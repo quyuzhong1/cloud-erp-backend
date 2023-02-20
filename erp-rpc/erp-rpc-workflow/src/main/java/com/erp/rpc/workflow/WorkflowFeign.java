@@ -121,4 +121,13 @@ public interface WorkflowFeign {
      */
     @PostMapping("workflow/feign/process/getProcessCurrentAudit")
     List<ProcessCurrentAuditorVO> getProcessCurrentAudit(@RequestBody List<String> businessTableIds);
+
+
+    /**
+     * 根据业务表id获取当前审核人情况
+     * @param businessTableId
+     * @return
+     */
+    @PostMapping("workflow/feign/process/getProcessNextAudit")
+    ProcessCurrentAuditorVO getProcessNextAudit(@RequestBody String businessTableId);
 }

@@ -5,16 +5,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.dto.FindUserDTO;
-import com.erp.common.business.enums.BaseStatusEnum;
-import com.erp.common.business.enums.SkuApproveConfigureEnum;
-import com.erp.common.business.enums.WorkflowBusinessEnum;
+import com.common.core.enums.BaseStatusEnum;
+import com.common.core.enums.SkuApproveConfigureEnum;
+import com.common.core.enums.WorkflowBusinessEnum;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.erp.model.workflow.dto.ProcessPassDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
+import com.erp.common.vo.LoginUser;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
@@ -27,6 +28,7 @@ import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
@@ -76,6 +78,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Value("${pmoCharge}")
     private String pmoCharge;
 
+    @Resource
+    private NoticeMessageService noticeMessageService;
+
     /**
      * 提交项目计划
      *
@@ -90,6 +95,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
+        String userName = commonService.getUserInfo().getUserName();
         checkAuditor();
         if (CollectionUtils.isNotEmpty(taskIds)) {
             checkTaskTime(taskList);
@@ -117,6 +123,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             //发起流程啊
             startScheduleTaskProcess(id);
         }
+        //异步发送消息
+        noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
         return saveResult;
     }
 
@@ -511,7 +519,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (Objects.isNull(plan)) {
             throw new ServiceException(ApiError.ERROR_95122);
         }
-        String userId = commonService.getUserInfo().getUid();
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        //是不是第一次审核
+        Boolean isFirst = false;
 
         //已存在的审核状态
         String dbStatus = plan.getStatus();
@@ -520,6 +532,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         String status = BaseStatusEnum.AUDIT_ING.getStatus();
         //当不是审核通过的时候
         if (!status.equals(dbStatus)) {
+            isFirst = true;
             plan.setStatus(status);
         }
         plan.setRemark(dto.getComment());
@@ -552,11 +565,23 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             if (result) {
                 List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
                 List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
-                taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+                //当是第一次审核的时候才更新状态
+                if (isFirst) {
+                    taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+                }
+
+                //给审核人发消息
+                List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
+                ProcessCurrentAuditorVO auditorVO = workflowFeign.getProcessNextAudit(id);
+                List<String> auditorList = auditorVO.getHandleUserIdList();
+                if (CollectionUtils.isNotEmpty(auditorList)) {
+                    noticeMessageService.scheduleTaskAuditor(userName, taskEntityList, plan.getProductId(),auditorList);
+                }
             }
         } else {
             throw new ServiceException(ApiError.ERROR_94005);
         }
+
         return true;
     }
 
@@ -576,8 +601,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (Objects.isNull(plan)) {
             throw new ServiceException(ApiError.ERROR_95122);
         }
-        String userId = commonService.getUserInfo().getUid();
-
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         //意见
         String comment = dto.getComment();
         String status = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
@@ -610,6 +636,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
                 List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+
+                //异步发送 审核通知消息
+                List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
+                noticeMessageService.scheduleTaskAudit(userName, taskEntityList, plan.getProductId(), status, comment);
             }
         } else {
             throw new ServiceException(ApiError.ERROR_94005);
@@ -631,6 +661,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public void processPass(ProcessPassDTO dto) {
         String id = dto.getBusinessTableId();
         ProjectPlanEntity plan = this.getById(id);
+        String userName = commonService.getUserInfo().getUserName();
         if (plan != null) {
             String status = BaseStatusEnum.AUDIT_PASS.getStatus();
             plan.setStatus(status);
@@ -639,6 +670,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             if (result) {
                 List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
                 List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
+                noticeMessageService.scheduleTaskAudit(userName, taskEntityList, plan.getProductId(), status, "");
                 /**
                  * 当是变更的情况 就要去更改数据
                  * @author yl
@@ -647,7 +680,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                  * @return void
                  */
                 if (ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())) {
+                    // 排期任务变动 发送通知
                     taskService.updateScheduleTask(taskList, status);
+                    noticeMessageService.changeScheduleTask(userName, taskEntityList, plan.getProductId());
                 } else {
                     /**
                      * 如果是初始排期 审核通过后

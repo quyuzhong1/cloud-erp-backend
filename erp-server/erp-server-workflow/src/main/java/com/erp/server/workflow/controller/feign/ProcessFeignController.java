@@ -210,4 +210,19 @@ public class ProcessFeignController extends BaseController {
     }
 
 
+    /**
+     * 根据业务表id 获取到 下一个 流程审核情况
+     *
+     * @param businessTableId
+     * @return java.util.List<com.erp.model.workflow.dto.WorkflowBusinessProcessDTO>
+     * @author yl
+     * @date 2023-02-08 19:48
+     */
+    @PostMapping("/getProcessNextAudit")
+    public ProcessCurrentAuditorVO getProcessNextAudit(@RequestBody String businessTableId) {
+        ProcessCurrentAuditorVO result=businessProcessService.getProcessNextAudit(businessTableId);
+        return result;
+    }
+
+
 }

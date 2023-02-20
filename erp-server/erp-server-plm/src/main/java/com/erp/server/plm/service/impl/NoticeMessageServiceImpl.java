@@ -908,6 +908,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2023-02-17 18:18
      */
     @Override
+    @Async("customExecutor")
     public void scheduleTaskSubmit(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         //排期任务 通知节点
@@ -946,7 +947,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             sendMessage.setUnionIds(unionIds);
             //消息内容
             String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CONTENT, userName, taskList.size());
-            String taskName = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+            String taskName = "-";
 
             /**
              * 获取到提交排期任务卡片的主内容
@@ -995,6 +996,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2023-02-20 15:13
      */
     @Override
+    @Async("customExecutor")
     public void scheduleTaskAudit(String userName, List<ProjectTaskEntity> taskList, String productId, String auditResult, String remark) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         //排期审核 通知节点
@@ -1073,17 +1075,19 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
     }
 
-    
+
     /**
      * 排期变更
-     * @author yl
-     * @date 2023-02-20 16:10
+     *
      * @param userName
      * @param taskList
      * @param productId
      * @return void
+     * @author yl
+     * @date 2023-02-20 16:10
      */
     @Override
+    @Async("customExecutor")
     public void changeScheduleTask(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         //排期任务 通知节点
@@ -1097,7 +1101,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
-
             if (CollectionUtils.isEmpty(taskList)) {
                 return;
             }
@@ -1114,6 +1117,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 }
             }
 
+
             //排除关闭通知的人员 并去重
             List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
@@ -1121,14 +1125,14 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             //消息内容
-            String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CONTENT, userName, taskList.size());
-            String taskName = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
-
+            String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CHANGE_CONTENT, taskList.size());
+            String taskName = "-";
+            String taskChargeName = taskList.stream().map(ProjectTaskEntity::getChargeName).collect(Collectors.joining(";"));
             /**
              * 获取到提交排期任务卡片的主内容
              */
-            String scheduleTaskSubmitCard = getScheduleTaskSubmitCard(taskName, product.getName(), product.getProductChargeName());
-            Map contentMap = getCardMessageMap(messageContent, scheduleTaskSubmitCard, fsAppUrl);
+            String scheduleTaskChangeCard = String.format(NoticeMessageConstant.SCHEDULE_TASK_CHANGE_CARD, taskName, product.getName(), taskChargeName);
+            Map contentMap = getCardMessageMap(messageContent, scheduleTaskChangeCard, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
             Boolean sendResult = fsService.batchSendMessage(sendMessage);
@@ -1146,7 +1150,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductId(product.getProductId());
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskName(taskName);
-                    recordEntity.setChargeName(product.getProductChargeName());
+                    recordEntity.setChargeName(taskChargeName);
                     messageRecordList.add(recordEntity);
                 }
                 //保存发送消息通知记录
@@ -1155,8 +1159,71 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
 
         }
-        
+
     }
+
+
+    /**
+     * 任务排期 审核人的通知
+     *
+     * @param userName
+     * @param taskList
+     * @param productId
+     * @param noticeList
+     * @return void
+     * @author yl
+     * @date 2023-02-20 16:47
+     */
+    @Override
+    public void scheduleTaskAuditor(String userName, List<ProjectTaskEntity> taskList, String productId, List<String> noticeList) {
+        if (CollectionUtils.isEmpty(noticeList)) {
+            return;
+        }
+
+        ProductShowDTO product = productInfoService.getProductInfo(productId);
+        List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+        List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+        FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+        List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+        sendMessage.setUnionIds(unionIds);
+        //消息内容
+        String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CONTENT, userName, taskList.size());
+        String taskName = "-";
+        //排期任务 通知节点
+        String noticeFlag = NoticeEnum.SCHEDULE_TASK_SUBMIT.getFlag();
+        /**
+         * 获取到提交排期任务卡片的主内容
+         */
+        String scheduleTaskSubmitCard = getScheduleTaskSubmitCard(taskName, product.getName(), product.getProductChargeName());
+        Map contentMap = getCardMessageMap(messageContent, scheduleTaskSubmitCard, fsAppUrl);
+        sendMessage.setContentMap(contentMap);
+        //发送消息的结果
+        Boolean sendResult = fsService.batchSendMessage(sendMessage);
+        //发送成功
+        if (sendResult) {
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+            for (String userId : acceptUserIds) {
+                NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                recordEntity.setMessageContent(messageContent);
+                recordEntity.setNoticeMessageId("1");
+                recordEntity.setNoticeNode(noticeFlag);
+                recordEntity.setNoticeUserId(userId);
+                recordEntity.setProductId(product.getProductId());
+                recordEntity.setProductName(product.getName());
+                recordEntity.setTaskName(taskName);
+                recordEntity.setChargeName(product.getProductChargeName());
+                messageRecordList.add(recordEntity);
+            }
+            //保存发送消息通知记录
+            noticeMessageRecordService.saveBatch(messageRecordList);
+
+        }
+
+    }
+
+
 
     /**
      * 获取到 提交排期审核任务消息卡片主体

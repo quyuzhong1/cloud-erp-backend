@@ -91,11 +91,18 @@ public interface NoticeMessageConstant {
     //排期任务不通过
     String SCHEDULE_TASK_NO_PASS_CONTENT= "【%s】排期审核结果：不通过【原因：%s】";
 
+    //排期任务变更
+    String SCHEDULE_TASK_CHANGE_CONTENT= "你的%s个任务排期发生变动，请及时查看任务列表";
+
+
     //任务排期 提交 卡片
     String SCHEDULE_TASK_SUBMIT_CARD="**任务名称：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
 
     //任务排期 审核 卡片
     String SCHEDULE_TASK_AUDIT_CARD="**任务数量：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
+
+    //任务排期 变更 卡片
+    String SCHEDULE_TASK_CHANGE_CARD="**任务名称：**%s\\n**产品名称：**%s\\n**任务负责人：**%s";
 
 
 

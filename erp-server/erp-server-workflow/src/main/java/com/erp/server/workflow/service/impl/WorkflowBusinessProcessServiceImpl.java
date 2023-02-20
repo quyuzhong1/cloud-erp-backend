@@ -1,7 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.BusinessTableDTO;
@@ -13,6 +12,7 @@ import com.erp.server.workflow.mapper.WorkflowBusinessProcessMapper;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,7 +138,7 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
 
         }
 
-        return  resultList;
+        return resultList;
 
     }
 
@@ -163,6 +163,43 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
             return resultList;
         }
         return new ArrayList<>();
+
+    }
+
+    /**
+     * 根据业务表id 获取到下一个审核节点
+     *
+     * @param id
+     * @return java.util.List<com.erp.model.workflow.vo.ProcessCurrentAuditorVO>
+     * @author yl
+     * @date 2023-02-20 17:23
+     */
+    @Override
+    public ProcessCurrentAuditorVO getProcessNextAudit(String id) {
+        ProcessCurrentAuditorVO vo = new ProcessCurrentAuditorVO();
+        if (StringUtils.isBlank(id)) {
+            return vo;
+        }
+        LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WorkflowBusinessProcessEntity::getBusinessTableId, id);
+        queryWrapper.orderByDesc(WorkflowBusinessProcessEntity::getCreateTime);
+        WorkflowBusinessProcessEntity businessProcess = this.getOne(queryWrapper);
+        if (businessProcess != null) {
+
+            vo.setBusinessTableId(businessProcess.getBusinessTableId());
+            String processId = businessProcess.getProcessId();
+            vo.setProcessId(processId);
+            List<HistoricTaskInstance> historyList = historyService // 历史相关Service
+                    .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
+                    .processInstanceId(processId) // 用流程实例id查询
+                    .orderByHistoricActivityInstanceStartTime()
+                    .asc()
+                    .list();
+            List<String> assigneeList = historyList.stream().filter(h -> h.getEndTime() == null).map(HistoricTaskInstance::getAssignee).collect(Collectors.toList());
+            vo.setHandleUserIdList(assigneeList);
+            return vo;
+        }
+        return vo;
 
     }
 }

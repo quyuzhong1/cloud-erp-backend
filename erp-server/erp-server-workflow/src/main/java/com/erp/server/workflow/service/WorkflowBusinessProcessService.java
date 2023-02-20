@@ -34,4 +34,13 @@ public interface WorkflowBusinessProcessService extends IService<WorkflowBusines
     List<ProcessCurrentAuditorVO> getProcessCurrentAuditor(List<String> businessTableIds);
 
     List<WorkflowBusinessProcessDTO> getProcessByTables(List<String> businessTableIds);
+
+    /**
+     * 根据业务表id 获取到下一个审核节点
+     * @author yl
+     * @date 2023-02-20 17:23
+     * @param id
+     * @return java.util.List<com.erp.model.workflow.vo.ProcessCurrentAuditorVO>
+     */
+    ProcessCurrentAuditorVO getProcessNextAudit(String id);
 }
