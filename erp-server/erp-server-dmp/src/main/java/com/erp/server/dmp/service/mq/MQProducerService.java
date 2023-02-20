@@ -84,7 +84,7 @@ public class MQProducerService<T> {
     public void syncSendMsg(String msgKey, String topic,String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = topic + ":" + tag;
+        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
         syncSendMsg(msgKey, destination, payload, msgSource);
     }
     /**
@@ -102,7 +102,7 @@ public class MQProducerService<T> {
      * @param payload
      */
     public void oneWaySendMsg(String msgKey, String destination, Object payload, String msgSource){
-        sendMsg(MSG_TYPE.ONEWAY, msgKey,destination, payload,msgSource);
+        sendMsg(MSG_TYPE.ONEWAY, msgKey,destination, payload, msgSource);
     }
     /**
      * 单向发送消息，不关注结果
@@ -117,12 +117,6 @@ public class MQProducerService<T> {
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
-    /**
-     * 普通发送（这里的参数对象User可以随意定义，可以发送个对象，也可以是字符串等）
-     */
-    public void sendEntity(String topic, String tag, T entity) {
-        rocketMQTemplate.convertAndSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), entity);
-    }
 
     /**
      *发送批量消息

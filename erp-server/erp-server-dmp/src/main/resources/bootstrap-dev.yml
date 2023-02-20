@@ -64,6 +64,7 @@ rocketmq:
     #TAG or SelectorType.SQL92
     selector-type: TAG
     pull-batch-size: 10
+    group: erp_dmp_group
 
 
 

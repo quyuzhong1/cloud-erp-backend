@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -245,7 +246,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
             dmpRefundItemEntity.setErpOrderItemId(erpOrderItemId);
             //折扣后金额
-            dmpRefundItemEntity.setAmountAfter(new BigDecimal(refundDetailsBean.getAmount()));
+            dmpRefundItemEntity.setAmountAfter(new BigDecimal(null != refundDetailsBean.getAmount() ? refundDetailsBean.getAmount() : "0"));
             orderItemList.add(dmpRefundItemEntity);
         });
         return orderItemList;
