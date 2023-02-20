@@ -45,9 +45,9 @@ public class ReimbursementController extends BaseController {
     }
 
 
-    //删除缓存
+    //删除流程
     @PostMapping("/removeProcess")
-    public ApiResult removeCache(@RequestParam(value = "deploymentId")  String  deploymentId) {
+    public ApiResult removeProcess(@RequestParam(value = "deploymentId")  String  deploymentId) {
         repositoryService.deleteDeployment(deploymentId);
         return success();
     }

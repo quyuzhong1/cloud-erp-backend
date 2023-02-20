@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Classname ChangeScheduleExportVO
@@ -31,6 +32,10 @@ public class ChangeScheduleExportVO implements Serializable {
     @ColumnWidth(50)
     @ExcelProperty(value = "负责人名", index = 2)
     private String chargeName;
+
+
+    @ExcelIgnore
+    private List<String> chargeIdList;
 
 
 

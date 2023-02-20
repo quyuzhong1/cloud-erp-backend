@@ -182,7 +182,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             throw new ServiceException(ApiError.ERROR_95122);
         }
         String status = plan.getStatus();
-        if (BaseStatusEnum.WAIT_AUDIT.getStatus().equals(status)) {
+        if (!BaseStatusEnum.WAIT_AUDIT.getStatus().equals(status)) {
             throw new ServiceException(ApiError.ERROR_95121);
         }
         String cancelStatus = BaseStatusEnum.CANCEL.getStatus();

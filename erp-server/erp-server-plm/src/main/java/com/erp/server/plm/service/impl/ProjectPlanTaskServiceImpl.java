@@ -700,16 +700,16 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportExcelVO> errorDateList = excelListener.getErrorDateList();
-
-            String fileName = "排期变更错误.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ScheduleTaskExportExcelVO.class);
             String url = "";
-            if (file != null && !file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+            if(CollectionUtils.isNotEmpty(errorDateList)){
+                String fileName = "排期变更错误.xlsx";
+                File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ScheduleTaskExportExcelVO.class);
+                if (file != null && !file.isDirectory()) {
+                    url = FastDFSClientUtil.uploadFile(file, fileName);
+                }
             }
             vo.setErrorUrl(url);
             vo.setSucceedList(excelListener.getSucceedDateList());
-
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }

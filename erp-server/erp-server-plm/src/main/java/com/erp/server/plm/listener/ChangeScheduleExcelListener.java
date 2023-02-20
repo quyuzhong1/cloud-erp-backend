@@ -2,16 +2,17 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.erp.common.business.enums.BaseStatusEnum;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.business.enums.BaseStatusEnum;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
-import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,7 +64,7 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
             errorMsgList.add("计划结束时间 不能为空");
         }
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
-            if (vo.getPlanEndTime().compareTo(vo.getPlanStartTime())<0) {
+            if (vo.getPlanEndTime().compareTo(vo.getPlanStartTime()) < 0) {
                 errorMsgList.add("结束时间必须大于开始时间");
             }
         }
@@ -89,13 +90,20 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
         changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
+        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt));
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());
         changeVO.setOriginStartTime(task.getPlanStartTime());
         changeVO.setOriginEndTime(task.getPlanEndTime());
+        String taskChargeId = task.getChargeId();
+        if (StringUtils.isNotBlank(taskChargeId)) {
+            changeVO.setChargeIdList(Arrays.asList(taskChargeId.split(",")));
+        } else {
+            changeVO.setChargeIdList(new ArrayList<>(1));
+        }
+
         succeedList.add(changeVO);
     }
 
