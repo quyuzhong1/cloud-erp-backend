@@ -31,13 +31,13 @@ public class ProjectPlanDetailsVO implements Serializable {
     /**
      * 总的任务数
      */
-    private Integer totalTaskCount;
+    private Integer totalTaskCount=0;
 
 
     /**
      * 待审核任务数
      */
-    private Integer waitAuditTaskCount;
+    private Integer waitAuditTaskCount=0;
 
     /**
      * 排期开始时间
@@ -52,7 +52,7 @@ public class ProjectPlanDetailsVO implements Serializable {
     /**
      * 总时长
      */
-    private Integer durationDay;
+    private Integer durationDay=0;
 
 
     /**

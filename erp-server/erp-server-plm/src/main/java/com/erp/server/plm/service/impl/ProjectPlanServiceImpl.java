@@ -233,6 +233,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         vo.setTotalTaskCount(Integer.valueOf(productMap.get("taskCount").toString()));
         //获取任务
         List<ProjectPlanTaskEntity> planTaskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(planTaskList)) {
+            vo.setTaskList(new ArrayList<>());
+            return vo;
+        }
 
         List<String> taskIdList = planTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
 
