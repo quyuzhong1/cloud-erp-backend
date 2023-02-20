@@ -40,6 +40,7 @@ public class SysBaseDicController extends BaseController {
     public ApiResult list(@RequestBody @Validated BaseSearchDTO dto){
         CurrencyEnum[] currencyEnums= CurrencyEnum.values();
         List<Map<String, String>> list=new ArrayList<>(currencyEnums.length);
+
         for(CurrencyEnum item:currencyEnums){
             Map<String, String> map=new HashMap<>(3);
             map.put("currencyCode",item.getCurrencyCode());
