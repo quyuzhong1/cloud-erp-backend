@@ -15,7 +15,7 @@ import java.util.List;
 
 public enum CustomizeFieldEnum {
     TASK_NAME("任务名称", "taskName", true, "plmScheduleTask", "plm项目计划任务"),
-    SCHEDULE_STATUS("排期审核状态", "statusName", true, "plmScheduleTask", "plm项目计划任务"),
+    SCHEDULE_STATUS("排期审核状态", "scheduleStatusName", true, "plmScheduleTask", "plm项目计划任务"),
     TASK_CHARGE_NAME("任务负责人", "chargeName", true, "plmScheduleTask", "plm项目计划任务"),
     PLAN_START_TIME("计划开始时间", "planStartTime", true, "plmScheduleTask", "plm项目计划任务"),
     PLAN_END_TIME("计划结束时间", "planEndTime", true, "plmScheduleTask", "plm项目计划任务"),

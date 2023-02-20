@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.CustomizeFieldEnum;
@@ -12,10 +13,7 @@ import com.erp.common.business.utils.FastDFSClientUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.model.plm.dto.ChangeScheduleDTO;
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
-import com.erp.model.plm.dto.HandleTaskScheduleDTO;
-import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
@@ -118,11 +116,23 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 parentVO.setId(parentId);
                 parentVO.setParentId(IsConstant.NO);
 
+
+
                 List<ProductTaskVO> phaseTaskList = item.getValue();
+
+
+                //最小计划开始时间
+                String minStartTime = phaseTaskList.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
+                //最大计划结束时间
+                String maxEndTime = phaseTaskList.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanEndTime).reversed()).map(ProductTaskVO::getPlanEndTime).findFirst().orElse(null);
+
                 //阶段名
                 String phaseName = phaseTaskList.get(0).getPhaseName();
                 parentVO.setPhaseId(item.getKey());
                 parentVO.setPhaseName(phaseName);
+
+                parentVO.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime : minStartTime.concat(" 00:00:00"));
+                parentVO.setPlanEndTime(StringUtils.isEmpty(maxEndTime) ? maxEndTime : maxEndTime.concat(" 23:59:59"));
                 parentId++;
 
                 for (ProductTaskVO vo : phaseTaskList) {
@@ -135,6 +145,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     vo.setPreTaskNames(String.join(",", preTaskNameList));
                     vo.setId(parentId);
                     vo.setParentId(parentVO.getId());
+                    vo.setPlanStartTime(StringUtils.isEmpty(vo.getPlanStartTime()) ? vo.getPlanStartTime() : vo.getPlanStartTime().concat(" 00:00:00"));
+                    vo.setPlanEndTime(StringUtils.isEmpty(vo.getPlanEndTime()) ? vo.getPlanEndTime() : vo.getPlanEndTime().concat(" 23:59:59"));
+                    vo.setRealityStartTime(StringUtils.isEmpty(vo.getRealityStartTime()) ? vo.getRealityStartTime() : vo.getRealityStartTime().concat(" 00:00:00"));
+                    vo.setRealityEndTime(StringUtils.isEmpty(vo.getRealityEndTime()) ? vo.getRealityEndTime() : vo.getRealityEndTime().concat(" 23:59:59"));
+
                     List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                             .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
                     vo.setDeliveryDocsNames(String.join(",", docsNameList));

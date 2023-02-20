@@ -234,7 +234,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //获取任务
         List<ProjectPlanTaskEntity> planTaskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
 
-        List<String> taskIdList=planTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+        List<String> taskIdList = planTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
 
         //最小计划开始时间
         Date minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
@@ -254,13 +254,18 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
          * 获取是变更的任务
          */
         List<ScheduleTaskDetailsVO> changeTaskList = projectPlanTaskService.getTaskByPlanType(productId, ProjectPlanConstant.PROJECT_PLAN_CHANGE);
-
-
+        List<String> changeTaskIdList = changeTaskList.stream().map(ScheduleTaskDetailsVO::getTaskId).collect(Collectors.toList());
+        taskIdList.addAll(changeTaskIdList);
+        //获取对应的任务
+        List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
         for (ProjectPlanTaskEntity item : planTaskList) {
             ScheduleTaskDetailsVO task = new ScheduleTaskDetailsVO();
             String chargeId = item.getChangeChargeId();
             String taskId = item.getTaskId();
-            //task.setTaskName(item.get);
+            String taskName=  taskEntityList.stream().filter(t->t.getId().equals(taskId)).findFirst().
+                    flatMap(data->Optional.ofNullable(data.getName())).orElse("");
+
+            task.setTaskName(taskName);
             task.setChargeId(item.getChangeChargeId());
             task.setChargeName(getNameByIds(chargeId, userList));
             task.setPlanEndTime(item.getChangeEndTime());
@@ -390,7 +395,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @return
      */
     @Override
-    public Boolean changeSchedule(String productId,List<ChangeTaskScheduleDTO> list) {
+    public Boolean changeSchedule(String productId, List<ChangeTaskScheduleDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
@@ -456,7 +461,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             startProcess.setBusinessKey(business.getBusinessKey());
             Map<String, Object> parameterMap = new HashMap<>();
 
-            if(StringUtils.isBlank(pmoCharge)){
+            if (StringUtils.isBlank(pmoCharge)) {
                 throw new ServiceException(ApiError.ERROR_9036);
             }
             parameterMap.put("pmoCharge", pmoCharge);
@@ -505,12 +510,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         String userId = commonService.getUserInfo().getUid();
 
         //已存在的审核状态
-        String dbStatus=plan.getStatus();
+        String dbStatus = plan.getStatus();
         //意见
         String comment = dto.getComment();
         String status = BaseStatusEnum.AUDIT_ING.getStatus();
         //当不是审核通过的时候
-        if(!status.equals(dbStatus)){
+        if (!status.equals(dbStatus)) {
             plan.setStatus(status);
         }
         plan.setRemark(dto.getComment());
@@ -530,6 +535,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
+
+        Map<String, Object> parameterMap = new HashMap<>();
+        parameterMap.put("agree", true);
+        approveProcess.setParameterMap(parameterMap);
+
         Boolean result = this.updateById(plan);
 
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
@@ -680,7 +690,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Override
     public void checkAuditor() {
 
-        if(StringUtils.isBlank(pmoCharge)){
+        if (StringUtils.isBlank(pmoCharge)) {
             throw new ServiceException(ApiError.ERROR_9036);
         }
 

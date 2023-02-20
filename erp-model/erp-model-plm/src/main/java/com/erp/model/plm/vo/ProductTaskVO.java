@@ -88,24 +88,24 @@ public class ProductTaskVO implements Serializable {
     /**
      * 计划开始时间
      */
-    private Date planStartTime;
+    private String planStartTime;
 
     /**
      * 计划结束时间
      */
-    private Date planEndTime;
+    private String planEndTime;
 
 
     /**
      * 实际开始时间
      */
-    private Date realityStartTime;
+    private String realityStartTime;
 
 
     /**
      * 实际结束时间
      */
-    private Date realityEndTime;
+    private String realityEndTime;
 
 
     /**
