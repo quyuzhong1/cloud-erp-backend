@@ -64,6 +64,11 @@ public class ProductTaskVO implements Serializable {
     private Integer type;
 
     /**
+     * 任务类型名称
+     */
+    private String typeName;
+
+    /**
      * 负责人id
      */
     private String chargeId;
@@ -112,6 +117,12 @@ public class ProductTaskVO implements Serializable {
      * 任务优先级 1 低级 2 中级 3 高级
      */
     private Integer priority;
+
+
+    /**
+     * 任务优先级 名
+     */
+    private String priorityName;
 
     /**
      * 任务阶段id
@@ -164,6 +175,12 @@ public class ProductTaskVO implements Serializable {
 
 
     /**
+     * 设置里程碑名
+     */
+    private String isMilepostName;
+
+
+    /**
      * 关联sku 表id集合
      */
     private List<String> refSkuIdList;
@@ -207,7 +224,6 @@ public class ProductTaskVO implements Serializable {
     /**
      * 是否变更中
      */
-
     private Boolean isChange = false;
 
 

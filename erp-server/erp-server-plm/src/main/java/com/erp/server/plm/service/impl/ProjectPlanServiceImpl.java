@@ -262,8 +262,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             ScheduleTaskDetailsVO task = new ScheduleTaskDetailsVO();
             String chargeId = item.getChangeChargeId();
             String taskId = item.getTaskId();
-            String taskName=  taskEntityList.stream().filter(t->t.getId().equals(taskId)).findFirst().
-                    flatMap(data->Optional.ofNullable(data.getName())).orElse("");
+            String taskName = taskEntityList.stream().filter(t -> t.getId().equals(taskId)).findFirst().
+                    flatMap(data -> Optional.ofNullable(data.getName())).orElse("");
 
             task.setTaskName(taskName);
             task.setChargeId(item.getChangeChargeId());
@@ -699,6 +699,26 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (CollectionUtils.isEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9032);
         }
+    }
+
+    /**
+     * 获取排期任务状态
+     *
+     * @param
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2023-02-20 11:48
+     */
+    @Override
+    public List<Map<String, Object>> getSubmitSchedule() {
+        List<Map<String, Object>> list = new ArrayList<>(10);
+        for (BaseStatusEnum item : BaseStatusEnum.values()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", item.getName());
+            map.put("status", item.getStatus());
+            list.add(map);
+        }
+        return list;
     }
 
 }

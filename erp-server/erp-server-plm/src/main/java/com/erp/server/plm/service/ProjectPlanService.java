@@ -14,6 +14,7 @@ import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.controller.AuditParamDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 项目计划表(ProjectPlan)表服务接口
@@ -80,4 +81,6 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
     void processPass(ProcessPassDTO dto);
 
     void checkAuditor();
+
+    List<Map<String, Object>> getSubmitSchedule();
 }

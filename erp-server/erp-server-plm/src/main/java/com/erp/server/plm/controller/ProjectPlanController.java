@@ -15,13 +15,11 @@ import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 产品排期
@@ -61,6 +59,18 @@ public class ProjectPlanController extends BaseController {
     public ApiResult submitSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanService.submitSchedule(dto);
         return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 获取审核状态
+     *
+     * @return
+     */
+    @GetMapping("/scheduleStatus")
+    public ApiResult submitSchedule() {
+        List<Map<String,Object>> list=projectPlanService.getSubmitSchedule();
+        return success(list);
     }
 
 

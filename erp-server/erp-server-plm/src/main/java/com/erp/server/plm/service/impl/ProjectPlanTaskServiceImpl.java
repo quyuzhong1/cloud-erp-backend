@@ -23,6 +23,7 @@ import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.listener.ChangeScheduleExcelListener;
 import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
@@ -117,14 +118,13 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 parentVO.setParentId(IsConstant.NO);
 
 
-
                 List<ProductTaskVO> phaseTaskList = item.getValue();
 
 
                 //最小计划开始时间
-                String minStartTime = phaseTaskList.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
+                String minStartTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
                 //最大计划结束时间
-                String maxEndTime = phaseTaskList.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanEndTime).reversed()).map(ProductTaskVO::getPlanEndTime).findFirst().orElse(null);
+                String maxEndTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanEndTime).reversed()).map(ProductTaskVO::getPlanEndTime).findFirst().orElse(null);
 
                 //阶段名
                 String phaseName = phaseTaskList.get(0).getPhaseName();
@@ -164,6 +164,30 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                             vo.setIsChange(true);
                         }
                     }
+                    Integer type = vo.getType();
+                    String typeName = "一般任务";
+                    if (TaskConstant.REVIEW_TASK.equals(type)) {
+                        typeName = "评审任务";
+                    }
+                    vo.setTypeName(typeName);
+                    //优先级
+                    Integer priority = vo.getPriority();
+
+                    String priorityName="低级";
+                    if(TaskConstant.INTERMEDIATE_TASK.equals(priority)){
+                        priorityName="中级";
+                    }else if(TaskConstant.ADVANCED_TASK.equals(priority)){
+                        priorityName="高级";
+                    }
+                    vo.setPriorityName(priorityName);
+                    //设置里程碑
+                    Integer isMilepost=vo.getIsMilepost();
+                    String isMilepostName="否";
+                    if(TaskConstant.YES_MILEPOST.equals(isMilepost)){
+                        isMilepostName="是";
+                    }
+                    vo.setIsMilepostName(isMilepostName);
+
                     vo.setScheduleStatusName(BaseStatusEnum.getName(vo.getScheduleStatus()));
                     parentId++;
                 }
@@ -225,11 +249,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * @date 2023-02-03 18:37
      */
     @Override
-    public Boolean importTaskSchedule(MultipartFile excelFile, String productId,HttpServletResponse response) {
-        if(StringUtils.isBlank(productId)){
-            throw new ServiceException(95010,"产品id不能为空");
+    public Boolean importTaskSchedule(MultipartFile excelFile, String productId, HttpServletResponse response) {
+        if (StringUtils.isBlank(productId)) {
+            throw new ServiceException(95010, "产品id不能为空");
         }
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService,productId);
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportExcelVO> list = excelListenerUtil.getDateList();
@@ -667,12 +691,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * @date 2023-02-14 11:25
      */
     @Override
-    public ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response,String  productId) {
-        if(StringUtils.isBlank(productId)){
-            throw new ServiceException(95010,"产品id不能为空");
+    public ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response, String productId) {
+        if (StringUtils.isBlank(productId)) {
+            throw new ServiceException(95010, "产品id不能为空");
         }
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
-        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService,productId);
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportExcelVO> errorDateList = excelListener.getErrorDateList();

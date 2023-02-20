@@ -8,18 +8,30 @@ package com.erp.server.plm.constant;
  */
 public interface TaskConstant {
 
-    public static final Integer APPROVAL_TASK = 1;
+    Integer APPROVAL_TASK = 1;
+    //评审任务
+    Integer REVIEW_TASK = 1;
 
-    public static final Integer PROJECT_TASK = 2;
+    //中级任务
+    Integer INTERMEDIATE_TASK=2;
 
-    public static final String APPROVAL_TASK_NAME = "立项阶段";
+    //高级任务
+    Integer ADVANCED_TASK=3;
+
+    Integer PROJECT_TASK = 2;
+
+    String APPROVAL_TASK_NAME = "立项阶段";
 
 
-    public static final Integer MY_FINISH_TASK = 0;
-    public static final Integer MY_APPROVAL_TASK = 1;
-    public static final Integer ALL_FINISH_TASK = 2;
+    Integer MY_FINISH_TASK = 0;
+    Integer MY_APPROVAL_TASK = 1;
+    Integer ALL_FINISH_TASK = 2;
 
-    public static final String FILE_TYPE = "文件";
+
+    //高级任务
+    Integer YES_MILEPOST=1;
+
+    String FILE_TYPE = "文件";
 
     //分配给我
     String ASSIGN_TO_ME = "assignToMe";
@@ -59,10 +71,10 @@ public interface TaskConstant {
 
 
     //产品
-    String PRODUCT="product";
+    String PRODUCT = "product";
 
     //计划结束时间
-    String PLAN_END_TIME="planEndTime";
+    String PLAN_END_TIME = "planEndTime";
 
 
 }
