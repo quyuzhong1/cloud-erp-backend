@@ -908,26 +908,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<ProjectTaskEntity> taskList = new ArrayList<>();
             taskList.add(taskEntity);
             noticeMessageService.newTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
-
-            //如果是立项阶段
-            if (isProjectApprovalPhase) {
-                Integer afterState = TaskStateEnum.NOT_START.getCode();
-                //如果不是是一般任务
-                if (!isGeneralTask) {
-                    afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
-                }
-                //保存任务记录
-                taskOperatorRecordService.addTaskOperator(taskEntity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
-                if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(afterState)) {
-                    //发布任务通知
-                    noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, dto.getProductId());
-                } else {
-                    //发布任务通知
-                    noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
-                }
-
-            }
-
         }
 
         return flag;
