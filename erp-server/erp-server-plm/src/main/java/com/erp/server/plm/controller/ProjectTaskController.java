@@ -230,7 +230,8 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
                 tableField = "charge_id",
                 menuCode = "plm:task:update",
-                serviceClass = ProjectTaskService.class
+                serviceClass = ProjectTaskService.class,
+                keyIdName = "taskId"
     )
     public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = taskService.updateBaseTask(dto);

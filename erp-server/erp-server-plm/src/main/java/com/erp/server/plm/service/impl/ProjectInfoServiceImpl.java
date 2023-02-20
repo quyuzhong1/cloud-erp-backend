@@ -16,16 +16,13 @@ import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.enums.ApprovalStatusEnum;
-import com.erp.server.plm.enums.ProductInfoStateEnum;
-import com.erp.server.plm.enums.ProjectStateEnum;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
-import org.apache.commons.math3.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.math3.util.Pair;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -505,25 +502,30 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                             continue;
                         }
                         //判断该阶段任务是否全部未开始
-                        long count1 = value.stream().filter(e -> TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus())).count();
+                        long count1 = value.stream().filter(e -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus())) || (TaskTypeEnum.GENERAL_TASK.getCode().equals(e.getType()) && TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus()))).count();
                         if (count1 == value.size()) {
                             unStartList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                             continue;
                         }
                         //判断该阶段任务是否全部未完成
-                        long count2 = value.stream().filter(e -> TaskStateEnum.FINISH.getCode().equals(e.getStatus())
-                                || TaskStateEnum.APPROVAL_ING.getCode().equals(e.getStatus())
-                                || TaskStateEnum.APPROVAL_PASS.getCode().equals(e.getStatus())
-                                || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())
+                        long count2 = value.stream().filter(e ->
+                                TaskStateEnum.FINISH.getCode().equals(e.getStatus())
                                 || TaskStateEnum.CLOSE.getCode().equals(e.getStatus())).count();
                         if (count2 == value.size()) {
                             finishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                             inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                             continue;
                         }
-                        //阶段下任务为进行中
-                        progressList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
-                        inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                        long count3 = value.stream().filter(e ->
+                                TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())
+                                || TaskStateEnum.APPROVAL_ING.getCode().equals(e.getStatus())
+                                || TaskStateEnum.APPROVAL_PASS.getCode().equals(e.getStatus())
+                                || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())).count();
+                        if (count3 > 0) {
+                            //阶段下任务为进行中
+                            progressList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                            inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                        }
                     }
                     //存在完成或进行中阶段
                     if (CollectionUtils.isNotEmpty(progressList)) {
