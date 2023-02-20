@@ -5,32 +5,30 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.*;
-import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.math3.util.Pair;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,6 +74,31 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private TaskDocsFinishService finishService;
 
+    @Autowired
+    private TemplateMembersService templateMembersService;
+    @Autowired
+    private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private TemplateRoleService templateRoleService;
+
+    @Autowired
+    private TemplatePhaseService templatePhaseService;
+
+    @Autowired
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+
+    @Autowired
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
+
+    @Autowired
+    private TemplateRoleRefMembersService templateRoleRefMembersService;
+
+    @Autowired
+    private TemplatePreTaskService templatePreTaskService;
+
+    @Autowired
+    private TemplateDocsPermissionService templateDocsPermissionService;
 
     @Autowired
     @Lazy
@@ -87,13 +110,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
 
     @Autowired
-    private ProjectStatusTimeService projectStatusTimeService;
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
 
     @Autowired
-    private ProductPlanService productPlanService;
+    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
 
     @Autowired
-    private BasicCategoryService basicCategoryService;
+    private TaskRefSkuConfigService taskRefSkuConfigService;
 
     /**
      * 项目概述
@@ -170,12 +193,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             throw new ServiceException(ApiError.ERROR_95067);
         }
 
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
+        List<String> chargeIdList = dto.getChargeIdList();
+        String chargeName = commonService.getNameByIds(chargeIdList);
         //负责人id
-        project.setChargeId(chargeId);
+        project.setChargeId(StringUtils.join(chargeIdList, ","));
         project.setChargeName(chargeName);
-
+        //来源
+        project.setSourceType(dto.getSourceType());
         //开始时间
         project.setStartTime(dto.getStartTime());
         //结束时间
@@ -183,23 +207,96 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         project.setDescribe(dto.getDescribe());
         project.setProjectStatus(ProjectStateEnum.YES_START.getState());
         boolean flag = updateById(project);
+        Integer sourceType = dto.getSourceType();
         if (flag) {
             String productId = project.getProductId();
-            ProductInfoEntity productInfo = productInfoService.getById(productId);
-            if (productInfo != null) {
-                productInfo.setProjectChargeId(chargeId);
-                productInfoService.updateById(productInfo);
-            }
+            String flagId = dto.getFlagId();
+
             //异步启动消息
             noticeMessageService.startProjectNotice(loginUser.getUserName(), productId);
 
-            if (StringUtils.isNotBlank(chargeId)) {
-                projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", Arrays.asList(chargeId));
+            //如果是新建 就直接 复制成员
+            if (SourceType.NEW.equals(sourceType)) {
+                /**
+                 * 从复制系统项目任务
+                 * 返回已经添加过的sku配置的任务id
+                 * 和任务列表
+                 */
+                Pair<List<String>, List<ProjectTaskEntity>> pair = projectTaskService.copyTaskBySys(productId, projectId);
+                List<ProjectTaskEntity> addProjectTaskList = pair.getValue();
+                //已经添加的任务id
+                List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                List<String> alreadyRefSkuConfigTaskIdList = pair.getKey();
+                /**
+                 * 查找 当没有配置表单的时候 的任务id
+                 * 则要自动生成配置表单
+                 */
+                List<String> noRefSkuConfigTaskIdList=addTaskIdList.stream().filter(a->!alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
+                    taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
+                }
+                //将已保存的任务id 与sku 关联 在一起
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
+                //异步发送通知
+                noticeMessageService.newTaskNotice(loginUser.getUserName(), addProjectTaskList, productId);
             }
-            //记录产品状态更新时间
-            projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), ProjectStateEnum.YES_START.getState());
-            //更新产品规划的产品状态
-            productPlanService.updateProductPlanStatus(productId, ProjectStateEnum.YES_START.getState(), MathUtil.TWO);
+            //如果是 从项目复制 那么从项目表 里面复制 复制成员
+            if (SourceType.PROJECT.equals(sourceType)) {
+                projectMembersService.saveMemberByProject(productId, projectId, flagId);
+                projectTaskService.copyTaskByProject(productId, projectId, flagId);
+            }
+
+            //如果是 从模板复制  那么模板复制数据
+            if (SourceType.TEMPLATE.equals(sourceType)) {
+                ProjectTemplateEntity template = templateService.getById(flagId);
+                if (Objects.isNull(template)) {
+                    throw new ServiceException(ApiError.ERROR_95051);
+                }
+                //复制模板团队成员
+                List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, projectId);
+                //复制模板角色
+                List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
+                //复制角色关系表
+                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList, copyMembersSourceList);
+                //复制 项目任务阶段
+                List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
+
+                //复制任务文档名 可能数据库已有数据
+                List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
+
+                //这个是任务的
+                List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(flagId, productId, projectId, phaseSourceList);
+                //这个是复制前置任务关系
+                templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
+
+
+                /**
+                 *  这个是复制任务与 sku 配置字段关系
+                 *  返回已经添加配置关系的 任务id 集合
+                 */
+                List<String> alreadyRefSkuConfigTaskIdList = templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
+                List<String> addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                /**
+                 * 查找 当没有配置表单的时候 的任务id
+                 * 则要自动生成配置表单
+                 */
+                List<String> noRefSkuConfigTaskIdList=addTaskIdList.stream().filter(a->!alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
+                    taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
+                }
+
+                //这个是交付文档
+                List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
+                //这个是文档权限
+                templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
+                //将已保存的任务id 与sku 关联 在一起
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
+
+            }
+            if (CollectionUtils.isNotEmpty(chargeIdList)) {
+                projectMembersService.saveByRoleAndMembers(productId,project.getId(),"项目经理",chargeIdList);
+            }
+
         }
 
         return flag;
@@ -255,7 +352,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         dto.getParams().setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
-        IPage pageData = new Page();
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = commonService.getUserInfo();
@@ -263,25 +359,14 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
-        List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
-        if (productIdList != null && productIdList.size() == 0) {
-            return new PagingVO(pageData);
-        }
-
-        //分类id
-        String categoryId = params.getCategoryId();
-
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-
+        IPage pageData = new Page();
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds, categoryIdList);
+                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds);
             }
         } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
+            pageData = baseMapper.paging(query, params, archiveProductIds);
         }
 
         Integer finish = TaskStateEnum.FINISH.getCode();
@@ -298,11 +383,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
-
-            //根据产品id 获取项目成员 相关信息
-            List<ItemMemberVO> ItemMemberList = projectMembersService.getByProductIds(productIds);
+            //查询阶段
+            List<ProjectPhaseEntity> phaseList = projectPhaseService.listByProductIds(productIds);
 
             for (ProductShowDTO item : list) {
+
+                //项目阶段，判断阶段任务是否全部完成
+                setProjectPhase(taskList,phaseList,item);
 
                 List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
 
@@ -316,24 +403,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     item.setIfIteration(true);
                 }
 
-                List<ItemMemberVO> itemMemberVOList = ItemMemberList.stream().filter(obj -> item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
-                item.setItemMemberList(itemMemberVOList);
-
-                Map<String, List<ItemMemberVO>> memberMap = itemMemberVOList.parallelStream().
-                        collect(Collectors.groupingBy(ItemMemberVO::getRoleId));
-
-                List<Map<String, Object>> itemMemberList = new ArrayList<>(memberMap.size());
-                for (Map.Entry<String, List<ItemMemberVO>> map : memberMap.entrySet()) {
-                    List<ItemMemberVO> memberList = map.getValue();
-                    Map<String, Object> roleMemberMap = new HashMap<>();
-                    String roleName = memberList.get(0).getRoleName();
-                    List<String> memberNameList = memberList.stream().map(ItemMemberVO::getMemberName).collect(Collectors.toList());
-                    roleMemberMap.put(roleName, memberNameList);
-                    itemMemberList.add(roleMemberMap);
-                }
-                item.setItemMember(itemMemberList);
-                String progressStatus = item.getProgressStatus();
-                item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
                 //总的文档数
                 CountDTO totalDocsDTO = productDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
                 if (totalDocsDTO != null) {
@@ -358,7 +427,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
                 String projectChargeId = item.getProjectChargeId();
                 if (StringUtils.isNotBlank(projectChargeId)) {
-                    item.setProjectChargeId(projectChargeId);
+                    item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
                 }
                 String productChargeId = item.getProductChargeId();
                 if (StringUtils.isNotBlank(productChargeId)) {
@@ -392,11 +461,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 double projectProgress = 0;
                 //立项任务完成
                 if (approvalTaskCount != 0) {
-                    approvalProgress = ((double) approvalFinishTaskCount / approvalTaskCount) * 100;
+                    approvalProgress = ((double)approvalFinishTaskCount / approvalTaskCount) * 100;
                 }
                 //项目任务完成
                 if (projectTaskCount != 0) {
-                    projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
+                    projectProgress = ((double)projectFinishTaskCount / projectTaskCount) * 100;
                 }
                 approvalProgress = Math.round(approvalProgress * 100) / 100;
                 projectProgress = Math.round(projectProgress * 100) / 100;
@@ -405,6 +474,105 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             }
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public void setProjectPhase(List<ProjectTaskEntity> taskList, List<ProjectPhaseEntity> phaseList,ProductShowDTO item) {
+        //项目阶段，判断阶段任务是否全部完成
+        if (CollectionUtils.isNotEmpty(taskList)) {
+            List<ProjectTaskEntity> projectTaskList = taskList.stream().filter(e -> item.getProductId().equals(e.getProductId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(projectTaskList)) {
+                //产品下任务阶段
+                List<ProjectPhaseEntity> projectPhaseList = phaseList.stream().filter(e -> item.getProductId().equals(e.getProductId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(projectPhaseList)) {
+                    //未开始
+                    List<Pair<String, Integer>> unStartList = new ArrayList<>();
+                    //进行中
+                    List<Pair<String, Integer>> progressList = new ArrayList<>();
+                    //已完成
+                    List<Pair<String, Integer>> finishList = new ArrayList<>();
+                    //进行中和已完成
+                    List<Pair<String, Integer>> inFinishList = new ArrayList<>();
+                    //结果集
+                    List<String> resultList = new ArrayList<>();
+                    for (int i = 0; i < projectPhaseList.size(); i++) {
+                        ProjectPhaseEntity projectPhaseEntity = projectPhaseList.get(i);
+                        List<ProjectTaskEntity> value = projectTaskList.stream().filter(e -> e.getPhaseId().equals(projectPhaseEntity.getId())).collect(Collectors.toList());
+                        if (CollectionUtils.isEmpty(value)) {
+                            continue;
+                        }
+                        //判断该阶段任务是否全部未开始
+                        long count1 = value.stream().filter(e -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus())) || (TaskTypeEnum.GENERAL_TASK.getCode().equals(e.getType()) && TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus()))).count();
+                        if (count1 == value.size()) {
+                            unStartList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                            continue;
+                        }
+                        //判断该阶段任务是否全部未完成
+                        long count2 = value.stream().filter(e ->
+                                TaskStateEnum.FINISH.getCode().equals(e.getStatus())
+                                || TaskStateEnum.CLOSE.getCode().equals(e.getStatus())).count();
+                        if (count2 == value.size()) {
+                            finishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                            inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                            continue;
+                        }
+                        long count3 = value.stream().filter(e ->
+                                TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())
+                                || TaskStateEnum.APPROVAL_ING.getCode().equals(e.getStatus())
+                                || TaskStateEnum.APPROVAL_PASS.getCode().equals(e.getStatus())
+                                || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())).count();
+                        if (count3 > 0) {
+                            //阶段下任务为进行中
+                            progressList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                            inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
+                        }
+                    }
+                    //存在完成或进行中阶段
+                    if (CollectionUtils.isNotEmpty(progressList)) {
+                        List<String> progress = progressList.stream().map(e -> e.getKey()).collect(Collectors.toList());
+                        if (CollectionUtils.isNotEmpty(progress)) {
+                            resultList.addAll(progress);
+                        }
+                    }
+                    if (CollectionUtils.isNotEmpty(unStartList)) {
+                        if (CollectionUtils.isEmpty(inFinishList)) {
+                            //都是未开始，则显示第一个
+                            resultList.add(unStartList.get(0).getKey());
+                        } else {
+                            Pair<String, Integer> pair = inFinishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
+                            List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
+                            if (CollectionUtils.isNotEmpty(unStart)) {
+                                resultList.addAll(unStart);
+                            }
+                        }
+                    }
+                    if ( CollectionUtils.isNotEmpty(finishList)){
+                        if (CollectionUtils.isEmpty(progressList)  ) {
+                            if (CollectionUtils.isNotEmpty(unStartList)) {
+                                Pair<String, Integer> pair = finishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
+                                List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
+                                if (CollectionUtils.isEmpty(unStart)) {
+                                    //未开始阶段在已完成阶段后面则显示最后一条
+                                    resultList.add(finishList.get(finishList.size() - 1).getKey());
+                                }
+                            } else {
+                                //全部已完成则显示最后一条
+                                resultList.add(finishList.get(finishList.size() - 1).getKey());
+                            }
+
+                        }
+                    }
+                    if (CollectionUtils.isNotEmpty(resultList)) {
+                        List<ProjectPhaseEntity> phasesList = projectPhaseService.listByPhaseNames(resultList,item.getProductId());
+                        if (CollectionUtils.isNotEmpty(phasesList)) {
+                            List<String> names = phasesList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
+                            item.setProjectPhase(String.join(",", names));
+                        }
+                    }
+                }
+
+            }
+        }
     }
 
     @Override
@@ -426,24 +594,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             list = baseMapper.listNotPaging(params, archiveProductIds);
         }
         return list;
-    }
-
-
-    /**
-     * 根据产品id 集合 获取到 项目信息
-     *
-     * @param productIdList
-     * @return
-     */
-    @Override
-    public List<ProjectInfoEntity> getByProductIdList(List<String> productIdList) {
-        if (CollectionUtils.isEmpty(productIdList)) {
-            return new ArrayList<>();
-        }
-        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(ProjectInfoEntity::getProductId, productIdList);
-        return this.list(queryWrapper);
-
     }
 
     /**
@@ -484,6 +634,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         newAdd.setFlagId(IdWorker.getIdStr());
         resultList.add(newAdd);
 
+//        StartItemSourceDTO project = new StartItemSourceDTO();
+//        project.setSourceType(SourceType.PROJECT);
+//        project.setSourceName("从项目中复制");
+//        project.setFlagId(IdWorker.getIdStr());
+//        project.setChildrenList(baseMapper.listMap(SourceType.PROJECT));
+//        resultList.add(project);
+
         StartItemSourceDTO template = new StartItemSourceDTO();
         template.setSourceType(SourceType.TEMPLATE);
         template.setSourceName("从模板中复制");
@@ -502,19 +659,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-10-12 10:49
      */
     @Override
-    public void addProject(String productId, String productName, String projectChargeId) {
+    public void addProject(String productId, String productName) {
         int getIfExist = getIfExist(productId);
         if (getIfExist == 0) {
             ProjectInfoEntity project = new ProjectInfoEntity();
             project.setName(productName);
             project.setProductId(productId);
             project.setProjectStatus(ProjectStateEnum.NOT_START.getState());
-            if (StringUtils.isNotBlank(projectChargeId)) {
-                project.setChargeId(projectChargeId);
-                String name = commonService.getNameById(projectChargeId);
-                project.setChargeName(name);
-            }
-
             this.save(project);
         }
 
@@ -600,13 +751,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-09-20 11:45
      */
     private List<Map<String, Object>> getFinishTaskTrend(int days, List<ProjectTaskEntity> taskList) {
-        LocalDateTime dateTime = LocalDateTime.now();
+        DateTime dateTime = new DateTime(new Date());
         List<Map<String, Object>> finishTaskTrend = new LinkedList<>();
         String fmt = DateUtil.fmt_day;
         SimpleDateFormat sdf = new SimpleDateFormat(fmt);
         for (int i = days; i >= 0; i--) {
             Map<String, Object> finishTaskMap = new HashMap<>();
-            Date date = LocalDateUtil.localDateTime2Date(dateTime.plusDays(-i));
+            Date date = dateTime.plusDays(-i).toDate();
             long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, t.getRealityEndTime())).count();
             finishTaskMap.put("date", sdf.format(date.getTime()));
             finishTaskMap.put("quantity", count);
@@ -783,6 +934,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         // return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
         return list;
     }
+
 
 
 }
