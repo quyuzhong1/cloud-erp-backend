@@ -503,7 +503,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                             continue;
                         }
                         //判断该阶段任务是否全部未开始
-                        long count1 = value.stream().filter(e -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus())) || (TaskTypeEnum.GENERAL_TASK.getCode().equals(e.getType()) && TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus()))).count();
+                        long count1 = value.stream().filter(e -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus())) || (TaskTypeEnum.REVIEW_TASK.getCode().equals(e.getType()) && TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus()))).count();
                         if (count1 == value.size()) {
                             unStartList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                             continue;
