@@ -85,8 +85,17 @@ public interface NoticeMessageConstant {
     //排期任务提交
     String SCHEDULE_TASK_CONTENT= "【%s】提交%S条排期审核,请及时查看";
 
+    //排期任务通过
+    String SCHEDULE_TASK_PASS_CONTENT= "【%s】排期审核结果：通过，任务已自动发布给任务负责人";
+
+    //排期任务不通过
+    String SCHEDULE_TASK_NO_PASS_CONTENT= "【%s】排期审核结果：不通过【原因：%s】";
+
     //任务排期 提交 卡片
     String SCHEDULE_TASK_SUBMIT_CARD="**任务名称：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
+
+    //任务排期 审核 卡片
+    String SCHEDULE_TASK_AUDIT_CARD="**任务数量：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
 
 
 

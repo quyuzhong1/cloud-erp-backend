@@ -551,7 +551,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (CollectionUtils.isNotEmpty(list)) {
             String productId = dto.getProductId();
             List<String> taskIdList = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
-            List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, taskIdList);
+            List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, taskIdList);
             String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
             Long count = taskList.stream().filter(p -> !auditPassStatus.equals(p.getScheduleStatus()))
                     .count();

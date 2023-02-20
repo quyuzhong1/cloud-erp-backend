@@ -28,9 +28,8 @@
             pt.change_start_time,
             pt.change_end_time,
             pt.origin_charge_id,
-            pt.change_chrge_id,
-            pt.schedule_status,
-            pt.schedule_type
+            pt.change_charge_id
+
         FROM project_plan_task pt LEFT JOIN project_plan pp
         ON pt.project_plan_id=pp.id
         WHERE  PP.product_id=#{productId}
