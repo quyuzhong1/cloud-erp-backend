@@ -25,6 +25,11 @@ public class ScheduleTaskDetailsVO implements Serializable {
      */
     private String taskId;
 
+    /**
+     * 任务名
+     */
+    private String taskName;
+
 
     /**
      * 任务负责人id

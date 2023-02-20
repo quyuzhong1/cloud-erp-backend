@@ -233,6 +233,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         vo.setTotalTaskCount(Integer.valueOf(productMap.get("taskCount").toString()));
         //获取任务
         List<ProjectPlanTaskEntity> planTaskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+
+        List<String> taskIdList=planTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+
         //最小计划开始时间
         Date minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
         //最大计划结束时间
@@ -251,10 +254,13 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
          * 获取是变更的任务
          */
         List<ScheduleTaskDetailsVO> changeTaskList = projectPlanTaskService.getTaskByPlanType(productId, ProjectPlanConstant.PROJECT_PLAN_CHANGE);
+
+
         for (ProjectPlanTaskEntity item : planTaskList) {
             ScheduleTaskDetailsVO task = new ScheduleTaskDetailsVO();
             String chargeId = item.getChangeChargeId();
             String taskId = item.getTaskId();
+            //task.setTaskName(item.get);
             task.setChargeId(item.getChangeChargeId());
             task.setChargeName(getNameByIds(chargeId, userList));
             task.setPlanEndTime(item.getChangeEndTime());
