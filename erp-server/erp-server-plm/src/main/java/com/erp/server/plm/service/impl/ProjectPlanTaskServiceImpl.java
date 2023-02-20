@@ -173,18 +173,18 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     //优先级
                     Integer priority = vo.getPriority();
 
-                    String priorityName="低级";
-                    if(TaskConstant.INTERMEDIATE_TASK.equals(priority)){
-                        priorityName="中级";
-                    }else if(TaskConstant.ADVANCED_TASK.equals(priority)){
-                        priorityName="高级";
+                    String priorityName = "低级";
+                    if (TaskConstant.INTERMEDIATE_TASK.equals(priority)) {
+                        priorityName = "中级";
+                    } else if (TaskConstant.ADVANCED_TASK.equals(priority)) {
+                        priorityName = "高级";
                     }
                     vo.setPriorityName(priorityName);
                     //设置里程碑
-                    Integer isMilepost=vo.getIsMilepost();
-                    String isMilepostName="否";
-                    if(TaskConstant.YES_MILEPOST.equals(isMilepost)){
-                        isMilepostName="是";
+                    Integer isMilepost = vo.getIsMilepost();
+                    String isMilepostName = "否";
+                    if (TaskConstant.YES_MILEPOST.equals(isMilepost)) {
+                        isMilepostName = "是";
                     }
                     vo.setIsMilepostName(isMilepostName);
 
@@ -424,24 +424,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 throw new ServiceException(ApiError.ERROR_95121);
             }
 
-            String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
             List<ProjectPlanTaskEntity> planTaskList = this.getByTaskIdList(productId, dto.getTaskIdList());
             //获取到项目计划的表id
             List<String> projectPlanIds = planTaskList.stream().map(ProjectPlanTaskEntity::getProjectPlanId).collect(Collectors.toList());
             //去重
             projectPlanIds = projectPlanIds.stream().distinct().collect(Collectors.toList());
-            List<ProjectPlanEntity> planList = projectPlanService.getByIds(projectPlanIds);
-            if (CollectionUtils.isNotEmpty(planList)) {
-                planList.stream().forEach(
-                        p -> p.setStatus(cancelStatus)
-                );
-                //更改审核状态
-                result = projectPlanService.saveOrUpdateBatch(planList);
-                List<ProjectPlanTaskEntity> planTaskEntityList = this.getByProjectPlanIdList(projectPlanIds);
-                List<String> taskIdList = planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
-                //更改任务状态
-                projectTaskService.updateScheduleStatus(productId, taskIdList, cancelStatus, "");
-            }
+            result= projectPlanService.cancelSchedule(projectPlanIds);
 
         }
         return result;
@@ -701,7 +689,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportExcelVO> errorDateList = excelListener.getErrorDateList();
             String url = "";
-            if(CollectionUtils.isNotEmpty(errorDateList)){
+            if (CollectionUtils.isNotEmpty(errorDateList)) {
                 String fileName = "排期变更错误.xlsx";
                 File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ScheduleTaskExportExcelVO.class);
                 if (file != null && !file.isDirectory()) {

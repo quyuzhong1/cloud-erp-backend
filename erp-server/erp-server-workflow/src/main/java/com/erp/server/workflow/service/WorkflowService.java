@@ -26,20 +26,30 @@ public interface WorkflowService {
     void rejectGoBackProcess(ApproveProcessDTO dto);
 
     //驳回到某一个节点
-  //  void rejectNodeProcess();
+    //  void rejectNodeProcess();
 
 
     //启动一个流程
     ProcessNodeDTO startProcess(StartProcessDTO dto);
 
 
-   //发布流程
-   Boolean deployDefinitionByResource(DeployProcessDTO dto);
+    //发布流程
+    Boolean deployDefinitionByResource(DeployProcessDTO dto);
 
-   List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto);
+    List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto);
 
 
-   void terminateProcess(ApproveProcessDTO dto);
+    void terminateProcess(ApproveProcessDTO dto);
 
-   List<ApproveNodeRecordVO> queryApproveRecordById(String id);
+    List<ApproveNodeRecordVO> queryApproveRecordById(String id);
+
+    
+    /**
+     * 根据业务表 撤销流程
+     * @author yl
+     * @date 2023-02-20 18:54
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean withDrawProcessByBusinessTable(WithDrawProcessBusinessDTO dto);
 }

@@ -130,4 +130,13 @@ public interface WorkflowFeign {
      */
     @PostMapping("workflow/feign/process/getProcessNextAudit")
     ProcessCurrentAuditorVO getProcessNextAudit(@RequestBody String businessTableId);
+
+
+    /**
+     * 根据业务表id 撤销流程
+     * @param dto
+     * @return
+     */
+    @PostMapping("workflow/feign/process/withDrawByBusiness")
+    Boolean withDrawByBusiness(@RequestBody WithDrawProcessBusinessDTO dto);
 }

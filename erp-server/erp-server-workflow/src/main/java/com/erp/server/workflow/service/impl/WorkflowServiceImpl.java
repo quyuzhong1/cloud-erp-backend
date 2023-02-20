@@ -1,9 +1,9 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.date.DateUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.business.enums.BaseStatusEnum;
 import com.erp.common.business.enums.ProcessInstanceStateEnum;
 import com.erp.model.workflow.dto.*;
@@ -11,6 +11,7 @@ import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -66,6 +67,9 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Autowired
     private ProcessTaskService processTaskService;
+
+    @Autowired
+    private WorkflowBusinessProcessService workflowBusinessProcessService;
 
     /**
      * 撤回流程
@@ -449,6 +453,77 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
         List<ApproveNodeRecordVO> recordList = processTaskService.getHistoryTaskByBusinessTableId(id);
         return recordList;
+    }
+
+    /**
+     * 根据业务表 撤销流程
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-20 18:54
+     */
+    @Override
+    public Boolean withDrawProcessByBusinessTable(WithDrawProcessBusinessDTO dto) {
+        List<String> businessTableIds = dto.getBusinessTableIdList();
+        String userId = dto.getUserId();
+        if (CollectionUtils.isEmpty(businessTableIds)) {
+            return false;
+        }
+        if (StringUtils.isBlank(userId)) {
+            return false;
+        }
+        List<WorkflowBusinessProcessDTO> list = workflowBusinessProcessService.getProcessByTables(businessTableIds);
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (WorkflowBusinessProcessDTO item : list) {
+                WorkflowBusinessProcessDTO businessProcess = list.stream().filter(w -> w.getBusinessId().
+                        equals(item.getBusinessId())).findFirst().orElse(null);
+                if (businessProcess != null) {
+                    String processId = businessProcess.getProcessId();
+                    if (StringUtils.isNotBlank(processId)) {
+                        //获取流程状态
+                        int state = checkProcessInstanceState(processId);
+                        if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
+                            return false;
+                        }
+                        //判断是否有任务
+                        List<Task> taskList = taskService.createTaskQuery().processInstanceId(processId).list();
+                        if (CollectionUtils.isEmpty(taskList)) {
+                            return false;
+                        }
+
+                        Task task = taskList.get(0);
+                        List<HistoricActivityInstance> historicActivityInstanceList = historyService.createHistoricActivityInstanceQuery()
+                                .processInstanceId(task.getProcessInstanceId())
+                                .activityType("userTask")
+                                .finished().orderByHistoricActivityInstanceEndTime()
+                                .asc().list();
+                        if (CollectionUtils.isEmpty(historicActivityInstanceList)) {
+                            return false;
+                        }
+                        ActivityInstance activityInstance = runtimeService.getActivityInstance(task.getProcessInstanceId());
+                        String toActId = historicActivityInstanceList.get(0).getActivityId();
+                        String assignee = historicActivityInstanceList.get(0).getAssignee();
+                        Map<String, Object> taskVariable = new HashMap<>(1);
+                        //设置当前处理人
+                        taskVariable.put(StringUtils.isBlank(userId) ? "assignee" : userId, assignee);
+                        runtimeService.createProcessInstanceModification(processId)
+                                //关闭相关任务
+                                .cancelActivityInstance(getInstanceIdForActivity(activityInstance, task.getTaskDefinitionKey()))
+                                .setAnnotation("进行了撤回到节点操作")
+                                //启动目标活动节点
+                                .startBeforeActivity(toActId)
+                                //流程的可变参数赋值
+                                .setVariables(taskVariable)
+                                .execute();
+                        runtimeService.deleteProcessInstance(task.getProcessInstanceId(), String.format("%s 用户执行了撤回操作", dto.getUserId()));
+
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public String matching(String activityType) {

@@ -3435,12 +3435,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //如果  排期任务状态 要通过才能发布任务
         //审核通过
-        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
-        //当不包含就要去除
-        if (!scheduleStatusList.contains(auditPassStatus)) {
-            throw new ServiceException(ApiError.ERROR_95130);
-        }
+//        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+//        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
+//        //当不包含就要去除
+//        if (!scheduleStatusList.contains(auditPassStatus)) {
+//            throw new ServiceException(ApiError.ERROR_95130);
+//        }
 
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();

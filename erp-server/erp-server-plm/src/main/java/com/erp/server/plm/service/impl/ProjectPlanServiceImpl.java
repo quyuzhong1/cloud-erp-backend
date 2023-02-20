@@ -170,32 +170,45 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     /**
      * 取消排期
      *
-     * @param id
+     * @param ids
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-02-03 17:35
      */
     @Override
-    public Boolean cancelSchedule(String id) {
-        ProjectPlanEntity plan = this.getById(id);
-        if (Objects.isNull(plan)) {
+    public Boolean cancelSchedule(List<String> ids) {
+        List<ProjectPlanEntity> planList = this.getByIds(ids);
+        if (CollectionUtils.isEmpty(planList)) {
             throw new ServiceException(ApiError.ERROR_95122);
         }
-        String status = plan.getStatus();
-        if (!BaseStatusEnum.WAIT_AUDIT.getStatus().equals(status)) {
+        List<String> statusList = planList.stream().map(ProjectPlanEntity::getStatus).collect(Collectors.toList());
+        String waitAudit = BaseStatusEnum.WAIT_AUDIT.getStatus();
+
+        if (!statusList.contains(waitAudit)) {
             throw new ServiceException(ApiError.ERROR_95121);
         }
+        String userId = commonService.getUserInfo().getUid();
         String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
-        plan.setStatus(cancelStatus);
-        Boolean result = this.updateById(plan);
-        if (result) {
-            String productId = plan.getProductId();
-            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
-            List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
-            //更改任务状态
-            taskService.updateScheduleStatus(productId, taskIds, cancelStatus, plan.getType());
+        planList.stream().forEach(p -> {
+            p.setStatus(cancelStatus);
+        });
+        WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
+        withDrawProcess.setUserId(userId);
+        withDrawProcess.setBusinessTableIdList(ids);
+        Boolean flag = workflowFeign.withDrawByBusiness(withDrawProcess);
+        //如果取消成功
+        if(flag){
+            Boolean result = this.updateBatchById(planList);
+            if (result) {
+                String productId = planList.get(0).getProductId();
+                String type = planList.get(0).getType();
+                List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(ids);
+                List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                //更改任务状态
+                taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_SUBMIT.getStatus(), type);
+            }
         }
-        return result;
+        return flag;
     }
 
 
@@ -574,7 +587,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 ProcessCurrentAuditorVO auditorVO = workflowFeign.getProcessNextAudit(id);
                 List<String> auditorList = auditorVO.getHandleUserIdList();
                 if (CollectionUtils.isNotEmpty(auditorList)) {
-                    noticeMessageService.scheduleTaskAuditor(userName, taskEntityList, plan.getProductId(),auditorList);
+                    noticeMessageService.scheduleTaskAuditor(userName, taskEntityList, plan.getProductId(), auditorList);
                 }
             }
         } else {

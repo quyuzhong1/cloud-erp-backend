@@ -44,8 +44,6 @@ public class ProcessFeignController extends BaseController {
     private WorkflowBusinessProcessService businessProcessService;
 
 
-
-
     //启动流程
     @PostMapping("/startProcess")
     public ProcessNodeDTO startProcess(@RequestBody StartProcessDTO dto) {
@@ -220,8 +218,17 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/getProcessNextAudit")
     public ProcessCurrentAuditorVO getProcessNextAudit(@RequestBody String businessTableId) {
-        ProcessCurrentAuditorVO result=businessProcessService.getProcessNextAudit(businessTableId);
+        ProcessCurrentAuditorVO result = businessProcessService.getProcessNextAudit(businessTableId);
         return result;
+    }
+
+
+    /**
+     * 撤销流程
+     */
+    @PostMapping("/withDrawByBusiness")
+    public Boolean withDraw(@RequestBody WithDrawProcessBusinessDTO dto) {
+        return workflowService.withDrawProcessByBusinessTable(dto);
     }
 
 

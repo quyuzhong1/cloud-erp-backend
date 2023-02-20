@@ -52,7 +52,7 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      */
     List<ApproveNodeRecordVO> auditInfo(String id);
 
-    Boolean cancelSchedule(String id);
+    Boolean cancelSchedule(List<String> ids);
 
     Boolean restartSchedule(String id);
 
