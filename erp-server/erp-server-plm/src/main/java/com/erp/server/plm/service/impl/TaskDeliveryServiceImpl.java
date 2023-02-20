@@ -16,7 +16,7 @@ import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.server.plm.constant.AdminUserConstant;
 import com.erp.server.plm.constant.IsConstant;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;

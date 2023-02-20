@@ -7,7 +7,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BusinessProcessDTO;
 import com.erp.model.plm.dto.BusinessProcessInfoDTO;
 import com.erp.model.plm.entity.BusinessProcessEntity;
-import com.erp.server.plm.enums.BusinessProcessEnum;
+import com.erp.model.plm.enums.BusinessProcessEnum;
 import com.erp.server.plm.mapper.BusinessProcessMapper;
 import com.erp.server.plm.service.BusinessProcessService;
 import org.springframework.stereotype.Service;

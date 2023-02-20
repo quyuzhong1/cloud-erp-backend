@@ -7,7 +7,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 

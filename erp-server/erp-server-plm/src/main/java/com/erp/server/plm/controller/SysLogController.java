@@ -6,7 +6,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
-import com.erp.server.plm.enums.SysLogClassPathEnum;
+import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.server.plm.service.SysLogService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;

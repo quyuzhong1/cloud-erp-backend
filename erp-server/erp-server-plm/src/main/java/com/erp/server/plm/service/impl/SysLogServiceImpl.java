@@ -55,7 +55,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
     @Autowired
     private SysUserFeign sysUserFeign;
 
-    private static final String PACKAGEPATH = "com.erp.server.plm.enums";
+    private static final String PACKAGEPATH = "com.erp.model.plm.enums";
 
     @Override
     public Boolean addSysLogByUpdate(Object oldObj, Object newObj, String classPath, String businessId, String pid, String msg) {

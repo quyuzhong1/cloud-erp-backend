@@ -11,7 +11,7 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.entity.BomOperateLogEntity;
 import com.erp.model.plm.vo.BomOperateVO;
-import com.erp.server.plm.enums.BomOperationTypeEnum;
+import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.mapper.BomOperateLogMapper;
 import com.erp.server.plm.service.BomOperateLogService;
 import com.erp.server.plm.service.CommonService;

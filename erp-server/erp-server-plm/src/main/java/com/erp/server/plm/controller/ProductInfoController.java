@@ -9,7 +9,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.server.plm.enums.ApprovalStatusEnum;
+import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.SysCodeService;

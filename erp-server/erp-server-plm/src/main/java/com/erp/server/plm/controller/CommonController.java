@@ -9,7 +9,7 @@ import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.ProjectMembersService;
 import org.springframework.web.bind.annotation.*;

@@ -30,7 +30,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.controller.AuditParamDTO;
-import com.erp.server.plm.enums.ProductChangeStateEnum;
+import com.erp.model.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;

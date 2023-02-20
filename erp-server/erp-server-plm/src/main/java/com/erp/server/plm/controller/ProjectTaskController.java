@@ -9,8 +9,8 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.server.plm.enums.TaskPriorityEnum;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskPriorityEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectTaskService;
@@ -229,8 +229,9 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/updateTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
                 tableField = "charge_id",
-                menuCode = "plm:task:update",
-                serviceClass = ProjectTaskService.class
+                menuCode = "plm:task:updateTask",
+                serviceClass = ProjectTaskService.class,
+                keyIdName = "taskId"
     )
     public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = taskService.updateBaseTask(dto);

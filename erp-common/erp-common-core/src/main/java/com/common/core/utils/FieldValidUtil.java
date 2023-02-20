@@ -32,14 +32,15 @@ public class FieldValidUtil {
     public static String fieldValid(Object object) {
 
         Field[] fields = object.getClass().getDeclaredFields();
-        String msg = "";
+        StringBuilder msg = new StringBuilder();
         for (Field field : fields) {
             //设置可访问
             field.setAccessible(true);
             //属性的值
-            Object fieldValue = null;
+            String fieldValue = null;
             try {
-                fieldValue = field.get(object);
+              Object obj =  field.get(object) ;
+              fieldValue = ObjectUtils.isNotEmpty(obj) ? String.valueOf(obj) : "";
             } catch (IllegalAccessException e) {
                 return fieldValue + "输入有误！";
             }
@@ -47,11 +48,14 @@ public class FieldValidUtil {
             boolean isExcelValid = field.isAnnotationPresent(FieldValid.class);
             if (isExcelValid) {
                 FieldValid annotation = field.getAnnotation(FieldValid.class);
-                 msg = dataScopeFilter(annotation, String.valueOf(fieldValue));
+                String str = dataScopeFilter(annotation, fieldValue);
+                if (StringUtils.isNotBlank(str)) {
+                    msg.append(str);
+                }
             }
 
         }
-        return msg;
+        return msg.toString();
     }
 
     /**
@@ -79,20 +83,18 @@ public class FieldValidUtil {
         StringBuilder msg = new StringBuilder();
 
         //必填校验
-        if (notNull) {
-            if (StringUtils.isBlank(fieldValue)) {
-                msg.append(fieldName.concat("不能为空;"));
-                return msg.toString();
-            }
+        if (notNull && StringUtils.isBlank(fieldValue)) {
+            msg.append(fieldName.concat("不能为空;"));
+            return msg.toString();
         }
         //长度校验
-        if (length > 0) {
+        if (length > 0 && StringUtils.isNotBlank(fieldValue)) {
             if (fieldValue.length() > length) {
                 msg.append(fieldName.concat("长度不能大于").concat(String.valueOf(length)).concat(";"));
             }
         }
         //正则校验
-        if (StringUtils.isNotBlank(formatPattern)) {
+        if (StringUtils.isNotBlank(formatPattern) && StringUtils.isNotBlank(fieldValue)) {
             //判断是否存在正则
             FieldFormatPatternTypeEnum fieldFormatPatternTypeEnum = FieldFormatPatternTypeEnum.getByName(formatPattern);
             boolean matches;
@@ -107,14 +109,14 @@ public class FieldValidUtil {
             }
         }
         //固定值校验
-        if (StringUtils.isNotBlank(fieldValues)) {
+        if (StringUtils.isNotBlank(fieldValues) && StringUtils.isNotBlank(fieldValue)) {
             List<String> valueList = Arrays.stream(fieldValues.split(",")).collect(Collectors.toList());
             if (!valueList.contains(fieldValue)){
-                msg.append(fieldName.concat("输入值未找到;"));
+                msg.append(fieldName.concat("输入值必须为[".concat(fieldValues).concat("];")));
             }
         }
         //枚举值校验
-        if (!Enum.class.equals(enumClass)) {
+        if (!Enum.class.equals(enumClass) && StringUtils.isNotBlank(fieldValue)) {
             Method method = null;
             EnumMessage[] messages = null;
             try {

@@ -7,7 +7,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.PreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProjectTaskService;

@@ -19,7 +19,7 @@ import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.enums.*;
+import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;

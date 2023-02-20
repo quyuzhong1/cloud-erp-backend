@@ -27,7 +27,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.enums.*;
+import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;

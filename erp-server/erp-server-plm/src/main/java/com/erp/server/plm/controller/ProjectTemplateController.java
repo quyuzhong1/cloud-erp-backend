@@ -11,7 +11,7 @@ import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
 import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
 import com.erp.model.plm.dto.SysRoleDTO;
 import com.erp.model.plm.vo.DropdownEnumVO;
-import com.erp.server.plm.enums.ChargeSuperiorEnum;
+import com.erp.model.plm.enums.ChargeSuperiorEnum;
 import com.erp.server.plm.service.ProjectTemplateService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;

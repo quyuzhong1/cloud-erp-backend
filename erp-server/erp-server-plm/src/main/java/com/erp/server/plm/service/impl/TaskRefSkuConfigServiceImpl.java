@@ -4,7 +4,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 import org.apache.commons.collections4.CollectionUtils;

@@ -2,11 +2,12 @@ package com.erp.model.plm.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
+import com.erp.model.plm.enums.ProductDetailStateEnum;
+import com.erp.model.plm.enums.PurchaseStateEnum;
+import com.erp.model.plm.enums.SaleMethodEnum;
+import com.erp.model.plm.enums.SaleStateEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * @Description 产品sku信息导入
@@ -18,12 +19,15 @@ import java.util.Date;
 public class ProductDetailExcelDTO {
 
     @ExcelProperty( value = "skuNo", index = 0)
+    @FieldValid(fieldName = "sku",isNotNull = true,maxLength = 10,formatPattern = "数字和字母")
     private String skuNo;
 
     @ExcelProperty( value = "产品分类", index = 1)
+    @FieldValid(fieldName = "产品分类",isNotNull = true)
     private String category;
 
     @ExcelProperty( value = "销售方式", index = 2)
+    @FieldValid(fieldName = "销售方式",enumClass = SaleMethodEnum.class)
     private String saleMethod;
 
     @ExcelProperty( value = "产品卖点", index = 3)
@@ -36,27 +40,32 @@ public class ProductDetailExcelDTO {
     private String usageDesc;
 
     @ExcelProperty( value = "存在侵权风险", index = 6)
+    @FieldValid(fieldName = "存在侵权风险",fieldValues = "是,否")
     private String pirateRisk;
 
     @ExcelProperty(value = "主要材质", index = 7)
     private String materials;
 
     @ExcelProperty(value = "品名", index = 8)
+    @FieldValid(fieldName = "品名",isNotNull = true,maxLength = 250)
     private String name;
 
     @ExcelProperty(value = "品牌", index = 9)
+    @FieldValid(fieldName = "品牌",isNotNull = true,maxLength = 250)
     private String brandName;
 
     @ExcelProperty(value = "产品属性", index = 10)
     private String property;
 
     @ExcelProperty(value = "计划上市时间", index = 11)
-    private Date planListingTime;
+    @FieldValid(fieldName = "计划上市时间",formatPattern = "日期")
+    private String planListingTime;
 
     @ExcelProperty(value = "单位", index = 12)
     private String unitName;
 
     @ExcelProperty(value = "产品经理", index = 13)
+    @FieldValid(fieldName = "产品经理",isNotNull = true,maxLength = 20)
     private String chargeName;
 
     @ExcelProperty(value = "目标含税成本", index = 14)
@@ -84,33 +93,42 @@ public class ProductDetailExcelDTO {
     private String actualGpmUsd;
 
     @ExcelProperty(value = "年目标销售量", index = 22)
-    private Long yearSaleQty;
+    @FieldValid(fieldName = "年目标销售量",formatPattern = "整数")
+    private String yearSaleQty;
 
     @ExcelProperty(value = "年目标销售额", index = 23)
-    private BigDecimal yearSaleAmount;
+    @FieldValid(fieldName = "年目标销售额",formatPattern = "金额")
+    private String yearSaleAmount;
 
     @ExcelProperty(value = "月目标销售量", index = 24)
-    private Long monthSaleQty;
+    @FieldValid(fieldName = "月目标销售量",formatPattern = "整数")
+    private String monthSaleQty;
 
     @ExcelProperty(value = "月目标销售额", index = 25)
-    private BigDecimal monthSaleAmount;
+    @FieldValid(fieldName = "月目标销售额",formatPattern = "金额")
+    private String monthSaleAmount;
 
     @ExcelProperty(value = "销售国家", index = 26)
     private String saleCountry;
 
     @ExcelProperty(value = "上市时间", index = 27)
-    private Date listingTime;
+    @FieldValid(fieldName = "上市时间",formatPattern = "日期")
+    private String listingTime;
 
     @ExcelProperty(value = "退市时间", index = 28)
-    private Date delistingTime;
+    @FieldValid(fieldName = "退市时间",formatPattern = "日期")
+    private String delistingTime;
 
     @ExcelProperty(value = "图片是否完成", index = 29)
+    @FieldValid(fieldName = "图片是否完成",fieldValues = "是,否")
     private String isFinishedImg;
 
     @ExcelProperty(value = "视频是否完成", index = 30)
+    @FieldValid(fieldName = "视频是否完成",fieldValues = "是,否")
     private String isFinishedVideo;
 
     @ExcelProperty(value = "销售状态", index = 31)
+    @FieldValid(fieldName = "产品经理",enumClass = SaleStateEnum.class)
     private String saleState;
 
     @ExcelProperty(value = "报关产品属性", index = 32)
@@ -123,7 +141,8 @@ public class ProductDetailExcelDTO {
     private String declareEnglishName;
 
     @ExcelProperty(value = "报关申报价格", index = 35)
-    private BigDecimal declarePrice;
+    @FieldValid(fieldName = "报关申报价格",formatPattern = "金额")
+    private String declarePrice;
 
     @ExcelProperty(value = "海关编码", index = 36)
     private String customsCode;
@@ -138,60 +157,78 @@ public class ProductDetailExcelDTO {
     private String englishUsage;
 
     @ExcelProperty(value = "产品尺寸(长)", index = 40)
-    private BigDecimal productSizeLength;
+    @FieldValid(fieldName = "产品尺寸(长)",formatPattern = "数字")
+    private String productSizeLength;
 
     @ExcelProperty(value = "产品尺寸(宽)", index = 41)
-    private BigDecimal productSizeWide;
+    @FieldValid(fieldName = "产品尺寸(宽)",formatPattern = "数字")
+    private String productSizeWide;
 
     @ExcelProperty(value = "产品尺寸(高)", index = 42)
-    private BigDecimal productSizeHigh;
+    @FieldValid(fieldName = "产品尺寸(高)",formatPattern = "数字")
+    private String productSizeHigh;
 
     @ExcelProperty(value = "毛重", index = 43)
-    private BigDecimal grossWeight;
+    @FieldValid(fieldName = "毛重",formatPattern = "数字")
+    private String grossWeight;
 
     @ExcelProperty(value = "净重", index = 44)
-    private BigDecimal netWeight;
+    @FieldValid(fieldName = "净重",formatPattern = "数字")
+    private String netWeight;
 
     @ExcelProperty(value = "箱规(长)", index = 45)
-    private BigDecimal boxSizeLength;
+    @FieldValid(fieldName = "箱规(长)",formatPattern = "数字")
+    private String boxSizeLength;
 
     @ExcelProperty(value = "箱规(宽)", index = 46)
-    private BigDecimal boxSizeWide;
+    @FieldValid(fieldName = "箱规(宽)",formatPattern = "数字")
+    private String boxSizeWide;
 
     @ExcelProperty(value = "箱规(高)", index = 47)
-    private BigDecimal boxSizeHigh;
+    @FieldValid(fieldName = "箱规(高)",formatPattern = "数字")
+    private String boxSizeHigh;
 
     @ExcelProperty(value = "单箱重量", index = 48)
-    private BigDecimal boxWeight;
+    @FieldValid(fieldName = "单箱重量",formatPattern = "数字")
+    private String boxWeight;
 
     @ExcelProperty(value = "单箱数量", index = 49)
-    private BigDecimal boxQty;
+    @FieldValid(fieldName = "单箱数量",formatPattern = "数字")
+    private String boxQty;
 
     @ExcelProperty(value = "ean码", index = 50)
     private String ean;
 
     @ExcelProperty(value = "计划首批下单量", index = 51)
-    private Long planOrderQty;
+    @FieldValid(fieldName = "计划首批下单量",formatPattern = "整数")
+    private String planOrderQty;
 
     @ExcelProperty(value = "首批下单时间", index = 52)
-    private Date placeOrderTime;
+    @FieldValid(fieldName = "首批下单时间",formatPattern = "日期")
+    private String placeOrderTime;
 
     @ExcelProperty(value = "预计首批到货时间", index = 53)
-    private Date planArrivalTime;
+    @FieldValid(fieldName = "预计首批到货时间",formatPattern = "日期")
+    private String planArrivalTime;
 
     @ExcelProperty(value = "MOQ(最小起订量)", index = 54)
-    private Integer moq;
+    @FieldValid(fieldName = "MOQ(最小起订量)",formatPattern = "整数")
+    private String moq;
 
     @ExcelProperty(value = "交货周期(天)", index = 55)
-    private BigDecimal deliveryCycle;
+    @FieldValid(fieldName = "交货周期(天)",formatPattern = "小数")
+    private String deliveryCycle;
 
     @ExcelProperty(value = "实际首批到货时间", index = 56)
-    private Date actualArrivalTime;
+    @FieldValid(fieldName = "实际首批到货时间",formatPattern = "日期")
+    private String actualArrivalTime;
 
     @ExcelProperty(value = "实际首批到货量", index = 57)
-    private Long actualArrivalQty;
+    @FieldValid(fieldName = "实际首批到货量",formatPattern = "整数")
+    private String actualArrivalQty;
 
     @ExcelProperty(value = "首批到货状态", index = 58)
+    @FieldValid(fieldName = "首批到货状态",enumClass = PurchaseStateEnum.class)
     private String arrivalState;
 
     @ExcelProperty(value = "采购员", index = 59)
@@ -204,9 +241,11 @@ public class ProductDetailExcelDTO {
     private String secondSupplier;
 
     @ExcelProperty(value = "量产入库时间", index = 62)
-    private Date firstMassProductDate;
+    @FieldValid(fieldName = "量产入库时间",formatPattern = "日期")
+    private String firstMassProductDate;
 
     @ExcelProperty(value = "产品开发状态", index = 63)
+    @FieldValid(fieldName = "产品开发状态",enumClass = ProductDetailStateEnum.class)
     private String productStateName;
 
     @ExcelProperty(value = "错误信息", index = 64)

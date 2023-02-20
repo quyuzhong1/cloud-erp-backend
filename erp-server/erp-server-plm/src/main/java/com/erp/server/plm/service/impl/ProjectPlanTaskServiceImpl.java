@@ -24,7 +24,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.listener.ChangeScheduleExcelListener;
 import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;

@@ -8,7 +8,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.server.plm.enums.ProjectStateEnum;
+import com.erp.model.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
