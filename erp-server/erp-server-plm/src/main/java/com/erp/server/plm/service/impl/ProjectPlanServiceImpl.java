@@ -164,7 +164,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95115);
         }
-
+        long blankChargeIdCount = taskList.stream().filter(t -> StringUtils.isBlank(t.getChargeId())).count();
+        if (blankChargeIdCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95097);
+        }
     }
 
     /**
@@ -197,7 +200,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         withDrawProcess.setBusinessTableIdList(ids);
         Boolean flag = workflowFeign.withDrawByBusiness(withDrawProcess);
         //如果取消成功
-        if(flag){
+        if (flag) {
             Boolean result = this.updateBatchById(planList);
             if (result) {
                 String productId = planList.get(0).getProductId();

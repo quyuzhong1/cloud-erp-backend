@@ -379,7 +379,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     }
 
     @Override
-    public List<ScheduleTaskVO> getPlanTaskByTaskIds(String productId, List<String> taskIdList) {
+    public List<ScheduleTaskVO> getPlanTaskByTaskIds1(String productId, List<String> taskIdList) {
         if (CollectionUtils.isNotEmpty(taskIdList)) {
             return baseMapper.getByTaskIds(productId, taskIdList);
         }
@@ -429,7 +429,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             List<String> projectPlanIds = planTaskList.stream().map(ProjectPlanTaskEntity::getProjectPlanId).collect(Collectors.toList());
             //去重
             projectPlanIds = projectPlanIds.stream().distinct().collect(Collectors.toList());
-            result= projectPlanService.cancelSchedule(projectPlanIds);
+            result = projectPlanService.cancelSchedule(projectPlanIds);
 
         }
         return result;
@@ -468,7 +468,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
         Boolean result = true;
         if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
-            List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, dto.getTaskIdList());
+            List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, dto.getTaskIdList());
+            if (CollectionUtils.isEmpty(taskList)) {
+                throw new ServiceException(ApiError.ERROR_95119);
+            }
             String auditNoPassStatus = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
             //初始提交
             Long count = taskList.stream().filter(p -> !auditNoPassStatus.equals(p.getScheduleStatus()))

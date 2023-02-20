@@ -52,7 +52,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
 
     List<ScheduleTaskVO> getByTaskIds(String productId, List<String> taskIdList);
 
-    List<ScheduleTaskVO> getPlanTaskByTaskIds(String productId, List<String> taskIdList);
+    List<ScheduleTaskVO> getPlanTaskByTaskIds1(String productId, List<String> taskIdList);
 
 
     List<ProjectPlanTaskEntity> getByTaskIdList(String productId, List<String> taskIdList);
