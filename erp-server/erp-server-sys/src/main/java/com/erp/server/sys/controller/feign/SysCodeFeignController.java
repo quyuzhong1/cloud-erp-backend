@@ -1,6 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.server.sys.service.SysCodeService;

@@ -2,11 +2,12 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.model.plm.enums.SysNoEnum;
@@ -54,7 +55,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
-        com.erp.common.modules.sys.dto.SysCodeSkuDTO dto = new com.erp.common.modules.sys.dto.SysCodeSkuDTO();
+        SysCodeSkuDTO dto = new SysCodeSkuDTO();
         //查询产品分类代码
         BasicCategoryEntity bestEntity = new BasicCategoryEntity();
         basicCategoryService.getBestEntity(entity.getCategoryId(),bestEntity);

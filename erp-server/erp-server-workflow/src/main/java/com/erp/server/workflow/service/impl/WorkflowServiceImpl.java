@@ -1,11 +1,11 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.enums.BaseStatusEnum;
-import com.common.core.enums.ProcessInstanceStateEnum;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.common.business.enums.BaseStatusEnum;
+import com.erp.common.business.enums.ProcessInstanceStateEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;

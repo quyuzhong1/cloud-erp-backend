@@ -4,7 +4,7 @@ package com.cloud.erp.chrome.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 /**
  * <p>

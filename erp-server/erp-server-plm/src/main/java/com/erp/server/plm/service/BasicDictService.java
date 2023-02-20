@@ -1,8 +1,6 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseDicDTO;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 

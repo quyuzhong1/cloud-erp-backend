@@ -1,9 +1,9 @@
 package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapEntity;

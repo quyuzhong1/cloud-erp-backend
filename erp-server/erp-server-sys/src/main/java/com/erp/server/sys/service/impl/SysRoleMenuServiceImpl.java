@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.modules.sys.vo.SysMenuVO;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysMenuEntity;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
@@ -147,7 +147,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     /**
      * 获取所有的菜单code
      *
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      * @Author Luo_WG
      * @Date 2022/11/1 14:23
      **/
@@ -281,7 +281,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * 获取到左侧菜单
      *
      * @param roleIds
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      * @author yl
      * @date 2022-09-26 9:44
      */
@@ -312,7 +312,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     /**
      * 获取左侧菜单所有列表
      *
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      * @Author Luo_WG
      * @Date 2022/11/1 14:26
      **/
@@ -364,7 +364,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @param menuIds
      * @param functionType
      * @param buttonType
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      * @author yl
      * @date 2022-09-26 9:54
      */

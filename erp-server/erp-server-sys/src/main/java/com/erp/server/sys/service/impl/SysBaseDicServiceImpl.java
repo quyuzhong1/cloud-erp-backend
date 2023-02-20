@@ -3,7 +3,7 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.dto.base.BaseDicDTO;
+import com.erp.common.business.dto.base.BaseDicDTO;
 import com.erp.model.sys.entity.SysBaseDicEntity;
 import com.erp.server.sys.mapper.SysBaseDicMapper;
 import com.erp.server.sys.service.SysBaseDicService;

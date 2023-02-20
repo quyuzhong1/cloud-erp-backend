@@ -1,10 +1,10 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class SysDocsController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:31
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/paging")
     //  @RequestPermissions("plm:sys:docs:paging")
@@ -51,7 +51,7 @@ public class SysDocsController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:33
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/saveOrUpdate")
     //   @RequestPermissions("plm:sys:docs:saveOrUpdate")
@@ -66,7 +66,7 @@ public class SysDocsController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:33
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/updateState")
 //    @RequestPermissions("plm:sys:docs:updateState")
@@ -80,7 +80,7 @@ public class SysDocsController extends BaseController {
      * @author yl
      * @date 2022-10-09 10:33
 
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @GetMapping("/list")
     //   @RequestPermissions("plm:sys:docs:list")

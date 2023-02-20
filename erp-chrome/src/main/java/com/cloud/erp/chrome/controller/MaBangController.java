@@ -3,8 +3,8 @@ package com.cloud.erp.chrome.controller;
 
 import com.cloud.erp.chrome.dto.MabangOrderDTO;
 import com.cloud.erp.chrome.service.MabanService;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

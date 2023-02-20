@@ -2,8 +2,9 @@ package com.erp.model.sys.dto;
 
 
 
-import com.erp.common.dto.base.BasePagingSearchDTO;
+import com.erp.common.business.dto.base.BasePagingSearchDTO;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper=false)
 public class SysAccountingCompanyPagingDTOPaging extends BasePagingSearchDTO {
 
     //状态

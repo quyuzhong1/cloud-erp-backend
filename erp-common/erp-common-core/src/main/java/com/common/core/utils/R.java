@@ -1,6 +1,7 @@
 package com.common.core.utils;
 
-import org.apache.http.HttpStatus;
+
+import cn.hutool.http.HttpStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,11 +29,11 @@ public class R extends HashMap<String, Object> {
 	}
 
 	public static R error() {
-		return error(HttpStatus.SC_INTERNAL_SERVER_ERROR, "未知异常，请联系管理员");
+		return error(HttpStatus.HTTP_INTERNAL_ERROR, "未知异常，请联系管理员");
 	}
 
 	public static R error(String msg) {
-		return error(HttpStatus.SC_INTERNAL_SERVER_ERROR, msg);
+		return error(HttpStatus.HTTP_INTERNAL_ERROR, msg);
 	}
 
 	public static R error(int code, String msg) {

@@ -1,7 +1,7 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.annotation.StateEnumValue;
-import com.erp.common.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;

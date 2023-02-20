@@ -1,8 +1,8 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;

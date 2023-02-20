@@ -1,10 +1,10 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
-import com.erp.common.modules.sys.dto.SysUserThirdDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.message.dto.email.EmailVerifyCodeDTO;
+import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.dto.SysUserBaseDTO;
 import com.erp.model.sys.dto.UpdatePasswordDTO;
 import com.erp.model.sys.dto.UserBaseDTO;

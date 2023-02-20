@@ -1,18 +1,18 @@
 package com.erp.server.auth.controller.api;
 
 
-import com.common.core.constant.TokenConstants;
+import com.erp.common.business.constant.TokenConstants;
 import com.common.core.utils.IpUtils;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.sys.dto.AccountLoginDTO;
-import com.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.erp.common.modules.sys.dto.SysUserDTO;
-import com.erp.common.modules.sys.dto.SysUserThirdDTO;
-import com.erp.common.modules.sys.vo.SysLoginUserVO;
-import com.erp.common.vo.LoginUser;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.sys.dto.AccountLoginDTO;
+import com.erp.model.sys.dto.SysLoginIpDTO;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.dto.SysUserThirdDTO;
+import com.erp.model.sys.vo.SysLoginUserVO;
+import com.erp.common.business.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
 import org.apache.commons.lang3.StringUtils;
@@ -123,7 +123,7 @@ public class SysLoginAuthController extends BaseController {
     /**
      * 根据token 获取 用户信息
      *
-     * @return com.erp.common.dto.base.ApiResult<com.erp.common.modules.sys.vo.SysLoginUserVO>
+     * @return com.common.core.vo.ApiResult<com.erp.model.sys.vo.SysLoginUserVO>
      * @author yl
      * @date 2023-01-14 9:21
      */

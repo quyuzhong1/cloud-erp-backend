@@ -4,11 +4,11 @@ package com.cloud.erp.chrome.controller;
 import com.cloud.erp.chrome.dto.GyyShipmentsDTO;
 import com.cloud.erp.chrome.service.GyyShipmentsInfoService;
 import com.cloud.erp.chrome.service.OrderGyyDeliverService;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.vo.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 /**
  * <p>

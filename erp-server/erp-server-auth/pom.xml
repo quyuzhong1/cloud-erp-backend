@@ -37,17 +37,6 @@
         </dependency>
 
         <!--公共服务-->
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-pojo</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-web</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
 
         <dependency>
             <groupId>com.cloud.erp</groupId>

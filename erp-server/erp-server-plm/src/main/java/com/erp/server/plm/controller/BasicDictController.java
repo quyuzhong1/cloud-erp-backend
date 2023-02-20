@@ -1,7 +1,7 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.server.plm.service.BasicDictService;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class BasicDictController extends BaseController {
      * 字典管理-保存或者修改plm字典表
      * @Date 2022/10/17 15:34
      * @param dtos dtos
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      **/
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdateDict(@RequestBody @Validated List<BasicDictDTO> dtos) {
@@ -41,7 +41,7 @@ public class BasicDictController extends BaseController {
      * 字典管理-删除plm字典表
      * @Date 2022/10/17 15:34
      * @param id id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      **/
     @PostMapping("/remove")
     public ApiResult saveOrUpdateDict(String id) {
@@ -54,7 +54,7 @@ public class BasicDictController extends BaseController {
      * @author yl
      * @date 2022-10-11 14:34
      * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @GetMapping("/list")
     public ApiResult<List<BasicDictEntity>> list(String type) {

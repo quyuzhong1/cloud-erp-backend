@@ -1,7 +1,7 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.server.plm.service.TemplateTaskDocsNameService;

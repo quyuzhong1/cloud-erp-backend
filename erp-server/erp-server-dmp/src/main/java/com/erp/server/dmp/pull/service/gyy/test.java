@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.apache.commons.collections.map.HashedMap;

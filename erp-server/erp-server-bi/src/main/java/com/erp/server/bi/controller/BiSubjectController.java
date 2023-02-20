@@ -1,11 +1,15 @@
 package com.erp.server.bi.controller;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.*;
-import com.erp.common.enums.DataAttributeEnum;
-import com.erp.common.modules.validator.UpdateGroup;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.dto.base.UpdateStateDTO;
+import com.erp.common.business.enums.DataAttributeEnum;
+import com.erp.common.business.validator.UpdateGroup;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.server.bi.service.BiSubjectService;

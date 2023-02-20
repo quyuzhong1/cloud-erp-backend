@@ -1,11 +1,11 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.DeliveryDocsGroupDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
@@ -53,7 +53,7 @@ public class TaskDeliveryDocsController extends BaseController {
      * @author yl
      * @date 2022-11-10 17:48
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/list")
     //  @RequestPermissions("plm:taskDocs:list")

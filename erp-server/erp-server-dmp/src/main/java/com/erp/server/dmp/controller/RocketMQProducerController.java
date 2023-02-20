@@ -1,10 +1,9 @@
 package com.erp.server.dmp.controller;
 
 import cn.hutool.json.JSONUtil;
-import com.common.core.constant.RocketMqTopic;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
+import com.erp.common.business.constant.RocketMqTopic;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.server.dmp.service.mq.MQConsumerDemoService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import org.springframework.web.bind.annotation.PostMapping;

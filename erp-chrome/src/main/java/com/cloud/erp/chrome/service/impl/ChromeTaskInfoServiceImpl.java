@@ -2,9 +2,8 @@ package com.cloud.erp.chrome.service.impl;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.cloud.erp.chrome.constant.BusinessType;
 import com.cloud.erp.chrome.constant.ErpPlatform;
@@ -17,7 +16,7 @@ import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.mapper.ChromeTaskInfoMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.exception.ServiceException;
+import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

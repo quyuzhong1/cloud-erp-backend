@@ -3,7 +3,7 @@ package com.erp.server.dmp.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapEntity;
 import com.erp.model.dmp.vo.CfgApiFieldMapVO;
 import org.apache.ibatis.annotations.Mapper;

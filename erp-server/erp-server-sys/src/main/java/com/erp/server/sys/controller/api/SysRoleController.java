@@ -1,13 +1,12 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.enums.ApiError;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.CopyRoleDTO;
 import com.erp.model.sys.entity.SysRoleEntity;
 import com.erp.server.sys.service.SysRoleService;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

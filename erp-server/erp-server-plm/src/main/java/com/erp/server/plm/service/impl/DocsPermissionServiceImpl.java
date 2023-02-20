@@ -2,10 +2,9 @@ package com.erp.server.plm.service.impl;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.server.plm.mapper.DocsPermissionEntityMapper;

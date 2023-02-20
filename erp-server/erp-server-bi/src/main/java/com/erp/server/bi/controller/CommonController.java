@@ -1,8 +1,8 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.business.utils.FastDFSClientUtil;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,7 +33,7 @@ public class CommonController extends BaseController {
      * 上传图片
      *
      * @param multipartFile 图片流
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
      **/

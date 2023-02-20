@@ -1,9 +1,9 @@
 package com.erp.server.sys.controller.api;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.modules.sys.vo.SysDeptDropDownVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;

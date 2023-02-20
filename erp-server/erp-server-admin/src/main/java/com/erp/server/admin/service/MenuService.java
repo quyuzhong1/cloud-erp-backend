@@ -1,10 +1,10 @@
 package com.erp.server.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.modules.sys.vo.SysMenuVO;
 import com.erp.model.admin.dto.SysFindMenuDTO;
 import com.erp.model.admin.dto.SysMenuDTO;
 import com.erp.model.admin.entity.MenuEntity;
+import com.erp.model.sys.vo.SysMenuVO;
 
 import java.util.List;
 

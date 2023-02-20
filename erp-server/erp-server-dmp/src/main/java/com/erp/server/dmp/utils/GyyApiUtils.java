@@ -1,8 +1,10 @@
 package com.erp.server.dmp.utils;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.Md5Util;
@@ -75,6 +77,7 @@ public class GyyApiUtils {
                 throw new RuntimeException(StrUtil.format("调用url={} param={} {}管易销售订单数据失败 responseMap={}",
                         UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap),  isHistory?"历史":"", JSONUtil.toJsonStr(responseMap)));
             }
+            JSONUtil.parseArray(responseMap.getString("orders"));
             List<GyyOrderEntity> dataList = JSONObject.parseArray(responseMap.getString("orders"), GyyOrderEntity.class);
             Integer totalCount = responseMap.getInteger("total");
             pageCount = (totalCount + pageSize - 1) / pageSize;

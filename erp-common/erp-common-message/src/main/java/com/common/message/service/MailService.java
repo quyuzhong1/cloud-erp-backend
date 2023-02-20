@@ -1,9 +1,10 @@
 package com.common.message.service;
 
-import com.erp.common.modules.email.dto.EmailDTO;
-import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
+
 
 import javax.mail.MessagingException;
+import com.common.message.dto.email.EmailDTO;
+import com.common.message.dto.email.EmailVerifyCodeDTO;
 
 /**
  * @Classname 邮件服务

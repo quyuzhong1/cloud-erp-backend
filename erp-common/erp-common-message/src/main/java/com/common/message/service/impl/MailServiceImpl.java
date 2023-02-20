@@ -3,11 +3,11 @@ package com.common.message.service.impl;
 
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.ThymeleafUtil;
+import com.common.message.dto.email.EmailDTO;
+import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
-import com.erp.common.modules.email.dto.EmailDTO;
-import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

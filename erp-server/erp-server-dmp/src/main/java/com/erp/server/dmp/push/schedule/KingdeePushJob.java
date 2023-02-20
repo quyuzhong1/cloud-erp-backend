@@ -1,10 +1,10 @@
 package com.erp.server.dmp.push.schedule;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;

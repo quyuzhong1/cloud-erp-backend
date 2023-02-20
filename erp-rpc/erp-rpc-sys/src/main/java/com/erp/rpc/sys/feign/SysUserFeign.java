@@ -1,10 +1,11 @@
 package com.erp.rpc.sys.feign;
 
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.modules.sys.dto.SysCodeSkuDTO;
-import com.erp.common.modules.sys.dto.*;
-import com.erp.common.modules.third.dto.ThirdUnionDTO;
+
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.dto.UserRequestPermissionsDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.vo.UserFieldVO;
 import org.springframework.cloud.openfeign.FeignClient;

@@ -1,8 +1,8 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.SelectShowDTO;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;

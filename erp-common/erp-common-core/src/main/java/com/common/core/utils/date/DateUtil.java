@@ -2,17 +2,14 @@ package com.common.core.utils.date;
 
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
-//import org.joda.time.format.DateTimeFormatter;
+import java.util.GregorianCalendar;
 
 /**
  * @Classname 日期工具类
@@ -45,10 +42,10 @@ public class DateUtil {
     }
 
     //获取 日期的中文名字
-    public static String getCnDate(LocalDate date) {
+    public static String getCnDate(LocalDateTime date) {
         int dayOfYear = date.getYear();
         int dayOfMonth = date.getDayOfMonth();
-        int monthValue = date.getMonthOfYear();
+        int monthValue = date.getMonthValue();
         StringBuffer sb = new StringBuffer();
         sb.append(dayOfYear).append("年");
         sb.append(monthValue).append("月");
@@ -74,7 +71,6 @@ public class DateUtil {
 
     /**
      * 获取某天  结束时间
-     *
      * @return
      */
     public static Date getEndTime(Date date) {
@@ -89,42 +85,6 @@ public class DateUtil {
     }
 
     /**
-     * 对日期的【秒】进行加/减
-     *
-     * @param date    日期
-     * @param seconds 秒数，负数为减
-     * @return 加/减几秒后的日期
-     */
-    public static Date addDateSeconds(Date date, int seconds) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusSeconds(seconds).toDate();
-    }
-
-    /**
-     * 对日期的【分钟】进行加/减
-     *
-     * @param date    日期
-     * @param minutes 分钟数，负数为减
-     * @return 加/减几分钟后的日期
-     */
-    public static Date addDateMinutes(Date date, int minutes) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusMinutes(minutes).toDate();
-    }
-
-    /**
-     * 对日期的【小时】进行加/减
-     *
-     * @param date  日期
-     * @param hours 小时数，负数为减
-     * @return 加/减几小时后的日期
-     */
-    public static Date addDateHours(Date date, int hours) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusHours(hours).toDate();
-    }
-
-    /**
      * 对日期的【天】进行加/减
      *
      * @param date 日期
@@ -132,33 +92,14 @@ public class DateUtil {
      * @return 加/减几天后的日期
      */
     public static Date addDateDays(Date date, int days) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusDays(days).toDate();
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
+        // 把日期往后增加一天,整数  往后推,负数往前移动
+        calendar.add(Calendar.DATE, days);
+        // 这个时间就是日期往后推一天的结果
+        return calendar.getTime();
     }
 
-    /**
-     * 对日期的【周】进行加/减
-     *
-     * @param date  日期
-     * @param weeks 周数，负数为减
-     * @return 加/减几周后的日期
-     */
-    public static Date addDateWeeks(Date date, int weeks) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusWeeks(weeks).toDate();
-    }
-
-    /**
-     * 对日期的【月】进行加/减
-     *
-     * @param date   日期
-     * @param months 月数，负数为减
-     * @return 加/减几月后的日期
-     */
-    public static Date addDateMonths(Date date, int months) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusMonths(months).toDate();
-    }
 
     /**
      * 对日期的【年】进行加/减
@@ -168,8 +109,11 @@ public class DateUtil {
      * @return 加/减几年后的日期
      */
     public static Date addDateYears(Date date, int years) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.plusYears(years).toDate();
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
+        // 把日期往后增加一年,整数  往后推,负数往前移动
+        calendar.add(Calendar.YEAR, years);
+        return calendar.getTime();
     }
 
     /**
@@ -206,36 +150,6 @@ public class DateUtil {
         return cal;
     }
 
-    /**
-     * 计算两个日期相隔月份数
-     *
-     * @param date1 <String>
-     * @param date2 <String>
-     * @return int
-     */
-    public static int getDiffMonth(Date date1, Date date2) {
-        int result = 0;
-        Calendar c1 = Calendar.getInstance();
-        Calendar c2 = Calendar.getInstance();
-        c1.setTime(date1);
-        c2.setTime(date2);
-
-        if (c1.getTime().after(c2.getTime())) {
-            throw new RuntimeException("[起始时间]不能大于[结束时间]");
-        }
-
-        if (c1.get(Calendar.YEAR) != c2.get(Calendar.YEAR)) {
-            Date date3 = getLastDayOfYear(c1.getTime()).getTime();
-            Date date4 = addDateSeconds(date3, 1);
-
-            result = getDiffMonth(date1, date3) + 1 + getDiffMonth(date4, date2);
-        } else {
-            result = c2.get(Calendar.MONTH) - c1.get(Calendar.MONTH);
-        }
-
-
-        return result == 0 ? 1 : Math.abs(result);
-    }
 
     /**
      * <li>功能描述：时间相减得到天数
@@ -350,9 +264,9 @@ public class DateUtil {
     }
 
 
-    public static LocalDate getCurrentTime() {
+    public static LocalDateTime getCurrentTime() {
 
-        return LocalDate.now();
+        return LocalDateTime.now();
     }
 
 
@@ -365,27 +279,6 @@ public class DateUtil {
             return sdf.format(date.getTime());
         }
         return "-";
-    }
-
-    /**
-     * Z字符串转日期
-     *
-     * @param str
-     * @return
-     */
-    public static Date strToDate(String str, String fmt) {
-        if (StringUtils.isNotBlank(str)) {
-            SimpleDateFormat format = new SimpleDateFormat(fmt);
-            Date date = null;
-            try {
-                date = format.parse(str);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            return date;
-        }
-        return null;
-
     }
 
 
@@ -420,24 +313,11 @@ public class DateUtil {
     }
 
     /**
-     * 验证是否是日期格式
-     */
-    public static boolean isValid(String dateStr, DateTimeFormatter dateFormatter) {
-        try {
-            LocalDateTime.parse(dateStr, dateFormatter);
-        } catch (DateTimeParseException e) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * 获取某年第一天日期
-     *
      * @param year 年份
      * @return Date
      */
-    public static Date getYearFirst(int year) {
+    public static Date getYearFirst(int year){
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
         calendar.set(Calendar.YEAR, year);
@@ -447,11 +327,10 @@ public class DateUtil {
 
     /**
      * 获取某年最后一天日期
-     *
      * @param year 年份
      * @return Date
      */
-    public static Date getYearLast(int year) {
+    public static Date getYearLast(int year){
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
         calendar.set(Calendar.YEAR, year);
@@ -462,7 +341,6 @@ public class DateUtil {
 
     /**
      * 获取环比日期
-     *
      * @param endDate
      * @param startDate
      * @return java.lang.String
@@ -484,17 +362,40 @@ public class DateUtil {
             // 计算差多少秒//输出结果
             long sec = diff % nd % nh % nm / ns;
 
-            DateTime dateTime = new DateTime(startDate);
-            DateTime dateTime1 = dateTime.plusDays(Integer.valueOf(-day + ""));
-            DateTime dateTime2 = dateTime1.plusHours(Integer.valueOf(-hour + ""));
-            DateTime dateTime3 = dateTime2.plusMinutes(Integer.valueOf(-min + ""));
-            DateTime dateTime4 = dateTime3.plusSeconds(Integer.valueOf(-sec + ""));
+
+            Calendar calendar = new GregorianCalendar();
+            calendar.setTime(startDate);
+            calendar.add(Calendar.DATE, Integer.valueOf(-day + ""));
+            calendar.add(Calendar.HOUR, Integer.valueOf(-hour + ""));
+            calendar.add(Calendar.MINUTE, Integer.valueOf(-min + ""));
+            calendar.add(Calendar.SECOND, Integer.valueOf(-sec + ""));
             //设置时间格式
             SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String date = f.format(dateTime4.toDate());
+            String date = f.format(calendar.getTime());
             return date;
         }
         return "";
+    }
+
+    /**
+     * Z字符串转日期
+     *
+     * @param str
+     * @return
+     */
+    public static Date strToDate(String str, String fmt) {
+        if (StringUtils.isNotBlank(str)) {
+            SimpleDateFormat format = new SimpleDateFormat(fmt);
+            Date date = null;
+            try {
+                date = format.parse(str);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            return date;
+        }
+        return null;
+
     }
 
 }

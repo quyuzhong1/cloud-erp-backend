@@ -2,8 +2,8 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSavePostUserDTO;
 import com.erp.model.sys.entity.SysPostUserEntity;
 

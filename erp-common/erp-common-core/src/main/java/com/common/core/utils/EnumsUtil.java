@@ -2,8 +2,8 @@ package com.common.core.utils;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.constant.EnumMessage;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

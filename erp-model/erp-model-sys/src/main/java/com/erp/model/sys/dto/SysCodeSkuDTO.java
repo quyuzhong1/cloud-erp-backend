@@ -3,6 +3,7 @@ package com.erp.model.sys.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -53,6 +54,7 @@ public class SysCodeSkuDTO implements Serializable {
     /**
      * 编码类型
      */
+    @NotBlank(message = "编码类型不能为空")
     private Integer type;
 
 }

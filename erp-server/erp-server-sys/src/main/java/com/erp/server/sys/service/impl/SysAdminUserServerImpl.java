@@ -3,8 +3,8 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.password.PassEntity;
-import com.common.core.utils.password.PassHandler;
+import com.erp.model.sys.entity.password.PassEntity;
+import com.erp.model.sys.entity.password.PassHandler;
 import com.erp.model.sys.dto.SysAdminUserDTO;
 import com.erp.model.sys.entity.SysAdminUserEntity;
 import com.erp.server.sys.mapper.SysAdminUserMapper;

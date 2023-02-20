@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.dto.base.PermissionsDTO;
+
+import com.erp.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

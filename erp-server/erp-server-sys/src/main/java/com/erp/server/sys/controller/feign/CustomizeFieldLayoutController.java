@@ -1,6 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.vo.UserFieldVO;

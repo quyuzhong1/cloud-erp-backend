@@ -2,7 +2,7 @@ package com.cloud.erp.chrome.schedule;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cloud.erp.chrome.constant.BusinessType;
 import com.cloud.erp.chrome.constant.ErpPlatform;

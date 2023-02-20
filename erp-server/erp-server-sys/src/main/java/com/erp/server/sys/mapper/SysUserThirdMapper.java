@@ -2,7 +2,7 @@ package com.erp.server.sys.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
+import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import org.apache.ibatis.annotations.Mapper;

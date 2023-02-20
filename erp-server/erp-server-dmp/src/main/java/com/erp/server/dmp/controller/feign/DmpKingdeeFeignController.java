@@ -1,6 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

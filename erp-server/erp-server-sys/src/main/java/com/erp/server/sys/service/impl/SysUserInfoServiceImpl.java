@@ -7,29 +7,30 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.constant.RedisCacheConstants;
-import com.common.core.constant.ThirdConstants;
-import com.common.core.constant.UserStateConstants;
+import com.erp.common.business.constant.RedisCacheConstants;
+import com.erp.common.business.constant.ThirdConstants;
+import com.erp.common.business.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.RedisKeyUtil;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.dto.UserRequestPermissionsDTO;
+import com.erp.model.sys.utils.RedisKeyUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.password.PassEntity;
-import com.common.core.utils.password.PassHandler;
+import com.erp.model.sys.entity.password.PassEntity;
+import com.erp.model.sys.entity.password.PassHandler;
 import com.common.message.service.MailService;
-import com.common.web.service.RedisService;
+import com.erp.common.business.service.RedisService;
 import com.erp.common.business.interceptor.CommonInterceptor;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.email.dto.EmailDTO;
-import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
-import com.erp.common.modules.email.enums.EmailTemplate;
-import com.erp.common.modules.sys.dto.*;
-import com.erp.common.modules.sys.vo.SysMenuVO;
-import com.erp.common.vo.LoginUser;
-import com.erp.common.vo.PagingVO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.message.dto.email.EmailDTO;
+import com.common.message.dto.email.EmailVerifyCodeDTO;
+import com.erp.common.business.enums.EmailTemplate;
+import com.erp.model.sys.vo.SysMenuVO;
+import com.erp.common.business.vo.LoginUser;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
 import com.erp.rpc.auth.feign.AuthFeign;
@@ -41,12 +42,12 @@ import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -536,7 +537,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 //        }
         EmailDTO<EmailVerifyCodeDTO> emailDTO = new EmailDTO();
         String code = RandomStringUtils.randomNumeric(4);
-        LocalDate localDate = LocalDate.now();
+        LocalDateTime localDate = LocalDateTime.now();
         dto.setVerifyCode(code);
         dto.setDate(DateUtil.getCnDate(localDate));
         emailDTO.setData(dto);
@@ -692,7 +693,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * 根据用户id 获取到用户的权限
      *
      * @param userId
-     * @return java.util.List<com.erp.common.modules.sys.dto.UserRequestPermissionsDTO>
+     * @return java.util.List<com.erp.common.business.dto.UserRequestPermissionsDTO>
      * @author yl
      * @date 2022-10-15 11:22
      */
@@ -872,7 +873,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @author yl
      * @date 2023-01-14 9:45
      * @param userId
-     * @return com.erp.common.modules.sys.dto.SysUserDTO
+     * @return com.erp.model.sys.dto.SysUserDTO
      */
     @Override
     public SysUserDTO getSysUserById(String userId) {

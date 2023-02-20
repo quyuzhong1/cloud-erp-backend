@@ -1,10 +1,9 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONUtil;
-import com.common.core.constant.RocketMqTopic;
+import com.erp.common.business.constant.RocketMqTopic;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;

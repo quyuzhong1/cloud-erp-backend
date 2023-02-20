@@ -1,10 +1,8 @@
 package com.erp.server.bi.controller;
 
 
-import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.enums.DataAttributeEnum;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.server.bi.service.BiDataSourceCostService;

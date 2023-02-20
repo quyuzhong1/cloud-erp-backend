@@ -6,11 +6,12 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
-import com.erp.common.vo.LoginUser;
-import com.erp.common.vo.PagingVO;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.common.business.vo.LoginUser;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -23,12 +24,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.math3.util.Pair;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -751,13 +752,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-09-20 11:45
      */
     private List<Map<String, Object>> getFinishTaskTrend(int days, List<ProjectTaskEntity> taskList) {
-        DateTime dateTime = new DateTime(new Date());
+        LocalDateTime dateTime = LocalDateTime.now();
         List<Map<String, Object>> finishTaskTrend = new LinkedList<>();
         String fmt = DateUtil.fmt_day;
         SimpleDateFormat sdf = new SimpleDateFormat(fmt);
         for (int i = days; i >= 0; i--) {
             Map<String, Object> finishTaskMap = new HashMap<>();
-            Date date = dateTime.plusDays(-i).toDate();
+            Date date = LocalDateUtil.localDateTime2Date(dateTime.plusDays(-i));
             long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, t.getRealityEndTime())).count();
             finishTaskMap.put("date", sdf.format(date.getTime()));
             finishTaskMap.put("quantity", count);

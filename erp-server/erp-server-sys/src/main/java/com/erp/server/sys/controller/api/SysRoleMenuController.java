@@ -1,8 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.RoleMenuDTO;
 import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
 import com.erp.model.sys.dto.SysRoleMenuDTO;
@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**

@@ -1,8 +1,8 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.ProductRoleDTO;
 import com.erp.model.plm.dto.ProjectRoleDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
@@ -31,7 +31,7 @@ public class ProjectRoleController extends BaseController {
      * 产品列表-成员分类
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 19:33
      */
@@ -46,7 +46,7 @@ public class ProjectRoleController extends BaseController {
      * 设置-项目成员-新增角色
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 19:33
      */
@@ -61,7 +61,7 @@ public class ProjectRoleController extends BaseController {
      * 设置-项目成员-获取角色列表
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 19:33
      */

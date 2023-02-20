@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto;
 
-import com.erp.common.dto.base.BaseSearchDTO;
+
+import com.erp.common.business.dto.base.BaseSearchDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -2,7 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.vo.LoginUser;
+import com.erp.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.DocsChangeRecordEntity;
 import com.erp.server.plm.mapper.DocsChangeRecordMapper;
 import com.erp.server.plm.service.CommonService;

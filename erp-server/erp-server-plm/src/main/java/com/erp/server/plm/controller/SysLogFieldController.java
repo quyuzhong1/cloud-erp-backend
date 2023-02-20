@@ -1,16 +1,9 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.SysLogSelectDTO;
-import com.erp.model.plm.dto.SysLogShowDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.server.plm.service.SysLogFieldService;
-import com.erp.server.plm.service.SysLogService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**

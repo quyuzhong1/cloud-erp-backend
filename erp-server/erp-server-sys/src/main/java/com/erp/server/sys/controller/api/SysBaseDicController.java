@@ -3,10 +3,10 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.core.enums.CurrencyEnum;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseDicDTO;
-import com.erp.common.dto.base.BaseSearchDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseDicDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.sys.entity.SysBaseDicEntity;
 import com.erp.server.sys.service.SysBaseDicService;
 import org.apache.commons.lang3.StringUtils;

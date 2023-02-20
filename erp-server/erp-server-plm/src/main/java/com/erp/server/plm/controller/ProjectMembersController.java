@@ -2,16 +2,16 @@ package com.erp.server.plm.controller;
 
 
 import com.common.core.utils.MathUtil;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProjectMembersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 import java.util.List;
 

@@ -1,10 +1,10 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.business.utils.FastDFSClientUtil;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
@@ -79,7 +79,7 @@ public class CommonController extends BaseController {
      * 上传图片
      *
      * @param multipartFile 图片流
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
      **/
@@ -97,7 +97,7 @@ public class CommonController extends BaseController {
      * 产品开发管理-项目任务-产品操作日志-查询
      *
      * @param productId 产品表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductOperateRecordEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductOperateRecordEntity>>
      * @Author Luo_WG
      * @Date 2022/10/11 11:51
      **/
@@ -111,7 +111,7 @@ public class CommonController extends BaseController {
      * 产品开发管理-项目任务-产品操作日志-新增
      *
      * @param dto 产品操作记录表（VO）
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/11 11:52
      **/
@@ -125,7 +125,7 @@ public class CommonController extends BaseController {
      * 产品开发管理-项目任务-产品操作日志-批量新增
      *
      * @param dto 产品操作记录表
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/11 11:52
      **/
@@ -138,7 +138,7 @@ public class CommonController extends BaseController {
     /**
      * 获取字典表所有类型
      *
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/11 11:52
      **/

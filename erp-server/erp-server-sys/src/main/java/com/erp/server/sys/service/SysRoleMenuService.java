@@ -2,7 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.modules.sys.vo.SysMenuVO;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.dto.RoleMenuDTO;
 import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
 import com.erp.model.sys.dto.SysRoleMenuDTO;
@@ -34,7 +34,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
      * 获取所有的菜单code
      * @Author Luo_WG
      * @Date 2022/11/1 14:23
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      **/
     List<SysMenuVO> findMenuAll();
 
@@ -60,7 +60,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
      * 获取左侧菜单所有列表
      * @Author Luo_WG
      * @Date 2022/11/1 14:26
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     * @return java.util.List<com.erp.model.sys.vo.SysMenuVO>
      **/
     List<SysMenuVO> findLeftMenuAll();
 

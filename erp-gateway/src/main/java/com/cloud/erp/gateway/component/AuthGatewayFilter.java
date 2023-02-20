@@ -1,12 +1,12 @@
 package com.cloud.erp.gateway.component;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
-import com.common.core.constant.AuthPassPath;
-import com.common.core.constant.TokenConstants;
-import com.erp.common.enums.ApiError;
-import com.erp.common.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.erp.common.business.constant.AuthPassPath;
+import com.erp.common.business.constant.TokenConstants;
+import com.erp.common.business.vo.LoginUser;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.net.URLEncoder;

@@ -25,11 +25,10 @@
         <module>erp-server</module>
         <module>erp-sdk</module>
         <module>erp-chrome</module>
-        <module>erp-common-business</module>
     </modules>
 
     <properties>
-        <fastjson.version>2.0.8</fastjson.version>
+        <fastjson.version>1.2.83</fastjson.version>
         <commons-collections4.version>4.3</commons-collections4.version>
         <commons.io.version>2.5</commons.io.version>
         <commons-lang3.version>3.0</commons-lang3.version>
@@ -94,8 +93,8 @@
 
         <!--fastjson-->
         <dependency>
-            <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2</artifactId>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
             <version>${fastjson.version}</version>
         </dependency>
 

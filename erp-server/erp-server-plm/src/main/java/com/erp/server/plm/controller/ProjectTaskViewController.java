@@ -1,9 +1,9 @@
 package com.erp.server.plm.controller;
 
 import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.enums.DataAttributeEnum;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.enums.DataAttributeEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProjectTaskViewService;
 import org.springframework.beans.factory.annotation.Autowired;

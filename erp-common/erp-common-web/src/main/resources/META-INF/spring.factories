@@ -1,4 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.common.web.config.RedisConfig,\
-  com.common.web.service.RedisService,\
-  com.common.web.service.RedisLock

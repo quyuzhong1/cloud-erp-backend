@@ -2,12 +2,12 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.enums.DataAttributeEnum;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.enums.DataAttributeEnum;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
@@ -48,7 +48,7 @@ public class ProductInfoController extends BaseController {
      * 产品列表-普通分页
      *
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>
+     * @return com.common.core.vo.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>
      * @author yl
      * @date 2022-10-09 10:17
      */

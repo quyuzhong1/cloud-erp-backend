@@ -1,8 +1,8 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.server.plm.service.TaskDocsFinishService;
@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 /**
  *产品开发管理
@@ -30,7 +30,7 @@ public class TaskDocsFinishController extends BaseController {
      * @author yl
      * @date 2022-10-14 11:05
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/importFile")
     //  @RequestPermissions("plm:finish:docs:importFile")
@@ -47,7 +47,7 @@ public class TaskDocsFinishController extends BaseController {
      * @author yl
      * @date 2022-10-14 11:05
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/removeFile")
     // @RequestPermissions("plm:finish:docs:removeFile")
@@ -61,7 +61,7 @@ public class TaskDocsFinishController extends BaseController {
      * @author yl
      * @date 2022-10-14 11:05
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/changeFile")
     //   @RequestPermissions("plm:finish:docs:changeFile")
@@ -75,7 +75,7 @@ public class TaskDocsFinishController extends BaseController {
      * @author yl
      * @date 2022-10-14 11:05
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/updateFile")
     //   @RequestPermissions("plm:finish:docs:changeFile")
@@ -89,7 +89,7 @@ public class TaskDocsFinishController extends BaseController {
      * @author yl
      * @date 2022-11-14 18:40
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/startChangeDocsProcess")
     //   @RequestPermissions("plm:finish:docs:changeFile")

@@ -2,7 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.business.dto.FindUserDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;

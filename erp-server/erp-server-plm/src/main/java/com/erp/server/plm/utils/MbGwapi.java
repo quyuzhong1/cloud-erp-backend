@@ -24,7 +24,7 @@ import javax.activation.MimetypesFileTypeMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;

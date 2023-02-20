@@ -1,8 +1,8 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
 import com.erp.model.bi.dto.AddTotalSubjectDTO;
 import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
@@ -79,7 +79,7 @@ public class BiLayoutController extends BaseController {
      * 编辑专题布局获取详情
      *
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-12-13 17:06
      */
@@ -94,7 +94,7 @@ public class BiLayoutController extends BaseController {
      * 删除布局模块
      *
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-12-13 17:06
      */
@@ -108,7 +108,7 @@ public class BiLayoutController extends BaseController {
      * 删除布局
      *
      * @param dto
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-12-13 17:06
      */

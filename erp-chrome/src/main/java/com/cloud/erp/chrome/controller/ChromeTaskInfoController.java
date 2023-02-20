@@ -4,12 +4,12 @@ package com.cloud.erp.chrome.controller;
 import com.cloud.erp.chrome.dto.FindTaskDTO;
 import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.vo.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 
 import java.util.List;
 

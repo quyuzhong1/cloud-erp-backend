@@ -2,8 +2,8 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
-import com.erp.common.modules.third.dto.ThirdUnionDTO;
+import com.erp.model.sys.dto.FindUserByThirdDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 

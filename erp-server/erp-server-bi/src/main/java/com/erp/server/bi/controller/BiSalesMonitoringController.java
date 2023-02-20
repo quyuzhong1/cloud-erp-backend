@@ -1,9 +1,9 @@
 package com.erp.server.bi.controller;
 
 import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.enums.DataAttributeEnum;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.server.bi.service.BiSalesMonitoringService;

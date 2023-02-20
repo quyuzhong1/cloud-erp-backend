@@ -1,7 +1,7 @@
 package com.erp.server.dmp.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.server.dmp.service.CfgApiAuthService;
 import org.springframework.validation.annotation.Validated;

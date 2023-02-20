@@ -49,7 +49,7 @@ public class KingdeeUtils {
         return map;
     }
 
-    public static JSONObject makeFieldJson(JSONObject jsonRoot, String pathStr,String splitStr,Object value){
+    public static JSONObject makeFieldJson(JSONObject jsonRoot, String pathStr, String splitStr, Object value){
         if(null==jsonRoot){
             jsonRoot = new JSONObject();
         }

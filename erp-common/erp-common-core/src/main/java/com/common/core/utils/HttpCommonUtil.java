@@ -28,7 +28,7 @@ public class HttpCommonUtil {
      * @throws Exception
      */
     public static JSONObject sendOkhttp(String url, String parameters, Map<String, Object> map,
-                                          Map<String, String> header, RequestMethod method) {
+                                        Map<String, String> header, RequestMethod method) {
 
         Response response = null;
         Long start = System.currentTimeMillis();

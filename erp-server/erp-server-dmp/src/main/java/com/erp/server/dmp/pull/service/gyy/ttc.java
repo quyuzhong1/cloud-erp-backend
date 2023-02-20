@@ -2,13 +2,6 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.collections.map.LinkedMap;
-
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 
 public class ttc {
 
@@ -28,7 +21,7 @@ public class ttc {
         String s = JSONObject.toJSONString(resultJson);
 
 
-        Object parse = JSONObject.parse(s);
+        Object parse = JSONObject.parseObject(s);
 
 
     }

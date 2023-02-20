@@ -1,11 +1,11 @@
 package com.erp.server.admin.controller.api;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.modules.sys.vo.SysMenuVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.admin.dto.SysFindMenuDTO;
 import com.erp.model.admin.dto.SysMenuDTO;
 import com.erp.model.admin.entity.MenuEntity;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.server.admin.service.MenuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;

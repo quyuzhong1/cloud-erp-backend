@@ -1,9 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.common.vo.PagingVO;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 
@@ -43,7 +43,7 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     Boolean ifProjectMember(String userId, String productId);
 
-    List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList,List<Integer> stateList);
+    List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList, List<Integer> stateList);
 
     void addRoleAndMembersByApproval(String productId);
 

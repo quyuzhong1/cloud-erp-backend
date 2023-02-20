@@ -5,9 +5,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.common.core.utils.BeanMapper;
 import com.erp.common.business.interceptor.CommonInterceptor;
-import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
-import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.common.vo.LoginUser;
+import com.erp.model.sys.dto.FindUserByThirdDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.common.business.vo.LoginUser;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
@@ -129,7 +129,7 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      * 根据平台获取对应的用户与Union 关系
      *
      * @param platform
-     * @return java.util.List<com.erp.common.modules.third.dto.ThirdUnionDTO>
+     * @return java.util.List<com.erp.model.sys.vo.ThirdUnionDTO>
      * @author yl
      * @date 2022-11-15 11:03
      */

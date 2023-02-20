@@ -1,6 +1,6 @@
 package com.erp.server.dmp.pull.schedule;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;

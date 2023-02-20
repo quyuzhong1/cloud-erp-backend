@@ -3,13 +3,13 @@ package com.erp.server.plm.controller;
 import com.alibaba.excel.EasyExcel;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailApproverEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -103,7 +103,7 @@ ProductDetailController extends BaseController {
      * 产品信息-主页列表-查询1
      *
      * @param pagingDTO pagingDTO
-     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductDetailShowDTO>>
+     * @return com.common.core.vo.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductDetailShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:15
      **/
@@ -119,7 +119,7 @@ ProductDetailController extends BaseController {
      * 产品信息-无规格-产品详情
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
      * @Author Luo_WG
      * @Date 2022/10/9 10:21
      **/
@@ -134,7 +134,7 @@ ProductDetailController extends BaseController {
      * 产品信息-多规格-产品详情
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
      * @Author Luo_WG
      * @Date 2022/10/9 10:22
      **/
@@ -150,7 +150,7 @@ ProductDetailController extends BaseController {
      * 产品信息-多规格-产品详情-编辑
      *
      * @param dto 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
      * @Author Luo_WG
      * @Date 2022/10/9 10:22
      **/
@@ -171,7 +171,7 @@ ProductDetailController extends BaseController {
      * 产品信息-无规格-产品详情-编辑
      *
      * @param dto 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
      * @Author Luo_WG
      * @Date 2022/10/9 10:21
      **/
@@ -193,7 +193,7 @@ ProductDetailController extends BaseController {
      * 产品信息-无规格-新增/修改
      *
      * @param productNoSpecDTO 新增产品无规格sku信息请求参数
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:22
      **/
@@ -208,7 +208,7 @@ ProductDetailController extends BaseController {
      * 产品信息-多规格-新增/修改
      *
      * @param productManySpecDTO 新增产品多规格sku信息请求参数
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
      **/
@@ -223,7 +223,7 @@ ProductDetailController extends BaseController {
      * 产品信息-无规格-基础信息上传图片
      *
      * @param productImagesDTO 产品图片信息请求参数
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
      **/
@@ -238,7 +238,7 @@ ProductDetailController extends BaseController {
      * 产品信息-多规格-自动生成
      *
      * @param variantAutoAddDTO 商品管理-产品信息-多规格-自动生成 请求参数
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductDetailEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductDetailEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
      **/
@@ -253,7 +253,7 @@ ProductDetailController extends BaseController {
      * 产品信息-多规格sku-删除
      *
      * @param skuId sku表id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
      **/
@@ -273,7 +273,7 @@ ProductDetailController extends BaseController {
      * 产品信息-取消按钮-删除
      *
      * @param id spu主表id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
      **/
@@ -290,7 +290,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
      * @param skuIds sku表id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      **//*
     @PostMapping("/deleteBatch")
     @RequestPermissions("plm:product:detail:deleteBatch")
@@ -303,7 +303,7 @@ ProductDetailController extends BaseController {
      * 成本信息-主页列表-查询
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductCostShowDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.ProductCostShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
      **/
@@ -317,7 +317,7 @@ ProductDetailController extends BaseController {
      * 采购信息-主页列表-查询
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductPurchaseShowDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.ProductPurchaseShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
      **/
@@ -331,7 +331,7 @@ ProductDetailController extends BaseController {
      * 销售信息-主页列表-查询
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductSaleShowDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.ProductSaleShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
      **/
@@ -345,7 +345,7 @@ ProductDetailController extends BaseController {
      * 物流信息-报关信息列表-查询
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductLogisticsShowDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.ProductLogisticsShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
      **/
@@ -359,7 +359,7 @@ ProductDetailController extends BaseController {
      * 物流信息-包装信息列表-查询
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductPackShowDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.ProductPackShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      **/
@@ -373,7 +373,7 @@ ProductDetailController extends BaseController {
      * 证书信息-主页列表-查询
      *
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductCertificateShowDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.ProductCertificateShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      **/
@@ -388,7 +388,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      * @param productCertificateDTO 产品证书表
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      **//*
     @GetMapping("/saveOrUpdateCertificate")
     public ApiResult saveOrUpdateCertificate(@RequestBody List<ProductCertificateDTO> productCertificateDTO) {
@@ -400,7 +400,7 @@ ProductDetailController extends BaseController {
      * 证书信息-主页列表-删除
      *
      * @param id 证书信息id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      **/
@@ -415,7 +415,7 @@ ProductDetailController extends BaseController {
      * 采购信息-主页备注信息列表-查询
      *
      * @param productId:产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
@@ -430,7 +430,7 @@ ProductDetailController extends BaseController {
      * 采购信息-备注信息-新增
      *
      * @param dto 产品采购备注信息列表（VO）
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
@@ -445,7 +445,7 @@ ProductDetailController extends BaseController {
      * 采购信息-备注信息-新增-批量
      *
      * @param dto 产品采购备注信息列表（VO）
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
@@ -461,7 +461,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantEntity>>
      **//*
     @GetMapping("/listVariant")
     public ApiResult<List<ProductVariantEntity>> listVariant() {
@@ -472,7 +472,7 @@ ProductDetailController extends BaseController {
     /**
      * 产品信息-变体管理-下拉列表-查询
      *
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
@@ -487,7 +487,7 @@ ProductDetailController extends BaseController {
      * 产品信息-变体管理-下拉列表-新增/修改
      *
      * @param productVariantDTO 产品变体类型属性表
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      **/
@@ -502,7 +502,7 @@ ProductDetailController extends BaseController {
      * 产品信息-变体管理-下拉列表-删除
      *
      * @param variantId 变体类型表主键Id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      **/
@@ -518,7 +518,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      * @param variantId 变体类型表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantPropertyEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantPropertyEntity>>
      **//*
     @GetMapping("/listVariantProperty")
     @ApiImplicitParams({
@@ -534,7 +534,7 @@ ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      * @param productVariantPropertyDTO 产品变体属性值表
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      **//*
     @PostMapping("/saveOrUpdateVariantProperty")
     public ApiResult saveOrUpdateVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
@@ -546,7 +546,7 @@ ProductDetailController extends BaseController {
      * 产品信息-变体管理-变体值-删除
      *
      * @param variantPropertyId 变体值表id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      **/
@@ -560,7 +560,7 @@ ProductDetailController extends BaseController {
      * 产品信息-单位管理-新增|修改
      *
      * @param productUnitList productUnitList
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
@@ -574,7 +574,7 @@ ProductDetailController extends BaseController {
     /**
      * 产品信息-单位管理-查询
      *
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductUnitEntity>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.entity.ProductUnitEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
@@ -588,7 +588,7 @@ ProductDetailController extends BaseController {
      * 产品信息-单位管理-删除
      *
      * @param id 单位列表id
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
@@ -605,7 +605,7 @@ ProductDetailController extends BaseController {
      * @param excelFile  文件流
      * @param importType 请求类型
      * @param response   响应
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      **/
@@ -678,7 +678,7 @@ ProductDetailController extends BaseController {
      *
      * @param productSkuExcelDTO productSkuExcelDTO
      * @param response           response
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
      **/
@@ -812,7 +812,7 @@ ProductDetailController extends BaseController {
     /**
      * 搜索sku
      *
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2023-01-11 14:58
      */
@@ -828,7 +828,7 @@ ProductDetailController extends BaseController {
      * 根据sku id
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductSmallestUnitDTO>
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductSmallestUnitDTO>
      * @author yl
      * @date 2023-01-29 14:03
      */

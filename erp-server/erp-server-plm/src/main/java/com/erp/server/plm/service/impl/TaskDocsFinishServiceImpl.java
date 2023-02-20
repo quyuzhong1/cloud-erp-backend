@@ -1,17 +1,17 @@
 package com.erp.server.plm.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.business.utils.FastDFSClientUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
-import com.erp.common.vo.LoginUser;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.ProcessNodeDTO;

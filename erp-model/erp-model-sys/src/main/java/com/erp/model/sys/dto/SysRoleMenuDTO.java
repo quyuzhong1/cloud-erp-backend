@@ -1,11 +1,10 @@
 package com.erp.model.sys.dto;
 
-import com.erp.common.annotation.StateEnumValue;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Set;
 
 /**
  * @Classname SysRoleMenuDTO

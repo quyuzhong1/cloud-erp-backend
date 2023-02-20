@@ -1,14 +1,12 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.annotation.StateEnumValue;
-import com.fasterxml.jackson.annotation.JacksonInject;
+import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;

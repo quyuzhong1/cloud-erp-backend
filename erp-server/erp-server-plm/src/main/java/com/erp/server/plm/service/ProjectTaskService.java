@@ -1,9 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.LoginUser;
-import com.erp.common.vo.PagingVO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.LoginUser;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;

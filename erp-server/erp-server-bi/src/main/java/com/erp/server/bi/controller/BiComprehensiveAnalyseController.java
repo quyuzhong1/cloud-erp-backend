@@ -1,10 +1,9 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import org.springframework.validation.annotation.Validated;

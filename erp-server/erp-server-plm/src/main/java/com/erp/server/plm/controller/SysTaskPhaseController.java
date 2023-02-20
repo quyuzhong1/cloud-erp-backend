@@ -1,10 +1,10 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
@@ -36,7 +36,7 @@ public class SysTaskPhaseController extends BaseController {
      * 新建任务-批量保存或者修改阶段名
      *
      * @param list
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 10:27
      */
@@ -63,7 +63,7 @@ public class SysTaskPhaseController extends BaseController {
     /**
      * 新建任务-修改阶段名
      *
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 10:27
      */
@@ -77,7 +77,7 @@ public class SysTaskPhaseController extends BaseController {
     /**
      * 新建任务-删除阶段名
      *
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 10:27
      */
@@ -92,7 +92,7 @@ public class SysTaskPhaseController extends BaseController {
     /**
      * 新建任务-获取阶段名称列表
      *
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-10-09 10:27
      */

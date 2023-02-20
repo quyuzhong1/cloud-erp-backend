@@ -1,7 +1,7 @@
 package com.erp.server.plm.service;
 
-import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.common.vo.LoginUser;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.vo.LoginUser;
 
 import java.util.List;
 

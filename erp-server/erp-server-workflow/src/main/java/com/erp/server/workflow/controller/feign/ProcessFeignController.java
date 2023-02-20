@@ -1,6 +1,6 @@
 package com.erp.server.workflow.controller.feign;
 
-import com.erp.common.controller.BaseController;
+import com.common.core.controller.BaseController;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;

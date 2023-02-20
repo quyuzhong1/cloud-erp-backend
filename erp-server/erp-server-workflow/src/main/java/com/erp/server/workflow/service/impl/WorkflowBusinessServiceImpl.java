@@ -3,7 +3,7 @@ package com.erp.server.workflow.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.business.dto.FindUserDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.dto.BusinessInfoDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;

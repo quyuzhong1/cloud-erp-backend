@@ -1,14 +1,15 @@
 package com.erp.server.plm.controller;
 
-import com.common.core.constant.ThirdConstants;
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.*;
+import com.erp.common.business.constant.ThirdConstants;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
 
-import com.erp.common.enums.ApiError;
-import com.erp.common.modules.sys.dto.FindThirdUserDTO;
-import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
-import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.NoticeMessageDTO;
+import com.common.core.enums.ApiError;
+import com.erp.model.sys.dto.FindUserByThirdDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.UpdateUserNoticeStateDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageRecordEntity;
@@ -19,7 +20,6 @@ import com.erp.server.plm.service.NoticeMessageService;
 import com.erp.server.plm.service.UserCancelNoticeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,7 +58,7 @@ public class UserNoticeMessageController extends BaseController {
      * 获取消息通知列表
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
      * @author yl
      * @date 2022-11-10 15:54
      */
@@ -76,7 +76,7 @@ public class UserNoticeMessageController extends BaseController {
      * 消息通知-分页展示
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
      * @author yl
      * @date 2022-11-10 15:54
      */
@@ -91,7 +91,7 @@ public class UserNoticeMessageController extends BaseController {
      * 更改状态
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
+     * @return com.common.core.vo.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
      * @author yl
      * @date 2022-11-10 15:55
      */
@@ -124,7 +124,7 @@ public class UserNoticeMessageController extends BaseController {
      * 检查是否有绑定plm 系统
      *
      * @param
-     * @return com.erp.common.dto.base.ApiResult
+     * @return com.common.core.vo.ApiResult
      * @author yl
      * @date 2022-11-14 11:10
      */

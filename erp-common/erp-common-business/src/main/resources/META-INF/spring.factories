@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.erp.common.business.config.RedisConfig,\
+  com.erp.common.business.service.RedisService,\
+  com.erp.common.business.service.RedisLock

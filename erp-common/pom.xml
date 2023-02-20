@@ -13,40 +13,15 @@
     <packaging>pom</packaging>
 
     <properties>
-        <hutool.version>5.8.10</hutool.version>
+        <hutool.version>5.8.12</hutool.version>
     </properties>
 
     <modules>
-        <module>erp-common-pojo</module>
         <module>erp-common-message</module>
         <module>erp-common-core</module>
-        <module>erp-common-web</module>
+        <module>erp-common-business</module>
     </modules>
 
-<!--    <properties>-->
-<!--        <hutool.version>5.8.10</hutool.version>-->
-<!--    <properties/>-->
-
-<!--    <dependency>-->
-<!--        <groupId>cn.hutool</groupId>-->
-<!--        <artifactId>hutool-all</artifactId>-->
-<!--        <version>${hutool.version}</version>-->
-<!--    </dependency>-->
-
-<!--    <distributionManagement>
-        <repository>
-            <id>nexus</id>
-            <name>nexus Repository RELEASES</name>
-            <url>http://172.16.100.11:8089/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>nexus</id>
-            <name>nexus Repository SNAPSHOTS</name>
-            <url>http://172.16.100.11:8089/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
--->
     <build>
         <pluginManagement>
             <plugins>

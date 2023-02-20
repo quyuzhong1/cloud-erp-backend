@@ -1,10 +1,10 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.BatchSysDepartUserDTO;
 import com.erp.model.sys.dto.DepartmentSearchDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;

@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import com.erp.common.business.interceptor.CommonInterceptor;
-import com.erp.common.vo.LoginUser;
+import com.erp.common.business.vo.LoginUser;
 import com.erp.server.dmp.service.CommonService;
 import org.springframework.stereotype.Service;
 

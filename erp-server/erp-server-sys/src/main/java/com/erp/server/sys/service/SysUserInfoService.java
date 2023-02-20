@@ -2,11 +2,12 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
-import com.erp.common.modules.sys.dto.*;
-import com.erp.common.vo.PagingVO;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.dto.UserRequestPermissionsDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.common.message.dto.email.EmailVerifyCodeDTO;
+import com.erp.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 
@@ -107,7 +108,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @author yl
      * @date 2023-01-29 10:25
      * @param userId
-     * @return com.erp.common.modules.sys.dto.SysUserDTO
+     * @return com.erp.model.sys.dto.SysUserDTO
      */
     SysUserDTO getSysUserById(String userId);
 

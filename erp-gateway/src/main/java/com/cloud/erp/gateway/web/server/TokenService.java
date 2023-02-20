@@ -1,13 +1,13 @@
 package com.cloud.erp.gateway.web.server;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.cloud.erp.gateway.config.JwtProperties;
-import com.common.core.constant.RedisCacheConstants;
 import com.common.core.utils.IdUtils;
-import com.common.core.utils.JwtUtils;
-import com.common.web.service.RedisService;
-import com.erp.common.modules.sys.dto.SysUserDTO;
-import com.erp.common.vo.LoginUser;
+import com.erp.common.business.constant.RedisCacheConstants;
+import com.erp.common.business.service.RedisService;
+import com.erp.common.business.vo.LoginUser;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

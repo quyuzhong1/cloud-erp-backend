@@ -1,6 +1,6 @@
 package com.erp.rpc.auth.feign;
 
-import com.erp.common.dto.base.ApiResult;
+import com.common.core.controller.vo.ApiResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 

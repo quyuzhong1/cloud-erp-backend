@@ -1,17 +1,10 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.annotation.StateEnumValue;
-import com.erp.common.dto.base.PermissionsDTO;
+import com.erp.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Classname ProductSearchDTO
@@ -21,7 +14,7 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-public class ProductSearchDTO extends PermissionsDTO  {
+public class ProductSearchDTO extends PermissionsDTO {
 
 
     /**

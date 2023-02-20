@@ -1,10 +1,10 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.bi.dto.CopySubjectDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;

@@ -1,10 +1,10 @@
 package com.erp.sdk.fs.service;
 
-import com.alibaba.fastjson2.JSONObject;
-import com.common.core.constant.ThirdConstants;
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.OkHttpUtils;
-import com.erp.common.modules.sys.dto.FindThirdUserDTO;
-import com.erp.common.modules.third.dto.FsBatchSendMessageDTO;
+import com.erp.common.business.constant.ThirdConstants;
+import com.erp.model.sys.dto.FindThirdUserDTO;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.constant.LoginConstant;
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

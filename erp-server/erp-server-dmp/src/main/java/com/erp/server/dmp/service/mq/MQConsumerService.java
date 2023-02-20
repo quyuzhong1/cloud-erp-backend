@@ -1,7 +1,7 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONUtil;
-import com.common.core.constant.RocketMqTopic;
+import com.erp.common.business.constant.RocketMqTopic;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.pull.service.dmp.*;

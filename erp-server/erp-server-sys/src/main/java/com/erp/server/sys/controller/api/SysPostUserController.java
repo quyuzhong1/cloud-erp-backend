@@ -1,9 +1,9 @@
 package com.erp.server.sys.controller.api;
 
-import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSavePostUserDTO;
 import com.erp.server.sys.service.SysPostUserService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.business.interceptor.CommonInterceptor;
-import com.erp.common.vo.LoginUser;
+import com.erp.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.ProductImagesDTO;
 import com.erp.model.plm.entity.ProductImagesEntity;
 import com.erp.server.plm.mapper.ProductImagesMapper;
