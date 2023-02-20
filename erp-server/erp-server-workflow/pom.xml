@@ -32,27 +32,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!--公共服务-->
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-
         <!--rpc-->
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-plm</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-
 
          <!--camunda-->
         <dependency>
@@ -99,11 +84,6 @@
             <groupId>com.alibaba</groupId>
             <artifactId>druid-spring-boot-starter</artifactId>
             <version>${alibaba.druid.verison}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ulisesbocchio</groupId>
-            <artifactId>jasypt-spring-boot-starter</artifactId>
-            <version>${jasypt.version}</version>
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
