@@ -1,12 +1,16 @@
 package com.common.core.enums;
 
+import com.common.core.constant.EnumMessage;
+import lombok.Getter;
+
 /**
  * @author Will
  * @version 1.0
  * @description: 字段类型枚举
  * @date 2023/2/14 16:33
  */
-public enum FieldTypeEnum {
+@Getter
+public enum FieldFormatPatternTypeEnum implements EnumMessage {
 
     INTEGER("integer", "整数","^-?\\d+$"),
     POSITIVE_INTEGER("positive_integer", "正整数","^[1-9]\\d*$"),
@@ -30,16 +34,16 @@ public enum FieldTypeEnum {
 
     private String desc;
 
-    FieldTypeEnum(String code, String name, String desc) {
+    FieldFormatPatternTypeEnum(String code, String name, String desc) {
         this.code = code;
         this.name = name;
         this.desc = desc;
 
     }
 
-    public static FieldTypeEnum getByCode(String code) {
-        FieldTypeEnum[] values = values();
-        for (FieldTypeEnum value : values) {
+    public static FieldFormatPatternTypeEnum getByCode(String code) {
+        FieldFormatPatternTypeEnum[] values = values();
+        for (FieldFormatPatternTypeEnum value : values) {
             if (value.code.equals(code)) {
                 return value;
             }
@@ -47,9 +51,9 @@ public enum FieldTypeEnum {
         return null;
     }
 
-    public static FieldTypeEnum getByName(String name) {
-        FieldTypeEnum[] values = values();
-        for (FieldTypeEnum value : values) {
+    public static FieldFormatPatternTypeEnum getByName(String name) {
+        FieldFormatPatternTypeEnum[] values = values();
+        for (FieldFormatPatternTypeEnum value : values) {
             if (value.name.equals(name)) {
                 return value;
             }
