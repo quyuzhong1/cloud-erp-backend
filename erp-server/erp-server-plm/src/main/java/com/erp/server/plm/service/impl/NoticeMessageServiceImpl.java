@@ -370,7 +370,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (StringUtils.isBlank(date)) {
             date = "-";
         }
-        String projectContent = String.format(NoticeMessageConstant.Task_PROJECT_CONTENT, taskName, productName, date, chargeFlag, chargeName);
+        String projectContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, taskName, productName, date, chargeFlag, chargeName);
         return projectContent;
     }
 
@@ -896,6 +896,46 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //保存发送消息通知记录
         noticeMessageRecordService.saveBatch(messageRecordList);
         return true;
+    }
+
+    
+    /**
+     * 排期任务提交
+     * @author yl
+     * @date 2023-02-17 18:18
+     * @param
+     * @return void
+     */
+    @Override
+    public void scheduleTaskSubmit(List<ProjectTaskEntity> taskList, String productId) {
+        ProductShowDTO product = productInfoService.getProductInfo(productId);
+
+        //排期任务 通知节点
+        String noticeFlag = NoticeEnum.SCHEDULE_TASK.getFlag();
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeFlag);
+        if(!Objects.isNull(notice )){
+            String noticeMessageId = notice.getId();
+            List<String> noticeUserIds = getSetNotice(notice, product);
+            //如果包含任务负责人的话
+            boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            for (ProjectTaskEntity task : taskList){
+                String chargeId = task.getChargeId();
+                List<String> allNoticeUserIds = new ArrayList<>();
+
+                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                    allNoticeUserIds.addAll(noticeUserIds);
+                    allNoticeUserIds.addAll(chargeIdList);
+                } else {
+                    allNoticeUserIds = noticeUserIds;
+                }
+            }
+        }
     }
 
 

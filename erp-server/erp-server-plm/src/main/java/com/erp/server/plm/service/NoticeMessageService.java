@@ -92,4 +92,9 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
 
     Boolean flyingBookReminder(FlyingBookReminderDTO dto);
+
+    /**
+     * 排期任务提交
+     */
+    void scheduleTaskSubmit(List<ProjectTaskEntity> taskList, String productId);
 }

@@ -2,6 +2,7 @@ package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
 import com.erp.common.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -50,17 +51,19 @@ public class ProjectPlanTaskConditionDTO extends SortDTO {
     /**
      * 任务排期审核状态
      */
-    private Integer planAuditState;
+    private String planAuditState;
 
     /**
      * 开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planStartTime;
 
 
     /**
      * 结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planEndTime;
 
 

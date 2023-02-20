@@ -1008,16 +1008,19 @@
             </if>
         </if>
         <if test="dto.taskChargeId !=null and dto.taskChargeId!=''">
-            AND string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(dto.taskChargeId,',')
+            AND string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(#{dto.taskChargeId},',')
         </if>
         <if test="dto.searchKeyword !=null and dto.searchKeyword!=''">
-            AND name LIKE concat('%',#{dto.searchKeyword},'%'
+            AND pt.name LIKE concat('%',#{dto.searchKeyword},'%')
         </if>
         <if test="dto.planStartTime !=null ">
             AND pt.plan_start_time &gt;= #{dto.planStartTime}
         </if>
         <if test="dto.planEndTime !=null ">
             AND pt.plan_end_time &lt;= #{dto.planEndTime}
+        </if>
+        <if test="dto.planAuditState !=null and  dto.planAuditState!=''">
+            AND pt.schedule_status = #{dto.planAuditState}
         </if>
         ORDER BY
         <if test="dto.sortList != null and dto.sortList.size > 0">

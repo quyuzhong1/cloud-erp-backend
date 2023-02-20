@@ -24,7 +24,10 @@ public enum NoticeEnum {
     START_PROJECT ("startProject","启动项目"),
     BEGIN_PROJECT("beginProject","开始项目"),
     FINISH_PROJECT("finishProject","完成项目"),
-    ARCHIVE_PROJECT("archiveProject","归档项目");
+    ARCHIVE_PROJECT("archiveProject","归档项目"),
+    SCHEDULE_TASK("scheduleTask","任务计划提交/变更 通知"),
+    SCHEDULE_CHANGE("scheduleChange","排期变动通知 通知");
+
 
 
 
