@@ -229,7 +229,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/updateTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
                 tableField = "charge_id",
-                menuCode = "plm:task:updateTask",
+                menuCode = "plm:task:update",
                 serviceClass = ProjectTaskService.class,
                 keyIdName = "taskId"
     )
