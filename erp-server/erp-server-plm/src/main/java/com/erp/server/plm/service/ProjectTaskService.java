@@ -255,4 +255,11 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return com.erp.model.plm.entity.ProjectTaskEntity
      */
     ProjectTaskEntity getbyName(String productId, String taskName);
+    /**
+     * @description: 批量更新任务阶段名称
+     * @author Will
+     * @date: 2023/2/20 20:52
+     * @param taskEntity
+     */
+    void updatePhase(ProjectTaskEntity taskEntity);
 }

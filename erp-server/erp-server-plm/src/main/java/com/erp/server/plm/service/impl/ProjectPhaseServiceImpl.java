@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.MathUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BasicProductIdDTO;
 import com.erp.model.plm.dto.BatchTaskPhaseDTO;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -90,11 +90,21 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
             chekPhaseName(list, productId);
+            //需要新增阶段
             List<ProjectPhaseEntity> saveList = new LinkedList<>();
+            //需要更新的任务
+            List<ProjectTaskEntity> updateList = new LinkedList<>();
             Integer seq = MathUtil.ONE;
             for (TaskPhaseDTO item : list) {
                 if (StringUtils.isBlank(item.getName())) {
                     throw new ServiceException(ApiError.ERROR_95002);
+                }
+                if (StringUtils.isNotBlank(item.getId())) {
+                    ProjectTaskEntity task = new ProjectTaskEntity();
+                    task.setPhaseId(item.getId());
+                    task.setPhaseName(item.getName());
+                    task.setProductId(productId);
+                    updateList.add(task);
                 }
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
                 entity.setName(item.getName());
@@ -104,6 +114,11 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
                 saveList.add(entity);
                 seq++;
             }
+            //根据阶段id更新产品下阶段名称
+            if (CollectionUtils.isNotEmpty(updateList)) {
+                updateList.forEach(e -> projectTaskService.updatePhase(e));
+            }
+            //新增或编辑阶段
             this.saveOrUpdateBatch(saveList);
         }
     }

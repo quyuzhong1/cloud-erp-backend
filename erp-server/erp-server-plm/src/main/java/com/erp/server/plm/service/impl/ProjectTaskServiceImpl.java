@@ -2707,6 +2707,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public void updatePhase(ProjectTaskEntity taskEntity) {
+        LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ProjectTaskEntity::getProductId,taskEntity.getProductId());
+        updateWrapper.eq(ProjectTaskEntity::getPhaseId,taskEntity.getPhaseId());
+        updateWrapper.set(ProjectTaskEntity::getPhaseName,taskEntity.getPhaseName());
+        this.update(updateWrapper);
+    }
+
     /**
      * 我创造的    任务创建人=当前账号人
      *
