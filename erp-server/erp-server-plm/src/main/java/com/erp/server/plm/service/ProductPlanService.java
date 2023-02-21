@@ -98,13 +98,29 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      */
     List<ProductPlanStatisticsVO> listProductPlanStatistics(ProductPlanGroupSerachDTO dto);
     /**
-     * @description: 表格数据
+     * @description: 产品经理表格
      * @author Will
-     * @date: 2023/2/21 11:38
-     * @param dto
-     * @return List<ProductPlanGroupVO>
+     * @date: 2023/2/21 16:59
+     * @param dto 
+     * @return List<ProductPlanGroupVO> 
      */
-    List<ProductPlanGroupVO> listProductPlanTable(ProductPlanGroupSerachDTO dto);
+    List<ProductPlanGroupVO> listTableChargeName(ProductPlanGroupSerachDTO dto);
+    /**
+     * @description: 产品等级表格
+     * @author Will
+     * @date: 2023/2/21 16:59
+     * @param dto 
+     * @return List<ProductPlanGroupVO> 
+     */
+    List<ProductPlanGroupVO> listTableGrade(ProductPlanGroupSerachDTO dto);
+    /**
+     * @description: 产品分类表格
+     * @author Will
+     * @date: 2023/2/21 16:59
+     * @param dto 
+     * @return List<ProductPlanGroupVO> 
+     */
+    List<ProductPlanGroupVO> listTableCategory(ProductPlanGroupSerachDTO dto);
     /**
      * @description: 立项趋势
      * @author Will
@@ -121,4 +137,5 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return Boolean
      */
     Boolean uploadImageUrl(ProductPlanImageDTO dto);
+
 }

@@ -10,4 +10,14 @@ import com.erp.model.plm.entity.ProjectStatusTimeEntity;
  * @date 2023/2/20 20:02
  */
 public interface ProjectStatusTimeService extends IService<ProjectStatusTimeEntity> {
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/2/21 19:26
+     * @param projectId
+     * @param projectStatus
+     * @return ProjectStatusTimeEntity
+     */
+    ProjectStatusTimeEntity getByProjectIdAndProjectStatus(String projectId, Integer projectStatus);
 }

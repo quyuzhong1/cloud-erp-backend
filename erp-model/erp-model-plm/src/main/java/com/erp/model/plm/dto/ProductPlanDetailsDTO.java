@@ -44,5 +44,5 @@ public class ProductPlanDetailsDTO implements Serializable {
     /**
      * 产品规划进度
      */
-    private List<productPlanProgressDTO> progressList;
+    private List<ProductPlanProgressDTO> progressList;
 }

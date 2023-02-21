@@ -2,8 +2,11 @@ package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -14,13 +17,13 @@ import lombok.NoArgsConstructor;
 @TableName(value ="project_status_time")
 @Data
 @NoArgsConstructor
-public class ProjectStatusTimeEntity {
+public class ProjectStatusTimeEntity extends BaseEntity {
 
     /**
      * 项目ID
      */
-    @TableField(value = "product_id")
-    private String productId;
+    @TableField(value = "project_id")
+    private String projectId;
 
     /**
      * 项目状态
@@ -32,6 +35,6 @@ public class ProjectStatusTimeEntity {
      * 状态更新时间
      */
     @TableField(value = "status_time")
-    private String statusTime;
+    private LocalDateTime statusTime;
 
 }

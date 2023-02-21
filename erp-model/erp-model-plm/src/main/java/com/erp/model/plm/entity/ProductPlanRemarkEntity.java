@@ -2,6 +2,7 @@ package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,10 +12,10 @@ import lombok.NoArgsConstructor;
  * @description: TODO
  * @date 2023/2/20 19:32
  */
-@TableName(value ="product_planning_remark")
+@TableName(value ="product_plan_remark")
 @Data
 @NoArgsConstructor
-public class ProductPlanningRemarkEntity {
+public class ProductPlanRemarkEntity extends BaseEntity {
 
 
     /**

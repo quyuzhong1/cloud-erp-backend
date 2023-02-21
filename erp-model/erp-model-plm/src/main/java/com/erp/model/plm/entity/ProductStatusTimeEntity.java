@@ -2,8 +2,11 @@ package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -14,7 +17,7 @@ import lombok.NoArgsConstructor;
 @TableName(value ="product_status_time")
 @Data
 @NoArgsConstructor
-public class ProductStatusTimeEntity {
+public class ProductStatusTimeEntity extends BaseEntity {
 
     /**
      * 产品ID
@@ -32,6 +35,6 @@ public class ProductStatusTimeEntity {
      * 状态更新时间
      */
     @TableField(value = "status_time")
-    private String statusTime;
+    private LocalDateTime statusTime;
 
 }

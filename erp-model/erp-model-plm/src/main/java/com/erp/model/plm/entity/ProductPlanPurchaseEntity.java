@@ -2,6 +2,7 @@ package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName(value ="product_plan_purchase")
 @Data
 @NoArgsConstructor
-public class ProductPlanPurchaseEntity {
+public class ProductPlanPurchaseEntity extends BaseEntity {
 
     /**
      * 产品规划ID

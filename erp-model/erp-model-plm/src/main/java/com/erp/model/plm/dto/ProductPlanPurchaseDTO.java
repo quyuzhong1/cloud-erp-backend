@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @author Will
@@ -28,12 +29,12 @@ public class ProductPlanPurchaseDTO implements Serializable {
     /**
      * 目标成本
      */
-    private String targetCost;
+    private BigDecimal targetCost;
 
     /**Z
      * 摸具成本预估
      */
-    private String estimatedMoldCost;
+    private BigDecimal estimatedMoldCost;
 
     /**
      * 供应商状态

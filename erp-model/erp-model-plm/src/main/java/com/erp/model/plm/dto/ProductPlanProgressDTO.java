@@ -13,12 +13,12 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class productPlanProgressDTO implements Serializable {
+public class ProductPlanProgressDTO implements Serializable {
 
     /**
      * 产品进度类型（新建规划、转产品开发、项目启动、项目完成）
      */
-    private String type;
+    private String typeName;
 
     /**
      * 人员姓名

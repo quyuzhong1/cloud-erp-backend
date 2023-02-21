@@ -1,10 +1,10 @@
 package com.erp.model.plm.dto;
 
+import com.erp.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
@@ -15,7 +15,7 @@ import java.time.LocalDate;
  */
 @Data
 @NoArgsConstructor
-public class ProductPlanSearchDTO implements Serializable {
+public class ProductPlanSearchDTO extends PermissionsDTO {
 
     /**
      * 类型：尚未开始，已立项，开发中，延期

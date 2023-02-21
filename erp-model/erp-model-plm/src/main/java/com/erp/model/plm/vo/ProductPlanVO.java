@@ -100,4 +100,14 @@ public class ProductPlanVO implements Serializable {
      * 创建时间
      */
     private LocalDate createTime;
+
+    /**
+     * 调研是否延期
+     */
+    private Boolean isDelaySurvey;
+
+    /**
+     * 立项是否延期
+     */
+    private Boolean isDelayApproval;
 }

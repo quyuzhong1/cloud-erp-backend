@@ -1,10 +1,10 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 /**
  * @author Will
@@ -15,7 +15,7 @@ import java.util.Date;
 @TableName(value ="product_plan_sale")
 @Data
 @NoArgsConstructor
-public class ProductPlanSaleEntity {
+public class ProductPlanSaleEntity extends BaseEntity {
 
     /**
      * 产品规划ID

@@ -34,7 +34,7 @@ public class ProductPlanSaleInfoDTO implements Serializable {
     /**
      * 预估销量
      */
-    private Long salesQty;
+    private Integer salesQty;
 
     /**
      * 预估销售额
@@ -44,7 +44,7 @@ public class ProductPlanSaleInfoDTO implements Serializable {
     /**
      * 实际销量
      */
-    private Long actualSalesQty;
+    private Integer actualSalesQty;
 
     /**
      * 实际销售额
@@ -54,10 +54,10 @@ public class ProductPlanSaleInfoDTO implements Serializable {
     /**
      * 销量达成率
      */
-    private String salesQtyRatio;
+    private BigDecimal salesQtyRatio;
 
     /**
      * 销售额达成率
      */
-    private String salesAmountRatio;
+    private BigDecimal salesAmountRatio;
 }

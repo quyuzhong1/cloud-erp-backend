@@ -13,6 +13,7 @@ import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.server.plm.service.ProductPlanService;
+import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -57,12 +58,12 @@ public class ProductPlanController extends BaseController {
      * 产品规划-查询详情
      * @author Will
      * @date: 2023/2/21 10:01
-     * @param dto
+     * @param id
      * @return ApiResult<ProductPlanDetailsDTO>
      */
     @GetMapping("/productPlanDetails")
-    public ApiResult<ProductPlanDetailsDTO> productPlanDetails(@RequestBody @Validated BaseIdDTO dto) {
-        ProductPlanDetailsDTO productPlanDTO = productPlanService.productPlanDetails(dto.getId());
+    public ApiResult<ProductPlanDetailsDTO> productPlanDetails(@Param("id") String id) {
+        ProductPlanDetailsDTO productPlanDTO = productPlanService.productPlanDetails(id);
         return success(productPlanDTO);
     }
 
@@ -133,17 +134,42 @@ public class ProductPlanController extends BaseController {
         return  success(list);
     }
 
-
     /**
-     * 产品规划-表格数据
+     * 产品规划-表格数据-产品经理
      * @author Will
      * @date: 2023/2/21 11:23
      * @param dto
      * @return ApiResult<List<ProductPlanGroupVO>>
      */
-    @PostMapping("/listProductPlanTable")
-    public ApiResult<List<ProductPlanGroupVO>> listProductPlanTable(@RequestBody ProductPlanGroupSerachDTO dto) {
-        List<ProductPlanGroupVO> list = productPlanService.listProductPlanTable(dto);
+    @PostMapping("/listTableChargeName")
+    public ApiResult<List<ProductPlanGroupVO>> listTableChargeName(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<ProductPlanGroupVO> list = productPlanService.listTableChargeName(dto);
+        return  success(list);
+    }
+
+    /**
+     * 产品规划-表格数据-产品等级
+     * @author Will
+     * @date: 2023/2/21 11:24
+     * @param dto
+     * @return ApiResult<List<ProductPlanGroupVO>>
+     */
+    @PostMapping("/listTableGrade")
+    public ApiResult<List<ProductPlanGroupVO>> listTableGrade(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<ProductPlanGroupVO> list = productPlanService.listTableGrade(dto);
+        return  success(list);
+    }
+
+    /**
+     * 产品规划-表格数据-产品分类
+     * @author Will
+     * @date: 2023/2/21 11:25
+     * @param dto
+     * @return ApiResult<List<ProductPlanGroupVO>>
+     */
+    @PostMapping("/listTableCategory")
+    public ApiResult<List<ProductPlanGroupVO>> listTableCategory(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<ProductPlanGroupVO> list = productPlanService.listTableCategory(dto);
         return  success(list);
     }
 

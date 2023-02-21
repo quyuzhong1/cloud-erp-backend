@@ -3,5 +3,64 @@
 <mapper namespace="com.erp.server.plm.mapper.ProductPlanMapper">
 
 
+    <select id="paging" resultType="com.erp.model.plm.vo.ProductPlanVO">
+        select
+            pp.id as id,
+            pp.year as year,
+            pp.image_url as imageUrl,
+            pp.name as name,
+            pp.product_status as  productStatusName,
+            pp.category as category,
+            pp.grade as grade,
+            pp.charge_name as chargeName,
+            pp.plan_survey_date as  planSurveyDate,
+            pp.plan_project_approval_date as  planProjectApprovalDate,
+            pp.plan_first_mass_stock_in_date as  planFirstMassStockInDate,
+            pp.plan_listing_date as  planListingDate,
+            pp.project_approval_date as  projectApprovalDate,
+            pp.first_mass_stock_in_date as  firstMassStockInDate,
+            pp.listing_date as  listingDate,
+            pp.create_user_name as  createUserName,
+            pp.create_time as  createTime
+        from  product_plan pp
+        <where>
+            <if test="params.type != null and params.type != ''">
+
+            </if>
+            <if test="params.name != null and params.name != ''">
+               and pp.name like concat('%',#{params.name},'%')
+            </if>
+            <if test="params.chargeId != null and params.chargeId != ''">
+                and pp.charge_id = #{params.chargeId}
+            </if>
+            <if test="params.categoryId != null and params.categoryId != ''">
+                and pp.category_id = #{params.categoryId}
+            </if>
+            <if test="params.planSurveyDateBegin != null ">
+                and pp.plan_survey_date_begin &gt;= #{params.planSurveyDateBegin}
+            </if>
+            <if test="params.planSurveyDateEnd != null ">
+                and pp.plan_survey_date_end &lt;= #{params.planSurveyDateEnd}
+            </if>
+            <if test="params.planProjectApprovalDateBegin != null ">
+                and pp.plan_project_approval_date_begin &gt;= #{params.planProjectApprovalDateBegin}
+            </if>
+            <if test="params.planProjectApprovalDateEnd != null ">
+                and pp.plan_project_approval_date_begin &lt;= #{params.planProjectApprovalDateEnd}
+            </if>
+            <if test="params.planFirstMassStockInDateBegin != null ">
+                and pp.plan_first_mass_stock_in_date_begin &gt;= #{params.planFirstMassStockInDateBegin}
+            </if>
+            <if test="params.planFirstMassStockInDateEnd != null ">
+                and pp.plan_first_mass_stock_in_date_end &lt;= #{params.planFirstMassStockInDateEnd}
+            </if>
+            <if test="params.planListingDateBegin != null ">
+                and pp.plan_listing_date_begin &gt;= #{params.planListingDateBegin}
+            </if>
+            <if test="params.planListingDateEnd != null ">
+                and pp.plan_listing_date_end &lt;= #{params.planListingDateEnd}
+            </if>
+        </where>
+    </select>
 
 </mapper>

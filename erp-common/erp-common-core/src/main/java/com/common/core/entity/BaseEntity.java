@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * @description: 实体类基类
@@ -39,8 +38,8 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    @TableField(value = "create_time")
+    private LocalDateTime createTime;
 
     /**
      * 修改人id
@@ -57,8 +56,8 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 更新时间
      */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    @TableField(value = "update_time")
+    private LocalDateTime updateTime;
 
     /**
      * 乐观锁版本号
@@ -90,7 +89,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      * 删除时间
      */
     @TableField(value = "deleted_time")
-    private Date deletedTime;
+    private LocalDateTime deletedTime;
 
 
     public static final String ID = "id";
