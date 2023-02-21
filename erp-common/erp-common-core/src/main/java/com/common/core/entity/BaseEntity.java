@@ -10,9 +10,9 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 实体类基类
- *
- * @author GWELL
+ * @description: 实体类基类
+ * @author Will
+ * @date: 2023/2/21 9:18
  */
 @Data
 @ToString
@@ -59,21 +59,21 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 逻辑删除字段
      */
-    @TableField(value = "is_delete")
+    @TableField(value = "is_deleted")
     @TableLogic
-    private Boolean isDelete;
+    private Boolean isDeleted;
 
     /**
      * 删除人id
      */
-    @TableField(value = "delete_user_id")
-    private String deleteUserId;
+    @TableField(value = "deleted_user_id")
+    private String deletedUserId;
 
     /**
      * 删除时间
      */
-    @TableField(value = "delete_time")
-    private Date deleteTime;
+    @TableField(value = "deleted_time")
+    private Date deletedTime;
 
 
     @Override
