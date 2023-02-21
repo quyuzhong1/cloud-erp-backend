@@ -92,6 +92,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Transactional
     public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return false;
+        }
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
         String userName = commonService.getUserInfo().getUserName();
@@ -628,7 +631,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         String status = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
         plan.setStatus(status);
         plan.setRemark(dto.getComment());
-
+        plan.setApprovalFinishTime(new Date());
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(id);
         tableDTO.setUserId(userId);
@@ -680,7 +683,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public void processPass(ProcessPassDTO dto) {
         String id = dto.getBusinessTableId();
         ProjectPlanEntity plan = this.getById(id);
-        LoginUser loginUser=commonService.getUserInfo();
+        LoginUser loginUser = commonService.getUserInfo();
         String userName = loginUser.getUserName();
         if (plan != null) {
             String status = BaseStatusEnum.AUDIT_PASS.getStatus();
@@ -709,7 +712,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                      * 就要
                      * 如果是自动发布的任务 就要发布
                      */
-                    taskService.initialScheduleTaskPass(loginUser,plan.getProductId(), taskIdList, status);
+                    taskService.initialScheduleTaskPass(loginUser, plan.getProductId(), taskIdList, status);
 
                 }
 

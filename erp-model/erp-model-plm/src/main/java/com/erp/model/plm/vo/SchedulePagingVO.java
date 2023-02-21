@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -69,12 +70,14 @@ public class SchedulePagingVO implements Serializable {
     /**
      * 提交时间
      */
-    private String createTime;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private Date createTime;
 
 
     /**
      * 审核完成时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date approvalFinishTime;
 
     /**

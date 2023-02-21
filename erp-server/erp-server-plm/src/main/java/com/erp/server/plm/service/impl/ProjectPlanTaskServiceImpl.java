@@ -111,7 +111,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
             //根据阶段分组
             LinkedHashMap<String, List<ProductTaskVO>> map = taskList.stream().
-                    collect(Collectors.groupingBy(ProductTaskVO::getPhaseId,LinkedHashMap::new,Collectors.toList()));
+                    collect(Collectors.groupingBy(ProductTaskVO::getPhaseId, LinkedHashMap::new, Collectors.toList()));
 
             //变更
             String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
@@ -260,12 +260,16 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListenerUtil).sheet(0).doRead();
-            List<ScheduleTaskExportExcelVO> list = excelListenerUtil.getDateList();
-            if (CollectionUtils.isEmpty(list)) {
+            List<ScheduleTaskExportExcelVO> dataList = excelListenerUtil.getDataList();
+            if (CollectionUtils.isEmpty(dataList)) {
+                throw new ServiceException(ApiError.ERROR_95133);
+            }
+            List<ScheduleTaskExportExcelVO> errorList = excelListenerUtil.getErrorList();
+            if (CollectionUtils.isEmpty(errorList)) {
                 return true;
             }
             String fileName = "排期错误";
-            ExcelUtil.export(fileName, "task", list, ScheduleTaskExportExcelVO.class, response);
+            ExcelUtil.export(fileName, "task", errorList, ScheduleTaskExportExcelVO.class, response);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }

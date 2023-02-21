@@ -240,6 +240,7 @@ public enum ApiError implements Serializable {
     ERROR_95130(95130,"存在项目计划未完成的任务"),
     ERROR_95131(95131,"导入模板下载失败"),
     ERROR_95132(95132, "立项模板产品属性不能为空"),
+    ERROR_95133(95133, "模板数据为空"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

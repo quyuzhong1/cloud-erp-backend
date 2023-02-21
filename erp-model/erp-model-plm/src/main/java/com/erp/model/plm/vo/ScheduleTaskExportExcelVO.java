@@ -40,8 +40,8 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
 
 
     @ColumnWidth(50)
-    @ExcelProperty(value = "任务排期状态", index = 2)
-    private String scheduleStatusName;
+    @ExcelProperty(value = "任务状态", index = 2)
+    private String statusName;
 
 
     /**

@@ -38,7 +38,7 @@
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
-                pp.${item.field} ${item.sort}
+                ${item.field} ${item.sort}
             </foreach>
         </if>
         pp.create_time DESC

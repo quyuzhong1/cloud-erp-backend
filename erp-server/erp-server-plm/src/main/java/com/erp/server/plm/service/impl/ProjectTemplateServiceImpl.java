@@ -18,6 +18,7 @@ import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
+import com.erp.model.plm.enums.ProjectTemplateShowTypeEnum;
 import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
@@ -88,7 +89,6 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         Boolean isApprovalTemplate = false;
         if (approvalTemplateCode.equals(templateType)) {
             isApprovalTemplate = true;
-
             //当为空的时候
             if (StringUtils.isBlank(productPropertyId)) {
                 throw new ServiceException(ApiError.ERROR_95132);
@@ -126,7 +126,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 throw new ServiceException(ApiError.ERROR_95063);
             }
         }
-        if (!isApprovalTemplate) {
+        if (ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getCode().equals(dto.getTemplateType()) ) {
             //查询项目默认模板是否已存在
             ProjectTemplateEntity projectDefaultTemplate = getProjectDefaultTemplate();
             if (projectDefaultTemplate != null && !projectDefaultTemplate.getId().equals(dto.getId())) {

@@ -6,7 +6,7 @@ spring:
         namespace: ${NACOS_NAMESPACE:dev-yl}
       config:
         server-addr: 172.16.100.12
-        namespace: test
+        namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml
 #  mail:
