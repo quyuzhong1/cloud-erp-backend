@@ -17,13 +17,13 @@ import lombok.NoArgsConstructor;
 public class ProjectStatusTimeEntity {
 
     /**
-     * 产品ID
+     * 项目ID
      */
     @TableField(value = "product_id")
     private String productId;
 
     /**
-     * 产品状态
+     * 项目状态
      */
     @TableField(value = "status")
     private String status;

@@ -959,7 +959,6 @@
         create_user_id,
         create_user_name,
         business_process_id,
-        approval_user_id,
         is_milepost,
         is_sku_change
         FROM project_task WHERE product_id = #{showDTO.productId}

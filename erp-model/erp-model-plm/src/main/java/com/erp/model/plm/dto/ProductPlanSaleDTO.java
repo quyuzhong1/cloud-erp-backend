@@ -38,7 +38,7 @@ public class ProductPlanSaleDTO implements Serializable {
     /**
      * 销售平台/渠道
      */
-    private String salesPlatform;
+    private String salesPlatformName;
 
     /**
      * 销售目标国家ID

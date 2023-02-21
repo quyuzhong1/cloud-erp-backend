@@ -16,7 +16,7 @@ import java.io.Serializable;
 public class productPlanProgressDTO implements Serializable {
 
     /**
-     * 产品进度类型（新疆规划、转产品开发、项目启动、项目完成）
+     * 产品进度类型（新建规划、转产品开发、项目启动、项目完成）
      */
     private String type;
 

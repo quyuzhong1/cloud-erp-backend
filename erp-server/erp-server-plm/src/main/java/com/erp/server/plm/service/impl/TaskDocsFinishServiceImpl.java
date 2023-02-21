@@ -415,11 +415,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             businessProcess = businessProcessService.getById(taskEntity.getBusinessProcessId());
         } else {
             //如果是 评审任务 就是任务负责人
-            String approvalUserId = taskEntity.getChargeId();
-            if (StringUtils.isEmpty(approvalUserId)) {
+            String chargeId = taskEntity.getChargeId();
+            if (StringUtils.isEmpty(chargeId)) {
                 throw new ServiceException(ApiError.ERROR_95045);
             }
-            List<String> userIdList = Arrays.asList(approvalUserId.split(","));
+            List<String> userIdList = Arrays.asList(chargeId.split(","));
             membersIds.add(userIdList);
 
             businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());

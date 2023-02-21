@@ -30,7 +30,7 @@ public class ProductPlanPurchaseDTO implements Serializable {
      */
     private String targetCost;
 
-    /**
+    /**Z
      * 摸具成本预估
      */
     private String estimatedMoldCost;
@@ -38,7 +38,7 @@ public class ProductPlanPurchaseDTO implements Serializable {
     /**
      * 供应商状态
      */
-    private String supplierStatus;
+    private String supplierStatusName;
 
     /**
      * 主要供应商名称

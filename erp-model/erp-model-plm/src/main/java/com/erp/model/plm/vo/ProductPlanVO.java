@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * @author Will
@@ -16,6 +15,11 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 public class ProductPlanVO implements Serializable {
+
+    /**
+     * 规划id
+     */
+    private String id;
 
     /**
      * 年份
@@ -35,7 +39,7 @@ public class ProductPlanVO implements Serializable {
     /**
      * 产品状态
      */
-    private String productStatus;
+    private String productStatusName;
 
     /**
      * 产品分类
@@ -95,5 +99,5 @@ public class ProductPlanVO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDate createTime;
 }

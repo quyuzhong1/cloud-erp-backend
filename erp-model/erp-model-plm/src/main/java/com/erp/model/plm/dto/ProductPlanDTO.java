@@ -165,12 +165,12 @@ public class ProductPlanDTO implements Serializable {
     /**
      * 是否需要ID设计
      */
-    private String isNeedIDDesign;
+    private Boolean isNeedIDDesign;
 
     /**
      * 是否需要结构设计
      */
-    private String isNeedStructuralDesign;
+    private Boolean isNeedStructuralDesign;
 
     /**
      * 计划调研时间

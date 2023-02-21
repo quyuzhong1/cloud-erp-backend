@@ -4230,11 +4230,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         startProcess.setBusinessKey(businessProcess.getBusinessType());
         Map<String, Object> parameterMap = new HashMap<>();
         //如果是 评审任务 就是任务负责人
-        String approvalUserId = taskEntity.getChargeId();
-        if (StringUtils.isEmpty(approvalUserId)) {
+        String chargeId = taskEntity.getChargeId();
+        if (StringUtils.isEmpty(chargeId)) {
             throw new ServiceException(ApiError.ERROR_95045);
         }
-        List<String> membersIds = Arrays.asList(approvalUserId.split(","));
+        List<String> membersIds = Arrays.asList(chargeId.split(","));
         parameterMap.put("taskChargeIdList", membersIds);
         startProcess.setParameterMap(parameterMap);
         ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);

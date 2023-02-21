@@ -37,7 +37,7 @@ public class ProductPlanPurchaseEntity {
     /**
      * 供应商状态
      */
-    @TableField(value = "estimated_mold_cost")
+    @TableField(value = "supplier_status")
     private String supplierStatus;
 
     /**
