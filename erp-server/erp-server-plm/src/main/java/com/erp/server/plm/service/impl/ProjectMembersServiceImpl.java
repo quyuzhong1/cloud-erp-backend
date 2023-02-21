@@ -427,8 +427,20 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public Boolean removeMembers(RemoveProjectMemberDTO dto) {
+        RoleRefMemberEntity roleRefMemberEntity = roleRefMemberService.getById(dto.getRoleRefMemberId());
+        if (ObjectUtils.isEmpty(roleRefMemberEntity)) {
+            return Boolean.TRUE;
+        }
+        //删除
         boolean flag = this.removeById(dto.getId());
+        //删除关联表信息
         roleRefMemberService.removeById(dto.getRoleRefMemberId());
+        //判断是否需要删除角色
+        List<RoleRefMemberEntity> list = roleRefMemberService.getByRoleIdsAndProductId(Arrays.asList(roleRefMemberEntity.getRoleId()), roleRefMemberEntity.getProductId());
+        if (CollectionUtils.isEmpty(list)) {
+            //如果是角色关联的最后一个成员，则删除角色
+            projectRoleService.removeById(roleRefMemberEntity.getRoleId());
+        }
         return flag;
     }
 
