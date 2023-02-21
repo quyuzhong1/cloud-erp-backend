@@ -7,7 +7,7 @@ import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.dto.BiTargetTypeDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
-import com.erp.model.bi.vo.ChartVO;
+import com.erp.common.business.vo.ChartVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;

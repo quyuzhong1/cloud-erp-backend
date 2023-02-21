@@ -1,5 +1,6 @@
 package com.erp.model.bi.vo;
 
+import com.erp.common.business.vo.ChartVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

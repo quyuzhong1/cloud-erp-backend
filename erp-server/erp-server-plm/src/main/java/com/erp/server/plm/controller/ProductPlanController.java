@@ -1,0 +1,224 @@
+package com.erp.server.plm.controller;
+
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.*;
+import com.erp.model.plm.vo.ProductPlanGroupVO;
+import com.erp.model.plm.vo.ProductPlanRemarkVO;
+import com.erp.model.plm.vo.ProductPlanStatisticsVO;
+import com.erp.model.plm.vo.ProductPlanVO;
+import com.erp.server.plm.service.ProductPlanService;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+
+/**
+ *  产品规划
+ * @author Will
+ * @date: 2023/2/21 9:45
+ */
+@RestController
+@RequestMapping("plm/product/plan")
+public class ProductPlanController extends BaseController {
+
+    @Resource
+    private ProductPlanService productPlanService;
+
+
+    /**
+     * 产品规划-分页查询
+     * @author Will
+     * @date: 2023/2/21 9:52
+     * @param dto
+     * @return ApiResult<PagingVO<List<ProductPlanVO>>>
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<List<ProductPlanVO>>> queryByPage(@RequestBody @Validated PagingDTO<ProductPlanSearchDTO> dto) {
+        PagingVO<List<ProductPlanVO>> pagingVO = productPlanService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 产品规划-查询详情
+     * @author Will
+     * @date: 2023/2/21 10:01
+     * @param dto
+     * @return ApiResult<ProductPlanDTO>
+     */
+    @GetMapping("/productPlanDetails")
+    public ApiResult<ProductPlanDTO> productPlanDetails(@RequestBody @Validated BaseIdDTO dto) {
+        ProductPlanDTO productPlanDTO = productPlanService.productPlanDetails(dto.getId());
+        return success(productPlanDTO);
+    }
+
+    /**
+     * 产品规划-规划开发
+     * @author Will
+     * @date: 2023/2/21 10:54
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/planDevelopProduct")
+    public ApiResult planDevelopProduct(@RequestBody @Validated ProductPlanDevelopDTO dto) {
+        Boolean flag = productPlanService.planDevelopProduct(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 产品规划-删除
+     * @author Will
+     * @date: 2023/2/21 10:03
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean flag = productPlanService.deleteById(dto.getId());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 产品规划-添加备注
+     * @author Will
+     * @date: 2023/2/21 10:07
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/addRemark")
+    public ApiResult addRemark(@RequestBody @Validated ProductPlanRemarkDTO dto) {
+        Boolean flag = productPlanService.addRemark(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 产品规划-备注列表
+     * @author Will
+     * @date: 2023/2/21 10:07
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/listRemark")
+    public ApiResult<List<ProductPlanRemarkVO>> listRemark(@RequestBody @Validated BaseIdDTO dto) {
+        List<ProductPlanRemarkVO> list = productPlanService.listRemark(dto);
+        return  success(list);
+    }
+
+
+    /**
+     * 产品规划-指标数据
+     * @author Will
+     * @date: 2023/2/21 11:13
+     * @param dto
+     * @return ApiResult<List<ProductPlanStatisticsVO>>
+     */
+    @PostMapping("/listProductPlanStatistics")
+    public ApiResult<List<ProductPlanStatisticsVO>> listProductPlanStatistics(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<ProductPlanStatisticsVO> list = productPlanService.listProductPlanStatistics(dto);
+        return  success(list);
+    }
+
+
+    /**
+     * 产品规划-表格数据
+     * @author Will
+     * @date: 2023/2/21 11:23
+     * @param dto
+     * @return ApiResult<List<ProductPlanGroupVO>>
+     */
+    @PostMapping("/listProductPlanTable")
+    public ApiResult<List<ProductPlanGroupVO>> listProductPlanTable(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<ProductPlanGroupVO> list = productPlanService.listProductPlanTable(dto);
+        return  success(list);
+    }
+
+    /**
+     * 产品规划-柱形图
+     * @author Will
+     * @date: 2023/2/21 11:42
+     * @param dto
+     * @return ApiResult<List<ProductPlanGroupVO>>
+     */
+    @PostMapping("/listProductPlanPieChart")
+    public ApiResult<List<ProductPlanGroupVO>> listProductPlanPieChart(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<ProductPlanGroupVO> list = productPlanService.listProductPlanTable(dto);
+        return  success(list);
+    }
+
+
+    /**
+     *  产品规划-导入规划
+     * @author Will
+     * @date: 2023/2/21 10:11
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/importFile")
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = productPlanService.importFile(excelFile,response);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 产品规划-下载模板
+     * @author Will
+     * @date: 2023/2/21 10:26
+     * @param request
+     * @param response
+
+     */
+    @GetMapping("/exportTemplate")
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/productPlanTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+   /**
+    * 产品规划-导出规划
+    * @author Will
+    * @date: 2023/2/21 10:29
+    * @param productPlanSearchDTO
+    * @param response
+    * @return ApiResult
+    */
+    @PostMapping(value = "/exportProductPlan")
+    public ApiResult exportProductPlan(@RequestBody ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response) {
+        Boolean flag = productPlanService.exportProductPlan(productPlanSearchDTO, response);
+        return flag == true ? success() : failure();
+    }
+
+}
+

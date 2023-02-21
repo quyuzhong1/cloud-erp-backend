@@ -13,6 +13,6 @@ import org.springframework.stereotype.Service;
  * @date 2023/2/20 19:53
  */
 @Service
-public class ProductPlanSaleImpl extends ServiceImpl<ProductPlanSaleMapper, ProductPlanSaleEntity>
+public class ProductPlanSaleServiceImpl extends ServiceImpl<ProductPlanSaleMapper, ProductPlanSaleEntity>
         implements ProductPlanSaleService {
 }

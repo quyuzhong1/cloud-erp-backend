@@ -11,7 +11,7 @@ import com.erp.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.dto.BiTargetTypeDTO;
-import com.erp.model.bi.vo.ChartVO;
+import com.erp.common.business.vo.ChartVO;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;

@@ -28,8 +28,14 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 创建人id
      */
-    @TableField(value = "create_user_id")
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
+    private String createUserName;
 
     /**
      * 创建时间
@@ -40,8 +46,14 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 修改人id
      */
-    @TableField(value = "update_user_id")
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
 
     /**
      * 更新时间
@@ -68,6 +80,12 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      */
     @TableField(value = "deleted_user_id")
     private String deletedUserId;
+
+    /**
+     * 删除人名称
+     */
+    @TableField(value = "deleted_user_name")
+    private String deletedUserName;
 
     /**
      * 删除时间

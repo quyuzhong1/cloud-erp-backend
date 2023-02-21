@@ -1,7 +1,19 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.business.dto.base.BaseIdDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductPlanEntity;
+import com.erp.model.plm.vo.ProductPlanGroupVO;
+import com.erp.model.plm.vo.ProductPlanRemarkVO;
+import com.erp.model.plm.vo.ProductPlanStatisticsVO;
+import com.erp.model.plm.vo.ProductPlanVO;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @author Will
@@ -10,4 +22,86 @@ import com.erp.model.plm.entity.ProductPlanEntity;
  * @date 2023/2/20 20:05
  */
 public interface ProductPlanService extends IService<ProductPlanEntity> {
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/2/21 10:02
+     * @param dto
+     * @return PagingVO<List<ProductPlanVO>>
+     */
+    PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> dto);
+    /**
+     * @description: 查询详情
+     * @author Will
+     * @date: 2023/2/21 10:02
+     * @param id
+     * @return ProductPlanDTO
+     */
+    ProductPlanDTO productPlanDetails(String id);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/2/21 10:04
+     * @param id
+     * @return Boolean
+     */
+    Boolean deleteById(String id);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/2/21 10:11
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 导出规划
+     * @author Will
+     * @date: 2023/2/21 10:30
+     * @param productPlanSearchDTO
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response);
+    /**
+     * @description: 新增备注
+     * @author Will
+     * @date: 2023/2/21 10:35
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addRemark(ProductPlanRemarkDTO dto);
+    /**
+     * @description: 备注列表
+     * @author Will
+     * @date: 2023/2/21 10:40
+     * @param dto
+     * @return List<ProductPlanRemarkVO>
+     */
+    List<ProductPlanRemarkVO> listRemark(BaseIdDTO dto);
+    /**
+     * @description: 规划开发
+     * @author Will
+     * @date: 2023/2/21 10:55
+     * @param dto
+     * @return Boolean
+     */
+    Boolean planDevelopProduct(ProductPlanDevelopDTO dto);
+    /**
+     * @description: 指标数据
+     * @author Will
+     * @date: 2023/2/21 11:14
+     * @param dto
+     * @return List<ProductPlanStatisticsVO>
+     */
+    List<ProductPlanStatisticsVO> listProductPlanStatistics(ProductPlanGroupSerachDTO dto);
+    /**
+     * @description: 表格数据
+     * @author Will
+     * @date: 2023/2/21 11:38
+     * @param dto
+     * @return List<ProductPlanGroupVO>
+     */
+    List<ProductPlanGroupVO> listProductPlanTable(ProductPlanGroupSerachDTO dto);
 }
