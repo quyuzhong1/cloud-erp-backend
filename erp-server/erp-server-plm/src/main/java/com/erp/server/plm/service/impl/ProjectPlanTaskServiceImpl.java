@@ -4,17 +4,21 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.enums.BaseStatusEnum;
-import com.erp.common.business.enums.CustomizeFieldEnum;
-import com.erp.common.business.enums.ModuleEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.common.business.dto.base.BaseIdDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.erp.model.plm.dto.*;
+import com.erp.common.business.enums.BaseStatusEnum;
+import com.erp.common.business.enums.CustomizeFieldEnum;
+import com.erp.common.business.enums.ModuleEnum;
+import com.erp.model.plm.dto.ChangeScheduleDTO;
+import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
+import com.erp.model.plm.dto.HandleTaskScheduleDTO;
+import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
@@ -24,7 +28,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.listener.ChangeScheduleExcelListener;
 import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
@@ -101,14 +104,15 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             //交付文档列表
             List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(productId);
 
-            //排期状态
+            // 只有在排期状态
             List<String> scheduleStatusList = new ArrayList<>();
-            scheduleStatusList.add(BaseStatusEnum.AUDIT_PASS.getStatus());
-            scheduleStatusList.add(BaseStatusEnum.AUDIT_PASS.getStatus());
+            scheduleStatusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
+            scheduleStatusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
 
             //根据阶段分组
-            Map<String, List<ProductTaskVO>> map = taskList.stream().
-                    collect(Collectors.groupingBy(ProductTaskVO::getPhaseId));
+            LinkedHashMap<String, List<ProductTaskVO>> map = taskList.stream().
+                    collect(Collectors.groupingBy(ProductTaskVO::getPhaseId,LinkedHashMap::new,Collectors.toList()));
+
             //变更
             String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
             int parentId = 1;
@@ -160,7 +164,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     String scheduleType = vo.getScheduleType();
                     //如果是变更 且不在 两个状态中 就是变更
                     if (change.equals(scheduleType)) {
-                        if (!scheduleStatusList.contains(scheduleStatus)) {
+                        if (scheduleStatusList.contains(scheduleStatus)) {
                             vo.setIsChange(true);
                         }
                     }
@@ -585,6 +589,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             entity.setOriginChargeId(item.getChargeId());
             entity.setOriginStartTime(item.getPlanStartTime());
             entity.setOriginEndTime(item.getPlanEndTime());
+            entity.setTaskId(taskId);
+            entity.setProductId(productId);
 
             ChangeTaskScheduleDTO changeTask = list.stream().filter(t -> t.getTaskId().equals(taskId)).findFirst().orElse(null);
             //从参数里面取

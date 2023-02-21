@@ -304,6 +304,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 for (ScheduleTaskDetailsVO hi : historyList) {
                     String hiChargeId = hi.getChargeId();
                     hi.setChargeName(getNameByIds(hiChargeId, userList));
+
+                    String hiTaskName = taskEntityList.stream().filter(t -> t.getId().equals(hi.getTaskId())).findFirst().
+                            flatMap(data -> Optional.ofNullable(data.getName())).orElse("");
+                    hi.setTaskName(hiTaskName);
                 }
             }
             task.setHistoryList(historyList);
