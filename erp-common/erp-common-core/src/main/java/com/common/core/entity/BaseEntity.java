@@ -15,7 +15,6 @@ import java.util.Date;
  * @date: 2023/2/21 9:18
  */
 @Data
-@ToString
 @NoArgsConstructor
 public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
@@ -92,6 +91,20 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      */
     @TableField(value = "deleted_time")
     private Date deletedTime;
+
+
+    public static final String ID = "id";
+
+    public static final String CREATE_TIME = "create_time";
+
+    public static final String UPDATE_TIME = "update_time";
+
+    public static final String VERSION = "version";
+
+    public static final String IS_DELETED = "is_deleted";
+    public static final String DELETED_USER_ID = "deleted_user_id";
+
+    public static final String DELETED_TIME = "deleted_time";
 
 
     @Override
