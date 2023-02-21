@@ -75,4 +75,11 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return com.erp.model.plm.entity.ProjectTemplateEntity
      */
     ProjectTemplateEntity getApprovalTemplate(Integer code, String productPropertyId);
+
+
+    /**
+     * 获取默认的开启的模板
+     * @return
+     */
+    ProjectTemplateEntity getDefaultTemplate();
 }

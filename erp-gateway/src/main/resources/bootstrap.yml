@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-gateway
   profiles:
-    active: dev
+    active: test
 server:
   port: 9000
 

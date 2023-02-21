@@ -27,7 +27,7 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
 
     Boolean removeTask(String taskId);
 
-    List<ProjectTaskSysEntity> getListByProperty(Integer state);
+    List<ProjectTaskSysEntity> getListByProperty(Integer state,String templateId);
 
     List<String> getSysTaskNames();
 

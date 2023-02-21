@@ -145,26 +145,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 添加系统的产品任务
-     * 只添加立项的
+     * 只添加立项模板的任务
      *
      * @param productId
-     * @param productPropertyId  产品属性id
+     * @param productPropertyId 产品属性id
      * @return void
      * @author yl
      * @date 2022-09-17 10:32
      */
     @Transactional
     @Override
-    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser,String productPropertyId) {
+    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser, String productPropertyId) {
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         // 查询立项模板
-        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getApprovalTemplate(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode(),productPropertyId);
+        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getApprovalTemplate(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode(), productPropertyId);
         if (ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
             return new ArrayList<>();
         }
         // 这是立项任务任务
-        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.get(TaskConstant.APPROVAL_TASK);
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK, projectTemplateEntity.getId());
         //添加前置任务
         List<ProjectTaskEntity> addTaskList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
@@ -178,20 +178,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(productId);
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-
-                //一般任务
-                Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
-                //是否是一般任务 true 是
-                Boolean isGeneralTask = generalTask.equals(taskType);
-
                 String id = IdWorker.getIdStr();
                 entity.setId(id);
                 source.setNewCreateId(id);
                 source.setDataId(item.getId());
                 sourceList.add(source);
-                if (IsConstant.NO.equals(item.getType())) {
-                    entity.setStatus(TaskStateEnum.NOT_START.getCode());
-                }
                 if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
                     //判断负责人分配方式是否是角色
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getDistributionType())) {
@@ -205,16 +196,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         }
                     }
                 }
-                Integer afterState = TaskStateEnum.NOT_START.getCode();
-                //如果不是是一般任务
-                if (!isGeneralTask) {
-                    afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
-                }
-                entity.setStatus(afterState);
                 boolean flag = this.save(entity);
                 if (flag) {
                     addTaskList.add(entity);
-
                     //查询模板任务下审核人
                     List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
                     if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
@@ -260,16 +244,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
 
 
-                    //保存任务记录
-                    taskOperatorRecordService.addTaskOperator(entity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
-                    //发布任务通知
-                    List<ProjectTaskEntity> taskList = new ArrayList<>(1);
-                    taskList.add(entity);
-                    if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
-                        noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, productId);
-                    } else {
-                        noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
-                    }
                 }
                 sysLogService.addSysLogBySave("新增了一个：[" + entity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), entity.getId(), null);
 
@@ -425,10 +399,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Pair<List<String>, List<ProjectTaskEntity>> copyTaskBySys(String saveProductId, String saveProjectId) {
 
+
         //添加过的 sku 配置的列表
         List<String> addTaskSkuConfigList = new ArrayList<>();
+        //这里要找项目模板【默认的】
+        ProjectTemplateEntity defaultTemplate = projectTemplateService.getDefaultTemplate();
+        if (Objects.isNull(defaultTemplate)) {
+              return new Pair<>(new ArrayList<>(), new ArrayList<>());
+        }
+        String templateId = defaultTemplate.getId();
         //从系统拿到 项目任务
-        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK, templateId);
         List<ProjectTaskEntity> addTaskList = new ArrayList<>(sysTaskList.size());
 
         //保存除了立项阶段的 阶段名
@@ -2663,9 +2644,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-02-17 10:59
      */
     @Override
-    public void initialScheduleTaskPass(String productId, List<String> taskIdList, String scheduleStatus) {
+    public void initialScheduleTaskPass(LoginUser loginUser, String productId, List<String> taskIdList, String scheduleStatus) {
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
         String userId = commonService.getUserInfo().getUid();
+
         for (ProjectTaskEntity task : taskList) {
             Integer taskType = task.getType();
             task.setScheduleStatus(scheduleStatus);
@@ -2676,6 +2658,28 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
             task = automationTask(task, taskType, chargeIdList, userId);
+            Integer afterState = TaskStateEnum.NOT_START.getCode();
+            //一般任务
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            //是否是一般任务 true 是
+            Boolean isGeneralTask = generalTask.equals(taskType);
+            //如果不是是一般任务
+            if (!isGeneralTask) {
+                afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
+            }
+            task.setStatus(afterState);
+
+
+            //保存任务记录
+            taskOperatorRecordService.addTaskOperator(task.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
+            //发布任务通知
+            List<ProjectTaskEntity> noticeTaskList = new ArrayList<>(1);
+            noticeTaskList.add(task);
+            if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(task.getStatus())) {
+                noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, productId);
+            } else {
+                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
+            }
 
         }
         if (CollectionUtils.isNotEmpty(taskList)) {
@@ -2705,9 +2709,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public void updatePhase(ProjectTaskEntity taskEntity) {
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(ProjectTaskEntity::getProductId,taskEntity.getProductId());
-        updateWrapper.eq(ProjectTaskEntity::getPhaseId,taskEntity.getPhaseId());
-        updateWrapper.set(ProjectTaskEntity::getPhaseName,taskEntity.getPhaseName());
+        updateWrapper.eq(ProjectTaskEntity::getProductId, taskEntity.getProductId());
+        updateWrapper.eq(ProjectTaskEntity::getPhaseId, taskEntity.getPhaseId());
+        updateWrapper.set(ProjectTaskEntity::getPhaseName, taskEntity.getPhaseName());
         this.update(updateWrapper);
     }
 

@@ -680,7 +680,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public void processPass(ProcessPassDTO dto) {
         String id = dto.getBusinessTableId();
         ProjectPlanEntity plan = this.getById(id);
-        String userName = commonService.getUserInfo().getUserName();
+        LoginUser loginUser=commonService.getUserInfo();
+        String userName = loginUser.getUserName();
         if (plan != null) {
             String status = BaseStatusEnum.AUDIT_PASS.getStatus();
             plan.setStatus(status);
@@ -708,7 +709,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                      * 就要
                      * 如果是自动发布的任务 就要发布
                      */
-                    taskService.initialScheduleTaskPass(plan.getProductId(), taskIdList, status);
+                    taskService.initialScheduleTaskPass(loginUser,plan.getProductId(), taskIdList, status);
 
                 }
 

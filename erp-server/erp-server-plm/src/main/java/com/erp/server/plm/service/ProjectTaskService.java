@@ -244,7 +244,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param status
      * @return void
      */
-    void initialScheduleTaskPass(String productId, List<String> taskIdList, String status);
+    void initialScheduleTaskPass(LoginUser loginUser,String productId, List<String> taskIdList, String status);
 
     /**
      * 根据任务名 和产品id 获取到对应的人

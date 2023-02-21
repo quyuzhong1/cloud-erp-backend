@@ -244,20 +244,39 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         return resultList;
     }
 
-    
+
     /**
      * 获取立项模板数据
-     * @author yl
-     * @date 2023-02-21 16:03
+     *
      * @param type
      * @param productPropertyId
      * @return com.erp.model.plm.entity.ProjectTemplateEntity
+     * @author yl
+     * @date 2023-02-21 16:03
      */
     @Override
     public ProjectTemplateEntity getApprovalTemplate(Integer type, String productPropertyId) {
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTemplateEntity::getType, type);
         queryWrapper.eq(ProjectTemplateEntity::getProductPropertyId, productPropertyId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
+
+    /**
+     * 获取默认的模板 项目模板【默认】
+     *
+     * @param
+     * @return com.erp.model.plm.entity.ProjectTemplateEntity
+     * @author yl
+     * @date 2023-02-21 17:41
+     */
+    @Override
+    public ProjectTemplateEntity getDefaultTemplate() {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getIsDefault, IsConstant.YES);
+        queryWrapper.eq(ProjectTemplateEntity::getStatus, IsConstant.YES);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
