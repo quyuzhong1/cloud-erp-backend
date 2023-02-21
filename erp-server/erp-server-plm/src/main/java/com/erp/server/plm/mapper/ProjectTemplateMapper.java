@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -33,4 +34,13 @@ public interface ProjectTemplateMapper extends BaseMapper<ProjectTemplateEntity>
      * @return IPage<ProjectTemplateDTO>
      */
     IPage<ProjectTemplateDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+
+    /**
+     * 获取立项模板产品属性
+     * @author yl
+     * @date 2023-02-21 14:52
+     * @param type
+     * @return java.util.List<java.util.Map<java.lang.String,java.lang.Object>>
+     */
+    List<Map<String, Object>> getProductPropertyList(@Param("type") String type);
 }

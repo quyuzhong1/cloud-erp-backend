@@ -149,4 +149,8 @@ public class ProjectTaskSysEntity implements Serializable {
      */
     @TableField("related_sku_type")
     private String relatedSkuType;
+
+
+    @TableField("template_id")
+    private String templateId;
 }

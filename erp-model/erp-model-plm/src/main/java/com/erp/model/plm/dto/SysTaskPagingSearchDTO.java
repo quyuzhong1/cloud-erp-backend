@@ -19,4 +19,9 @@ public class SysTaskPagingSearchDTO extends BaseSearchDTO {
      */
     private String type;
 
+    /**
+     * 模板id
+     */
+    private String templateId;
+
 }

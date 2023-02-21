@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -62,4 +63,16 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return ProjectTemplateEntity
      */
     ProjectTemplateEntity getByType(Integer code);
+
+    List<Map<String, Object>> getProductPropertyList();
+
+    /**
+     * 获取立项模板
+     * @author yl
+     * @date 2023-02-21 16:02
+     * @param code
+     * @param productPropertyId
+     * @return com.erp.model.plm.entity.ProjectTemplateEntity
+     */
+    ProjectTemplateEntity getApprovalTemplate(Integer code, String productPropertyId);
 }

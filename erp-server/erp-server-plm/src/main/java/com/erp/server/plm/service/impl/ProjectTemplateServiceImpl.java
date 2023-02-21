@@ -3,33 +3,38 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.business.interceptor.CommonInterceptor;
-import com.erp.common.business.dto.base.BaseSearchDTO;
-import com.erp.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.erp.common.business.dto.base.PagingDTO;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.business.vo.LoginUser;
 import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
+import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
-import com.erp.model.plm.enums.ProjectTemplateShowTypeEnum;
-import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
+import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProjectTemplateService;
 import com.erp.server.plm.service.TemplateRoleService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -48,6 +53,9 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     @Resource
     private TemplateRoleService templateRoleService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -55,24 +63,40 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
         List<ProjectTemplateDTO> list = paging.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(obj-> obj.setTypeName( obj.getIsDefault() == 1 ? ProjectTemplateTypeEnum.getNameByCode(obj.getType()).concat("【默认】") : ProjectTemplateTypeEnum.getNameByCode(obj.getType()) ));
+            list.forEach(obj -> obj.setTypeName(obj.getIsDefault() == 1 ? ProjectTemplateTypeEnum.getNameByCode(obj.getType()).concat("【默认】") : ProjectTemplateTypeEnum.getNameByCode(obj.getType())));
         }
         return new PagingVO(paging);
     }
 
     /**
+     * @param dto
+     * @return Boolean
      * @description: 列表新增或修改
      * @author Will
      * @date: 2022/11/11 15:42
-     * @param dto
-     * @return Boolean
      */
     @Override
     public Boolean saveOrUpdate(ProjectTemplateSaveOrUpdateDTO dto) {
         //验证模板名称是否已存在
         checkTemplateName(dto.getName());
+        //立项模板
+        Integer approvalTemplateCode = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
+        Integer templateType = dto.getTemplateType();
+        //立项模板产品属性
+        String productPropertyId = dto.getProductPropertyId();
+        //是否是立项模板
+        Boolean isApprovalTemplate = false;
+        if (approvalTemplateCode.equals(templateType)) {
+            isApprovalTemplate = true;
+
+            //当为空的时候
+            if (StringUtils.isBlank(productPropertyId)) {
+                throw new ServiceException(ApiError.ERROR_95132);
+            }
+        }
+
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
-        BeanMapperUtils.copy(dto,entity);
+        BeanMapperUtils.copy(dto, entity);
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
@@ -93,16 +117,16 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         }
         //先设置成非默认，项目模板
         entity.setIsDefault(IsConstant.NO);
-        entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
-        if (ProjectTemplateShowTypeEnum.APPROVAL_TEMPLATE.getCode().equals(dto.getTemplateType()) ) {
+        entity.setType(templateType);
+        //当是立项模板的时候
+        if (isApprovalTemplate) {
             //查询立项模板是否已存在
-            ProjectTemplateEntity approvalTemplate = getApprovalTemplate();
+            ProjectTemplateEntity approvalTemplate = getApprovalTemplate(productPropertyId);
             if (approvalTemplate != null && !approvalTemplate.getId().equals(dto.getId())) {
                 throw new ServiceException(ApiError.ERROR_95063);
             }
-            entity.setType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
         }
-        if (ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getCode().equals(dto.getTemplateType()) ) {
+        if (!isApprovalTemplate) {
             //查询项目默认模板是否已存在
             ProjectTemplateEntity projectDefaultTemplate = getProjectDefaultTemplate();
             if (projectDefaultTemplate != null && !projectDefaultTemplate.getId().equals(dto.getId())) {
@@ -115,36 +139,38 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     }
 
     /**
+     * @return ProjectTemplateEntity
      * @description: 查询立项模板
      * @author Will
      * @date: 2022/11/16 16:48
-     * @return ProjectTemplateEntity
      */
-    private ProjectTemplateEntity getApprovalTemplate(){
+    private ProjectTemplateEntity getApprovalTemplate(String productPropertyId) {
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType,ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
+        queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
+        queryWrapper.eq(ProjectTemplateEntity::getProductPropertyId, productPropertyId);
+        queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
 
     /**
+     * @return ProjectTemplateEntity
      * @description: 查询项目默认模板
      * @author Will
      * @date: 2022/11/16 16:48
-     * @return ProjectTemplateEntity
      */
-    private ProjectTemplateEntity getProjectDefaultTemplate(){
+    private ProjectTemplateEntity getProjectDefaultTemplate() {
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType,ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
+        queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
         queryWrapper.eq(ProjectTemplateEntity::getIsDefault, IsConstant.YES);
         return this.getOne(queryWrapper);
     }
 
     /**
+     * @param dto
+     * @return Boolean
      * @description: 修改模板状态
      * @author Will
      * @date: 2022/11/11 15:42
-     * @param dto
-     * @return Boolean
      */
     @Override
     public Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto) {
@@ -170,9 +196,9 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         List<TemplateRoleEntity> list = templateRoleService.getByTemplateId(templateId);
         List<SysRoleDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(list)) {
-            return  new ArrayList<>();
+            return new ArrayList<>();
         }
-        list.forEach(obj->{
+        list.forEach(obj -> {
             resultList.add(new SysRoleDTO().setId(obj.getId()).setRoleName(obj.getName()));
         });
         return resultList;
@@ -181,10 +207,76 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     @Override
     public ProjectTemplateEntity getByType(Integer type) {
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType,type);
+        queryWrapper.eq(ProjectTemplateEntity::getType, type);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
+
+
+    /**
+     * 获取立项模板的产品属性
+     *
+     * @param
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2023-02-21 14:45
+     */
+    @Override
+    public List<Map<String, Object>> getProductPropertyList() {
+        String type = BasicDictTypeEnum.PRODUCT_PROPERTY.getCode();
+        List<BasicDictEntity> dictList = basicDictService.listByType(type);
+        Integer approvalTemplateCode = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
+
+        List<ProjectTemplateEntity> templateList = this.getTemplateByType(approvalTemplateCode);
+        List<String> productPropertyIdList = templateList.stream().
+                filter(t -> StringUtils.isNotBlank(t.getProductPropertyId())).
+                map(ProjectTemplateEntity::getProductPropertyId).collect(Collectors.toList());
+        List<Map<String, Object>> resultList = new ArrayList<>(dictList.size());
+        for (BasicDictEntity dict : dictList) {
+            Map<String, Object> map = new HashMap<>();
+            String productPropertyId = dict.getId();
+            map.put("productPropertyId", productPropertyId);
+            map.put("name", dict.getValue());
+            map.put("disable", productPropertyIdList.contains(productPropertyId));
+            resultList.add(map);
+        }
+
+        return resultList;
+    }
+
+    
+    /**
+     * 获取立项模板数据
+     * @author yl
+     * @date 2023-02-21 16:03
+     * @param type
+     * @param productPropertyId
+     * @return com.erp.model.plm.entity.ProjectTemplateEntity
+     */
+    @Override
+    public ProjectTemplateEntity getApprovalTemplate(Integer type, String productPropertyId) {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType, type);
+        queryWrapper.eq(ProjectTemplateEntity::getProductPropertyId, productPropertyId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
+
+    /**
+     * 根据模板类型获取模板
+     *
+     * @param type
+     * @return
+     * @author yl
+     * @date 2023-02-21 15:35
+     */
+    public List<ProjectTemplateEntity> getTemplateByType(Integer type) {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType, type);
+        return this.list(queryWrapper);
+    }
+
 
     /**
      * 保存模板 返回模板id
@@ -195,7 +287,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @date 2022-09-20 14:30
      */
     @Override
-    public String saveTemplate(String templateName,String productId,Integer templateType) {
+    public String saveTemplate(String templateName, String productId, Integer templateType) {
         checkTemplateName(templateName);
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
@@ -221,7 +313,6 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     public List<StartItemSourceDTO> startItemSource(Integer sourceType) {
         return baseMapper.getStartItemSource(sourceType);
     }
-
 
 
     /**

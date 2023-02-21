@@ -29,7 +29,7 @@ public class SysTaskDTO implements Serializable {
      * 任务名
      */
     @NotBlank(message = "任务名不能为空")
-    @Size(max = 50,message = "任务名最大50字符")
+    @Size(max = 50, message = "任务名最大50字符")
     private String name;
 
     /**
@@ -115,7 +115,7 @@ public class SysTaskDTO implements Serializable {
     /**
      * 业务流程名
      */
-    private String businessName="";
+    private String businessName = "";
 
     private List<DocsDTO> deliveryDocsList;
 
@@ -132,6 +132,12 @@ public class SysTaskDTO implements Serializable {
      */
     private String fieldJson;
 
+
+    /**
+     * 模板id
+     */
+    @NotBlank(message = "模板id不能为空")
+    private String templateId;
 
 
 }

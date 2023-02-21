@@ -67,6 +67,13 @@ public class ProjectTemplateEntity implements Serializable {
     @TableField("create_user_id")
     private String createUserId;
 
+
+    /**
+     * 产品属性id
+     * 对应basic_dict 表 type=productProperty 表id
+     */
+    @TableField("product_property_id")
+    private String productPropertyId;
     /**
      * 创建时间
      */

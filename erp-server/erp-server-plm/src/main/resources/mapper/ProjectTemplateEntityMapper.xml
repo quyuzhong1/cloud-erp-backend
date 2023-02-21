@@ -36,6 +36,7 @@
                 pt.update_user_id,
                 pt.update_user_name,
                 pt.is_default,
+                pt.product_property_id,
                 pt.status
             FROM project_template pt
             <where>
@@ -44,6 +45,15 @@
                 </if>
             </where>
             ORDER BY pt.create_time asc
+    </select>
+
+    <select id="getProductPropertyList" resultType="java.util.Map">
+        SELECT
+          id,value AS name
+          FROM  basic_dict  WHERE type=#{type}
+          AND id  NOT IN (
+            SELECT product_property_id FROM  project_template WHERE type=1
+          )
     </select>
 
 </mapper>

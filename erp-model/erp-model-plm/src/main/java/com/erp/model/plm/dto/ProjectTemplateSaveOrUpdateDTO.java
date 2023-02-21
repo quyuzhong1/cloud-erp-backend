@@ -31,4 +31,9 @@ public class ProjectTemplateSaveOrUpdateDTO implements Serializable {
      */
     @NotBlank(message = "模板名称不能为空")
     private String name;
+
+    /**
+     * 产品属性id
+     */
+    private String productPropertyId;
 }

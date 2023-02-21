@@ -27,7 +27,7 @@ import java.util.Map;
 public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
-    List<ProjectTaskEntity> addSysTask(String id, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser );
+    List<ProjectTaskEntity> addSysTask(String id, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser,String  productPropertyId);
 
     void removeTaskByProductId(String productId);
 

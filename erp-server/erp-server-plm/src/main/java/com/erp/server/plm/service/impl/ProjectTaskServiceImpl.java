@@ -148,22 +148,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * 只添加立项的
      *
      * @param productId
+     * @param productPropertyId  产品属性id
      * @return void
      * @author yl
      * @date 2022-09-17 10:32
      */
     @Transactional
     @Override
-    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser) {
+    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser,String productPropertyId) {
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         // 查询立项模板
-        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getByType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
+        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getApprovalTemplate(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode(),productPropertyId);
         if (ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
             return new ArrayList<>();
         }
         // 这是立项任务任务
-        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.get(TaskConstant.APPROVAL_TASK);
         //添加前置任务
         List<ProjectTaskEntity> addTaskList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
@@ -175,14 +176,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 BeanMapper.copy(item, entity);
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(productId);
-                String chargeId = item.getChargeId();
-                List chargeIdList = new ArrayList();
-                if (StringUtils.isNotBlank(chargeId)) {
-                    chargeIdList = Arrays.asList(chargeId.split(","));
-                }
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-                // entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
 
                 //一般任务
                 Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();

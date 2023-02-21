@@ -42,6 +42,11 @@ public class ProjectTemplateDTO implements Serializable {
     private String typeName;
 
     /**
+     * 立项模板的属性id
+     */
+    private String productPropertyId;
+
+    /**
      * 模板状态(1启用，0禁用)
      */
     private Integer status;
