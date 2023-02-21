@@ -270,10 +270,14 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         Date minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
         //最大计划结束时间
         Date maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeEndTime).get();
-        vo.setScheduleStartTine(minStartTime);
-        vo.setScheduleEndTine(maxEndTime);
+        String fmt = DateUtil.fmt_day;
+        vo.setScheduleStartTine(DateUtil.conversionDate(minStartTime, fmt).concat(" 00:00:00"));
+        vo.setScheduleEndTine(DateUtil.conversionDate(maxEndTime, fmt).concat(" 23:59:59"));
         //相差多少天
         Integer durationDay = DateUtil.getDiffDay(minStartTime, maxEndTime);
+        if (minStartTime == maxEndTime) {
+            durationDay = durationDay + 1;
+        }
         vo.setDurationDay(durationDay);
         vo.setWaitAuditTaskCount(planTaskList.size());
 

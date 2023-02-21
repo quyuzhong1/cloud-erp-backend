@@ -260,11 +260,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListenerUtil).sheet(0).doRead();
-            List<ScheduleTaskExportExcelVO> dataList = excelListenerUtil.getDataList();
+            List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
             if (CollectionUtils.isEmpty(dataList)) {
                 throw new ServiceException(ApiError.ERROR_95133);
             }
-            List<ScheduleTaskExportExcelVO> errorList = excelListenerUtil.getErrorList();
+            List<ScheduleTaskExportErrorExcelVO> errorList = excelListenerUtil.getErrorList();
             if (CollectionUtils.isEmpty(errorList)) {
                 return true;
             }
@@ -279,14 +279,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     @Override
     public Boolean fieldSet(CustomizeFieldLayoutDTO dto) {
-
         String userId = commonService.getUserInfo().getUid();
         dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.getCode());
         dto.setUserId(userId);
         dto.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.getName());
         dto.setLayoutJson(dto.getLayoutJson());
-
-
         return sysUserFeign.batchAdd(dto);
     }
 
@@ -699,8 +696,14 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
         ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListener).sheet(0).doRead();
-            List<ScheduleTaskExportExcelVO> errorDateList = excelListener.getErrorDateList();
+            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
+            List<ScheduleTaskExportErrorExcelVO> list=excelListener.getDataList();
+            if(CollectionUtils.isEmpty(list)){
+                throw new ServiceException(ApiError.ERROR_95133);
+            }
+
+
+            List<ScheduleTaskExportErrorExcelVO> errorDateList = excelListener.getErrorDataList();
             String url = "";
             if (CollectionUtils.isNotEmpty(errorDateList)) {
                 String fileName = "排期变更错误.xlsx";

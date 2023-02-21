@@ -7,7 +7,7 @@ import com.erp.common.business.enums.BaseStatusEnum;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
-import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
+import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
@@ -22,14 +22,14 @@ import java.util.Objects;
  * @Date 2023-02-14 11:28
  * @Created by yl
  */
-public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleTaskExportExcelVO> {
+public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleTaskExportErrorExcelVO> {
 
     private ProjectTaskService projectTaskService;
 
 
-    private List<ScheduleTaskExportExcelVO> errorList;
+    private List<ScheduleTaskExportErrorExcelVO> errorList;
 
-
+    private List<ScheduleTaskExportErrorExcelVO> dataList;
     private List<ChangeScheduleExportVO> succeedList;
 
 
@@ -40,12 +40,14 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         this.errorList = new ArrayList<>();
         this.succeedList = new ArrayList<>();
         this.productId = productId;
+        this.dataList = new ArrayList<>();
 
     }
 
     @Override
-    public void invoke(ScheduleTaskExportExcelVO vo, AnalysisContext analysisContext) {
+    public void invoke(ScheduleTaskExportErrorExcelVO vo, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
+        dataList.add(vo);
         if (StringUtils.isBlank(vo.getTaskName())) {
             errorMsgList.add("任务名 不能为空");
         }
@@ -113,9 +115,20 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
      *
      * @return
      */
-    public List<ScheduleTaskExportExcelVO> getErrorDateList() {
+    public List<ScheduleTaskExportErrorExcelVO> getErrorDataList() {
         return errorList;
     }
+
+
+    /**
+     * 获取到数据的信息
+     *
+     * @return
+     */
+    public List<ScheduleTaskExportErrorExcelVO> getDataList() {
+        return dataList;
+    }
+
 
     /**
      * 获取到成功的信息

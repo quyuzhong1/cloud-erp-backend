@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -42,12 +41,12 @@ public class ProjectPlanDetailsVO implements Serializable {
     /**
      * 排期开始时间
      */
-    private Date scheduleStartTine;
+    private String scheduleStartTine;
 
     /**
      * 排期结束时间
      */
-    private Date scheduleEndTine;
+    private String scheduleEndTine;
 
     /**
      * 总时长

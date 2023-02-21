@@ -65,8 +65,4 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
     @ExcelProperty(value = "负责人名", index = 5)
     private String chargeName;
 
-    @ColumnWidth(100)
-    @ExcelProperty(value = "错误信息", index = 6)
-    private String errorMsg;
-
 }

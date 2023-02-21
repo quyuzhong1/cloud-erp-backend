@@ -2,11 +2,11 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.erp.common.business.enums.BaseStatusEnum;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.business.enums.BaseStatusEnum;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
+import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import com.erp.server.plm.service.ProjectPlanService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +23,7 @@ import java.util.Objects;
  * @Date 2023-02-10 14:31
  * @Created by yl
  */
-public class ProjectPlanTaskExcelListener extends AnalysisEventListener<ScheduleTaskExportExcelVO> {
+public class ProjectPlanTaskExcelListener extends AnalysisEventListener<ScheduleTaskExportErrorExcelVO> {
 
 
     private ProjectTaskService projectTaskService;
@@ -32,12 +32,12 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
     private ProjectPlanService projectPlanService;
 
 
-    private List<ScheduleTaskExportExcelVO> list;
+    private List<ScheduleTaskExportErrorExcelVO> list;
 
 
     private List<String> taskIdList;
 
-    private List<ScheduleTaskExportExcelVO> dataList;
+    private List<ScheduleTaskExportErrorExcelVO> dataList;
 
     private String productId;
 
@@ -60,7 +60,7 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
      * @date 2023-02-10 14:33
      */
     @Override
-    public void invoke(ScheduleTaskExportExcelVO vo, AnalysisContext analysisContext) {
+    public void invoke(ScheduleTaskExportErrorExcelVO vo, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         dataList.add(vo);
         if (StringUtils.isBlank(vo.getTaskName())) {
@@ -110,11 +110,11 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         projectTaskService.updateById(task);
     }
 
-    public List<ScheduleTaskExportExcelVO> getErrorList() {
+    public List<ScheduleTaskExportErrorExcelVO> getErrorList() {
         return list;
     }
 
-    public List<ScheduleTaskExportExcelVO> getDataList() {
+    public List<ScheduleTaskExportErrorExcelVO> getDataList() {
         return dataList;
     }
 
