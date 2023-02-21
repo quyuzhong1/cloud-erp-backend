@@ -473,8 +473,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (StringUtils.isBlank(userId)) {
             return false;
         }
-        List<WorkflowBusinessProcessDTO> list = workflowBusinessProcessService.getProcessByTables(businessTableIds);
-        if (CollectionUtils.isNotEmpty(list)) {
+        try {
+            List<WorkflowBusinessProcessDTO> list = workflowBusinessProcessService.getProcessByTables(businessTableIds);
+            if (CollectionUtils.isEmpty(list)) {
+                return false;
+            }
             for (WorkflowBusinessProcessDTO item : list) {
                 WorkflowBusinessProcessDTO businessProcess = list.stream().filter(w -> w.getBusinessId().
                         equals(item.getBusinessId())).findFirst().orElse(null);
@@ -493,37 +496,17 @@ public class WorkflowServiceImpl implements WorkflowService {
                         }
 
                         Task task = taskList.get(0);
-                        List<HistoricActivityInstance> historicActivityInstanceList = historyService.createHistoricActivityInstanceQuery()
-                                .processInstanceId(task.getProcessInstanceId())
-                                .activityType("userTask")
-                                .finished().orderByHistoricActivityInstanceEndTime()
-                                .asc().list();
-                        if (CollectionUtils.isEmpty(historicActivityInstanceList)) {
-                            return false;
-                        }
-                        ActivityInstance activityInstance = runtimeService.getActivityInstance(task.getProcessInstanceId());
-                        String toActId = historicActivityInstanceList.get(0).getActivityId();
-                        String assignee = historicActivityInstanceList.get(0).getAssignee();
-                        Map<String, Object> taskVariable = new HashMap<>(1);
-                        //设置当前处理人
-                        taskVariable.put(StringUtils.isBlank(userId) ? "assignee" : userId, assignee);
-                        runtimeService.createProcessInstanceModification(processId)
-                                //关闭相关任务
-                                .cancelActivityInstance(getInstanceIdForActivity(activityInstance, task.getTaskDefinitionKey()))
-                                .setAnnotation("进行了撤回到节点操作")
-                                //启动目标活动节点
-                                .startBeforeActivity(toActId)
-                                //流程的可变参数赋值
-                                .setVariables(taskVariable)
-                                .execute();
-                        runtimeService.deleteProcessInstance(task.getProcessInstanceId(), String.format("%s 用户执行了撤回操作", dto.getUserId()));
 
+                        runtimeService.deleteProcessInstance(task.getProcessInstanceId(), String.format("%s 用户执行了撤回操作", dto.getUserId()));
+                        return true;
                     }
                 }
             }
-        }
 
-        return null;
+        } catch (Exception e) {
+            log.error("withDrawProcessByBusinessTable", e);
+        }
+        return false;
     }
 
     public String matching(String activityType) {
