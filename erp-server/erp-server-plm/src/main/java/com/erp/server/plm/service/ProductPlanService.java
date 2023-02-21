@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.business.dto.base.BaseIdDTO;
 import com.erp.common.business.dto.base.PagingDTO;
 import com.erp.common.business.vo.PagingVO;
+import com.erp.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductPlanEntity;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
@@ -35,9 +36,9 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @author Will
      * @date: 2023/2/21 10:02
      * @param id
-     * @return ProductPlanDTO
+     * @return ProductPlanDetailsDTO
      */
-    ProductPlanDTO productPlanDetails(String id);
+    ProductPlanDetailsDTO productPlanDetails(String id);
     /**
      * @description: 删除
      * @author Will
@@ -104,4 +105,20 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return List<ProductPlanGroupVO>
      */
     List<ProductPlanGroupVO> listProductPlanTable(ProductPlanGroupSerachDTO dto);
+    /**
+     * @description: 立项趋势
+     * @author Will
+     * @date: 2023/2/21 11:57
+     * @param dto
+     * @return List<SeriesVO>
+     */
+    List<SeriesVO> listApprovalTrend(ProductPlanGroupSerachDTO dto);
+    /**
+     * @description: 图片上传
+     * @author Will
+     * @date: 2023/2/21 12:08
+     * @param dto
+     * @return Boolean
+     */
+    Boolean uploadImageUrl(ProductPlanImageDTO dto);
 }

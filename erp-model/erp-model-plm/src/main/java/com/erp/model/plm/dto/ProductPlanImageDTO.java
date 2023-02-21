@@ -10,31 +10,21 @@ import java.io.Serializable;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2023/2/21 10:32
+ * @date 2023/2/21 12:05
  */
 @Data
 @NoArgsConstructor
-public class ProductPlanRemarkDTO implements Serializable {
+public class ProductPlanImageDTO implements Serializable {
 
     /**
      * 规划id
      */
     @NotBlank(message = "规划id不能为空")
-    private String productPlanId;
+    private String id;
 
     /**
-     * 规划备注
+     * 图片URL
      */
-    @NotBlank(message = "备注不能为空")
-    private String remark;
-
-    /**
-     * 创建人
-     */
-    private String createUserName;
-
-    /**
-     * 创建时间
-     */
-    private String createTime;
+    @NotBlank(message = "图片URL不能为空")
+    private String imagesUrl;
 }

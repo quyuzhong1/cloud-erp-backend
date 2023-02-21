@@ -9,6 +9,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.business.dto.base.BaseIdDTO;
 import com.erp.common.business.dto.base.PagingDTO;
 import com.erp.common.business.vo.PagingVO;
+import com.erp.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.ProductPlanEntity;
@@ -48,7 +49,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
-    public ProductPlanDTO productPlanDetails(String id) {
+    public ProductPlanDetailsDTO productPlanDetails(String id) {
         return null;
     }
 
@@ -114,6 +115,16 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public List<ProductPlanGroupVO> listProductPlanTable(ProductPlanGroupSerachDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<SeriesVO> listApprovalTrend(ProductPlanGroupSerachDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean uploadImageUrl(ProductPlanImageDTO dto) {
         return null;
     }
 }

@@ -7,9 +7,9 @@ import com.common.core.exception.ServiceException;
 import com.erp.common.business.dto.base.BaseIdDTO;
 import com.erp.common.business.dto.base.PagingDTO;
 import com.erp.common.business.vo.PagingVO;
+import com.erp.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
-import com.erp.model.plm.vo.ProductPlanRemarkVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.server.plm.service.ProductPlanService;
@@ -58,12 +58,25 @@ public class ProductPlanController extends BaseController {
      * @author Will
      * @date: 2023/2/21 10:01
      * @param dto
-     * @return ApiResult<ProductPlanDTO>
+     * @return ApiResult<ProductPlanDetailsDTO>
      */
     @GetMapping("/productPlanDetails")
-    public ApiResult<ProductPlanDTO> productPlanDetails(@RequestBody @Validated BaseIdDTO dto) {
-        ProductPlanDTO productPlanDTO = productPlanService.productPlanDetails(dto.getId());
+    public ApiResult<ProductPlanDetailsDTO> productPlanDetails(@RequestBody @Validated BaseIdDTO dto) {
+        ProductPlanDetailsDTO productPlanDTO = productPlanService.productPlanDetails(dto.getId());
         return success(productPlanDTO);
+    }
+
+    /**
+     * 产品规划-图片上传
+     * @author Will
+     * @date: 2023/2/21 12:03
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/uploadImageUrl")
+    public ApiResult uploadImageUrl(@RequestBody ProductPlanImageDTO dto) {
+        Boolean flag = productPlanService.uploadImageUrl(dto);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -106,19 +119,6 @@ public class ProductPlanController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 产品规划-备注列表
-     * @author Will
-     * @date: 2023/2/21 10:07
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/listRemark")
-    public ApiResult<List<ProductPlanRemarkVO>> listRemark(@RequestBody @Validated BaseIdDTO dto) {
-        List<ProductPlanRemarkVO> list = productPlanService.listRemark(dto);
-        return  success(list);
-    }
-
 
     /**
      * 产品规划-指标数据
@@ -148,15 +148,15 @@ public class ProductPlanController extends BaseController {
     }
 
     /**
-     * 产品规划-柱形图
+     * 产品规划-立项趋势
      * @author Will
      * @date: 2023/2/21 11:42
      * @param dto
      * @return ApiResult<List<ProductPlanGroupVO>>
      */
-    @PostMapping("/listProductPlanPieChart")
-    public ApiResult<List<ProductPlanGroupVO>> listProductPlanPieChart(@RequestBody ProductPlanGroupSerachDTO dto) {
-        List<ProductPlanGroupVO> list = productPlanService.listProductPlanTable(dto);
+    @PostMapping("/listApprovalTrend")
+    public ApiResult<List<SeriesVO>> listApprovalTrend(@RequestBody ProductPlanGroupSerachDTO dto) {
+        List<SeriesVO> list = productPlanService.listApprovalTrend(dto);
         return  success(list);
     }
 

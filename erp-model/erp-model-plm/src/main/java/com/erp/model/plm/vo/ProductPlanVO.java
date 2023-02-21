@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Date;
 
 /**
  * @author Will
@@ -15,4 +17,83 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class ProductPlanVO implements Serializable {
 
+    /**
+     * 年份
+     */
+    private Integer  year;
+
+    /**
+     * 产品示意图URL
+     */
+    private String imageUrl;
+
+    /**
+     * 产品名称
+     */
+    private String name;
+
+    /**
+     * 产品状态
+     */
+    private String productStatus;
+
+    /**
+     * 产品分类
+     */
+    private String category;
+
+    /**
+     * 产品等级
+     */
+    private String grade;
+
+    /**
+     * 产品经理
+     */
+    private String chargeName;
+
+    /**
+     * 计划调研时间
+     */
+    private LocalDate planSurveyDate;
+
+    /**
+     * 计划立项时间
+     */
+    private LocalDate planProjectApprovalDate;
+
+    /**
+     * 计划首批入库时间
+     */
+    private LocalDate planFirstMassStockInDate;
+
+    /**
+     * 计划上市时间
+     */
+    private LocalDate planListingDate;
+
+    /**
+     * 实际立项时间
+     */
+    private LocalDate projectApprovalDate;
+
+    /**
+     * 实际首批入库时间
+     */
+    private LocalDate firstMassStockInDate;
+
+    /**
+     * 实际上市时间
+     */
+    private LocalDate listingDate;
+
+    /**
+     * 创建人名称
+     */
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
 }
