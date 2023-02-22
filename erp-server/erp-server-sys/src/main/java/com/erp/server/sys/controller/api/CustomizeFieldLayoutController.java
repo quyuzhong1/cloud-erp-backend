@@ -1,4 +1,4 @@
-package com.erp.server.sys.controller.feign;
+package com.erp.server.sys.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/feign/customize/field")
+@RequestMapping("sys/api/customize/field")
 public class CustomizeFieldLayoutController extends BaseController {
 
     @Resource

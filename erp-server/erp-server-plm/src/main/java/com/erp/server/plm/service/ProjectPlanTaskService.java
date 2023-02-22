@@ -11,7 +11,6 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
-import com.erp.model.sys.vo.UserFieldVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +42,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
 
     List<CustomizeFieldVO> allField();
 
-    UserFieldVO getUserField();
+
 
 
     List<ScheduleTaskVO> getScheduleTaskList(String productId,String status);

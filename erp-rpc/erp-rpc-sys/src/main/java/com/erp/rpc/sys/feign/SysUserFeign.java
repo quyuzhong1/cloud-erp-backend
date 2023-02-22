@@ -2,12 +2,11 @@ package com.erp.rpc.sys.feign;
 
 
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.UserRequestPermissionsDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.common.business.dto.FindUserDTO;
+import com.erp.common.business.dto.UserRequestPermissionsDTO;
+import com.erp.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.vo.UserFieldVO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,10 +67,6 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
-    //根据用户名称查询用户
-    @GetMapping("sys/feign/user/getUserByUserName")
-    FindUserDTO getUserByUserName(@RequestBody String userName);
-
     //根据userIds查询用户集合
     @GetMapping("sys/feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
@@ -118,12 +113,5 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/dept/getByDeptNames")
     List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
 
-    //保存反选字段
-    @PostMapping("sys/feign/customize/field/add")
-    Boolean batchAdd(@RequestBody CustomizeFieldLayoutDTO dto);
-
-    //获取反选字段
-    @PostMapping("sys/feign/customize/field/getByUserId")
-    UserFieldVO getByUserId(@RequestBody FindCustomizeFieldDTO dto);
 
 }

@@ -4,15 +4,13 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.BaseStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.BaseStatusEnum;
-import com.common.business.enums.CustomizeFieldEnum;
-import com.common.business.enums.ModuleEnum;
 import com.erp.model.plm.dto.ChangeScheduleDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -21,10 +19,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
-import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
-import com.erp.model.sys.vo.UserFieldVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -74,9 +69,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Resource
     private TaskDeliveryService taskDeliveryService;
 
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     @Resource
     private CommonService commonService;
@@ -153,7 +145,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     vo.setPlanStartTime(StringUtils.isEmpty(vo.getPlanStartTime()) ? vo.getPlanStartTime() : vo.getPlanStartTime().concat(" 00:00:00"));
                     vo.setPlanEndTime(StringUtils.isEmpty(vo.getPlanEndTime()) ? vo.getPlanEndTime() : vo.getPlanEndTime().concat(" 23:59:59"));
                     vo.setRealityStartTime(vo.getRealityStartTime());
-                    vo.setRealityEndTime( vo.getRealityEndTime());
+                    vo.setRealityEndTime(vo.getRealityEndTime());
 
                     List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                             .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
@@ -284,45 +276,16 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     @Override
     public Boolean fieldSet(CustomizeFieldLayoutDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
-        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.getCode());
-        dto.setUserId(userId);
-        dto.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.getName());
-        dto.setLayoutJson(dto.getLayoutJson());
-        return sysUserFeign.batchAdd(dto);
+        return true;
     }
 
     @Override
     public List<CustomizeFieldVO> allField() {
-        String code = ModuleEnum.PLM_SCHEDULE_TASK.code;
-        List<CustomizeFieldEnum> customizeFieldList = CustomizeFieldEnum.getByModuleCode(code);
-        List<CustomizeFieldVO> resultList = new ArrayList<>(customizeFieldList.size());
-        for (CustomizeFieldEnum item : customizeFieldList) {
-            CustomizeFieldVO dto = new CustomizeFieldVO();
-            dto.setFieldName(item.getFieldName());
-            dto.setFieldTitle(item.getFieldTitle());
-            dto.setIsDefault(item.getIsDefault());
-            dto.setModuleCode(item.getModuleCode());
-            dto.setModuleName(item.getModuleName());
-            resultList.add(dto);
-        }
-        return resultList;
+        return new ArrayList<>();
     }
 
 
-    /**
-     * 获取用户设置的字段
-     *
-     * @return
-     */
-    @Override
-    public UserFieldVO getUserField() {
-        FindCustomizeFieldDTO dto = new FindCustomizeFieldDTO();
-        dto.setUserId(commonService.getUserInfo().getUid());
-        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.code);
-        return sysUserFeign.getByUserId(dto);
 
-    }
 
 
     /**
