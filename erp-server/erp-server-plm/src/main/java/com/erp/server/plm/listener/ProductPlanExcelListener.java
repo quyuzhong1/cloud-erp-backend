@@ -55,6 +55,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
      */
     private List<ProductPlanExcelDTO> list;
 
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
     /**
      * 导入数据，用于判断导入是否为空
      */
@@ -84,7 +85,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         dataList.add(productPlanExcelDTO);
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(productPlanExcelDTO);
-        if (CollectionUtils.isEmpty(msgList)) {
+        if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
         FindUserDTO charge = sysUserFeign.getUserByUserName(productPlanExcelDTO.getChargeName());
@@ -102,13 +103,13 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         if (StringUtils.isNotBlank(productPlanExcelDTO.getProperty())) {
             BasicDictEntity productProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), productPlanExcelDTO.getProperty());
             if (ObjectUtils.isEmpty(productProperty)) {
-                errorMsgList.add("产品属性在系统中未找到");
+                errorMsgList.add("项目类型在系统中未找到");
             } else {
                 productPlanEntity.setPropertyId(productProperty.getId());
             }
         }
-        if (StringUtils.isNotBlank(productPlanExcelDTO.getProperty())) {
-            BasicDictEntity grade = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_GRADE.getCode(), productPlanExcelDTO.getProperty());
+        if (StringUtils.isNotBlank(productPlanExcelDTO.getGrade())) {
+            BasicDictEntity grade = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_GRADE.getCode(), productPlanExcelDTO.getGrade());
             if (ObjectUtils.isEmpty(grade)) {
                 errorMsgList.add("产品等级在系统中未找到");
             } else {
@@ -118,26 +119,28 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
 
         //产品分类
         String category = productPlanExcelDTO.getCategory();
-        BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category);
-        if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-            errorMsgList.add("产品分类不存在");
-        } else {
-            //父级品类
-            List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
-            if (CollectionUtils.isEmpty(categoryList)) {
+        if (StringUtils.isNotBlank(category)) {
+            BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category);
+            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
                 errorMsgList.add("产品分类不存在");
+            } else {
+                //父级品类
+                List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
+                if (CollectionUtils.isEmpty(categoryList)) {
+                    errorMsgList.add("产品分类不存在");
+                }
+                //一级品类
+                BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95091.msg);
+                }
+                //二级品类
+                BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95092.msg);
+                }
+                productPlanEntity.setCategoryId(basicCategoryEntity.getId());
             }
-            //一级品类
-            BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                errorMsgList.add(ApiError.ERROR_95091.msg);
-            }
-            //二级品类
-            BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
-                errorMsgList.add(ApiError.ERROR_95092.msg);
-            }
-            productPlanEntity.setCategoryId(basicCategoryEntity.getId());
         }
 
         String errStr = "";
@@ -160,16 +163,16 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         productPlanEntity.setIsNeedStructuralDesign(StringUtils.isBlank(productPlanExcelDTO.getIsNeedStructuralDesignStr()) ? Boolean.FALSE : ("是".equals(productPlanExcelDTO.getIsNeedStructuralDesignStr()) ? Boolean.TRUE : Boolean.FALSE));
         productPlanEntity.setPlanMarketingSeason(StringUtils.isBlank(productPlanExcelDTO.getPlanMarketingSeasonName()) ? "" : SeasonEnum.getByName(productPlanExcelDTO.getPlanMarketingSeasonName()).getCode());
         if (StringUtils.isNotBlank(productPlanExcelDTO.getPlanSurveyDateStr())) {
-            productPlanEntity.setPlanSurveyDate(LocalDate.parse(productPlanExcelDTO.getPlanSurveyDateStr(), DateTimeFormatter.ISO_LOCAL_DATE));
+            productPlanEntity.setPlanSurveyDate(LocalDate.parse(productPlanExcelDTO.getPlanSurveyDateStr(), dateTimeFormatter));
         }
         if (StringUtils.isNotBlank(productPlanExcelDTO.getPlanProjectApprovalDateStr())) {
-            productPlanEntity.setPlanProjectApprovalDate(LocalDate.parse(productPlanExcelDTO.getPlanProjectApprovalDateStr(), DateTimeFormatter.ISO_LOCAL_DATE));
+            productPlanEntity.setPlanProjectApprovalDate(LocalDate.parse(productPlanExcelDTO.getPlanProjectApprovalDateStr(), dateTimeFormatter));
         }
         if (StringUtils.isNotBlank(productPlanExcelDTO.getPlanFirstMassStockInDateStr())) {
-            productPlanEntity.setPlanFirstMassStockInDate(LocalDate.parse(productPlanExcelDTO.getPlanFirstMassStockInDateStr(), DateTimeFormatter.ISO_LOCAL_DATE));
+            productPlanEntity.setPlanFirstMassStockInDate(LocalDate.parse(productPlanExcelDTO.getPlanFirstMassStockInDateStr(), dateTimeFormatter));
         }
         if (StringUtils.isNotBlank(productPlanExcelDTO.getPlanListingDateStr())) {
-            productPlanEntity.setPlanListingDate(LocalDate.parse(productPlanExcelDTO.getPlanListingDateStr(), DateTimeFormatter.ISO_LOCAL_DATE));
+            productPlanEntity.setPlanListingDate(LocalDate.parse(productPlanExcelDTO.getPlanListingDateStr(), dateTimeFormatter));
         }
 
         //规划信息

@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProjectStatusTimeEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectStatusTimeMapper;
 import com.erp.server.plm.service.ProjectStatusTimeService;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,6 @@ public class ProjectStatusTimeServiceImpl extends ServiceImpl<ProjectStatusTimeM
         LambdaQueryWrapper<ProjectStatusTimeEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectStatusTimeEntity::getProjectId,projectId);
         queryWrapper.eq(ProjectStatusTimeEntity::getStatus,projectStatus.toString());
-        queryWrapper.eq(ProjectStatusTimeEntity::getIsDeleted, IsConstant.NO);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }

@@ -26,15 +26,15 @@ public class ProductPlanExcelDTO implements Serializable {
     /**
      * 年份
      */
-    @ExcelProperty(value = "年份", index = 0)
-    @FieldValid(isNotNull = true,formatPattern = FieldFormatPatternTypeEnum.integer,maxLength = 4)
+    @ExcelProperty(value = "*年份", index = 0)
+    @FieldValid(fieldName = "年份",isNotNull = true,formatPattern = FieldFormatPatternTypeEnum.integer,maxLength = 4)
     private String  year;
 
     /**
      * 产品经理
      */
-    @ExcelProperty(value = "产品经理", index = 1)
-    @FieldValid(isNotNull = true)
+    @ExcelProperty(value = "*产品经理", index = 1)
+    @FieldValid(fieldName = "产品经理",isNotNull = true)
     private String chargeName;
 
     /**
@@ -60,28 +60,28 @@ public class ProductPlanExcelDTO implements Serializable {
      * 产品款品
      */
     @ExcelProperty(value = "产品款品", index = 5)
-    @FieldValid(enumClass = ProductStyleEnum.class)
+    @FieldValid(fieldName = "产品款品",enumClass = ProductStyleEnum.class)
     private String productStyleName;
 
     /**
      * 新品/老品
      */
     @ExcelProperty(value = "新品/老品", index = 6)
-    @FieldValid(enumClass = ProductTypeEnum.class)
+    @FieldValid(fieldName = "新品/老品",enumClass = ProductTypeEnum.class)
     private String productTypeName;
 
     /**
      * 三代规划（721原则）
      */
     @ExcelProperty(value = "三代规划（721原则）", index = 7)
-    @FieldValid(enumClass = ThreeGenerationPlanningEnum.class)
+    @FieldValid(fieldName = "三代规划（721原则）",enumClass = ThreeGenerationPlanningEnum.class)
     private String threeGenerationPlanningName;
 
     /**
      * 产品名称
      */
-    @ExcelProperty(value = "产品名称", index = 8)
-    @FieldValid(isNotNull = true,maxLength = 200)
+    @ExcelProperty(value = "*产品名称", index = 8)
+    @FieldValid(fieldName = "产品名称",isNotNull = true,maxLength = 200)
     private String name;
 
     /**
@@ -112,7 +112,7 @@ public class ProductPlanExcelDTO implements Serializable {
      * sku数量
      */
     @ExcelProperty(value = "sku数量", index = 13)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "sku数量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String skuQtyStr;
 
     /**
@@ -157,49 +157,49 @@ public class ProductPlanExcelDTO implements Serializable {
      * 销售平台/渠道
      */
     @ExcelProperty(value = "销售平台/渠道", index = 20)
-    @FieldValid(enumClass = SalesPlatformEnum.class)
+    @FieldValid(fieldName = "销售平台/渠道",enumClass = SalesPlatformEnum.class)
     private String salesPlatformName;
 
     /**
      * 人民币定价
      */
     @ExcelProperty(value = "人民币定价", index = 21)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "人民币定价",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String priceCnyStr;
 
     /**
      * 美元定价
      */
     @ExcelProperty(value = "美元定价", index = 22)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "美元定价",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String priceUsdStr;
 
     /**
      * 是否需要ID设计
      */
     @ExcelProperty(value = "是否需要ID设计", index = 23)
-    @FieldValid(fieldValues = "是,否")
+    @FieldValid(fieldName = "是否需要ID设计",fieldValues = "是,否")
     private String isNeedIDDesignStr;
 
     /**
      * 是否需要结构设计
      */
     @ExcelProperty(value = "是否需要结构设计", index = 24)
-    @FieldValid(fieldValues = "是,否")
+    @FieldValid(fieldName = "是否需要结构设计",fieldValues = "是,否")
     private String isNeedStructuralDesignStr;
 
     /**
      * 目标成本
      */
     @ExcelProperty(value = "目标成本", index = 25)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "目标成本",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String targetCostStr;
 
     /**
      * 摸具成本预估
      */
     @ExcelProperty(value = "摸具成本预估", index = 26)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "摸具成本预估",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String estimatedMoldCostStr;
 
     /**
@@ -224,203 +224,203 @@ public class ProductPlanExcelDTO implements Serializable {
      * 计划调研时间
      */
     @ExcelProperty(value = "计划调研时间", index = 30)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.date)
+    @FieldValid(fieldName = "计划调研时间",formatPattern = FieldFormatPatternTypeEnum.date)
     private String planSurveyDateStr;
 
     /**
      * 计划立项时间
      */
     @ExcelProperty(value = "计划立项时间", index = 31)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.date)
+    @FieldValid(fieldName = "计划立项时间",formatPattern = FieldFormatPatternTypeEnum.date)
     private String planProjectApprovalDateStr;
 
     /**
      * 计划首批入库时间
      */
     @ExcelProperty(value = "计划首批入库时间", index = 32)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.date)
+    @FieldValid(fieldName = "计划首批入库时间",formatPattern = FieldFormatPatternTypeEnum.date)
     private String planFirstMassStockInDateStr;
 
     /**
      * 计划上市季节
      */
     @ExcelProperty(value = "计划上市季节", index = 33)
-    @FieldValid(enumClass = SeasonEnum.class)
+    @FieldValid(fieldName = "计划上市季节",enumClass = SeasonEnum.class)
     private String planMarketingSeasonName;
 
     /**
      * 计划上市时间
      */
     @ExcelProperty(value = "计划上市时间", index = 34)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.date)
+    @FieldValid(fieldName = "计划上市时间",formatPattern = FieldFormatPatternTypeEnum.date)
     private String planListingDateStr;
 
     /**
      * 一月销售额
      */
     @ExcelProperty(value = "一月销售额", index = 35)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "一月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String januaryAmountStr;
 
     /**
      * 二月销售额
      */
     @ExcelProperty(value = "二月销售额", index = 36)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "二月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String februaryAmountStr;
 
     /**
      * 三月销售额
      */
     @ExcelProperty(value = "三月销售额", index = 37)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "三月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String marchAmountStr;
 
     /**
      * 四月销售额
      */
     @ExcelProperty(value = "四月销售额", index = 38)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "四月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String aprilAmountStr;
 
     /**
      * 五月销售额
      */
     @ExcelProperty(value = "五月销售额", index = 39)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "五月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String mayAmountStr;
 
     /**
      * 六月销售额
      */
     @ExcelProperty(value = "六月销售额", index = 40)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "六月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String juneAmountStr;
 
     /**
      * 七月销售额
      */
     @ExcelProperty(value = "七月销售额", index = 41)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "七月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String julyAmountStr;
 
     /**
      * 八月销售额
      */
     @ExcelProperty(value = "八月销售额", index = 42)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "八月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String augustAmountStr;
 
     /**
      * 九月销售额
      */
     @ExcelProperty(value = "九月销售额", index = 43)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "九月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String septemberAmountStr;
 
     /**
      * 十月销售额
      */
     @ExcelProperty(value = "十月销售额", index = 44)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "十月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String octoberAmountStr;
 
     /**
      * 十一月销售额
      */
     @ExcelProperty(value = "十一月销售额", index = 45)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "十一月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String novemberAmountStr;
 
     /**
      * 十二月销售额
      */
     @ExcelProperty(value = "十二月销售额", index = 46)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
+    @FieldValid(fieldName = "十二月销售额",formatPattern = FieldFormatPatternTypeEnum.amount)
     private String decemberAmountStr;
 
     /**
      * 一月销量
      */
     @ExcelProperty(value = "一月销量", index = 47)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "一月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String januaryQtyStr;
 
     /**
      * 二月销量
      */
     @ExcelProperty(value = "二月销量", index = 48)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "二月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String februaryQtyStr;
 
     /**
      * 三月销量
      */
     @ExcelProperty(value = "三月销量", index = 49)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "三月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String marchQtyStr;
 
     /**
      * 四月销量
      */
     @ExcelProperty(value = "四月销量", index = 50)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "四月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String aprilQtyStr;
 
     /**
      * 五月销量
      */
     @ExcelProperty(value = "五月销量", index = 51)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "五月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String mayQtyStr;
 
     /**
      * 六月销量
      */
     @ExcelProperty(value = "六月销量", index = 52)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "六月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String juneQtyStr;
 
     /**
      * 七月销量
      */
     @ExcelProperty(value = "七月销量", index = 53)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "七月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String julyQtyStr;
 
     /**
      * 八月销量
      */
     @ExcelProperty(value = "八月销量", index = 54)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "八月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String augustQtyStr;
 
     /**
      * 九月销量
      */
     @ExcelProperty(value = "九月销量", index = 55)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "九月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String septemberQtyStr;
 
     /**
      * 十月销量
      */
     @ExcelProperty(value = "十月销量", index = 56)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "十月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String octoberQtyStr;
 
     /**
      * 十一月销量
      */
     @ExcelProperty(value = "十一月销量", index = 57)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "十一月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String novemberQtyStr;
 
     /**
      * 十二月销量
      */
     @ExcelProperty(value = "十二月销量", index = 58)
-    @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
+    @FieldValid(fieldName = "十二月销量",formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
     private String decemberQtyStr;
 
     /**

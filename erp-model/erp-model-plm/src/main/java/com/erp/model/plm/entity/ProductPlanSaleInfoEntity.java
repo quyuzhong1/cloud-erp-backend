@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  * @description: TODO
  * @date 2023/2/20 19:19
  */
-@TableName(value ="product_plan_sale_information")
+@TableName(value ="product_plan_sale_info")
 @Data
 @NoArgsConstructor
 public class ProductPlanSaleInfoEntity extends BaseEntity {

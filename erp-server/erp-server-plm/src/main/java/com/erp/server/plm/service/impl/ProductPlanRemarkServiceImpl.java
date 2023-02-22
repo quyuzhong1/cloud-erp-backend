@@ -40,7 +40,7 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
         }
         LambdaUpdateWrapper<ProductPlanRemarkEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanRemarkEntity::getProductPlanId,productPlanId);
-        updateWrapper.set(ProductPlanRemarkEntity::getIsDeleted, IsConstant.YES);
+        updateWrapper.set(ProductPlanRemarkEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedUserId,userInfo.getUid());
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedUserName,userInfo.getUserName());

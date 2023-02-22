@@ -64,7 +64,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      */
     @Version
     @TableField(fill = FieldFill.INSERT)
-    private Long version;
+    private Integer version;
 
     /**
      * 逻辑删除字段

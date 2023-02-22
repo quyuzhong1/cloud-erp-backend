@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.ProductPlanPurchaseEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProductPlanPurchaseMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductPlanPurchaseService;
@@ -38,7 +37,7 @@ public class ProductPlanPurchaseServiceImpl extends ServiceImpl<ProductPlanPurch
         }
         LambdaUpdateWrapper<ProductPlanPurchaseEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanPurchaseEntity::getProductPlanId,productPlanId);
-        updateWrapper.set(ProductPlanPurchaseEntity::getIsDeleted, IsConstant.YES);
+        updateWrapper.set(ProductPlanPurchaseEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanPurchaseEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanPurchaseEntity::getDeletedUserId,userInfo.getUid());
         updateWrapper.set(ProductPlanPurchaseEntity::getDeletedUserName,userInfo.getUserName());

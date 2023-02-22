@@ -40,7 +40,7 @@ public class ProductPlanSaleInfoServiceImpl extends ServiceImpl<ProductPlanSaleI
         }
         LambdaUpdateWrapper<ProductPlanSaleInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanSaleInfoEntity::getProductPlanId,productPlanId);
-        updateWrapper.set(ProductPlanSaleInfoEntity::getIsDeleted, IsConstant.YES);
+        updateWrapper.set(ProductPlanSaleInfoEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedUserId,userInfo.getUid());
         updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedUserName,userInfo.getUserName());

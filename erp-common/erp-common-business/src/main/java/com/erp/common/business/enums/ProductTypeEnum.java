@@ -1,12 +1,14 @@
 package com.erp.common.business.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * @author Will
  * @version 1.0
  * @description: TODO
  * @date 2023/2/22 10:43
  */
-public enum ProductTypeEnum {
+public enum ProductTypeEnum implements EnumMessage {
 
     NEW_PRODUCTS("old", "新品","新品"),
     OLD_PRODUCTS("new", "老品","老品");

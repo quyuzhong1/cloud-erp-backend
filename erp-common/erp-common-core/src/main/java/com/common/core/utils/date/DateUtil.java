@@ -23,7 +23,7 @@ public class DateUtil {
 
     }
 
-    public static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd";
+    public static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd",fmt_year_month = "yyyy/MM/dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd";
 
     public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
 
