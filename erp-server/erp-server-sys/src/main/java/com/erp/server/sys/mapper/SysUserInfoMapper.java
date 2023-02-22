@@ -5,9 +5,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
-import com.erp.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.erp.model.sys.dto.SysLoginIpDTO;
-import com.erp.common.business.dto.base.PermissionsDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.SysUserPagingSearchDTO;
 import com.erp.model.sys.dto.UserDTO;

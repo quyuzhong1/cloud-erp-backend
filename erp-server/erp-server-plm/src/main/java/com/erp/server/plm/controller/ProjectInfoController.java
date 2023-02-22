@@ -1,12 +1,12 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.business.annotation.DataPermission;
+import com.common.business.annotation.DataPermission;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.erp.common.business.enums.DataAttributeEnum;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;

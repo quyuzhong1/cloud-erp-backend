@@ -1,7 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.entity.BiDictEntity;
 import org.apache.commons.math3.util.Pair;
 

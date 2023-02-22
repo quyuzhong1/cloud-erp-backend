@@ -3,9 +3,9 @@ package com.erp.server.plm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BaseSearchDTO;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProjectTemplateDTO;
 import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
 import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;

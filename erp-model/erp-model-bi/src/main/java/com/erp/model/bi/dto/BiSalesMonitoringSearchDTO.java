@@ -1,6 +1,6 @@
 package com.erp.model.bi.dto;
 
-import com.erp.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

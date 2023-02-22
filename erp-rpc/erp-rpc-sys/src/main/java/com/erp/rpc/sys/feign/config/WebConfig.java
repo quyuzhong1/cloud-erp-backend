@@ -1,7 +1,7 @@
 package com.erp.rpc.sys.feign.config;
 
 
-import com.erp.common.business.interceptor.CommonInterceptor;
+import com.common.business.interceptor.CommonInterceptor;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
 import com.erp.rpc.sys.feign.aspect.RequestPermissionsAspect;
 import org.springframework.context.annotation.Bean;

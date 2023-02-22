@@ -2,10 +2,10 @@ package com.erp.server.plm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BaseIdDTO;
-import com.erp.common.business.dto.base.BaseSearchDTO;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.DeliveryDocsGroupDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;

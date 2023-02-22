@@ -90,7 +90,7 @@
         WHERE uid=#{params.uid}
     </update>
 
-    <select id="getRequestPermissionsList" resultType="com.erp.common.business.dto.UserRequestPermissionsDTO">
+    <select id="getRequestPermissionsList" resultType="com.common.business.dto.UserRequestPermissionsDTO">
         SELECT MAX(COALESCE ( sm.data_scope, 0 )) AS dataScope,m.menu_code AS permissionsCode
         FROM sys_role_menu sm INNER JOIN  sys_role_user sr ON sr.role_id = sm.role_id
         INNER JOIN  sys_menu m ON sm.menu_id = m.menu_id

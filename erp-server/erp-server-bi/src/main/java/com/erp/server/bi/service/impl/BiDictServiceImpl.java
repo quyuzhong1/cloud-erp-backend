@@ -2,7 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.mapper.BiDictMapper;
 import com.erp.server.bi.service.BiDictService;

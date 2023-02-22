@@ -14,7 +14,7 @@ public interface MongoService {
 	 * @param table:表名
 	 * @throws Exception
 	 */
-	<T> void saveMongoData(T data, String table) throws Exception;
+	<T> void saveMongoData(T data, String table);
 	/**
 	 * 2批量保存数据
 	 * @param <T>

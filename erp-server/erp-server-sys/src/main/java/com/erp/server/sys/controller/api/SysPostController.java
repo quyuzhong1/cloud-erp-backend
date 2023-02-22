@@ -3,10 +3,10 @@ package com.erp.server.sys.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BasePagingSearchDTO;
-import com.erp.common.business.dto.base.BaseSearchDTO;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.dto.base.BasePagingSearchDTO;
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.SysPostDTO;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.server.sys.service.SysPostService;

@@ -1,17 +1,17 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.business.annotation.DataPermission;
+import com.common.business.annotation.DataPermission;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
-import com.erp.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.dto.BiTargetTypeDTO;
-import com.erp.common.business.vo.ChartVO;
+import com.common.business.vo.ChartVO;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;

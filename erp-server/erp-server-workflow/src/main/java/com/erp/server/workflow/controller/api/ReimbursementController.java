@@ -2,7 +2,7 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.service.ProcessTaskService;

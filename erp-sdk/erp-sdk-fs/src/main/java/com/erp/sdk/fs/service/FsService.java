@@ -2,7 +2,7 @@ package com.erp.sdk.fs.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.OkHttpUtils;
-import com.erp.common.business.constant.ThirdConstants;
+import com.common.business.constant.ThirdConstants;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.sdk.fs.config.FsProperties;

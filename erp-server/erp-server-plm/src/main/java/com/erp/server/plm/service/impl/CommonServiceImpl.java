@@ -1,9 +1,9 @@
 package com.erp.server.plm.service.impl;
 
-import com.erp.common.business.dto.FindUserDTO;
-import com.erp.common.business.interceptor.CommonInterceptor;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.interceptor.CommonInterceptor;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;

@@ -1,11 +1,11 @@
 package com.erp.server.sys.controller.feign;
 
-import com.erp.common.business.constant.UserStateConstants;
+import com.common.business.constant.UserStateConstants;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.FindUserDTO;
-import com.erp.common.business.dto.UserRequestPermissionsDTO;
-import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.enums.ApiError;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.sys.dto.*;

@@ -1,6 +1,6 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

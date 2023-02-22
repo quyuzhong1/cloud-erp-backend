@@ -2,7 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSaveRoleUserDTO;
 import com.erp.model.sys.entity.SysRoleUserEntity;

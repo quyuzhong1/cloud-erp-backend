@@ -2,7 +2,7 @@ package com.erp.model.sys.dto;
 
 
 
-import com.erp.common.business.dto.base.BasePagingSearchDTO;
+import com.common.business.dto.base.BasePagingSearchDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

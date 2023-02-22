@@ -328,7 +328,7 @@
 
     </select>
 
-    <select id="getNotFinish" resultType="com.erp.common.business.dto.base.BaseIdDTO">
+    <select id="getNotFinish" resultType="com.common.business.dto.base.BaseIdDTO">
         SELECT id,sku_no AS name FROM product_detail
         <where>
             <if test="skuIdList!=null and skuIdList.size>0 ">

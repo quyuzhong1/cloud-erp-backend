@@ -1,13 +1,12 @@
 package com.erp.rpc.sys.feign.aspect;
 
 import com.common.core.utils.ObjectUtils;
-import com.erp.common.business.annotation.RequestPermissions;
-import com.erp.common.business.dto.UserRequestPermissionsDTO;
-import com.erp.common.business.dto.base.PermissionsDTO;
-import com.erp.common.business.interceptor.CommonInterceptor;
+import com.common.business.annotation.RequestPermissions;
+import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -36,7 +35,7 @@ public class RequestPermissionsAspect {
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @Around("@annotation(com.erp.common.business.annotation.RequestPermissions)")
+    @Around("@annotation(com.common.business.annotation.RequestPermissions)")
     public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
         Object obj = null;
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();

@@ -39,7 +39,7 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	public <T> void saveMongoData(T data, String table) throws Exception {
+	public <T> void saveMongoData(T data, String table) {
 		orderTemplate.insert(data, table);
 	}
 

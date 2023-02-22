@@ -2,7 +2,7 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 
 /**
  * @author Will

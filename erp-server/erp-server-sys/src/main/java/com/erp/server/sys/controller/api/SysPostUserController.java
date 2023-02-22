@@ -2,7 +2,7 @@ package com.erp.server.sys.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSavePostUserDTO;
 import com.erp.server.sys.service.SysPostUserService;

@@ -1,15 +1,15 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.business.constant.ThirdConstants;
+import com.common.business.constant.ThirdConstants;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BaseIdDTO;
-import com.erp.common.business.dto.base.BaseSearchDTO;
-import com.erp.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
 
 import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.UpdateUserNoticeStateDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageRecordEntity;

@@ -2,10 +2,10 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.business.dto.base.BatchStateDTO;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.erp.common.business.dto.base.StateDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.dto.base.BatchStateDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.StateDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;

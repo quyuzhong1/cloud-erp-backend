@@ -4,13 +4,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.StrUtils;
-import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.business.dto.UserRequestPermissionsDTO;
-import com.erp.common.business.interceptor.CommonInterceptor;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.common.business.dto.base.PermissionsDTO;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -54,7 +53,7 @@ public class DataPermissionAspect {
     private ApplicationContext applicationContext;
 
     // 配置织入点
-    @Pointcut("@annotation(com.erp.common.business.annotation.DataPermission)")
+    @Pointcut("@annotation(com.common.business.annotation.DataPermission)")
     public void dataScopePointCut() {
     }
 

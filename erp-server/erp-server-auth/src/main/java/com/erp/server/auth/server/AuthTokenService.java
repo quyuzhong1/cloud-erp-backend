@@ -1,13 +1,13 @@
 package com.erp.server.auth.server;
 
 import com.alibaba.fastjson.JSONObject;
-import com.erp.common.business.constant.RedisCacheConstants;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.core.utils.IdUtils;
 import com.erp.model.sys.utils.JwtUtils;
-import com.erp.common.business.service.RedisService;
-import com.erp.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.RedisService;
+import com.common.business.interceptor.CommonInterceptor;
 import com.erp.model.sys.dto.SysUserDTO;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.server.auth.config.AuthJwtProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

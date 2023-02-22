@@ -1,7 +1,7 @@
 package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.business.dto.base.BaseDicDTO;
+import com.common.business.dto.base.BaseDicDTO;
 import com.erp.model.sys.entity.SysBaseDicEntity;
 
 import java.util.List;

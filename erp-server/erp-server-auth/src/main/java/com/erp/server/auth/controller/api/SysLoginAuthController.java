@@ -1,7 +1,7 @@
 package com.erp.server.auth.controller.api;
 
 
-import com.erp.common.business.constant.TokenConstants;
+import com.common.business.constant.TokenConstants;
 import com.common.core.utils.IpUtils;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -12,7 +12,7 @@ import com.erp.model.sys.dto.SysLoginIpDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
 import org.apache.commons.lang3.StringUtils;

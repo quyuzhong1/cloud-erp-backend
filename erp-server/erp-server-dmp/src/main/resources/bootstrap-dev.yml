@@ -9,7 +9,13 @@ spring:
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-dmp.yml,druid-common.yml
-#显示日期的
+#  data:
+#    mongodb:
+#      uri: uri:mongodb://root:mongoDBulanzi@172.16.100.12:27017/erp-dmp?maxIdleTimeMS=2000&maxLifeTimeMS=2000S&maxPoolSize=50&waitQueueMultiple=30&waitQueueTimeoutMS=2000&connect=replicaSet&replicaSet=rs0
+#      database: erp-dmp
+#      authentication-database: admin
+#      transactionEnabled: true
+    #显示日期的
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8

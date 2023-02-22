@@ -2,7 +2,7 @@ package com.erp.server.bi.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.service.BiDictService;
 import org.springframework.validation.annotation.Validated;

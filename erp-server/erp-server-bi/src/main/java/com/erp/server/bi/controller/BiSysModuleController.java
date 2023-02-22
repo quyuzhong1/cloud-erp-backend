@@ -2,7 +2,7 @@ package com.erp.server.bi.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.validator.UpdateGroup;
+import com.common.business.validator.UpdateGroup;
 import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
 import com.erp.server.bi.constant.BiConstant;

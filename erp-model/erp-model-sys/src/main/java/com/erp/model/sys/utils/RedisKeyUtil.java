@@ -1,7 +1,7 @@
 package com.erp.model.sys.utils;
 
 import com.common.core.utils.Md5Util;
-import com.erp.common.business.constant.RedisCacheConstants;
+import com.common.business.constant.RedisCacheConstants;
 
 /**
  * @Classname RedisKeyUtil

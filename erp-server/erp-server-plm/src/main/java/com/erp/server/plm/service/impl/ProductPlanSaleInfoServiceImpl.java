@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.ProductPlanSaleInfoEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProductPlanSaleInfoMapper;

@@ -1,6 +1,6 @@
 package com.erp.model.bi.dto;
 
-import com.erp.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

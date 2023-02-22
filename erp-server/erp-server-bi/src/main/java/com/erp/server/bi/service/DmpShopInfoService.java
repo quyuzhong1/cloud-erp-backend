@@ -1,8 +1,8 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.business.dto.base.PagingDTO;
-import com.erp.common.business.vo.PagingVO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.DmpShopInfoChangeDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDeptChangeDTO;

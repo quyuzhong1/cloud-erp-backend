@@ -1,7 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;

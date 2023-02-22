@@ -2,11 +2,14 @@ package com.erp.server.dmp.config;
 
 import com.erp.server.dmp.bean.YamlPropertySourceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 @Configuration
@@ -14,21 +17,22 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 public class DatacenterMongo extends AbstractMongoConfig {
 	@Autowired
 	private ConfigurableEnvironment env;
-	 
+
 	@Primary
-    @Bean(name = "reportTemplate")
+  	@Bean(name = "reportTemplate")
 	@Override
-	public MongoTemplate getMongoTemplate() throws Exception {
-		return new MongoTemplate(mongoDbFactory(env,"erp"));
+	public MongoTemplate getMongoTemplate(){
+		return new MongoTemplate(mongoDatabaseFactory());
 	}
 
-//	@Bean
-//	public MongoDatabaseFactory mongoDbFactory() throws Exception {
-//		return mongoDbFactory(env,"erp");
-//	}
-//	@Bean
-//	public MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory mongoDbFactory) {
-//		return new MongoTransactionManager(mongoDbFactory);
-//	}
+	@Bean
+	public MongoDatabaseFactory mongoDatabaseFactory(){
+		return mongoDbFactory(env,"");
+	}
+	@Bean
+	public MongoTransactionManager mongoTransactionManager() {
+		return new MongoTransactionManager(mongoDatabaseFactory());
+	}
+
 
 }

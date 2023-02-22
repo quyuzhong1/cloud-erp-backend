@@ -2,7 +2,7 @@ package com.erp.model.sys.utils;
 
 
 import com.common.core.utils.ConvertUtil;
-import com.erp.common.business.constant.SecurityConstants;
+import com.common.business.constant.SecurityConstants;
 import com.erp.model.sys.dto.SysUserDTO;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

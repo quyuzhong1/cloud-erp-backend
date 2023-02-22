@@ -1,7 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;

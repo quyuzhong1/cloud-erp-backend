@@ -3,8 +3,8 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.interceptor.CommonInterceptor;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.UserAddProductEntity;
 import com.erp.server.plm.mapper.UserAddProductEntityMapper;
 import com.erp.server.plm.service.UserAddProductService;

@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.CommonInterceptor;
+import com.common.business.interceptor.CommonInterceptor;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.server.sys.mapper.SysUserThirdMapper;

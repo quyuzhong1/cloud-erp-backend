@@ -1,6 +1,6 @@
 package com.erp.server.bi.service;
 
-import com.erp.common.business.vo.LoginUser;
+import com.common.business.vo.LoginUser;
 
 /**
  * @Classname CommonService

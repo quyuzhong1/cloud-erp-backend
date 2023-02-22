@@ -2,13 +2,11 @@ package com.erp.server.dmp.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.server.dmp.service.CfgApiAuthService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -51,4 +49,13 @@ public class CfgApiAuthController extends BaseController {
         return success();
     }
 
+    @PostMapping("/mongo/save/test")
+    public ApiResult saveTest(@RequestBody BaseIdDTO dto)  {
+        try {
+            cfgApiAuthService.saveMongoTest(dto.getId());
+            return success();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

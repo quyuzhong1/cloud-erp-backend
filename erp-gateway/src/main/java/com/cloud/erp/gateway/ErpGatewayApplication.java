@@ -1,13 +1,14 @@
 package com.cloud.erp.gateway;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.context.annotation.ComponentScan;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@Slf4j
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class}, scanBasePackages = {"com.erp.*","com.common.*"})
 @EnableDiscoveryClient
 public class ErpGatewayApplication {
 
@@ -18,6 +19,7 @@ public class ErpGatewayApplication {
 
         springApplication.setBannerMode(Banner.Mode.LOG);
         springApplication.run(args);
+        log.info("================ Gateway 启动成功 ================");
     }
 
 }

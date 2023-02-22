@@ -5,7 +5,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.CostProfitAnalyzeRankVO;
 import com.erp.model.bi.vo.PieChartVO;
-import com.erp.common.business.vo.SeriesVO;
+import com.common.business.vo.SeriesVO;
 import com.erp.server.bi.service.BiDataSourceCostService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

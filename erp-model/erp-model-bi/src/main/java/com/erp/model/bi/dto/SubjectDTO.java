@@ -1,7 +1,7 @@
 package com.erp.model.bi.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.common.business.validator.UpdateGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
