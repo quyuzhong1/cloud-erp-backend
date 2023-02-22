@@ -132,6 +132,12 @@ public class ProjectTaskDTO  implements Serializable {
      */
     private Integer status;
 
+
+    /**
+     * 排期状态
+     */
+    private String scheduleStatus;
+
     /**
      * 交付文档审核分配人集合
      */

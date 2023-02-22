@@ -1599,6 +1599,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
             List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
             list.forEach(obj -> {
+                if(StringUtils.isBlank(obj.getCharges())){
+                       return;
+                }
                 List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
                 //回显名称
                 if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(obj.getDistributionType())) {

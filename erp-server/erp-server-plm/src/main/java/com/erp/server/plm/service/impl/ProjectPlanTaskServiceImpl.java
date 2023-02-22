@@ -84,8 +84,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Resource
     private ProjectPlanService projectPlanService;
 
-    @Resource
-    private BasicDictService basicDictService;
 
     /**
      * 根据条件获取到项目计划任务
@@ -154,8 +152,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     vo.setParentId(parentVO.getId());
                     vo.setPlanStartTime(StringUtils.isEmpty(vo.getPlanStartTime()) ? vo.getPlanStartTime() : vo.getPlanStartTime().concat(" 00:00:00"));
                     vo.setPlanEndTime(StringUtils.isEmpty(vo.getPlanEndTime()) ? vo.getPlanEndTime() : vo.getPlanEndTime().concat(" 23:59:59"));
-                    vo.setRealityStartTime(StringUtils.isEmpty(vo.getRealityStartTime()) ? vo.getRealityStartTime() : vo.getRealityStartTime().concat(" 00:00:00"));
-                    vo.setRealityEndTime(StringUtils.isEmpty(vo.getRealityEndTime()) ? vo.getRealityEndTime() : vo.getRealityEndTime().concat(" 23:59:59"));
+                    vo.setRealityStartTime(vo.getRealityStartTime());
+                    vo.setRealityEndTime( vo.getRealityEndTime());
 
                     List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                             .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
@@ -659,7 +657,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
         //前期任务
         List<PreTaskEntity> preTaskList = preTaskService.getPreTaskByProductId(dto.getId());
-        List<String> taskIdList = preTaskList.stream().map(PreTaskEntity::getTaskId).collect(Collectors.toList());
+        List<String> taskIdList = preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
 
         return list.stream().filter(t -> !taskIdList.contains(t.getTaskId())).collect(Collectors.toList());
     }

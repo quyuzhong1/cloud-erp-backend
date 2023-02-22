@@ -55,6 +55,12 @@ public class ScheduleTaskDetailsVO implements Serializable {
     private List<ScheduleTaskDetailsVO> historyList;
 
 
+    /**
+     * 前端要求id
+     */
+    private String id;
+
+
 
 
 

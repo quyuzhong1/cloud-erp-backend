@@ -271,13 +271,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //最大计划结束时间
         Date maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeEndTime).get();
         String fmt = DateUtil.fmt_day;
-        vo.setScheduleStartTine(DateUtil.conversionDate(minStartTime, fmt).concat(" 00:00:00"));
-        vo.setScheduleEndTine(DateUtil.conversionDate(maxEndTime, fmt).concat(" 23:59:59"));
+        vo.setScheduleStartTine(DateUtil.conversionDate(minStartTime, fmt));
+        vo.setScheduleEndTine(DateUtil.conversionDate(maxEndTime, fmt));
         //相差多少天
-        Integer durationDay = DateUtil.getDiffDay(minStartTime, maxEndTime);
-        if (minStartTime == maxEndTime) {
-            durationDay = durationDay + 1;
-        }
+        Integer durationDay = DateUtil.getDiffDay(minStartTime, maxEndTime)+1;
         vo.setDurationDay(durationDay);
         vo.setWaitAuditTaskCount(planTaskList.size());
 
@@ -305,6 +302,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setPlanEndTime(item.getChangeEndTime());
             task.setPlanStartTime(item.getChangeStartTime());
             task.setTaskId(taskId);
+            task.setId(IdWorker.getIdStr());
 
             List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(historyList)) {
@@ -315,6 +313,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                     String hiTaskName = taskEntityList.stream().filter(t -> t.getId().equals(hi.getTaskId())).findFirst().
                             flatMap(data -> Optional.ofNullable(data.getName())).orElse("");
                     hi.setTaskName(hiTaskName);
+                    hi.setId(IdWorker.getIdStr());
                 }
             }
             task.setHistoryList(historyList);
