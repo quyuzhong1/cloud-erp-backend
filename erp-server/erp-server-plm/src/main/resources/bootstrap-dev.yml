@@ -10,9 +10,9 @@ spring:
         file-extension: yml
         shared-configs: common.yml,db-plm.yml,erp-third-party.yml,druid-common.yml
 #显示日期的
-  jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: GMT+8
+#  jackson:
+#    date-format: yyyy-MM-dd HH:mm:ss
+#    time-zone: GMT+8
 
 fdfs:
   connect-timeout: 600

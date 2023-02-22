@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class WorkflowBusinessProcessDTO implements Serializable {
+public class WorkflowBusinessProcessDTO implements Serializable
+{
 
 
     /**
