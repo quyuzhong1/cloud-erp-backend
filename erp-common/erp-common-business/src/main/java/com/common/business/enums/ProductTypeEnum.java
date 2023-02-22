@@ -1,4 +1,4 @@
-package com.erp.common.business.enums;
+package com.common.business.enums;
 
 import com.common.core.constant.EnumMessage;
 

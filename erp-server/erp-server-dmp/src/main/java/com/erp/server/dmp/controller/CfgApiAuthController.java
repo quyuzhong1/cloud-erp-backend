@@ -52,7 +52,11 @@ public class CfgApiAuthController extends BaseController {
     @PostMapping("/mongo/save/test")
     public ApiResult saveTest(@RequestBody BaseIdDTO dto)  {
         try {
-            cfgApiAuthService.saveMongoTest(dto.getId());
+            if(Integer.valueOf(dto.getId()) < 100){
+                cfgApiAuthService.saveMongoTest(dto.getId());
+            }else {
+                cfgApiAuthService.saveMongoTest(dto.getId(), dto.getId());
+            }
             return success();
         } catch (Exception e) {
             throw new RuntimeException(e);

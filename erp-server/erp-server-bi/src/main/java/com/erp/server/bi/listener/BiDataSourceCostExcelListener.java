@@ -8,7 +8,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.business.dto.FindUserDTO;
-import com.erp.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.SalesPlatformEnum;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;

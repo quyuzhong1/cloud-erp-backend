@@ -26,7 +26,7 @@ public interface CfgApiAuthService extends IService<CfgApiAuthEntity> {
      * @param dto
      */
     void update(CfgApiAuthDTO dto);
-
-    void saveMongoTest(String type) throws Exception;
+    void saveMongoTest(String type);
+    void saveMongoTest(String type, String id);
 
 }

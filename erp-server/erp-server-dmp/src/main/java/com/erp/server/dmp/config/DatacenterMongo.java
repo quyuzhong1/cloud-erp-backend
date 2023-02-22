@@ -11,6 +11,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.transaction.interceptor.TransactionInterceptor;
 
 @Configuration
 @PropertySource(value= {"/bootstrap.yml"},factory= YamlPropertySourceFactory.class)
@@ -29,7 +30,7 @@ public class DatacenterMongo extends AbstractMongoConfig {
 	public MongoDatabaseFactory mongoDatabaseFactory(){
 		return mongoDbFactory(env,"");
 	}
-	@Bean
+	@Bean("mongoTransactionManager")
 	public MongoTransactionManager mongoTransactionManager() {
 		return new MongoTransactionManager(mongoDatabaseFactory());
 	}

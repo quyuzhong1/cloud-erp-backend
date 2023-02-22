@@ -3,7 +3,7 @@ package com.erp.server.bi.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.erp.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.SalesPlatformEnum;
 import com.erp.model.bi.dto.BiTargetManagementImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;

@@ -13,7 +13,6 @@ import com.erp.server.dmp.mapper.CfgApiAuthMapper;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgApiAuthService;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +50,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, transactionManager = "MONGO_TRANSACTION_MANAGER")
     public void saveMongoTest(String type){
         CfgApiAuthEntity cfgApiAuthEntity = new CfgApiAuthEntity();
         cfgApiAuthEntity.setApiPlatform(type);
@@ -91,11 +90,25 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
             mongoService.saveMongoData(entity, "mongo_test_transactional_up");
             log.info("mongo_test_transactional_up");
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "")
+    public void saveMongoTest(String type, String id){
+        CfgApiAuthEntity cfgApiAuthEntity = new CfgApiAuthEntity();
+        cfgApiAuthEntity.setApiPlatform(type);
+        cfgApiAuthEntity.setApiPlatformId(type);
+        CfgApiAuthEntity cfgApiAuthEntity2 = new CfgApiAuthEntity();
+        cfgApiAuthEntity2.setApiPlatform(type);
+        cfgApiAuthEntity2.setApiPlatformId(type);
+        cfgApiAuthEntity2.setKey(type);
+        cfgApiAuthEntity2.setValue(type);
         if(Integer.valueOf(type) > 100 ) {
             // 保存mysql数据
             save(cfgApiAuthEntity);
             save(cfgApiAuthEntity2);
-            log.info("mongo_test_transactional_up");
+            log.info("pgSQL_test_transactional_up");
+            Integer s  = 5/0;
         }
     }
 
