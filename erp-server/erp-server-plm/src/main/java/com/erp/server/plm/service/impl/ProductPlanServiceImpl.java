@@ -24,6 +24,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductPlanProcessEnum;
+import com.erp.model.plm.enums.ProductPlanStatusEnum;
 import com.erp.model.plm.enums.ProjectStateEnum;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanRemarkVO;
@@ -94,6 +95,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductPlanVO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        List<ProductPlanVO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            records.forEach(obj -> {
+                obj.setProductStatusName(StringUtils.isBlank(obj.getProductStatus()) ? "" : ProductPlanStatusEnum.getNameByCode(obj.getProductStatus()).getName());
+            });
+        }
         return new PagingVO(pageData);
     }
 

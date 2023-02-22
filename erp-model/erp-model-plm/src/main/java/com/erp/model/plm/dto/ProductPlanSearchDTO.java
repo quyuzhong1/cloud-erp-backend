@@ -18,7 +18,7 @@ import java.time.LocalDate;
 public class ProductPlanSearchDTO extends PermissionsDTO {
 
     /**
-     * 类型：尚未开始，已立项，开发中，延期
+     * 类型：1尚未开始，2已立项，3开发中
      */
     @NotBlank(message = "类型不能为空")
     private String type;

@@ -24,14 +24,24 @@
             pp.create_time as  createTime
         from  product_plan pp
         <where>
-            <if test="params.type != null and params.type != ''">
-
+            pp.is_deleted = false
+            <if test="params.type != null and params.type != '' and params.type == '1'">
+               and pp.product_status = ''
+            </if>
+            <if test="params.type != null and params.type != '' and params.type == '2'">
+                and pp.product_status in ('3','4','5','6')
+            </if>
+            <if test="params.type != null and params.type != '' and params.type == '3'">
+                and pp.product_status in ('4','5','6')
             </if>
             <if test="params.name != null and params.name != ''">
                and pp.name like concat('%',#{params.name},'%')
             </if>
             <if test="params.chargeId != null and params.chargeId != ''">
-                and pp.charge_id = #{params.chargeId}
+                and
+                <foreach collection="params.chargeIds" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId != ''">
                 and pp.category_id = #{params.categoryId}

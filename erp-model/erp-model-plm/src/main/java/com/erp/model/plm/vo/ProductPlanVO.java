@@ -39,6 +39,11 @@ public class ProductPlanVO implements Serializable {
     /**
      * 产品状态
      */
+    private String productStatus;
+
+    /**
+     * 产品状态名称
+     */
     private String productStatusName;
 
     /**
