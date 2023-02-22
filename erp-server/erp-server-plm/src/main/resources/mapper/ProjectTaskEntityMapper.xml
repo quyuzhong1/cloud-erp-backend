@@ -1000,10 +1000,10 @@
         WHERE pt.product_id=#{dto.productId}
         <if test="dto.phase!=null and dto.phase!=''  ">
             <if test="dto.phase=='projectApproval'">
-                AND pt.property=1
+                AND pt.phase_name='立项阶段'
             </if>
             <if test="dto.phase=='project'">
-                AND pt.property=2
+                AND pt.phase_name!='立项阶段'
             </if>
         </if>
         <if test="dto.taskChargeId !=null and dto.taskChargeId!=''">

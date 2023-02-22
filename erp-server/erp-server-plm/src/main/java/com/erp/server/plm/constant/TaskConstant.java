@@ -12,6 +12,10 @@ public interface TaskConstant {
     //评审任务
     Integer REVIEW_TASK = 1;
 
+
+    //低级任务
+    Integer LOW_TASK=1;
+
     //中级任务
     Integer INTERMEDIATE_TASK=2;
 

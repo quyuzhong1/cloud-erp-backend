@@ -45,7 +45,7 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList, List<Integer> stateList);
 
-    void addRoleAndMembersByApproval(String productId);
+    void addRoleAndMembersByApproval(String productId,String productPropertyId);
 
     List<ProjectMembersEntity> getByMemberIds(List<String> memberIds,String productId);
 

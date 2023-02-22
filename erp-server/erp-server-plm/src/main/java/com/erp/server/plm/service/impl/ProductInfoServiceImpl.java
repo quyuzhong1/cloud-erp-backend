@@ -296,7 +296,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //异步发送通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
             //默认查询立项模板中的成员和角色信息
-            projectMembersService.addRoleAndMembersByApproval(entity.getId());
+            projectMembersService.addRoleAndMembersByApproval(entity.getId(),entity.getPropertyId());
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());

@@ -405,7 +405,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这里要找项目模板【默认的】
         ProjectTemplateEntity defaultTemplate = projectTemplateService.getDefaultTemplate();
         if (Objects.isNull(defaultTemplate)) {
-              return new Pair<>(new ArrayList<>(), new ArrayList<>());
+            return new Pair<>(new ArrayList<>(), new ArrayList<>());
         }
         String templateId = defaultTemplate.getId();
         //从系统拿到 项目任务
@@ -2524,6 +2524,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean batchUpdate(BatchScheduleTaskDTO dto) {
+
+        List<String> taskIds = dto.getPreTaskIdList();
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return false;
+        }
+        List<ProjectTaskEntity> taskEntityList = this.getByTaskIds(taskIds);
+        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+        long count = taskEntityList.stream().filter(p -> !auditPassStatus.equals(p.getScheduleStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95136);
+        }
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(ProjectTaskEntity::getId, dto.getTaskIdList());
         if (dto.getPlanStartTime() != null) {

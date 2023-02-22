@@ -84,6 +84,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Resource
     private ProjectPlanService projectPlanService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
     /**
      * 根据条件获取到项目计划任务
      *
@@ -177,11 +180,13 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     //优先级
                     Integer priority = vo.getPriority();
 
-                    String priorityName = "低级";
+                    String priorityName = "";
                     if (TaskConstant.INTERMEDIATE_TASK.equals(priority)) {
                         priorityName = "中级";
                     } else if (TaskConstant.ADVANCED_TASK.equals(priority)) {
                         priorityName = "高级";
+                    } else if (TaskConstant.LOW_TASK.equals(priority)) {
+                        priorityName = "低级";
                     }
                     vo.setPriorityName(priorityName);
                     //设置里程碑
@@ -235,8 +240,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public void exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
         List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto);
         for (ProductTaskVO vo : taskList) {
-            String status = vo.getScheduleStatus();
-            vo.setScheduleStatusName(BaseStatusEnum.getName(status));
+            String scheduleStatus = vo.getScheduleStatus();
+            Integer taskStatus = vo.getStatus();
+            vo.setScheduleStatusName(BaseStatusEnum.getName(scheduleStatus));
+            vo.setStatusName(TaskStateEnum.getName(taskStatus));
         }
         List<ScheduleTaskExportExcelVO> excelList = BeanMapper.copyList(taskList, ScheduleTaskExportExcelVO.class);
         String fileName = "任务数据";
@@ -697,8 +704,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
-            List<ScheduleTaskExportErrorExcelVO> list=excelListener.getDataList();
-            if(CollectionUtils.isEmpty(list)){
+            List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();
+            if (CollectionUtils.isEmpty(list)) {
                 throw new ServiceException(ApiError.ERROR_95133);
             }
 
@@ -723,7 +730,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
 
     /**
-     * 导出任务排期
+     * 导出任务排期 模板
      *
      * @param request
      * @param response

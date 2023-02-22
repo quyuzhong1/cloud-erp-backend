@@ -531,10 +531,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Override
     @Transactional
-    public void addRoleAndMembersByApproval(String productId) {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
-        ProjectTemplateEntity entity = projectTemplateService.getOne(queryWrapper);
+    public void addRoleAndMembersByApproval(String productId,String productPropertyId) {
+        Integer code=ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
+        ProjectTemplateEntity entity = projectTemplateService.getApprovalTemplate(code,productPropertyId);
         if (ObjectUtils.isNotEmpty(entity)) {
             //模板角色
             List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
