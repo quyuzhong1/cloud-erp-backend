@@ -51,6 +51,12 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         if (StringUtils.isBlank(vo.getTaskName())) {
             errorMsgList.add("任务名 不能为空");
         }
+        if (StringUtils.isBlank(vo.getTaskName())) {
+            errorMsgList.add("任务名 不能为空");
+        }
+        if (StringUtils.isBlank(vo.getProductName())) {
+            errorMsgList.add("产品名 不能为空");
+        }
         if (StringUtils.isBlank(vo.getChargeName())) {
             errorMsgList.add("负责人不能为空");
         }

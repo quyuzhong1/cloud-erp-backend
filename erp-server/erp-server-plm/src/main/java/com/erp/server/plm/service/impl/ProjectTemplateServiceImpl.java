@@ -79,7 +79,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     @Override
     public Boolean saveOrUpdate(ProjectTemplateSaveOrUpdateDTO dto) {
         //验证模板名称是否已存在
-        checkTemplateName(dto.getName());
+        checkTemplateName(dto.getName(),dto.getId());
         //立项模板
         Integer approvalTemplateCode = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
         Integer templateType = dto.getTemplateType();
@@ -307,7 +307,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      */
     @Override
     public String saveTemplate(String templateName, String productId, Integer templateType) {
-        checkTemplateName(templateName);
+        checkTemplateName(templateName,"");
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
@@ -341,9 +341,12 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @author yl
      * @date 2022-09-20 14:34
      */
-    private void checkTemplateName(String templateName) {
+    private void checkTemplateName(String templateName,String id) {
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTemplateEntity::getName, templateName);
+        if(StringUtils.isNotBlank(id)){
+            queryWrapper.ne(ProjectTemplateEntity::getId, id);
+        }
         int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95011);

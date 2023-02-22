@@ -103,8 +103,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             checkTaskTime(taskList);
             checkTaskStatus(taskList);
         }
-        long approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).count();
-        long projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).count();
+        String phaseName = "立项阶段";
+        long approvalTaskCount = taskList.stream().filter(t -> phaseName.equals(t.getPhaseName())).count();
+        long projectTaskCount = taskList.stream().filter(t -> !phaseName.equals(t.getPhaseName())).count();
         String phase = "all";
         if (approvalTaskCount > 0 && projectTaskCount == 0) {
             phase = "projectApproval";
@@ -274,7 +275,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         vo.setScheduleStartTine(DateUtil.conversionDate(minStartTime, fmt));
         vo.setScheduleEndTine(DateUtil.conversionDate(maxEndTime, fmt));
         //相差多少天
-        Integer durationDay = DateUtil.getDiffDay(minStartTime, maxEndTime)+1;
+        Integer durationDay = DateUtil.getDiffDay(minStartTime, maxEndTime) + 1;
         vo.setDurationDay(durationDay);
         vo.setWaitAuditTaskCount(planTaskList.size());
 

@@ -981,6 +981,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public Boolean removeTask(String taskId) {
         ProjectTaskEntity entity = this.getById(taskId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        String scheduleStatus = entity.getScheduleStatus();
+        if(BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)){
+            throw new ServiceException(ApiError.ERROR_95137);
+        }
         Integer IsFixed = entity.getIsFixed();
         LoginUser loginUser = commonService.getUserInfo();
         //如果是固定任务
@@ -1599,8 +1606,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
             List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
             list.forEach(obj -> {
-                if(StringUtils.isBlank(obj.getCharges())){
-                       return;
+                if (StringUtils.isBlank(obj.getCharges())) {
+                    return;
                 }
                 List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
                 //回显名称
@@ -3437,12 +3444,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //如果  排期任务状态 要通过才能发布任务
         //审核通过
-//        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-//        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
-//        //当不包含就要去除
-//        if (!scheduleStatusList.contains(auditPassStatus)) {
-//            throw new ServiceException(ApiError.ERROR_95130);
-//        }
+        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
+        //当不包含就要去除
+        if (!scheduleStatusList.contains(auditPassStatus)) {
+            throw new ServiceException(ApiError.ERROR_95130);
+        }
 
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
