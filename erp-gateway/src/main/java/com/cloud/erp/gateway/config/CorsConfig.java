@@ -4,8 +4,9 @@ package com.cloud.erp.gateway.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 
 /**
@@ -18,7 +19,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 public class CorsConfig {
 
     @Bean
-    public CorsWebFilter corsWebFilter(){
+    public CorsFilter corsWebFilter(){
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
         //跨域配置
         CorsConfiguration corsConfiguration = new CorsConfiguration();
@@ -30,7 +31,7 @@ public class CorsConfig {
         corsConfiguration.setAllowCredentials(true);
         //可以让所有的请求 来访问
         urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
-        return new CorsWebFilter(urlBasedCorsConfigurationSource);
+        return new CorsFilter(urlBasedCorsConfigurationSource);
 
     }
 }
