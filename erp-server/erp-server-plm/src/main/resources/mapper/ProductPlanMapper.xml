@@ -47,28 +47,28 @@
                 and pp.category_id = #{params.categoryId}
             </if>
             <if test="params.planSurveyDateBegin != null ">
-                and pp.plan_survey_date_begin &gt;= #{params.planSurveyDateBegin}
+                and pp.plan_survey_date_begin &gt;= #{params.planSurveyDateBegin}::timestamp
             </if>
             <if test="params.planSurveyDateEnd != null ">
-                and pp.plan_survey_date_end &lt;= #{params.planSurveyDateEnd}
+                and pp.plan_survey_date_end &lt;= #{params.planSurveyDateEnd}::timestamp
             </if>
             <if test="params.planProjectApprovalDateBegin != null ">
-                and pp.plan_project_approval_date_begin &gt;= #{params.planProjectApprovalDateBegin}
+                and pp.plan_project_approval_date_begin &gt;= #{params.planProjectApprovalDateBegin}::timestamp
             </if>
             <if test="params.planProjectApprovalDateEnd != null ">
-                and pp.plan_project_approval_date_begin &lt;= #{params.planProjectApprovalDateEnd}
+                and pp.plan_project_approval_date_begin &lt;= #{params.planProjectApprovalDateEnd}::timestamp
             </if>
             <if test="params.planFirstMassStockInDateBegin != null ">
-                and pp.plan_first_mass_stock_in_date_begin &gt;= #{params.planFirstMassStockInDateBegin}
+                and pp.plan_first_mass_stock_in_date_begin &gt;= #{params.planFirstMassStockInDateBegin}::timestamp
             </if>
             <if test="params.planFirstMassStockInDateEnd != null ">
-                and pp.plan_first_mass_stock_in_date_end &lt;= #{params.planFirstMassStockInDateEnd}
+                and pp.plan_first_mass_stock_in_date_end &lt;= #{params.planFirstMassStockInDateEnd}::timestamp
             </if>
             <if test="params.planListingDateBegin != null ">
-                and pp.plan_listing_date_begin &gt;= #{params.planListingDateBegin}
+                and pp.plan_listing_date_begin &gt;= #{params.planListingDateBegin}::timestamp
             </if>
             <if test="params.planListingDateEnd != null ">
-                and pp.plan_listing_date_end &lt;= #{params.planListingDateEnd}
+                and pp.plan_listing_date_end &lt;= #{params.planListingDateEnd}::timestamp
             </if>
         </where>
     </select>
