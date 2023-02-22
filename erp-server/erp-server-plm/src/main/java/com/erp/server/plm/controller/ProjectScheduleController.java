@@ -31,7 +31,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("plm/product/schedule")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
-public class ProjectPlanController extends BaseController {
+public class ProjectScheduleController extends BaseController {
     /**
      * 服务对象
      */
