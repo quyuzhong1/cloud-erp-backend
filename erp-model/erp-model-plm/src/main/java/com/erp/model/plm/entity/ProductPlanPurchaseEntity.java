@@ -6,6 +6,8 @@ import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @author Will
  * @version 1.0
@@ -27,13 +29,13 @@ public class ProductPlanPurchaseEntity extends BaseEntity {
      * 目标成本
      */
     @TableField(value = "target_cost")
-    private String targetCost;
+    private BigDecimal targetCost;
 
     /**
      * 摸具成本预估
      */
     @TableField(value = "estimated_mold_cost")
-    private String estimatedMoldCost;
+    private BigDecimal estimatedMoldCost;
 
     /**
      * 供应商状态

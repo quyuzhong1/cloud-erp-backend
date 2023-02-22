@@ -142,6 +142,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
 
+    @Autowired
+    private TemplateTaskService templateTaskService;
 
     /**
      * 添加系统的产品任务
@@ -201,49 +203,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     addTaskList.add(entity);
                     //查询模板任务下审核人
                     List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
-                    if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                        for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
-                            String charges = taskChargeDistributionEntity.getCharges();
-                            List<String> chargeList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
-                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                                List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(chargeList, projectTemplateEntity.getId());
-                                if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                                    List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());
-                                    taskChargeDistributionEntity.setChargeIds(StringUtils.join(memberIds, ","));
-                                }
-                            }
-                            //任务负责人为空是跳过审核人上级
-                            if (StringUtils.isBlank(entity.getChargeId())) {
-                                continue;
-                            }
-                            List<String> chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
-                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                                //需要添加的负责人
-                                List<String> supueriorIds = new ArrayList<>();
-                                //查询对应负责人的上级
-                                List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(chargeIds);
-                                if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
-                                    List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                                    for (String superiorType : superiorTypeList) {
-                                        List<String> userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
-                                        if (CollectionUtils.isNotEmpty(userIds)) {
-                                            supueriorIds.addAll(userIds);
-                                        }
-                                    }
-                                }
-                                if (CollectionUtils.isNotEmpty(supueriorIds)) {
-                                    supueriorIds = supueriorIds.stream().distinct().collect(Collectors.toList());
-                                    taskChargeDistributionEntity.setChargeIds(StringUtils.join(supueriorIds, ","));
-                                }
-                            }
-                        }
-
-                        //保存交付文档的审核人
-                        taskChargeDistributionService.removeAndSave(entity.getId(), taskChargeDistributionList, MathUtil.THREE);
+                    List<String> chargeIds = new ArrayList<>();
+                    if (StringUtils.isNotBlank(entity.getChargeId())) {
+                        chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
                     }
+                    //设置审核人信息
+                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList,chargeIds,projectTemplateEntity.getId(),entity.getId(),MathUtil.THREE);
+
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
-
-
                 }
                 sysLogService.addSysLogBySave("新增了一个：[" + entity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), entity.getId(), null);
 
@@ -461,47 +428,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     addTaskList.add(entity);
                     //查询模板任务下审核人
                     List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
-                    if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                        for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
-                            String charges = taskChargeDistributionEntity.getCharges();
-                            List<String> chargeList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
-                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                                List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(chargeList, projectTemplateEntity.getId());
-                                if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                                    List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());
-                                    taskChargeDistributionEntity.setChargeIds(StringUtils.join(memberIds, ","));
-                                }
-                            }
-                            //任务负责人为空是跳过审核人上级
-                            if (StringUtils.isBlank(entity.getChargeId())) {
-                                continue;
-                            }
-                            List<String> chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
-                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                                //需要添加的负责人
-                                List<String> supueriorIds = new ArrayList<>();
-                                //查询对应负责人的上级
-                                List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(chargeIds);
-                                if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
-                                    List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                                    for (String superiorType : superiorTypeList) {
-                                        List<String> userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
-                                        if (CollectionUtils.isNotEmpty(userIds)) {
-                                            supueriorIds.addAll(userIds);
-                                        }
-                                    }
-                                }
-                                if (CollectionUtils.isNotEmpty(supueriorIds)) {
-                                    supueriorIds = supueriorIds.stream().distinct().collect(Collectors.toList());
-                                    taskChargeDistributionEntity.setChargeIds(StringUtils.join(supueriorIds, ","));
-                                }
-                            }
-                        }
-
-                        //保存交付文档的审核人
-                        taskChargeDistributionService.removeAndSave(entity.getId(), taskChargeDistributionList, MathUtil.THREE);
+                    List<String> chargeIds = new ArrayList<>();
+                    if (StringUtils.isNotBlank(entity.getChargeId())) {
+                        chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
                     }
-
+                    //设置审核人信息
+                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList,chargeIds,projectTemplateEntity.getId(),entity.getId(),MathUtil.THREE);
                     taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(), docsNameList);
                 }
             }
@@ -1407,6 +1339,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
                     if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionDTO.getDistributionType())) {
                         taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
+                        taskChargeDistributionDTO.setCharges(String.join(",", chargeList));
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionDTO.getDistributionType())) {
                         List<String> chargesList = Arrays.stream(charges.split(",")).collect(Collectors.toList());

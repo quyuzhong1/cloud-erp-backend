@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,10 +30,10 @@ public class FieldValidUtil {
      * @param object
      * @return String
      */
-    public static String fieldValid(Object object) {
+    public static List<String> fieldValid(Object object) {
 
         Field[] fields = object.getClass().getDeclaredFields();
-        StringBuilder msg = new StringBuilder();
+        List<String> msgList = new ArrayList<>();
         for (Field field : fields) {
             //设置可访问
             field.setAccessible(true);
@@ -42,7 +43,7 @@ public class FieldValidUtil {
               Object obj =  field.get(object) ;
               fieldValue = ObjectUtils.isNotEmpty(obj) ? String.valueOf(obj) : "";
             } catch (IllegalAccessException e) {
-                return fieldValue + "输入有误！";
+                msgList.add(fieldValue + "输入有误！");
             }
             //判断字段是否含有注解
             boolean isExcelValid = field.isAnnotationPresent(FieldValid.class);
@@ -50,12 +51,12 @@ public class FieldValidUtil {
                 FieldValid annotation = field.getAnnotation(FieldValid.class);
                 String str = dataScopeFilter(annotation, fieldValue);
                 if (StringUtils.isNotBlank(str)) {
-                    msg.append(str);
+                    msgList.add(str);
                 }
             }
 
         }
-        return msg.toString();
+        return msgList;
     }
 
     /**

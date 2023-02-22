@@ -779,6 +779,22 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     }
 
+    @Override
+    public FindUserDTO getUserByUserName(String userName) {
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserInfoEntity::getUserName, userName);
+        queryWrapper.last("limit 1");
+        SysUserInfoEntity entity = this.getOne(queryWrapper);
+        if(!Objects.isNull(entity)){
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(entity.getUid());
+            userDTO.setUserName(entity.getUserName());
+            userDTO.setIsMyState(0);
+            return userDTO;
+        }
+        return new FindUserDTO();
+    }
+
 
     /**
      * 获取所有用户所在的部门

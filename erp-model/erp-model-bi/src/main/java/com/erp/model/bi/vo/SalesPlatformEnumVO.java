@@ -16,7 +16,7 @@ import lombok.*;
 @ToString
 public class SalesPlatformEnumVO {
 
-    private Integer code;
+    private String code;
 
     private String name;
 

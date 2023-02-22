@@ -184,6 +184,17 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据用户名称获取用户
+     *
+     * @return
+     */
+    @PostMapping("/getUserByUserName")
+    public FindUserDTO getUserByUserName(@RequestBody String userName) {
+        FindUserDTO dto = sysUserInfoService.getUserByUserName(userName);
+        return dto;
+    }
+
+    /**
      * 获取所有用户所在的部门
      * @Author Luo_WG
      * @Date 2022/12/13 17:12

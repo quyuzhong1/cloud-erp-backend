@@ -68,6 +68,10 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
+    //根据用户名称查询用户
+    @GetMapping("sys/feign/user/getUserByUserName")
+    FindUserDTO getUserByUserName(@RequestBody String userName);
+
     //根据userIds查询用户集合
     @GetMapping("sys/feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);

@@ -29,6 +29,23 @@ public enum FieldFormatPatternTypeEnum implements EnumMessage {
     HTML("HTML", "HTML","<(/S*?)[^>]*>.*?<//1>|<.*? />"),
     IP("IP", "IP","/d+/./d+/./d+/./d+");
 
+    public static final String integer = "整数";
+    public static final String positiveInteger = "正整数";
+    public static final String number = "数字";
+    public static final String decimal = "小数";
+    public static final String numberLetter = "数字和字母";
+    public static final String amount = "金额";
+    public static final String date = "日期";
+    public static final String yearMonth = "年-月";
+    public static final String mobile = "手机";
+    public static final String telephone = "电话";
+    public static final String qq = "QQ";
+    public static final String mailbox = "邮箱";
+    public static final String postalCode = "邮政编码";
+    public static final String id = "身份证";
+    public static final String html = "HTML";
+    public static final String ip = "IP";
+
     private String code;
 
     private String name;

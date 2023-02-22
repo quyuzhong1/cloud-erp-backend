@@ -3,9 +3,10 @@ package com.erp.server.plm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.dmp.enums.SalesPlatformEnum;
+import com.erp.common.business.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.SelectShowDTO;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
+import com.erp.server.plm.constant.IsConstant;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +34,7 @@ public class PlmDropDownListController extends BaseController {
     @GetMapping("/platform/list")
     public ApiResult<List<SelectShowDTO>> listPlatformDropDown() {
         List<SelectShowDTO> result = Arrays.stream(SalesPlatformEnum.values())
-                .map(x -> new SelectShowDTO(x.getCode(), x.getName(), x.getDesc()))
+                .map(x -> new SelectShowDTO(IsConstant.NO, x.getName(), x.getDesc()))
                 .collect(Collectors.toList());
         return success(result);
     }

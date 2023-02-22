@@ -82,6 +82,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Resource
     private ProjectStatusTimeService projectStatusTimeService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -164,7 +167,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, sysUserFeign);
+        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this,basicDictService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

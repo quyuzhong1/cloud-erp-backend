@@ -6,6 +6,8 @@ import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * @author Will
  * @version 1.0
@@ -27,13 +29,13 @@ public class ProductPlanSaleEntity extends BaseEntity {
      * 人民币定价
      */
     @TableField(value = "price_cny")
-    private String priceCny;
+    private BigDecimal priceCny;
 
     /**
      * 美元定价
      */
     @TableField(value = "price_usd")
-    private String priceUsd;
+    private BigDecimal priceUsd;
 
     /**
      * 销售平台/渠道

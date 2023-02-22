@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.business.dto.base.PagingDTO;
 import com.erp.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.TaskChargeDistributionEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 
 import java.util.List;
@@ -87,4 +88,8 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
 
 
     List<TemplateTaskEntity> listByRoleId(String roleId);
+    /**
+     * 设置审核人信息
+     */
+    void setTaskChargeDistribution(List<TaskChargeDistributionEntity> taskChargeDistributionList, List<String> ids, String templateId, String taskId, Integer source);
 }

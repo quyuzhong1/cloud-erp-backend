@@ -72,9 +72,9 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         List<String> errorMsgList = new ArrayList<>();
         //添加数据用于判断是否为空
         dataList.add(dto);
-        String msg = FieldValidUtil.fieldValid(dto);
-        if (StringUtils.isNotBlank(msg)) {
-            errorMsgList.add(msg);
+        List<String> msgList = FieldValidUtil.fieldValid(dto);
+        if (CollectionUtils.isEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
         }
         ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
         //根据产品名称查询产品信息
