@@ -183,9 +183,9 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkflowBusinessProcessEntity::getBusinessTableId, id);
         queryWrapper.orderByDesc(WorkflowBusinessProcessEntity::getCreateTime);
+        queryWrapper.last("LIMIT 1");
         WorkflowBusinessProcessEntity businessProcess = this.getOne(queryWrapper);
         if (businessProcess != null) {
-
             vo.setBusinessTableId(businessProcess.getBusinessTableId());
             String processId = businessProcess.getProcessId();
             vo.setProcessId(processId);
