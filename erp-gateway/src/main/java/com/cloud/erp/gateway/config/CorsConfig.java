@@ -3,6 +3,7 @@ package com.cloud.erp.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.reactive.CorsWebFilter;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.CorsFilter;
  * @Created by yl
  */
 @Configuration
+@Order(1)
 public class CorsConfig {
 
     @Bean
