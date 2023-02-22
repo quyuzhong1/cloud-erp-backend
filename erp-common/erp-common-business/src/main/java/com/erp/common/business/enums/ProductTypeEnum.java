@@ -43,4 +43,13 @@ public enum ProductTypeEnum {
         }
         return null;
     }
+    public static ProductTypeEnum getByName(String name) {
+        ProductTypeEnum[] enums = values();
+        for (ProductTypeEnum plmEnum : enums) {
+            if (plmEnum.getName().equals(name)) {
+                return plmEnum;
+            }
+        }
+        return null;
+    }
 }

@@ -113,7 +113,7 @@ public class ProductPlanExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "sku数量", index = 13)
     @FieldValid(formatPattern = FieldFormatPatternTypeEnum.positiveInteger)
-    private String skuQty;
+    private String skuQtyStr;
 
     /**
      * 规格参数
@@ -165,42 +165,42 @@ public class ProductPlanExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "人民币定价", index = 21)
     @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
-    private String priceCny;
+    private String priceCnyStr;
 
     /**
      * 美元定价
      */
     @ExcelProperty(value = "美元定价", index = 22)
     @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
-    private String priceUsd;
+    private String priceUsdStr;
 
     /**
      * 是否需要ID设计
      */
     @ExcelProperty(value = "是否需要ID设计", index = 23)
     @FieldValid(fieldValues = "是,否")
-    private String isNeedIDDesign;
+    private String isNeedIDDesignStr;
 
     /**
      * 是否需要结构设计
      */
     @ExcelProperty(value = "是否需要结构设计", index = 24)
     @FieldValid(fieldValues = "是,否")
-    private String isNeedStructuralDesign;
+    private String isNeedStructuralDesignStr;
 
     /**
      * 目标成本
      */
     @ExcelProperty(value = "目标成本", index = 25)
     @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
-    private String targetCost;
+    private String targetCostStr;
 
     /**
      * 摸具成本预估
      */
     @ExcelProperty(value = "摸具成本预估", index = 26)
     @FieldValid(formatPattern = FieldFormatPatternTypeEnum.amount)
-    private String estimatedMoldCost;
+    private String estimatedMoldCostStr;
 
     /**
      * 供应商状态
@@ -246,7 +246,7 @@ public class ProductPlanExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "计划上市季节", index = 33)
     @FieldValid(enumClass = SeasonEnum.class)
-    private String planMarketingSeason;
+    private String planMarketingSeasonName;
 
     /**
      * 计划上市时间

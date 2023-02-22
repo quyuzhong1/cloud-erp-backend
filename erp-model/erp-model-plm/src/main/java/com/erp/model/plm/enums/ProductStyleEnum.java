@@ -50,4 +50,13 @@ public enum ProductStyleEnum implements EnumMessage {
         }
         return null;
     }
+    public static ProductStyleEnum getByName(String name) {
+        ProductStyleEnum[] enums = values();
+        for (ProductStyleEnum plmEnum : enums) {
+            if (plmEnum.getName().equals(name)) {
+                return plmEnum;
+            }
+        }
+        return null;
+    }
 }

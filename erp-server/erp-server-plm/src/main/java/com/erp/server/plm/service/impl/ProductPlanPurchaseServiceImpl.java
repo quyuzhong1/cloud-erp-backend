@@ -49,7 +49,6 @@ public class ProductPlanPurchaseServiceImpl extends ServiceImpl<ProductPlanPurch
     public ProductPlanPurchaseEntity getByProductPlanId(String productPlanId) {
         LambdaQueryWrapper<ProductPlanPurchaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductPlanPurchaseEntity::getProductPlanId,productPlanId);
-        queryWrapper.eq(ProductPlanPurchaseEntity::getIsDeleted,IsConstant.NO);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }

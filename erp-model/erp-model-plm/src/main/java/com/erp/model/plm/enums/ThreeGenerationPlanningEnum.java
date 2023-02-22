@@ -46,4 +46,13 @@ public enum ThreeGenerationPlanningEnum implements EnumMessage {
         }
         return null;
     }
+    public static ThreeGenerationPlanningEnum getByName(String name) {
+        ThreeGenerationPlanningEnum[] enums = values();
+        for (ThreeGenerationPlanningEnum plmEnum : enums) {
+            if (plmEnum.getName().equals(name)) {
+                return plmEnum;
+            }
+        }
+        return null;
+    }
 }

@@ -155,7 +155,7 @@ public class ProductPlanEntity extends BaseEntity {
      * sku数量
      */
     @TableField(value = "sku_qty")
-    private String skuQty;
+    private Integer skuQty;
 
     /**
      * 规格参数
@@ -193,14 +193,14 @@ public class ProductPlanEntity extends BaseEntity {
     /**
      * 是否需要ID设计
      */
-    @TableField(value = "is_need_ID_design")
-    private String isNeedIDDesign;
+    @TableField(value = "is_need_id_design")
+    private Boolean isNeedIDDesign;
 
     /**
      * 是否需要结构设计
      */
     @TableField(value = "is_need_structural_design")
-    private String isNeedStructuralDesign;
+    private Boolean isNeedStructuralDesign;
 
     /**
      * 计划调研时间

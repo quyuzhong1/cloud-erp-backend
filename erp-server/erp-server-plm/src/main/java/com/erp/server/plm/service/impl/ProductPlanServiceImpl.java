@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.util.DateUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -84,6 +85,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Resource
     private BasicDictService basicDictService;
+
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
 
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
@@ -167,7 +172,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this,basicDictService, sysUserFeign);
+        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this,basicDictService,basicCategoryService,productPlanSaleService,productPlanSaleInfoService,productPlanPurchaseService,productPlanRemarkService,sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -251,6 +256,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Override
     public Boolean uploadImageUrl(ProductPlanImageDTO dto) {
         return null;
+    }
+
+    @Override
+    public ProductPlanEntity getByYearAndName(Integer year, String name) {
+        LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductPlanEntity::getYear,year);
+        queryWrapper.eq(ProductPlanEntity::getName,name);
+        return this.getOne(queryWrapper);
     }
 
     /**

@@ -51,7 +51,6 @@ public class ProductPlanSaleInfoServiceImpl extends ServiceImpl<ProductPlanSaleI
     public List<ProductPlanSaleInfoEntity> listByProductPlanId(String productPlanId) {
         LambdaQueryWrapper<ProductPlanSaleInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductPlanSaleInfoEntity::getProductPlanId,productPlanId);
-        queryWrapper.eq(ProductPlanSaleInfoEntity::getIsDeleted,IsConstant.NO);
         return this.list(queryWrapper);
     }
 }

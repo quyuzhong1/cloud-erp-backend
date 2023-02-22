@@ -51,7 +51,6 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
     public List<ProductPlanRemarkEntity> listByProductPlanId(String productPlanId) {
         LambdaQueryWrapper<ProductPlanRemarkEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductPlanRemarkEntity::getProductPlanId,productPlanId);
-        queryWrapper.eq(ProductPlanRemarkEntity::getIsDeleted,IsConstant.NO);
         return this.list(queryWrapper);
     }
 }

@@ -2,9 +2,9 @@ package com.erp.rpc.sys.feign;
 
 
 import com.common.core.controller.vo.ApiResult;
-import com.erp.common.business.dto.FindUserDTO;
-import com.erp.common.business.dto.UserRequestPermissionsDTO;
-import com.erp.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -66,6 +66,10 @@ public interface SysUserFeign {
     //根据userId查询用户
     @GetMapping("sys/feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
+
+    //根据用户名称查询用户
+    @GetMapping("sys/feign/user/getUserByUserName")
+    FindUserDTO getUserByUserName(@RequestBody String userName);
 
     //根据userIds查询用户集合
     @GetMapping("sys/feign/user/getUserListByUserIds")

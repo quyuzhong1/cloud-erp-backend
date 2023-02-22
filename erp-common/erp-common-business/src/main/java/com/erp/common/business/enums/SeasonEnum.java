@@ -48,4 +48,13 @@ public enum SeasonEnum implements EnumMessage {
         return null;
     }
 
+    public static SeasonEnum getByName(String name) {
+        SeasonEnum[] enums = values();
+        for (SeasonEnum plmEnum : enums) {
+            if (plmEnum.getName().equals(name)) {
+                return plmEnum;
+            }
+        }
+        return null;
+    }
 }

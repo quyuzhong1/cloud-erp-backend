@@ -41,7 +41,7 @@ public class ProductPlanSaleInfoEntity extends BaseEntity {
      * 销量
      */
     @TableField(value = "sales_qty")
-    private Long salesQty;
+    private Integer salesQty;
 
     /**
      * 销售额

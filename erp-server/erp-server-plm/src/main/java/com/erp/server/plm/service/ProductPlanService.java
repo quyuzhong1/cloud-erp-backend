@@ -137,5 +137,13 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return Boolean
      */
     Boolean uploadImageUrl(ProductPlanImageDTO dto);
-
+    /**
+     * @description: 根据年份和产品名称查询
+     * @author Will
+     * @date: 2023/2/22 14:17
+     * @param year
+     * @param name
+     * @return ProductPlanEntity
+     */
+    ProductPlanEntity getByYearAndName(Integer year, String name);
 }
