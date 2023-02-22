@@ -2,6 +2,8 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
@@ -47,14 +49,19 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
      */
     @Override
     public UserFieldVO getByUserId(FindCustomizeFieldDTO dto) {
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        String userId = "";
+        if (loginUser != null) {
+            userId = loginUser.getUid();
+        }
         LambdaQueryWrapper<CustomizeFieldLayoutEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CustomizeFieldLayoutEntity::getModuleCode, dto.getModuleCode());
-        queryWrapper.eq(CustomizeFieldLayoutEntity::getUserId, dto.getUserId());
+        queryWrapper.eq(CustomizeFieldLayoutEntity::getUserId, userId);
         queryWrapper.orderByDesc(CustomizeFieldLayoutEntity::getCreateTime);
         queryWrapper.last("LIMIT 1");
         CustomizeFieldLayoutEntity entity = this.getOne(queryWrapper);
         UserFieldVO result = new UserFieldVO();
-        if(entity!=null){
+        if (entity != null) {
             result.setModuleName(entity.getModuleName());
             result.setModuleCode(entity.getModuleCode());
             result.setLayoutJson(entity.getLayoutJson());

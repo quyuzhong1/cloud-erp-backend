@@ -1,8 +1,8 @@
 package com.erp.server.plm.controller;
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.BatchScheduleTaskDTO;
 import com.erp.model.plm.dto.ChangeScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -12,7 +12,6 @@ import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ScheduleChangeTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
-import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.validation.annotation.Validated;
@@ -130,16 +129,7 @@ public class ProjectPlanTaskController extends BaseController {
         return success(result);
     }
 
-    /**
-     * 获取用户设置字段
-     *
-     * @return
-     */
-    @GetMapping("/getUserField")
-    public ApiResult<UserFieldVO> getUserField() {
-        UserFieldVO result = projectPlanTaskService.getUserField();
-        return success(result);
-    }
+
 
     /**
      * 批量更新

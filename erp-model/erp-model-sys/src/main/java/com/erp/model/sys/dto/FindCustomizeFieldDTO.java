@@ -18,7 +18,6 @@ public class FindCustomizeFieldDTO implements Serializable {
 
 
 
-    private String userId;
 
     @NotBlank(message = "模块code 不能为空")
     private String moduleCode;

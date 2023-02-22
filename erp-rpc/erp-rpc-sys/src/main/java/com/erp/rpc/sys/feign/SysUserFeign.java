@@ -1,10 +1,10 @@
 package com.erp.rpc.sys.feign;
 
 
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -34,6 +34,7 @@ public interface SysUserFeign {
     //扫码登录
     @PostMapping("sys/feign/user/scanCodeLogin")
     ApiResult<SysUserDTO> scanCodeLogin(@RequestBody SysUserThirdDTO loginDTO);
+
 
 
     //获取用户列表
