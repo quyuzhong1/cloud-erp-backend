@@ -227,4 +227,11 @@ public class ProductTaskVO implements Serializable {
     private Boolean isChange = false;
 
 
+    /**
+     * 阶段排序号
+     */
+
+    private Integer phaseSeq;
+
+
 }

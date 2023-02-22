@@ -21,6 +21,7 @@ import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
@@ -73,6 +74,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private TaskDeliveryService taskDeliveryService;
+
 
     @Value("${pmoCharge}")
     private String pmoCharge;
@@ -265,6 +270,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             return vo;
         }
 
+        //交付文档列表
+        List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(productId);
+
         List<String> taskIdList = planTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
 
         //最小计划开始时间
@@ -304,6 +312,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setPlanStartTime(item.getChangeStartTime());
             task.setTaskId(taskId);
             task.setId(IdWorker.getIdStr());
+            List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
+                    .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
+            task.setDeliveryDocsNames(String.join(",", docsNameList));
+
 
             List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(historyList)) {
@@ -315,6 +327,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                             flatMap(data -> Optional.ofNullable(data.getName())).orElse("");
                     hi.setTaskName(hiTaskName);
                     hi.setId(IdWorker.getIdStr());
+
+                    List<String> docsList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
+                            .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
+                    hi.setDeliveryDocsNames(String.join(",", docsList));
                 }
             }
             task.setHistoryList(historyList);

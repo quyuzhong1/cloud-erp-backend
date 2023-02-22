@@ -96,13 +96,13 @@ public interface NoticeMessageConstant {
 
 
     //任务排期 提交 卡片
-    String SCHEDULE_TASK_SUBMIT_CARD="**任务名称：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
+    String SCHEDULE_TASK_SUBMIT_CARD="**任务名称：**%s\n**产品名称：**%s\n**产品经理：**%s";
 
     //任务排期 审核 卡片
-    String SCHEDULE_TASK_AUDIT_CARD="**任务数量：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
+    String SCHEDULE_TASK_AUDIT_CARD="**任务数量：**%s\n**产品名称：**%s\n**产品经理：**%s";
 
     //任务排期 变更 卡片
-    String SCHEDULE_TASK_CHANGE_CARD="**任务名称：**%s\\n**产品名称：**%s\\n**任务负责人：**%s";
+    String SCHEDULE_TASK_CHANGE_CARD="**任务名称：**%s\n**产品名称：**%s\n**任务负责人：**%s";
 
 
 

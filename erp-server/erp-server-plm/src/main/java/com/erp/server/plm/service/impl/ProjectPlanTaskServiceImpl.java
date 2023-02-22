@@ -70,8 +70,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     private TaskDeliveryService taskDeliveryService;
 
 
-    @Resource
-    private CommonService commonService;
+
 
     @Resource
     private ProjectPlanService projectPlanService;
@@ -103,13 +102,15 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             scheduleStatusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
 
             //根据阶段分组
-            LinkedHashMap<String, List<ProductTaskVO>> map = taskList.stream().
-                    collect(Collectors.groupingBy(ProductTaskVO::getPhaseId, LinkedHashMap::new, Collectors.toList()));
+            TreeMap<Integer, List<ProductTaskVO>> map = taskList.stream().
+                    collect(Collectors.groupingBy(ProductTaskVO::getPhaseSeq, TreeMap::new, Collectors.toList()));
+
+
 
             //变更
             String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
             int parentId = 1;
-            for (Map.Entry<String, List<ProductTaskVO>> item : map.entrySet()) {
+            for (Map.Entry<Integer, List<ProductTaskVO>> item : map.entrySet()) {
                 ProductTaskVO parentVO = new ProductTaskVO();
                 parentVO.setId(parentId);
                 parentVO.setParentId(IsConstant.NO);
@@ -125,7 +126,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
                 //阶段名
                 String phaseName = phaseTaskList.get(0).getPhaseName();
-                parentVO.setPhaseId(item.getKey());
+                String phaseId= phaseTaskList.get(0).getPhaseId();
+                parentVO.setPhaseId(phaseId);
                 parentVO.setPhaseName(phaseName);
 
                 parentVO.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime : minStartTime.concat(" 00:00:00"));

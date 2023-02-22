@@ -56,6 +56,11 @@ public class ScheduleTaskDetailsVO implements Serializable {
 
 
     /**
+     * 交付文档名称
+     */
+    private String deliveryDocsNames;
+
+    /**
      * 前端要求id
      */
     private String id;
