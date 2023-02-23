@@ -22,6 +22,7 @@ public class CustomizeFieldLayoutDTO implements Serializable {
     /**
      * 模块编号
      */
+    @NotBlank(message = "模块code不能为空")
     private String moduleCode;
 
 
@@ -36,7 +37,7 @@ public class CustomizeFieldLayoutDTO implements Serializable {
     @NotBlank(message = "字段布局不能为空")
     private String layoutJson;
 
-    private String userId;
+
 
 
 }

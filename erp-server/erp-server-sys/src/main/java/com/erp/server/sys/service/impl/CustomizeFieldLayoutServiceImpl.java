@@ -27,12 +27,17 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
     @Override
     public Boolean add(CustomizeFieldLayoutDTO dto) {
         if (dto != null) {
+            LoginUser loginUser = CommonInterceptor.threadLocal.get();
+            String userId = "";
+            if (loginUser != null) {
+                userId = loginUser.getUid();
+            }
             CustomizeFieldLayoutEntity entity = new CustomizeFieldLayoutEntity();
             BeanMapper.copy(dto, entity);
             entity.setCreateTime(new Date());
             entity.setUpdateTime(new Date());
-            entity.setCreateUserId(dto.getUserId());
-            entity.setUpdateUserId(dto.getUserId());
+            entity.setCreateUserId(userId);
+            entity.setUpdateUserId(userId);
             return this.save(entity);
         }
         return true;

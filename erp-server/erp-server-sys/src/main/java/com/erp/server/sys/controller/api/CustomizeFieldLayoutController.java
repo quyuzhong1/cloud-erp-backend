@@ -26,7 +26,7 @@ public class CustomizeFieldLayoutController extends BaseController {
     private CustomizeFieldLayoutService customizeFieldLayoutService;
 
 
-    @PostMapping("/add")
+    @PostMapping("/fieldSet")
     public Boolean saveHiddenField(@RequestBody CustomizeFieldLayoutDTO dto) {
         Boolean result = customizeFieldLayoutService.add(dto);
         return result;

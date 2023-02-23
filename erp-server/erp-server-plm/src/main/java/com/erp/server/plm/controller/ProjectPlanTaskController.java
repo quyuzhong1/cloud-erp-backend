@@ -10,7 +10,6 @@ import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ChangeScheduleExportResultVO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ScheduleChangeTaskVO;
-import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
@@ -111,14 +110,7 @@ public class ProjectPlanTaskController extends BaseController {
     }
 
 
-    /**
-     * 字段设置
-     */
-    @PostMapping("/fieldSet")
-    public ApiResult fieldSet(@RequestBody CustomizeFieldLayoutDTO dto) {
-        Boolean result = projectPlanTaskService.fieldSet(dto);
-        return result == true ? success() : failure();
-    }
+
 
     /**
      * 所有字段显示
