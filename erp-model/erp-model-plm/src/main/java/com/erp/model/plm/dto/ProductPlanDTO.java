@@ -55,7 +55,12 @@ public class ProductPlanDTO implements Serializable {
     private String productStatusName;
 
     /**
-     * 产品分类
+     * 一级分类
+     */
+    private String firstCategory;
+
+    /**
+     * 二级分类
      */
     private String category;
 

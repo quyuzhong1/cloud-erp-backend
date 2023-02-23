@@ -296,4 +296,13 @@
         group by pp.id
     </select>
 
+    <select id="listProductPlanGroupTable" resultType="com.erp.model.plm.vo.ProductPlanGroupVO">
+        select
+               *
+        from  product_plan pp
+        <where>
+
+        </where>
+    </select>
+
 </mapper>

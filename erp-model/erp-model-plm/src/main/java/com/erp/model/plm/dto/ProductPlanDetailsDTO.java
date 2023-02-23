@@ -43,6 +43,11 @@ public class ProductPlanDetailsDTO implements Serializable {
     private List<ProductPlanSaleInfoDTO> saleInfoList;
 
     /**
+     * 年份
+     */
+    private Integer year;
+
+    /**
      * 销售总量
      */
     private BigDecimal totalAmount;

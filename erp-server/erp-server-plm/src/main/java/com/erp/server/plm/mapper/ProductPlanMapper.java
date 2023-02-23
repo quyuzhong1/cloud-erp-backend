@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.ProductPlanGroupSerachDTO;
 import com.erp.model.plm.dto.ProductPlanSearchDTO;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.ProductPlanEntity;
+import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -60,4 +61,13 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
     * @return Integer
     */
     Integer listProductPlanStatusCount(@Param("params")ProductPlanGroupSerachDTO dto,@Param("type") Integer type,@Param("startTime") LocalDateTime startTime,@Param("endTime") LocalDateTime endTime);
+    /**
+     * @description: 指标数据
+     * @author Will
+     * @date: 2023/2/23 15:26
+     * @param dto
+     * @param one
+     * @return List<ProductPlanGroupVO>
+     */
+    List<ProductPlanGroupVO> listProductPlanGroupTable(ProductPlanGroupSerachDTO dto, Integer one);
 }

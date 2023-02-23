@@ -48,6 +48,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -146,6 +147,18 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         productPlanDTO.setIsNeedIDDesignStr(productPlanEntity.getIsNeedIDDesign() ? "是" : "否");
         //是否需要结构设计
         productPlanDTO.setIsNeedStructuralDesignStr(productPlanEntity.getIsNeedStructuralDesign() ? "是" : "否");
+        //查询一级类目
+        if (StringUtils.isNotBlank(productPlanEntity.getCategoryId())) {
+            List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(productPlanEntity.getCategoryId());
+            if (CollectionUtils.isNotEmpty(categoryList)) {
+                //一级品类
+                BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(bestEntity)) {
+                    productPlanDTO.setFirstCategory(bestEntity.getName());
+                }
+            }
+        }
+
 
         //查询采购信息
         ProductPlanPurchaseEntity productPlanPurchaseEntity = productPlanPurchaseService.getByProductPlanId(id);
@@ -176,14 +189,15 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //查询销售数据信息
         List<ProductPlanSaleInfoEntity> saleInfoList = productPlanSaleInfoService.listByProductPlanId(id);
         if (CollectionUtils.isNotEmpty(saleInfoList)) {
-            int year = LocalDate.now().getYear();
+            Integer year = saleInfoList.stream().max(Comparator.comparingInt(ProductPlanSaleInfoEntity::getYear)).map(ProductPlanSaleInfoEntity::getYear).get();
             //最新年份的
-            saleInfoList = saleInfoList.stream().filter(e -> e.getYear().equals(Integer.valueOf(year))).collect(Collectors.toList());
+            saleInfoList = saleInfoList.stream().filter(e -> e.getYear().equals(year)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(saleInfoList)) {
                 List<ProductPlanSaleInfoDTO> list = BeanMapperUtils.copyList(ProductPlanSaleInfoDTO.class,saleInfoList);
                 Integer totalQty = list.stream().map(ProductPlanSaleInfoDTO::getSalesQty).reduce(Integer::sum).get();
                 BigDecimal totalAmount = list.stream().map(ProductPlanSaleInfoDTO::getSalesAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
                 resultDTO.setTotalQty(totalQty);
+                resultDTO.setYear(year);
                 resultDTO.setTotalAmount(totalAmount);
                 resultDTO.setSaleInfoList(list);
             }
@@ -428,18 +442,23 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public List<ProductPlanGroupVO> listTableChargeName(ProductPlanGroupSerachDTO dto) {
-
-
+        //产品经理
+        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto,MathUtil.ONE);
+        
         return null;
     }
 
     @Override
     public List<ProductPlanGroupVO> listTableGrade(ProductPlanGroupSerachDTO dto) {
+        //产品等级
+        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto,MathUtil.TWO);
         return null;
     }
 
     @Override
     public List<ProductPlanGroupVO> listTableCategory(ProductPlanGroupSerachDTO dto) {
+        //产品分类
+        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto,MathUtil.THREE);
         return null;
     }
 

@@ -1,31 +1,32 @@
 package com.common.core.utils;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import lombok.NoArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.Collections;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 
 /**
  * 计算工具类
  */
 @UtilityClass
+@NoArgsConstructor
 public class MathUtil {
 
     public final int scale = 2;
-    public final BigDecimal BigDecimal_10000 = new BigDecimal("10000");
-    public final BigDecimal BigDecimal_46000 = new BigDecimal("46000");
-    public final BigDecimal BigDecimal_200 = new BigDecimal("200");
-    public final BigDecimal BigDecimal_1000 = new BigDecimal("1000");
-    public final BigDecimal BigDecimal_0_125 = new BigDecimal("0.125");
-    public final BigDecimal BigDecimal_9_5 = new BigDecimal("9.5");
     public final BigDecimal BigDecimal_100 = new BigDecimal("100");
     public final BigDecimal BigDecimal__1 = new BigDecimal("-1");
     public final BigDecimal BigDecimal_2 = new BigDecimal("2");
     public final BigDecimal BigDecimal_0_1 = new BigDecimal("0.1");
-    public final BigDecimal YB_FEE_DEFAULT = new BigDecimal("1.002");
-    public final BigDecimal Y_FEE_DEFAULT = new BigDecimal("0.0004");
-    public final BigDecimal B_FEE_DEFAULT = new BigDecimal("0.00007");
     public final BigDecimal OTHER_FEE_DEFAULT = new BigDecimal("0.0001");
 
 
@@ -393,4 +394,153 @@ public class MathUtil {
         //返回保留两位小数的随机数。不进行四舍五入
         return db.setScale(scale, BigDecimal.ROUND_DOWN);
     }
+
+    private static final Set<Collector.Characteristics> CHARACTERISTICS = Collections.emptySet();
+
+
+    @SuppressWarnings("unchecked")
+    private static <I, R> Function<I, R> check() {
+        return i -> (R) i;
+    }
+
+    @SuppressWarnings("hiding")
+    static class CollectorImpl<T, A, R> implements Collector<T, A, R> {
+
+        private final Supplier<A> supplier;
+        private final BiConsumer<A, T> accumulator;
+        private final BinaryOperator<A> combiner;
+        private final Function<A, R> finisher;
+        private final Set<Characteristics> characteristics;
+
+        CollectorImpl(Supplier<A> supplier, BiConsumer<A, T> accumulator, BinaryOperator<A> combiner, Function<A, R> finisher, Set<Characteristics> characteristics) {
+            this.supplier = supplier;
+            this.accumulator = accumulator;
+            this.combiner = combiner;
+            this.finisher = finisher;
+            this.characteristics = characteristics;
+        }
+
+        CollectorImpl(Supplier<A> supplier, BiConsumer<A, T> accumulator, BinaryOperator<A> combiner, Set<Characteristics> characteristics) {
+            this(supplier, accumulator, combiner, check(), characteristics);
+        }
+
+        @Override
+        public Supplier<A> supplier() {
+            return supplier;
+        }
+
+        @Override
+        public BiConsumer<A, T> accumulator() {
+            return accumulator;
+        }
+
+        @Override
+        public BinaryOperator<A> combiner() {
+            return combiner;
+        }
+
+        @Override
+        public Function<A, R> finisher() {
+            return finisher;
+        }
+
+        @Override
+        public Set<Characteristics> characteristics() {
+            return characteristics;
+        }
+    }
+
+    /**
+     * 求和方法
+     * @param mapper
+     * @param <T>
+     * @return
+     */
+    public static <T> Collector<T, ?, BigDecimal> summingBigDecimal(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper) {
+        return new BigDecimalUtil.CollectorImpl<>(
+                () -> new BigDecimal[]{new BigDecimal(0)},
+                (a, t) -> {
+                    a[0] = a[0].add(mapper.applyAsBigDecimal(t), MathContext.DECIMAL32);
+                },
+                (a, b) -> {
+                    a[0] = a[0].add(b[0], MathContext.DECIMAL32);
+                    return a;
+                },
+                a -> a[0], CHARACTERISTICS
+        );
+    }
+
+    /**
+     * 求最大值，这里的最小MIN值，作为初始条件判断值，如果某些数据范围超过百亿，可以根据需求换成 Long.MIN_VALUE 或者 Double.MIN_VALUE
+     * @param mapper
+     * @param <T>
+     * @return
+     */
+    public static <T> Collector<T, ?, BigDecimal> maxBy(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper) {
+        return new BigDecimalUtil.CollectorImpl<>(
+                () -> new BigDecimal[]{new BigDecimal(Integer.MIN_VALUE)},
+                (a, t) -> {
+                    a[0] = a[0].max(mapper.applyAsBigDecimal(t));
+                },
+                (a, b) -> {
+                    a[0] = a[0].max(b[0]);
+                    return a;
+                },
+                a -> a[0], CHARACTERISTICS
+        );
+    }
+
+    /**
+     * 求最小值，这里的最大MAX值，作为初始条件判断值，如果某些数据范围超过百亿，可以根据需求换成 Long.MAX_VALUE 或者 Double.MAX_VALUE
+     * @param mapper
+     * @param <T>
+     * @return
+     */
+    public static <T> Collector<T, ?, BigDecimal> minBy(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper) {
+        return new BigDecimalUtil.CollectorImpl<>(
+                () -> new BigDecimal[]{new BigDecimal(Integer.MAX_VALUE)},
+                (a, t) -> {
+                    a[0] = a[0].min(mapper.applyAsBigDecimal(t));
+                },
+                (a, b) -> {
+                    a[0] = a[0].min(b[0]);
+                    return a;
+                },
+                a -> a[0], CHARACTERISTICS
+        );
+    }
+
+    /**
+     * 求平均，并且保留小数，返回一个平均值
+     * @param mapper
+     * @param newScale
+     * @param roundingMode
+     * @param <T>
+     * @return
+     */
+    public static <T> Collector<T, ?, BigDecimal> averagingBigDecimal(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper,
+                                                                      int newScale, int roundingMode) {
+        return new BigDecimalUtil.CollectorImpl<>(
+                () -> new BigDecimal[]{new BigDecimal(0), new BigDecimal(0)},
+                (a, t) -> {
+                    a[0] = a[0].add(mapper.applyAsBigDecimal(t));
+                    a[1] = a[1].add(BigDecimal.ONE);
+                },
+                (a, b) -> {
+                    a[0] = a[0].min(b[0]);
+                    return a;
+                },
+                a -> a[0].divide(a[1], MathContext.DECIMAL32).setScale(newScale, roundingMode), CHARACTERISTICS
+        );
+    }
+
+    // 自定义函数
+    @FunctionalInterface
+    public interface ToBigDecimalFunction<T> {
+
+        BigDecimal applyAsBigDecimal(T t);
+
+    }
+
+
 }
