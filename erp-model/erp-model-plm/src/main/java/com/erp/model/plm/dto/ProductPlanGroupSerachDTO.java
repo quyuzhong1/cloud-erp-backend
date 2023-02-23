@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -23,17 +24,17 @@ public class ProductPlanGroupSerachDTO implements Serializable {
     /**
      * 产品经理ID
      */
-    private String chargeId;
+    private List<String> chargeId;
 
     /**
      * 产品等级ID
      */
-    private String gradeId;
+    private List<String> gradeId;
 
     /**
      * 类目ID
      */
-    private String categoryId;
+    private List<String> categoryId;
 
     /**
      * 分组字段（辅助字段）

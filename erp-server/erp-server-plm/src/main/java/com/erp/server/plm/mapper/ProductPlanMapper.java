@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.ProductPlanApprovalTrendDTO;
 import com.erp.model.plm.dto.ProductPlanGroupSerachDTO;
 import com.erp.model.plm.dto.ProductPlanSearchDTO;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
@@ -69,4 +70,6 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
      * @return List<ProductPlanGroupVO>
      */
     List<ProductPlanGroupVO> listProductPlanGroupTable(@Param("params") ProductPlanGroupSerachDTO params);
+
+    List<ProductPlanApprovalTrendDTO> countApprovalTrend(ProductPlanGroupSerachDTO dto, LocalDateTime thisYearStart, LocalDateTime thisYearEnd);
 }

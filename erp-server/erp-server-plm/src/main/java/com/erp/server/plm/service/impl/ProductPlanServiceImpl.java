@@ -487,10 +487,26 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public List<SeriesVO> listApprovalTrend(ProductPlanGroupSerachDTO dto) {
+        List<SeriesVO> resultList = new ArrayList<>();
+        MonthEnum[] values = MonthEnum.values();
+        Integer year = dto.getYear();
+        LocalDate localDate = LocalDateTimeUtil.parseDate(String.valueOf(year), "yyyy");
+        //所选年份的
+        LocalDateTime thisYearStart = LocalDateUtil.getThisYearStart(localDate);
+        LocalDateTime thisYearEnd = LocalDateUtil.getThisYearEnd(localDate);
+        baseMapper.countApprovalTrend(dto,thisYearStart,thisYearEnd);
 
+
+        for (MonthEnum monthEnum:values) {
+            SeriesVO seriesVO = new SeriesVO();
+
+
+
+        }
 
         return null;
     }
+
 
     @Override
     public Boolean uploadImageUrl(ProductPlanImageDTO dto) {

@@ -30,13 +30,13 @@
         left join (select product_plan_id,remark from product_plan_remark where  is_deleted = false and remark != '' order by id desc limit 1 ) ppr  on pp.id = ppr.product_plan_id
         <where>
             pp.is_deleted = false
-            <if test="params.type != null and params.type != '' and params.type == '1'">
+            <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
                and pp.product_status = ''
             </if>
-            <if test="params.type != null and params.type != '' and params.type == '2'">
+            <if test="params.type != null and params.type != '' and params.type == '2'.toString()">
                 and pp.product_status in ('3','4','5','6')
             </if>
-            <if test="params.type != null and params.type != '' and params.type == '3'">
+            <if test="params.type != null and params.type != '' and params.type == '3'.toString()">
                 and pp.product_status in ('4','5','6')
             </if>
             <if test="params.name != null and params.name != ''">
@@ -136,13 +136,13 @@
         left join (select product_plan_id,string_agg(remark,',') from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id )ppr  on pp.id = ppr.product_plan_id
         <where>
             pp.is_deleted = false
-            <if test="params.type != null and params.type != '' and params.type == '1'">
+            <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
                 and pp.product_status = ''
             </if>
-            <if test="params.type != null and params.type != '' and params.type == '2'">
+            <if test="params.type != null and params.type != '' and params.type == '2'.toString()">
                 and pp.product_status in ('3','4','5','6')
             </if>
-            <if test="params.type != null and params.type != '' and params.type == '3'">
+            <if test="params.type != null and params.type != '' and params.type == '3'.toString()">
                 and pp.product_status in ('4','5','6')
             </if>
             <if test="params.name != null and params.name != ''">
@@ -331,7 +331,7 @@
             </if>
         </where>
         group by pp.${params.groupFields}
-
     </select>
+    <select id="countApprovalTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO"></select>
 
 </mapper>
