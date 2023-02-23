@@ -32,6 +32,7 @@ import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
 import com.erp.server.plm.mapper.ProductPlanMapper;
@@ -445,25 +446,40 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     public List<ProductPlanGroupVO> listTableChargeName(ProductPlanGroupSerachDTO dto) {
         //产品经理
         dto.setGroupField("charge_id");
+        dto.setGroupFields("charge_id,charge_name");
         List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto);
-        
-        return null;
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> chargeList = list.stream().map(ProductPlanGroupVO::getChargeId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(chargeList)) {
+            return list;
+        }
+        List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
+        if (CollectionUtils.isEmpty(userDeptList)) {
+            return list;
+        }
+        for (ProductPlanGroupVO productPlanGroupVO: list) {
+            String deptNames = userDeptList.stream().filter(obj -> productPlanGroupVO.getChargeId().equals(obj.getUid())).map(SysUserDeptDTO::getDeptName).collect(Collectors.joining(","));
+            productPlanGroupVO.setDeptName(deptNames);
+        }
+        return list;
     }
 
     @Override
     public List<ProductPlanGroupVO> listTableGrade(ProductPlanGroupSerachDTO dto) {
         //产品等级
         dto.setGroupField("grade_id");
-        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto);
-        return null;
+        dto.setGroupFields("grade_id,grade");
+        return baseMapper.listProductPlanGroupTable(dto);
     }
 
     @Override
     public List<ProductPlanGroupVO> listTableCategory(ProductPlanGroupSerachDTO dto) {
         //产品分类
         dto.setGroupField("category_id");
-        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto);
-        return null;
+        dto.setGroupFields("category_id,category");
+        return baseMapper.listProductPlanGroupTable(dto);
     }
 
 

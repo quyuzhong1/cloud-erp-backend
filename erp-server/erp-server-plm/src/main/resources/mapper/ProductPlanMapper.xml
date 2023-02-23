@@ -298,15 +298,39 @@
 
     <select id="listProductPlanGroupTable" resultType="com.erp.model.plm.vo.ProductPlanGroupVO">
         select
+               ${params.groupFields},
                count(0) as totalCount,
-               (select count(0) from product_plan where product_status = '3' and ${groupField} = pp.${groupField}) as approvalCount,
-               (select count(0) from product_plan where product_status in ('4','5','6') and ${groupField} = pp.${groupField}) as progressCount,
-               (select count(0) from product_plan where product_status = '6' and ${groupField} = pp.${groupField}) as completeCount,
-               (select count(0) from product_plan where product_status = '3' and project_approval_date > plan_project_approval_date and ${groupField} = pp.${groupField}) as approvalDelayCount,
-               (select count(0) from product_plan where product_status = '7' and ${groupField} = pp.${groupField}) as cancelCount,
+               (select count(0) from product_plan where product_status = '3' and ${params.groupField} = pp.${params.groupField}) as approvalCount,
+               (select count(0) from product_plan where product_status in ('4','5','6') and ${params.groupField} = pp.${params.groupField}) as progressCount,
+               (select count(0) from product_plan where product_status = '6' and ${params.groupField} = pp.${params.groupField}) as completeCount,
+               (select count(0) from product_plan where product_status = '3' and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}) as approvalDelayCount,
+               (select count(0) from product_plan where product_status = '7' and ${params.groupField} = pp.${params.groupField}) as cancelCount
         from  product_plan pp
-
-        group by pp.${groupField}
+        <where>
+            pp.is_deleted = false
+            <if test="params.year != null ">
+                and pp.year = #{params.year}
+            </if>
+            <if test="params.chargeId != null and params.chargeId.size > 0">
+                and
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.gradeId != null and params.gradeId.size > 0">
+                and
+                <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.categoryId != null and params.categoryId.size > 0">
+                and
+                <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+        </where>
+        group by pp.${params.groupFields}
 
     </select>
 

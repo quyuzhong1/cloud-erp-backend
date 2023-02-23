@@ -16,30 +16,39 @@ import java.io.Serializable;
 public class ProductPlanGroupVO implements Serializable {
 
     /**
-     * 表格类型（产品经理、产品等级、产品分类）
-     */
-    private String tableType;
-
-    /**
      * 组别
      */
     private String deptName;
 
     /**
-     * 姓名
+     * 产品经理ID
+     */
+    private String chargeId;
+
+    /**
+     * 产品经理
      */
     private String chargeName;
 
     /**
-     * 产品等级
+     * 等级ID
+     */
+    private String gradeId;
+
+    /**
+     * 等级
      */
     private String grade;
 
     /**
-     * 产品分类
+     * 类目ID
+     */
+    private String categoryId;
+
+    /**
+     * 类目
      */
     private String category;
-
 
     /**
      * 总规划数
