@@ -1,7 +1,6 @@
 package com.common.core.utils;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import lombok.NoArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 import java.math.BigDecimal;
@@ -19,7 +18,6 @@ import java.util.stream.Collector;
  * 计算工具类
  */
 @UtilityClass
-@NoArgsConstructor
 public class MathUtil {
 
     public final int scale = 2;

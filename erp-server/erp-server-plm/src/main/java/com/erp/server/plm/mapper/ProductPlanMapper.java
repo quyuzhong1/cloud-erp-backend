@@ -65,9 +65,9 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
      * @description: 指标数据
      * @author Will
      * @date: 2023/2/23 15:26
-     * @param dto
-     * @param one
+     * @param params
+     * @param type
      * @return List<ProductPlanGroupVO>
      */
-    List<ProductPlanGroupVO> listProductPlanGroupTable(ProductPlanGroupSerachDTO dto, Integer one);
+    List<ProductPlanGroupVO> listProductPlanGroupTable(@Param("params") ProductPlanGroupSerachDTO params,@Param("type") Integer type);
 }
