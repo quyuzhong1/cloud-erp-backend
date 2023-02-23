@@ -240,51 +240,51 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 for (ProductPlanSaleInfoEntity entity: saleInfoList) {
                     if (MonthEnum.JANUARY.getCode().equals(entity.getMonth().toString())) {
                         obj.setJanuaryQtyStr(entity.getSalesQty().toString());
-                        obj.setJanuaryAmountStr(entity.getSalesAmount().toString());
+                        obj.setJanuaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.FEBRUARY.getCode().equals(entity.getMonth().toString())) {
                         obj.setFebruaryQtyStr(entity.getSalesQty().toString());
-                        obj.setFebruaryAmountStr(entity.getSalesAmount().toString());
+                        obj.setFebruaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.MARCH.getCode().equals(entity.getMonth().toString())) {
                         obj.setMarchQtyStr(entity.getSalesQty().toString());
-                        obj.setMarchAmountStr(entity.getSalesAmount().toString());
+                        obj.setMarchAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.APRIL.getCode().equals(entity.getMonth().toString())) {
                         obj.setAprilQtyStr(entity.getSalesQty().toString());
-                        obj.setAprilAmountStr(entity.getSalesAmount().toString());
+                        obj.setAprilAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.MAY.getCode().equals(entity.getMonth().toString())) {
                         obj.setMayQtyStr(entity.getSalesQty().toString());
-                        obj.setMayAmountStr(entity.getSalesAmount().toString());
+                        obj.setMayAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.JUNE.getCode().equals(entity.getMonth().toString())) {
                         obj.setJuneQtyStr(entity.getSalesQty().toString());
-                        obj.setJuneAmountStr(entity.getSalesAmount().toString());
+                        obj.setJuneAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.JULY.getCode().equals(entity.getMonth().toString())) {
                         obj.setJulyQtyStr(entity.getSalesQty().toString());
-                        obj.setJulyAmountStr(entity.getSalesAmount().toString());
+                        obj.setJulyAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.AUGUST.getCode().equals(entity.getMonth().toString())) {
                         obj.setAugustQtyStr(entity.getSalesQty().toString());
-                        obj.setAugustAmountStr(entity.getSalesAmount().toString());
+                        obj.setAugustAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.SEPTEMBER.getCode().equals(entity.getMonth().toString())) {
                         obj.setSeptemberQtyStr(entity.getSalesQty().toString());
-                        obj.setSeptemberAmountStr(entity.getSalesAmount().toString());
+                        obj.setSeptemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.OCTOBER.getCode().equals(entity.getMonth().toString())) {
                         obj.setOctoberQtyStr(entity.getSalesQty().toString());
-                        obj.setOctoberAmountStr(entity.getSalesAmount().toString());
+                        obj.setOctoberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.NOVEMBER.getCode().equals(entity.getMonth().toString())) {
                         obj.setNovemberQtyStr(entity.getSalesQty().toString());
-                        obj.setNovemberAmountStr(entity.getSalesAmount().toString());
+                        obj.setNovemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                     if (MonthEnum.DECEMBER.getCode().equals(entity.getMonth().toString())) {
                         obj.setDecemberQtyStr(entity.getSalesQty().toString());
-                        obj.setDecemberAmountStr(entity.getSalesAmount().toString());
+                        obj.setDecemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
                     }
                 }
             });

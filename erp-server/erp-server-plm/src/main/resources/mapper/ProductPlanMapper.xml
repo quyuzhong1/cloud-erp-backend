@@ -93,6 +93,7 @@
 
     <select id="listExportExcel" resultType="com.erp.model.plm.dto.excel.ProductPlanExcelDTO">
         select
+            pp.id as productPlanId,
             pp.year as year,
             pp.charge_name as chargeName,
             pp.brand_name as brandName,
@@ -116,17 +117,19 @@
             pps.sales_platform as salesPlatformName,
             pps.price_cny as priceCnyStr,
             pps.price_usd as priceUsdStr,
-            pp.is_need_id_design as isNeedIDDesignStr,
-            pp.is_need_structural_design as isNeedStructuralDesignStr,
+            case when pp.is_need_id_design = false then '否'
+                 else '是' end as isNeedIDDesignStr,
+            case when pp.is_need_structural_design = false then '否'
+                 else '是' end as isNeedStructuralDesignStr,
             ppp.target_cost as targetCostStr,
             ppp.estimated_mold_cost as estimatedMoldCostStr,
             ppp.supplier_status as supplierStatus,
             ppp.main_supplier_name as mainSupplierName,
-            pp.plan_survey_date as planSurveyDateStr,
-            pp.plan_project_approval_date as planProjectApprovalDateStr,
-            pp.plan_first_mass_stock_in_date as planFirstMassStockInDateStr,
+            to_char(pp.plan_survey_date, 'yyyy/MM/dd') as planSurveyDateStr,
+            to_char(pp.plan_project_approval_date, 'yyyy/MM/dd')  as planProjectApprovalDateStr,
+            to_char(pp.plan_first_mass_stock_in_date, 'yyyy/MM/dd') as planFirstMassStockInDateStr,
             pp.plan_marketing_season as planMarketingSeasonName,
-            pp.plan_listing_date as planListingDateStr
+            to_char(pp.plan_listing_date, 'yyyy/MM/dd') as planListingDateStr
         from  product_plan pp
         left join product_plan_purchase ppp on pp.id = ppp.product_plan_id and ppp.is_deleted = false
         left join product_plan_sale pps on pp.id = pps.product_plan_id and pps.is_deleted = false
