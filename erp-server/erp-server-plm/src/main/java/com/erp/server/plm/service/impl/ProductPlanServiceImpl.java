@@ -22,7 +22,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -388,11 +390,46 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public List<ProductPlanStatisticsVO> listProductPlanStatistics(ProductPlanGroupSerachDTO dto) {
-        return null;
+        List<ProductPlanStatisticsVO> reslutList = new ArrayList<>();
+        LocalDate now = LocalDate.now();
+        LocalDateTime startTime = LocalDateUtil.getThisMonthStart(now);
+        LocalDateTime endTime = LocalDateUtil.getThisMonthEnd(now);
+        //查询规划总数及本月新增
+        Integer count = this.baseMapper.listProductPlanTotalCount(dto, null,null);
+        Integer crtCount = this.baseMapper.listProductPlanTotalCount(dto,startTime,endTime);
+        setProductPlanStatisticsVO(reslutList,"规划总数",count,"本月新增",crtCount);
+        //未调研
+        Integer notSurveyCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.ONE,null,null);
+        setProductPlanStatisticsVO(reslutList,"未调研",notSurveyCount,"",null);
+        //已立项
+        Integer approvalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,null,null);
+        Integer thisApprovalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,startTime,startTime);
+        setProductPlanStatisticsVO(reslutList,"已立项",approvalCount,"本月立项",thisApprovalCount);
+        //已进行中
+        Integer handCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,null,null);
+        Integer thisHandCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,startTime,startTime);
+        setProductPlanStatisticsVO(reslutList,"进行中",handCount,"本月进行中",thisHandCount);
+        //已完成
+        Integer completeCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,null,null);
+        Integer thisCompleteCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,startTime,startTime);
+        setProductPlanStatisticsVO(reslutList,"已完成",completeCount,"本月已完成",thisCompleteCount);
+        //立项延期
+        Integer deferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,null,null);
+        Integer thisDeferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,startTime,startTime);
+        setProductPlanStatisticsVO(reslutList,"立项延期",deferCount,"本月延期数",thisDeferCount);
+        //已取消
+        Integer cacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,null,null);
+        Integer thisCacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,startTime,startTime);
+        setProductPlanStatisticsVO(reslutList,"已取消",cacelCount,"本月已取消",thisCacelCount);
+        return reslutList;
     }
+
+
 
     @Override
     public List<ProductPlanGroupVO> listTableChargeName(ProductPlanGroupSerachDTO dto) {
+
+
         return null;
     }
 
@@ -509,4 +546,19 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         progressList.add(productPlanProgressDTO);
     }
 
+    /**
+     * 指标数量
+     */
+    private void setProductPlanStatisticsVO(List<ProductPlanStatisticsVO> resultList,String describe,Integer totalCount,String thisDescribe,Integer thisMonthCount) {
+        ProductPlanStatisticsVO productPlanStatisticsVO = new ProductPlanStatisticsVO();
+        productPlanStatisticsVO.setDescribe(describe);
+        productPlanStatisticsVO.setTotalCount(totalCount == null ? MathUtil.ZERO :totalCount);
+        productPlanStatisticsVO.setThisDescribe(thisDescribe);
+        if ("未调研".equals(describe)) {
+            productPlanStatisticsVO.setThisMonthCount(null);
+        } else {
+            productPlanStatisticsVO.setThisMonthCount(thisMonthCount == null ? MathUtil.ZERO : thisMonthCount);
+        }
+        resultList.add(productPlanStatisticsVO);
+    }
 }

@@ -26,6 +26,12 @@ public class ProjectStatusTimeEntity extends BaseEntity {
     private String projectId;
 
     /**
+     * 产品ID
+     */
+    @TableField(value = "product_id")
+    private String productId;
+
+    /**
      * 项目状态
      */
     @TableField(value = "status")

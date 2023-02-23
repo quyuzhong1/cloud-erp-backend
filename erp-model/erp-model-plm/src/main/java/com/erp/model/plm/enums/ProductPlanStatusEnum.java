@@ -13,8 +13,8 @@ public enum ProductPlanStatusEnum {
     PROJECT_APPROVED("3", "已立项",""),
     PROJECT_STARTUP("4", "项目启动",""),
     PROJECT_PROGRESS("5", "项目进行中",""),
-    PROJECT_COMPLETE("6", "项目完成","");
-
+    PROJECT_COMPLETE("6", "项目完成",""),
+    PROJECT_CANCEL("7", "取消","");
 
     private String code;
 

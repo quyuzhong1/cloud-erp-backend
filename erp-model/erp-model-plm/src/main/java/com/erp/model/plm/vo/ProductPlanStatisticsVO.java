@@ -18,7 +18,7 @@ public class ProductPlanStatisticsVO implements Serializable {
     /**
      * 总数量
      */
-    private Long totalCount;
+    private Integer totalCount;
 
     /**
      * 总数量描述
@@ -28,7 +28,7 @@ public class ProductPlanStatisticsVO implements Serializable {
     /**
      * 本月数量
      */
-    private Long thisMonthCount;
+    private Integer thisMonthCount;
 
     /**
      * 本月数量描述
