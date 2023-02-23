@@ -53,7 +53,7 @@ public class ProductInfoController extends BaseController {
      * @date 2022-10-09 10:17
      */
     @PostMapping("/paging")
-   // @RequestPermissions("plm:product:paging")
+    // @RequestPermissions("plm:product:paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
@@ -62,10 +62,11 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-无分页
+     *
+     * @param dto
+     * @return ApiResult<List < BasicDTO>>
      * @author Will
      * @date: 2023/2/10 14:47
-     * @param dto
-     * @return ApiResult<List<BasicDTO>>
      */
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
@@ -189,14 +190,15 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-立项状态下拉框
+     *
+     * @return ApiResult
      * @author Will
      * @date: 2022/11/24 10:24
-     * @return ApiResult
      */
     @GetMapping("/getApprovalStatusSelect")
     public ApiResult<List<SelectShowDTO>> getApprovalStatusSelect() {
         List<SelectShowDTO> list = new ArrayList<>();
-        Arrays.stream(ApprovalStatusEnum.values()).forEach(obj->{
+        Arrays.stream(ApprovalStatusEnum.values()).forEach(obj -> {
             SelectShowDTO dto = new SelectShowDTO();
             dto.setValue(obj.getCode());
             dto.setLabel(obj.getName());
@@ -207,10 +209,11 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-获取SPU编号
-     * @author Will
-     * @date: 2023/1/7 16:09
+     *
      * @param categoryId
      * @return ApiResult
+     * @author Will
+     * @date: 2023/1/7 16:09
      */
     @GetMapping("/getSpuNo")
     public ApiResult getSpuNo(@Param("categoryId") String categoryId) {
@@ -218,6 +221,11 @@ public class ProductInfoController extends BaseController {
         return success(spuNo);
     }
 
+
+    @GetMapping("/getItemDocs")
+    public ApiResult<DeliveryDocsDTO> getItemDocs(@Param("productId") String productId) {
+        return success();
+    }
 
 }
 

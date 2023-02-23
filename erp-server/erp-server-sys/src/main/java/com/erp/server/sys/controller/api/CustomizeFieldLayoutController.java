@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/api/customize/field")
+@RequestMapping("sys/customize/field")
 public class CustomizeFieldLayoutController extends BaseController {
 
     @Resource
