@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.vo.UserFieldVO;
@@ -27,14 +28,14 @@ public class CustomizeFieldLayoutController extends BaseController {
 
 
     @PostMapping("/fieldSet")
-    public Boolean saveHiddenField(@RequestBody CustomizeFieldLayoutDTO dto) {
+    public ApiResult saveHiddenField(@RequestBody CustomizeFieldLayoutDTO dto) {
         Boolean result = customizeFieldLayoutService.add(dto);
-        return result;
+        return result==true?success():failure();
     }
 
     @PostMapping("/getByUserId")
-    public UserFieldVO getByUserId(@RequestBody FindCustomizeFieldDTO  dto) {
+    public ApiResult<UserFieldVO> getByUserId(@RequestBody FindCustomizeFieldDTO  dto) {
         UserFieldVO vo = customizeFieldLayoutService.getByUserId(dto);
-        return vo;
+        return success(vo);
     }
 }
