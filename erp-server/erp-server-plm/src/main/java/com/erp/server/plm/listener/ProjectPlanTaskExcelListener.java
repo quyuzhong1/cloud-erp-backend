@@ -2,11 +2,13 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.core.utils.date.DateUtil;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.ProjectPlanService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
@@ -39,13 +41,16 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     private List<ScheduleTaskExportErrorExcelVO> dataList;
 
+    private SysUserFeign sysUserFeign;
+
     private String productId;
 
-    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService, String productId) {
+    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService, String productId, SysUserFeign sysUserFeign) {
         this.projectTaskService = projectTaskService;
         this.projectPlanService = projectPlanService;
         this.list = new ArrayList<>();
         this.taskIdList = new ArrayList<>();
+        this.sysUserFeign = sysUserFeign;
         this.productId = productId;
         this.dataList = new ArrayList<>();
     }
@@ -88,9 +93,9 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             String scheduleStatus = task.getScheduleStatus();
             List<String> statusList = new ArrayList<>();
             statusList.add(BaseStatusEnum.WAIT_SUBMIT.getStatus());
-            statusList.add(BaseStatusEnum.CANCEL.getStatus());
+            statusList.add(BaseStatusEnum.AUDIT_NO_PASS.getStatus());
             if (!statusList.contains(scheduleStatus)) {
-                errorMsgList.add("只有待提交和取消的任务才能排期");
+                errorMsgList.add("只有待提交和审核不通过的任务才能排期");
             }
         }
         String errStr = "";
@@ -103,10 +108,24 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             list.add(vo);
             return;
         }
+
+        String chargeName = vo.getChargeName();
+        String dbChargeName = task.getChargeName();
+        //当两个名字不一样 就要更改
+        if (!chargeName.equals(dbChargeName)) {
+            FindUserDTO user=sysUserFeign.getUserByUserName(chargeName);
+            if(user!=null){
+               if(StringUtils.isNotBlank(user.getUserId())){
+                   task.setChargeName(chargeName);
+                   task.setChargeId(user.getUserId());
+               }
+            }
+        }
+
         taskIdList.add(task.getId());
         productId = task.getProductId();
-        task.setPlanStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
-        task.setPlanEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt));
+        task.setPlanStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_day));
+        task.setPlanEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_day));
         projectTaskService.updateById(task);
     }
 

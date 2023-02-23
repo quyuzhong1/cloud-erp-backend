@@ -2,7 +2,6 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -10,6 +9,7 @@ import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.controller.AuditParamDTO;
 
@@ -83,4 +83,6 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
     void checkAuditor();
 
     List<Map<String, Object>> getSubmitSchedule();
+
+
 }

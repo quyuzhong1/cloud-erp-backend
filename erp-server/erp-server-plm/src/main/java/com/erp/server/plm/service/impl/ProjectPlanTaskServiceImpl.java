@@ -65,6 +65,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     private ProjectTaskService projectTaskService;
 
     @Resource
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
+    @Resource
     private PreTaskService preTaskService;
 
     @Resource
@@ -76,6 +79,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     @Resource
     private ProjectPlanService projectPlanService;
+
+
+    @Resource
+    private ProductDetailService productDetailService;
 
 
     /**
@@ -97,6 +104,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             List<PreTaskEntity> preTaskList = preTaskService.getPreTaskByProductId(dto.getProductId());
             //交付文档列表
             List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(productId);
+            //关联的sku
+            List<ProjectTaskRefSkuEntity> refSkuList = projectTaskRefSkuService.getByProductId(productId);
+
+            List<String> skuIdList = refSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuList = productDetailService.getSkuBySkuIds(skuIdList);
 
             // 只有在排期状态
             List<String> scheduleStatusList = new ArrayList<>();
@@ -106,7 +118,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             //根据阶段分组
             TreeMap<Integer, List<ProductTaskVO>> map = taskList.stream().
                     collect(Collectors.groupingBy(ProductTaskVO::getPhaseSeq, TreeMap::new, Collectors.toList()));
-
 
 
             //变更
@@ -128,7 +139,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
                 //阶段名
                 String phaseName = phaseTaskList.get(0).getPhaseName();
-                String phaseId= phaseTaskList.get(0).getPhaseId();
+                String phaseId = phaseTaskList.get(0).getPhaseId();
                 parentVO.setPhaseId(phaseId);
                 parentVO.setPhaseName(phaseName);
 
@@ -174,6 +185,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     //优先级
                     Integer priority = vo.getPriority();
 
+                    List<String> skuIds= refSkuList.stream().filter(ref -> ref.getTaskId().equals(taskId)).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+
+                    List<String> refSkuNoList=skuList.stream().filter(s->skuIds.contains(s.getSkuId())).map(SkuVO::getSkuNo).collect(Collectors.toList());
+                    vo.setRefSkuIdList(skuIds);
+                    vo.setRefSkuNoList(refSkuNoList);
                     String priorityName = "";
                     if (TaskConstant.INTERMEDIATE_TASK.equals(priority)) {
                         priorityName = "中级";
@@ -258,7 +274,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (StringUtils.isBlank(productId)) {
             throw new ServiceException(95010, "产品id不能为空");
         }
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId);
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId,sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
@@ -270,7 +286,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 return true;
             }
             String fileName = "排期错误";
-            ExcelUtil.export(fileName, "task", errorList, ScheduleTaskExportExcelVO.class, response);
+            ExcelUtil.export(fileName, "task", errorList, ScheduleTaskExportErrorExcelVO.class, response);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }
@@ -287,9 +303,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public List<CustomizeFieldVO> allField() {
         return new ArrayList<>();
     }
-
-
-
 
 
     /**
@@ -666,7 +679,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             throw new ServiceException(95010, "产品id不能为空");
         }
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
-        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId,sysUserFeign);
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();

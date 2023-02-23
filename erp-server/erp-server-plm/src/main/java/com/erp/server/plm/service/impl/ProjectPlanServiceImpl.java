@@ -94,7 +94,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-03 17:08
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
         if (CollectionUtils.isEmpty(taskIds)) {
@@ -135,6 +135,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
         return saveResult;
     }
+
 
 
     /**

@@ -1179,7 +1179,23 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (CollectionUtils.isEmpty(noticeList)) {
             return;
         }
+        //排期任务 通知节点
+        String noticeFlag = NoticeEnum.SCHEDULE_TASK_SUBMIT.getFlag();
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeFlag);
+        if (Objects.isNull(notice)) {
+            return;
+        }
+        //项目人员
+        String itemPeoples = notice.getItemPeople();
+        if (StringUtils.isEmpty(itemPeoples)) {
+            return;
+        }
+        List<String> itemPeopleList = Arrays.asList(itemPeoples.split(","));
 
+        //如果不包含 审核人
+        if (!itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
+            return;
+        }
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
         List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
@@ -1189,8 +1205,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //消息内容
         String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CONTENT, userName, taskList.size());
         String taskName = "-";
-        //排期任务 通知节点
-        String noticeFlag = NoticeEnum.SCHEDULE_TASK_SUBMIT.getFlag();
+
         /**
          * 获取到提交排期任务卡片的主内容
          */
@@ -1222,7 +1237,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
 
     }
-
 
 
     /**
@@ -2476,10 +2490,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         actionMap.put("tag", "button");
         actionMap.put("url", url);
         actionMap.put("type", "primary");
-        Map<String, Object> actionTextMap = new HashMap<>();
-        actionTextMap.put("tag", "plain_text");
-        actionTextMap.put("content", "查看详情");
-        actionMap.put("text", actionTextMap);
+//        Map<String, Object> actionTextMap = new HashMap<>();
+//        actionTextMap.put("tag", "plain_text");
+//        actionTextMap.put("content", "查看详情");
+//        actionMap.put("text", actionTextMap);
         Map<String, Object> actionValueMap = new HashMap<>();
         actionValueMap.put("chosen", "approve");
         actionMap.put("value", actionValueMap);
