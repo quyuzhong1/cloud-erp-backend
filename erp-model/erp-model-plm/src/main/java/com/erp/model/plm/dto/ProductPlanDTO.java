@@ -50,9 +50,9 @@ public class ProductPlanDTO implements Serializable {
     private String nameEn;
 
     /**
-     * 产品状态
+     * 产品状态名称
      */
-    private String productStatus;
+    private String productStatusName;
 
     /**
      * 产品分类
@@ -60,19 +60,9 @@ public class ProductPlanDTO implements Serializable {
     private String category;
 
     /**
-     * 产品分类ID
-     */
-    private String categoryId;
-
-    /**
      * 产品等级
      */
     private String grade;
-
-    /**
-     * 产品等级ID
-     */
-    private String gradeId;
 
     /**
      * 产品经理
@@ -80,24 +70,14 @@ public class ProductPlanDTO implements Serializable {
     private String chargeName;
 
     /**
-     * 产品经理ID
-     */
-    private String chargeId;
-
-    /**
      * 新品/老品
      */
-    private String productType;
+    private String productTypeName;
 
     /**
      * 品牌名称
      */
     private String brandName;
-
-    /**
-     * 品牌ID
-     */
-    private String brandId;
 
     /**
      * 对标竞品链接
@@ -110,19 +90,14 @@ public class ProductPlanDTO implements Serializable {
     private String property;
 
     /**
-     * 项目类型ID（同产品属性ID）
-     */
-    private String propertyId;
-
-    /**
      * 产品款品
      */
-    private String productStyle;
+    private String productStyleName;
 
     /**
      * 三代规划（721原则）
      */
-    private String threeGenerationPlanning;
+    private String threeGenerationPlanningName;
 
     /**
      * 核心专利
@@ -139,18 +114,15 @@ public class ProductPlanDTO implements Serializable {
      */
     private String specification;
 
-
     /**
      * 主要卖点描述
      */
     private String sellingPointDesc;
 
-
     /**
      * 应用场景
      */
     private String applicationScenario;
-
 
     /**
      * 使用场景描述
@@ -165,12 +137,12 @@ public class ProductPlanDTO implements Serializable {
     /**
      * 是否需要ID设计
      */
-    private Boolean isNeedIDDesign;
+    private String isNeedIDDesignStr;
 
     /**
      * 是否需要结构设计
      */
-    private Boolean isNeedStructuralDesign;
+    private String isNeedStructuralDesignStr;
 
     /**
      * 计划调研时间
@@ -183,14 +155,9 @@ public class ProductPlanDTO implements Serializable {
     private LocalDate planProjectApprovalDate;
 
     /**
-     * 实际立项时间
-     */
-    private LocalDate projectApprovalDate;
-
-    /**
      * 计划上市季节
      */
-    private String planMarketingSeason;
+    private String planMarketingSeasonName;
 
     /**
      * 计划首批入库时间
@@ -198,19 +165,9 @@ public class ProductPlanDTO implements Serializable {
     private LocalDate planFirstMassStockInDate;
 
     /**
-     * 实际首批入库时间
-     */
-    private LocalDate firstMassStockInDate;
-
-    /**
      * 计划上市时间
      */
     private LocalDate planListingDate;
-
-    /**
-     * 实际上市时间
-     */
-    private LocalDate listingDate;
 
     /**
      * 调研是否延期

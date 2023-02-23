@@ -38,14 +38,14 @@ public enum ProductPlanStatusEnum {
         return desc;
     }
 
-    public static ProductPlanStatusEnum getNameByCode(String code) {
+    public static String getNameByCode(String code) {
         ProductPlanStatusEnum[] enums = values();
         for (ProductPlanStatusEnum plmEnum : enums) {
             if (plmEnum.getCode().equals(code)) {
-                return plmEnum;
+                return plmEnum.getName();
             }
         }
-        return null;
+        return "";
     }
     public static ProductPlanStatusEnum getByName(String name) {
         ProductPlanStatusEnum[] enums = values();

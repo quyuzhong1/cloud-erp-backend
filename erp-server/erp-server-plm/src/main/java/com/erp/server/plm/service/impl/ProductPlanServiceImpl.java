@@ -42,6 +42,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -100,7 +102,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 //产品状态格式化
-                obj.setProductStatusName(StringUtils.isBlank(obj.getProductStatus()) ? "" : ProductPlanStatusEnum.getNameByCode(obj.getProductStatus()).getName());
+                obj.setProductStatusName(ProductPlanStatusEnum.getNameByCode(obj.getProductStatus()));
                 //调研是否延期
                 if (ObjectUtils.isNotEmpty(obj.getSurveyDate()) && ObjectUtils.isNotEmpty(obj.getPlanSurveyDate())) {
                     obj.setIsDelaySurvey(obj.getSurveyDate().isAfter(obj.getPlanSurveyDate()));
@@ -125,6 +127,23 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
         BeanMapperUtils.copy(productPlanEntity,productPlanDTO);
         resultDTO.setProductPlanDTO(productPlanDTO);
+        //枚举格式化
+        productPlanDTO.setProductStyleName(ProductStyleEnum.getNameByCode(productPlanEntity.getProductStyle()));
+        productPlanDTO.setProductTypeName(ProductTypeEnum.getNameByCode(productPlanEntity.getProductType()));
+        productPlanDTO.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode( productPlanEntity.getThreeGenerationPlanning()));
+        productPlanDTO.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(productPlanEntity.getPlanMarketingSeason()));
+        //调研是否延期
+        if (ObjectUtils.isNotEmpty(productPlanEntity.getSurveyDate()) && ObjectUtils.isNotEmpty(productPlanEntity.getPlanSurveyDate())) {
+            productPlanDTO.setIsDelaySurvey(productPlanEntity.getSurveyDate().isAfter(productPlanEntity.getPlanSurveyDate()));
+        }
+        //立项是否延期
+        if (ObjectUtils.isNotEmpty(productPlanEntity.getProjectApprovalDate()) && ObjectUtils.isNotEmpty(productPlanEntity.getPlanProjectApprovalDate())) {
+            productPlanDTO.setIsDelaySurvey(productPlanEntity.getProjectApprovalDate().isAfter(productPlanEntity.getPlanProjectApprovalDate()));
+        }
+        //是否需要ID设计
+        productPlanDTO.setIsNeedIDDesignStr(productPlanEntity.getIsNeedIDDesign() ? "是" : "否");
+        //是否需要结构设计
+        productPlanDTO.setIsNeedStructuralDesignStr(productPlanEntity.getIsNeedStructuralDesign() ? "是" : "否");
 
         //查询采购信息
         ProductPlanPurchaseEntity productPlanPurchaseEntity = productPlanPurchaseService.getByProductPlanId(id);
@@ -143,6 +162,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         ProductPlanSaleDTO productPlanSaleDTO = new ProductPlanSaleDTO();
         BeanMapperUtils.copy(productPlanSaleEntity,productPlanSaleDTO);
         resultDTO.setProductPlanSaleDTO(productPlanSaleDTO);
+        productPlanSaleDTO.setSalesPlatformName(SalesPlatformEnum.getNameByName(productPlanSaleEntity.getSalesPlatform()));
 
         //查询备注信息
        List<ProductPlanRemarkEntity> remarkList = productPlanRemarkService.listByProductPlanId(id);
@@ -154,8 +174,17 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //查询销售数据信息
         List<ProductPlanSaleInfoEntity> saleInfoList = productPlanSaleInfoService.listByProductPlanId(id);
         if (CollectionUtils.isNotEmpty(saleInfoList)) {
-            List<ProductPlanSaleInfoDTO> list = BeanMapperUtils.copyList(ProductPlanSaleInfoDTO.class,saleInfoList);
-            resultDTO.setSaleInfoList(list);
+            int year = LocalDate.now().getYear();
+            //最新年份的
+            saleInfoList = saleInfoList.stream().filter(e -> e.getYear().equals(Integer.valueOf(year))).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(saleInfoList)) {
+                List<ProductPlanSaleInfoDTO> list = BeanMapperUtils.copyList(ProductPlanSaleInfoDTO.class,saleInfoList);
+                Integer totalQty = list.stream().map(ProductPlanSaleInfoDTO::getSalesQty).reduce(Integer::sum).get();
+                BigDecimal totalAmount = list.stream().map(ProductPlanSaleInfoDTO::getSalesAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                resultDTO.setTotalQty(totalQty);
+                resultDTO.setTotalAmount(totalAmount);
+                resultDTO.setSaleInfoList(list);
+            }
         }
 
         List<ProductPlanProgressDTO> progressList = new ArrayList<>();

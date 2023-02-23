@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -40,6 +41,16 @@ public class ProductPlanDetailsDTO implements Serializable {
      * 销售数据
      */
     private List<ProductPlanSaleInfoDTO> saleInfoList;
+
+    /**
+     * 销售总量
+     */
+    private BigDecimal totalAmount;
+
+    /**
+     * 销售总销售额
+     */
+    private Integer totalQty;
 
     /**
      * 产品规划进度
