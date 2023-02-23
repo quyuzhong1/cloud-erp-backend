@@ -10,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
+import com.erp.model.plm.enums.ProductProgressStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.SysCodeService;
@@ -20,10 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 产品开发管理
@@ -53,7 +51,7 @@ public class ProductInfoController extends BaseController {
      * @date 2022-10-09 10:17
      */
     @PostMapping("/paging")
-   // @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -221,6 +219,37 @@ public class ProductInfoController extends BaseController {
     }
 
 
+    /**
+     * 获取产品进展列表
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-02-23 18:01
+     */
+    @GetMapping("/getProgressStatus")
+    public ApiResult getProgressStatus() {
+        int length = ProductProgressStatusEnum.values().length;
+        List<Map<String, Object>> list = new ArrayList<>(length);
+        for (ProductProgressStatusEnum status : ProductProgressStatusEnum.values()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", status.getName());
+            map.put("status", status.getStatus());
+            list.add(map);
+        }
+        return success(list);
+    }
+
+
+    /**
+     * 设置产品进度
+     * @param dto
+     * @return
+     */
+    @PostMapping("/setProgressStatus")
+    public ApiResult setProgressStatus(@RequestBody @Validated SetProductProgressStatusDTO dto) {
+        Boolean result=productInfoService.setProgressStatus(dto);
+        return result==true?success():failure();
+    }
 
 
 }

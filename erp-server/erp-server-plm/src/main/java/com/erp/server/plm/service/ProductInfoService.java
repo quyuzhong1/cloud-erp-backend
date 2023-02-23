@@ -108,4 +108,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return ProductInfoEntity
      */
     ProductInfoEntity getByName(String name);
+
+    Boolean setProgressStatus(SetProductProgressStatusDTO dto);
 }

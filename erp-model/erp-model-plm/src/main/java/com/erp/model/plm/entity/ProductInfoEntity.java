@@ -261,4 +261,18 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "sales_channel")
     private String salesChannel;
 
+
+    /**
+     * 示意图url
+     */
+    @TableField(value = "image_url")
+    private String imageUrl;
+
+    /**
+     * normal 正常  postpone 延期   risk 风险  no 暂无
+     * 产品进展
+     */
+    @TableField(value = "progress_status")
+    private String progressStatus;
+
 }

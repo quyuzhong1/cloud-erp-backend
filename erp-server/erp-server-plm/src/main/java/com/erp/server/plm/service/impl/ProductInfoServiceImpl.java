@@ -479,7 +479,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
 
             //根据产品id 获取项目成员 相关信息
-            List<ItemMemberVO> ItemMemberList=projectMembersService.getByProductIds(productIds);
+            List<ItemMemberVO> ItemMemberList = projectMembersService.getByProductIds(productIds);
 
 
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
@@ -503,7 +503,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                 }
-                List<ItemMemberVO>  itemMemberVOList= ItemMemberList.stream().filter(obj->item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
+                List<ItemMemberVO> itemMemberVOList = ItemMemberList.stream().filter(obj -> item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
                 item.setItemMemberList(itemMemberVOList);
                 String progressStatus = item.getProgressStatus();
                 item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
@@ -1100,6 +1100,24 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         queryWrapper.eq(ProductInfoEntity::getName, name);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    /**
+     * 设置产品进度
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-23 18:29
+     */
+    @Override
+    public Boolean setProgressStatus(SetProductProgressStatusDTO dto) {
+        ProductInfoEntity entity = this.getById(dto.getProductId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+        entity.setProgressStatus(dto.getProgressStatus());
+        return this.updateById(entity);
     }
 
     /**
