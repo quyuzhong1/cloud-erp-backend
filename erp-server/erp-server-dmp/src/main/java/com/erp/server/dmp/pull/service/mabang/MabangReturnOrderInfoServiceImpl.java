@@ -25,8 +25,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -79,7 +82,8 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
      * @return
      */
     @Override
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto) {
         List<ReturnOrderEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
             log.info("拉取马帮退货订单列表数据为空 entityList.size = 0 ");
@@ -122,10 +126,13 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_RETURN_ORDER_TAG.getName(),
-                                msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
-                .collect(Collectors.toList());
+        mabangToMqlist.stream().peek(msg ->{
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_RETURN_ORDER_TAG.getName(),
+                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
+            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }).collect(Collectors.toList());
 
     }
 
@@ -134,7 +141,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
      * @param dto
      * @return
      */
-    private List<ReturnOrderEntity> pullDate(RequestDTO dto) throws Exception {
+    private List<ReturnOrderEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         dto.getJobTaskDTO().setLastTime(nextTime);

@@ -34,7 +34,7 @@ public class MongoServiceImpl implements MongoService {
 	private MongoTemplate orderTemplate;
 	
 	@Override
-	public <T> void saveMongoDataMult(List<T> dataList, String table) throws Exception {
+	public <T> void saveMongoDataMult(List<T> dataList, String table) {
 		orderTemplate.insert(dataList, table);
 	}
 
@@ -50,7 +50,7 @@ public class MongoServiceImpl implements MongoService {
 
 	@Override
 	public <T> List<T> findMongoData(Object obj, int currentPage, int pageSize, String table,
-			Class<T> clazz) throws Exception {
+			Class<T> clazz) {
 		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(obj);
 		Query query = new Query(criteria);
 		if(currentPage > 0 && pageSize> 0) {
@@ -177,14 +177,14 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	public <T> void deleteMongoData(Object obj, String table, Class<T> clazz) throws Exception {
+	public <T> void deleteMongoData(Object obj, String table, Class<T> clazz) {
 		Criteria criteria = MongoUtil.mongoFilter(obj);
 		Query query = new Query(criteria);
 		orderTemplate.remove(query, clazz, table);
 	}
 
 	@Override
-	public <T> void updateMongoData(Object obj, MapUtil data, String table, Class<T> clazz) throws Exception {
+	public <T> void updateMongoData(Object obj, MapUtil data, String table, Class<T> clazz){
 		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(obj);
 		Query query = new Query(criteria);
 		Update update = new Update();
@@ -197,7 +197,7 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	public <T> void deleteMongoDataByID(String id, String table, Class<T> clazz) throws Exception {
+	public <T> void deleteMongoDataByID(String id, String table, Class<T> clazz) {
 		Criteria criteria = new Criteria();
 		criteria.and("_id").is(id);
 		Query query = new Query(criteria);

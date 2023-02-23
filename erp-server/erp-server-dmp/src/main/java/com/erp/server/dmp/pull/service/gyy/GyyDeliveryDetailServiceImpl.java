@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.message.constant.RocketMqTopic;
@@ -25,6 +26,8 @@ import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,8 +56,8 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto) {
         List<GyyDeliveryDetailEntity> gyyDeliveryDetailEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyDeliveryDetailEntityList)) {
             log.info("拉取管易发货订单列表数据为空 gyyDeliveryDetailEntityList.size = 0 ");
@@ -98,10 +101,13 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
-                                msg, msg.getBillNo()))
-                .collect(Collectors.toList());
+        mabangToMqlist.stream().peek(msg ->{
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
+                    msg, msg.getBillNo());
+            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -110,7 +116,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
      * @param dto
      * @return
      */
-    private List<GyyDeliveryDetailEntity> pullDate(RequestDTO dto) throws Exception {
+    private List<GyyDeliveryDetailEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         dto.getJobTaskDTO().setLastTime(nextTime);

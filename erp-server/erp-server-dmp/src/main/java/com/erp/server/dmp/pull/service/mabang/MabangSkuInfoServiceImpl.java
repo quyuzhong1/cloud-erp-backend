@@ -19,6 +19,7 @@ import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -41,7 +42,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     private DmpSkuInfoService dmpSkuInfoService;
 
     @Override
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto) {
         List<SkuInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
             log.info("拉取马帮SKU信息列表数据为空 entityList.size = 0 ");
@@ -79,7 +81,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
      * @param dto
      * @return
      */
-    private List<SkuInfoEntity> pullDate(RequestDTO dto) throws Exception {
+    private List<SkuInfoEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         dto.getJobTaskDTO().setLastTime(nextTime);

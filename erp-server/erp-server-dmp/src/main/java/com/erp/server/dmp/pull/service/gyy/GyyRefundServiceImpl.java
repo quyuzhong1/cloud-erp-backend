@@ -26,8 +26,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -78,7 +81,8 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
 
     @Override
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto) {
         List<GyyRefundEntity> gyyRefundEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyRefundEntityList)) {
             log.info("拉取管易退款列表数据为空 gyyOrderEntityList.size = 0 ");
@@ -120,10 +124,13 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
-                                msg, StrUtil.format("{}_{}",msg.getPlatformOrderId() + msg.getSalesRecordNumber())))
-                .collect(Collectors.toList());
+        mabangToMqlist.stream().peek(msg ->{
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
+                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId() + msg.getSalesRecordNumber()));
+            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -131,7 +138,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
      * @param dto
      * @return
      */
-    private List<GyyRefundEntity> pullDate(RequestDTO dto) throws Exception {
+    private List<GyyRefundEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         dto.getJobTaskDTO().setLastTime(nextTime);

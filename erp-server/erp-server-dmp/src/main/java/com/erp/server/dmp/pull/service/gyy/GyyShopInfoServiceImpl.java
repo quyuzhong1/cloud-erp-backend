@@ -22,7 +22,10 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -71,7 +74,8 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
 
 
     @Override
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto) {
         List<GyyShopInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
             log.info("拉取管易店铺列表数据为空 entityList.size = 0 ");
@@ -110,10 +114,13 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_SHOP_INFO_TAG.getName(),
-                                msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode())))
-                .collect(Collectors.toList());
+        mabangToMqlist.stream().peek(msg ->{
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_SHOP_INFO_TAG.getName(),
+                    msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode()));
+            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -122,7 +129,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
      * @param dto
      * @return
      */
-    private List<GyyShopInfoEntity> pullDate(RequestDTO dto) throws Exception {
+    private List<GyyShopInfoEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         if(null == lastTime || null == nextTime){

@@ -53,7 +53,7 @@ public class MabangApiUtils {
      *
      * @throws Exception
      */
-    public static List<OrderEntity> querySalesList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<OrderEntity> querySalesList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         String pageSize = "1000";
         String pageIndex = "";
         //总页数
@@ -103,7 +103,7 @@ public class MabangApiUtils {
      *
      * @throws Exception
      */
-    public static List<RefundOrderEntity> queryRefundList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<RefundOrderEntity> queryRefundList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         //每页显示的条数 最小10 最大2000
         Integer pageSize = 1000;
         Integer pageIndex = 1;
@@ -144,7 +144,7 @@ public class MabangApiUtils {
      *
      * @throws Exception
      */
-    public static List<ReturnOrderEntity> queryReturnOrderList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<ReturnOrderEntity> queryReturnOrderList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 1000;
         Integer pageIndex = 1;
         //总页数
@@ -181,7 +181,7 @@ public class MabangApiUtils {
      *
      * @throws Exception
      */
-    public static List<ShopEntity> queryShopList(String method) throws Exception {
+    public static List<ShopEntity> queryShopList(String method) {
         List<ShopEntity> infoArrayList = new ArrayList<>();
         HashMap<String, Object> params = new HashMap<>(6);
         ParamHeaderVO paramVo = getParamMap(method, 0, params);
@@ -208,7 +208,7 @@ public class MabangApiUtils {
      *
      * @throws Exception
      */
-    public static List<SkuInfoEntity> querySkuList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<SkuInfoEntity> querySkuList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         // 当前每页条数，默认20，最大值为100
         Integer pageSize = 100;
         Integer pageIndex = 1;
@@ -240,7 +240,7 @@ public class MabangApiUtils {
         return infoArrayList;
     }
 
-    public static List<OrderEntity> queryHistorySalesList(String method, LocalDateTime endDate) throws Exception {
+    public static List<OrderEntity> queryHistorySalesList(String method, LocalDateTime endDate) {
         String pageSize = "1000";
         String pageIndex = "";
         //总页数

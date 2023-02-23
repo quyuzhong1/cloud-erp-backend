@@ -25,7 +25,10 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -48,7 +51,8 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
     private MQProducerService<DmpShopInfoEntity> mqProducerService;
 
     @Override
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto)  {
         List<KingdeeShopEntity> skuEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(skuEntityList)){
             log.info("拉取金蝶客户信息列表数据为空 entityList.size = 0 ");
@@ -93,10 +97,13 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SHOP_INFO_TAG.getName(),
-                                msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode())))
-                .collect(Collectors.toList());
+        mabangToMqlist.stream().peek(msg -> {
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SHOP_INFO_TAG.getName(),
+                msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode()));
+            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }).collect(Collectors.toList());
 
     }
 
@@ -148,7 +155,7 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
      * @param dto
      * @return
      */
-    public List<KingdeeShopEntity> pullDate(RequestDTO dto) throws Exception {
+    public List<KingdeeShopEntity> pullDate(RequestDTO dto) {
         // 当前页数
         Integer pageIndex = 0;
         // 每次最多获取100条

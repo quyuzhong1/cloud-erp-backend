@@ -21,6 +21,7 @@ import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -74,7 +75,8 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
      * @return
      */
     @Override
-    public void pullDataSave(RequestDTO dto) throws Exception {
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void pullDataSave(RequestDTO dto) {
         List<GyySkuInfoEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
             log.info("拉取管易SKU信息列表数据为空 entityList.size = 0 ");
@@ -111,7 +113,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
      * @param dto
      * @return
      */
-    private List<GyySkuInfoEntity> pullDate(RequestDTO dto) throws Exception {
+    private List<GyySkuInfoEntity> pullDate(RequestDTO dto){
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         dto.getJobTaskDTO().setLastTime(nextTime);

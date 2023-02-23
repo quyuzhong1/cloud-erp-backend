@@ -53,7 +53,7 @@ public class GyyApiUtils {
      *
      * @throws Exception
      */
-    public static List<GyyOrderEntity> querySalesList(String method, LocalDateTime startDate, LocalDateTime endDate, Boolean isHistory) throws Exception {
+    public static List<GyyOrderEntity> querySalesList(String method, LocalDateTime startDate, LocalDateTime endDate, Boolean isHistory){
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数
@@ -98,7 +98,7 @@ public class GyyApiUtils {
      *
      * @throws Exception
      */
-    public static List<GyyDeliveryDetailEntity> queryDeliveryList(String method, LocalDateTime startDate, LocalDateTime endDate, Boolean isHistory) throws Exception {
+    public static List<GyyDeliveryDetailEntity> queryDeliveryList(String method, LocalDateTime startDate, LocalDateTime endDate, Boolean isHistory){
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数
@@ -148,7 +148,7 @@ public class GyyApiUtils {
      *
      * @throws Exception
      */
-    public static List<GyyRefundEntity> queryRefundList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<GyyRefundEntity> queryRefundList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数
@@ -190,7 +190,7 @@ public class GyyApiUtils {
      *
      * @throws Exception
      */
-    public static List<GyyReturnOrderEntity> queryReturnOrderList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<GyyReturnOrderEntity> queryReturnOrderList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数
@@ -233,7 +233,7 @@ public class GyyApiUtils {
      *
      * @throws Exception
      */
-    public static List<GyyShopInfoEntity> queryShopList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<GyyShopInfoEntity> queryShopList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数
@@ -275,7 +275,7 @@ public class GyyApiUtils {
      *
      * @throws Exception
      */
-    public static List<GyySkuInfoEntity> querySkuList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+    public static List<GyySkuInfoEntity> querySkuList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数

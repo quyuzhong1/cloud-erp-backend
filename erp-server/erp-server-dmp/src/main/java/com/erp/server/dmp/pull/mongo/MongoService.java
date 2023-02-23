@@ -22,7 +22,7 @@ public interface MongoService {
 	 * @param table:表名
 	 * @throws Exception
 	 */
-	<T> void saveMongoDataMult(List<T> dataList, String table) throws Exception;
+	<T> void saveMongoDataMult(List<T> dataList, String table);
 	/**
 	 * 3根据mongo里面的自增id查询数据
 	 * @param <T>
@@ -44,7 +44,7 @@ public interface MongoService {
 	 * @return
 	 * @throws Exception
 	 */
-	<T> List<T> findMongoData(Object obj, int currentPage, int pageSize, String table, Class<T> clazz) throws Exception;
+	<T> List<T> findMongoData(Object obj, int currentPage, int pageSize, String table, Class<T> clazz);
 	/**
 	 * 5 查询mongo里面的数据,支持分页
 	 * @param <T>
@@ -131,7 +131,7 @@ public interface MongoService {
 	 * @param table:表名
 	 * @throws Exception
 	 */
-	<T> void deleteMongoData(Object obj, String table, Class<T> clazz) throws Exception;
+	<T> void deleteMongoData(Object obj, String table, Class<T> clazz);
 	/**
 	 * 12更新数据
 	 * @param obj:条件
@@ -139,14 +139,14 @@ public interface MongoService {
 	 * @param table:表名
 	 * @throws Exception
 	 */
-	<T> void updateMongoData(Object obj, MapUtil data, String table, Class<T> clazz) throws Exception;
+	<T> void updateMongoData(Object obj, MapUtil data, String table, Class<T> clazz);
 	/**
 	 * 13根据id删除数据
 	 * @param id,:条件
 	 * @param table:表名
 	 * @throws Exception
 	 */
-	<T> void deleteMongoDataByID(String id, String table, Class<T> clazz) throws Exception;
+	<T> void deleteMongoDataByID(String id, String table, Class<T> clazz);
 
 	/**
 	 * 12更新数据

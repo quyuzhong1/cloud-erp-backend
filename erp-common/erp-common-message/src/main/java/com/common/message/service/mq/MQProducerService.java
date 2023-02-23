@@ -1,5 +1,6 @@
 package com.common.message.service.mq;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
@@ -12,11 +13,9 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,7 +128,7 @@ public class MQProducerService<T> {
     public SendResult sendBachMsg(String topic, String tag, List<T> msgs) {
         List<Message<T>> messageList = msgs.stream()
                 .map(msg -> MessageBuilder.withPayload(msg)
-                        .setHeader(RocketMQHeaders.KEYS, IdUtils.simpleUUID())
+                        .setHeader(RocketMQHeaders.KEYS, IdUtil.getSnowflake())
                         .build())
                 .collect(Collectors.toList());
         return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag), messageList);
