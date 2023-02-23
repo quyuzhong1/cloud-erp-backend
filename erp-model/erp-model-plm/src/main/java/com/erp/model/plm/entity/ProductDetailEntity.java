@@ -134,9 +134,6 @@ public class ProductDetailEntity implements Serializable {
     @TableField(value = "update_user_name")
     private String updateUserName;
 
-
-
-
     /**
      *禁止修改的字段
      */

@@ -209,6 +209,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         for (ProductPlanProcessEnum plmEnum : values) {
             setProductPlanProgress(productPlanEntity, progressList, plmEnum.getName());
         }
+        resultDTO.setProgressList(progressList);
         return resultDTO;
     }
 
@@ -443,7 +444,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Override
     public List<ProductPlanGroupVO> listTableChargeName(ProductPlanGroupSerachDTO dto) {
         //产品经理
-        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto,MathUtil.ONE);
+        dto.setGroupField("charge_id");
+        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto);
         
         return null;
     }
@@ -451,14 +453,16 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Override
     public List<ProductPlanGroupVO> listTableGrade(ProductPlanGroupSerachDTO dto) {
         //产品等级
-        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto,MathUtil.TWO);
+        dto.setGroupField("grade_id");
+        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto);
         return null;
     }
 
     @Override
     public List<ProductPlanGroupVO> listTableCategory(ProductPlanGroupSerachDTO dto) {
         //产品分类
-        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto,MathUtil.THREE);
+        dto.setGroupField("category_id");
+        List<ProductPlanGroupVO> list = baseMapper.listProductPlanGroupTable(dto);
         return null;
     }
 

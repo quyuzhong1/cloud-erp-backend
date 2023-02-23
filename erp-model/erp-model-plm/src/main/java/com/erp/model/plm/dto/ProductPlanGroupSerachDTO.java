@@ -35,4 +35,8 @@ public class ProductPlanGroupSerachDTO implements Serializable {
      */
     private String categoryId;
 
+    /**
+     * 分组字段（辅助字段）
+     */
+    private String groupField;
 }

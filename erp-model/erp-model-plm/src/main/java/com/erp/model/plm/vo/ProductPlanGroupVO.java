@@ -44,30 +44,30 @@ public class ProductPlanGroupVO implements Serializable {
     /**
      * 总规划数
      */
-    private Long totalCount;
+    private Integer totalCount;
 
     /**
      * 立项数量
      */
-    private Long approvalCount;
+    private Integer approvalCount;
 
     /**
      * 进行中数量
      */
-    private Long progressCount;
+    private Integer progressCount;
 
     /**
      * 完成数量
      */
-    private Long completeCount;
+    private Integer completeCount;
 
     /**
      * 延期数量
      */
-    private Long approvalDelayCount;
+    private Integer approvalDelayCount;
 
     /**
      * 取消数量
      */
-    private Long cancelCount;
+    private Integer cancelCount;
 }

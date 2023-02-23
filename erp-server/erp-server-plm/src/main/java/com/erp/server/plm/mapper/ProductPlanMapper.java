@@ -66,8 +66,7 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
      * @author Will
      * @date: 2023/2/23 15:26
      * @param params
-     * @param type
      * @return List<ProductPlanGroupVO>
      */
-    List<ProductPlanGroupVO> listProductPlanGroupTable(@Param("params") ProductPlanGroupSerachDTO params,@Param("type") Integer type);
+    List<ProductPlanGroupVO> listProductPlanGroupTable(@Param("params") ProductPlanGroupSerachDTO params);
 }
