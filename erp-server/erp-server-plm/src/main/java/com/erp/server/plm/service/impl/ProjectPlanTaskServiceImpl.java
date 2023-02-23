@@ -64,6 +64,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Resource
     private ProjectTaskService projectTaskService;
 
+
+    @Resource
+    private ProductInfoService productInfoService;
+
     @Resource
     private ProjectTaskRefSkuService projectTaskRefSkuService;
 
@@ -185,9 +189,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     //优先级
                     Integer priority = vo.getPriority();
 
-                    List<String> skuIds= refSkuList.stream().filter(ref -> ref.getTaskId().equals(taskId)).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+                    List<String> skuIds = refSkuList.stream().filter(ref -> ref.getTaskId().equals(taskId)).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
 
-                    List<String> refSkuNoList=skuList.stream().filter(s->skuIds.contains(s.getSkuId())).map(SkuVO::getSkuNo).collect(Collectors.toList());
+                    List<String> refSkuNoList = skuList.stream().filter(s -> skuIds.contains(s.getSkuId())).map(SkuVO::getSkuNo).collect(Collectors.toList());
                     vo.setRefSkuIdList(skuIds);
                     vo.setRefSkuNoList(refSkuNoList);
                     String priorityName = "";
@@ -274,7 +278,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (StringUtils.isBlank(productId)) {
             throw new ServiceException(95010, "产品id不能为空");
         }
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId,sysUserFeign);
+        ProductInfoEntity infoEntity = productInfoService.getById(productId);
+        if(Objects.isNull(infoEntity)){
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId, sysUserFeign,infoEntity.getName());
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();

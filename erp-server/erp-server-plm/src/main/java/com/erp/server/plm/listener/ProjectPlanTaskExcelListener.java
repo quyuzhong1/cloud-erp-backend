@@ -5,7 +5,6 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -45,7 +44,9 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     private String productId;
 
-    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService, String productId, SysUserFeign sysUserFeign) {
+    private String productName;
+
+    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService, String productId, SysUserFeign sysUserFeign, String productName) {
         this.projectTaskService = projectTaskService;
         this.projectPlanService = projectPlanService;
         this.list = new ArrayList<>();
@@ -53,6 +54,7 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         this.sysUserFeign = sysUserFeign;
         this.productId = productId;
         this.dataList = new ArrayList<>();
+        this.productName = productName;
     }
 
     /**
@@ -68,16 +70,30 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
     public void invoke(ScheduleTaskExportErrorExcelVO vo, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         dataList.add(vo);
-        if (StringUtils.isBlank(vo.getTaskName())) {
-            errorMsgList.add("任务名 不能为空");
+        if (StringUtils.isBlank(vo.getProductName())) {
+            errorMsgList.add("产品名称 不能为空");
         }
-        if (StringUtils.isBlank(vo.getChargeName())) {
-            errorMsgList.add("负责人不能为空");
+        if (!productName.equals(vo.getProductName())) {
+            errorMsgList.add("产品名称为当前产品");
+        }
+
+        if (StringUtils.isBlank(vo.getTaskName())) {
+            errorMsgList.add("任务名不能为空");
         }
         ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName().trim());
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
+        String chargeName = vo.getChargeName();
+        if (StringUtils.isBlank(vo.getChargeName())) {
+            errorMsgList.add("负责人不能为空");
+        }
+
+        FindUserDTO user = sysUserFeign.getUserByUserName(chargeName);
+        if (Objects.isNull(user)||StringUtils.isBlank(user.getUserId())) {
+            errorMsgList.add("负责人有误");
+        }
+
         if (StringUtils.isBlank(vo.getPlanStartTime())) {
             errorMsgList.add("计划开始时间 不能为空");
         }
@@ -109,16 +125,14 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             return;
         }
 
-        String chargeName = vo.getChargeName();
         String dbChargeName = task.getChargeName();
         //当两个名字不一样 就要更改
         if (!chargeName.equals(dbChargeName)) {
-            FindUserDTO user=sysUserFeign.getUserByUserName(chargeName);
-            if(user!=null){
-               if(StringUtils.isNotBlank(user.getUserId())){
-                   task.setChargeName(chargeName);
-                   task.setChargeId(user.getUserId());
-               }
+            if (user != null) {
+                if (StringUtils.isNotBlank(user.getUserId())) {
+                    task.setChargeName(chargeName);
+                    task.setChargeId(user.getUserId());
+                }
             }
         }
 
@@ -139,10 +153,10 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        //提交排期
-        HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
-        dto.setProductId(productId);
-        dto.setTaskIdList(taskIdList);
-        projectPlanService.submitSchedule(dto);
+//        //提交排期
+//        HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
+//        dto.setProductId(productId);
+//        dto.setTaskIdList(taskIdList);
+//        projectPlanService.submitSchedule(dto);
     }
 }
