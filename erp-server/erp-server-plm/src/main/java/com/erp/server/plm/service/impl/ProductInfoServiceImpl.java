@@ -285,7 +285,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
         //自动生成产品编号
-        if (ObjectUtils.isEmpty(entity.getId()) || !entity.getCategoryId().equals(oldEntity.getCategoryId())) {
+        if (ObjectUtils.isEmpty(entity.getId()) || (!entity.getCategoryId().equals(oldEntity.getCategoryId()))) {
             String spuNo = sysCodeService.getSpuNo(categoryId);
             entity.setSpuNo(spuNo);
         }

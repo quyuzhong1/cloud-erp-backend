@@ -376,6 +376,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productInfoEntity)) {
             ProductDTO productDTO = new ProductDTO();
             BeanMapperUtils.copy(dto,productDTO);
+            productDTO.setChargeIds(dto.getChargeIdList());
+            productDTO.setId(null);
             //当需要新增产品时
             String productId = productInfoService.saveOrUpdateProduct(productDTO);
             if (StringUtils.isBlank(productId)) {
@@ -485,6 +487,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public List<SeriesVO> listApprovalTrend(ProductPlanGroupSerachDTO dto) {
+
+
         return null;
     }
 

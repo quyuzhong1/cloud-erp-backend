@@ -4,8 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -26,7 +28,7 @@ public class ProductPlanDevelopDTO implements Serializable {
     /**
      * 产品类型
      */
-    @NotEmpty(message = "产品类型不能为空")
+    @NotNull(message = "产品类型不能为空")
     private Integer type;
 
     /**
@@ -53,10 +55,18 @@ public class ProductPlanDevelopDTO implements Serializable {
     private String propertyId;
 
     /**
-     * 产品负责人ID
+     * 产品属性
      */
-    @NotBlank(message = "产品负责人ID不能为空")
-    private String chargeId;
+    @NotBlank(message = "产品属性不能为空")
+    private String property;
+
+    /**
+     * 产品负责人id
+     */
+    @NotNull(message = "产品负责人id不能为空")
+    @Size(min = 1,message = "产品负责人id 不能为空")
+    private List<String> chargeIdList;
+
 
     /**
      * 产品等级ID
@@ -69,5 +79,14 @@ public class ProductPlanDevelopDTO implements Serializable {
      */
     @NotBlank(message = "品牌ID不能为空")
     private String brandId;
+
+    /**
+     * 产品品牌
+     */
+    @NotBlank(message = "产品品牌不能为空")
+    private String  brandName;
+
+
+
 
 }
