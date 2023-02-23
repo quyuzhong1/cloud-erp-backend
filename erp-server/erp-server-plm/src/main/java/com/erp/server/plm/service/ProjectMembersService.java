@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectMembersEntity;
+import com.erp.model.plm.vo.ItemMemberVO;
 
 import java.util.List;
 
@@ -52,4 +53,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     List<ProjectMembersEntity> listByRoleIds(List<String> roleIdList, String productId);
 
    Boolean saveByRoleAndMembers(String productId,String projectId,String roleName,List<String> memberList);
+
+    List<ItemMemberVO> getByProductIds(List<String> productIds);
 }

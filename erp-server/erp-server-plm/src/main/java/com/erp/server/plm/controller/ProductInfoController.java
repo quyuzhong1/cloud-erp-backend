@@ -2,12 +2,12 @@ package com.erp.server.plm.controller;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
@@ -53,8 +53,7 @@ public class ProductInfoController extends BaseController {
      * @date 2022-10-09 10:17
      */
     @PostMapping("/paging")
-    // @RequestPermissions("plm:product:paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
+   // @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -222,10 +221,7 @@ public class ProductInfoController extends BaseController {
     }
 
 
-    @GetMapping("/getItemDocs")
-    public ApiResult<DeliveryDocsDTO> getItemDocs(@Param("productId") String productId) {
-        return success();
-    }
+
 
 }
 

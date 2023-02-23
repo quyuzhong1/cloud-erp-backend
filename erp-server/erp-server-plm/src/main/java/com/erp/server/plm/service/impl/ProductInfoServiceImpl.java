@@ -10,24 +10,25 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.RedisService;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.service.RedisService;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -292,11 +293,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList, loginUser,entity.getPropertyId());
+            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList, loginUser, entity.getPropertyId());
             //异步发送通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
             //默认查询立项模板中的成员和角色信息
-            projectMembersService.addRoleAndMembersByApproval(entity.getId(),entity.getPropertyId());
+            projectMembersService.addRoleAndMembersByApproval(entity.getId(), entity.getPropertyId());
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());
@@ -321,7 +322,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             addProductInfoLog(dto, oldEntity, entity.getId(), entity.getId());
         }
         //新增或修改产品经理角色和对应成员
-        projectMembersService.saveByRoleAndMembers(entity.getId(),null,"产品经理",chargeIds);
+        projectMembersService.saveByRoleAndMembers(entity.getId(), null, "产品经理", chargeIds);
         return entity.getId();
     }
 
@@ -368,7 +369,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
         }
-         return Boolean.TRUE;
+        return Boolean.TRUE;
     }
 
 
@@ -460,6 +461,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = loginUser.getUid();
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
+        //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
                 pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds);
@@ -472,8 +474,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
 
         if (CollectionUtils.isNotEmpty(list)) {
+
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
+
+            //根据产品id 获取项目成员 相关信息
+            List<ItemMemberVO> ItemMemberList=projectMembersService.getByProductIds(productIds);
+
+
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
 
             //根据产品id 获取到对应的要交付的文档数
@@ -487,7 +495,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             for (ProductShowDTO item : list) {
                 //项目阶段，判断阶段任务是否全部完成
-                projectInfoService.setProjectPhase(taskList,phaseList,item);
+                projectInfoService.setProjectPhase(taskList, phaseList, item);
 
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
@@ -495,6 +503,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                 }
+                List<ItemMemberVO>  itemMemberVOList= ItemMemberList.stream().filter(obj->item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
+                item.setItemMemberList(itemMemberVOList);
+                String progressStatus = item.getProgressStatus();
+                item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
                 //总的文档数
                 CountDTO totalDocsDTO = productDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
                 if (totalDocsDTO != null) {
@@ -526,8 +538,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
-
-
                 Integer projectStatus = item.getProjectStatus();
                 if (projectStatus != null) {
                     item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
@@ -1056,7 +1066,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public void updateSpecByChangeSku(ProductInfoDTO dto) {
         String id = dto.getId();
         ProductInfoEntity productInfoEntity = this.getById(id);
-        if(productInfoEntity!=null){
+        if (productInfoEntity != null) {
             BeanMapper.copy(dto, productInfoEntity);
             LoginUser loginUser = commonService.getUserInfo();
             if (StringUtils.isBlank(productInfoEntity.getId())) {
@@ -1079,7 +1089,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public ProductInfoEntity getBySpuNo(String spuNo) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductInfoEntity::getSpuNo,spuNo);
+        queryWrapper.eq(ProductInfoEntity::getSpuNo, spuNo);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
@@ -1087,7 +1097,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public ProductInfoEntity getByName(String name) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductInfoEntity::getName,name);
+        queryWrapper.eq(ProductInfoEntity::getName, name);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }

@@ -123,15 +123,25 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
     @Override
     public List<RoleRefMemberEntity> listByMembersIds(List<String> membersIds) {
         LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(RoleRefMemberEntity::getMembersId,membersIds);
+        queryWrapper.in(RoleRefMemberEntity::getMembersId, membersIds);
         return this.list(queryWrapper);
     }
 
     @Override
     public List<RoleRefMemberEntity> getByRoleIdsAndProductId(List<String> roleIdList, String productId) {
         LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(RoleRefMemberEntity::getRoleId,roleIdList);
-        queryWrapper.eq(RoleRefMemberEntity::getProductId,productId);
+        queryWrapper.in(RoleRefMemberEntity::getRoleId, roleIdList);
+        queryWrapper.eq(RoleRefMemberEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<RoleRefMemberEntity> getByProductIds(List<String> productIds) {
+        if (CollectionUtils.isEmpty(productIds)) {
+            return new ArrayList<>(1);
+        }
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(RoleRefMemberEntity::getProductId, productIds);
         return this.list(queryWrapper);
     }
 }

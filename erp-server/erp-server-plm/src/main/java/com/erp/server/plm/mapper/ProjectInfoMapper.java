@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -25,9 +26,9 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
 
     List<StartItemSourceDTO> listMap(@Param("sourceType") Integer sourceType);
 
-    IPage paging(Page query, @Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
+    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 
-    IPage myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
+    IPage<ProductShowDTO> myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds, @Param("archiveProductIds") List<String> archiveProductIds);
 
     List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 

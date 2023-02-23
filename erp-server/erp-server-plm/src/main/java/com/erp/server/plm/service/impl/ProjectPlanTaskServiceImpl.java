@@ -20,6 +20,7 @@ import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -70,7 +71,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     private TaskDeliveryService taskDeliveryService;
 
 
-
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Resource
     private ProjectPlanService projectPlanService;
@@ -258,7 +260,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         }
         ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
             if (CollectionUtils.isEmpty(dataList)) {
                 throw new ServiceException(ApiError.ERROR_95133);
@@ -664,7 +666,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             throw new ServiceException(95010, "产品id不能为空");
         }
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
-        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId);
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId,sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();

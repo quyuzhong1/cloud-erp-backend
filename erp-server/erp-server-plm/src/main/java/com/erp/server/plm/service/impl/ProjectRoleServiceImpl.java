@@ -121,7 +121,7 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
 
     @Override
     public List<ProjectRoleEntity> listRoleByMemberIds(List<String> memberList) {
-        List<RoleRefMemberEntity> roleRefMemberList= roleRefMemberService.listByMembersIds(memberList);
+        List<RoleRefMemberEntity> roleRefMemberList = roleRefMemberService.listByMembersIds(memberList);
         if (CollectionUtils.isEmpty(roleRefMemberList)) {
             return new ArrayList<>();
         }
@@ -132,10 +132,28 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     @Override
     public ProjectRoleEntity getByRoleName(String productId, String roleName) {
         LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectRoleEntity::getName,roleName);
+        queryWrapper.eq(ProjectRoleEntity::getName, roleName);
         queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    /**
+     * 根据产品id 获取项目角色信息
+     *
+     * @param productIds
+     * @return java.util.List<com.erp.model.plm.entity.ProjectRoleEntity>
+     * @author yl
+     * @date 2023-02-23 17:21
+     */
+    @Override
+    public List<ProjectRoleEntity> getByProductIds(List<String> productIds) {
+        if (CollectionUtils.isEmpty(productIds)) {
+            return new ArrayList<>(1);
+        }
+        LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProjectRoleEntity::getProductId, productIds);
+        return this.list(queryWrapper);
     }
 
 

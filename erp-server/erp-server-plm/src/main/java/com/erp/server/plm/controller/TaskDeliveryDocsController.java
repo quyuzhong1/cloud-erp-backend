@@ -1,17 +1,16 @@
 package com.erp.server.plm.controller;
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.DeliveryDocsGroupDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TaskDeliveryService;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -115,19 +114,6 @@ public class TaskDeliveryDocsController extends BaseController {
         return success(docsPower);
     }
 
-
-
-    /**
-     * 产品列表 设置项目产出
-     *
-     * @param
-     * @return
-     */
-    @PostMapping("/setProjectOutput")
-    public ApiResult setProjectOutput(@Param("deliveryDocsIdList") List<String> deliveryDocsIds) {
-
-        return success();
-    }
 
 
 }

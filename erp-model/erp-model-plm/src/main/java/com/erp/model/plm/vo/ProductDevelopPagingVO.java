@@ -1,6 +1,5 @@
-package com.erp.model.plm.dto;
+package com.erp.model.plm.vo;
 
-import com.erp.model.plm.vo.ItemMemberVO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,19 +10,26 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @Classname ProductShowDTO
+ * 产品开发分页列表
+ *
+ * @Classname
  * @Description TODO
- * @Date 2022-09-17 14:46
+ * @Date 2023-02-23 14:27
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class ProductShowDTO implements Serializable {
-
+public class ProductDevelopPagingVO implements Serializable {
     /**
      * 产品id
      */
     private String productId;
+
+
+    /**
+     * 产品示意图url
+     */
+    private String imageUrl;
 
     /**
      * 项目id
@@ -52,25 +58,21 @@ public class ProductShowDTO implements Serializable {
 
     /**
      * 产品立项状态
-     *
      */
     private Integer approvalStatus;
 
     /**
      * 产品立项状态名
-     *
      */
     private String approvalStatusName;
     /**
      * 产品项目状态
-     *  0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
-     *
+     * 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
      */
     private Integer projectStatus;
 
     /**
      * 产品项目状态名
-     *
      */
     private String projectStatusName;
 
@@ -88,7 +90,8 @@ public class ProductShowDTO implements Serializable {
     /**
      * 项目负责人id
      */
-    private List<String> projectChargeIdList=new ArrayList<>();
+    private List<String> projectChargeIdList = new ArrayList<>();
+
 
     private String projectChargeId;
 
@@ -98,6 +101,7 @@ public class ProductShowDTO implements Serializable {
     private String productChargeName;
 
     private String productChargeId;
+
 
     /**
      * 产品负责人id
@@ -130,8 +134,6 @@ public class ProductShowDTO implements Serializable {
     private Integer projectFinishTaskCount;
 
 
-
-
     /**
      * 立项进度
      */
@@ -151,17 +153,17 @@ public class ProductShowDTO implements Serializable {
     /**
      * 是否收藏 产品 true  收藏 false 没有
      */
-    private Boolean ifAddProduct=false;
+    private Boolean ifAddProduct = false;
 
     /**
      * 是否迭代产品 true  是  false 不是
      */
-    private Boolean ifIteration=false;
+    private Boolean ifIteration = false;
 
     /**
      * 创建时间
      */
-    private Date  createTime;
+    private Date createTime;
 
     /**
      * 总文档数
@@ -169,12 +171,10 @@ public class ProductShowDTO implements Serializable {
     private Integer totalDocsCount;
 
 
-
     /**
      * 完成文档档数
      */
     private Integer finishDocsCount;
-
 
 
     /**
@@ -204,12 +204,6 @@ public class ProductShowDTO implements Serializable {
      */
     private String property;
 
-    /**
-     * 示意图
-     */
-
-    private String imageUrl;
-
 
 
     /**
@@ -224,5 +218,4 @@ public class ProductShowDTO implements Serializable {
      * 项目成员
      */
     private List<ItemMemberVO>  itemMemberList;
-
 }

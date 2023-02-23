@@ -38,7 +38,7 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
 
     private String productId;
 
-    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId) {
+    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId,SysUserFeign sysUserFeign) {
         this.projectTaskService = projectTaskService;
         this.errorList = new ArrayList<>();
         this.succeedList = new ArrayList<>();
