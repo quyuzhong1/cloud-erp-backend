@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectTaskTimeRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProjectTaskTimeRecordEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="deleted_time" property="deletedTime" />
+        <result column="deleted_user_id" property="deletedUserId" />
+        <result column="reality_start_time" property="realityStartTime" />
+        <result column="reality_end_time" property="realityEndTime" />
+        <result column="operator_type" property="operatorType" />
+        <result column="project_task_id" property="projectTaskId" />
+        <result column="task_time" property="taskTime" />
+    </resultMap>
+    <select id="pageTaskTimeRecord" resultType="com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO">
+        SELECT
+        pi."name" as productName,
+        COALESCE(pi.spu_no, '') as spuNo,
+        regexp_split_to_table(pt.charge_name,',') as chargeName,
+        sum(case when plan_start_time is not null and plan_end_time is not null
+        then date_part('day', pt.plan_end_time + '1 day' - pt.plan_start_time) ELSE '0' END) as planTaskTime,
+        sum(case when pttr.reality_end_time is not null and pttr.reality_start_time is not null
+        then date_part('day', pttr.reality_end_time +'1 day' - pttr.reality_start_time) ELSE '0' END) as consumerTime,
+        count(case when plan_start_time is not null and plan_end_time is not null
+        then 1 else 0 END)  as planTaskNum,
+        count(pt."id")  as totalTaskNum,
+        SUM(CASE WHEN pt.status = 4 THEN 1 else 0 end)  finishedTaskNum,
+        SUM(CASE WHEN pt.status != 4 THEN 1 else 0 end)  unfinishedTaskNum,
+        SUM(CASE WHEN (pt.status = 0 OR pt.status = 1 OR  pt.status = 2 OR  pt.status = 3)
+        and pt.plan_end_time is not null and pt.plan_end_time  &lt; CURRENT_DATE THEN 1 else 0 end)  delayTaskNum
+        FROM "project_task" pt
+        LEFT JOIN product_info  pi on pt.product_id = pi.id
+        LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id
+        <where>
+            <if test="null != params and null != params.searchKeyword and '' != params.searchKeyword">
+               and (pi."name" like concat('%',#{param.searchKeyword} ,'%') or pi.spu_no like concat('%',#{param.searchKeyword} ,'%'))
+            </if>
+            <if test="null != params and null != params.startDate and '' != params.startDate and null != params.endDate and '' != params.endDate">
+                and pttr.reality_end_time >= #{param.startDate}
+                and pttr.reality_end_time &lt;= #{param.endDate}
+            </if>
+            <if test="null != params and null != params.chargeId">
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="null != param and '' != param">
+                ${param}
+            </if>
+        </where>
+        GROUP BY pi."name", chargeName,spuNo
+    </select>
+
+</mapper>
