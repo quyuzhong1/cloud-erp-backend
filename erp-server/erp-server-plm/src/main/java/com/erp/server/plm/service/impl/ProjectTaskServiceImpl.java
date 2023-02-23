@@ -2467,8 +2467,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean batchUpdate(BatchScheduleTaskDTO dto) {
-
-        List<String> taskIds = dto.getPreTaskIdList();
+        List<String> taskIds = dto.getTaskIdList();
         if (CollectionUtils.isEmpty(taskIds)) {
             return false;
         }

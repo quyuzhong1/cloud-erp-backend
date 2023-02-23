@@ -2,8 +2,9 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.core.utils.date.DateUtil;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
@@ -111,13 +112,25 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         changeVO.setOriginStartTime(task.getPlanStartTime());
         changeVO.setOriginEndTime(task.getPlanEndTime());
         String taskChargeId = task.getChargeId();
-        String taskChargeName=task.getChargeName();
-        if (StringUtils.isNotBlank(taskChargeId)) {
-            changeVO.setChargeIdList(Arrays.asList(taskChargeId.split(",")));
+        String taskChargeName = task.getChargeName();
+        List<String> chargeIdList = new ArrayList<>();
+        //当传过来的任务负责人不同的时候
+        if (!chargeName.equals(taskChargeName)) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserName(chargeName);
+            if (!Objects.isNull(findUserDTO)) {
+                String userId = findUserDTO.getUserId();
+                if (StringUtils.isNotBlank(userId)) {
+                    chargeIdList = Arrays.asList(userId);
+                }
+            }
         } else {
-            changeVO.setChargeIdList(new ArrayList<>(1));
+            if (StringUtils.isNotBlank(taskChargeId)) {
+                chargeIdList = Arrays.asList(taskChargeId.split(","));
+            }
         }
 
+
+        changeVO.setChargeIdList(chargeIdList);
         succeedList.add(changeVO);
     }
 
