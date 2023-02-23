@@ -11,6 +11,7 @@ import com.erp.model.plm.dto.DeliveryDocsGroupDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TaskDeliveryService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -112,6 +113,20 @@ public class TaskDeliveryDocsController extends BaseController {
     public ApiResult<SetDocsPowerDTO> getPower(@RequestParam(value = "id") String id) {
         SetDocsPowerDTO docsPower = docsPermissionService.getDocsPower(id);
         return success(docsPower);
+    }
+
+
+
+    /**
+     * 产品列表 设置项目产出
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/setProjectOutput")
+    public ApiResult setProjectOutput(@Param("deliveryDocsIdList") List<String> deliveryDocsIds) {
+
+        return success();
     }
 
 

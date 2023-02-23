@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.ProductRoleDTO;
 import com.erp.model.plm.dto.ProjectRoleDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.server.plm.service.ProjectRoleService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -69,6 +70,18 @@ public class ProjectRoleController extends BaseController {
     //   @RequestPermissions("plm:role:list")
     public ApiResult<List<ProjectRoleEntity>> list(String productId) {
         return success(projectRoleService.listByProductId(productId));
+    }
+
+    /**
+     * 产品列表 设置项目产出
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/setItemRole")
+    public ApiResult setProjectOutput(@Param("itemRoleIdList") List<String> itemRoleIds) {
+
+        return success();
     }
 }
 
