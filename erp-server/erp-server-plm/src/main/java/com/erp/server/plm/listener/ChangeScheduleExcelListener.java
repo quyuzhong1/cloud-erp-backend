@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
@@ -31,6 +32,7 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
 
     private List<ScheduleTaskExportErrorExcelVO> dataList;
     private List<ChangeScheduleExportVO> succeedList;
+    private SysUserFeign sysUserFeign;
 
 
     private String productId;
@@ -41,6 +43,7 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         this.succeedList = new ArrayList<>();
         this.productId = productId;
         this.dataList = new ArrayList<>();
+        this.sysUserFeign = sysUserFeign;
 
     }
 
@@ -100,12 +103,15 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         changeVO.setStatus(task.getStatus());
         changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
         changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt));
+        //改变的任务负责人名
+        String chargeName = vo.getChargeName();
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());
         changeVO.setOriginStartTime(task.getPlanStartTime());
         changeVO.setOriginEndTime(task.getPlanEndTime());
         String taskChargeId = task.getChargeId();
+        String taskChargeName=task.getChargeName();
         if (StringUtils.isNotBlank(taskChargeId)) {
             changeVO.setChargeIdList(Arrays.asList(taskChargeId.split(",")));
         } else {
