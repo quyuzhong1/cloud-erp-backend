@@ -5,7 +5,6 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname 处理 TableField  注解
@@ -26,6 +25,6 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //更新时的 填充数据
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.setFieldValByName("updateTime", new Date(), metaObject);
+        this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
     }
 }
