@@ -37,14 +37,14 @@ public enum ThreeGenerationPlanningEnum implements EnumMessage {
         return desc;
     }
 
-    public static ThreeGenerationPlanningEnum getNameByCode(String code) {
+    public static String getNameByCode(String code) {
         ThreeGenerationPlanningEnum[] enums = values();
         for (ThreeGenerationPlanningEnum plmEnum : enums) {
             if (plmEnum.getCode().equals(code)) {
-                return plmEnum;
+                return plmEnum.getName();
             }
         }
-        return null;
+        return "";
     }
     public static ThreeGenerationPlanningEnum getByName(String name) {
         ThreeGenerationPlanningEnum[] enums = values();

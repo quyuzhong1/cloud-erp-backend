@@ -46,7 +46,7 @@ public enum ApiError implements Serializable {
     ERROR_1012(1012, "Excel解析数据时发生异常"),
     ERROR_1013(1013, "您没有权限操作"),
     ERROR_1014(1014, "请勿重复操作"),
-
+    ERROR_1015(1015, "导出失败"),
     /**
      * 警告信息 从800 开始
      */
@@ -245,6 +245,8 @@ public enum ApiError implements Serializable {
     ERROR_95135(95135, "产品规划采购信息不存在"),
     ERROR_95136(95136, "排期状态未审核的任务不能批量更新"),
     ERROR_95137(95137, "排期审核通过的任务不能删除"),
+    ERROR_95138(95138, "产品规划已存在关联产品"),
+    ERROR_95139(95139, "产品新增失败"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

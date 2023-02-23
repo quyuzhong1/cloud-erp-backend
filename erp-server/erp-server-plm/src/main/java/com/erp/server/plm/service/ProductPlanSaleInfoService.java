@@ -28,4 +28,12 @@ public interface ProductPlanSaleInfoService extends IService<ProductPlanSaleInfo
      * @return List<ProductPlanSaleInfoEntity>
      */
     List<ProductPlanSaleInfoEntity> listByProductPlanId(String productPlanId);
+    /**
+     * @description: 根据规划ids查询
+     * @author Will
+     * @date: 2023/2/23 10:51
+     * @param productPlanIds
+     * @return List<ProductPlanSaleInfoEntity>
+     */
+    List<ProductPlanSaleInfoEntity> listByProductPlanIds(List<String> productPlanIds);
 }

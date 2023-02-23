@@ -10,8 +10,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.MonthEnum;
+import com.common.business.enums.ProductTypeEnum;
+import com.common.business.enums.SalesPlatformEnum;
+import com.common.business.enums.SeasonEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
@@ -23,11 +26,8 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.ProductPlanProcessEnum;
-import com.erp.model.plm.enums.ProductPlanStatusEnum;
-import com.erp.model.plm.enums.ProjectStateEnum;
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
-import com.erp.model.plm.vo.ProductPlanRemarkVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -46,6 +46,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -98,7 +99,16 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         List<ProductPlanVO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
+                //产品状态格式化
                 obj.setProductStatusName(StringUtils.isBlank(obj.getProductStatus()) ? "" : ProductPlanStatusEnum.getNameByCode(obj.getProductStatus()).getName());
+                //调研是否延期
+                if (ObjectUtils.isNotEmpty(obj.getSurveyDate()) && ObjectUtils.isNotEmpty(obj.getPlanSurveyDate())) {
+                    obj.setIsDelaySurvey(obj.getSurveyDate().isAfter(obj.getPlanSurveyDate()));
+                }
+                //立项是否延期
+                if (ObjectUtils.isNotEmpty(obj.getProjectApprovalDate()) && ObjectUtils.isNotEmpty(obj.getPlanProjectApprovalDate())) {
+                    obj.setIsDelaySurvey(obj.getProjectApprovalDate().isAfter(obj.getPlanProjectApprovalDate()));
+                }
             });
         }
         return new PagingVO(pageData);
@@ -208,7 +218,89 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response) {
-        return null;
+        List<ProductPlanExcelDTO> productPlanExcelDTOS = baseMapper.listExportExcel(productPlanSearchDTO);
+        if (CollectionUtils.isNotEmpty(productPlanExcelDTOS)) {
+            List<String> productPlanIds = productPlanExcelDTOS.stream().map(ProductPlanExcelDTO::getProductPlanId).collect(Collectors.toList());
+            List<ProductPlanSaleInfoEntity> productPlanSaleInfoList = productPlanSaleInfoService.listByProductPlanIds(productPlanIds);
+            productPlanExcelDTOS.forEach(obj -> {
+                //枚举格式化
+                obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
+                obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));
+                obj.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode( obj.getThreeGenerationPlanningName()));
+                obj.setSalesPlatformName(SalesPlatformEnum.getNameByName(obj.getSalesPlatformName()));
+                obj.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(obj.getPlanMarketingSeasonName()));
+                //销售数据信息
+                if (CollectionUtils.isEmpty(productPlanSaleInfoList)) {
+                    return;
+                }
+                List<ProductPlanSaleInfoEntity> saleInfoList = productPlanSaleInfoList.stream().filter(e -> e.getProductPlanId().equals(obj.getProductPlanId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(saleInfoList)) {
+                    return;
+                }
+                for (ProductPlanSaleInfoEntity entity: saleInfoList) {
+                    if (MonthEnum.JANUARY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setJanuaryQtyStr(entity.getSalesQty().toString());
+                        obj.setJanuaryAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.FEBRUARY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setFebruaryQtyStr(entity.getSalesQty().toString());
+                        obj.setFebruaryAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.MARCH.getCode().equals(entity.getMonth().toString())) {
+                        obj.setMarchQtyStr(entity.getSalesQty().toString());
+                        obj.setMarchAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.APRIL.getCode().equals(entity.getMonth().toString())) {
+                        obj.setAprilQtyStr(entity.getSalesQty().toString());
+                        obj.setAprilAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.MAY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setMayQtyStr(entity.getSalesQty().toString());
+                        obj.setMayAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.JUNE.getCode().equals(entity.getMonth().toString())) {
+                        obj.setJuneQtyStr(entity.getSalesQty().toString());
+                        obj.setJuneAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.JULY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setJulyQtyStr(entity.getSalesQty().toString());
+                        obj.setJulyAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.AUGUST.getCode().equals(entity.getMonth().toString())) {
+                        obj.setAugustQtyStr(entity.getSalesQty().toString());
+                        obj.setAugustAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.SEPTEMBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setSeptemberQtyStr(entity.getSalesQty().toString());
+                        obj.setSeptemberAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.OCTOBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setOctoberQtyStr(entity.getSalesQty().toString());
+                        obj.setOctoberAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.NOVEMBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setNovemberQtyStr(entity.getSalesQty().toString());
+                        obj.setNovemberAmountStr(entity.getSalesAmount().toString());
+                    }
+                    if (MonthEnum.DECEMBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setDecemberQtyStr(entity.getSalesQty().toString());
+                        obj.setDecemberAmountStr(entity.getSalesAmount().toString());
+                    }
+                }
+            });
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/productPlan.xlsx";
+        String name = "产品规划";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(productPlanExcelDTOS, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -224,14 +316,46 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
-    public List<ProductPlanRemarkVO> listRemark(BaseIdDTO dto) {
-        return null;
+    public Boolean planDevelopProduct(ProductPlanDevelopDTO dto) {
+        ProductPlanEntity productPlanEntity = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            throw new ServiceException(ApiError.ERROR_95134);
+        }
+        if (StringUtils.isNotBlank(productPlanEntity.getProductId())) {
+            throw new ServiceException(ApiError.ERROR_95138);
+        }
+        //根据产品名称判断是否已经存在开发产品
+        ProductInfoEntity productInfoEntity = productInfoService.getByName(dto.getName());
+        if (ObjectUtils.isEmpty(productInfoEntity)) {
+            ProductDTO productDTO = new ProductDTO();
+            BeanMapperUtils.copy(dto,productDTO);
+            //当需要新增产品时
+            String productId = productInfoService.saveOrUpdateProduct(productDTO);
+            if (StringUtils.isBlank(productId)) {
+                throw new ServiceException(ApiError.ERROR_95139);
+            }
+            productInfoEntity = productInfoService.getById(productId);
+        }
+        //存在数据则关联规划并且需要同步的数据以产品的为准
+        productPlanEntity.setProductId(productInfoEntity.getId());
+        productPlanEntity.setChargeId(productInfoEntity.getChargeId());
+        productPlanEntity.setChargeName(productInfoEntity.getChargeName());
+        productPlanEntity.setBrandId(productInfoEntity.getBrandId());
+        productPlanEntity.setBrandName(productInfoEntity.getBrandName());
+        productPlanEntity.setCategoryId(productInfoEntity.getCategoryId());
+        productPlanEntity.setCategory(productInfoEntity.getCategory());
+        productPlanEntity.setGradeId(productInfoEntity.getGradeId());
+        productPlanEntity.setGrade(productInfoEntity.getGrade());
+        productPlanEntity.setSpuNo(productInfoEntity.getSpuNo());
+        productPlanEntity.setPropertyId(productInfoEntity.getPropertyId());
+        productPlanEntity.setProperty(productInfoEntity.getProperty());
+        ProductPlanStatusEnum  statusEnum = ProductPlanStatusEnum.getByName(ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()));
+        if (ObjectUtils.isNotEmpty(statusEnum)) {
+            productPlanEntity.setProductStatus(statusEnum.getCode());
+        }
+        return  this.updateById(productPlanEntity);
     }
 
-    @Override
-    public Boolean planDevelopProduct(ProductPlanDevelopDTO dto) {
-        return null;
-    }
 
     @Override
     public List<ProductPlanStatisticsVO> listProductPlanStatistics(ProductPlanGroupSerachDTO dto) {

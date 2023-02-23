@@ -32,6 +32,11 @@ public class ProductPlanVO implements Serializable {
     private String imageUrl;
 
     /**
+     * SPU(型号)
+     */
+    private String spuNo;
+
+    /**
      * 产品名称
      */
     private String name;
@@ -62,37 +67,42 @@ public class ProductPlanVO implements Serializable {
     private String chargeName;
 
     /**
-     * 计划调研时间
+     * 上市时间
+     */
+    private LocalDate surveyDate;
+
+    /**
+     * 计划调研日期
      */
     private LocalDate planSurveyDate;
 
     /**
-     * 计划立项时间
-     */
-    private LocalDate planProjectApprovalDate;
-
-    /**
-     * 计划首批入库时间
-     */
-    private LocalDate planFirstMassStockInDate;
-
-    /**
-     * 计划上市时间
-     */
-    private LocalDate planListingDate;
-
-    /**
-     * 实际立项时间
+     * 实际立项日期
      */
     private LocalDate projectApprovalDate;
 
     /**
-     * 实际首批入库时间
+     * 计划立项日期
+     */
+    private LocalDate planProjectApprovalDate;
+
+    /**
+     * 计划首批入库日期
+     */
+    private LocalDate planFirstMassStockInDate;
+
+    /**
+     * 计划上市日期
+     */
+    private LocalDate planListingDate;
+
+    /**
+     * 实际首批入库日期
      */
     private LocalDate firstMassStockInDate;
 
     /**
-     * 实际上市时间
+     * 实际上市日期
      */
     private LocalDate listingDate;
 
@@ -115,4 +125,9 @@ public class ProductPlanVO implements Serializable {
      * 立项是否延期
      */
     private Boolean isDelayApproval;
+
+    /**
+     * 备注
+     */
+     private String remark;
 }

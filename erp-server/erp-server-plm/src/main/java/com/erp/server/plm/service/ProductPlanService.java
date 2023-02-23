@@ -1,14 +1,12 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductPlanEntity;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
-import com.erp.model.plm.vo.ProductPlanRemarkVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -73,14 +71,6 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return Boolean
      */
     Boolean addRemark(ProductPlanRemarkDTO dto);
-    /**
-     * @description: 备注列表
-     * @author Will
-     * @date: 2023/2/21 10:40
-     * @param dto
-     * @return List<ProductPlanRemarkVO>
-     */
-    List<ProductPlanRemarkVO> listRemark(BaseIdDTO dto);
     /**
      * @description: 规划开发
      * @author Will

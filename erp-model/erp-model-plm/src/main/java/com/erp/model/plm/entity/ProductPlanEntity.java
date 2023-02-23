@@ -209,6 +209,12 @@ public class ProductPlanEntity extends BaseEntity {
     private LocalDate planSurveyDate;
 
     /**
+     * 实际调研时间
+     */
+    @TableField(value = "survey_date")
+    private LocalDate surveyDate;
+
+    /**
      * 计划立项时间
      */
     @TableField(value = "plan_project_approval_date")

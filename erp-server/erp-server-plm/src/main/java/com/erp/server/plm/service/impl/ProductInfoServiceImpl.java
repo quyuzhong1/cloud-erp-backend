@@ -1084,6 +1084,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public ProductInfoEntity getByName(String name) {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductInfoEntity::getName,name);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
     /**
      * /**
      * 获取文件名

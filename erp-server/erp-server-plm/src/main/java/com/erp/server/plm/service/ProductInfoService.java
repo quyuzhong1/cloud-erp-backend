@@ -100,5 +100,12 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     ProductInfoEntity getBySpuNo(String spuNo);
 
-
+    /**
+     * @description: 根据名称查询产品
+     * @author Will
+     * @date: 2023/2/22 19:27
+     * @param name
+     * @return ProductInfoEntity
+     */
+    ProductInfoEntity getByName(String name);
 }

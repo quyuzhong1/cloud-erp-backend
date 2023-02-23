@@ -24,6 +24,10 @@ import java.io.Serializable;
 public class ProductPlanExcelDTO implements Serializable {
 
     /**
+     *  规划id
+     */
+    private String productPlanId;
+    /**
      * 年份
      */
     @ExcelProperty(value = "*年份", index = 0)

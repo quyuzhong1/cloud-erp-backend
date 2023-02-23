@@ -41,14 +41,14 @@ public enum ProductStyleEnum implements EnumMessage {
         return desc;
     }
 
-    public static ProductStyleEnum getNameByCode(String code) {
+    public static String getNameByCode(String code) {
         ProductStyleEnum[] enums = values();
         for (ProductStyleEnum plmEnum : enums) {
             if (plmEnum.getCode().equals(code)) {
-                return plmEnum;
+                return plmEnum.getName();
             }
         }
-        return null;
+        return "";
     }
     public static ProductStyleEnum getByName(String name) {
         ProductStyleEnum[] enums = values();

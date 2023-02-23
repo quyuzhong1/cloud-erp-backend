@@ -8,12 +8,15 @@
             pp.id as id,
             pp.year as year,
             pp.image_url as imageUrl,
+            pp.spu_no as spuNo,
             pp.name as name,
             pp.product_status as  productStatusName,
             pp.category as category,
             pp.grade as grade,
             pp.charge_name as chargeName,
+            pp.survey_date as surveyDate,
             pp.plan_survey_date as  planSurveyDate,
+            pp.project_approval_date as projectApprovalDate,
             pp.plan_project_approval_date as  planProjectApprovalDate,
             pp.plan_first_mass_stock_in_date as  planFirstMassStockInDate,
             pp.plan_listing_date as  planListingDate,
@@ -21,8 +24,10 @@
             pp.first_mass_stock_in_date as  firstMassStockInDate,
             pp.listing_date as  listingDate,
             pp.create_user_name as  createUserName,
-            pp.create_time as  createTime
+            pp.create_time as  createTime,
+            ppr.remark
         from  product_plan pp
+        left join (select product_plan_id,remark from product_plan_remark where  is_deleted = false and remark != '' order by id desc limit 1 ) ppr  on pp.id = ppr.product_plan_id
         <where>
             pp.is_deleted = false
             <if test="params.type != null and params.type != '' and params.type == '1'">
@@ -39,38 +44,154 @@
             </if>
             <if test="params.chargeId != null and params.chargeId != ''">
                 and
-                <foreach collection="params.chargeIds" item="item" open="(" close=")" separator="or">
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
                     string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId != ''">
-                and pp.category_id = #{params.categoryId}
+                and
+                <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
             </if>
             <if test="params.planSurveyDateBegin != null ">
-                and pp.plan_survey_date_begin &gt;= #{params.planSurveyDateBegin}::timestamp
+                and pp.plan_survey_date &gt;= #{params.planSurveyDateBegin}::timestamp
             </if>
             <if test="params.planSurveyDateEnd != null ">
-                and pp.plan_survey_date_end &lt;= #{params.planSurveyDateEnd}::timestamp
+                and pp.plan_survey_date &lt;= #{params.planSurveyDateEnd}::timestamp
             </if>
             <if test="params.planProjectApprovalDateBegin != null ">
-                and pp.plan_project_approval_date_begin &gt;= #{params.planProjectApprovalDateBegin}::timestamp
+                and pp.plan_project_approval_date &gt;= #{params.planProjectApprovalDateBegin}::timestamp
             </if>
             <if test="params.planProjectApprovalDateEnd != null ">
-                and pp.plan_project_approval_date_begin &lt;= #{params.planProjectApprovalDateEnd}::timestamp
+                and pp.plan_project_approval_date &lt;= #{params.planProjectApprovalDateEnd}::timestamp
             </if>
             <if test="params.planFirstMassStockInDateBegin != null ">
-                and pp.plan_first_mass_stock_in_date_begin &gt;= #{params.planFirstMassStockInDateBegin}::timestamp
+                and pp.plan_first_mass_stock_in_date &gt;= #{params.planFirstMassStockInDateBegin}::timestamp
             </if>
             <if test="params.planFirstMassStockInDateEnd != null ">
-                and pp.plan_first_mass_stock_in_date_end &lt;= #{params.planFirstMassStockInDateEnd}::timestamp
+                and pp.plan_first_mass_stock_in_date &lt;= #{params.planFirstMassStockInDateEnd}::timestamp
             </if>
             <if test="params.planListingDateBegin != null ">
-                and pp.plan_listing_date_begin &gt;= #{params.planListingDateBegin}::timestamp
+                and pp.plan_listing_date &gt;= #{params.planListingDateBegin}::timestamp
             </if>
             <if test="params.planListingDateEnd != null ">
-                and pp.plan_listing_date_end &lt;= #{params.planListingDateEnd}::timestamp
+                and pp.plan_listing_date &lt;= #{params.planListingDateEnd}::timestamp
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time asc
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.plm.dto.excel.ProductPlanExcelDTO">
+        select
+            pp.year as year,
+            pp.charge_name as chargeName,
+            pp.brand_name as brandName,
+            pp.category as category,
+            pp.grade as grade,
+            pp.product_style as productStyleName,
+            pp.product_type as productTypeName,
+            pp.three_generation_planning as threeGenerationPlanningName,
+            pp.name as name,
+            pp.name_en as nameEn,
+            pp.patent as patent,
+            pp.competitive_product_link as competitiveProductLink,
+            pp.spu_no as spuNo,
+            pp.sku_qty as skuQtyStr,
+            pp.specification as specification,
+            pp.application_scenario as applicationScenario,
+            pp.scene_category as sceneCategory,
+            pp.application_scenario_desc as applicationScenarioDesc,
+            pp.selling_point_desc as selling_point_desc,
+            pps.sales_target_country as salesTargetCountry,
+            pps.sales_platform as salesPlatformName,
+            pps.price_cny as priceCnyStr,
+            pps.price_usd as priceUsdStr,
+            pp.is_need_id_design as isNeedIDDesignStr,
+            pp.is_need_structural_design as isNeedStructuralDesignStr,
+            ppp.target_cost as targetCostStr,
+            ppp.estimated_mold_cost as estimatedMoldCostStr,
+            ppp.supplier_status as supplierStatus,
+            ppp.main_supplier_name as mainSupplierName,
+            pp.plan_survey_date as planSurveyDateStr,
+            pp.plan_project_approval_date as planProjectApprovalDateStr,
+            pp.plan_first_mass_stock_in_date as planFirstMassStockInDateStr,
+            pp.plan_marketing_season as planMarketingSeasonName,
+            pp.plan_listing_date as planListingDateStr
+        from  product_plan pp
+        left join product_plan_purchase ppp on pp.id = ppp.product_plan_id and ppp.is_deleted = false
+        left join product_plan_sale pps on pp.id = pps.product_plan_id and pps.is_deleted = false
+        left join (select product_plan_id,string_agg(remark,',') from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id )ppr  on pp.id = ppr.product_plan_id
+        <where>
+            pp.is_deleted = false
+            <if test="params.type != null and params.type != '' and params.type == '1'">
+                and pp.product_status = ''
+            </if>
+            <if test="params.type != null and params.type != '' and params.type == '2'">
+                and pp.product_status in ('3','4','5','6')
+            </if>
+            <if test="params.type != null and params.type != '' and params.type == '3'">
+                and pp.product_status in ('4','5','6')
+            </if>
+            <if test="params.name != null and params.name != ''">
+                and pp.name like concat('%',#{params.name},'%')
+            </if>
+            <if test="params.chargeId != null and params.chargeId != ''">
+                and
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.categoryId != null and params.categoryId != ''">
+                and
+                <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.planSurveyDateBegin != null ">
+                and pp.plan_survey_date &gt;= #{params.planSurveyDateBegin}::timestamp
+            </if>
+            <if test="params.planSurveyDateEnd != null ">
+                and pp.plan_survey_date &lt;= #{params.planSurveyDateEnd}::timestamp
+            </if>
+            <if test="params.planProjectApprovalDateBegin != null ">
+                and pp.plan_project_approval_date &gt;= #{params.planProjectApprovalDateBegin}::timestamp
+            </if>
+            <if test="params.planProjectApprovalDateEnd != null ">
+                and pp.plan_project_approval_date &lt;= #{params.planProjectApprovalDateEnd}::timestamp
+            </if>
+            <if test="params.planFirstMassStockInDateBegin != null ">
+                and pp.plan_first_mass_stock_in_date &gt;= #{params.planFirstMassStockInDateBegin}::timestamp
+            </if>
+            <if test="params.planFirstMassStockInDateEnd != null ">
+                and pp.plan_first_mass_stock_in_date&lt;= #{params.planFirstMassStockInDateEnd}::timestamp
+            </if>
+            <if test="params.planListingDateBegin != null ">
+                and pp.plan_listing_date &gt;= #{params.planListingDateBegin}::timestamp
+            </if>
+            <if test="params.planListingDateEnd != null ">
+                and pp.plan_listing_date &lt;= #{params.planListingDateEnd}::timestamp
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time asc
     </select>
 
 </mapper>

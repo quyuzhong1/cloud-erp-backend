@@ -36,14 +36,14 @@ public enum ProductTypeEnum implements EnumMessage {
         return desc;
     }
 
-    public static ProductTypeEnum getNameByCode(String code) {
+    public static String getNameByCode(String code) {
         ProductTypeEnum[] enums = values();
         for (ProductTypeEnum plmEnum : enums) {
             if (plmEnum.getCode().equals(code)) {
-                return plmEnum;
+                return plmEnum.getName();
             }
         }
-        return null;
+        return "";
     }
     public static ProductTypeEnum getByName(String name) {
         ProductTypeEnum[] enums = values();

@@ -63,6 +63,16 @@ public enum SalesPlatformEnum implements EnumMessage {
         return null;
     }
 
+    public static String getNameByName(String name) {
+        SalesPlatformEnum[] values = values();
+        for (SalesPlatformEnum value : values) {
+            if (value.name.equals(name)) {
+                return value.getName();
+            }
+        }
+        return "";
+    }
+
     public static SalesPlatformEnum getByName(String name) {
         SalesPlatformEnum[] values = values();
         for (SalesPlatformEnum value : values) {
