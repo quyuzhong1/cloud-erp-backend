@@ -50,7 +50,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "MONGO_TRANSACTION_MANAGER")
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void saveMongoTest(String type){
         CfgApiAuthEntity cfgApiAuthEntity = new CfgApiAuthEntity();
         cfgApiAuthEntity.setApiPlatform(type);
@@ -93,7 +93,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, transactionManager = "")
+    @Transactional(rollbackFor = Exception.class)
     public void saveMongoTest(String type, String id){
         CfgApiAuthEntity cfgApiAuthEntity = new CfgApiAuthEntity();
         cfgApiAuthEntity.setApiPlatform(type);
@@ -108,7 +108,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
             save(cfgApiAuthEntity);
             save(cfgApiAuthEntity2);
             log.info("pgSQL_test_transactional_up");
-            Integer s  = 5/0;
+//            Integer s  = 5/0;
         }
     }
 

@@ -1,4 +1,4 @@
-package com.erp.server.workflow.config;
+package com.common.core.config;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.*;
