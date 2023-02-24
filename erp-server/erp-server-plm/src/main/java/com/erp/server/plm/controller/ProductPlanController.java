@@ -76,7 +76,7 @@ public class ProductPlanController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/uploadImageUrl")
-    public ApiResult uploadImageUrl(@RequestParam("multipartFile") MultipartFile multipartFile,@RequestParam("id") String id ,HttpServletRequest request) {
+    public ApiResult uploadImageUrl(@RequestParam("multipartFile") MultipartFile multipartFile,@RequestParam("id") String id) {
         Boolean flag = productPlanService.uploadImageUrl(multipartFile,id);
         return flag == true ? success() : failure();
     }
