@@ -43,7 +43,6 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
         updateWrapper.set(ProductPlanRemarkEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedUserId,userInfo.getUid());
-        updateWrapper.set(ProductPlanRemarkEntity::getDeletedUserName,userInfo.getUserName());
         return this.update(updateWrapper);
     }
 
