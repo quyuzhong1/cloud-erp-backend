@@ -2,6 +2,10 @@ package com.common.business.enums;
 
 import com.common.core.constant.EnumMessage;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Will
  * @version 1.0
@@ -10,18 +14,18 @@ import com.common.core.constant.EnumMessage;
  */
 public enum MonthEnum implements EnumMessage {
 
-    JANUARY("1", "一月","一月"),
-    FEBRUARY("2", "二月","二月"),
-    MARCH("3", "三月","三月"),
-    APRIL("4", "四月","四月"),
-    MAY("5", "五月","五月"),
-    JUNE("6", "六月","六月"),
-    JULY("7", "七月","七月"),
-    AUGUST("8", "八月","八月"),
-    SEPTEMBER("9", "九月","九月"),
-    OCTOBER("10", "十月","十月"),
-    NOVEMBER("11", "十一月","十一月"),
-    DECEMBER("12", "十二月","十二月");
+    JANUARY("1", "一月","january"),
+    FEBRUARY("2", "二月","february"),
+    MARCH("3", "三月","march"),
+    APRIL("4", "四月","april"),
+    MAY("5", "五月","may"),
+    JUNE("6", "六月","june"),
+    JULY("7", "七月","july"),
+    AUGUST("8", "八月","august"),
+    SEPTEMBER("9", "九月","september"),
+    OCTOBER("10", "十月","october"),
+    NOVEMBER("11", "十一月","november"),
+    DECEMBER("12", "十二月","december");
 
     private String code;
 
@@ -43,6 +47,14 @@ public enum MonthEnum implements EnumMessage {
     }
     public String getDesc() {
         return desc;
+    }
+
+    public static List<String> getMonthList(int startMonth, int endMonth) {
+        List<String> monthList = Arrays.stream(MonthEnum.values())
+                .filter(x -> Integer.valueOf(x.code) >= startMonth &&Integer.valueOf(x.code) <= endMonth)
+                .map(MonthEnum::getDesc)
+                .collect(Collectors.toList());
+        return monthList;
     }
 
     public static MonthEnum getNameByCode(String code) {
