@@ -2,8 +2,10 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
@@ -70,15 +72,22 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
     public void invoke(ScheduleTaskExportErrorExcelVO vo, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         dataList.add(vo);
-        if (StringUtils.isBlank(vo.getProductName())) {
-            errorMsgList.add("产品名称 不能为空");
-        }
-        if (!productName.equals(vo.getProductName())) {
-            errorMsgList.add("产品名称为当前产品");
+
+        //注解验证信息
+        List<String> msgList = FieldValidUtil.fieldValid(vo);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
         }
 
-        if (StringUtils.isBlank(vo.getTaskName())) {
-            errorMsgList.add("任务名不能为空");
+        if (StringUtils.isBlank(vo.getProductName())) {
+            errorMsgList.add("产品名称不能为空");
+        }
+        if (!productName.equals(vo.getProductName())) {
+            errorMsgList.add("产品名称有误");
+        }
+        String taskName = vo.getTaskName();
+        if (StringUtils.isBlank(taskName)) {
+            errorMsgList.add("任务名称不能为空");
         }
         ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName().trim());
         if (Objects.isNull(task)) {
@@ -90,8 +99,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         }
 
         FindUserDTO user = sysUserFeign.getUserByUserName(chargeName);
-        if (Objects.isNull(user)||StringUtils.isBlank(user.getUserId())) {
-            errorMsgList.add("负责人有误");
+        if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
+            errorMsgList.add("负责人不存在");
         }
 
         if (StringUtils.isBlank(vo.getPlanStartTime())) {

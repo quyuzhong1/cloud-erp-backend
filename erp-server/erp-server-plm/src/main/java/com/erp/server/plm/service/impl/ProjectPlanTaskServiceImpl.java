@@ -253,13 +253,23 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public void exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
         List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto);
-        for (ProductTaskVO vo : taskList) {
+
+
+        List<ProductTaskVO> exportList = new ArrayList<>(taskList.size());
+        //根据阶段分组
+        TreeMap<Integer, List<ProductTaskVO>> map = taskList.stream().
+                collect(Collectors.groupingBy(ProductTaskVO::getPhaseSeq, TreeMap::new, Collectors.toList()));
+
+        for (Map.Entry<Integer, List<ProductTaskVO>> item : map.entrySet()) {
+            exportList.addAll(item.getValue());
+        }
+            for (ProductTaskVO vo : exportList) {
             String scheduleStatus = vo.getScheduleStatus();
             Integer taskStatus = vo.getStatus();
             vo.setScheduleStatusName(BaseStatusEnum.getName(scheduleStatus));
             vo.setStatusName(TaskStateEnum.getName(taskStatus));
         }
-        List<ScheduleTaskExportExcelVO> excelList = BeanMapper.copyList(taskList, ScheduleTaskExportExcelVO.class);
+        List<ScheduleTaskExportExcelVO> excelList = BeanMapper.copyList(exportList, ScheduleTaskExportExcelVO.class);
         String fileName = "任务数据";
         ExcelUtil.export(fileName, "task", excelList, ScheduleTaskExportExcelVO.class, response);
     }
@@ -279,11 +289,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             throw new ServiceException(95010, "产品id不能为空");
         }
         ProductInfoEntity infoEntity = productInfoService.getById(productId);
-        if(Objects.isNull(infoEntity)){
+        if (Objects.isNull(infoEntity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
 
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId, sysUserFeign,infoEntity.getName());
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId, sysUserFeign, infoEntity.getName());
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
@@ -687,8 +697,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (StringUtils.isBlank(productId)) {
             throw new ServiceException(95010, "产品id不能为空");
         }
+        ProductInfoEntity infoEntity = productInfoService.getById(productId);
+        if (Objects.isNull(infoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
-        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId, sysUserFeign);
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId, sysUserFeign, infoEntity.getName());
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();
