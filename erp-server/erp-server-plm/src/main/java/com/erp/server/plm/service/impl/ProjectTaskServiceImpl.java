@@ -44,6 +44,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -144,6 +145,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private TemplateTaskService templateTaskService;
+
+    @Resource
+    private ProjectTaskTimeRecordService projectTaskTimeRecordService;
 
     /**
      * 添加系统的产品任务
@@ -2597,6 +2601,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-02-17 10:59
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void initialScheduleTaskPass(LoginUser loginUser, String productId, List<String> taskIdList, String scheduleStatus) {
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
         String userId = commonService.getUserInfo().getUid();
@@ -2637,6 +2642,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (CollectionUtils.isNotEmpty(taskList)) {
             this.updateBatchById(taskList);
+            projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(taskList);
         }
     }
 

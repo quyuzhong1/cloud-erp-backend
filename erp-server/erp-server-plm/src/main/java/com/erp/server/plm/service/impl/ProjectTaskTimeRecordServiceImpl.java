@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskTimeRecordEntity;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.server.plm.mapper.ProjectTaskTimeRecordMapper;
@@ -57,5 +58,10 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList) {
+        
     }
 }
