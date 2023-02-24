@@ -16,6 +16,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
@@ -397,6 +398,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             //查询阶段
             List<ProjectPhaseEntity> phaseList = projectPhaseService.listByProductIds(productIds);
 
+            //根据产品id 获取项目成员 相关信息
+            List<ItemMemberVO> ItemMemberList = projectMembersService.getByProductIds(productIds);
+
             for (ProductShowDTO item : list) {
 
                 //项目阶段，判断阶段任务是否全部完成
@@ -414,6 +418,24 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     item.setIfIteration(true);
                 }
 
+                List<ItemMemberVO> itemMemberVOList = ItemMemberList.stream().filter(obj -> item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
+                item.setItemMemberList(itemMemberVOList);
+
+                Map<String, List<ItemMemberVO>> memberMap = itemMemberVOList.parallelStream().
+                        collect(Collectors.groupingBy(ItemMemberVO::getRoleId));
+
+                List<Map<String, Object>> itemMemberList = new ArrayList<>(memberMap.size());
+                for (Map.Entry<String, List<ItemMemberVO>> map : memberMap.entrySet()) {
+                    List<ItemMemberVO> memberList = map.getValue();
+                    Map<String, Object> roleMemberMap = new HashMap<>();
+                    String roleName = memberList.get(0).getRoleName();
+                    List<String> memberNameList = memberList.stream().map(ItemMemberVO::getMemberName).collect(Collectors.toList());
+                    roleMemberMap.put(roleName, memberNameList);
+                    itemMemberList.add(roleMemberMap);
+                }
+                item.setItemMember(itemMemberList);
+                String progressStatus = item.getProgressStatus();
+                item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
                 //总的文档数
                 CountDTO totalDocsDTO = productDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
                 if (totalDocsDTO != null) {
