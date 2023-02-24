@@ -187,6 +187,18 @@ public class ProductPlanController extends BaseController {
         return  success(list);
     }
 
+    /**
+     * @description: 查询所有未关联规划
+     * @author Will
+     * @date: 2023/2/24 11:48
+     * @return ApiResult<List<SelectShowDTO>>
+     */
+    @GetMapping("/listNotRelatedProductPlan")
+    public ApiResult<List<SelectShowDTO>> listNotRelatedProductPlan() {
+        List<SelectShowDTO> list = productPlanService.listNotRelatedProductPlan();
+        return  success(list);
+    }
+
 
     /**
      *  产品规划-导入规划

@@ -169,7 +169,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private ProjectPhaseService projectPhaseService;
 
     @Autowired
-    private ProjectRoleService projectRoleService;
+    private ProductStatusTimeService productStatusTimeService;
+
+    @Autowired
+    private ProductPlanService productPlanService;
+
+    @Autowired
+    private ProjectStatusTimeService projectStatusTimeService;
+
 
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
@@ -319,10 +326,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
             //产品信息修改操作日志
-            addProductInfoLog(dto, oldEntity, entity.getId(), entity.getId());
+            saveProductInfoLog(dto, oldEntity, entity.getId(), entity.getId());
         }
         //新增或修改产品经理角色和对应成员
         projectMembersService.saveByRoleAndMembers(entity.getId(), null, "产品经理", chargeIds);
+        //关联产品规划
+        if (StringUtils.isNotBlank(dto.getProductPlanId())) {
+            productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(),entity);
+        }
         return entity.getId();
     }
 
@@ -867,7 +878,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             UpdateProductDTO updateDto = new UpdateProductDTO();
             BeanMapperUtils.copy(newProduct, updateDto);
             //产品信息修改操作日志
-            addProductLog(updateDto, product, productId, productId);
+            saveProductLog(updateDto, product, productId, productId);
+            //记录产品状态更新时间
+            productStatusTimeService.saveOrUpdateProductStatusTime(dto.getProductId(),dto.getApprovalStatus());
+            //更新产品规划的产品状态
+            productPlanService.updateProductPlanStatus(dto.getProductId(),dto.getApprovalStatus(),MathUtil.ONE);
         }
 
         //项目信息
@@ -912,6 +927,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     project.setProjectStatus(projectStatus);
                 }
                 projectInfoService.updateById(project);
+                //记录项目状态更新时间
+                projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(),dto.getProductId(),projectStatus);
+                //更新产品规划的产品状态
+                productPlanService.updateProductPlanStatus(dto.getProductId(),projectStatus,MathUtil.TWO);
             }
         }
 
@@ -1236,7 +1255,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     /**
      * 产品信息修改日志
      */
-    private void addProductInfoLog(ProductDTO dto, ProductInfoEntity oldEntity, String businessId, String pid) {
+    private void saveProductInfoLog(ProductDTO dto, ProductInfoEntity oldEntity, String businessId, String pid) {
         ProductDTO oldDto = new ProductDTO();
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);
@@ -1253,7 +1272,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     /**
      * 产品信息修改日志
      */
-    private void addProductLog(UpdateProductDTO dto, ProductInfoEntity oldEntity, String businessId, String pid) {
+    private void saveProductLog(UpdateProductDTO dto, ProductInfoEntity oldEntity, String businessId, String pid) {
         UpdateProductDTO oldDto = new UpdateProductDTO();
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity, oldDto);

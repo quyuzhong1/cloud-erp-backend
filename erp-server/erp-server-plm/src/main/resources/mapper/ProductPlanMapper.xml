@@ -45,13 +45,13 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
             <if test="params.planSurveyDateBegin != null ">
@@ -151,13 +151,13 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
             <if test="params.planSurveyDateBegin != null ">
@@ -215,19 +215,19 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.gradeId != null and params.gradeId.size > 0">
                 and
                 <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.grade_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
         </where>
@@ -254,9 +254,9 @@
                 </if>
             </if>
             <if test="type != null and type == 3">
-                and  pp.product_status = '5'
+                and  pp.product_status in ('4','5','6')
                 <if test="startTime != null and endTime != null">
-                    and pjst.status = '2' and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                    and pjst.status in ('1','2','3') and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
                 </if>
             </if>
             <if test="type != null and type == 4">
@@ -277,19 +277,19 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.gradeId != null and params.gradeId.size > 0">
                 and
                 <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.grade_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
         </where>
@@ -320,13 +320,13 @@
             <if test="params.gradeId != null and params.gradeId.size > 0">
                 and
                 <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.grade_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
         </where>
@@ -350,19 +350,19 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.gradeId != null and params.gradeId.size > 0">
                 and
                 <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.grade_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
         </where>
@@ -386,19 +386,19 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.gradeId != null and params.gradeId.size > 0">
                 and
                 <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.grade_id,','))
                 </foreach>
             </if>
             <if test="params.categoryId != null and params.categoryId.size > 0">
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
         </where>

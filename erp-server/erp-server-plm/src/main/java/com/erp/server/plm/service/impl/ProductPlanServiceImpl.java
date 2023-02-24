@@ -364,6 +364,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
+    @Transactional
     public Boolean planDevelopProduct(ProductPlanDevelopDTO dto) {
         ProductPlanEntity productPlanEntity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(productPlanEntity)) {
@@ -392,6 +393,17 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             productInfoEntity = productInfoService.getById(productId);
         }
         //存在数据则关联规划并且需要同步的数据以产品的为准
+        updateProductPlanByProduct(productPlanEntity,productInfoEntity);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void updateProductPlanByProduct(ProductPlanEntity productPlanEntity,ProductInfoEntity productInfoEntity) {
+        if (ObjectUtils.isEmpty(productPlanEntity)
+                || ObjectUtils.isEmpty(productInfoEntity)
+                || StringUtils.isBlank(productPlanEntity.getId())) {
+            throw new ServiceException(ApiError.ERROR_95140);
+        }
         productPlanEntity.setProductId(productInfoEntity.getId());
         productPlanEntity.setChargeId(productInfoEntity.getChargeId());
         productPlanEntity.setChargeName(productInfoEntity.getChargeName());
@@ -408,9 +420,18 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isNotEmpty(statusEnum)) {
             productPlanEntity.setProductStatus(statusEnum.getCode());
         }
-        return  this.updateById(productPlanEntity);
+        this.updateById(productPlanEntity);
     }
 
+    @Override
+    public void relatedProductPlanByProduct(String productPlanId, ProductInfoEntity entity) {
+        ProductPlanEntity productPlanEntity = this.getById(productPlanId);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            throw new ServiceException(ApiError.ERROR_95134);
+        }
+        //更新同步规划数据
+        updateProductPlanByProduct(productPlanEntity,entity);
+    }
 
     @Override
     public List<ProductPlanStatisticsVO> listProductPlanStatistics(ProductPlanGroupSerachDTO dto) {
@@ -561,6 +582,67 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public void updateProductPlanStatus(String productId, Integer status, Integer type) {
+        ProductPlanEntity productPlanEntity = this.getByProductId(productId);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            return;
+        }
+        //产品状态
+        if (MathUtil.ONE.equals(type)) {
+            //未开始
+            if (ApprovalStatusEnum.WAIT.getCode().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.WAIT.getCode());
+            }
+            //调研中
+            if (ApprovalStatusEnum.PROBE.getCode().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.PROBE.getCode());
+            }
+            //已立项
+            if (ApprovalStatusEnum.APPROVAL.getCode().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.APPROVAL.getCode());
+            }
+            //已中止
+            if (ApprovalStatusEnum.TERMINATE.getCode().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
+            }
+        }
+        //项目状态
+        if (MathUtil.TWO.equals(type)) {
+            //启动
+            if (ProjectStateEnum.YES_START.getState().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.YES_START.getCode());
+            }
+            //进行中
+            if (ProjectStateEnum.ING.getState().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.ING.getCode());
+            }
+            //完成
+            if (ProjectStateEnum.FINISH.getState().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
+            }
+            //中止
+            if (ProjectStateEnum.STOP.getState().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
+            }
+        }
+        this.updateById(productPlanEntity);
+    }
+
+    @Override
+    public List<SelectShowDTO> listNotRelatedProductPlan() {
+        List<SelectShowDTO> resultList = new ArrayList<>();
+        //查询所有未关联产品的规划
+        List<ProductPlanEntity> list = this.listAllNotRelatedProductPlan();
+        if (CollectionUtils.isEmpty(list)) {
+            return  resultList;
+        }
+        list.forEach(obj -> {
+            resultList.add(new SelectShowDTO(null,obj.getId(),obj.getName()));
+        });
+        return resultList;
+    }
+
     /**
      * @description: 删除规划
      * @author Will
@@ -659,5 +741,23 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             productPlanStatisticsVO.setThisMonthCount(thisMonthCount == null ? MathUtil.ZERO : thisMonthCount);
         }
         resultList.add(productPlanStatisticsVO);
+    }
+
+    /**
+     * 根据产品id查询
+     */
+    private ProductPlanEntity getByProductId(String productId) {
+        LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductPlanEntity::getProductId,productId);
+        return this.getOne(queryWrapper);
+    }
+
+    /**
+     * 查询所有未关联产品的规划
+     */
+    private List<ProductPlanEntity> listAllNotRelatedProductPlan() {
+        LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductPlanEntity::getProductId,"");
+        return this.list(queryWrapper);
     }
 }

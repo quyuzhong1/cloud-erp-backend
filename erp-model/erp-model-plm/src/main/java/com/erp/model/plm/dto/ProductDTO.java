@@ -119,6 +119,12 @@ public class ProductDTO implements Serializable {
     private List<String> disableFieldList;
 
     /**
+     * 产品规划id
+     */
+    private String productPlanId;
+
+
+    /**
      * 辅助字段：产品经理
      */
     private String chargeName;

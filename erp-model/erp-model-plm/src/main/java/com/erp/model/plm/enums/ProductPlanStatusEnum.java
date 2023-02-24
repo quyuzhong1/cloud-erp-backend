@@ -8,13 +8,13 @@ package com.erp.model.plm.enums;
  */
 public enum ProductPlanStatusEnum {
 
-    NOT_STARTED("1", "未开始",""),
-    UNDER_INVESTIGATION("2", "调研中",""),
-    PROJECT_APPROVED("3", "已立项",""),
-    PROJECT_STARTUP("4", "项目启动",""),
-    PROJECT_PROGRESS("5", "项目进行中",""),
-    PROJECT_COMPLETE("6", "项目完成",""),
-    PROJECT_CANCEL("7", "取消","");
+    WAIT("1", "未开始",""),
+    PROBE("2", "调研中",""),
+    APPROVAL("3", "已立项",""),
+    YES_START("4", "项目启动",""),
+    ING("5", "项目进行中",""),
+    FINISH("6", "项目完成",""),
+    CANCEL("7", "取消","");
 
     private String code;
 

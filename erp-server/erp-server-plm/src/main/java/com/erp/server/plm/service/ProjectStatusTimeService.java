@@ -20,4 +20,13 @@ public interface ProjectStatusTimeService extends IService<ProjectStatusTimeEnti
      * @return ProjectStatusTimeEntity
      */
     ProjectStatusTimeEntity getByProjectIdAndProjectStatus(String projectId, Integer projectStatus);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/2/24 11:32
+     * @param projectId
+     * @param productId
+     * @param projectStatus
+     */
+    void saveOrUpdateProjectStatusTime(String projectId, String productId, Integer projectStatus);
 }

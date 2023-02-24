@@ -10,4 +10,13 @@ import com.erp.model.plm.entity.ProductStatusTimeEntity;
  * @date 2023/2/20 20:02
  */
 public interface ProductStatusTimeService extends IService<ProductStatusTimeEntity> {
+    /**
+     * @description: 新增或修改状态及时间
+     * @author Will
+     * @date: 2023/2/24 10:53
+     * @param productId
+     * @param approvalStatus
+     * @return Boolean
+     */
+    void saveOrUpdateProductStatusTime(String productId, Integer approvalStatus);
 }

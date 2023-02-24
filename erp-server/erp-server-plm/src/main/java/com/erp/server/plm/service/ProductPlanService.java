@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductPlanEntity;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
@@ -137,4 +138,36 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return ProductPlanEntity
      */
     ProductPlanEntity getByYearAndName(Integer year, String name);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/2/24 11:07
+     * @param productId 产品id
+     * @param status 状态
+     * @param type 1产品，2项目
+     */
+    void updateProductPlanStatus(String productId, Integer status, Integer type);
+    /**
+     * @description: 查询所有未关联规划
+     * @author Will
+     * @date: 2023/2/24 11:49
+     * @return List<SelectShowDTO>
+     */
+    List<SelectShowDTO> listNotRelatedProductPlan();
+    /**
+     * @description:更新产品规划数据
+     * @author Will
+     * @date: 2023/2/24 12:10
+     * @param productPlanEntity
+     * @param productInfoEntity
+     */
+    void updateProductPlanByProduct(ProductPlanEntity productPlanEntity, ProductInfoEntity productInfoEntity);
+    /**
+     * @description: 关联产品规划
+     * @author Will
+     * @date: 2023/2/24 12:15
+     * @param productPlanId
+     * @param entity
+     */
+    void relatedProductPlanByProduct(String productPlanId, ProductInfoEntity entity);
 }
