@@ -71,5 +71,24 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
      */
     List<ProductPlanGroupVO> listProductPlanGroupTable(@Param("params") ProductPlanGroupSerachDTO params);
 
-    List<ProductPlanApprovalTrendDTO> countApprovalTrend(ProductPlanGroupSerachDTO dto, LocalDateTime thisYearStart, LocalDateTime thisYearEnd);
+    /**
+     * @description: 查询立项趋势数量（立项）
+     * @author Will
+     * @date: 2023/2/23 19:55
+     * @param params
+     * @param thisYearStart
+     * @param thisYearEnd
+     * @return List<ProductPlanApprovalTrendDTO>
+     */
+    List<ProductPlanApprovalTrendDTO> countApprovalTrend(@Param("params")ProductPlanGroupSerachDTO params, @Param("startTime")LocalDateTime thisYearStart, @Param("endTime")LocalDateTime thisYearEnd);
+    /**
+     * @description: 查询立项趋势数量（完成）
+     * @author Will
+     * @date: 2023/2/23 19:58
+     * @param params
+     * @param thisYearStart
+     * @param thisYearEnd
+     * @return List<ProductPlanApprovalTrendDTO>
+     */
+    List<ProductPlanApprovalTrendDTO> countCompleteTrend(@Param("params")ProductPlanGroupSerachDTO params, @Param("startTime")LocalDateTime thisYearStart, @Param("endTime")LocalDateTime thisYearEnd);
 }

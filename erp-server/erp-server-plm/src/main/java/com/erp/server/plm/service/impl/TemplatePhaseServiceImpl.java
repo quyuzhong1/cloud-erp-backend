@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.BasicTemplateIdDTO;
 import com.erp.model.plm.dto.BatchTemplatePhaseDTO;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -25,10 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -73,6 +70,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         List<TemplatePhaseEntity> list = getByTemplateId(templateId);
         List<ProjectPhaseEntity> existList = projectPhaseService.getByProductId(productId);
         List<CopySourceDTO> sourceList = new ArrayList<>();
+        Integer seq = existList.stream().max(Comparator.comparingInt(ProjectPhaseEntity::getSeq)).map(ProjectPhaseEntity::getSeq).get();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectPhaseEntity> copyList = new ArrayList<>();
             for (TemplatePhaseEntity item : list) {
@@ -86,6 +84,8 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
                     entity.setProductId(productId);
                     String id = IdWorker.getIdStr();
                     entity.setId(id);
+                    seq++;
+                    entity.setSeq(seq);
                     source.setNewCreateId(id);
                     copyList.add(entity);
                 } else {

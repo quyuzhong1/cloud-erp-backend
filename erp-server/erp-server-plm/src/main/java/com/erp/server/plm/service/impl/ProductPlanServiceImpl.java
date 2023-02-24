@@ -377,6 +377,11 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             ProductDTO productDTO = new ProductDTO();
             BeanMapperUtils.copy(dto,productDTO);
             productDTO.setChargeIds(dto.getChargeIdList());
+            //等级编码
+            BasicDictEntity grade = basicDictService.getById(dto.getId());
+            if (ObjectUtils.isNotEmpty(grade)) {
+                productDTO.setGrade(grade.getValue());
+            }
             productDTO.setId(null);
             //当需要新增产品时
             String productId = productInfoService.saveOrUpdateProduct(productDTO);
@@ -494,17 +499,43 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //所选年份的
         LocalDateTime thisYearStart = LocalDateUtil.getThisYearStart(localDate);
         LocalDateTime thisYearEnd = LocalDateUtil.getThisYearEnd(localDate);
-        baseMapper.countApprovalTrend(dto,thisYearStart,thisYearEnd);
-
-
+        //立项数量
+        List<ProductPlanApprovalTrendDTO> approvalList = baseMapper.countApprovalTrend(dto, thisYearStart, thisYearEnd);
+        //完成数量
+        List<ProductPlanApprovalTrendDTO> completeList = baseMapper.countCompleteTrend(dto, thisYearStart, thisYearEnd);
+        List<String> monthList = new ArrayList<>();
+        List<Integer> approvalCountList = new ArrayList<>();
+        List<Integer> completeCountList = new ArrayList<>();
         for (MonthEnum monthEnum:values) {
-            SeriesVO seriesVO = new SeriesVO();
-
-
-
+            //立项数量
+            Integer approvalCount = MathUtil.ZERO;
+            //完成数量
+            Integer completeCount = MathUtil.ZERO;
+            monthList.add(monthEnum.getCode());
+            if (CollectionUtils.isNotEmpty(approvalList)){
+                 approvalCount = approvalList.stream().filter(obj -> (year + monthEnum.getCode()).equals(String.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
+            }
+            if (CollectionUtils.isNotEmpty(completeList)){
+                 completeCount = completeList.stream().filter(obj -> (year + monthEnum.getCode()).equals(String.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
+            }
+            approvalCountList.add(approvalCount);
+            completeCountList.add(completeCount);
         }
+        SeriesVO seriesVO1 = new SeriesVO();
+        seriesVO1.setName("月份");
+        seriesVO1.setData(monthList);
+        resultList.add(seriesVO1);
 
-        return null;
+        SeriesVO seriesVO2 = new SeriesVO();
+        seriesVO2.setName("立项数量");
+        seriesVO2.setData(approvalCountList);
+        resultList.add(seriesVO2);
+
+        SeriesVO seriesVO3 = new SeriesVO();
+        seriesVO3.setName("完成数量");
+        seriesVO3.setData(completeCountList);
+        resultList.add(seriesVO3);
+        return resultList;
     }
 
 

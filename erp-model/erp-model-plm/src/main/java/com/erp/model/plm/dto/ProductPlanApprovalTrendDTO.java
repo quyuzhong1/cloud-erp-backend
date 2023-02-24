@@ -15,4 +15,18 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class ProductPlanApprovalTrendDTO implements Serializable {
 
+    /**
+     * 月份
+     */
+    private Integer month;
+
+    /**
+     * 立项数量
+     */
+    private Integer approvalCount;
+
+    /**
+     * 完成数量
+     */
+    private Integer completeCount;
 }

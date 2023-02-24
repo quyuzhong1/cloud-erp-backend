@@ -332,6 +332,77 @@
         </where>
         group by pp.${params.groupFields}
     </select>
-    <select id="countApprovalTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO"></select>
+
+    <select id="countApprovalTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO">
+        select
+            to_char(pst.status_time,'YYYYMM') as month,
+            count(0) as approvalCount
+        from product_plan pp
+        left join product_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false and pst.status = '3'
+        <where>
+            pp.is_deleted = false and pp.product_status = '3'
+            <if test="startTime != null and endTime != null">
+                and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
+            </if>
+            <if test="params.year != null ">
+                and pp.year = #{params.year}
+            </if>
+            <if test="params.chargeId != null and params.chargeId.size > 0">
+                and
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.gradeId != null and params.gradeId.size > 0">
+                and
+                <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.categoryId != null and params.categoryId.size > 0">
+                and
+                <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+        </where>
+        group by to_char(pst.status_time,'YYYYMM')
+    </select>
+
+    <select id="countCompleteTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO">
+        select
+        to_char(pst.status_time,'YYYYMM') as month,
+        count(0) as complateCount
+        from product_plan pp
+        left join project_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false and pst.status = '3'
+        <where>
+            pp.is_deleted = false and pp.product_status = '6'
+            <if test="startTime != null and endTime != null">
+                and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
+            </if>
+            <if test="params.year != null ">
+                and pp.year = #{params.year}
+            </if>
+            <if test="params.chargeId != null and params.chargeId.size > 0">
+                and
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.gradeId != null and params.gradeId.size > 0">
+                and
+                <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.grade_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="params.categoryId != null and params.categoryId.size > 0">
+                and
+                <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                    string_to_array(pp.category_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+        </where>
+        group by to_char(pst.status_time,'YYYYMM')
+    </select>
 
 </mapper>
