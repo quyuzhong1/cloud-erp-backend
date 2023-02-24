@@ -58,7 +58,7 @@
                 ${param}
             </if>
         </where>
-        GROUP BY pi."name", chargeName,spuNo
+        GROUP BY pi."name", chargeName,spuNo,pi.create_time
         ORDER BY pi.create_time DESC
     </select>
 
