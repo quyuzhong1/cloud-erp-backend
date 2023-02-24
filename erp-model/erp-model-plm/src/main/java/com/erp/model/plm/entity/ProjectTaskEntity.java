@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -18,6 +19,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_task")
+@NoArgsConstructor
 public class ProjectTaskEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -218,4 +220,14 @@ public class ProjectTaskEntity implements Serializable {
      */
     @TableField("schedule_type")
     private String scheduleType;
+
+    public ProjectTaskEntity(String taskId, Date realityStart, Date realityEnd) {
+        this.id = taskId;
+        if(null != realityEnd){
+            this.realityEndTime = realityEnd;
+        }
+        if (null != realityStart) {
+            this.realityStartTime = realityStart;
+        }
+    }
 }

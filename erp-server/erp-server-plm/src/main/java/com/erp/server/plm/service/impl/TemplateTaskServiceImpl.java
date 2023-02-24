@@ -7,22 +7,23 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.*;
+import com.erp.model.plm.enums.ChargeSuperiorEnum;
+import com.erp.model.plm.enums.DistributionTypeEnum;
+import com.erp.model.plm.enums.RelatedSkuTypeEnum;
+import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.sys.dto.UserSuperiorDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.TaskConstant;
@@ -378,67 +379,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         return sourceList;
 
-    }
-
-    /**
-     * 立项任务 自动发布
-     *
-     * @param taskEntity
-     * @param taskType
-     * @param chargeIdList
-     * @param userId
-     * @return com.erp.model.plm.entity.ProjectTaskEntity
-     * @author yl
-     * @date 2022-12-01 10:28
-     */
-    private ProjectTaskEntity automationTask(ProjectTaskEntity taskEntity, Integer taskType, List<String> chargeIdList, String userId) {
-        //审核任务
-        Integer reviewTask = TaskTypeEnum.REVIEW_TASK.getCode();
-        //一般任务
-        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
-
-        taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
-        //如果是一般任务就变成待开始
-        if (generalTask.equals(taskType)) {
-            taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
-        }
-        //如果是审核任务就变成开启流程并变成待审核
-        if (reviewTask.equals(taskType)) {
-            String businessKey = BusinessProcessEnum.REVIEW_TASK.getBusinessKey();
-            BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
-            if (processEntity != null) {
-                //评审任务 由任务负责人审核
-                if (CollectionUtils.isNotEmpty(chargeIdList)) {
-                    Date nowDate = new Date();
-                    //待审核
-                    Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
-                    StartProcessDTO startProcess = new StartProcessDTO();
-                    startProcess.setBusinessKey(processEntity.getBusinessKey());
-                    startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
-                    startProcess.setUserId(userId);
-                    Map<String, Object> parameterMap = new HashMap<>();
-                    String params = processEntity.getParam();
-                    if (StringUtils.isNotBlank(params)) {
-                        String[] paramList = params.split(",");
-                        if (paramList.length == 1) {
-                            parameterMap.put(paramList[0], chargeIdList);
-                        }
-                    }
-                    startProcess.setParameterMap(parameterMap);
-                    //启动一个流程
-                    ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
-                    //这个是流程Id
-                    String processId = process.getProcessId();
-                    //流程id 不为空 表示成功
-                    if (StringUtils.isNotBlank(processId)) {
-                        taskEntity.setProcessId(processId);
-                        taskEntity.setRealityStartTime(nowDate);
-                        taskEntity.setStatus(waitConfirmCode);
-                    }
-                }
-            }
-        }
-        return taskEntity;
     }
 
     @Override

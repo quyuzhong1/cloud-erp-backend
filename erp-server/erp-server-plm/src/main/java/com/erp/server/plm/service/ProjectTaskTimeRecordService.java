@@ -38,8 +38,8 @@ public interface ProjectTaskTimeRecordService extends IService<ProjectTaskTimeRe
     Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response);
 
     /**
-     *
+     * 通过任务列表保存或更新工时
      * @param taskList
      */
-    void saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList);
+    Boolean saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList);
 }

@@ -1665,11 +1665,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(taskIds)) {
             LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
             updateWrapper.set(ProjectTaskEntity::getStatus, state);
-            if (realityStart != null) {
+            if (null != realityStart) {
                 updateWrapper.set(ProjectTaskEntity::getRealityStartTime, realityStart);
             }
-            if (realityEnd != null) {
+            if (null != realityEnd) {
                 updateWrapper.set(ProjectTaskEntity::getRealityEndTime, realityEnd);
+            }
+            if(null != realityStart && null != realityEnd){
+                List<ProjectTaskEntity> updateOrSavEntitiyList = taskIds.stream()
+                        .map(taskId -> new ProjectTaskEntity(taskId, realityStart, realityEnd))
+                        .collect(Collectors.toList());
+                if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(updateOrSavEntitiyList)){
+                    log.error("ProjectTaskServiceImpl>>>updateTaskState>>更新/保存工时记录失败请重试！");
+                    throw new RuntimeException("更新/保存工时记录失败请重试");
+                }
             }
             updateWrapper.in(ProjectTaskEntity::getId, taskIds);
             return this.update(updateWrapper);
@@ -2642,7 +2651,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (CollectionUtils.isNotEmpty(taskList)) {
             this.updateBatchById(taskList);
-            projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(taskList);
+            if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(taskList)){
+                log.error("ProjectTaskServiceImpl>>>initialScheduleTaskPass>>更新/保存工时记录失败请重试！");
+                throw new RuntimeException("更新/保存工时记录失败请重试");
+            }
         }
     }
 
@@ -3329,7 +3341,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @return
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean startTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
@@ -3373,7 +3385,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @return
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean publishTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
@@ -3471,6 +3483,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         this.updateById(review);
                         noticeList.add(review);
                     }
+                }
+                if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(noticeList)){
+                    log.error("ProjectTaskServiceImpl>>>publishTask>>>更新/保存工时记录失败请重试！");
+                    throw new RuntimeException("更新/保存工时记录失败请重试");
                 }
                 //发送通知
                 noticeMessageService.releaseTaskNotice(loginUser.getUserName(), noticeList, dto.getProductId());
@@ -3584,7 +3600,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @return
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finishTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
@@ -3755,6 +3771,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     this.updateTaskState(processTaskIds, WaitConfirmCode, null, null);
                     taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), WaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
                 }
+            }
+            if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(waitConfirmNoticeList)){
+                log.error("ProjectTaskServiceImpl>>>publishTask>>>更新/保存工时记录失败请重试！");
+                throw new RuntimeException("更新/保存工时记录失败请重试");
             }
 
             //发送完成待审核的消息
@@ -4049,7 +4069,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-21 10:01
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void approvalTaskPass(String processId) {
         LoginUser loginUser = commonService.getUserInfo();
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -4075,7 +4095,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
             taskEntity.setRealityEndTime(new Date());
             this.updateById(taskEntity);
-
+            if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(new ArrayList<>(Arrays.asList(taskEntity)))){
+                log.error("ProjectTaskServiceImpl>>>approvalTaskPass>>更新/保存工时记录失败请重试！");
+                throw new RuntimeException("更新/保存工时记录失败请重试");
+            }
             if (MathUtil.ONE.equals(taskEntity.getProperty())) {
                 //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
                 Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);

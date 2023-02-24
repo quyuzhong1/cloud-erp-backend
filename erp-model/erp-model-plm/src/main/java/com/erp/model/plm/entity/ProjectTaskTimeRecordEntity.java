@@ -1,12 +1,15 @@
 package com.erp.model.plm.entity;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -20,19 +23,20 @@ import java.util.Date;
 @Data
 @Accessors(chain = true)
 @TableName("project_task_time_record")
+@NoArgsConstructor
 public class ProjectTaskTimeRecordEntity extends BaseEntity<ProjectTaskTimeRecordEntity> {
 
     /**
      * 任务开始时间
      */
     @TableField("reality_start_time")
-    private Date realityStartTime;
+    private LocalDateTime realityStartTime;
 
     /**
      * 任务结束时间
      */
     @TableField("reality_end_time")
-    private Date realityEndTime;
+    private LocalDateTime realityEndTime;
 
     /**
      * 操作人类型
@@ -68,4 +72,19 @@ public class ProjectTaskTimeRecordEntity extends BaseEntity<ProjectTaskTimeRecor
         return null;
     }
 
+
+    public ProjectTaskTimeRecordEntity(ProjectTaskEntity entity) {
+        this.projectTaskId = entity.getId();
+        if(null != entity.getRealityStartTime()){
+            this.realityStartTime = LocalDateTimeUtil.of(entity.getRealityStartTime());
+        }
+        if(null != entity.getRealityEndTime()){
+            this.realityEndTime = LocalDateTimeUtil.of(entity.getRealityEndTime());
+        }
+        this.operatorType = "system";
+        if(null != entity.getRealityStartTime() && null != entity.getRealityEndTime()){
+            this.taskTime = Integer.valueOf(String.valueOf(getRealityEndTime().toLocalDate().toEpochDay() - getRealityStartTime().toLocalDate().toEpochDay()));
+        }
+
+    }
 }

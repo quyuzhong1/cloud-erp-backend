@@ -59,6 +59,7 @@
             </if>
         </where>
         GROUP BY pi."name", chargeName,spuNo
+        ORDER BY pi.create_time DESC
     </select>
 
 </mapper>
