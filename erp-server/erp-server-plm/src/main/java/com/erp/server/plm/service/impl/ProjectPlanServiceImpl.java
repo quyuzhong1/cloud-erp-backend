@@ -130,6 +130,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
             //发起流程啊
             startScheduleTaskProcess(id);
+
+            //给第一个人发信息
+            noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
+
         }
         //异步发送消息
         noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
@@ -487,6 +491,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //发起流程
             startScheduleTaskProcess(id);
+
+            String userName = commonService.getUserInfo().getUserName();
+            //给第一个人发信息
+            noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
+
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_AUDIT.getStatus(), type);
 
@@ -538,6 +547,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             //流程id
             String processId = processResult.getProcessId();
             if (StringUtils.isNotBlank(processId)) {
+
                 WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
                 businessProcess.setBusinessId(business.getId());
                 businessProcess.setCreateTime(LocalDateTime.now());

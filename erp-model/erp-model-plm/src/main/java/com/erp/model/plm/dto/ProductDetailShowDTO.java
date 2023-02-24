@@ -57,9 +57,19 @@ public class ProductDetailShowDTO implements Serializable {
     private Integer arrivalState;
 
     /**
+     * 首批到货状态：1.未到货 2.已到货 3.部分到货
+     */
+    private String arrivalStateName;
+
+    /**
      * 侵权风险
      */
     private Integer pirateRisk;
+
+    /**
+     *侵权风险名
+     */
+    private String pirateRiskName;
 
     /**
      * 标准零售价
