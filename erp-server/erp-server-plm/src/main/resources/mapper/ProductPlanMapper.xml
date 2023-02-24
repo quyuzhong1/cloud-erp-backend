@@ -339,7 +339,7 @@
         from product_plan pp
         left join product_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false and pst.status = '3'
         <where>
-            pp.is_deleted = false and pp.product_status = '3'
+            pp.is_deleted = false and pp.product_status in ('3','4','5','6')
             <if test="startTime != null and endTime != null">
                 and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
             </if>
