@@ -263,7 +263,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         for (Map.Entry<Integer, List<ProductTaskVO>> item : map.entrySet()) {
             exportList.addAll(item.getValue());
         }
-            for (ProductTaskVO vo : exportList) {
+        for (ProductTaskVO vo : exportList) {
             String scheduleStatus = vo.getScheduleStatus();
             Integer taskStatus = vo.getStatus();
             vo.setScheduleStatusName(BaseStatusEnum.getName(scheduleStatus));
@@ -759,6 +759,36 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
+    }
+
+
+    /**
+     * 更改任务排期的任务信息 防止 别人更改了原本的计划时间
+     *
+     * @param projectPlanIds
+     * @return void
+     * @author yl
+     * @date 2023-02-24 12:18
+     */
+    @Override
+    public void updateTaskInfo(List<String> projectPlanIds) {
+        List<ProjectPlanTaskEntity> projectPlanList = this.getByProjectPlanIdList(projectPlanIds);
+        List<String> taskIdList = projectPlanList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+        List<ProjectTaskEntity> taskList = projectTaskService.getByTaskIds(taskIdList);
+        for (ProjectPlanTaskEntity item : projectPlanList) {
+            String taskId = item.getTaskId();
+            ProjectTaskEntity taskEntity = taskList.stream().filter(t -> t.getId().equals(taskId)).findFirst().orElse(null);
+            if (taskEntity != null) {
+                item.setOriginStartTime(taskEntity.getPlanStartTime());
+                item.setOriginEndTime(taskEntity.getPlanEndTime());
+                item.setOriginChargeId(taskEntity.getChargeId());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(projectPlanList)) {
+            this.updateBatchById(projectPlanList);
+        }
+
+
     }
 
 }

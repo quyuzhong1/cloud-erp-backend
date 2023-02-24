@@ -144,4 +144,11 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @return void
      */
     void exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response);
+
+
+    /**
+     * 查询任务是否更改了开始时间
+     * @param projectPlanIds
+     */
+    void updateTaskInfo(List<String> projectPlanIds);
 }

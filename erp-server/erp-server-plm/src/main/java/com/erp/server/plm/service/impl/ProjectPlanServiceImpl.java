@@ -437,6 +437,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             startScheduleTaskProcess(id);
             String productId = plan.getProductId();
             List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+            projectPlanTaskService.updateTaskInfo(Arrays.asList(id));
             List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, waitAuditStatus, plan.getType());

@@ -241,10 +241,10 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @date 2023-02-17 10:57
      * @param productId
      * @param taskIdList
-     * @param status
+     * @param scheduleStatus
      * @return void
      */
-    void initialScheduleTaskPass(LoginUser loginUser,String productId, List<String> taskIdList, String status);
+    void initialScheduleTaskPass(LoginUser loginUser,String productId, List<String> taskIdList, String scheduleStatus);
 
     /**
      * 根据任务名 和产品id 获取到对应的人
