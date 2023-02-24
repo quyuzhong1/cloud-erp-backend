@@ -1,9 +1,14 @@
 package com.erp.server.sys.handler;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.common.core.utils.MathUtil;
+import com.erp.server.sys.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -14,17 +19,45 @@ import java.util.Date;
  */
 @Component
 public class ErpObjectHandler implements MetaObjectHandler {
+    @Autowired
+    private CommonService commonService;
 
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
-        this.setFieldValByName("createTime", new Date(), metaObject);
-        this.setFieldValByName("updateTime", new Date(), metaObject);
+        Date now = new Date();
+        String userId = commonService.getUserInfo().getUid();
+        String userName = commonService.getUserInfo().getUserName();
+        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("deletedUserId")){
+            this.setFieldValByName("createTime", now, metaObject);
+            this.setFieldValByName("updateTime", now, metaObject);
+
+        }else {
+            LocalDateTime localDateTime = LocalDateTime.now();
+            this.setFieldValByName("version", MathUtil.ONE, metaObject);
+            this.setFieldValByName("createTime", localDateTime, metaObject);
+            this.setFieldValByName("updateTime", localDateTime, metaObject);
+            this.setFieldValByName("createUserId", userId, metaObject);
+            this.setFieldValByName("createUserName", userName, metaObject);
+            this.setFieldValByName("updateUserId", userId, metaObject);
+            this.setFieldValByName("updateUserName", userName, metaObject);
+        }
+
+
+
     }
 
     //更新时的 填充数据
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.setFieldValByName("updateTime", new Date(), metaObject);
+        String userId = commonService.getUserInfo().getUid();
+        String userName = commonService.getUserInfo().getUserName();
+        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("deletedUserId")){
+            this.setFieldValByName("updateTime", new Date(), metaObject);
+        }else {
+            this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
+            this.setFieldValByName("updateUserName", userName, metaObject);
+            this.setFieldValByName("updateUserId", userId, metaObject);
+        }
     }
 }

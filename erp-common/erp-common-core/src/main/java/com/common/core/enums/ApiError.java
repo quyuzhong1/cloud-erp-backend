@@ -83,6 +83,7 @@ public enum ApiError implements Serializable {
     ERROR_9034(9034, "品质部,采购开发组,采购执行组,物流部负责人不能为空"),
     ERROR_9035(9035, "财务人员审核人不能为空"),
     ERROR_9036(9036, "项目管理部负责人不能为空"),
+    ERROR_9037(9037, "日历修改异常请重试"),
 
 
 

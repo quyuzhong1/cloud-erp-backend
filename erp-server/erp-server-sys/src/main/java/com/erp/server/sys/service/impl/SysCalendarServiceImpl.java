@@ -75,23 +75,29 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
                 insertEntity.setCalendarDate(entity);
                 insertEntity.setIsWorkDay(updateDTO.getIsWorkDay());
                 insertEntity.setIsManualSet(Boolean.TRUE);
+                if(StrUtil.isNotBlank(updateDTO.getRemark())){
+                    insertEntity.setRemark(updateDTO.getRemark());
+                }
                 insertList.add(insertEntity);
             }else {
                 sysCalendarEntity.setIsWorkDay(updateDTO.getIsWorkDay());
                 sysCalendarEntity.setIsManualSet(Boolean.TRUE);
+                if(StrUtil.isNotBlank(updateDTO.getRemark())){
+                    sysCalendarEntity.setRemark(updateDTO.getRemark());
+                }
                 updateList.add(sysCalendarEntity);
             }
         });
-        boolean insertResult = false;
         if (CollectionUtil.isNotEmpty(insertList)){
-            insertResult = saveBatch(insertList);
+            if (!saveBatch(insertList)) {
+                throw new ServiceException(ApiError.ERROR_9037);
+            }
+
         }
-        boolean updateResult = false;
         if (CollectionUtil.isNotEmpty(updateList)){
-            updateResult = updateBatchById(updateList);
-        }
-        if (!(insertResult && updateResult)){
-            throw new ServiceException(ApiError.ERROR_403);
+            if(!updateBatchById(updateList)){
+                throw new ServiceException(ApiError.ERROR_9037);
+            }
         }
         return Boolean.TRUE;
     }

@@ -69,5 +69,7 @@ public class SysCalendarDTO implements Serializable {
         @NotNull(message = "日期类型不能为空")
         private Boolean isWorkDay;
 
+        private String remark;
+
     }
 }
