@@ -82,8 +82,8 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 删除人名称
      */
-    @TableField(value = "deleted_user_name")
-    private String deletedUserName;
+//    @TableField(value = "deleted_user_name")
+//    private String deletedUserName;
 
     /**
      * 删除时间
