@@ -23,7 +23,7 @@ public class DateUtil {
 
     }
 
-    public static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd",fmt_year_month = "yyyy/MM/dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd";
+    public static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd", fmt_year_month = "yyyy/MM/dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd";
 
     public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
 
@@ -71,6 +71,7 @@ public class DateUtil {
 
     /**
      * 获取某天  结束时间
+     *
      * @return
      */
     public static Date getEndTime(Date date) {
@@ -314,10 +315,11 @@ public class DateUtil {
 
     /**
      * 获取某年第一天日期
+     *
      * @param year 年份
      * @return Date
      */
-    public static Date getYearFirst(int year){
+    public static Date getYearFirst(int year) {
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
         calendar.set(Calendar.YEAR, year);
@@ -327,10 +329,11 @@ public class DateUtil {
 
     /**
      * 获取某年最后一天日期
+     *
      * @param year 年份
      * @return Date
      */
-    public static Date getYearLast(int year){
+    public static Date getYearLast(int year) {
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
         calendar.set(Calendar.YEAR, year);
@@ -341,6 +344,7 @@ public class DateUtil {
 
     /**
      * 获取环比日期
+     *
      * @param endDate
      * @param startDate
      * @return java.lang.String
@@ -390,7 +394,7 @@ public class DateUtil {
             try {
                 date = format.parse(str);
             } catch (ParseException e) {
-                e.printStackTrace();
+                return date;
             }
             return date;
         }

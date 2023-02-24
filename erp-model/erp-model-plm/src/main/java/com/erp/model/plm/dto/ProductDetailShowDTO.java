@@ -81,6 +81,8 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private Integer productState;
 
+    private String productStateName;
+
     /**
      * 创建人
      */
@@ -111,10 +113,24 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private Integer isMarketable;
 
+
+    private String isMarketableName;
+
     /**
      * 流程id
      */
     private String processId;
 
     private Boolean isChangeIng;
+
+    /**
+     * 产品属性
+     */
+    private String property;
+
+
+    /**
+     * 产品英文名称
+     */
+    private String nameEn;
 }

@@ -130,7 +130,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
             //发起流程啊
             startScheduleTaskProcess(id);
-
             //给第一个人发信息
             noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
 

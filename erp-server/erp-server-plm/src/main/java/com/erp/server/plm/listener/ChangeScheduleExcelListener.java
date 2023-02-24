@@ -39,7 +39,7 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
 
     private String productId;
 
-    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId,SysUserFeign sysUserFeign,String productName) {
+    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId, SysUserFeign sysUserFeign, String productName) {
         this.projectTaskService = projectTaskService;
         this.errorList = new ArrayList<>();
         this.succeedList = new ArrayList<>();
@@ -70,21 +70,24 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         if (StringUtils.isBlank(taskName)) {
             errorMsgList.add("任务名不能为空");
         }
-        ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName().trim());
+        ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName());
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
 
-        if(!Objects.isNull(task)&&!task.getPid().equals("0")){
+        if (!Objects.isNull(task) && !task.getPid().equals("0")) {
             errorMsgList.add("子任务不能排期变更");
         }
         String chargeName = vo.getChargeName();
-        if (StringUtils.isBlank(vo.getChargeName())) {
+        if (StringUtils.isBlank(chargeName)) {
             errorMsgList.add("负责人不能为空");
         }
-        FindUserDTO user = sysUserFeign.getUserByUserName(chargeName);
-        if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
-            errorMsgList.add("负责人不存在");
+        FindUserDTO user = null;
+        if (StringUtils.isNotBlank(chargeName)) {
+            user = sysUserFeign.getUserByUserName(chargeName);
+            if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
+                errorMsgList.add("负责人不存在");
+            }
         }
 
         if (StringUtils.isBlank(vo.getPlanStartTime())) {
@@ -94,9 +97,9 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
             errorMsgList.add("计划结束时间 不能为空");
         }
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
-            Date startTime=DateUtil.strToDate(vo.getPlanStartTime(),DateUtil.fmt_year_month);
-            Date endTime=DateUtil.strToDate(vo.getPlanEndTime(),DateUtil.fmt_year_month);
-            if(startTime!=null&&endTime!=null){
+            Date startTime = DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month);
+            Date endTime = DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month);
+            if (startTime != null && endTime != null) {
                 if (endTime.compareTo(startTime) < 0) {
                     errorMsgList.add("结束时间必须大于开始时间");
                 }

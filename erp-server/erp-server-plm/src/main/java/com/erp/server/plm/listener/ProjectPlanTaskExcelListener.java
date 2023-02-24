@@ -94,14 +94,16 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
+        FindUserDTO user = null;
         String chargeName = vo.getChargeName();
         if (StringUtils.isBlank(vo.getChargeName())) {
             errorMsgList.add("负责人不能为空");
         }
-
-        FindUserDTO user = sysUserFeign.getUserByUserName(chargeName);
-        if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
-            errorMsgList.add("负责人不存在");
+        if (StringUtils.isNotBlank(chargeName)) {
+            user = sysUserFeign.getUserByUserName(chargeName);
+            if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
+                errorMsgList.add("负责人不存在");
+            }
         }
 
         if (StringUtils.isBlank(vo.getPlanStartTime())) {
@@ -111,11 +113,14 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             errorMsgList.add("计划结束时间 不能为空");
         }
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
-            Date startTime=DateUtil.strToDate(vo.getPlanStartTime(),DateUtil.fmt_year_month);
-            Date endTime=DateUtil.strToDate(vo.getPlanEndTime(),DateUtil.fmt_year_month);
-            if (endTime.compareTo(startTime) < 0) {
-                errorMsgList.add("结束时间必须大于开始时间");
+            Date startTime = DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month);
+            Date endTime = DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month);
+            if (startTime != null && endTime != null) {
+                if (endTime.compareTo(startTime) < 0) {
+                    errorMsgList.add("结束时间必须大于开始时间");
+                }
             }
+
         }
         if (task != null) {
             String scheduleStatus = task.getScheduleStatus();
