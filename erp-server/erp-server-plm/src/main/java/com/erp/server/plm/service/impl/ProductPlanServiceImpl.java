@@ -473,6 +473,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
+    public void removeProductId(String productId) {
+        LambdaUpdateWrapper<ProductPlanEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(ProductPlanEntity::getProductId,"");
+        updateWrapper.eq(ProductPlanEntity::getProductId,productId);
+        this.update(updateWrapper);
+    }
+
+    @Override
     public List<ProductPlanStatisticsVO> listProductPlanStatistics(ProductPlanGroupSerachDTO dto) {
         List<ProductPlanStatisticsVO> reslutList = new ArrayList<>();
         LocalDate now = LocalDate.now();
@@ -743,7 +751,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 return;
             }
             //已生成项目
-            ProjectInfoEntity projectInfoEntity = projectInfoService.getById(productId);
+            ProjectInfoEntity projectInfoEntity = projectInfoService.getByProductId(productId);
             if (ObjectUtils.isEmpty(projectInfoEntity) || ProjectStateEnum.NOT_START.getState().equals(projectInfoEntity.getProjectStatus())) {
                 progressList.add(productPlanProgressDTO);
                 return;

@@ -177,4 +177,11 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @param productId
      */
     void updateRealDateByProductId(String productId);
+    /**
+     * @description: 产品id
+     * @author Will
+     * @date: 2023/2/24 16:21
+     * @param productId
+     */
+    void removeProductId(String productId);
 }

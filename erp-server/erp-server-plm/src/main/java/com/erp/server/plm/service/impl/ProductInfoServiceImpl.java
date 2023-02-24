@@ -410,7 +410,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 //删除项目
                 projectInfoService.removeByProductId(productId);
                 productDetailService.deleteByProductId(productId);
-
+                //清除产品规划绑定的产品id
+                productPlanService.removeProductId(productId);
             }
 
         }
