@@ -1671,11 +1671,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (null != realityEnd) {
                 updateWrapper.set(ProjectTaskEntity::getRealityEndTime, realityEnd);
             }
-            if(null != realityStart && null != realityEnd){
+            if (null != realityStart && null != realityEnd) {
                 List<ProjectTaskEntity> updateOrSavEntitiyList = taskIds.stream()
                         .map(taskId -> new ProjectTaskEntity(taskId, realityStart, realityEnd))
                         .collect(Collectors.toList());
-                if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(updateOrSavEntitiyList)){
+                if (!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(updateOrSavEntitiyList)) {
                     log.error("ProjectTaskServiceImpl>>>updateTaskState>>更新/保存工时记录失败请重试！");
                     throw new RuntimeException("更新/保存工时记录失败请重试");
                 }
@@ -2486,7 +2486,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         List<ProjectTaskEntity> taskEntityList = this.getByTaskIds(taskIds);
 
-        if(dto.getPlanStartTime()!=null &&dto.getPlanEndTime()!=null){
+        if (dto.getPlanStartTime() != null && dto.getPlanEndTime() != null) {
             List<String> statusList = new ArrayList<>(2);
             String auditNoPassStatus = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
             String waitSubmitStatus = BaseStatusEnum.WAIT_SUBMIT.getStatus();
@@ -2562,14 +2562,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-02-11 16:42
      */
     @Override
-    public void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status) {
+    public void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status, LoginUser loginUser,String productId) {
         if (CollectionUtils.isNotEmpty(taskList)) {
             List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             List<ProjectTaskEntity> projectTaskList = this.getByTaskIds(taskIdList);
             List<ProjectTaskEntity> updateList = new ArrayList<>(projectTaskList.size());
             List<FindUserDTO> userList = sysUserFeign.getUserList();
             for (ProjectTaskEntity item : projectTaskList) {
-                ProjectPlanTaskEntity planTask = taskList.stream().filter(t -> item.getId().
+                String taskId = item.getId();
+                ProjectPlanTaskEntity planTask = taskList.stream().filter(t -> taskId.
                         equals(t.getTaskId())).findFirst().orElse(null);
                 if (planTask != null) {
                     String changeChargeId = planTask.getChangeChargeId();
@@ -2594,6 +2595,36 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (planTask.getIsRestart()) {
                         //任务状态变成未开始
                         item.setStatus(TaskStateEnum.NOT_START.getCode());
+                        Integer taskType = item.getType();
+                        List<String> chargeIdList = new ArrayList<>();
+                        String chargeId = item.getChargeId();
+                        if (StringUtils.isNotBlank(chargeId)) {
+                            chargeIdList = Arrays.asList(chargeId.split(","));
+                        }
+                        item = automationTask(item, taskType, chargeIdList, loginUser.getUid());
+                        Integer afterState = TaskStateEnum.NOT_START.getCode();
+                        //一般任务
+                        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+                        //是否是一般任务 true 是
+                        Boolean isGeneralTask = generalTask.equals(taskType);
+                        //如果不是是一般任务
+                        if (!isGeneralTask) {
+                            afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
+                        }
+                        item.setStatus(afterState);
+
+                        //保存任务记录
+                        taskOperatorRecordService.addTaskOperator(item.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
+                        //发布任务通知
+                        List<ProjectTaskEntity> noticeTaskList = new ArrayList<>(1);
+                        noticeTaskList.add(item);
+                        if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(item.getStatus())) {
+                            noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), noticeTaskList, productId);
+                        } else {
+                            noticeMessageService.releaseTaskNotice(loginUser.getUserName(), noticeTaskList, productId);
+                        }
+
+
                     }
                     updateList.add(item);
                 }
@@ -2651,15 +2682,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<ProjectTaskEntity> noticeTaskList = new ArrayList<>(1);
             noticeTaskList.add(task);
             if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(task.getStatus())) {
-                noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, productId);
+                noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), noticeTaskList, productId);
             } else {
-                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
+                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), noticeTaskList, productId);
             }
 
         }
         if (CollectionUtils.isNotEmpty(taskList)) {
             this.updateBatchById(taskList);
-            if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(taskList)){
+            if (!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(taskList)) {
                 log.error("ProjectTaskServiceImpl>>>initialScheduleTaskPass>>更新/保存工时记录失败请重试！");
                 throw new RuntimeException("更新/保存工时记录失败请重试");
             }
@@ -3492,7 +3523,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         noticeList.add(review);
                     }
                 }
-                if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(noticeList)){
+                if (!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(noticeList)) {
                     log.error("ProjectTaskServiceImpl>>>publishTask>>>更新/保存工时记录失败请重试！");
                     throw new RuntimeException("更新/保存工时记录失败请重试");
                 }
@@ -3780,7 +3811,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), WaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
                 }
             }
-            if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(waitConfirmNoticeList)){
+            if (!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(waitConfirmNoticeList)) {
                 log.error("ProjectTaskServiceImpl>>>publishTask>>>更新/保存工时记录失败请重试！");
                 throw new RuntimeException("更新/保存工时记录失败请重试");
             }
@@ -4103,7 +4134,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
             taskEntity.setRealityEndTime(new Date());
             this.updateById(taskEntity);
-            if(!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(new ArrayList<>(Arrays.asList(taskEntity)))){
+            if (!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(new ArrayList<>(Arrays.asList(taskEntity)))) {
                 log.error("ProjectTaskServiceImpl>>>approvalTaskPass>>更新/保存工时记录失败请重试！");
                 throw new RuntimeException("更新/保存工时记录失败请重试");
             }

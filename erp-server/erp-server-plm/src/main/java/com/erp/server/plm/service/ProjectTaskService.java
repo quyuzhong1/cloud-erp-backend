@@ -232,7 +232,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param status
      * @return void
      */
-    void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status);
+    void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status,LoginUser loginUser,String productId);
 
     /**
      * 如果是初始排期  任务审核通过后

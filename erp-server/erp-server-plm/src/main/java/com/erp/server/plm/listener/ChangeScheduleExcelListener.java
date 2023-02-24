@@ -96,9 +96,12 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
             Date startTime=DateUtil.strToDate(vo.getPlanStartTime(),DateUtil.fmt_year_month);
             Date endTime=DateUtil.strToDate(vo.getPlanEndTime(),DateUtil.fmt_year_month);
-            if (endTime.compareTo(startTime) < 0) {
-                errorMsgList.add("结束时间必须大于开始时间");
+            if(startTime!=null&&endTime!=null){
+                if (endTime.compareTo(startTime) < 0) {
+                    errorMsgList.add("结束时间必须大于开始时间");
+                }
             }
+
         }
 
         if (task != null) {

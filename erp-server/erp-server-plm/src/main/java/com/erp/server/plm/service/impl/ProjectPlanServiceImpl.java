@@ -731,7 +731,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                  */
                 if (ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())) {
                     // 排期任务变动 发送通知
-                    taskService.updateScheduleTask(taskList, status);
+                    taskService.updateScheduleTask(taskList, status,loginUser,plan.getProductId());
                     noticeMessageService.changeScheduleTask(userName, taskEntityList, plan.getProductId());
                 } else {
                     /**
