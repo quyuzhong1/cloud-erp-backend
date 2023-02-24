@@ -178,7 +178,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private ProjectStatusTimeService projectStatusTimeService;
 
 
-
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
     /**
@@ -332,7 +331,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         projectMembersService.saveByRoleAndMembers(entity.getId(), null, "产品经理", chargeIds);
         //关联产品规划
         if (StringUtils.isNotBlank(dto.getProductPlanId())) {
-            productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(),entity);
+            productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(), entity);
         }
         return entity.getId();
     }
@@ -516,6 +515,23 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 List<ItemMemberVO> itemMemberVOList = ItemMemberList.stream().filter(obj -> item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
                 item.setItemMemberList(itemMemberVOList);
+
+                Map<String, List<ItemMemberVO>> memberMap = itemMemberVOList.parallelStream().
+                        collect(Collectors.groupingBy(ItemMemberVO::getRoleId));
+
+                List<Map<String, Object>> itemMemberList = new ArrayList<>(memberMap.size());
+                for (Map.Entry<String, List<ItemMemberVO>> map : memberMap.entrySet()) {
+                    List<ItemMemberVO> memberList = map.getValue();
+                    Map<String, Object> roleMemberMap = new HashMap<>();
+                    String roleName = memberList.get(0).getRoleName();
+                    List<String> memberNameList = memberList.stream().map(ItemMemberVO::getMemberName).collect(Collectors.toList());
+                    roleMemberMap.put(roleName, memberNameList);
+                    itemMemberList.add(roleMemberMap);
+                }
+
+
+                item.setItemMember(itemMemberList);
+
                 String progressStatus = item.getProgressStatus();
                 item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
                 //总的文档数
@@ -880,9 +896,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //产品信息修改操作日志
             saveProductLog(updateDto, product, productId, productId);
             //记录产品状态更新时间
-            productStatusTimeService.saveOrUpdateProductStatusTime(dto.getProductId(),dto.getApprovalStatus());
+            productStatusTimeService.saveOrUpdateProductStatusTime(dto.getProductId(), dto.getApprovalStatus());
             //更新产品规划的产品状态
-            productPlanService.updateProductPlanStatus(dto.getProductId(),dto.getApprovalStatus(),MathUtil.ONE);
+            productPlanService.updateProductPlanStatus(dto.getProductId(), dto.getApprovalStatus(), MathUtil.ONE);
         }
 
         //项目信息
@@ -928,9 +944,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 projectInfoService.updateById(project);
                 //记录项目状态更新时间
-                projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(),dto.getProductId(),projectStatus);
+                projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), projectStatus);
                 //更新产品规划的产品状态
-                productPlanService.updateProductPlanStatus(dto.getProductId(),projectStatus,MathUtil.TWO);
+                productPlanService.updateProductPlanStatus(dto.getProductId(), projectStatus, MathUtil.TWO);
             }
         }
 

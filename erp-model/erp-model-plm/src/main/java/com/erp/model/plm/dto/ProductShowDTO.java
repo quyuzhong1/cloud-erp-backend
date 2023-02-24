@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname ProductShowDTO
@@ -52,25 +53,21 @@ public class ProductShowDTO implements Serializable {
 
     /**
      * 产品立项状态
-     *
      */
     private Integer approvalStatus;
 
     /**
      * 产品立项状态名
-     *
      */
     private String approvalStatusName;
     /**
      * 产品项目状态
-     *  0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
-     *
+     * 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
      */
     private Integer projectStatus;
 
     /**
      * 产品项目状态名
-     *
      */
     private String projectStatusName;
 
@@ -88,7 +85,7 @@ public class ProductShowDTO implements Serializable {
     /**
      * 项目负责人id
      */
-    private List<String> projectChargeIdList=new ArrayList<>();
+    private List<String> projectChargeIdList = new ArrayList<>();
 
     private String projectChargeId;
 
@@ -130,8 +127,6 @@ public class ProductShowDTO implements Serializable {
     private Integer projectFinishTaskCount;
 
 
-
-
     /**
      * 立项进度
      */
@@ -151,17 +146,17 @@ public class ProductShowDTO implements Serializable {
     /**
      * 是否收藏 产品 true  收藏 false 没有
      */
-    private Boolean ifAddProduct=false;
+    private Boolean ifAddProduct = false;
 
     /**
      * 是否迭代产品 true  是  false 不是
      */
-    private Boolean ifIteration=false;
+    private Boolean ifIteration = false;
 
     /**
      * 创建时间
      */
-    private Date  createTime;
+    private Date createTime;
 
     /**
      * 总文档数
@@ -169,12 +164,10 @@ public class ProductShowDTO implements Serializable {
     private Integer totalDocsCount;
 
 
-
     /**
      * 完成文档档数
      */
     private Integer finishDocsCount;
-
 
 
     /**
@@ -211,18 +204,17 @@ public class ProductShowDTO implements Serializable {
     private String imageUrl;
 
 
-
     /**
      * 产品分类名
      */
     private String category;
 
 
-
-
     /**
      * 项目成员
      */
-    private List<ItemMemberVO>  itemMemberList;
+    private List<ItemMemberVO> itemMemberList;
+
+    private List<Map<String,Object>> itemMember;
 
 }
