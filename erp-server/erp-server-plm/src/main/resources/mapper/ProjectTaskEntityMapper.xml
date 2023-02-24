@@ -1053,6 +1053,7 @@
         charge_id,
         charge_name,
         schedule_status,
+        pid,
         schedule_type
         FROM project_task
         WHERE  product_id=#{productId}
