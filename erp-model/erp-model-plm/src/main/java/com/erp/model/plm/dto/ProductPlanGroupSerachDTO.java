@@ -3,7 +3,6 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -20,7 +19,6 @@ public class ProductPlanGroupSerachDTO implements Serializable {
     /**
      * 年份
      */
-    @NotNull(message = "年份不能为空")
     private Integer year;
 
     /**

@@ -248,6 +248,7 @@ public enum ApiError implements Serializable {
     ERROR_95138(95138, "产品规划已存在关联产品"),
     ERROR_95139(95139, "产品新增失败"),
     ERROR_95140(95140, "产品规划同步产品数据失败"),
+    ERROR_95141(95141, "选择年份不能为空"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

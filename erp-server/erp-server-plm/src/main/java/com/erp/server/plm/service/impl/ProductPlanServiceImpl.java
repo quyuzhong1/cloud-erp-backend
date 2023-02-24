@@ -517,6 +517,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         List<SeriesVO> resultList = new ArrayList<>();
         MonthEnum[] values = MonthEnum.values();
         Integer year = dto.getYear();
+        if (ObjectUtils.isEmpty(dto.getYear())) {
+            throw new ServiceException(ApiError.ERROR_95141);
+        }
         LocalDate localDate = LocalDateTimeUtil.parseDate(String.valueOf(year), "yyyy");
         //所选年份的
         LocalDateTime thisYearStart = LocalDateUtil.getThisYearStart(localDate);

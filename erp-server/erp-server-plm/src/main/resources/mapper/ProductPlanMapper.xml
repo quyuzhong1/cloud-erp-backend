@@ -199,7 +199,7 @@
 
     <select id="listProductPlanTotalCount" resultType="java.lang.Integer">
         select
-               count(0)
+               count(DISTINCT pp.id)
         from product_plan pp
         <where>
             pp.is_deleted = false
@@ -235,14 +235,14 @@
 
     <select id="listProductPlanStatusCount" resultType="java.lang.Integer">
         select
-            count(0)
+            count(DISTINCT pp.id)
         from product_plan pp
         left join product_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false
         left join project_status_time pjst on pp.product_id = pjst.product_id and pjst.is_deleted = false
         <where>
             pp.is_deleted = false
             <if test="type != null and type == 1">
-                and pp.product_status = '' or pp.product_status = '1'
+                and (pp.product_status = '' or pp.product_status = '1')
             </if>
             <if test="type != null and (type == 2 or type == 6)">
                 and  pp.product_status = '3'
@@ -293,7 +293,6 @@
                 </foreach>
             </if>
         </where>
-        group by pp.id
     </select>
 
     <select id="listProductPlanGroupTable" resultType="com.erp.model.plm.vo.ProductPlanGroupVO">
