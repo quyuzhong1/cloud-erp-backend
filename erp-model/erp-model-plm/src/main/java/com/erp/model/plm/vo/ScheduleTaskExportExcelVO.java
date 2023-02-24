@@ -51,7 +51,7 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划开始时间", index = 3)
-    @FieldValid(fieldName = "计划开始时间",formatPattern = FieldFormatPatternTypeEnum.date)
+    @FieldValid(fieldName = "计划开始时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String planStartTime;
 
     /**
@@ -59,7 +59,7 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划结束时间", index = 4)
-    @FieldValid(fieldName = "计划结束时间",formatPattern = FieldFormatPatternTypeEnum.date)
+    @FieldValid(fieldName = "计划结束时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String planEndTime;
 
 

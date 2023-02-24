@@ -536,7 +536,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             Integer approvalCount = MathUtil.ZERO;
             //完成数量
             Integer completeCount = MathUtil.ZERO;
-            monthList.add(monthEnum.getCode());
+            monthList.add(monthEnum.getCode().concat("月份"));
             if (CollectionUtils.isNotEmpty(approvalList)){
                  approvalCount = approvalList.stream().filter(obj -> (year + monthEnum.getCode()).equals(String.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
             }

@@ -12,39 +12,39 @@ import lombok.Getter;
 @Getter
 public enum FieldFormatPatternTypeEnum implements EnumMessage {
 
-    INTEGER("integer", "整数","^-?\\d+$"),
-    POSITIVE_INTEGER("positive_integer", "正整数","^[1-9]\\d*$"),
-    NUMBER("number", "数字","^-?\\d+(\\.\\d+)?$"),
-    DECIMAL("decimal", "小数","^-?\\d+\\.\\d+$"),
-    NUMBER_LETTER("number_letter", "数字和字母","^[a-z0-9A-Z]+$"),
-    AMOUNT("amount", "金额","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$"),
-    DATE("date", "日期","(?:[0-9]{1,4}(?<!^0?0?0?0))\\/(?:0?[1-9]|1[0-2])\\/(?:0?[1-9]|1[0-9]|2[0-8]|(?:(?<=-(?:0?[13578]|1[02])-)(?:29|3[01]))|(?:(?<=-(?:0?[469]|11)-)(?:29|30))|(?:(?<=(?:(?:[0-9]{0,2}(?!0?0)(?:[02468]?(?<![13579])[048]|[13579][26]))|(?:(?:[02468]?[048]|[13579][26])00))-0?2-)(?:29)))"),
-    YEAR_MONTH("year_month", "年-月","^\\d{4}-((0([1-9]))|(1(0|1|2)))$"),
-    MOBILE("mobile", "手机","^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$"),
-    TELEPHONE("telephone", "电话","0\\d{2,3}-\\d{7,8}"),
-    QQ("QQ", "QQ","[1-9][0-9]{4,}"),
-    MAILBOX("mailbox", "邮箱","^([a-zA-Z0-9]*[-_]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]*[-_]?[a-zA-Z0-9]+)+[\\.][A-Za-z]{2,3}([\\.][A-Za-z]{2})?$"),
-    POSTAL_CODE("postal_code", "邮政编码","[1-9]/d{5}(?!/d)"),
-    ID("ID", "身份证","/d{15}|/d{18}"),
-    HTML("HTML", "HTML","<(/S*?)[^>]*>.*?<//1>|<.*? />"),
-    IP("IP", "IP","/d+/./d+/./d+/./d+");
+    ENUM_INTEGER("integer", "整数","^-?\\d+$"),
+    ENUM_POSITIVE_INTEGER("positive_integer", "正整数","^[1-9]\\d*$"),
+    ENUM_NUMBER("number", "数字","^-?\\d+(\\.\\d+)?$"),
+    ENUM_DECIMAL("decimal", "小数","^-?\\d+\\.\\d+$"),
+    ENUM_NUMBER_LETTER("number_letter", "数字和字母","^[a-z0-9A-Z]+$"),
+    ENUM_AMOUNT("amount", "金额","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$"),
+    ENUM_DATE("date", "日期","(?:[0-9]{1,4}(?<!^0?0?0?0))\\/(?:0?[1-9]|1[0-2])\\/(?:0?[1-9]|1[0-9]|2[0-8]|(?:(?<=-(?:0?[13578]|1[02])-)(?:29|3[01]))|(?:(?<=-(?:0?[469]|11)-)(?:29|30))|(?:(?<=(?:(?:[0-9]{0,2}(?!0?0)(?:[02468]?(?<![13579])[048]|[13579][26]))|(?:(?:[02468]?[048]|[13579][26])00))-0?2-)(?:29)))"),
+    ENUM_YEAR_MONTH("year_month", "年-月","^\\d{4}-((0([1-9]))|(1(0|1|2)))$"),
+    ENUM_MOBILE("mobile", "手机","^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$"),
+    ENUM_TELEPHONE("telephone", "电话","0\\d{2,3}-\\d{7,8}"),
+    ENUM_QQ("QQ", "QQ","[1-9][0-9]{4,}"),
+    ENUM_MAILBOX("mailbox", "邮箱","^([a-zA-Z0-9]*[-_]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]*[-_]?[a-zA-Z0-9]+)+[\\.][A-Za-z]{2,3}([\\.][A-Za-z]{2})?$"),
+    ENUM_POSTAL_CODE("postal_code", "邮政编码","[1-9]/d{5}(?!/d)"),
+    ENUM_ID("ID", "身份证","/d{15}|/d{18}"),
+    ENUM_HTML("HTML", "HTML","<(/S*?)[^>]*>.*?<//1>|<.*? />"),
+    ENUM_IP("IP", "IP","/d+/./d+/./d+/./d+");
 
-    public static final String integer = "整数";
-    public static final String positiveInteger = "正整数";
-    public static final String number = "数字";
-    public static final String decimal = "小数";
-    public static final String numberLetter = "数字和字母";
-    public static final String amount = "金额";
-    public static final String date = "日期";
-    public static final String yearMonth = "年-月";
-    public static final String mobile = "手机";
-    public static final String telephone = "电话";
-    public static final String qq = "QQ";
-    public static final String mailbox = "邮箱";
-    public static final String postalCode = "邮政编码";
-    public static final String id = "身份证";
-    public static final String html = "HTML";
-    public static final String ip = "IP";
+    public static final String INTEGER = "整数";
+    public static final String POSITIVEINTEGER = "正整数";
+    public static final String NUMBER = "数字";
+    public static final String DECIMAL = "小数";
+    public static final String NUMBER_LETTER = "数字和字母";
+    public static final String AMOUNT = "金额";
+    public static final String DATE = "日期";
+    public static final String YEARMONTH = "年-月";
+    public static final String MOBILE = "手机";
+    public static final String TELEPHONE = "电话";
+    public static final String QQ = "QQ";
+    public static final String MAILBOX = "邮箱";
+    public static final String POSTAL_CODE = "邮政编码";
+    public static final String ID = "身份证";
+    public static final String HTML = "HTML";
+    public static final String IP = "IP";
 
     private String code;
 
