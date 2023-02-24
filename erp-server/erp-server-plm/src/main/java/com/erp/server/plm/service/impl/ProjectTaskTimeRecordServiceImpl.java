@@ -93,18 +93,17 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
                 updateList.add(updateEntity);
             }
         });
-
-        boolean saveResult = false;
         if (CollectionUtil.isNotEmpty(insertList)) {
-            saveResult = saveBatch(insertList);
+            if (!saveBatch(insertList)) {
+                log.error("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>insertList更新/保存工时记录失败请重试！");
+                throw new RuntimeException("保存工时记录失败请重试！");
+            }
         }
-        boolean updateResult = false;
         if (CollectionUtil.isNotEmpty(updateList)) {
-            updateResult = updateBatchById(updateList);
-        }
-        if (!(saveResult && updateResult)){
-            log.error("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>更新/保存工时记录失败请重试！");
-            throw new RuntimeException("更新/保存工时记录失败请重试！");
+            if (!updateBatchById(updateList)) {
+                log.error("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>updateList更新/保存工时记录失败请重试！");
+            throw new RuntimeException("更新工时记录失败请重试！");
+            }
         }
         return true;
     }
