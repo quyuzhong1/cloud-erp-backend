@@ -313,8 +313,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setTaskName(taskName);
             task.setChargeId(item.getChangeChargeId());
             task.setChargeName(getNameByIds(chargeId, userList));
-            task.setPlanEndTime(item.getChangeEndTime());
-            task.setPlanStartTime(item.getChangeStartTime());
+            task.setPlanEndTime(item.getOriginEndTime());
+            task.setPlanStartTime(item.getOriginStartTime());
             task.setTaskId(taskId);
             task.setId(IdWorker.getIdStr());
             List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))

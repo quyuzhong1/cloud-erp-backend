@@ -2536,10 +2536,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         actionMap.put("tag", "button");
         actionMap.put("url", url);
         actionMap.put("type", "primary");
-//        Map<String, Object> actionTextMap = new HashMap<>();
-//        actionTextMap.put("tag", "plain_text");
-//        actionTextMap.put("content", "查看详情");
-//        actionMap.put("text", actionTextMap);
+        Map<String, Object> actionTextMap = new HashMap<>();
+        actionTextMap.put("tag", "plain_text");
+        actionTextMap.put("content", "查看详情");
+        actionMap.put("text", actionTextMap);
         Map<String, Object> actionValueMap = new HashMap<>();
         actionValueMap.put("chosen", "approve");
         actionMap.put("value", actionValueMap);

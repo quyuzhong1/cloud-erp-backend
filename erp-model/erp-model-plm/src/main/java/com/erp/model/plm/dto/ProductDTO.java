@@ -129,4 +129,10 @@ public class ProductDTO implements Serializable {
      */
     private String chargeName;
 
+    /**
+     * 产品示意图url
+     */
+
+    private String imageUrl;
+
 }
