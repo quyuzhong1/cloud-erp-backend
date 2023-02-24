@@ -61,6 +61,7 @@
         status,name AS taskName
         FROM project_task WHERE product_id=#{productId}
         AND schedule_status=#{scheduleStatus}
+        AND pid='0'
         <if test="taskName!=null and taskName!=''">
             AND name LIKE concat('%',#{taskName},'%')
 

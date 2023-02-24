@@ -167,7 +167,6 @@ public class ProductTaskVO implements Serializable {
     private String scheduleType;
 
 
-
     /**
      * 设置里程碑(0否，1是)
      */
@@ -230,8 +229,10 @@ public class ProductTaskVO implements Serializable {
     /**
      * 阶段排序号
      */
-
     private Integer phaseSeq;
 
-
+    /**
+     * 是否是子任务
+     */
+    private Boolean isSubtask;
 }

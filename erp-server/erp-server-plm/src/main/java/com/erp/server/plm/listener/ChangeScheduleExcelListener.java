@@ -74,6 +74,10 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
+
+        if(!Objects.isNull(task)&&!task.getPid().equals("0")){
+            errorMsgList.add("子任务不能排期变更");
+        }
         String chargeName = vo.getChargeName();
         if (StringUtils.isBlank(vo.getChargeName())) {
             errorMsgList.add("负责人不能为空");

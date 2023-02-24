@@ -131,11 +131,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 ProductTaskVO parentVO = new ProductTaskVO();
                 parentVO.setId(parentId);
                 parentVO.setParentId(IsConstant.NO);
-
-
                 List<ProductTaskVO> phaseTaskList = item.getValue();
-
-
                 //最小计划开始时间
                 String minStartTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
                 //最大计划结束时间
@@ -165,6 +161,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     vo.setPlanEndTime(StringUtils.isEmpty(vo.getPlanEndTime()) ? vo.getPlanEndTime() : vo.getPlanEndTime().concat(" 23:59:59"));
                     vo.setRealityStartTime(vo.getRealityStartTime());
                     vo.setRealityEndTime(vo.getRealityEndTime());
+
+                    vo.setIsSubtask(!vo.getPid().equals("0"));
 
                     List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                             .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
@@ -552,6 +550,13 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             String productId = dto.getProductId();
             List<String> taskIdList = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
             List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, taskIdList);
+
+            Long subTaskCount = taskList.stream().filter(p -> !p.getPid().equals("0"))
+                    .count();
+            if (subTaskCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95143);
+            }
+
             String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
             Long count = taskList.stream().filter(p -> !auditPassStatus.equals(p.getScheduleStatus()))
                     .count();
@@ -653,12 +658,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         for (ScheduleChangeTaskVO vo : list) {
             vo.setStatusName(TaskStateEnum.getName(vo.getStatus()));
         }
-
-        //前期任务
-        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskByProductId(dto.getId());
-        List<String> taskIdList = preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
-
-        return list.stream().filter(t -> !taskIdList.contains(t.getTaskId())).collect(Collectors.toList());
+        return list;
     }
 
 

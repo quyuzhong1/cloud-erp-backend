@@ -251,6 +251,7 @@ public enum ApiError implements Serializable {
     ERROR_95140(95140, "产品规划同步产品数据失败"),
     ERROR_95141(95141, "选择年份不能为空"),
     ERROR_95142(95142, "录入产品已关联规划"),
+    ERROR_95143(95143, "子任务不能排期变更"),
     /**
      * bi 错误
      * 从97000 开始  以端口号
