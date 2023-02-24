@@ -137,7 +137,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     }
 
 
-
     /**
      * 检查任务状态
      *
@@ -202,7 +201,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         String userId = commonService.getUserInfo().getUid();
         String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
-        planList.stream().forEach(p -> {
+        String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
+        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+        planList.stream().filter(p -> p.getType().equals(change)).forEach(p -> {
+            p.setStatus(auditPassStatus);
+        });
+        planList.stream().filter(p -> !p.getType().equals(change)).forEach(p -> {
             p.setStatus(cancelStatus);
         });
         WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
@@ -796,11 +800,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Override
     public List<Map<String, Object>> getSubmitSchedule() {
         List<Map<String, Object>> list = new ArrayList<>(10);
+        String cancel = BaseStatusEnum.CANCEL.getStatus();
         for (BaseStatusEnum item : BaseStatusEnum.values()) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("name", item.getName());
-            map.put("status", item.getStatus());
-            list.add(map);
+            if (!item.getStatus().equals(cancel)) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("name", item.getName());
+                map.put("status", item.getStatus());
+                list.add(map);
+            }
+
         }
         return list;
     }

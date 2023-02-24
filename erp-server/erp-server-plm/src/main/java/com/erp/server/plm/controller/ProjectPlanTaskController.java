@@ -66,7 +66,7 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导出模板
      */
-    @PostMapping("/exportTemplate")
+    @GetMapping("/exportTemplate")
     public ApiResult exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response) {
         projectPlanTaskService.exportScheduleTemplate(request, response);
         return success();

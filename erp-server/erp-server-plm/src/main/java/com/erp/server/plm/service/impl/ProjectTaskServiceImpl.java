@@ -10,20 +10,21 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.RedisService;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.service.RedisService;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
@@ -32,7 +33,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -2485,11 +2485,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             return false;
         }
         List<ProjectTaskEntity> taskEntityList = this.getByTaskIds(taskIds);
-        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-        long count = taskEntityList.stream().filter(p -> !auditPassStatus.equals(p.getScheduleStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95136);
+
+        if(dto.getPlanStartTime()!=null &&dto.getPlanEndTime()!=null){
+            List<String> statusList = new ArrayList<>(2);
+            String auditNoPassStatus = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
+            String waitSubmitStatus = BaseStatusEnum.WAIT_SUBMIT.getStatus();
+            statusList.add(auditNoPassStatus);
+            statusList.add(waitSubmitStatus);
+            long count = taskEntityList.stream().filter(p -> !statusList.contains(p.getScheduleStatus())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95136);
+            }
         }
+
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(ProjectTaskEntity::getId, dto.getTaskIdList());
         if (dto.getPlanStartTime() != null) {
@@ -2675,7 +2683,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
-        queryWrapper.eq(ProjectTaskEntity::getName, taskName);
+        queryWrapper.eq(ProjectTaskEntity::getName, taskName.trim());
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }

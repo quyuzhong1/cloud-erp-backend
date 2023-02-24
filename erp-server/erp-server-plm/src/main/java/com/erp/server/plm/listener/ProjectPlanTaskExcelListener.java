@@ -89,7 +89,7 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         if (StringUtils.isBlank(taskName)) {
             errorMsgList.add("任务名称不能为空");
         }
-        ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName().trim());
+        ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName());
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
