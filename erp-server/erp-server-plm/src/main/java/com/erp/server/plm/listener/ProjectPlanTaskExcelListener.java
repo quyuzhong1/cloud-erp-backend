@@ -15,6 +15,7 @@ import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -110,7 +111,9 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             errorMsgList.add("计划结束时间 不能为空");
         }
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
-            if (vo.getPlanEndTime().compareTo(vo.getPlanStartTime()) < 0) {
+            Date startTime=DateUtil.strToDate(vo.getPlanStartTime(),DateUtil.fmt_year_month);
+            Date endTime=DateUtil.strToDate(vo.getPlanEndTime(),DateUtil.fmt_year_month);
+            if (endTime.compareTo(startTime) < 0) {
                 errorMsgList.add("结束时间必须大于开始时间");
             }
         }
@@ -147,8 +150,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
         taskIdList.add(task.getId());
         productId = task.getProductId();
-        task.setPlanStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_day));
-        task.setPlanEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_day));
+        task.setPlanStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month));
+        task.setPlanEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month));
         projectTaskService.updateById(task);
     }
 

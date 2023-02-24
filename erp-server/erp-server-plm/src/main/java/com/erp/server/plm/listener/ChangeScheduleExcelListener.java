@@ -15,10 +15,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @Classname ChangeScheduleExcelListener
@@ -93,7 +90,9 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
             errorMsgList.add("计划结束时间 不能为空");
         }
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
-            if (vo.getPlanEndTime().compareTo(vo.getPlanStartTime()) < 0) {
+            Date startTime=DateUtil.strToDate(vo.getPlanStartTime(),DateUtil.fmt_year_month);
+            Date endTime=DateUtil.strToDate(vo.getPlanEndTime(),DateUtil.fmt_year_month);
+            if (endTime.compareTo(startTime) < 0) {
                 errorMsgList.add("结束时间必须大于开始时间");
             }
         }
@@ -119,8 +118,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
-        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt));
+        changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month));
+        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month));
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());
