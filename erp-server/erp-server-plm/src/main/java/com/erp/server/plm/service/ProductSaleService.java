@@ -52,8 +52,16 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @description: 根据skuId查询
      * @author Will
      * @date: 2023/1/12 17:58
-     * @param id
+     * @param skuId
      * @return ProductSaleEntity
      */
     ProductSaleEntity getBySkuId(String skuId);
+    /**
+     * @description: 根据skuIds查询销售信息
+     * @author Will
+     * @date: 2023/2/24 15:37
+     * @param skuIds
+     * @return List<ProductSaleEntity>
+     */
+    List<ProductSaleEntity> listBySkuIds(List<String> skuIds);
 }

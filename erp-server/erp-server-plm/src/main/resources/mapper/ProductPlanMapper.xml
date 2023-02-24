@@ -10,7 +10,7 @@
             pp.image_url as imageUrl,
             pp.spu_no as spuNo,
             pp.name as name,
-            pp.product_status as  productStatusName,
+            pp.product_status as  productStatus,
             pp.category as category,
             pp.grade as grade,
             pp.charge_name as chargeName,

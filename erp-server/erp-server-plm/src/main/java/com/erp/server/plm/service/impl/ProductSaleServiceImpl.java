@@ -98,6 +98,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
+
+    @Override
+    public List<ProductSaleEntity> listBySkuIds(List<String> skuIds) {
+        LambdaQueryWrapper<ProductSaleEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(ProductSaleEntity::getSkuId, skuIds);
+        return this.list(queryWrapper);
+    }
 }
 
 

@@ -150,6 +150,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductChangeService productChangeService;
 
+    @Resource
+    private ProductPlanService productPlanService;
+
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
@@ -598,6 +601,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductCertificateLog(productCertificateList, id);
             productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
+        //更新规划中的首批入库时间和上市时间
+        productPlanService.updateRealDateByProductId(id);
         return true;
     }
 

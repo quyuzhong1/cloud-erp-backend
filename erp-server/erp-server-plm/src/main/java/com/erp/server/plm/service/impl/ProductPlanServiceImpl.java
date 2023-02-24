@@ -97,6 +97,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Resource
     private BasicCategoryService basicCategoryService;
 
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private ProductSaleService productSaleService;
+
 
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
@@ -391,6 +397,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 throw new ServiceException(ApiError.ERROR_95139);
             }
             productInfoEntity = productInfoService.getById(productId);
+        } else {
+            //判断产品是否已关联规划
+            ProductPlanEntity found = this.getByProductId(productInfoEntity.getId());
+            if (ObjectUtils.isNotEmpty(found)) {
+                throw new ServiceException(ApiError.ERROR_95142);
+            }
         }
         //存在数据则关联规划并且需要同步的数据以产品的为准
         updateProductPlanByProduct(productPlanEntity,productInfoEntity);
@@ -431,6 +443,33 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         //更新同步规划数据
         updateProductPlanByProduct(productPlanEntity,entity);
+    }
+
+    @Override
+    public void updateRealDateByProductId(String productId) {
+        ProductPlanEntity productPlanEntity = this.getByProductId(productId);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            return;
+        }
+        //查询产品信息最后的首批入库时间
+        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(productId);
+        if (CollectionUtils.isEmpty(skuList)) {
+            return;
+        }
+        Date firstMassProductDate = skuList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate()))
+                .max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
+                .map(ProductDetailEntity::getFirstMassProductDate).get();
+        productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : LocalDateUtil.date2LocalDate(firstMassProductDate));
+        List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        //查询销售信息最后的上市时间
+        List<ProductSaleEntity> productSaleList = productSaleService.listBySkuIds(skuIds);
+        if (CollectionUtils.isNotEmpty(productSaleList)) {
+            Date listingTime = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime()))
+                    .max(Comparator.comparing(ProductSaleEntity::getListingTime))
+                    .map(ProductSaleEntity::getListingTime).get();
+            productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : LocalDateUtil.date2LocalDate(listingTime));
+        }
+        this.updateById(productPlanEntity);
     }
 
     @Override
@@ -600,10 +639,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             //调研中
             if (ApprovalStatusEnum.PROBE.getCode().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.PROBE.getCode());
+                productPlanEntity.setSurveyDate(LocalDate.now());
             }
             //已立项
             if (ApprovalStatusEnum.APPROVAL.getCode().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.APPROVAL.getCode());
+                productPlanEntity.setProjectApprovalDate(LocalDate.now());
             }
             //已中止
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(status)) {
