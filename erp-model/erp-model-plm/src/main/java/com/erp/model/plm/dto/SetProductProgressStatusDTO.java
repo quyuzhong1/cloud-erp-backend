@@ -2,6 +2,7 @@ package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
@@ -13,7 +14,7 @@ import java.io.Serializable;
  * @Created by yl
  */
 @Data
-@NotBlank
+@NoArgsConstructor
 public class SetProductProgressStatusDTO  implements Serializable {
 
     @StateEnumValue(strValues = {"normal","postpone","risk","no"},message = "进展状态有误")
