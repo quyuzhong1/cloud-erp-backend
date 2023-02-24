@@ -70,7 +70,7 @@
                 AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND pt.end_time &lt;= #{params.taskSearchDTO.endTime}
+               AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         ORDER BY
@@ -164,7 +164,7 @@
                 AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND pt.end_time &lt;= #{params.taskSearchDTO.endTime}
+               AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         <if test="params.param != null and params.param != ''">
@@ -319,7 +319,7 @@
                 AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND pt.end_time &gt;= #{params.taskSearchDTO.endTime}
+               AND pt.create_time &gt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         ORDER BY
@@ -643,7 +643,7 @@
                     AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
                 </if>
                 <if test="params.taskSearchDTO.endTime != null ">
-                    AND pt.end_time &lt;= #{params.taskSearchDTO.endTime}
+                   AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
                 </if>
             </if>
             <if test="params.param != null and params.param != ''">
