@@ -441,6 +441,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95134);
         }
+        if (ObjectUtils.isEmpty(entity.getApprovalStatus())) {
+            entity.setApprovalStatus(ApprovalStatusEnum.WAIT.getCode());
+        }
         //更新同步规划数据
         updateProductPlanByProduct(productPlanEntity,entity);
     }

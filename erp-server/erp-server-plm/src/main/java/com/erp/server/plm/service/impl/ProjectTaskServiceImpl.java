@@ -711,39 +711,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean save(ProjectTaskDTO dto) {
+        //验证名称是否重复
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         productInfoService.checkProduct(dto.getProductId());
-        //配置表单属性
-        String fieldConfigType = dto.getFieldConfigType();
-        List<String> refSkuIdList = dto.getRefSkuIdList();
-        //生成sku
-        String createSku = TaskConstant.CREATE_SKU;
-        //填写sku
-        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
-        //filedjson
-        String fieldJson = dto.getFieldJson();
-        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
-
-        //第二种 sku 没有  并且 表单属性不为空 且为生成
-        Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList)
-                && (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
-
-
-        //自定义审核人
-        Integer type = dto.getType();
-        //一般任务
-        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //验证表单数据
+        checkFieldConfig(dto);
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
-        //如果是一般任务 必须要有审核流程
-        if (needCheckFirst || needCheckSecond) {
-            if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(approvalList)) {
-                    throw new ServiceException(ApiError.ERROR_95078);
-                }
-            }
-        }
-
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -769,7 +742,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //是否是一般任务 true 是
-        Boolean isGeneralTask = generalTask.equals(dto.getType());
+        Boolean isGeneralTask = TaskTypeEnum.GENERAL_TASK.getCode().equals(dto.getType());
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
         taskEntity.setPhaseName(phaseName);
@@ -1224,6 +1197,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
+        //验证表单数据
+        checkFieldConfig(dto);
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
         if (Objects.isNull(taskEntity)) {
@@ -4582,6 +4557,39 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskNames = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.toList());
         if (taskNames.contains(name)) {
             throw new ServiceException(ApiError.ERROR_95013);
+        }
+    }
+
+    private void checkFieldConfig(ProjectTaskDTO dto) {
+        //配置表单属性
+        String fieldConfigType = dto.getFieldConfigType();
+        List<String> refSkuIdList = dto.getRefSkuIdList();
+        //生成sku
+        String createSku = TaskConstant.CREATE_SKU;
+        //填写sku
+        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
+        //filedjson
+        String fieldJson = dto.getFieldJson();
+        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
+        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
+
+        //第二种 sku 没有  并且 表单属性不为空 且为生成
+        Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList)
+                && (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
+
+
+        //自定义审核人
+        Integer type = dto.getType();
+        //一般任务
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
+        //如果是一般任务 必须要有审核流程
+        if (needCheckFirst || needCheckSecond) {
+            if (generalTask.equals(type)) {
+                if (CollectionUtils.isEmpty(approvalList)) {
+                    throw new ServiceException(ApiError.ERROR_95078);
+                }
+            }
         }
     }
 
