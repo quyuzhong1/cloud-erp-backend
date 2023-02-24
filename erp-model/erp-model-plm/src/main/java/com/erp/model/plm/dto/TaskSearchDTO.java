@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -42,12 +42,12 @@ public class TaskSearchDTO implements Serializable {
     /**
      * 开始时间
      */
-    private Date startTime;
+    private LocalDate startTime;
 
     /**
      * 结束时间
      * @return
      */
-    private Date endTime;
+    private LocalDate endTime;
 
 }
