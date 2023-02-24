@@ -344,7 +344,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             });
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productPlan.xlsx";
+        String excelPath = "excel/exportProductPlan.xlsx";
         String name = "产品规划";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);

@@ -94,7 +94,7 @@
     <select id="listExportExcel" resultType="com.erp.model.plm.dto.excel.ProductPlanExcelDTO">
         select
             pp.id as productPlanId,
-            pp.year as year,
+            pp.year as yearStr,
             pp.charge_name as chargeName,
             pp.brand_name as brandName,
             pp.category as category,

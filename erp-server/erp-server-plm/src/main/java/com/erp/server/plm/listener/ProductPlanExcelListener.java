@@ -89,7 +89,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             errorMsgList.addAll(msgList);
         }
         FindUserDTO charge = sysUserFeign.getUserByUserName(productPlanExcelDTO.getChargeName());
-        if (ObjectUtils.isEmpty(charge)) {
+        if (ObjectUtils.isEmpty(charge) || StringUtils.isBlank(charge.getUserId())) {
             errorMsgList.add("产品经理在系统中未找到");
         }
         if (StringUtils.isNotBlank(productPlanExcelDTO.getBrandName())) {
