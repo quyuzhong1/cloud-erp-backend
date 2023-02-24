@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -540,9 +541,17 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
 
     @Override
-    public Boolean uploadImageUrl(ProductPlanImageDTO dto) {
-        return null;
+    public Boolean uploadImageUrl(MultipartFile multipartFiles, String id) {
+        ProductPlanEntity productPlanEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            throw new ServiceException(ApiError.ERROR_95133);
+        }
+        String filePath = FastDFSClientUtil.uploadFile(multipartFiles);
+        productPlanEntity.setImageUrl(filePath);
+        return this.updateById(productPlanEntity);
     }
+
+
 
     @Override
     public ProductPlanEntity getByYearAndName(Integer year, String name) {

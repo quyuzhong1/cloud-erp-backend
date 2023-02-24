@@ -71,12 +71,13 @@ public class ProductPlanController extends BaseController {
      * 产品规划-图片上传
      * @author Will
      * @date: 2023/2/21 12:03
-     * @param dto
+     * @param multipartFile
+     * @param id
      * @return ApiResult
      */
     @PostMapping("/uploadImageUrl")
-    public ApiResult uploadImageUrl(@RequestBody ProductPlanImageDTO dto) {
-        Boolean flag = productPlanService.uploadImageUrl(dto);
+    public ApiResult uploadImageUrl(@RequestParam("multipartFile") MultipartFile multipartFile,@RequestParam("id") String id ,HttpServletRequest request) {
+        Boolean flag = productPlanService.uploadImageUrl(multipartFile,id);
         return flag == true ? success() : failure();
     }
 

@@ -123,10 +123,11 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @description: 图片上传
      * @author Will
      * @date: 2023/2/21 12:08
-     * @param dto
+     * @param multipartFile
+     * @param id
      * @return Boolean
      */
-    Boolean uploadImageUrl(ProductPlanImageDTO dto);
+    Boolean uploadImageUrl(MultipartFile multipartFile, String id);
     /**
      * @description: 根据年份和产品名称查询
      * @author Will
