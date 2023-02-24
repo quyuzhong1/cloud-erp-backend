@@ -42,15 +42,16 @@
         LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id
         <where>
             <if test="null != params and null != params.searchKeyword and '' != params.searchKeyword">
-               and (pi."name" like concat('%',#{param.searchKeyword} ,'%') or pi.spu_no like concat('%',#{param.searchKeyword} ,'%'))
+               and (pi."name" like concat('%',#{params.searchKeyword} ,'%') or pi.spu_no like concat('%',#{params.searchKeyword} ,'%'))
             </if>
-            <if test="null != params and null != params.startDate and '' != params.startDate and null != params.endDate and '' != params.endDate">
-                and pttr.reality_end_time >= #{param.startDate}
-                and pttr.reality_end_time &lt;= #{param.endDate}
+            <if test="null != params and null != params.startDate  and null != params.endDate">
+                and pttr.reality_end_time >= #{params.startDate}
+                and pttr.reality_end_time &lt;= #{params.endDate}
             </if>
-            <if test="null != params and null != params.chargeId">
-                <foreach collection="params.chargeId" item="item" open="(" close=")" separator=",">
-                    #{item}
+            <if test="null != params and null != params.chargeId and params.chargeId.size > 0">
+            and
+                <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                    #{item} = ANY (string_to_array(pt.charge_id,','))
                 </foreach>
             </if>
             <if test="null != param and '' != param">

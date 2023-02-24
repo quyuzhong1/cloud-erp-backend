@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskTimeRecordEntity;
 import com.common.core.serveice.SuperService;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -34,4 +36,10 @@ public interface ProjectTaskTimeRecordService extends IService<ProjectTaskTimeRe
      * @return
      */
     Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response);
+
+    /**
+     *
+     * @param taskList
+     */
+    void saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList);
 }
