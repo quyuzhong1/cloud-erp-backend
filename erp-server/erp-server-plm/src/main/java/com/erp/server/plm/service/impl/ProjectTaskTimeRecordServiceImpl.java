@@ -73,7 +73,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             return false;
         }
         List<ProjectTaskTimeRecordEntity> exitTaskTimeEntities = lambdaQuery()
-                .in(ProjectTaskTimeRecordEntity::getProjectTaskId, taskList)
+                .in(ProjectTaskTimeRecordEntity::getProjectTaskId, taskList.stream().map(ProjectTaskEntity::getId).distinct().collect(Collectors.toList()))
                 .list();
         List<ProjectTaskTimeRecordEntity> insertList = new ArrayList<>();
         List<ProjectTaskTimeRecordEntity> updateList = new ArrayList<>();
