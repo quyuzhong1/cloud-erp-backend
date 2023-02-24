@@ -29,12 +29,22 @@ public class SysCalendarController extends BaseController {
     @Resource
     private SysCalendarService sysCalendarService;
 
+    /**
+     * 手动修改系统日期列表
+     * @param dto
+     * @return
+     */
     @PostMapping("/list")
     public ApiResult<List<SysCalendarListVO>> listByDate(@RequestBody @Validated SysCalendarDTO.ListDTO dto){
         List<SysCalendarListVO> resultList = sysCalendarService.listByCondition(dto);
         return success(resultList);
     }
 
+    /**
+     * 新增或更新日期状态
+     * @param dto
+     * @return
+     */
     @PostMapping("/save/or/update")
     public ApiResult<Boolean> saveOrUpdateBatchDate(@RequestBody @Validated SysCalendarDTO.SaveOrUpdateDTO dto){
         Boolean result = sysCalendarService.saveOrUpdateBatchDate(dto);
