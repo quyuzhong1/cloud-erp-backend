@@ -454,8 +454,8 @@ public class MathUtil {
      * @param <T>
      * @return
      */
-    public static <T> Collector<T, ?, BigDecimal> summingBigDecimal(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper) {
-        return new BigDecimalUtil.CollectorImpl<>(
+    public static <T> Collector<T, ?, BigDecimal> summingBigDecimal(MathUtil.ToBigDecimalFunction<? super T> mapper) {
+        return new MathUtil.CollectorImpl<>(
                 () -> new BigDecimal[]{new BigDecimal(0)},
                 (a, t) -> {
                     a[0] = a[0].add(mapper.applyAsBigDecimal(t), MathContext.DECIMAL32);
@@ -474,8 +474,8 @@ public class MathUtil {
      * @param <T>
      * @return
      */
-    public static <T> Collector<T, ?, BigDecimal> maxBy(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper) {
-        return new BigDecimalUtil.CollectorImpl<>(
+    public static <T> Collector<T, ?, BigDecimal> maxBy(MathUtil.ToBigDecimalFunction<? super T> mapper) {
+        return new MathUtil.CollectorImpl<>(
                 () -> new BigDecimal[]{new BigDecimal(Integer.MIN_VALUE)},
                 (a, t) -> {
                     a[0] = a[0].max(mapper.applyAsBigDecimal(t));
@@ -494,8 +494,8 @@ public class MathUtil {
      * @param <T>
      * @return
      */
-    public static <T> Collector<T, ?, BigDecimal> minBy(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper) {
-        return new BigDecimalUtil.CollectorImpl<>(
+    public static <T> Collector<T, ?, BigDecimal> minBy(MathUtil.ToBigDecimalFunction<? super T> mapper) {
+        return new MathUtil.CollectorImpl<>(
                 () -> new BigDecimal[]{new BigDecimal(Integer.MAX_VALUE)},
                 (a, t) -> {
                     a[0] = a[0].min(mapper.applyAsBigDecimal(t));
@@ -516,9 +516,9 @@ public class MathUtil {
      * @param <T>
      * @return
      */
-    public static <T> Collector<T, ?, BigDecimal> averagingBigDecimal(BigDecimalUtil.ToBigDecimalFunction<? super T> mapper,
+    public static <T> Collector<T, ?, BigDecimal> averagingBigDecimal(MathUtil.ToBigDecimalFunction<? super T> mapper,
                                                                       int newScale, int roundingMode) {
-        return new BigDecimalUtil.CollectorImpl<>(
+        return new MathUtil.CollectorImpl<>(
                 () -> new BigDecimal[]{new BigDecimal(0), new BigDecimal(0)},
                 (a, t) -> {
                     a[0] = a[0].add(mapper.applyAsBigDecimal(t));

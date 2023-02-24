@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BigDecimalUtil;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -738,7 +737,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 季度数据  (x- 1) / 3 + 1
         Map<Integer, BigDecimal> quarterMap = profitMap.entrySet().stream()
                 .collect(Collectors.groupingBy(x -> (x.getKey() - 1) / 3 + 1,
-                        BigDecimalUtil.summingBigDecimal(Map.Entry::getValue)));
+                        MathUtil.summingBigDecimal(Map.Entry::getValue)));
 
         // 成本
         List<DateCostVO> costSaleExpenses = dateCostVOS.stream()
@@ -748,7 +747,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 季度成本汇总
         Map<Integer, BigDecimal> quarterCostMap = costSaleExpenses.stream()
                 .collect(Collectors.groupingBy(x -> (x.getGroupDate().getMonthValue() - 1) / 3 + 1,
-                        BigDecimalUtil.summingBigDecimal(DateCostVO::getCostValue)));
+                        MathUtil.summingBigDecimal(DateCostVO::getCostValue)));
 
         // 时间分组销售额-季度
         Map<Integer, BigDecimal> quarterSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 1);
@@ -773,7 +772,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .collect(Collectors.groupingBy(x -> x.getGroupDate(),
                         Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
         // 年度分组数据销售毛利率
-        Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), BigDecimalUtil.summingBigDecimal(v -> {
+        Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), MathUtil.summingBigDecimal(v -> {
             Map<String, BigDecimal> tempMap = costMap.get(v);
             BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
             BigDecimal costTotalCost = tempMap.getOrDefault("cost_totalCost", BigDecimal.ZERO);
@@ -789,7 +788,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 季度成本汇总
         Map<Integer, BigDecimal> yearCostMap = costSaleExpenses.stream()
                 .collect(Collectors.groupingBy(x -> x.getGroupDate().getYear(),
-                        BigDecimalUtil.summingBigDecimal(DateCostVO::getCostValue)));
+                        MathUtil.summingBigDecimal(DateCostVO::getCostValue)));
 
         // 时间分组销售额-季度
         Map<Integer, BigDecimal> yearSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 2);

@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.BigDecimalUtil;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -562,7 +561,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesList)){
             targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getPlatformName,
-                    BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+                    MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
 
         // 查询目标销量
@@ -614,7 +613,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesList)){
             targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getCategory,
-                    BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+                    MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
 
         // 查询目标销量
@@ -669,7 +668,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesList)){
             targetSalesMap = salesList.stream().filter(x -> null== newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
-                    BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+                    MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
 
         // 查询目标销量
@@ -731,7 +730,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesList)){
             targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                    BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+                    MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
 
         // 查询目标销量
@@ -778,7 +777,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         ));
         // 产品定位销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(),BigDecimal.ZERO))));
+                MathUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(),BigDecimal.ZERO))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
@@ -797,7 +796,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = salesList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
-                BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+                MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         // 查询目标销量
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
@@ -841,7 +840,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 ));
         // 产品类型销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(), BigDecimal.ZERO))));
+                MathUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(), BigDecimal.ZERO))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
@@ -1038,15 +1037,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (0 == type){
             // 月份
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> x.getPlatformCreateTime().getMonthValue(),
-                    BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+                    MathUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else if (1 == type){
             // 季度
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> (x.getPlatformCreateTime().getMonthValue()-1) / 3 + 1,
-                    BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+                    MathUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else {
             // 年度
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> x.getPlatformCreateTime().getYear(),
-                    BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+                    MathUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }
         return resultMap;
     }
