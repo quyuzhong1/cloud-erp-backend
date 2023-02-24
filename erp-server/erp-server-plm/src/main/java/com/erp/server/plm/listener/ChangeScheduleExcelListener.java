@@ -2,8 +2,10 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
@@ -35,16 +37,19 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
     private List<ChangeScheduleExportVO> succeedList;
     private SysUserFeign sysUserFeign;
 
+    private String productName;
+
 
     private String productId;
 
-    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId,SysUserFeign sysUserFeign) {
+    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId,SysUserFeign sysUserFeign,String productName) {
         this.projectTaskService = projectTaskService;
         this.errorList = new ArrayList<>();
         this.succeedList = new ArrayList<>();
         this.productId = productId;
         this.dataList = new ArrayList<>();
         this.sysUserFeign = sysUserFeign;
+        this.productName = productName;
 
     }
 
@@ -52,21 +57,33 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
     public void invoke(ScheduleTaskExportErrorExcelVO vo, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         dataList.add(vo);
-        if (StringUtils.isBlank(vo.getTaskName())) {
-            errorMsgList.add("任务名 不能为空");
-        }
-        if (StringUtils.isBlank(vo.getTaskName())) {
-            errorMsgList.add("任务名 不能为空");
+
+        //注解验证信息
+        List<String> msgList = FieldValidUtil.fieldValid(vo);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
         }
         if (StringUtils.isBlank(vo.getProductName())) {
-            errorMsgList.add("产品名 不能为空");
+            errorMsgList.add("产品名称不能为空");
         }
-        if (StringUtils.isBlank(vo.getChargeName())) {
-            errorMsgList.add("负责人不能为空");
+        if (!productName.equals(vo.getProductName())) {
+            errorMsgList.add("产品名称有误");
+        }
+        String taskName = vo.getTaskName();
+        if (StringUtils.isBlank(taskName)) {
+            errorMsgList.add("任务名不能为空");
         }
         ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName().trim());
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
+        }
+        String chargeName = vo.getChargeName();
+        if (StringUtils.isBlank(vo.getChargeName())) {
+            errorMsgList.add("负责人不能为空");
+        }
+        FindUserDTO user = sysUserFeign.getUserByUserName(chargeName);
+        if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
+            errorMsgList.add("负责人不存在");
         }
 
         if (StringUtils.isBlank(vo.getPlanStartTime())) {
@@ -104,8 +121,6 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         changeVO.setStatus(task.getStatus());
         changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
         changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt));
-        //改变的任务负责人名
-        String chargeName = vo.getChargeName();
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());
@@ -116,9 +131,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         List<String> chargeIdList = new ArrayList<>();
         //当传过来的任务负责人不同的时候
         if (!chargeName.equals(taskChargeName)) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserName(chargeName);
-            if (!Objects.isNull(findUserDTO)) {
-                String userId = findUserDTO.getUserId();
+            if (!Objects.isNull(user)) {
+                String userId = user.getUserId();
                 if (StringUtils.isNotBlank(userId)) {
                     chargeIdList = Arrays.asList(userId);
                 }

@@ -781,6 +781,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public FindUserDTO getUserByUserName(String userName) {
+        if(StringUtils.isBlank(userName)){
+            return new FindUserDTO();
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserName, userName);
         queryWrapper.last("limit 1");

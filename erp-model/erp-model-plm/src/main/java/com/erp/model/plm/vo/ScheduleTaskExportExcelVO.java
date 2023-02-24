@@ -3,6 +3,8 @@ package com.erp.model.plm.vo;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -49,6 +51,7 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划开始时间", index = 3)
+    @FieldValid(fieldName = "计划开始时间",formatPattern = FieldFormatPatternTypeEnum.date)
     private String planStartTime;
 
     /**
@@ -56,6 +59,7 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划结束时间", index = 4)
+    @FieldValid(fieldName = "计划结束时间",formatPattern = FieldFormatPatternTypeEnum.date)
     private String planEndTime;
 
 

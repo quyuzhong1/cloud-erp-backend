@@ -208,7 +208,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
                     }
                     //设置审核人信息
-                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList,chargeIds,projectTemplateEntity.getId(),entity.getId(),MathUtil.THREE);
+                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), entity.getId(), MathUtil.THREE);
 
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
                 }
@@ -433,7 +433,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
                     }
                     //设置审核人信息
-                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList,chargeIds,projectTemplateEntity.getId(),entity.getId(),MathUtil.THREE);
+                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), entity.getId(), MathUtil.THREE);
                     taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(), docsNameList);
                 }
             }
@@ -917,7 +917,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95027);
         }
         String scheduleStatus = entity.getScheduleStatus();
-        if(BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)){
+        if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
             throw new ServiceException(ApiError.ERROR_95137);
         }
         Integer IsFixed = entity.getIsFixed();
@@ -1364,7 +1364,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         }
                         if (CollectionUtils.isNotEmpty(chargeList)) {
                             chargeList = chargeList.stream().distinct().collect(Collectors.toList());
-                            ;
+
                             taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                         }
                     }
@@ -2652,6 +2652,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public ProjectTaskEntity getbyName(String productId, String taskName) {
+        if (StringUtils.isBlank(productId) || StringUtils.isBlank(taskName)) {
+            return null;
+        }
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
         queryWrapper.eq(ProjectTaskEntity::getName, taskName);

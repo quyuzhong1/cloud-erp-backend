@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -43,7 +42,6 @@ public class NoticeMessageDTO implements Serializable {
     /**
      * 项目人
      */
-    @StateEnumValue(strValues = {"projectCharge","productCharge","taskCharge","auditor"},message = "项目人员类型错误")
     private String itemPeople;
 
     /**
