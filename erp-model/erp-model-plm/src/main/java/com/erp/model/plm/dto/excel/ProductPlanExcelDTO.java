@@ -32,7 +32,7 @@ public class ProductPlanExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*年份", index = 0)
     @FieldValid(fieldName = "年份",isNotNull = true,formatPattern = FieldFormatPatternTypeEnum.integer,maxLength = 4)
-    private String  year;
+    private String  yearStr;
 
     /**
      * 产品经理

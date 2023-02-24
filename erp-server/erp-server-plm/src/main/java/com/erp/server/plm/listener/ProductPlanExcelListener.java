@@ -153,7 +153,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             list.add(productPlanExcelDTO);
             return;
         }
-        productPlanEntity.setYear(Integer.valueOf(productPlanExcelDTO.getYear()));
+        productPlanEntity.setYear(Integer.valueOf(productPlanExcelDTO.getYearStr()));
         productPlanEntity.setChargeId(charge.getUserId());
         productPlanEntity.setProductType(StringUtils.isBlank(productPlanExcelDTO.getProductTypeName()) ? "" : ProductTypeEnum.getByName(productPlanExcelDTO.getProductTypeName()).getCode());
         productPlanEntity.setProductStyle(StringUtils.isBlank(productPlanExcelDTO.getProductStyleName()) ? "" : ProductStyleEnum.getByName(productPlanExcelDTO.getProductStyleName()).getCode());
@@ -223,7 +223,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         for (MonthEnum monthEnum : values) {
             ProductPlanSaleInfoEntity productPlanSaleInfoEntity = new ProductPlanSaleInfoEntity();
             productPlanSaleInfoEntity.setProductPlanId(productPlanEntity.getId());
-            productPlanSaleInfoEntity.setYear(Integer.valueOf(productPlanExcelDTO.getYear()));
+            productPlanSaleInfoEntity.setYear(Integer.valueOf(productPlanExcelDTO.getYearStr()));
             productPlanSaleInfoEntity.setMonth(Integer.valueOf(monthEnum.getCode()));
             switch (monthEnum.getCode()) {
                 case "1":
