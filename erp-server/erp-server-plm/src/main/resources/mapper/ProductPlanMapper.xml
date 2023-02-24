@@ -31,7 +31,7 @@
         <where>
             pp.is_deleted = false
             <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
-               and pp.product_status = ''
+               and pp.product_status in ('','1')
             </if>
             <if test="params.type != null and params.type != '' and params.type == '2'.toString()">
                 and pp.product_status in ('3','4','5','6')

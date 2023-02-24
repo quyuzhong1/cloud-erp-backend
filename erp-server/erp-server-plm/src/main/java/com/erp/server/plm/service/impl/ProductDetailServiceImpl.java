@@ -722,6 +722,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductCertificateLog(productCertificateList, productInfoDTO.getId());
             productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
+        //更新规划中的首批入库时间和上市时间
+        productPlanService.updateRealDateByProductId(productInfoDTO.getId());
         return true;
     }
 

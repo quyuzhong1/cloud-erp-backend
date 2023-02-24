@@ -10,12 +10,12 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.vo.ProductDevelopPagingVO;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
@@ -119,6 +119,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Autowired
     private TaskRefSkuConfigService taskRefSkuConfigService;
+
+    @Autowired
+    private ProjectStatusTimeService projectStatusTimeService;
+
+    @Autowired
+    private ProductPlanService productPlanService;
 
     /**
      * 项目概述
@@ -298,7 +304,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (CollectionUtils.isNotEmpty(chargeIdList)) {
                 projectMembersService.saveByRoleAndMembers(productId,project.getId(),"项目经理",chargeIdList);
             }
-
+            //记录产品状态更新时间
+            projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(),dto.getProductId(), project.getProjectStatus());
+            //更新产品规划的产品状态
+            productPlanService.updateProductPlanStatus(productId, project.getProjectStatus(), MathUtil.TWO);
         }
 
         return flag;
