@@ -11,8 +11,6 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -25,27 +23,27 @@ import java.util.*;
  */
 public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleTaskExportErrorExcelVO> {
 
-    private ProjectTaskService projectTaskService;
+    private List<ProjectTaskEntity> projectTaskList;
 
 
     private List<ScheduleTaskExportErrorExcelVO> errorList;
 
     private List<ScheduleTaskExportErrorExcelVO> dataList;
     private List<ChangeScheduleExportVO> succeedList;
-    private SysUserFeign sysUserFeign;
+    private List<FindUserDTO> sysUserList;
 
     private String productName;
 
 
     private String productId;
 
-    public ChangeScheduleExcelListener(ProjectTaskService projectTaskService, String productId, SysUserFeign sysUserFeign, String productName) {
-        this.projectTaskService = projectTaskService;
+    public ChangeScheduleExcelListener(List<ProjectTaskEntity> projectTaskList, String productId, List<FindUserDTO> sysUserList, String productName) {
+        this.projectTaskList = projectTaskList;
         this.errorList = new ArrayList<>();
         this.succeedList = new ArrayList<>();
         this.productId = productId;
         this.dataList = new ArrayList<>();
-        this.sysUserFeign = sysUserFeign;
+        this.sysUserList = sysUserList;
         this.productName = productName;
 
     }
@@ -70,7 +68,12 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         if (StringUtils.isBlank(taskName)) {
             errorMsgList.add("任务名不能为空");
         }
-        ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName());
+
+        ProjectTaskEntity task = null;
+        if (StringUtils.isNotBlank(taskName)) {
+            task=projectTaskList.stream().filter(t -> t.getName().equals(taskName) &&
+                    t.getProductId().equals(productId)).findFirst().orElse(null);
+        }
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
@@ -84,7 +87,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         }
         FindUserDTO user = null;
         if (StringUtils.isNotBlank(chargeName)) {
-            user = sysUserFeign.getUserByUserName(chargeName);
+            user = sysUserList.stream().filter(u->chargeName.equals(u.getUserName())).
+                    findFirst().orElse(null);
             if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
                 errorMsgList.add("负责人不存在");
             }

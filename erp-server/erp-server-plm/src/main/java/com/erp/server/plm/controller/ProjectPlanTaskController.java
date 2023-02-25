@@ -10,7 +10,6 @@ import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ChangeScheduleExportResultVO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ScheduleChangeTaskVO;
-import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.validation.annotation.Validated;
@@ -108,19 +107,6 @@ public class ProjectPlanTaskController extends BaseController {
         Boolean result = projectPlanTaskService.importTaskSchedule(excelFile,productId, response);
         return result == true ? success() : failure();
     }
-
-
-
-
-    /**
-     * 所有字段显示
-     */
-    @GetMapping("/allField")
-    public ApiResult<List<CustomizeFieldVO>> fieldShow() {
-        List<CustomizeFieldVO> result = projectPlanTaskService.allField();
-        return success(result);
-    }
-
 
 
     /**

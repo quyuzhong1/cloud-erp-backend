@@ -2473,13 +2473,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
+        //是否修改
+        boolean ifModify = false;
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(ProjectTaskEntity::getId, dto.getTaskIdList());
         if (dto.getPlanStartTime() != null) {
             updateWrapper.set(ProjectTaskEntity::getPlanStartTime, dto.getPlanStartTime());
+            ifModify = true;
         }
         if (dto.getPlanEndTime() != null) {
             updateWrapper.set(ProjectTaskEntity::getPlanEndTime, dto.getPlanEndTime());
+            ifModify = true;
         }
         if (StringUtils.isNotBlank(dto.getPhaseId())) {
             updateWrapper.set(ProjectTaskEntity::getPhaseId, dto.getPhaseId());
@@ -2489,28 +2493,37 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 phaseName = phaseEntity.getName();
             }
             updateWrapper.set(ProjectTaskEntity::getPhaseName, phaseName);
+            ifModify = true;
         }
         List<String> chargeId = dto.getChargeIds();
         if (CollectionUtils.isNotEmpty(chargeId)) {
             updateWrapper.set(ProjectTaskEntity::getChargeId, String.join(",", chargeId));
             String chargeNames = commonService.getNameByIds(chargeId);
             updateWrapper.set(ProjectTaskEntity::getChargeName, chargeNames);
+            ifModify = true;
         }
         //描述
         if (StringUtils.isNotBlank(dto.getDescription())) {
             updateWrapper.set(ProjectTaskEntity::getDescription, dto.getDescription());
+            ifModify = true;
         }
         if (dto.getPriority() != null) {
             updateWrapper.set(ProjectTaskEntity::getPriority, dto.getPriority());
+            ifModify = true;
+
         }
         if (dto.getIsMilepost() != null) {
             updateWrapper.set(ProjectTaskEntity::getIsMilepost, dto.getIsMilepost());
+            ifModify = true;
         }
         if (StringUtils.isNotBlank(dto.getRelatedSkuType())) {
             updateWrapper.set(ProjectTaskEntity::getRelatedSkuType, dto.getRelatedSkuType());
+            ifModify = true;
         }
-
-        Boolean result = this.update(updateWrapper);
+        Boolean result = true;
+        if (ifModify) {
+            result = this.update(updateWrapper);
+        }
 
         //前置任务
         if (CollectionUtils.isNotEmpty(dto.getPreTaskIdList())) {
@@ -2537,7 +2550,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-02-11 16:42
      */
     @Override
-    public void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status, LoginUser loginUser,String productId) {
+    public void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status, LoginUser loginUser, String productId) {
         if (CollectionUtils.isNotEmpty(taskList)) {
             List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             List<ProjectTaskEntity> projectTaskList = this.getByTaskIds(taskIdList);

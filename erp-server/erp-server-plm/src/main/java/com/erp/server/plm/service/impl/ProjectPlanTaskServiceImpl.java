@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.core.enums.ApiError;
@@ -18,8 +19,6 @@ import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
-import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
-import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
@@ -290,8 +289,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (Objects.isNull(infoEntity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
-
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService, productId, sysUserFeign, infoEntity.getName());
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.getByProductId(productId);
+        List<FindUserDTO> sysUserList = sysUserFeign.getUserList();
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskList, projectTaskService, productId, sysUserList, infoEntity.getName());
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
@@ -311,15 +311,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         return false;
     }
 
-    @Override
-    public Boolean fieldSet(CustomizeFieldLayoutDTO dto) {
-        return true;
-    }
-
-    @Override
-    public List<CustomizeFieldVO> allField() {
-        return new ArrayList<>();
-    }
 
 
     /**
@@ -385,13 +376,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         return baseMapper.getByTaskIds(productId, taskIdList);
     }
 
-    @Override
-    public List<ScheduleTaskVO> getPlanTaskByTaskIds1(String productId, List<String> taskIdList) {
-        if (CollectionUtils.isNotEmpty(taskIdList)) {
-            return baseMapper.getByTaskIds(productId, taskIdList);
-        }
-        return new ArrayList<>();
-    }
+
 
     @Override
     public List<ProjectPlanTaskEntity> getByTaskIdList(String productId, List<String> taskIdList) {
@@ -701,8 +686,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (Objects.isNull(infoEntity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.getByProductId(productId);
+        List<FindUserDTO> sysUserList = sysUserFeign.getUserList();
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
-        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService, productId, sysUserFeign, infoEntity.getName());
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskList, productId, sysUserList, infoEntity.getName());
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();
@@ -715,7 +702,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             String url = "";
             if (CollectionUtils.isNotEmpty(errorDateList)) {
                 String fileName = "排期变更错误.xlsx";
-                File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ScheduleTaskExportExcelVO.class);
+                File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ScheduleTaskExportErrorExcelVO.class);
                 if (file != null && !file.isDirectory()) {
                     url = FastDFSClientUtil.uploadFile(file, fileName);
                 }
@@ -782,6 +769,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 item.setOriginStartTime(taskEntity.getPlanStartTime());
                 item.setOriginEndTime(taskEntity.getPlanEndTime());
                 item.setOriginChargeId(taskEntity.getChargeId());
+                item.setChangeChargeId(taskEntity.getChargeId());
+                item.setChangeStartTime(taskEntity.getPlanStartTime());
+                item.setChangeEndTime(taskEntity.getPlanEndTime());
+
             }
         }
         if (CollectionUtils.isNotEmpty(projectPlanList)) {

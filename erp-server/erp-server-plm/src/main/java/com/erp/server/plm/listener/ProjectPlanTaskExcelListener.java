@@ -9,8 +9,6 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.service.ProjectPlanService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,10 +28,11 @@ import java.util.Objects;
 public class ProjectPlanTaskExcelListener extends AnalysisEventListener<ScheduleTaskExportErrorExcelVO> {
 
 
-    private ProjectTaskService projectTaskService;
+    private List<ProjectTaskEntity> projectTaskList;
 
 
-    private ProjectPlanService projectPlanService;
+    private ProjectTaskService  projectTaskService;
+
 
 
     private List<ScheduleTaskExportErrorExcelVO> list;
@@ -43,18 +42,18 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     private List<ScheduleTaskExportErrorExcelVO> dataList;
 
-    private SysUserFeign sysUserFeign;
+    private List<FindUserDTO> sysUserList;
 
     private String productId;
 
     private String productName;
 
-    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService, String productId, SysUserFeign sysUserFeign, String productName) {
+    public ProjectPlanTaskExcelListener(List<ProjectTaskEntity>  projectTaskList, ProjectTaskService projectTaskService, String productId, List<FindUserDTO> sysUserList, String productName) {
         this.projectTaskService = projectTaskService;
-        this.projectPlanService = projectPlanService;
+        this.projectTaskList = projectTaskList;
         this.list = new ArrayList<>();
         this.taskIdList = new ArrayList<>();
-        this.sysUserFeign = sysUserFeign;
+        this.sysUserList = sysUserList;
         this.productId = productId;
         this.dataList = new ArrayList<>();
         this.productName = productName;
@@ -90,7 +89,12 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         if (StringUtils.isBlank(taskName)) {
             errorMsgList.add("任务名称不能为空");
         }
-        ProjectTaskEntity task = projectTaskService.getbyName(productId, vo.getTaskName());
+
+        ProjectTaskEntity task = null;
+        if (StringUtils.isNotBlank(taskName)) {
+            task=projectTaskList.stream().filter(t -> t.getName().equals(taskName) &&
+                    t.getProductId().equals(productId)).findFirst().orElse(null);
+        }
         if (Objects.isNull(task)) {
             errorMsgList.add("任务不存在");
         }
@@ -100,7 +104,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             errorMsgList.add("负责人不能为空");
         }
         if (StringUtils.isNotBlank(chargeName)) {
-            user = sysUserFeign.getUserByUserName(chargeName);
+            user = sysUserList.stream().filter(u->chargeName.equals(u.getUserName())).
+                    findFirst().orElse(null);
             if (Objects.isNull(user) || StringUtils.isBlank(user.getUserId())) {
                 errorMsgList.add("负责人不存在");
             }

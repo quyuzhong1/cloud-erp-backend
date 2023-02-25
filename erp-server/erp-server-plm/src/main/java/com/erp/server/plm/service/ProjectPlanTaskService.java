@@ -9,8 +9,6 @@ import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.*;
-import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
-import com.erp.model.sys.vo.CustomizeFieldVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,21 +35,12 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
 
     Boolean importTaskSchedule(MultipartFile excelFile,String productId, HttpServletResponse response);
 
-    Boolean fieldSet(CustomizeFieldLayoutDTO dto);
 
-
-    List<CustomizeFieldVO> allField();
-
-
-
-
-    List<ScheduleTaskVO> getScheduleTaskList(String productId,String status);
 
     void savePlanTask(String projectPlanId,String productId,List<ProjectTaskEntity> taskList);
 
     List<ScheduleTaskVO> getByTaskIds(String productId, List<String> taskIdList);
 
-    List<ScheduleTaskVO> getPlanTaskByTaskIds1(String productId, List<String> taskIdList);
 
 
     List<ProjectPlanTaskEntity> getByTaskIdList(String productId, List<String> taskIdList);

@@ -206,12 +206,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
         String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
         String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-        planList.stream().filter(p -> p.getType().equals(change)).forEach(p -> {
-            p.setStatus(auditPassStatus);
-        });
-        planList.stream().filter(p -> !p.getType().equals(change)).forEach(p -> {
-            p.setStatus(cancelStatus);
-        });
+        for (ProjectPlanEntity item : planList) {
+            String type = item.getType();
+            //当时变更 就变成审核通过
+            if (change.equals(type) ) {
+                item.setStatus(auditPassStatus);
+            }else{
+                item.setStatus(cancelStatus);
+            }
+        }
         WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
         withDrawProcess.setUserId(userId);
         withDrawProcess.setBusinessTableIdList(ids);
@@ -316,8 +319,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setTaskName(taskName);
             task.setChargeId(item.getChangeChargeId());
             task.setChargeName(getNameByIds(chargeId, userList));
-            task.setPlanEndTime(item.getOriginEndTime());
-            task.setPlanStartTime(item.getOriginStartTime());
+            task.setPlanEndTime(item.getChangeEndTime());
+            task.setPlanStartTime(item.getChangeStartTime());
             task.setTaskId(taskId);
             task.setId(IdWorker.getIdStr());
             List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
@@ -740,7 +743,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                  */
                 if (ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())) {
                     // 排期任务变动 发送通知
-                    taskService.updateScheduleTask(taskList, status,loginUser,plan.getProductId());
+                    taskService.updateScheduleTask(taskList, status, loginUser, plan.getProductId());
                     noticeMessageService.changeScheduleTask(userName, taskEntityList, plan.getProductId());
                 } else {
                     /**
