@@ -110,4 +110,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     ProductInfoEntity getByName(String name);
 
     Boolean setProgressStatus(SetProductProgressStatusDTO dto);
+
+    Boolean setSchematicImageUrl(SetSchematicImageUrlDTO dto);
 }

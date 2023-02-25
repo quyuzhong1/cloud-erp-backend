@@ -133,7 +133,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductDetailApproverService productDetailApproverService;
 
     @Resource
-    private ProductUnitService productUnitService;
+    private ProjectInfoService projectInfoService;
 
     @Resource
     private ProductVariantService productVariantService;
@@ -178,16 +178,44 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
-        if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
-            List<ProductDetailShowDTO> list = pageData.getRecords();
-            List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
-            List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
-            for (ProductDetailShowDTO item : list) {
-                item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
-                Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
-                item.setIsChangeIng(isChangeIng);
-            }
+        List<ProductDetailShowDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
         }
+        List<String> productIdList = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+        List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
+        List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+        List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
+
+        for (ProductDetailShowDTO item : list) {
+            item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
+            Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
+            item.setIsChangeIng(isChangeIng);
+            //首批到货状态
+            Integer arrivalState = item.getArrivalState();
+            item.setArrivalStateName(PurchaseStateEnum.getNameByCode(arrivalState));
+            //侵权风险
+            Integer pirateRisk = item.getPirateRisk();
+            item.setPirateRiskName(PirateRiskEnum.getName(pirateRisk));
+            //产品状态
+            Integer productState = item.getProductState();
+            item.setProductStateName(ProductDetailStateEnum.getNameByCode(productState));
+            //是否可销售
+            Integer isMarketable = item.getIsMarketable();
+            Integer yes=0;
+            if (yes.equals(isMarketable)) {
+                item.setIsMarketableName("是");
+            } else {
+                item.setIsMarketableName("否");
+            }
+            //项目经理
+            String projectChargeName = projectList.stream().filter(p -> p.getProductId().
+                    equals(item.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getChargeName())).orElse("");
+            item.setProjectChargeName(projectChargeName);
+
+
+        }
+
         return new PagingVO(pageData);
     }
 
@@ -1425,7 +1453,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         try {
             sendDataToKingdee(entity);
         } catch (Exception e) {
-            log.error("同步产品信息至金蝶失败！",e);
+            log.error("同步产品信息至金蝶失败！", e);
         }
         return this.updateById(entity);
     }
@@ -1456,7 +1484,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //sku
         resultMap.put("skuNo", entity.getSkuNo());
         //名称
-        resultMap.put("name",entity.getName());
+        resultMap.put("name", entity.getName());
         //spu
         resultMap.put("spuNo", productInfoEntity.getSpuNo());
         //产品功能描述
@@ -1507,13 +1535,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品属性
             if (StringUtils.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
                 List<String> list = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
-                for (String id:list) {
+                for (String id : list) {
                     BasicDictEntity declareProperty = basicDictService.getById(id);
                     if (ObjectUtils.isNotEmpty(declareProperty)) {
                         String value = declareProperty.getValue();
                         //产品属性（是否带电）
-                        if ("内电".equals(value) || "可拆卸电池".equals(value) || "纯电池".equals(value) ) {
-                            resultMap.put("productProperty_electric",true);
+                        if ("内电".equals(value) || "可拆卸电池".equals(value) || "纯电池".equals(value)) {
+                            resultMap.put("productProperty_electric", true);
                         }
                         //产品属性（是否带磁）
                         if ("带磁".equals(value)) {
@@ -1592,7 +1620,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //MOQ(最小起订量)
             resultMap.put("moq", productPurchaseEntity.getMoq());
             //EAN码
-            resultMap.put("ean",productPurchaseEntity.getEan());
+            resultMap.put("ean", productPurchaseEntity.getEan());
             if (StringUtils.isNotBlank(productPurchaseEntity.getPurchaseUserId())) {
                 FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(productPurchaseEntity.getPurchaseUserId());
                 if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -1728,7 +1756,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public List<SkuVO> searchSku(String searchKeyword) {
-        return baseMapper.searchSku(searchKeyword,ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+        return baseMapper.searchSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
     }
 
 
@@ -1752,7 +1780,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //验证必填信息
         String str = checkRequiredData(productDetailEntity);
         if (StringUtils.isNotBlank(str)) {
-            throw new ServiceException(new ApiResult(1,str));
+            throw new ServiceException(new ApiResult(1, str));
         }
         //启动流程
         productDetailStartProcess(productDetailEntity);
@@ -1802,7 +1830,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(productDetailEntity.getProductState())) {
             str.append("产品开发状态不能为空");
         }
-        return  str.toString();
+        return str.toString();
     }
 
     /**
@@ -1941,7 +1969,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String id = skuDTO.getProductManySpecBaseDTO().getId();
         ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
-        BeanMapper.copy(baseDTO,productInfoDTO);
+        BeanMapper.copy(baseDTO, productInfoDTO);
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(id);
         if (ObjectUtils.isNotEmpty(baseDTO)) {

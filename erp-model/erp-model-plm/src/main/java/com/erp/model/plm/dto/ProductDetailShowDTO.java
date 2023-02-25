@@ -133,4 +133,100 @@ public class ProductDetailShowDTO implements Serializable {
      * 产品英文名称
      */
     private String nameEn;
+
+
+    /**
+     * 产品品牌
+     */
+    private String brandName;
+
+    /**
+     * 产品等级
+     */
+    private String grade;
+
+
+
+    /**
+     * 产品负责人
+     * product_info
+     */
+    private String productChargeName;
+
+
+
+    /**
+     * 项目负责人
+     */
+    private String projectChargeName;
+
+    /**
+     * 首批到货时间
+     * product_detail
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date firstMassProductDate;
+
+    /**
+     * 计划上市时间
+     * product_detail
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date planListingTime;
+
+    /**
+     * 试产数量
+     * product_purchase
+     */
+    private Integer trialProductionQty;
+
+    /**
+     * EAN码
+     * product_purchase
+     */
+    private String ean;
+
+    /**
+     * 交货周期
+     * product_purchase
+     */
+    private Integer deliveryCycle;
+
+    /**
+     * 一级供应商
+     * product_purchase
+     */
+    private String mainSupplier;
+
+    /**
+     * 年度销量
+     * product_sale
+     */
+    private Integer yearSaleQty;
+
+    /**
+     * 年度销售额
+     * product_sale
+     */
+    private BigDecimal yearSaleAmount;
+
+    /**
+     * 上市时间
+     * product_sale
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date listingTime;
+
+    /**
+     * 退市时间
+     * product_sale
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date delistingTime;
+
+
+
+
+
+
 }

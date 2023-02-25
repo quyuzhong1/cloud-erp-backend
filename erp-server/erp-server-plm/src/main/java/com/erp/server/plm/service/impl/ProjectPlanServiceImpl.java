@@ -198,7 +198,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         List<String> statusList = planList.stream().map(ProjectPlanEntity::getStatus).collect(Collectors.toList());
         String waitAudit = BaseStatusEnum.WAIT_AUDIT.getStatus();
-
         if (!statusList.contains(waitAudit)) {
             throw new ServiceException(ApiError.ERROR_95121);
         }
@@ -225,10 +224,26 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             if (result) {
                 String productId = planList.get(0).getProductId();
                 String type = planList.get(0).getType();
-                List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(ids);
-                List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                //变更的
+                List<String> changePlanIds=planList.stream().filter(p->p.getType().equals(change)).
+                        map(ProjectPlanEntity::getId).collect(Collectors.toList());
+
+                List<ProjectPlanTaskEntity> changeTaskList = projectPlanTaskService.getByProjectPlanIdList(changePlanIds);
+                List<String> changeTaskIds = changeTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
-                taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_SUBMIT.getStatus(), type);
+                taskService.updateScheduleStatus(productId, changeTaskIds, auditPassStatus, change);
+
+                //变更的
+                List<String> initialPlanIds=planList.stream().filter(p->!p.getType().equals(change)).
+                        map(ProjectPlanEntity::getId).collect(Collectors.toList());
+
+                List<ProjectPlanTaskEntity> initialTaskList = projectPlanTaskService.getByProjectPlanIdList(initialPlanIds);
+                List<String> initialTaskIds = initialTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                //更改任务状态
+                taskService.updateScheduleStatus(productId, initialTaskIds, auditPassStatus, "");
+
+
+
             }
         }
         return flag;

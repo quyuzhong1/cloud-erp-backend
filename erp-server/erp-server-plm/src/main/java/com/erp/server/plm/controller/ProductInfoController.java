@@ -251,6 +251,17 @@ public class ProductInfoController extends BaseController {
         return result==true?success():failure();
     }
 
+    /**
+     * 设置产品示意图
+     * @param dto
+     * @return
+     */
+    @PostMapping("/setSchematicImageUrl")
+    public ApiResult setSchematicImageUrl(@RequestBody @Validated SetSchematicImageUrlDTO dto) {
+        Boolean result=productInfoService.setSchematicImageUrl(dto);
+        return result==true?success():failure();
+    }
+
 
 }
 

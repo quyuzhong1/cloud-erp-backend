@@ -38,7 +38,7 @@ public enum  PurchaseStateEnum implements EnumMessage {
                 return purchaseStateEnum.getName();
             }
         }
-        return null;
+        return "";
     }
 
     public static PurchaseStateEnum getEnumByType(String code){

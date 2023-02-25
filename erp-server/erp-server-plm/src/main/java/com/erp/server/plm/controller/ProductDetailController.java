@@ -48,8 +48,7 @@ public class
 
 ProductDetailController extends BaseController {
 
-    @Resource
-    private ProductInfoService productInfoService;
+
 
     @Resource
     private ProductDetailService productDetailService;

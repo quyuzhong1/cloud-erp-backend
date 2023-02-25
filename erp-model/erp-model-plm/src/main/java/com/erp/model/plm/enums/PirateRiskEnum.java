@@ -34,7 +34,7 @@ public enum PirateRiskEnum implements EnumMessage {
 
     public static String getName(Integer code) {
         for (PirateRiskEnum pirateRiskEnum : PirateRiskEnum.values()) {
-            if (code.equals(pirateRiskEnum.getCode())) {
+            if (pirateRiskEnum.getCode().equals(code)) {
                 return pirateRiskEnum.getName();
             }
         }

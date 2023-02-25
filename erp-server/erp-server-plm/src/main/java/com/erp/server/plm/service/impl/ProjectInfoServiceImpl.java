@@ -240,7 +240,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                  * 查找 当没有配置表单的时候 的任务id
                  * 则要自动生成配置表单
                  */
-                List<String> noRefSkuConfigTaskIdList=addTaskIdList.stream().filter(a->!alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
+                List<String> noRefSkuConfigTaskIdList = addTaskIdList.stream().filter(a -> !alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
                     taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
@@ -284,12 +284,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                  *  返回已经添加配置关系的 任务id 集合
                  */
                 List<String> alreadyRefSkuConfigTaskIdList = templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
-                List<String> addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
                 /**
                  * 查找 当没有配置表单的时候 的任务id
                  * 则要自动生成配置表单
                  */
-                List<String> noRefSkuConfigTaskIdList=addTaskIdList.stream().filter(a->!alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
+                List<String> noRefSkuConfigTaskIdList = addTaskIdList.stream().filter(a -> !alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
                     taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
@@ -303,10 +303,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
             }
             if (CollectionUtils.isNotEmpty(chargeIdList)) {
-                projectMembersService.saveByRoleAndMembers(productId,project.getId(),"项目经理",chargeIdList);
+                projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", chargeIdList);
             }
             //记录产品状态更新时间
-            projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(),dto.getProductId(), project.getProjectStatus());
+            projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), project.getProjectStatus());
             //更新产品规划的产品状态
             productPlanService.updateProductPlanStatus(productId, project.getProjectStatus(), MathUtil.TWO);
         }
@@ -404,7 +404,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             for (ProductShowDTO item : list) {
 
                 //项目阶段，判断阶段任务是否全部完成
-                setProjectPhase(taskList,phaseList,item);
+                setProjectPhase(taskList, phaseList, item);
 
                 List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
 
@@ -494,11 +494,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 double projectProgress = 0;
                 //立项任务完成
                 if (approvalTaskCount != 0) {
-                    approvalProgress = ((double)approvalFinishTaskCount / approvalTaskCount) * 100;
+                    approvalProgress = ((double) approvalFinishTaskCount / approvalTaskCount) * 100;
                 }
                 //项目任务完成
                 if (projectTaskCount != 0) {
-                    projectProgress = ((double)projectFinishTaskCount / projectTaskCount) * 100;
+                    projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
                 }
                 approvalProgress = Math.round(approvalProgress * 100) / 100;
                 projectProgress = Math.round(projectProgress * 100) / 100;
@@ -543,7 +543,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                         //判断该阶段任务是否全部未完成
                         long count2 = value.stream().filter(e ->
                                 TaskStateEnum.FINISH.getCode().equals(e.getStatus())
-                                || TaskStateEnum.CLOSE.getCode().equals(e.getStatus())).count();
+                                        || TaskStateEnum.CLOSE.getCode().equals(e.getStatus())).count();
                         if (count2 == value.size()) {
                             finishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                             inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
@@ -551,9 +551,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                         }
                         long count3 = value.stream().filter(e ->
                                 TaskStateEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())
-                                || TaskStateEnum.APPROVAL_ING.getCode().equals(e.getStatus())
-                                || TaskStateEnum.APPROVAL_PASS.getCode().equals(e.getStatus())
-                                || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())).count();
+                                        || TaskStateEnum.APPROVAL_ING.getCode().equals(e.getStatus())
+                                        || TaskStateEnum.APPROVAL_PASS.getCode().equals(e.getStatus())
+                                        || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())).count();
                         if (count3 > 0) {
                             //阶段下任务为进行中
                             progressList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
@@ -579,8 +579,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                             }
                         }
                     }
-                    if ( CollectionUtils.isNotEmpty(finishList)){
-                        if (CollectionUtils.isEmpty(progressList)  ) {
+                    if (CollectionUtils.isNotEmpty(finishList)) {
+                        if (CollectionUtils.isEmpty(progressList)) {
                             if (CollectionUtils.isNotEmpty(unStartList)) {
                                 Pair<String, Integer> pair = finishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
                                 List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
@@ -596,7 +596,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                         }
                     }
                     if (CollectionUtils.isNotEmpty(resultList)) {
-                        List<ProjectPhaseEntity> phasesList = projectPhaseService.listByPhaseNames(resultList,item.getProductId());
+                        List<ProjectPhaseEntity> phasesList = projectPhaseService.listByPhaseNames(resultList, item.getProductId());
                         if (CollectionUtils.isNotEmpty(phasesList)) {
                             List<String> names = phasesList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
                             item.setProjectPhase(String.join(",", names));
@@ -627,6 +627,24 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             list = baseMapper.listNotPaging(params, archiveProductIds);
         }
         return list;
+    }
+
+
+    /**
+     * 根据产品id 集合 获取到 项目信息
+     *
+     * @param productIdList
+     * @return
+     */
+    @Override
+    public List<ProjectInfoEntity> getByProductIdList(List<String> productIdList) {
+        if (CollectionUtils.isEmpty(productIdList)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProjectInfoEntity::getProductId, productIdList);
+        return this.list(queryWrapper);
+
     }
 
     /**
@@ -967,7 +985,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         // return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
         return list;
     }
-
 
 
 }

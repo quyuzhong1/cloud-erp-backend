@@ -1156,6 +1156,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.updateById(entity);
     }
 
+
+    /**
+     * 设置产品示意图
+     * @param dto
+     * @return
+     */
+    @Override
+    public Boolean setSchematicImageUrl(SetSchematicImageUrlDTO dto) {
+        ProductInfoEntity entity = this.getById(dto.getProductId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+        entity.setImageUrl(dto.getImageUrl());
+        return this.updateById(entity);
+    }
+
     /**
      * /**
      * 获取文件名
