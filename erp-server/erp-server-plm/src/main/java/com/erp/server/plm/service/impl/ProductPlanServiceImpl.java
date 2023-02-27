@@ -459,18 +459,23 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isEmpty(skuList)) {
             return;
         }
-        Date firstMassProductDate = skuList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate()))
-                .max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
-                .map(ProductDetailEntity::getFirstMassProductDate).get();
-        productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : LocalDateUtil.date2LocalDate(firstMassProductDate));
+        List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(firstMassProductList)) {
+            Date firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
+                    .map(ProductDetailEntity::getFirstMassProductDate).get();
+            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : LocalDateUtil.date2LocalDate(firstMassProductDate));
+        }
         List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //查询销售信息最后的上市时间
         List<ProductSaleEntity> productSaleList = productSaleService.listBySkuIds(skuIds);
         if (CollectionUtils.isNotEmpty(productSaleList)) {
-            Date listingTime = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime()))
-                    .max(Comparator.comparing(ProductSaleEntity::getListingTime))
-                    .map(ProductSaleEntity::getListingTime).get();
-            productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : LocalDateUtil.date2LocalDate(listingTime));
+            productSaleList = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(productSaleList)) {
+                Date listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
+                        .map(ProductSaleEntity::getListingTime).get();
+                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : LocalDateUtil.date2LocalDate(listingTime));
+            }
+
         }
         this.updateById(productPlanEntity);
     }
