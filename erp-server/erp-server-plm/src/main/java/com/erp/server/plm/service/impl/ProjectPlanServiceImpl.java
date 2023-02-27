@@ -203,51 +203,106 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             throw new ServiceException(ApiError.ERROR_95121);
         }
         String userId = commonService.getUserInfo().getUid();
-        String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
+        //变更
         String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
-        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-        for (ProjectPlanEntity item : planList) {
-            String type = item.getType();
-            //当时变更 就变成审核通过
-            if (change.equals(type) ) {
-                item.setStatus(auditPassStatus);
-            }else{
-                item.setStatus(cancelStatus);
-            }
-        }
-        WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
-        withDrawProcess.setUserId(userId);
-        withDrawProcess.setBusinessTableIdList(ids);
-        Boolean flag = workflowFeign.withDrawByBusiness(withDrawProcess);
-        //如果取消成功
-        if (flag) {
-            Boolean result = this.updateBatchById(planList);
+        //初次
+        String initial = ProjectPlanConstant.PROJECT_PLAN_INITIAL;
+
+        /**
+         *  这个是初次提交 且是待审核的
+         *  取消后那么它的状态该成 取消
+         *  然后任务状态 也是已取消
+         */
+        List<ProjectPlanEntity> initialList = planList.stream().filter(p ->
+                initial.equals(p.getType()) && waitAudit.equals(p.getStatus())).collect(Collectors.toList());
+
+        Boolean initialResult = initialPlanCancel(initialList, userId);
+
+        /**
+         * 这个是变更的 状态为待提交
+         * @author yl
+         * @date 2023-02-27 19:18
+         * @param ids
+         * @return java.lang.Boolean
+         */
+        List<ProjectPlanEntity> changeList = planList.stream().filter(p ->
+                change.equals(p.getType()) && waitAudit.equals(p.getStatus())).collect(Collectors.toList());
+
+        Boolean changeResult = changePlanCancel(changeList, userId);
+        return initialResult && changeResult;
+    }
+
+    /**
+     * 初始排期 是待审核的取消
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-02-27 19:05
+     */
+    public Boolean initialPlanCancel(List<ProjectPlanEntity> planList, String userId) {
+        if (CollectionUtils.isNotEmpty(planList)) {
+            //初次
+            String initial = ProjectPlanConstant.PROJECT_PLAN_INITIAL;
+            String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
+            planList.forEach(plan ->
+                    plan.setStatus(cancelStatus)
+            );
+            List<String> ids = planList.stream().map(ProjectPlanEntity::getId).collect(Collectors.toList());
+            WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
+            withDrawProcess.setUserId(userId);
+            withDrawProcess.setBusinessTableIdList(ids);
+            Boolean result = workflowFeign.withDrawByBusiness(withDrawProcess);
             if (result) {
+                this.updateBatchById(planList);
                 String productId = planList.get(0).getProductId();
-                String type = planList.get(0).getType();
-                //变更的
-                List<String> changePlanIds=planList.stream().filter(p->p.getType().equals(change)).
-                        map(ProjectPlanEntity::getId).collect(Collectors.toList());
-
-                List<ProjectPlanTaskEntity> changeTaskList = projectPlanTaskService.getByProjectPlanIdList(changePlanIds);
-                List<String> changeTaskIds = changeTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
-                //更改任务状态
-                taskService.updateScheduleStatus(productId, changeTaskIds, auditPassStatus, change);
-
-                //变更的
-                List<String> initialPlanIds=planList.stream().filter(p->!p.getType().equals(change)).
-                        map(ProjectPlanEntity::getId).collect(Collectors.toList());
-
-                List<ProjectPlanTaskEntity> initialTaskList = projectPlanTaskService.getByProjectPlanIdList(initialPlanIds);
+                List<ProjectPlanTaskEntity> initialTaskList = projectPlanTaskService.getByProjectPlanIdList(ids);
                 List<String> initialTaskIds = initialTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
-                taskService.updateScheduleStatus(productId, initialTaskIds, auditPassStatus, "");
-
-
-
+                taskService.updateScheduleStatus(productId, initialTaskIds, cancelStatus, initial);
             }
+
+            return result;
         }
-        return flag;
+        return true;
+
+    }
+
+
+    /**
+     * 变更排期 是待审核的取消
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-02-27 19:05
+     */
+    public Boolean changePlanCancel(List<ProjectPlanEntity> planList, String userId) {
+        if (CollectionUtils.isNotEmpty(planList)) {
+            //变更
+            String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
+            String auditPass = BaseStatusEnum.AUDIT_PASS.getStatus();
+            planList.forEach(plan ->
+                    plan.setStatus(auditPass)
+            );
+            List<String> ids = planList.stream().map(ProjectPlanEntity::getId).collect(Collectors.toList());
+            WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
+            withDrawProcess.setUserId(userId);
+            withDrawProcess.setBusinessTableIdList(ids);
+            Boolean result = workflowFeign.withDrawByBusiness(withDrawProcess);
+            if (result) {
+                this.updateBatchById(planList);
+                String productId = planList.get(0).getProductId();
+                List<ProjectPlanTaskEntity> changeTaskList = projectPlanTaskService.getByProjectPlanIdList(ids);
+                List<String> changeTaskIds = changeTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                //更改任务状态
+                taskService.updateScheduleStatus(productId, changeTaskIds, auditPass, change);
+            }
+            return result;
+        }
+
+        return true;
+
     }
 
 
@@ -326,7 +381,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //获取对应的任务
         List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
         Map<String, List<PreTaskVO>> preTaskGourpTaskIdMap = MapUtil.empty();
-        if(CollectionUtil.isNotEmpty(taskEntityList)){
+        if (CollectionUtil.isNotEmpty(taskEntityList)) {
             preTaskGourpTaskIdMap = preTaskService.listByTaskIds(taskEntityList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList()));
         }
         for (ProjectPlanTaskEntity item : planTaskList) {

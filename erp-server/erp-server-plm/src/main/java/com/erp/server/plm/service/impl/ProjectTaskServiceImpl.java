@@ -726,30 +726,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
-
-
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
-
-        /**
-         *  如果是立项阶段
-         *  去掉  在排期审核通过后 在弄
-         *  自动完成一步
-         */
-        Boolean isProjectApprovalPhase = false;
-        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
-            isProjectApprovalPhase = true;
-//            taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
-        }
-
-        //是否是一般任务 true 是
-        Boolean isGeneralTask = TaskTypeEnum.GENERAL_TASK.getCode().equals(dto.getType());
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
         taskEntity.setPhaseName(phaseName);
         taskEntity.setCreateUserId(loginUser.getUid());
         taskEntity.setCreateUserName(loginUser.getUserName());
-        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+        if (null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
             taskEntity.setWorkPeriod(dto.getWorkPeriod());
         }
         //交付文档
@@ -897,12 +881,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        LoginUser loginUser = commonService.getUserInfo();
+
         String scheduleStatus = entity.getScheduleStatus();
         if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
-            throw new ServiceException(ApiError.ERROR_95137);
+            if(!"admin".equals(loginUser.getUserAccount())){
+                throw new ServiceException(ApiError.ERROR_95137);
+            }
         }
         Integer IsFixed = entity.getIsFixed();
-        LoginUser loginUser = commonService.getUserInfo();
+
         //如果是固定任务
         if (IsConstant.YES.equals(IsFixed)) {
             throw new ServiceException(ApiError.ERROR_95014);
@@ -1265,7 +1253,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> chargeIds = dto.getChargeIds();
 
         taskEntity.setPhaseName(phaseName);
-        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+        if (null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
             taskEntity.setWorkPeriod(dto.getWorkPeriod());
         }
         dto.setPhaseName(phaseName);
@@ -2467,7 +2455,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             return false;
         }
         List<ProjectTaskEntity> taskEntityList = this.getByTaskIds(taskIds);
-
+        // 只有审核不通过和待提交 才能修改开始和结束时间
         if (dto.getPlanStartTime() != null && dto.getPlanEndTime() != null) {
             List<String> statusList = new ArrayList<>(2);
             String auditNoPassStatus = BaseStatusEnum.AUDIT_NO_PASS.getStatus();

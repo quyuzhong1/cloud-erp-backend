@@ -42,6 +42,7 @@ public class CommonServiceImpl implements CommonService {
             loginUser = new LoginUser();
             loginUser.setUid(userId);
             loginUser.setUserName(userName);
+            loginUser.setUserAccount("");
         }
         return loginUser;
     }
