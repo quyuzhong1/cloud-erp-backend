@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
@@ -158,6 +159,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductAttestationService productAttestationService;
+
+    //变更财务人员审核
+    @Value("${changeFinancialAudit}")
+    private String financial;
 
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
@@ -2386,29 +2391,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
             //审核人3
             //List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
-            //审核人1
+            //审核人1(产品经理)
             List<String> firstApproveIdList = new ArrayList<>();
             if (StringUtils.isBlank(productDetailEntity.getChargeId())) {
                 throw new ServiceException(ApiError.ERROR_95082);
             }
-            List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).collect(Collectors.toList());
+            List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).distinct().collect(Collectors.toList());
             firstApproveIdList.addAll(firstApproveIds);
-            //审核人2
+            //审核人2(产品部经理/产品经理上级)
             String secondDeptName = SkuApproveConfigureEnum.SECOND_APPROVE.getDesc();
             List<String> secondApproveIdList = setApproveLead(secondDeptName);
-            //审核人3
-            String thirdDeptName = SkuApproveConfigureEnum.THIRD_APPROVE.getDesc();
+            //审核人3(产品研发中心负责人、供应链中心负责人)
+            String thirdDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
             List<String> thirdApproveIdList = setApproveLead(thirdDeptName);
-            //审核人4
-            String fourthDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
-            List<String> fourthApproveIdList = setApproveLead(fourthDeptName);
-
+            //审核人4(Cindy)
+            //财务人员
+            if (StringUtils.isBlank(financial)) {
+                throw new ServiceException(ApiError.ERROR_9035);
+            }
             Map<String, Object> parameterMap = new HashMap<>();
 
             parameterMap.put("firstApproveIdList", firstApproveIdList);
             parameterMap.put("secondApproveIdList", secondApproveIdList);
             parameterMap.put("thirdApproveIdList", thirdApproveIdList);
-            parameterMap.put("fourthApproveIdList", fourthApproveIdList);
+            parameterMap.put("fourthApproveIdList", Arrays.asList(financial));
             startProcess.setParameterMap(parameterMap);
             //启动流程
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
