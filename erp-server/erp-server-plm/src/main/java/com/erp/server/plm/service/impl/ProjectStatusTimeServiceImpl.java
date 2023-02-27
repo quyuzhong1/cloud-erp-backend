@@ -40,6 +40,7 @@ public class ProjectStatusTimeServiceImpl extends ServiceImpl<ProjectStatusTimeM
             projectStatusTimeEntity = new ProjectStatusTimeEntity();
             projectStatusTimeEntity.setProjectId(projectId);
             projectStatusTimeEntity.setProductId(productId);
+            projectStatusTimeEntity.setStatusTime(LocalDateTime.now());
             projectStatusTimeEntity.setStatus(String.valueOf(projectStatus));
         }
          this.saveOrUpdate(projectStatusTimeEntity);

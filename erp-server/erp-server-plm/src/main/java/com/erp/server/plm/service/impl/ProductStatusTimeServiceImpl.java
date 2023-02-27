@@ -30,6 +30,7 @@ public class ProductStatusTimeServiceImpl extends ServiceImpl<ProductStatusTimeM
             //不存在则新增
             productStatusTimeEntity = new ProductStatusTimeEntity();
             productStatusTimeEntity.setProductId(productId);
+            productStatusTimeEntity.setStatusTime(LocalDateTime.now());
             productStatusTimeEntity.setStatus(String.valueOf(approvalStatus));
         }
          this.saveOrUpdate(productStatusTimeEntity);
