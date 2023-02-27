@@ -71,8 +71,8 @@ public class ProductPlanExcelDTO implements Serializable {
     /**
      * 新品/老品
      */
-    @ExcelProperty(value = "新品/老品", index = 6)
-    @FieldValid(fieldName = "新品/老品",enumClass = ProductTypeEnum.class)
+    @ExcelProperty(value = "新品/老品升级", index = 6)
+    @FieldValid(fieldName = "新品/老品升级",enumClass = ProductTypeEnum.class)
     private String productTypeName;
 
     /**
@@ -85,8 +85,8 @@ public class ProductPlanExcelDTO implements Serializable {
     /**
      * 产品名称
      */
-    @ExcelProperty(value = "*产品名称", index = 8)
-    @FieldValid(fieldName = "产品名称",isNotNull = true,maxLength = 200)
+    @ExcelProperty(value = "*产品名称（中文）", index = 8)
+    @FieldValid(fieldName = "产品名称（中文）",isNotNull = true,maxLength = 200)
     private String name;
 
     /**
