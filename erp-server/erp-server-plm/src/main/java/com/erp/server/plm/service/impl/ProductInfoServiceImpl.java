@@ -505,9 +505,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectPhaseEntity> phaseList = projectPhaseService.listByProductIds(productIds);
 
             for (ProductShowDTO item : list) {
-                //项目阶段，判断阶段任务是否全部完成
-                projectInfoService.setProjectPhase(taskList, phaseList, item);
-
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                 }

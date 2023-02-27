@@ -14,13 +14,20 @@
         p.progress_status,
         p.image_url,
         p.property,
-        p.category
-        FROM product_info p INNER JOIN project_info
-        pi
+        p.category,
+        pph.name as projectPhase
+        FROM product_info p INNER JOIN project_info pi
         ON p.id=pi.product_id
+        left JOin (select pt.product_id, min(pp.seq) as seq from project_task pt
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.phase_id = pp.id
+        where pt.status in (0,1,2,3,7,9,10) GROUP BY pt.product_id) pp on p.id = pp.product_id
+        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id = #{params.categoryId}
+        </if>
+        <if test="params.phaseId != '' and params.phaseId != null">
+            AND pph.id = #{params.phaseId}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -67,12 +74,20 @@
         p.progress_status,
         p.image_url,
         p.property,
-        p.category
+        p.category,
+        pph.name as projectPhase
         FROM product_info p
         INNER JOIN project_info pi ON p.id=pi.product_id
+        left JOin (select pt.product_id, min(pp.seq) as seq from project_task pt
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.phase_id = pp.id
+        where pt.status in (0,1,2,3,7,9,10) GROUP BY pt.product_id) pp on p.id = pp.product_id
+        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId!='' and params.categoryId!=null">
-            AND P.category_id=#{params.categoryId}
+        <if test="params.categoryId != '' and params.categoryId != null">
+            AND P.category_id = #{params.categoryId}
+        </if>
+        <if test="params.phaseId != '' and params.phaseId != null">
+            AND pph.id = #{params.phaseId}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -103,6 +118,7 @@
         <if test="params.param!='' and params.param!=null">
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
+
 
         ORDER BY  pi.create_time DESC
     </select>

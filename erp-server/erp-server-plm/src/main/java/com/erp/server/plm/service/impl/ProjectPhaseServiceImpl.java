@@ -25,10 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -226,6 +223,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
         if (CollectionUtils.isNotEmpty(sysPhaseNames)) {
             List<ProjectPhaseEntity> existList = projectPhaseService.getByProductId(productId);
+            Integer seq = existList.stream().max(Comparator.comparingInt(ProjectPhaseEntity::getSeq)).map(ProjectPhaseEntity::getSeq).get();
             List<CopySourceDTO> sourceList = new ArrayList<>(sysPhaseNames.size());
             List<ProjectPhaseEntity> saveList = new ArrayList<>();
             for (SysTaskPhaseEntity item : sysPhaseNames) {
@@ -237,6 +235,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
                     phaseEntity.setProductId(productId);
                     phaseEntity.setIsSourceSys(IsConstant.YES);
                     String id = IdWorker.getIdStr();
+                    seq++;
+                    phaseEntity.setSeq(seq);
                     phaseEntity.setId(id);
                     source.setNewCreateId(id);
                     saveList.add(phaseEntity);

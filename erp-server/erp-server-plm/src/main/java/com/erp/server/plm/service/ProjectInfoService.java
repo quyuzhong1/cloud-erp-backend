@@ -5,8 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
-import com.erp.model.plm.entity.ProjectPhaseEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
 
 import java.util.List;
 
@@ -43,8 +41,6 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     boolean archive(String productId);
 
     ProjectInfoEntity getByProductId(String productId);
-
-    void setProjectPhase(List<ProjectTaskEntity> taskList, List<ProjectPhaseEntity> phaseList, ProductShowDTO item);
 
     List<BasicDTO> listProjectInfo(ProductSearchDTO dto);
 
