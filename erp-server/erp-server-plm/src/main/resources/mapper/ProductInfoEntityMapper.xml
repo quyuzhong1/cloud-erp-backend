@@ -27,7 +27,7 @@
           pph.name as projectPhase
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id
-        left JOin (select pt.product_id, COALESCE(min(pp.seq),min(ppe.seq)) as seq from project_task pt
+        left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
         left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
@@ -78,7 +78,7 @@
     <select id="listNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
         SELECT p.id, p.name FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id
-        left JOin (select pt.product_id, COALESCE(min(pp.seq),min(ppe.seq)) as seq from project_task pt
+        left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
         left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
@@ -153,7 +153,7 @@
         p.category
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id
-        left JOin (select pt.product_id, COALESCE(min(pp.seq),min(ppe.seq)) as seq from project_task pt
+        left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
         left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
@@ -199,7 +199,7 @@
         SELECT p.id, p.name
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id
-        left JOin (select pt.product_id, COALESCE(min(pp.seq),min(ppe.seq)) as seq from project_task pt
+        left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
         left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
