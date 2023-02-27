@@ -432,10 +432,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         productPlanEntity.setSpuNo(productInfoEntity.getSpuNo());
         productPlanEntity.setPropertyId(productInfoEntity.getPropertyId());
         productPlanEntity.setProperty(productInfoEntity.getProperty());
+        //未生成项目列表则取产品状态
         ProductPlanStatusEnum  statusEnum = ProductPlanStatusEnum.getByName(ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()));
         if (ObjectUtils.isNotEmpty(statusEnum)) {
             productPlanEntity.setProductStatus(statusEnum.getCode());
         }
+        //生成了项目列表则取项目状态
+        projectInfoService.getByProductId(productInfoEntity.getId());
+
         this.updateById(productPlanEntity);
     }
 

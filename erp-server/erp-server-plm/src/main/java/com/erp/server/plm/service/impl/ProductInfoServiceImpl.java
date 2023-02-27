@@ -195,50 +195,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.count(queryWrapper);
     }
 
-    private List<String> getUpdateField(ProductDTO productDTO) {
-        ProductInfoEntity dto = new ProductInfoEntity();
-        BeanMapper.copy(productDTO, dto);
-        List<String> list = new ArrayList<>();
-        ProductInfoEntity productInfoEntity = this.getById(dto.getId());
-        if (!productInfoEntity.getName().equals(dto.getName())) {
-            list.add("编辑了[产品名称]由[" + productInfoEntity.getName() + "]改为[" + dto.getName() + "]");
-        }
-        if (!productInfoEntity.getProperty().equals(dto.getProperty())) {
-            list.add("编辑了[产品属性]由[" + productInfoEntity.getProperty() + "]改为[" + dto.getProperty() + "]");
-        }
-        //负责人ids
-        List<String> chargeIds = productDTO.getChargeIds();
-        String chargeName = commonService.getNameByIds(chargeIds);
-        if (!productInfoEntity.getChargeName().equals(chargeName)) {
-            list.add("编辑了[产品负责人]由[" + productInfoEntity.getChargeName() + "]改为[" + chargeName + "]");
-        }
-        if (!productInfoEntity.getGrade().equals(dto.getGrade())) {
-            list.add("编辑了[产品等级]由[" + productInfoEntity.getGrade() + "]改为[" + dto.getGrade() + "]");
-        }
-        if (!productInfoEntity.getBrandName().equals(dto.getBrandName())) {
-            list.add("编辑了[产品品牌]由[" + productInfoEntity.getBrandName() + "]改为[" + dto.getBrandName() + "]");
-        }
-        if (!productInfoEntity.getCategory().equals(dto.getCategory())) {
-            list.add("编辑了[产品类别]由[" + productInfoEntity.getCategory() + "]改为[" + dto.getCategory() + "]");
-        }
-  /*      if (!productInfoEntity.getSpuNo().equals(dto.getSpuNo())) {
-            list.add("编辑了[spu]由[" + productInfoEntity.getCategory() + "]改为[" + dto.getCategory() + "]");
-        }
-        if (!productInfoEntity.getSellSpot().equals(dto.getSellSpot())) {
-            list.add("编辑了[产品卖点]由[" + productInfoEntity.getSellSpot() + "]改为[" + dto.getSellSpot() + "]");
-        }
-        if (!productInfoEntity.getFunctionDesc().equals(dto.getFunctionDesc())) {
-            list.add("编辑了[产品功能描述]由[" + productInfoEntity.getFunctionDesc() + "]改为[" + dto.getFunctionDesc() + "]");
-        }
-        if (!productInfoEntity.getUsageDesc().equals(dto.getUsageDesc())) {
-            list.add("编辑了[产品用途]由[" + productInfoEntity.getUsageDesc() + "]改为[" + dto.getUsageDesc() + "]");
-        }
-        if (!productInfoEntity.getMaterials().equals(dto.getMaterials())) {
-            list.add("编辑了[主要材质]由[" + productInfoEntity.getMaterials() + "]改为[" + dto.getMaterials() + "]");
-        }*/
-        return list;
-    }
-
     /**
      * 保存或许修改产品信息
      *
@@ -316,14 +272,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //通知新建产品
             noticeMessageService.newProductNotice(loginUser.getUserName(), entity.getId());
         } else {
-            //新增产品操作日志
-            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-            productOperateRecordDTO.setProductId(entity.getId());
-            List<String> updateField = this.getUpdateField(dto);
-            if (updateField.size() > 0) {
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
-                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-            }
             //产品信息修改操作日志
             saveProductInfoLog(dto, oldEntity, entity.getId(), entity.getId());
         }
