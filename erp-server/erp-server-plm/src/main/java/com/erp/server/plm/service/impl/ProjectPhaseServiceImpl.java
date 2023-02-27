@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.dto.BasicProductIdDTO;
-import com.erp.model.plm.dto.BatchTaskPhaseDTO;
-import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.TaskPhaseDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
@@ -271,6 +268,22 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     @Override
     public List<ProjectPhaseEntity> listByPhaseNames(List<String> phaseNames,String productId) {
         return this.baseMapper.listByPhaseNames(phaseNames,productId);
+    }
+
+    @Override
+    public List<SelectShowDTO> listPhaseName() {
+        List<SelectShowDTO> resultList = new ArrayList<>();
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.groupBy(ProjectPhaseEntity::getName);
+        queryWrapper.select(ProjectPhaseEntity::getName);
+        List<String> list = this.listObjs(queryWrapper, Object::toString);
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        list.forEach(obj -> {
+            resultList.add(new SelectShowDTO(null,obj,obj));
+        });
+        return resultList;
     }
 
     private void checkPhaseTask(String id) {

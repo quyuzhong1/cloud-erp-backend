@@ -1,10 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.BasicProductIdDTO;
-import com.erp.model.plm.dto.BatchTaskPhaseDTO;
-import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.TaskPhaseDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 
 import java.util.List;
@@ -46,4 +43,6 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
     List<ProjectPhaseEntity> listByProductIds(List<String> productIds);
 
     List<ProjectPhaseEntity> listByPhaseNames(List<String> phaseNames,String productId);
+
+    List<SelectShowDTO> listPhaseName();
 }

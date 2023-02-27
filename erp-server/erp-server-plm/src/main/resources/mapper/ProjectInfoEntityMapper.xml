@@ -27,8 +27,8 @@
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseId != '' and params.phaseId != null">
-            AND pph.id = #{params.phaseId}
+        <if test="params.phaseName != '' and params.phaseName != null">
+            AND pph.name = #{params.phaseName}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -88,8 +88,8 @@
         <if test="params.categoryId != '' and params.categoryId != null">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseId != '' and params.phaseId != null">
-            AND pph.id = #{params.phaseId}
+        <if test="params.phaseName != '' and params.phaseName != null">
+            AND pph.name = #{params.phaseName}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -139,8 +139,8 @@
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
-        <if test="params.phaseId != '' and params.phaseId != null">
-            AND pph.id = #{params.phaseId}
+        <if test="params.phaseName != '' and params.phaseName != null">
+            AND pph.name = #{params.phaseName}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -189,8 +189,8 @@
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseId != '' and params.phaseId != null">
-            AND pph.id = #{params.phaseId}
+        <if test="params.phaseName != '' and params.phaseName != null">
+            AND pph.name = #{params.phaseName}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')

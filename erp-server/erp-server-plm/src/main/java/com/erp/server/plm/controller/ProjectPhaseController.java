@@ -1,16 +1,16 @@
 package com.erp.server.plm.controller;
 
 
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BasicProductIdDTO;
 import com.erp.model.plm.dto.BatchTaskPhaseDTO;
+import com.erp.model.plm.dto.SelectShowDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.server.plm.service.ProjectPhaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import java.util.List;
 
@@ -67,6 +67,15 @@ public class ProjectPhaseController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
+    /**
+     * 项目任务-所有阶段
+     *
+     * @return
+     */
+    @GetMapping("/listPhaseName")
+    public ApiResult<List<SelectShowDTO>> listAll() {
+        List<SelectShowDTO> list = projectPhaseService.listPhaseName();
+        return success(list);
+    }
 }
 
