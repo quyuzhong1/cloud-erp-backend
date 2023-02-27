@@ -155,6 +155,11 @@ public class ProjectScheduleController extends BaseController {
         return success(list);
     }
 
+
+    /**
+     * 自动排期
+     * @return
+     */
     @PostMapping("/auto")
     public ApiResult<ProjectTaskPlanAutoVO> autoSchedule(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<ProjectPlanTaskDTO.AutoDTO> dto){
         ProjectTaskPlanAutoVO resultVO = projectPlanService.autoSchedule(dto);

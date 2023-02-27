@@ -113,9 +113,9 @@ public class TemplateTaskDTO implements Serializable {
 //        private List<String> preTaskIdList;
 
         /**
-         * 前置任务列表
+         * 前置任务id
          */
-        private List<PreTaskDTO> preTaskList;
+        private List<String> preTaskIdList;
 
         /**
          * 业务流程表id

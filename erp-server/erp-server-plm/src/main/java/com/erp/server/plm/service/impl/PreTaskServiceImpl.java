@@ -60,11 +60,10 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
      */
 
     @Override
-    public void savePreTask(String taskId, List<PreTaskDTO> preTaskList, String productId) {
+    public void savePreTask(String taskId, List<String> preTaskList, String productId) {
         //先删除前置任务
-        List<String> preTaskIdList = preTaskList.stream().map(PreTaskDTO::getPreTaskId).collect(Collectors.toList());
-        removePreTaskByTaskId(taskId, preTaskIdList);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+        removePreTaskByTaskId(taskId, preTaskList);
+        if (CollectionUtils.isNotEmpty(preTaskList)) {
             List<PreTaskEntity> addList = preTaskList.stream()
                     .map(preTask -> new PreTaskEntity(preTask, taskId, productId))
                     .collect(Collectors.toList());

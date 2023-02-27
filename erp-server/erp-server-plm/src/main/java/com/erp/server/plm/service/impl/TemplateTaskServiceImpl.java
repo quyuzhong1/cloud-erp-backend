@@ -482,7 +482,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //保存模板配置信息
         templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(), dto.getTemplateId(), dto.getFieldConfigType(), dto.getFieldJson());
         //保存前置任务
-        templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskList(), dto.getTemplateId());
+        templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
     }
 

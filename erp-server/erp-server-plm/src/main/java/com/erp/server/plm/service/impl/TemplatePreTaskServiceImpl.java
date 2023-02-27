@@ -97,19 +97,16 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     }
 
     @Override
-    public void saveTemplatePreTaskList(String taskId, List<PreTaskDTO> preTaskList, String templateId) {
+    public void saveTemplatePreTaskList(String taskId, List<String> preTaskIdList, String templateId) {
         //先删除前置任务
-        List<String> preTaskIdList = preTaskList.stream().map(PreTaskDTO::getPreTaskId).collect(Collectors.toList());
         removeTemplatePreTask(taskId,templateId, preTaskIdList);
-        if (CollectionUtils.isNotEmpty(preTaskList)) {
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
             List<TemplatePreTaskEntity> addList = new ArrayList<>();
-            for (PreTaskDTO preTask : preTaskList) {
+            for (String preTaskId : preTaskIdList) {
                 TemplatePreTaskEntity entity = new TemplatePreTaskEntity();
-                entity.setPreTaskId(preTask.getPreTaskId());
+                entity.setPreTaskId(preTaskId);
                 entity.setTaskId(taskId);
                 entity.setTemplateId(templateId);
-                entity.setIntervalWorkPeriod(preTask.getIntervalWorkPeriod());
-                entity.setRelationship(preTask.getRelationshipCode());
                 addList.add(entity);
             }
             this.saveBatch(addList);

@@ -788,7 +788,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskList(), dto.getProductId());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
             //保存SKU配置 字段 关系表
             taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
@@ -1294,8 +1294,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             dto.setDeliveryDocsNames(deliveryDocsNames);
         }
         //前置任务名称
-        if (CollectionUtils.isNotEmpty(dto.getPreTaskList())) {
-            List<ProjectTaskEntity> projectTaskList = this.listByIds(dto.getPreTaskList().stream().map(PreTaskDTO::getPreTaskId).collect(Collectors.toList()));
+        if (CollectionUtils.isNotEmpty(dto.getPreTaskIdList())) {
+            List<ProjectTaskEntity> projectTaskList = this.listByIds(dto.getPreTaskIdList());
             if (CollectionUtils.isNotEmpty(projectTaskList)) {
                 String preTaskNames = projectTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
                 dto.setPreTaskNames(preTaskNames);
@@ -1364,7 +1364,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskList(), dto.getProductId());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
             //保存SKU配置 字段 关系表
             taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());

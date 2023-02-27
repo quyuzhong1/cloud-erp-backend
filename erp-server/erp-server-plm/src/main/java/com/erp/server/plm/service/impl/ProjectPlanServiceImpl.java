@@ -852,12 +852,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public ProjectTaskPlanAutoVO autoSchedule(List<ProjectPlanTaskDTO.AutoDTO> dto) {
         // 校验第一条是否有开始时间
+//        dto.stream().
 
         // 查询所有休息日
 
-        // 对当前日期进行排期
+        // 对当前日期进行排期 - 校验是否存在冲突重复id
 
-        //
+        // 查询下一个节点
+
+        // 对下一个节点进行排期
 
         return null;
     }

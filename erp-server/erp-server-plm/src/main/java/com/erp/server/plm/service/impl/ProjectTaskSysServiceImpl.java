@@ -210,7 +210,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
 
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
             //保存前置任务
-            preTaskService.savePreTask(entity.getId(), dto.getPreTaskList(), "");
+            preTaskService.savePreTask(entity.getId(), dto.getPreTaskIdList(), "");
 
             //保存SKU配置 字段 关系表
             taskRefSkuConfigService.addSkuField(entity.getId(), "", dto.getFieldConfigType(), dto.getFieldJson());

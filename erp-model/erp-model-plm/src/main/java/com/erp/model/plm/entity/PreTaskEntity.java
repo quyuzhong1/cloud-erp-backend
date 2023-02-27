@@ -67,12 +67,10 @@ public class PreTaskEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public PreTaskEntity(PreTaskDTO preTask, String taskId, String productId) {
-        this.preTaskId = preTask.getPreTaskId();
+    public PreTaskEntity(String preTaskId, String taskId, String productId) {
+        this.preTaskId = preTaskId;
         this.taskId = taskId;
         this.productId = productId;
-        this.intervalWorkPeriod = preTask.getIntervalWorkPeriod();
-        this.relationship = preTask.getRelationshipCode();
     }
 
     public PreTaskEntity(PreTaskUpdateDTO updateDTO) {

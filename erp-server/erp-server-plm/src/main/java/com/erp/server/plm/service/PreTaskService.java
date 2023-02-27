@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public interface PreTaskService extends IService<PreTaskEntity> {
 
-    void savePreTask(String id, List<PreTaskDTO> preTaskList, String productId);
+    void savePreTask(String id, List<String> preTaskList, String productId);
 
     Boolean addPreTask(SetPreTaskDTO dto);
 

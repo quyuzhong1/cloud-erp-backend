@@ -27,7 +27,7 @@ public interface TemplatePreTaskService extends IService<TemplatePreTaskEntity> 
      * @param templateId
 
      */
-    void saveTemplatePreTaskList(String taskId, List<PreTaskDTO> preTaskList, String templateId);
+    void saveTemplatePreTaskList(String taskId, List<String> preTaskList, String templateId);
 
     /**
      * @description: 根据任务id和模板id查询前置任务

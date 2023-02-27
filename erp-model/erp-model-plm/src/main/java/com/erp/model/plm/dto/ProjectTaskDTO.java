@@ -73,9 +73,9 @@ public class ProjectTaskDTO  implements Serializable {
     private List<String> chargeIds;
 
     /**
-     * 前置任务
+     * 前置任务id
      */
-    private List<PreTaskDTO> preTaskList;
+    private List<String> preTaskIdList;
 
     /**
      * 计划开始时间
