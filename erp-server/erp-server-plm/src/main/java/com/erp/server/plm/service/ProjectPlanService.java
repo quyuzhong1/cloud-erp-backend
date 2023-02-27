@@ -5,9 +5,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
+import com.erp.model.plm.dto.ProjectPlanTaskDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
+import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
@@ -85,4 +87,10 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
     List<Map<String, Object>> getSubmitSchedule();
 
 
+    /**
+     * 自动排期服务
+     * @param dto
+     * @return
+     */
+    ProjectTaskPlanAutoVO autoSchedule(List<ProjectPlanTaskDTO.AutoDTO> dto);
 }

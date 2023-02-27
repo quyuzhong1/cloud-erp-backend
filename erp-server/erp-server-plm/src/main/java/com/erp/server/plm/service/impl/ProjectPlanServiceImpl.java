@@ -19,12 +19,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
+import com.erp.model.plm.dto.ProjectPlanTaskDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.PreTaskVO;
-import com.erp.model.plm.vo.ProjectPlanDetailsVO;
-import com.erp.model.plm.vo.SchedulePagingVO;
-import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
+import com.erp.model.plm.vo.*;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -848,6 +846,14 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
         }
         return list;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ProjectTaskPlanAutoVO autoSchedule(List<ProjectPlanTaskDTO.AutoDTO> dto) {
+        //
+
+        return null;
     }
 
 }

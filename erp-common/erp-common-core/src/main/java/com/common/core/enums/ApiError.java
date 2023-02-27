@@ -48,6 +48,7 @@ public enum ApiError implements Serializable {
     ERROR_1014(1014, "请勿重复操作"),
     ERROR_1015(1015, "导出失败"),
     ERROR_1016(1016, "导入文件格式错误，请使用xlsx文件"),
+    ERROR_1017(1017, "参数列表不能为空"),
     /**
      * 警告信息 从800 开始
      */

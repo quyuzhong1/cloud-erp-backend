@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RelationshipDTO {
+public class RelationshipVO {
 
     /**
      * code

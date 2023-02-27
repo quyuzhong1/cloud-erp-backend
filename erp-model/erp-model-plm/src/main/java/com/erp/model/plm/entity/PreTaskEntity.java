@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import com.erp.model.plm.dto.PreTaskDTO;
+import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -72,5 +73,11 @@ public class PreTaskEntity implements Serializable {
         this.productId = productId;
         this.intervalWorkPeriod = preTask.getIntervalWorkPeriod();
         this.relationship = preTask.getRelationshipCode();
+    }
+
+    public PreTaskEntity(PreTaskUpdateDTO updateDTO) {
+        this.id = updateDTO.getId();
+        this.intervalWorkPeriod = updateDTO.getIntervalWorkPeriod();
+        this.relationship = updateDTO.getRelationshipCode();
     }
 }

@@ -12,6 +12,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectTaskService;
@@ -20,6 +21,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.util.*;
 
 /**
@@ -146,6 +149,18 @@ public class ProjectTaskController extends BaseController {
 //        Boolean flag = preTaskService.addPreTask(dto);
 //        return flag == true ? success() : failure();
 //    }
+
+    @PostMapping("/update/pre/task")
+    public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
+        Boolean flag = preTaskService.updatePreTask(dto);
+        return flag == true ? success() : failure();
+    }
+
+    @PostMapping("/list/pre/task")
+    public ApiResult<List<PreTaskListVO>> listPreTask(@RequestBody @Validated PreTaskDTO.ListPreTaskDTO dto) {
+        List<PreTaskListVO> reusltList = preTaskService.ListPreTaskByTaskId(dto.getTaskId());
+        return success(reusltList);
+    }
 
     /**
      * 项目任务-任务详情-移除前置任务

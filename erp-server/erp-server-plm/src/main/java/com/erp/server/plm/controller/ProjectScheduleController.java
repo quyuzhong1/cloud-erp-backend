@@ -1,9 +1,14 @@
 package com.erp.server.plm.controller;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.plm.dto.ProjectPlanTaskDTO;
+import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -18,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -150,8 +156,9 @@ public class ProjectScheduleController extends BaseController {
     }
 
     @PostMapping("/auto")
-    public ApiResult autoSchedule(){
-        return success();
+    public ApiResult<ProjectTaskPlanAutoVO> autoSchedule(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<ProjectPlanTaskDTO.AutoDTO> dto){
+        ProjectTaskPlanAutoVO resultVO = projectPlanService.autoSchedule(dto);
+        return success(resultVO);
     }
 
 }

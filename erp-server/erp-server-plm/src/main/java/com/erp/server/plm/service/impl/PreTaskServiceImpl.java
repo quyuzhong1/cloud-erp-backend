@@ -7,10 +7,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.PreTaskDTO;
+import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.server.plm.mapper.PreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
@@ -21,6 +23,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -328,6 +331,27 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
                 .map(PreTaskVO::new)
                 .collect(Collectors.groupingBy(PreTaskVO::getTaskId));
         return groupByTaskIdMap;
+    }
+
+    @Override
+    public List<PreTaskListVO> ListPreTaskByTaskId(String taskId) {
+        List<PreTaskEntity> entityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
+                .ne(PreTaskEntity::getProductId, "")
+                .list();
+        if(CollectionUtil.isEmpty(entityList)){
+            return Collections.emptyList();
+        }
+        return entityList.stream().map(PreTaskListVO::new).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updatePreTask(List<PreTaskUpdateDTO> dto) {
+        if (CollectionUtil.isEmpty(dto)) {
+            return false;
+        }
+        List<PreTaskEntity> updateList = dto.stream().map(PreTaskEntity::new).collect(Collectors.toList());
+        return updateBatchById(updateList);
     }
 
 

@@ -13,24 +13,21 @@ import javax.validation.constraints.NotBlank;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreTaskDTO {
+public class PreTaskUpdateDTO {
+
+
     /**
-     * 前置任务id
+     * 关系Id
      */
-    private String preTaskId;
+    @NotBlank(message = "关系ID不能为空")
+    private String id;
     /**
      * 依赖关系
      */
+    @NotBlank()
     private TaskRelationshipEnum relationshipCode;
     /**
      * 间隔工期
      */
     private Integer intervalWorkPeriod;
-
-    @Data
-    @NoArgsConstructor
-    public static class ListPreTaskDTO{
-        @NotBlank(message = "任务id不能为空")
-        private String taskId;
-    }
 }
