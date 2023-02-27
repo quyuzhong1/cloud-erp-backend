@@ -64,7 +64,7 @@ public enum ProductStyleEnum implements EnumMessage {
         ProductStyleEnum[] enums = values();
         for (ProductStyleEnum plmEnum : enums) {
             if (plmEnum.getName().equals(name)) {
-                return plmEnum.getName();
+                return plmEnum.getCode();
             }
         }
         return "";
