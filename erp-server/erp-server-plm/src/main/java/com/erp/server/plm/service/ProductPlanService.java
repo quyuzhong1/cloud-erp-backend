@@ -153,7 +153,7 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @date: 2023/2/24 11:49
      * @return List<SelectShowDTO>
      */
-    List<SelectShowDTO> listNotRelatedProductPlan();
+    List<SelectShowDTO> listNotRelatedProductPlan(String productId);
     /**
      * @description:更新产品规划数据
      * @author Will

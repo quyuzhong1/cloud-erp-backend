@@ -441,12 +441,23 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public void relatedProductPlanByProduct(String productPlanId, ProductInfoEntity entity) {
+        if (ObjectUtils.isEmpty(entity.getApprovalStatus())) {
+            entity.setApprovalStatus(ApprovalStatusEnum.WAIT.getCode());
+        }
+        //根据产品id清空之前关联的规划
+        ProductPlanEntity found = this.getByProductId(entity.getId());
+        if (ObjectUtils.isNotEmpty(found)) {
+            found.setProductId("");
+            found.setProductStatus("");
+            this.updateById(found);
+        }
+        //未关联时
+        if (StringUtils.isBlank(productPlanId)) {
+            return;
+        }
         ProductPlanEntity productPlanEntity = this.getById(productPlanId);
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95134);
-        }
-        if (ObjectUtils.isEmpty(entity.getApprovalStatus())) {
-            entity.setApprovalStatus(ApprovalStatusEnum.WAIT.getCode());
         }
         //更新同步规划数据
         updateProductPlanByProduct(productPlanEntity,entity);
@@ -694,12 +705,19 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
-    public List<SelectShowDTO> listNotRelatedProductPlan() {
+    public List<SelectShowDTO> listNotRelatedProductPlan(String productId) {
         List<SelectShowDTO> resultList = new ArrayList<>();
         //查询所有未关联产品的规划
         List<ProductPlanEntity> list = this.listAllNotRelatedProductPlan();
         if (CollectionUtils.isEmpty(list)) {
             return  resultList;
+        }
+        //如果有传产品id则将关联的规划加入下拉框用于回显
+        if (StringUtils.isNotBlank(productId)) {
+            ProductPlanEntity productPlanEntity = this.getByProductId(productId);
+            if (ObjectUtils.isNotEmpty(productPlanEntity)) {
+                resultList.add(new SelectShowDTO(null,productPlanEntity.getId(),productPlanEntity.getName()));
+            }
         }
         list.forEach(obj -> {
             resultList.add(new SelectShowDTO(null,obj.getId(),obj.getName()));

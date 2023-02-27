@@ -194,8 +194,8 @@ public class ProductPlanController extends BaseController {
      * @return ApiResult<List<SelectShowDTO>>
      */
     @GetMapping("/listNotRelatedProductPlan")
-    public ApiResult<List<SelectShowDTO>> listNotRelatedProductPlan() {
-        List<SelectShowDTO> list = productPlanService.listNotRelatedProductPlan();
+    public ApiResult<List<SelectShowDTO>> listNotRelatedProductPlan(@Param("productId")String productId) {
+        List<SelectShowDTO> list = productPlanService.listNotRelatedProductPlan(productId);
         return  success(list);
     }
 
