@@ -184,4 +184,13 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @param productId
      */
     void removeProductId(String productId);
+
+    /**
+     * @description: 根据产品id查询
+     * @author Will
+     * @date: 2023/2/27 17:47
+     * @param productId
+     * @return ProductPlanEntity
+     */
+    ProductPlanEntity getByProductId(String productId);
 }

@@ -436,10 +436,29 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         ProductPlanStatusEnum  statusEnum = ProductPlanStatusEnum.getByName(ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()));
         if (ObjectUtils.isNotEmpty(statusEnum)) {
             productPlanEntity.setProductStatus(statusEnum.getCode());
+        } else {
+            productPlanEntity.setProductStatus(ProductPlanStatusEnum.WAIT.getCode());
         }
         //生成了项目列表则取项目状态
-        projectInfoService.getByProductId(productInfoEntity.getId());
-
+        ProjectInfoEntity projectInfoEntity = projectInfoService.getByProductId(productInfoEntity.getId());
+        if (ObjectUtils.isNotEmpty(projectInfoEntity)) {
+            //启动
+            if (ProjectStateEnum.YES_START.getState().equals(productInfoEntity.getApprovalStatus())) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.YES_START.getCode());
+            }
+            //进行中
+            if (ProjectStateEnum.ING.getState().equals(productInfoEntity.getApprovalStatus())) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.ING.getCode());
+            }
+            //完成
+            if (ProjectStateEnum.FINISH.getState().equals(productInfoEntity.getApprovalStatus())) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
+            }
+            //中止
+            if (ProjectStateEnum.STOP.getState().equals(productInfoEntity.getApprovalStatus())) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
+            }
+        }
         this.updateById(productPlanEntity);
     }
 
@@ -831,7 +850,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     /**
      * 根据产品id查询
      */
-    private ProductPlanEntity getByProductId(String productId) {
+    @Override
+    public ProductPlanEntity getByProductId(String productId) {
         LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductPlanEntity::getProductId,productId);
         return this.getOne(queryWrapper);
