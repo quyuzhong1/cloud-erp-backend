@@ -131,8 +131,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
-        finishEntity.setOldUploadType(dto.getUploadType());
-        finishEntity.setOldFileName(fileName);
+
         List<TaskDocsFinishEntity> resultList = new ArrayList<>();
         List<UploadMultipartFileDTO> list = dto.getList();
         for (UploadMultipartFileDTO uploadMultipartFileDTO: list) {
@@ -155,7 +154,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     if (StringUtils.isBlank(fileUrl)) {
                         throw new ServiceException(ApiError.ERROR_95018);
                     }
-                    finishEntity.setUploadType(IsConstant.NO);
+                    entity.setUploadType(IsConstant.NO);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileSuffix(fileSuffix);
                     entity.setFileSize(fileSize);
@@ -163,6 +162,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     entity.setFileUrl(fileUrl);
                     entity.setOldFileName(fileName);
                     entity.setOldFileUrl(fileUrl);
+                    entity.setOldUploadType(IsConstant.NO);
                     fileNames.add(fileName);
                     resultList.add(entity);
                 }
@@ -176,6 +176,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileUrl(fileUrl);
                     entity.setOldFileUrl(fileUrl);
+                    entity.setOldUploadType(dto.getUploadType());
                     resultList.add(entity);
                 }
             }
@@ -306,8 +307,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
-        finishEntity.setOldUploadType(dto.getUploadType());
-        finishEntity.setOldFileName(fileName);
+
         List<TaskDocsFinishEntity> resultList = new ArrayList<>();
         List<UploadMultipartFileDTO> list = dto.getList();
         for (UploadMultipartFileDTO uploadMultipartFileDTO: list) {
@@ -333,13 +333,14 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     if (StringUtils.isBlank(fileUrl)) {
                         throw new ServiceException(ApiError.ERROR_95018);
                     }
-                    finishEntity.setUploadType(IsConstant.NO);
+                    entity.setUploadType(IsConstant.NO);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileSuffix(fileSuffix);
                     entity.setFileSize(fileSize);
                     entity.setFileName(fileName);
                     entity.setFileUrl(fileUrl);
                     entity.setOldFileName(fileName);
+                    entity.setOldUploadType(IsConstant.NO);
                     entity.setOldFileUrl(fileUrl);
                     fileNames.add(fileName);
                     resultList.add(entity);
@@ -354,6 +355,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileUrl(fileUrl);
                     entity.setOldFileUrl(fileUrl);
+                    entity.setOldUploadType(IsConstant.YES);
                     resultList.add(entity);
                 }
             }
@@ -566,8 +568,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
-        finishEntity.setOldUploadType(dto.getUploadType());
-        finishEntity.setOldFileName(fileName);
         List<TaskDocsFinishEntity> resultList = new ArrayList<>();
         List<UploadMultipartFileDTO> list = dto.getList();
         if (CollectionUtils.isNotEmpty(list)) {
@@ -601,6 +601,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                         entity.setFileName(fileName);
                         entity.setFileUrl(fileUrl);
                         entity.setOldFileName(fileName);
+                        entity.setOldUploadType(IsConstant.NO);
                         entity.setOldFileUrl(fileUrl);
                         fileNames.add(fileName);
                         resultList.add(entity);
@@ -615,6 +616,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                         entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                         entity.setFileUrl(fileUrl);
                         entity.setOldFileUrl(fileUrl);
+                        entity.setOldUploadType(IsConstant.YES);
                         resultList.add(entity);
                     }
                 }

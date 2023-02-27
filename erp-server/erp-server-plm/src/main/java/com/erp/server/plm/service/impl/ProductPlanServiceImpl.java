@@ -39,6 +39,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
 import com.erp.server.plm.mapper.ProductPlanMapper;
 import com.erp.server.plm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,7 @@ import java.util.stream.Collectors;
  * @description: TODO
  * @date 2023/2/20 19:53
  */
+@Slf4j
 @Service
 public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, ProductPlanEntity>
         implements ProductPlanService {
@@ -248,8 +250,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
+            log.error("导入错误！",e);
             throw new ServiceException(ApiError.ERROR_95124);
         } catch (ExcelCommonException e) {
+            log.error("导入格式错误！",e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
         List<ProductPlanExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
