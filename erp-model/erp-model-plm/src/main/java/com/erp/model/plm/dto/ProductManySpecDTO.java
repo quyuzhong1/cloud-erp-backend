@@ -65,4 +65,16 @@ public class ProductManySpecDTO {
      * 采购备注信息
      */
     private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
+
+
+    /**
+     * 包装辅料
+     */
+    private List<ProductAccessoriesDTO> productAccessoriesList;
+
+
+    /**
+     * 产品认证
+     */
+    private List<ProductAttestationDTO> productAttestationList;
 }

@@ -2,7 +2,10 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.ProductAttestationDTO;
 import com.erp.model.plm.entity.ProductAttestationEntity;
+
+import java.util.List;
 
 /**
  * 产品认证信息表(ProductAttestation)表服务接口
@@ -12,6 +15,12 @@ import com.erp.model.plm.entity.ProductAttestationEntity;
  */
 public interface ProductAttestationService  extends IService<ProductAttestationEntity> {
 
-
-
+    /**
+     * 保存或者修改 产品认证信息
+     * @author yl
+     * @date 2023-02-27 9:13
+     * @param productAttestationList
+     * @return java.lang.Boolean
+     */
+    Boolean saveOrUpdateBatchAttestation(List<ProductAttestationDTO> productAttestationList);
 }

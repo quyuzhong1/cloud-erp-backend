@@ -153,6 +153,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductPlanService productPlanService;
 
+    @Resource
+    private ProductAccessoriesService productAccessoriesService;
+
+    @Resource
+    private ProductAttestationService productAttestationService;
+
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
@@ -202,7 +208,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             item.setProductStateName(ProductDetailStateEnum.getNameByCode(productState));
             //是否可销售
             Integer isMarketable = item.getIsMarketable();
-            Integer yes=0;
+            Integer yes = 0;
             if (yes.equals(isMarketable)) {
                 item.setIsMarketableName("是");
             } else {
@@ -752,6 +758,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(productInfoDTO.getId());
+
+        //9.修改/新增  包装辅料信息
+        List<ProductAccessoriesDTO> productAccessoriesList = productManySpecDTO.getProductAccessoriesList();
+        if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
+            //添加包装辅料的日志
+            productAccessoriesService.addProductAccessoriesLog(productCertificateList, productInfoDTO.getId());
+            productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
+        }
+
+        //10.修改/新增  认证信息
+        List<ProductAttestationDTO> productAttestationList = productManySpecDTO.getProductAttestationList();
+        if (CollectionUtils.isNotEmpty(productAttestationList)) {
+            productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
+        }
+
+
         return true;
     }
 
