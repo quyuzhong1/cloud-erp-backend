@@ -2723,6 +2723,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         this.update(updateWrapper);
     }
 
+    @Override
+    public List<ProjectTaskEntity> listByTaskIds(List<String> preTaskIds) {
+        return lambdaQuery().in(ProjectTaskEntity::getId, preTaskIds)
+                .list();
+    }
+
     /**
      * 我创造的    任务创建人=当前账号人
      *

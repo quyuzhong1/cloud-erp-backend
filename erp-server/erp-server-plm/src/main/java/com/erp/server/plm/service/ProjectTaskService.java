@@ -263,4 +263,11 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param taskEntity
      */
     void updatePhase(ProjectTaskEntity taskEntity);
+
+    /**
+     * 根据任务id查询列表
+     * @param preTaskIds
+     * @return
+     */
+    List<ProjectTaskEntity> listByTaskIds(List<String> preTaskIds);
 }

@@ -341,7 +341,10 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         if(CollectionUtil.isEmpty(entityList)){
             return Collections.emptyList();
         }
-        return entityList.stream().map(PreTaskListVO::new).collect(Collectors.toList());
+        List<String> preTaskIds = entityList.stream().map(PreTaskEntity::getPreTaskId).distinct().collect(Collectors.toList());
+        List<ProjectTaskEntity> taskEntityList = projectTaskService.listByTaskIds(preTaskIds);
+        Map<String, ProjectTaskEntity> preTaskIdMap = taskEntityList.stream().collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
+        return entityList.stream().map(x -> new PreTaskListVO(x, preTaskIdMap.get(x.getId()))).collect(Collectors.toList());
     }
 
     @Override
