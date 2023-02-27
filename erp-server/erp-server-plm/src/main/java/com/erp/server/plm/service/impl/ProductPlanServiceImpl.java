@@ -234,7 +234,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         productPlanPurchaseService.removeByProductPlanId(id);
         //删除销售信息
         productPlanSaleService.removeByProductPlanId(id);
-        //删除销售数据
+        //删除销售数据easyexcel读取csv文件
         productPlanSaleInfoService.removeByProductPlanId(id);
         //删除备注信息
         productPlanRemarkService.removeByProductPlanId(id);

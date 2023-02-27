@@ -27,7 +27,9 @@
             pp.create_time as  createTime,
             ppr.remark
         from  product_plan pp
-        left join (select product_plan_id,remark from product_plan_remark where  is_deleted = false and remark != '' order by id desc limit 1 ) ppr  on pp.id = ppr.product_plan_id
+        left join (select a.product_plan_id, a.remark from product_plan_remark a
+        left join (select product_plan_id,max(id) as id from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id) b
+        on a.product_plan_id = b.product_plan_id and a.id = b.id) ppr  on pp.id = ppr.product_plan_id
         <where>
             pp.is_deleted = false
             <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
@@ -250,9 +252,9 @@
                 </if>
             </if>
             <if test="type != null and (type == 2 or type == 6)">
-                and pst.status = '3'
+                 and pp.product_status = '3'
                 <if test="startTime != null and endTime != null">
-                     and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
+                 and pst.status = '3'  and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
                 </if>
                 <if test="type == 6">
                     and pp.project_approval_date > pp.plan_project_approval_date
@@ -262,27 +264,27 @@
                 </if>
             </if>
             <if test="type != null and type == 3">
-                and pjst.status in ('1','2','3')
+                 and pp.product_status in ('4','5','6')
                 <if test="startTime != null and endTime != null">
-                     and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                 and pjst.status in ('1','2','3')   and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
                 </if>
                 <if test="params.year != null  and startTime == null">
                     and pp.year = #{params.year}
                 </if>
             </if>
             <if test="type != null and type == 4">
-                and pjst.status = '3'
+                 and pp.product_status = '6'
                 <if test="startTime != null and endTime != null">
-                     and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                    and pjst.status = '3'   and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
                 </if>
                 <if test="params.year != null  and startTime == null">
                     and pp.year = #{params.year}
                 </if>
             </if>
             <if test="type != null and type == 5">
-                and (pjst.status = '4' or pst.status = '4')
+                 and pp.product_status = '7'
                 <if test="startTime != null and endTime != null">
-                    and ((pjst.status = '4' and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp) or (pst.status = '4' and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp))
+                 and (pjst.status = '4' or pst.status = '4')   and ((pjst.status = '4' and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp) or (pst.status = '4' and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp))
                 </if>
                 <if test="params.year != null  and startTime == null">
                     and pp.year = #{params.year}

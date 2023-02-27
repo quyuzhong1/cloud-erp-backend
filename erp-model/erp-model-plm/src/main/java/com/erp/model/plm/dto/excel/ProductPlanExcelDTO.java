@@ -1,15 +1,14 @@
 package com.erp.model.plm.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.common.business.enums.ProductTypeEnum;
 import com.common.business.enums.SalesPlatformEnum;
 import com.common.business.enums.SeasonEnum;
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.plm.enums.ProductStyleEnum;
 import com.erp.model.plm.enums.ThreeGenerationPlanningEnum;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -20,7 +19,6 @@ import java.io.Serializable;
  * @date 2023/2/21 10:15
  */
 @Data
-@NoArgsConstructor
 public class ProductPlanExcelDTO implements Serializable {
 
     /**

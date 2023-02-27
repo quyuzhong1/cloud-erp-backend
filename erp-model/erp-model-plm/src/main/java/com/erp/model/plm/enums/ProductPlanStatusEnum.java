@@ -14,7 +14,7 @@ public enum ProductPlanStatusEnum {
     YES_START("4", "项目启动",""),
     ING("5", "项目进行中",""),
     FINISH("6", "项目完成",""),
-    CANCEL("7", "取消","");
+    CANCEL("7", "已中止","");
 
     private String code;
 
