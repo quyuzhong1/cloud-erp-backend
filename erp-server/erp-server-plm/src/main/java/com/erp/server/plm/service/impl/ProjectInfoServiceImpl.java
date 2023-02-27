@@ -306,9 +306,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", chargeIdList);
             }
             //记录产品状态更新时间
-            projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), project.getProjectStatus());
+            projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), ProjectStateEnum.YES_START.getState());
             //更新产品规划的产品状态
-            productPlanService.updateProductPlanStatus(productId, project.getProjectStatus(), MathUtil.TWO);
+            productPlanService.updateProductPlanStatus(productId, ProjectStateEnum.YES_START.getState(), MathUtil.TWO);
         }
 
         return flag;

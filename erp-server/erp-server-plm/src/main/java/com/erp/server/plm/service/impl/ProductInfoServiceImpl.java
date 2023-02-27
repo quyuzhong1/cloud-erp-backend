@@ -874,6 +874,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     }
 
                 }
+                //记录产品状态更新时间
+                productStatusTimeService.saveOrUpdateProductStatusTime(dto.getProductId(), dto.getApprovalStatus());
+                //更新产品规划的产品状态
+                productPlanService.updateProductPlanStatus(dto.getProductId(), dto.getApprovalStatus(), MathUtil.ONE);
             }
 
             Boolean updateFlag = this.updateById(newProduct);
@@ -888,15 +892,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 productDetailService.updateProductStateByProductId(newProduct.getId(), ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
             }
 
-
             UpdateProductDTO updateDto = new UpdateProductDTO();
             BeanMapperUtils.copy(newProduct, updateDto);
             //产品信息修改操作日志
             saveProductLog(updateDto, product, productId, productId);
-            //记录产品状态更新时间
-            productStatusTimeService.saveOrUpdateProductStatusTime(dto.getProductId(), dto.getApprovalStatus());
-            //更新产品规划的产品状态
-            productPlanService.updateProductPlanStatus(dto.getProductId(), dto.getApprovalStatus(), MathUtil.ONE);
         }
 
         //项目信息
@@ -939,12 +938,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         }
                     }
                     project.setProjectStatus(projectStatus);
+
+                    //记录项目状态更新时间
+                    projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), projectStatus);
+                    //更新产品规划的产品状态
+                    productPlanService.updateProductPlanStatus(dto.getProductId(), projectStatus, MathUtil.TWO);
                 }
                 projectInfoService.updateById(project);
-                //记录项目状态更新时间
-                projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), projectStatus);
-                //更新产品规划的产品状态
-                productPlanService.updateProductPlanStatus(dto.getProductId(), projectStatus, MathUtil.TWO);
+
             }
         }
 
