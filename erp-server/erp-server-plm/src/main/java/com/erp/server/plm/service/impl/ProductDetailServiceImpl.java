@@ -277,16 +277,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
 
+        List<ProductDetailEntity> detailEntityList=this.queryByProductId(productId);
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
+        for(ProductAccessoriesDTO accessories:productAccessoriesList){
+            String skuNo= detailEntityList.stream().filter(d->d.getId().equals(accessories.getParentSkuId())).
+                    findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
+            accessories.setParentSkuNo(skuNo);
+        }
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
 
         //产品认证信息
         List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
+        for(ProductAttestationDTO attestation:productAttestationList){
+            String skuNo= detailEntityList.stream().filter(d->d.getId().equals(attestation.getSkuId())).
+                    findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
+            attestation.setSkuNo(skuNo);
+        }
         productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
-
-
         return productNoSpecDetailAllDTO;
     }
 
@@ -307,14 +316,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductManyDetailDTO productManyDetail = new ProductManyDetailDTO();
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
-        //基础信息 禁用字段
-        List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
-        manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
-        //获取多级分类
-        List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
-        manySpecDetailById.setCategoryIdList(categoryIdList);
-        productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
-
+        if(!Objects.isNull(manySpecDetailById)){
+            //基础信息 禁用字段
+            List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
+            manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
+            //获取多级分类
+            List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
+            manySpecDetailById.setCategoryIdList(categoryIdList);
+            productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
+        }
         //多规格产品明细信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
