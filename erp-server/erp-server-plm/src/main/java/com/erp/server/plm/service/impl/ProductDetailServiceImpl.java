@@ -412,10 +412,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
+        for(ProductAccessoriesDTO accessories:productAccessoriesList){
+            String skuNo= list.stream().filter(d->d.getId().equals(accessories.getParentSkuId())).
+                    findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
+            accessories.setParentSkuNo(skuNo);
+        }
         productManyDetail.setProductAccessoriesList(productAccessoriesList);
 
         //产品认证信息
         List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
+        for(ProductAttestationDTO attestation:productAttestationList){
+           String skuNo= list.stream().filter(d->d.getId().equals(attestation.getSkuId())).
+                   findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
+            attestation.setSkuNo(skuNo);
+        }
         productManyDetail.setProductAttestationList(productAttestationList);
         return productManyDetail;
     }
@@ -853,16 +863,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             attestationList.addAll(transportList);
         }
+        if (CollectionUtils.isEmpty(attestationList)) {
+            return;
+        }
         List<String> ids = attestationList.stream().map(AttestationDTO::getId).collect(Collectors.toList());
 
-        List<ProductAttestationEntity> attestationEntityList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(ids)) {
-            attestationEntityList = productAttestationService.listByIds(ids);
-        }
-        List<ProductAttestationEntity> finalAttestationEntityList = attestationEntityList;
+        List<ProductAttestationEntity> attestationEntityList = productAttestationService.getListByIds(ids);
+
         attestationList.forEach(obj -> {
             //SKU操作日志
-            ProductAttestationEntity oldEntity = finalAttestationEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
+            ProductAttestationEntity oldEntity = attestationEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
             AttestationDTO oldDto = new AttestationDTO();
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity, oldDto);
@@ -886,16 +896,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
 
     private void addProductAccessoriesLog(List<ProductAccessoriesDTO> productAccessoriesList, String productId) {
-        List<String> ids = productAccessoriesList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductAccessoriesDTO::getId).collect(Collectors.toList());
-        List<ProductAccessoriesEntity> accessoriesEntityList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(ids)) {
-            accessoriesEntityList = productAccessoriesService.listByIds(ids);
+        if (CollectionUtils.isEmpty(productAccessoriesList)) {
+            return;
         }
-        List<ProductAccessoriesEntity> finalAccessoriesEntityList = accessoriesEntityList;
+        List<String> ids = productAccessoriesList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductAccessoriesDTO::getId).collect(Collectors.toList());
+        List<ProductAccessoriesEntity> accessoriesEntityList = productAccessoriesService.getListByIds(ids);
         productAccessoriesList.forEach(obj -> {
             //SKU操作日志
-            ProductAccessoriesEntity oldEntity = finalAccessoriesEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
-            ProductCertificateDTO oldDto = new ProductCertificateDTO();
+            ProductAccessoriesEntity oldEntity = accessoriesEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
+            ProductAccessoriesDTO oldDto = new ProductAccessoriesDTO();
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity, oldDto);
             }

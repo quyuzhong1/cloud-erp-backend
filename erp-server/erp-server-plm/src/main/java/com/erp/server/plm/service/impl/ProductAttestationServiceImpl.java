@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.AttestationDTO;
@@ -10,6 +11,7 @@ import com.erp.server.plm.mapper.ProductAttestationMapper;
 import com.erp.server.plm.service.ProductAttestationService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateBatchAttestation(List<ProductAttestationDTO> productAttestationList) {
         if (CollectionUtils.isNotEmpty(productAttestationList)) {
             List<AttestationDTO> attestationList = new ArrayList<>(10);
@@ -62,10 +65,31 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 attestationList.addAll(transportList);
             }
 
+            //这是传过来的id
+            List<String> idList = attestationList.stream().map(AttestationDTO::getId).collect(Collectors.toList());
+            //这个是skuid
+            List<String> skuIdList = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
+            //先删除 去掉的 认证
+            removeBySkuIds(skuIdList, idList);
             List<ProductAttestationEntity> list = BeanMapper.copyList(attestationList, ProductAttestationEntity.class);
-            return this.saveBatch(list);
+            return this.saveOrUpdateBatch(list);
         }
         return true;
+    }
+
+    /**
+     * @param skuIdList
+     * @param ids       存在的
+     */
+    private void removeBySkuIds(List<String> skuIdList, List<String> ids) {
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            LambdaQueryWrapper<ProductAttestationEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProductAttestationEntity::getSkuId, skuIdList);
+            if (CollectionUtils.isNotEmpty(ids)) {
+                queryWrapper.notIn(ProductAttestationEntity::getId, ids);
+            }
+            this.remove(queryWrapper);
+        }
     }
 
     @Override
@@ -99,12 +123,22 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 //其它
                 List<ProductAttestationEntity> otherList = valueList.stream().filter(v -> other.equals(v.getType())).
                         collect(Collectors.toList());
-                attestation.setTransportList(BeanMapper.copyList(otherList, AttestationDTO.class));
+                attestation.setOtherList(BeanMapper.copyList(otherList, AttestationDTO.class));
                 resultList.add(attestation);
             }
 
         }
 
         return resultList;
+    }
+
+    @Override
+    public List<ProductAttestationEntity> getListByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<ProductAttestationEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProductAttestationEntity::getId, ids);
+        return this.list(queryWrapper);
     }
 }

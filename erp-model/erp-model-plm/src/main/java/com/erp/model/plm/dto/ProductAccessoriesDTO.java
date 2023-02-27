@@ -32,11 +32,34 @@ public class ProductAccessoriesDTO implements Serializable {
      */
     private String parentSkuId;
 
+    /**
+     * 父级sku no
+     */
+    private String parentSkuNo;
+
 
     /**
      * 辅料的sku id
      */
     private String accessoriesSkuId;
+
+
+    /**
+     * 辅料的sku no
+     */
+    private String accessoriesSkuNo;
+
+
+    /**
+     * 辅料的sku的名字
+     */
+    private String accessoriesSkuName;
+
+
+    /**
+     * 辅料的sku的图片
+     */
+    private String accessoriesSkuImagesUrl;
 
     /**
      * 数量

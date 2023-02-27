@@ -28,4 +28,6 @@ public interface ProductAccessoriesService  extends IService<ProductAccessoriesE
      * @return
      */
     List<ProductAccessoriesDTO> getByProductId(String productId);
+
+    List<ProductAccessoriesEntity> getListByIds(List<String> ids);
 }

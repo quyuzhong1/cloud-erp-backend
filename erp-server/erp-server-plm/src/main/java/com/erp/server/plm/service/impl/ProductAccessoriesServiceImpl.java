@@ -31,7 +31,7 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
      */
     @Override
     public Boolean saveOrUpdateBatchAccessories(List<ProductAccessoriesDTO> productAccessoriesList) {
-        if (CollectionUtils.isEmpty(productAccessoriesList)) {
+        if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
             List<ProductAccessoriesEntity> list = BeanMapper.copyList(productAccessoriesList, ProductAccessoriesEntity.class);
             return this.saveOrUpdateBatch(list);
         }
@@ -46,10 +46,18 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
      */
     @Override
     public List<ProductAccessoriesDTO> getByProductId(String productId) {
-        List<ProductAccessoriesDTO> resultList = new ArrayList<>();
-        List<ProductAccessoriesEntity> entityList = listByProductId(productId);
-        resultList=BeanMapper.copyList(entityList, ProductAccessoriesDTO.class);
+        List<ProductAccessoriesDTO> resultList = baseMapper.getByProductId(productId);
         return resultList;
+    }
+
+    @Override
+    public List<ProductAccessoriesEntity> getListByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<ProductAccessoriesEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProductAccessoriesEntity::getId, ids);
+        return this.list(queryWrapper);
     }
 
 

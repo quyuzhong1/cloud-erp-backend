@@ -32,4 +32,6 @@ public interface ProductAttestationService  extends IService<ProductAttestationE
      * @return java.util.List<com.erp.model.plm.dto.ProductAttestationDTO>
      */
     List<ProductAttestationDTO> getByProductId(String productId);
+
+    List<ProductAttestationEntity> getListByIds(List<String> ids);
 }

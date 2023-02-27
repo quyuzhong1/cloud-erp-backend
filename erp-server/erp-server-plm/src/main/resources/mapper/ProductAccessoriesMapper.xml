@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductAccessoriesMapper">
+
+
+    <select id="getByProductId" resultType="com.erp.model.plm.dto.ProductAccessoriesDTO">
+         SELECT pa.id,
+         pa.product_id,
+         pa.parent_sku_id,
+         pa.quantity,
+         pa.accessories_sku_id,
+         pd.sku_no AS accessoriesSkuNo,
+         pd.name AS accessoriesSkuName,
+         pd.images_url AS accessoriesSkuImagesUrl
+         FROM product_accessories pa
+         LEFT JOIN product_detail pd
+         ON pa.accessories_sku_id=pd.id
+         WHERE pa.parent_sku_id IN (
+           SELECT id FROM product_detail WHERE product_id =#{productId}
+         )
+         AND pa.is_deleted=false
+
+
+
+
+    </select>
+</mapper>

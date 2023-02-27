@@ -161,14 +161,14 @@ public class ProductDetailShowDTO implements Serializable {
     private String projectChargeName;
 
     /**
-     * 首批到货时间
+     * 首批入库时间
      * product_detail
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date firstMassProductDate;
 
     /**
-     * 计划上市时间
+     * 预计计划上市时间
      * product_detail
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
@@ -209,6 +209,32 @@ public class ProductDetailShowDTO implements Serializable {
      * product_sale
      */
     private BigDecimal yearSaleAmount;
+
+
+    /**
+     * 产品分类
+     */
+    private String category;
+
+
+    /**
+     * 销售方式
+     * product_info
+     */
+    private String saleMethod;
+
+
+
+
+    /**
+     * 销售渠道
+     * product_info
+     */
+    private String salesChannel;
+
+
+
+
 
     /**
      * 上市时间
