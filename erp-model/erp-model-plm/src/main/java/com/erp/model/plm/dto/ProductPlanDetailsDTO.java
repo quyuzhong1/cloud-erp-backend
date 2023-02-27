@@ -48,12 +48,12 @@ public class ProductPlanDetailsDTO implements Serializable {
     private Integer year;
 
     /**
-     * 销售总量
+     * 销售总销售额
      */
     private BigDecimal totalAmount;
 
     /**
-     * 销售总销售额
+     * 销售总量
      */
     private Integer totalQty;
 

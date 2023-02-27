@@ -192,7 +192,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             productPlanSaleEntity.setId(saleFound.getId());
         }
         productPlanSaleEntity.setPriceCny(StringUtils.isBlank(productPlanExcelDTO.getPriceCnyStr()) ? BigDecimal.ZERO : MathUtil.valueOf(productPlanExcelDTO.getPriceCnyStr()));
-        productPlanSaleEntity.setPriceCny(StringUtils.isBlank(productPlanExcelDTO.getPriceUsdStr()) ? BigDecimal.ZERO : MathUtil.valueOf(productPlanExcelDTO.getPriceUsdStr()));
+        productPlanSaleEntity.setPriceUsd(StringUtils.isBlank(productPlanExcelDTO.getPriceUsdStr()) ? BigDecimal.ZERO : MathUtil.valueOf(productPlanExcelDTO.getPriceUsdStr()));
         productPlanSaleEntity.setSalesPlatform(productPlanExcelDTO.getSalesPlatformName());
         productPlanSaleEntity.setSalesTargetCountry(productPlanExcelDTO.getSalesTargetCountry());
         productPlanSaleEntity.setProductPlanId(productPlanEntity.getId());

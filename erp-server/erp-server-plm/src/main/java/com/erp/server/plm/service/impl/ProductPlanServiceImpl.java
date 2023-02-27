@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.excel.util.DateUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -175,6 +176,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         ProductPlanPurchaseDTO productPlanPurchaseDTO = new ProductPlanPurchaseDTO();
         BeanMapperUtils.copy(productPlanPurchaseEntity,productPlanPurchaseDTO);
+        productPlanPurchaseDTO.setSupplierStatusName(productPlanPurchaseEntity.getSupplierStatus());
         resultDTO.setProductPlanPurchaseDTO(productPlanPurchaseDTO);
 
         //查询销售信息
@@ -247,6 +249,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            throw new ServiceException(ApiError.ERROR_1016);
         }
         List<ProductPlanExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
@@ -498,28 +502,28 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         Integer count = this.baseMapper.listProductPlanTotalCount(dto, null,null);
         Integer crtCount = this.baseMapper.listProductPlanTotalCount(dto,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"规划总数",count,"本月新增",crtCount);
-        //未调研
+        //待开发
         Integer notSurveyCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.ONE,null,null);
-        setProductPlanStatisticsVO(reslutList,"未调研",notSurveyCount,"",null);
+        setProductPlanStatisticsVO(reslutList,"待开发",notSurveyCount,"",null);
         //已立项
         Integer approvalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,null,null);
-        Integer thisApprovalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,startTime,startTime);
+        Integer thisApprovalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"已立项",approvalCount,"本月立项",thisApprovalCount);
         //已进行中
         Integer handCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,null,null);
-        Integer thisHandCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,startTime,startTime);
+        Integer thisHandCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"进行中",handCount,"本月进行中",thisHandCount);
         //已完成
         Integer completeCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,null,null);
-        Integer thisCompleteCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,startTime,startTime);
+        Integer thisCompleteCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"已完成",completeCount,"本月已完成",thisCompleteCount);
         //立项延期
         Integer deferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,null,null);
-        Integer thisDeferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,startTime,startTime);
+        Integer thisDeferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"立项延期",deferCount,"本月延期数",thisDeferCount);
         //已取消
         Integer cacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,null,null);
-        Integer thisCacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,startTime,startTime);
+        Integer thisCacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"已取消",cacelCount,"本月已取消",thisCacelCount);
         return reslutList;
     }

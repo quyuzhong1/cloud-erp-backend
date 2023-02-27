@@ -242,37 +242,46 @@
         <where>
             pp.is_deleted = false
             <if test="type != null and type == 1">
-                and (pp.product_status = '' or pp.product_status = '1')
+                and pp.product_status = ''
             </if>
             <if test="type != null and (type == 2 or type == 6)">
-                and  pp.product_status = '3'
+                and pst.status = '3'
                 <if test="startTime != null and endTime != null">
-                    and pst.status = '3' and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
+                     and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
                 </if>
                 <if test="type == 6">
                     and pp.project_approval_date > pp.plan_project_approval_date
                 </if>
+                <if test="params.year != null  and startTime == null">
+                    and pp.year = #{params.year}
+                </if>
             </if>
             <if test="type != null and type == 3">
-                and  pp.product_status in ('4','5','6')
+                and pjst.status in ('1','2','3')
                 <if test="startTime != null and endTime != null">
-                    and pjst.status in ('1','2','3') and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                     and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                </if>
+                <if test="params.year != null  and startTime == null">
+                    and pp.year = #{params.year}
                 </if>
             </if>
             <if test="type != null and type == 4">
-                and  pp.product_status = '6'
+                and pjst.status = '3'
                 <if test="startTime != null and endTime != null">
-                    and pjst.status = '3' and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                     and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                </if>
+                <if test="params.year != null  and startTime == null">
+                    and pp.year = #{params.year}
                 </if>
             </if>
             <if test="type != null and type == 5">
-                and  pp.product_status = '7'
+                and (pjst.status = '4' or pst.status = '4')
                 <if test="startTime != null and endTime != null">
                     and ((pjst.status = '4' and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp) or (pst.status = '4' and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp))
                 </if>
-            </if>
-            <if test="params.year != null ">
-                and pp.year = #{params.year}
+                <if test="params.year != null  and startTime == null">
+                    and pp.year = #{params.year}
+                </if>
             </if>
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
