@@ -45,13 +45,23 @@ public enum ProductTypeEnum implements EnumMessage {
         }
         return "";
     }
-    public static ProductTypeEnum getByName(String name) {
+    public static String getByName(String name) {
         ProductTypeEnum[] enums = values();
         for (ProductTypeEnum plmEnum : enums) {
             if (plmEnum.getName().equals(name)) {
-                return plmEnum;
+                return plmEnum.getName();
             }
         }
-        return null;
+        return "";
+    }
+
+    public static String getCodeByName(String name) {
+        ProductTypeEnum[] enums = values();
+        for (ProductTypeEnum plmEnum : enums) {
+            if (plmEnum.getName().equals(name)) {
+                return plmEnum.getCode();
+            }
+        }
+        return "";
     }
 }

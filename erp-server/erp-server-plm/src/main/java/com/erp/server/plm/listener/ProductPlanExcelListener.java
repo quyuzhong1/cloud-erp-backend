@@ -88,10 +88,14 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        FindUserDTO charge = sysUserFeign.getUserByUserName(productPlanExcelDTO.getChargeName());
-        if (ObjectUtils.isEmpty(charge) || StringUtils.isBlank(charge.getUserId())) {
-            errorMsgList.add("产品经理在系统中未找到");
+        if (StringUtils.isNotBlank(productPlanExcelDTO.getChargeName())) {
+            FindUserDTO charge = sysUserFeign.getUserByUserName(productPlanExcelDTO.getChargeName());
+            if (ObjectUtils.isEmpty(charge) || StringUtils.isBlank(charge.getUserId())) {
+                errorMsgList.add("产品经理在系统中未找到");
+            }
+            productPlanEntity.setChargeId(charge.getUserId());
         }
+
         if (StringUtils.isNotBlank(productPlanExcelDTO.getBrandName())) {
             BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), productPlanExcelDTO.getBrandName());
             if (ObjectUtils.isEmpty(productBrand)) {
@@ -154,14 +158,13 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             return;
         }
         productPlanEntity.setYear(Integer.valueOf(productPlanExcelDTO.getYearStr()));
-        productPlanEntity.setChargeId(charge.getUserId());
-        productPlanEntity.setProductType(StringUtils.isBlank(productPlanExcelDTO.getProductTypeName()) ? "" : ProductTypeEnum.getByName(productPlanExcelDTO.getProductTypeName()).getCode());
-        productPlanEntity.setProductStyle(StringUtils.isBlank(productPlanExcelDTO.getProductStyleName()) ? "" : ProductStyleEnum.getByName(productPlanExcelDTO.getProductStyleName()).getCode());
-        productPlanEntity.setThreeGenerationPlanning(StringUtils.isBlank(productPlanExcelDTO.getThreeGenerationPlanningName()) ? "" : ThreeGenerationPlanningEnum.getByName(productPlanExcelDTO.getThreeGenerationPlanningName()).getCode());
+        productPlanEntity.setProductType(ProductTypeEnum.getCodeByName(productPlanExcelDTO.getProductTypeName()));
+        productPlanEntity.setProductStyle(ProductStyleEnum.getCodeByName(productPlanExcelDTO.getProductStyleName()));
+        productPlanEntity.setThreeGenerationPlanning(ThreeGenerationPlanningEnum.getCodeByName(productPlanExcelDTO.getThreeGenerationPlanningName()));
         productPlanEntity.setSkuQty(StringUtils.isBlank(productPlanExcelDTO.getSkuQtyStr()) ? 0 : Integer.valueOf(productPlanExcelDTO.getSkuQtyStr()));
         productPlanEntity.setIsNeedIDDesign(StringUtils.isBlank(productPlanExcelDTO.getIsNeedIDDesignStr()) ? Boolean.FALSE : ("是".equals(productPlanExcelDTO.getIsNeedIDDesignStr()) ? Boolean.TRUE : Boolean.FALSE));
         productPlanEntity.setIsNeedStructuralDesign(StringUtils.isBlank(productPlanExcelDTO.getIsNeedStructuralDesignStr()) ? Boolean.FALSE : ("是".equals(productPlanExcelDTO.getIsNeedStructuralDesignStr()) ? Boolean.TRUE : Boolean.FALSE));
-        productPlanEntity.setPlanMarketingSeason(StringUtils.isBlank(productPlanExcelDTO.getPlanMarketingSeasonName()) ? "" : SeasonEnum.getByName(productPlanExcelDTO.getPlanMarketingSeasonName()).getCode());
+        productPlanEntity.setPlanMarketingSeason(SeasonEnum.getCodeByName(productPlanExcelDTO.getPlanMarketingSeasonName()));
         if (StringUtils.isNotBlank(productPlanExcelDTO.getPlanSurveyDateStr())) {
             productPlanEntity.setPlanSurveyDate(LocalDate.parse(productPlanExcelDTO.getPlanSurveyDateStr(), dateTimeFormatter));
         }
@@ -225,45 +228,53 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             productPlanSaleInfoEntity.setProductPlanId(productPlanEntity.getId());
             productPlanSaleInfoEntity.setYear(Integer.valueOf(productPlanExcelDTO.getYearStr()));
             productPlanSaleInfoEntity.setMonth(Integer.valueOf(monthEnum.getCode()));
-            switch (monthEnum.getCode()) {
-                case "1":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJanuaryQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJanuaryQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getJanuaryAmountStr()));
-                case "2":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getFebruaryQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getFebruaryQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getFebruaryAmountStr()));
-                case "3":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getMarchQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getMarchQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getMarchAmountStr()));
-                case "4":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getAprilQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getAprilQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getAprilAmountStr()));
-                case "5":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getMayQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getMayQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getMayQtyStr()));
-                case "6":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJuneQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJuneQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getJuneAmountStr()));
-                case "7":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJulyQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJulyQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getJulyAmountStr()));
-                case "8":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getAugustQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getAugustQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getAugustAmountStr()));
-                case "9":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getSeptemberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getSeptemberQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getSeptemberAmountStr()));
-                case "10":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getOctoberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getOctoberQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getOctoberAmountStr()));
-                case "11":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getNovemberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getNovemberQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getNovemberAmountStr()));
-                case "12":
-                    productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getDecemberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getDecemberQtyStr()));
-                    productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getDecemberAmountStr()));
-                default:
-                    break;
+            if (MonthEnum.JANUARY.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJanuaryQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJanuaryQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getJanuaryAmountStr()));
+            }
+            if (MonthEnum.FEBRUARY.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getFebruaryQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getFebruaryQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getFebruaryAmountStr()));
+            }
+            if (MonthEnum.MARCH.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getMarchQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getMarchQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getMarchAmountStr()));
+            }
+            if (MonthEnum.APRIL.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getAprilQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getAprilQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getAprilAmountStr()));
+            }
+            if (MonthEnum.MAY.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getMayQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getMayQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getMayQtyStr()));
+            }
+            if (MonthEnum.JUNE.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJuneQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJuneQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getJuneAmountStr()));
+            }
+            if (MonthEnum.JULY.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJulyQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJulyQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getJulyAmountStr()));
+            }
+            if (MonthEnum.AUGUST.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getAugustQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getAugustQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getAugustAmountStr()));
+            }
+            if (MonthEnum.SEPTEMBER.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getSeptemberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getSeptemberQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getSeptemberAmountStr()));
+            }
+            if (MonthEnum.OCTOBER.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getOctoberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getOctoberQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getOctoberAmountStr()));
+            }
+            if (MonthEnum.NOVEMBER.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getNovemberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getNovemberQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getNovemberAmountStr()));
+            }
+            if (MonthEnum.DECEMBER.getCode().equals(monthEnum.getCode())) {
+                productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getDecemberQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getDecemberQtyStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getDecemberAmountStr()));
             }
             saleInfoList.add(productPlanSaleInfoEntity);
         }
