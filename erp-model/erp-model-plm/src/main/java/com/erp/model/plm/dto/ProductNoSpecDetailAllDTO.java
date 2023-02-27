@@ -54,4 +54,16 @@ public class ProductNoSpecDetailAllDTO {
      */
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
 
+
+
+    /**
+     * 产品包装辅料
+     */
+    private List<ProductAccessoriesDTO> productAccessoriesList;
+
+    /**
+     * 产品认证信息
+     */
+    private List<ProductAttestationDTO> productAttestationList;
+
 }

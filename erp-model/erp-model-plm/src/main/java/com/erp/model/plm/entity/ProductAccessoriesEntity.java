@@ -13,7 +13,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("product_attestation")
+@TableName("product_accessories")
 public class ProductAccessoriesEntity extends BaseEntity {
     private static final long serialVersionUID = 203604435236054219L;
 
@@ -29,6 +29,11 @@ public class ProductAccessoriesEntity extends BaseEntity {
      * 辅料的sku id
      */
     private String accessoriesSkuId;
+
+    /**
+     * 产品id
+     */
+    private String productId;
 
 
 

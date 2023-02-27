@@ -23,4 +23,13 @@ public interface ProductAttestationService  extends IService<ProductAttestationE
      * @return java.lang.Boolean
      */
     Boolean saveOrUpdateBatchAttestation(List<ProductAttestationDTO> productAttestationList);
+
+    /**
+     * 根据产品id 获取 产品认证信息
+     * @author yl
+     * @date 2023-02-27 10:55
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.dto.ProductAttestationDTO>
+     */
+    List<ProductAttestationDTO> getByProductId(String productId);
 }

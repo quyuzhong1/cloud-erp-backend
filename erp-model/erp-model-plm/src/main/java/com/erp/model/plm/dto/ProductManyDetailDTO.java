@@ -9,16 +9,16 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
-* @Description 查询多规格明细信息实体类（VO）
-* @Author Luo_WG
-* @Date 2022/9/22 12:12
-**/
+ * @Description 查询多规格明细信息实体类（VO）
+ * @Author Luo_WG
+ * @Date 2022/9/22 12:12
+ **/
 @Data
 @NoArgsConstructor
 public class ProductManyDetailDTO {
 
     /**
-     *产品spu基础信息表
+     * 产品spu基础信息表
      */
     private ProductManySpecBaseDTO productManySpecBaseDTO;
 
@@ -66,6 +66,17 @@ public class ProductManyDetailDTO {
      * 产品选中的变体信息
      */
     private List<ProductVariantOptionEntity> productVariantOptionEntityList;
+
+
+    /**
+     * 产品包装辅料
+     */
+    private List<ProductAccessoriesDTO> productAccessoriesList;
+
+    /**
+     * 产品认证信息
+     */
+    private List<ProductAttestationDTO> productAttestationList;
 
 
 }

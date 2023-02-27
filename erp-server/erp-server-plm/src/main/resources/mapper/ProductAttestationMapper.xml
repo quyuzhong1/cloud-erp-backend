@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductAttestationMapper">
+
+
+    <select id="getByProductId" resultType="com.erp.model.plm.entity.ProductAttestationEntity">
+        SELECT
+          sku_id,
+          type,
+          value,
+          dict_id
+          FROM product_attestation pa
+          LEFT JOIN product_detail pd
+          ON pd.id=pa.sku_id
+          WHERE pd.product_id=#{productId}
+    </select>
+</mapper>
+

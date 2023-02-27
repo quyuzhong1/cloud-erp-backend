@@ -21,19 +21,18 @@ public class ProductAttestationEntity extends BaseEntity {
      * sku Id
      */
     private String skuId;
-    /**
-     * 产品认证
-     */
-    private String product;
-    /**
-     * 运输认证
-     */
-    private String transport;
-    /**
-     * 其他认证
-     */
-    private String other;
 
+
+    String type;
+    /**
+     * 认证值
+     */
+    private String value;
+
+    /**
+     * 对应字典表id
+     */
+    private String dictId;
 
 
 }

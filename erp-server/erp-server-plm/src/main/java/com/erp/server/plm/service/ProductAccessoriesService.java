@@ -2,7 +2,6 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProductAccessoriesDTO;
-import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.entity.ProductAccessoriesEntity;
 
 import java.util.List;
@@ -22,5 +21,11 @@ public interface ProductAccessoriesService  extends IService<ProductAccessoriesE
      */
     Boolean saveOrUpdateBatchAccessories(List<ProductAccessoriesDTO> productAccessoriesList);
 
-    void addProductAccessoriesLog(List<ProductCertificateDTO> productCertificateList, String id);
+
+    /**
+     * 根据产品id 获取辅料信息
+     * @param productId
+     * @return
+     */
+    List<ProductAccessoriesDTO> getByProductId(String productId);
 }

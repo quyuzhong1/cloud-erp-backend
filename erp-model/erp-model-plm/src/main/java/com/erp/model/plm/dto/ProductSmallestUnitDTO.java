@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * 产品信息的最小拆分的信息
  * 对应 变更信息里面的
+ *
  * @Classname
  * @Description TODO
  * @Date 2023-01-29 11:12
@@ -22,7 +23,7 @@ public class ProductSmallestUnitDTO implements Serializable {
 
 
     /**
-     *产品spu基础信息表
+     * 产品spu基础信息表
      */
     private ProductManySpecBaseDTO productManySpecBaseDTO;
 
@@ -66,5 +67,16 @@ public class ProductSmallestUnitDTO implements Serializable {
      * 产品证书信息
      */
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
+
+
+    /**
+     * 产品认证信息
+     */
+    private ProductAttestationDTO productAttestationDTO;
+
+    /**
+     * 产品包装辅料
+     */
+    private List<ProductAccessoriesDTO> productAccessoriesList;
 
 }

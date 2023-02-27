@@ -276,6 +276,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
+
+
+        //产品辅料信息
+        List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
+        productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
+
+        //产品认证信息
+        List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
+        productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
+
+
         return productNoSpecDetailAllDTO;
     }
 
@@ -398,6 +409,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品选择的变体查询
         List<ProductVariantOptionEntity> productVariantOptionEntityList = productVariantOptionService.list(productId);
         productManyDetail.setProductVariantOptionEntityList(productVariantOptionEntityList);
+
+        //产品辅料信息
+        List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
+        productManyDetail.setProductAccessoriesList(productAccessoriesList);
+
+        //产品认证信息
+        List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
+        productManyDetail.setProductAttestationList(productAttestationList);
         return productManyDetail;
     }
 
@@ -637,6 +656,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(id);
+
+        //9.修改/新增  包装辅料信息
+        List<ProductAccessoriesDTO> productAccessoriesList = productNoSpecDTO.getProductAccessoriesList();
+        if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
+            //添加包装辅料的日志
+            addProductAccessoriesLog(productAccessoriesList, id);
+            productAccessoriesList.stream().forEach(p -> p.setProductId(id));
+            productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
+        }
+
+        //10.修改/新增  认证信息
+        List<ProductAttestationDTO> productAttestationList = productNoSpecDTO.getProductAttestationList();
+        if (CollectionUtils.isNotEmpty(productAttestationList)) {
+            addProductAttestationLog(productAttestationList, id);
+            productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
+        }
+
         return true;
     }
 
@@ -762,19 +798,113 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //9.修改/新增  包装辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productManySpecDTO.getProductAccessoriesList();
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
+            productAccessoriesList.stream().forEach(p -> p.setProductId(productInfoDTO.getId()));
             //添加包装辅料的日志
-            productAccessoriesService.addProductAccessoriesLog(productCertificateList, productInfoDTO.getId());
+            addProductAccessoriesLog(productAccessoriesList, productInfoDTO.getId());
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
 
         //10.修改/新增  认证信息
         List<ProductAttestationDTO> productAttestationList = productManySpecDTO.getProductAttestationList();
         if (CollectionUtils.isNotEmpty(productAttestationList)) {
+            addProductAttestationLog(productAttestationList, productInfoDTO.getId());
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
 
 
         return true;
+    }
+
+
+    /**
+     * 添加产品认证的日志
+     *
+     * @param productAttestationList
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2023-02-27 10:02
+     */
+    private void addProductAttestationLog(List<ProductAttestationDTO> productAttestationList, String productId) {
+        List<AttestationDTO> attestationList = new ArrayList<>(10);
+        for (ProductAttestationDTO item : productAttestationList) {
+            //产品认证
+            List<AttestationDTO> productList = item.getProductList();
+            for (AttestationDTO product : productList) {
+                product.setSkuId(item.getSkuId());
+                product.setType(ProductManyDetailConstant.PRODUCT_ATTESTATION);
+
+            }
+            attestationList.addAll(productList);
+
+            //其它认证
+            List<AttestationDTO> otherList = item.getOtherList();
+            for (AttestationDTO other : otherList) {
+                other.setSkuId(item.getSkuId());
+                other.setType(ProductManyDetailConstant.OTHER_ATTESTATION);
+            }
+            attestationList.addAll(otherList);
+
+            //运输认证
+            List<AttestationDTO> transportList = item.getTransportList();
+            for (AttestationDTO transport : transportList) {
+                transport.setSkuId(item.getSkuId());
+                transport.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
+            }
+            attestationList.addAll(transportList);
+        }
+        List<String> ids = attestationList.stream().map(AttestationDTO::getId).collect(Collectors.toList());
+
+        List<ProductAttestationEntity> attestationEntityList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            attestationEntityList = productAttestationService.listByIds(ids);
+        }
+        List<ProductAttestationEntity> finalAttestationEntityList = attestationEntityList;
+        attestationList.forEach(obj -> {
+            //SKU操作日志
+            ProductAttestationEntity oldEntity = finalAttestationEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
+            AttestationDTO oldDto = new AttestationDTO();
+            if (ObjectUtils.isNotEmpty(oldEntity)) {
+                BeanMapperUtils.copy(oldEntity, oldDto);
+            }
+            ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
+        });
+    }
+
+    /**
+     * 添加包装辅料的信息 操作日志
+     *
+     * @param productAccessoriesList
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2023-02-27 9:58
+     */
+
+    private void addProductAccessoriesLog(List<ProductAccessoriesDTO> productAccessoriesList, String productId) {
+        List<String> ids = productAccessoriesList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductAccessoriesDTO::getId).collect(Collectors.toList());
+        List<ProductAccessoriesEntity> accessoriesEntityList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            accessoriesEntityList = productAccessoriesService.listByIds(ids);
+        }
+        List<ProductAccessoriesEntity> finalAccessoriesEntityList = accessoriesEntityList;
+        productAccessoriesList.forEach(obj -> {
+            //SKU操作日志
+            ProductAccessoriesEntity oldEntity = finalAccessoriesEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
+            ProductCertificateDTO oldDto = new ProductCertificateDTO();
+            if (ObjectUtils.isNotEmpty(oldEntity)) {
+                BeanMapperUtils.copy(oldEntity, oldDto);
+            }
+            ProductDetailEntity productDetailEntity = this.getById(obj.getAccessoriesSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getAccessoriesSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
+        });
     }
 
     /**
@@ -1973,6 +2103,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             item.setDisableFieldList(disableFields);
         }
         result.setProductCertificateShowDTOList(certificateShowList);
+
+        //产品认证信息
+        List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
+        ProductAttestationDTO productAttestationDTO = productAttestationList.stream().filter(attestation ->
+                skuId.equals(attestation.getSkuId())).findFirst().orElse(null);
+        result.setProductAttestationDTO(productAttestationDTO);
+
+        //产品包装辅料
+        List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
+        List<ProductAccessoriesDTO> accessoriesList = productAccessoriesList.stream().filter(obj ->
+                skuId.equals(obj.getParentSkuId())).collect(Collectors.toList());
+        result.setProductAccessoriesList(accessoriesList);
+
         return result;
     }
 
@@ -2095,6 +2238,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
 
+        //9.修改/新增 产品认证信息
+        ProductAttestationDTO productAttestationDTO = skuDTO.getProductAttestationDTO();
+        if (!Objects.isNull(productAttestationDTO)) {
+            List<ProductAttestationDTO> list = new ArrayList<>(1);
+            list.add(productAttestationDTO);
+            //添加日志
+            addProductAttestationLog(list, id);
+            productAttestationService.saveOrUpdateBatchAttestation(list);
+        }
+        //10 修改/新增加 包装辅料信息
+
+        List<ProductAccessoriesDTO> productAccessoriesList = skuDTO.getProductAccessoriesList();
+        if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
+            //
+            addProductAccessoriesLog(productAccessoriesList, id);
+            productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
+        }
         //编辑通过后发送金蝶
         this.sendKingDeeData(detailEntity.getId());
 
