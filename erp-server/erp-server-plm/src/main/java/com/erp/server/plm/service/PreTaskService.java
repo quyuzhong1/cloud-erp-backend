@@ -1,11 +1,14 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.vo.PreTaskVO;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -13,19 +16,17 @@ import java.util.List;
  */
 public interface PreTaskService extends IService<PreTaskEntity> {
 
-    void savePreTask(String id, List<String> preTaskIdList,String productId);
+    void savePreTask(String id, List<PreTaskDTO> preTaskList, String productId);
 
     Boolean addPreTask(SetPreTaskDTO dto);
 
     Boolean removePreTask(SetPreTaskDTO dto);
 
-    List<String> getPreTaskIdList(String taskId);
+    List<PreTaskVO> getPreTaskIdList(String taskId);
 
 
 
     void checkPreTaskFinish(List<String> taskIds);
-
-    List<ProjectTaskEntity> getPreTaskList(String taskId);
 
     List<PreTaskEntity> getPreTaskByProductId(String productId);
 
@@ -56,4 +57,11 @@ public interface PreTaskService extends IService<PreTaskEntity> {
      * @return void
      */
     void batchUpdate(String productId, List<String> taskIdList, List<String> preTaskIdList);
+
+    /**
+     * 根据任务id获取前置任务
+     * @param taskIds
+     * @return
+     */
+    Map<String, List<PreTaskVO>> listByTaskIds(List<String> taskIds);
 }

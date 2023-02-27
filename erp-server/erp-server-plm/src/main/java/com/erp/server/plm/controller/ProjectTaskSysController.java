@@ -1,13 +1,14 @@
 package com.erp.server.plm.controller;
 
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
+import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.server.plm.service.ProjectTaskSysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -49,9 +50,9 @@ public class ProjectTaskSysController extends BaseController {
      */
     @GetMapping("/taskDetails")
     //  @RequestPermissions("plm:sys:task:taskDetails")
-    public ApiResult<SysTaskDTO> taskDetails(String taskId) {
-        SysTaskDTO taskDTO = projectTaskSysService.taskDetails(taskId);
-        return success(taskDTO);
+    public ApiResult<SysTaskVO> taskDetails(String taskId) {
+        SysTaskVO taskVO = projectTaskSysService.taskDetails(taskId);
+        return success(taskVO);
     }
 
 

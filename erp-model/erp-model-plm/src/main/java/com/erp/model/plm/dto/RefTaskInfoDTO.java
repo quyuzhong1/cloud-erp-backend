@@ -44,4 +44,9 @@ public class RefTaskInfoDTO implements Serializable {
      * 任务状态  0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
      */
     private Integer taskStatus;
+
+    /**
+     * 工期
+     */
+    private Integer workPeriod;
 }

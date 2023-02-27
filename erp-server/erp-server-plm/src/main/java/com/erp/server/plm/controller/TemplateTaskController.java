@@ -1,13 +1,14 @@
 package com.erp.server.plm.controller;
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.dto.TemplateTaskDTO;
 import com.erp.model.plm.dto.TemplateTaskParamDTO;
 import com.erp.model.plm.dto.TemplateTaskShowDTO;
+import com.erp.model.plm.vo.TemplateTaskVO;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -98,9 +99,9 @@ public class TemplateTaskController extends BaseController {
      * @return ApiResult<TemplateTaskDTO>
      */
     @PostMapping("/taskDetails")
-    public ApiResult<TemplateTaskDTO> taskDetails(@RequestBody @Validated TemplateTaskParamDTO dto) {
-        TemplateTaskDTO taskDTO = templateTaskService.taskDetails(dto);
-        return success(taskDTO);
+    public ApiResult<TemplateTaskVO> taskDetails(@RequestBody @Validated TemplateTaskParamDTO dto) {
+        TemplateTaskVO taskVO = templateTaskService.taskDetails(dto);
+        return success(taskVO);
     }
 
 }

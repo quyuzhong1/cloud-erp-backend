@@ -1,13 +1,17 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.server.plm.mapper.PreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
@@ -19,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -44,25 +50,21 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
      * 保存前置任务
      *
      * @param taskId
-     * @param preTaskIdList
+     * @param preTaskList
      * @return void
      * @author yl
      * @date 2022-10-12 14:28
      */
 
     @Override
-    public void savePreTask(String taskId, List<String> preTaskIdList, String productId) {
+    public void savePreTask(String taskId, List<PreTaskDTO> preTaskList, String productId) {
         //先删除前置任务
+        List<String> preTaskIdList = preTaskList.stream().map(PreTaskDTO::getPreTaskId).collect(Collectors.toList());
         removePreTaskByTaskId(taskId, preTaskIdList);
         if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            List<PreTaskEntity> addList = new ArrayList<>();
-            for (String preTaskId : preTaskIdList) {
-                PreTaskEntity entity = new PreTaskEntity();
-                entity.setPreTaskId(preTaskId);
-                entity.setTaskId(taskId);
-                entity.setProductId(productId);
-                addList.add(entity);
-            }
+            List<PreTaskEntity> addList = preTaskList.stream()
+                    .map(preTask -> new PreTaskEntity(preTask, taskId, productId))
+                    .collect(Collectors.toList());
             this.saveBatch(addList);
         }
     }
@@ -97,6 +99,8 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         PreTaskEntity entity = new PreTaskEntity();
         entity.setTaskId(dto.getTaskId());
         entity.setPreTaskId(dto.getPreTaskId());
+        entity.setIntervalWorkPeriod(dto.getIntervalWorkPeriod());
+        entity.setRelationship(dto.getRelationshipCode());
         return this.save(entity);
     }
 
@@ -128,11 +132,16 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
      * @date 2022-10-12 14:45
      */
     @Override
-    public List<String> getPreTaskIdList(String taskId) {
+    public List<PreTaskVO> getPreTaskIdList(String taskId) {
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
-        queryWrapper.select(PreTaskEntity::getPreTaskId);
-        return this.listObjs(queryWrapper, Object::toString);
+        queryWrapper.select(PreTaskEntity::getPreTaskId, PreTaskEntity::getRelationship,
+                PreTaskEntity::getIntervalWorkPeriod, PreTaskEntity::getId, PreTaskEntity::getTaskId);
+        List<PreTaskEntity> entityList = this.list(queryWrapper);
+        if (CollectionUtil.isEmpty(entityList)) {
+            return Collections.emptyList();
+        }
+        return entityList.stream().map(PreTaskVO::new).collect(Collectors.toList());
     }
 
     /**
@@ -173,25 +182,6 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     }
 
-
-    /**
-     * 获取该任务的前置任务
-     *
-     * @param taskId
-     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskEntity>
-     * @author yl
-     * @date 2022-10-27 9:58
-     */
-    @Override
-    public List<ProjectTaskEntity> getPreTaskList(String taskId) {
-        List<String> preTaskIdList = getPreTaskIdList(taskId);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(ProjectTaskEntity::getId, preTaskIdList);
-            return projectTaskService.list(queryWrapper);
-        }
-        return new ArrayList<>();
-    }
 
     @Override
     public List<PreTaskEntity> getPreTaskByProductId(String productId) {
@@ -322,6 +312,22 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         }
 
         this.saveBatch(addList);
+    }
+
+    @Override
+    public Map<String, List<PreTaskVO>> listByTaskIds(List<String> taskIds) {
+        if (CollectionUtil.isEmpty(taskIds)){
+            return MapUtil.empty();
+        }
+        List<PreTaskEntity> entityList = lambdaQuery().in(PreTaskEntity::getTaskId, taskIds)
+                .list();
+        if(CollectionUtil.isEmpty(entityList)){
+            return MapUtil.empty();
+        }
+        Map<String, List<PreTaskVO>> groupByTaskIdMap = entityList.stream()
+                .map(PreTaskVO::new)
+                .collect(Collectors.groupingBy(PreTaskVO::getTaskId));
+        return groupByTaskIdMap;
     }
 
 

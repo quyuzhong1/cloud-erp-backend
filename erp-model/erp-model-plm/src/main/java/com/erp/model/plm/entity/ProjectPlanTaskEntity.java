@@ -98,9 +98,11 @@ public class ProjectPlanTaskEntity implements Serializable {
      * 是否重启
      */
     private Boolean isRestart;
-
-
-
+    /**
+     * 工期
+     */
+    @TableField("work_period")
+    private Integer workPeriod;
 
 }
 

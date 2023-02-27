@@ -1,5 +1,8 @@
-package com.erp.model.plm.dto;
+package com.erp.model.plm.vo;
 
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.PreTaskDTO;
+import com.erp.model.plm.dto.TaskChargeDistributionDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,7 +22,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TemplateTaskDTO implements Serializable {
+public class TemplateTaskVO implements Serializable {
 
         /**
          * 任务id
@@ -110,12 +113,12 @@ public class TemplateTaskDTO implements Serializable {
 //        /**
 //         * 前置任务id
 //         */
-//        private List<String> preTaskIdList;
+//        private List<String>  ;
 
         /**
          * 前置任务列表
          */
-        private List<PreTaskDTO> preTaskList;
+        private List<PreTaskVO> preTaskList;
 
         /**
          * 业务流程表id

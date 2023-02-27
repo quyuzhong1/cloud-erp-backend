@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
+import com.erp.model.plm.vo.SysTaskVO;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
 
     List<Map<String, Object>> taskList();
 
-    SysTaskDTO taskDetails(String taskId);
+    SysTaskVO taskDetails(String taskId);
 
     void checkQuotePhase(String id);
 }

@@ -233,8 +233,13 @@
 
 
     <select id="getRefTask" resultType="com.erp.model.plm.dto.RefTaskInfoDTO">
-        SELECT id AS flagTaskId ,name AS taskName,charge_name AS taskChargeName,type AS taskType,
-        status AS taskStatus FROM project_task
+        SELECT id AS flagTaskId ,
+            name AS taskName,
+            charge_name AS taskChargeName,
+            type AS taskType,
+            status AS taskStatus,
+            work_period AS workPeriod
+        FROM project_task
         <where>
             <if test="taskIds !=null and taskIds.size()>0">
                 id IN
@@ -273,6 +278,7 @@
             pt.role_name as roleName,
             pt.distribution_type as distributionType,
             pt.related_sku_type as relatedSkuType,
+            pt.work_period as workPeriod,
             pp.seq
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id
@@ -560,7 +566,8 @@
                pt.process_id as processId,
                pt.role_name as roleName,
                pt.distribution_type as distributionType,
-               pt.related_sku_type as relatedSkuType
+               pt.related_sku_type as relatedSkuType,
+               pt.work_period AS workPeriod
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id

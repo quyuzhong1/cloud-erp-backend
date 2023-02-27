@@ -20,7 +20,8 @@
                pts.is_fixed,
                pts.create_user_id,
                pts.create_user_name,
-               pts.create_time
+               pts.create_time,
+               pts.work_period
         FROM project_task_sys pts
         left join sys_project_phase spp on pts.phase_id = spp.id
         WHERE template_id=#{params.templateId}

@@ -126,5 +126,9 @@ public class SysTaskPagingDTO implements Serializable {
      * 阶段名
      */
     private String phaseName;
+    /**
+     * 工期
+     */
+    private String workPeriod;
 
 }

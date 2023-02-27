@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,9 +17,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ScheduleTaskDetailsVO implements Serializable {
-
-
-
 
     /**
      * 任务id
@@ -65,11 +63,13 @@ public class ScheduleTaskDetailsVO implements Serializable {
      */
     private String id;
 
-
-
-
-
-
-
+    /**
+     * 工期
+     */
+    private Integer workPeriod;
+    /**
+     * 前置任务关系列表
+     */
+    private List<PreTaskVO> preTaskList;
 
 }

@@ -23,6 +23,7 @@ import com.erp.model.plm.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.enums.DistributionTypeEnum;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.model.plm.enums.TaskTypeEnum;
+import com.erp.model.plm.vo.TemplateTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -205,24 +206,24 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     @Override
-    public TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto) {
+    public TemplateTaskVO taskDetails(TemplateTaskParamDTO dto) {
 
         TemplateTaskEntity taskEntity = this.getByIdAndTemplateId(dto.getId(), dto.getTemplateId());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        TemplateTaskDTO resultDTO = new TemplateTaskDTO();
-        BeanMapper.copy(taskEntity, resultDTO);
+        TemplateTaskVO resultVO = new TemplateTaskVO();
+        BeanMapper.copy(taskEntity, resultVO);
         //判断任务分配类型
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             String roleId = taskEntity.getRoleId();
             if (StringUtils.isNotBlank(roleId)) {
-                resultDTO.setRoleIds(Arrays.asList(roleId.split(",")));
+                resultVO.setRoleIds(Arrays.asList(roleId.split(",")));
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskEntity.getDistributionType())){
             String chargeId = taskEntity.getChargeId();
             if (StringUtils.isNotBlank(chargeId)) {
-                resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+                resultVO.setChargeIds(Arrays.asList(chargeId.split(",")));
             }
         }
         //查询模板任务下审核人
@@ -252,24 +253,24 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 }
 
             });
-            resultDTO.setApprovalList(list);
+            resultVO.setApprovalList(list);
         }
-        resultDTO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(), dto.getTemplateId()));
-        String businessProcessId = resultDTO.getBusinessProcessId();
+        resultVO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(), dto.getTemplateId()));
+        String businessProcessId = resultVO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
             if (processEntity != null) {
-                resultDTO.setBusinessName(processEntity.getBusinessName());
+                resultVO.setBusinessName(processEntity.getBusinessName());
             }
         }
-        resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId()));
+        resultVO.setPreTaskList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId()));
         TemplateTaskRefSkuConfigEntity skuConfigEntity = templateTaskRefSkuConfigService.getByTaskId(taskEntity.getId());
         if (skuConfigEntity != null) {
-            resultDTO.setFieldJson(skuConfigEntity.getFieldJson());
-            resultDTO.setFieldConfigType(skuConfigEntity.getFieldConfigType());
+            resultVO.setFieldJson(skuConfigEntity.getFieldJson());
+            resultVO.setFieldConfigType(skuConfigEntity.getFieldConfigType());
         }
 
-        return resultDTO;
+        return resultVO;
     }
 
     @Override
@@ -390,7 +391,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdate(TemplateTaskDTO dto) {
         //验证任务名称是否已存在
         checkTemplateTaskName(dto);
@@ -464,6 +465,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         //因为模板任务无主键，则无法用saveOrUpdate进行操作
+        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+            entity.setWorkPeriod(dto.getWorkPeriod());
+        }
         if (StringUtils.isBlank(entity.getId())) {
             this.save(entity);
         } else {
@@ -478,7 +482,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //保存模板配置信息
         templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(), dto.getTemplateId(), dto.getFieldConfigType(), dto.getFieldJson());
         //保存前置任务
-        templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
+        templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskList(), dto.getTemplateId());
         return true;
     }
 

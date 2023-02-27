@@ -1,12 +1,15 @@
 package com.erp.server.plm.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
+import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.TemplatePreTaskEntity;
+import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.server.plm.mapper.TemplatePreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.TemplatePreTaskService;
@@ -15,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -72,11 +77,13 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
                             t.getDataId().equals(item.getTaskId())).findFirst().orElse(null);
                     CopySourceDTO preSource = taskSourceList.stream().filter(t ->
                             t.getDataId().equals(item.getPreTaskId())).findFirst().orElse(null);
-                    if (taskSource != null && preSource != null) {
+                    if (null != taskSource && null != preSource) {
                         PreTaskEntity entity = new PreTaskEntity();
                         entity.setProductId(productId);
                         entity.setTaskId(taskSource.getNewCreateId());
                         entity.setPreTaskId(preSource.getNewCreateId());
+                        entity.setRelationship(exist.getRelationship());
+                        entity.setIntervalWorkPeriod(exist.getIntervalWorkPeriod());
                         copyList.add(entity);
                     }
                 }
@@ -90,16 +97,19 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     }
 
     @Override
-    public void saveTemplatePreTaskList(String taskId, List<String> preTaskIdList, String templateId) {
+    public void saveTemplatePreTaskList(String taskId, List<PreTaskDTO> preTaskList, String templateId) {
         //先删除前置任务
+        List<String> preTaskIdList = preTaskList.stream().map(PreTaskDTO::getPreTaskId).collect(Collectors.toList());
         removeTemplatePreTask(taskId,templateId, preTaskIdList);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+        if (CollectionUtils.isNotEmpty(preTaskList)) {
             List<TemplatePreTaskEntity> addList = new ArrayList<>();
-            for (String preTaskId : preTaskIdList) {
+            for (PreTaskDTO preTask : preTaskList) {
                 TemplatePreTaskEntity entity = new TemplatePreTaskEntity();
-                entity.setPreTaskId(preTaskId);
+                entity.setPreTaskId(preTask.getPreTaskId());
                 entity.setTaskId(taskId);
                 entity.setTemplateId(templateId);
+                entity.setIntervalWorkPeriod(preTask.getIntervalWorkPeriod());
+                entity.setRelationship(preTask.getRelationshipCode());
                 addList.add(entity);
             }
             this.saveBatch(addList);
@@ -107,12 +117,16 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     }
 
     @Override
-    public List<String> getTemplatePreTaskIdList(String taskId, String templateId) {
+    public List<PreTaskVO> getTemplatePreTaskIdList(String taskId, String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTaskId, taskId);
         queryWrapper.eq(TemplatePreTaskEntity::getTemplateId,templateId);
-        queryWrapper.select(TemplatePreTaskEntity::getPreTaskId);
-        return this.listObjs(queryWrapper, Object::toString);
+        queryWrapper.select(TemplatePreTaskEntity::getPreTaskId, TemplatePreTaskEntity::getRelationship, TemplatePreTaskEntity::getIntervalWorkPeriod);
+        List<TemplatePreTaskEntity> entityList = this.list(queryWrapper);
+        if (CollectionUtil.isEmpty(entityList)) {
+            return Collections.emptyList();
+        }
+        return entityList.stream().map(PreTaskVO::new).collect(Collectors.toList());
     }
 
     public List<TemplatePreTaskEntity> getByTemplateId(String templateId) {

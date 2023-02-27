@@ -1,5 +1,7 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -18,10 +20,8 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
-import com.erp.model.plm.entity.ProjectPlanEntity;
-import com.erp.model.plm.entity.ProjectPlanTaskEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
@@ -84,6 +84,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private NoticeMessageService noticeMessageService;
+
+    @Resource
+    private PreTaskService preTaskService;
 
     /**
      * 提交项目计划
@@ -324,6 +327,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         taskIdList.addAll(changeTaskIdList);
         //获取对应的任务
         List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
+        Map<String, List<PreTaskVO>> preTaskGourpTaskIdMap = MapUtil.empty();
+        if(CollectionUtil.isNotEmpty(taskEntityList)){
+            preTaskGourpTaskIdMap = preTaskService.listByTaskIds(taskEntityList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList()));
+        }
         for (ProjectPlanTaskEntity item : planTaskList) {
             ScheduleTaskDetailsVO task = new ScheduleTaskDetailsVO();
             String chargeId = item.getChangeChargeId();
@@ -338,9 +345,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setPlanStartTime(item.getChangeStartTime());
             task.setTaskId(taskId);
             task.setId(IdWorker.getIdStr());
+            task.setWorkPeriod(item.getWorkPeriod());
             List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                     .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
             task.setDeliveryDocsNames(String.join(",", docsNameList));
+            task.setPreTaskList(preTaskGourpTaskIdMap.get(task.getId()));
 
 
             List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());

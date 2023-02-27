@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -46,6 +47,18 @@ public class TemplatePreTaskEntity implements Serializable {
      * 模板id
      */
     private String templateId;
+
+    /**
+     * 间隔工期
+     */
+    @TableField(value = "interval_work_period")
+    private Integer intervalWorkPeriod;
+
+    /**
+     * 依赖关系
+     */
+    @TableField(value = "relationship")
+    private TaskRelationshipEnum relationship;
 
     private static final long serialVersionUID = 1L;
 

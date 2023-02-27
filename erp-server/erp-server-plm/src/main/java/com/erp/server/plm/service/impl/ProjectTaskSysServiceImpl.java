@@ -16,6 +16,8 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.vo.PreTaskVO;
+import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
@@ -155,6 +157,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             }
 
         }
+        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+            entity.setWorkPeriod(dto.getWorkPeriod());
+        }
         List<DocsDTO> docsList = dto.getDeliveryDocsList();
         boolean flag = this.saveOrUpdate(entity);
         //表示保存成功
@@ -205,7 +210,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
 
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
             //保存前置任务
-            preTaskService.savePreTask(entity.getId(), dto.getPreTaskIdList(), "");
+            preTaskService.savePreTask(entity.getId(), dto.getPreTaskList(), "");
 
             //保存SKU配置 字段 关系表
             taskRefSkuConfigService.addSkuField(entity.getId(), "", dto.getFieldConfigType(), dto.getFieldJson());
@@ -362,23 +367,23 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     }
 
     @Override
-    public SysTaskDTO taskDetails(String taskId) {
+    public SysTaskVO taskDetails(String taskId) {
         ProjectTaskSysEntity sysEntity = this.getById(taskId);
         if (Objects.isNull(sysEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        SysTaskDTO sysTaskDTO = new SysTaskDTO();
-        BeanMapper.copy(sysEntity, sysTaskDTO);
+        SysTaskVO sysTaskVO = new SysTaskVO();
+        BeanMapper.copy(sysEntity, sysTaskVO);
         //判断任务分配类型
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(sysEntity.getDistributionType())) {
             String roleId = sysEntity.getRoleId();
             if (StringUtils.isNotBlank(roleId)) {
-                sysTaskDTO.setRoleIds(Arrays.asList(roleId.split(",")));
+                sysTaskVO.setRoleIds(Arrays.asList(roleId.split(",")));
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(sysEntity.getDistributionType())) {
             String chargeId = sysEntity.getChargeId();
             if (StringUtils.isNotBlank(chargeId)) {
-                sysTaskDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+                sysTaskVO.setChargeIds(Arrays.asList(chargeId.split(",")));
             }
         }
         //查询任务下审核人
@@ -408,26 +413,26 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 }
 
             });
-            sysTaskDTO.setApprovalList(list);
+            sysTaskVO.setApprovalList(list);
         }
         String businessProcessId = sysEntity.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
             if (processEntity != null) {
-                sysTaskDTO.setBusinessName(processEntity.getBusinessName());
+                sysTaskVO.setBusinessName(processEntity.getBusinessName());
             }
         }
         //前置任务id集合
-        List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
-        sysTaskDTO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
-        sysTaskDTO.setPreTaskIdList(preTaskIdList);
+        List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
+        sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
+        sysTaskVO.setPreTaskList(preTaskList);
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         if (refSku != null) {
-            sysTaskDTO.setFieldJson(refSku.getFieldJson());
-            sysTaskDTO.setFieldConfigType(refSku.getFieldConfigType());
+            sysTaskVO.setFieldJson(refSku.getFieldJson());
+            sysTaskVO.setFieldConfigType(refSku.getFieldConfigType());
         }
 
-        return sysTaskDTO;
+        return sysTaskVO;
     }
 
     /**

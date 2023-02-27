@@ -210,4 +210,9 @@ public class TaskPagingShowDTO implements Serializable {
      * 关联类型
      */
     private String relatedSkuType;
+
+    /**
+     * 工期
+     */
+    private Integer workPeriod;
 }

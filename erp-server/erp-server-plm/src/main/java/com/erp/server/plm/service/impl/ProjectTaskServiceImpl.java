@@ -25,6 +25,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
@@ -709,7 +710,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-09-22 15:33
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean save(ProjectTaskDTO dto) {
         //验证名称是否重复
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
@@ -748,6 +749,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskEntity.setPhaseName(phaseName);
         taskEntity.setCreateUserId(loginUser.getUid());
         taskEntity.setCreateUserName(loginUser.getUserName());
+        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+            taskEntity.setWorkPeriod(dto.getWorkPeriod());
+        }
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
@@ -784,7 +788,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskList(), dto.getProductId());
 
             //保存SKU配置 字段 关系表
             taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
@@ -1058,12 +1062,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
-        List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
+        List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         //前置任务
         List<RefTaskInfoDTO> preTasks = new ArrayList<>();
 
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            preTasks = getRefTask(preTaskIdList);
+        if (CollectionUtils.isNotEmpty(preTaskList)) {
+            preTasks = getRefTask(preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList()));
         }
         detailsDTO.setPreTasks(preTasks);
         //子任务
@@ -1194,7 +1198,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-13 9:25
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         //验证表单数据
@@ -1261,6 +1265,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> chargeIds = dto.getChargeIds();
 
         taskEntity.setPhaseName(phaseName);
+        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+            taskEntity.setWorkPeriod(dto.getWorkPeriod());
+        }
         dto.setPhaseName(phaseName);
         //如果分配类型为角色，则需要更新底层角色名称字段
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
@@ -1287,8 +1294,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             dto.setDeliveryDocsNames(deliveryDocsNames);
         }
         //前置任务名称
-        if (CollectionUtils.isNotEmpty(dto.getPreTaskIdList())) {
-            List<ProjectTaskEntity> projectTaskList = this.listByIds(dto.getPreTaskIdList());
+        if (CollectionUtils.isNotEmpty(dto.getPreTaskList())) {
+            List<ProjectTaskEntity> projectTaskList = this.listByIds(dto.getPreTaskList().stream().map(PreTaskDTO::getPreTaskId).collect(Collectors.toList()));
             if (CollectionUtils.isNotEmpty(projectTaskList)) {
                 String preTaskNames = projectTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
                 dto.setPreTaskNames(preTaskNames);
@@ -1357,7 +1364,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskList(), dto.getProductId());
 
             //保存SKU配置 字段 关系表
             taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
@@ -1493,24 +1500,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-15 10:04
      */
     @Override
-    public ProjectTaskDTO taskDetails(String taskId) {
+    public ProjectTaskVO taskDetails(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        ProjectTaskDTO resultDTO = new ProjectTaskDTO();
-        BeanMapper.copy(taskEntity, resultDTO);
+        ProjectTaskVO resultVO = new ProjectTaskVO();
+        BeanMapper.copy(taskEntity, resultVO);
         String chargeId = taskEntity.getChargeId();
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             //负责人为角色
             if (StringUtils.isNotBlank(chargeId)) {
-                resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+                resultVO.setChargeIds(Arrays.asList(chargeId.split(",")));
             } else {
-                resultDTO.setChargeIds(Arrays.asList(taskEntity.getRoleName().split(",")));
+                resultVO.setChargeIds(Arrays.asList(taskEntity.getRoleName().split(",")));
             }
         } else {
             if (StringUtils.isNotBlank(chargeId)) {
-                resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+                resultVO.setChargeIds(Arrays.asList(chargeId.split(",")));
             }
         }
         //查询模板任务下审核人
@@ -1567,7 +1574,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
 
             });
-            resultDTO.setApprovalList(list);
+            resultVO.setApprovalList(list);
         }
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
@@ -1587,28 +1594,28 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             refSkuMap.put("isFinishTask", refSkuItem.getIsFinishTask());
             refSkuFinishList.add(refSkuMap);
         }
-        resultDTO.setRefSkuFinishList(refSkuFinishList);
+        resultVO.setRefSkuFinishList(refSkuFinishList);
 
         if (refSku != null) {
-            resultDTO.setFieldJson(refSku.getFieldJson());
-            resultDTO.setFieldConfigType(refSku.getFieldConfigType());
+            resultVO.setFieldJson(refSku.getFieldJson());
+            resultVO.setFieldConfigType(refSku.getFieldConfigType());
         }
-        resultDTO.setRefSkuIdList(skuIdList);
+        resultVO.setRefSkuIdList(skuIdList);
         List<String> skuNoList = productDetailList.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
-        resultDTO.setRefSkuNoList(skuNoList);
+        resultVO.setRefSkuNoList(skuNoList);
 
-        resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
-        String businessProcessId = resultDTO.getBusinessProcessId();
+        resultVO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
+        String businessProcessId = resultVO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
             if (processEntity != null) {
-                resultDTO.setBusinessName(processEntity.getBusinessName());
+                resultVO.setBusinessName(processEntity.getBusinessName());
             }
 
         }
-        resultDTO.setPreTaskIdList(preTaskService.getPreTaskIdList(taskId));
+        resultVO.setPreTaskList(preTaskService.getPreTaskIdList(taskId));
 
-        return resultDTO;
+        return resultVO;
     }
 
     /**
@@ -4647,7 +4654,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             oldDto.setDeliveryDocsNames(deliveryDocsNames);
         }
         //处理变更前前置任务
-        List<String> preTaskIdList = preTaskService.getPreTaskIdList(businessId);
+        List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(businessId);
+        List<String> preTaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(preTaskIdList)) {
             List<ProjectTaskEntity> projectTaskList = this.listByIds(preTaskIdList);
             if (CollectionUtils.isNotEmpty(projectTaskList)) {

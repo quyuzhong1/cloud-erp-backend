@@ -1,7 +1,9 @@
-package com.erp.model.plm.dto;
+package com.erp.model.plm.vo;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.plm.vo.PreTaskVO;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.PreTaskDTO;
+import com.erp.model.plm.dto.TaskChargeDistributionDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +23,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class SysTaskDTO implements Serializable {
+public class SysTaskVO implements Serializable {
 
 
     private String id;
@@ -29,8 +31,6 @@ public class SysTaskDTO implements Serializable {
     /**
      * 任务名
      */
-    @NotBlank(message = "任务名不能为空")
-    @Size(max = 50, message = "任务名最大50字符")
     private String name;
 
     /**
@@ -43,7 +43,6 @@ public class SysTaskDTO implements Serializable {
     /**
      * 分配类型（0角色，1人员）
      */
-    @NotNull(message = "分配类型不能为空")
     private Integer distributionType;
 
     /**
@@ -63,7 +62,7 @@ public class SysTaskDTO implements Serializable {
     /**
      * 前置任务列表
      */
-    private List<PreTaskDTO> preTaskList;
+    private List<PreTaskVO> preTaskList;
 
     /**
      * 计划开始时间
@@ -141,7 +140,6 @@ public class SysTaskDTO implements Serializable {
     /**
      * 模板id
      */
-    @NotBlank(message = "模板id不能为空")
     private String templateId;
     /**
      * 工期

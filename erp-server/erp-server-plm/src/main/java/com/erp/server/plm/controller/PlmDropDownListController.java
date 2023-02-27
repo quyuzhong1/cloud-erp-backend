@@ -6,6 +6,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.SelectShowDTO;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
+import com.erp.model.plm.enums.TaskRelationshipEnum;
+import com.erp.model.plm.vo.RelationshipDTO;
 import com.erp.server.plm.constant.IsConstant;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +50,18 @@ public class PlmDropDownListController extends BaseController {
     public ApiResult<List<SelectShowDTO>> listRelatedSkuType() {
         List<SelectShowDTO> result = Arrays.stream(RelatedSkuTypeEnum.values())
                 .map(x -> new SelectShowDTO(0, x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 依赖关系枚举下拉
+     * @return
+     */
+    @GetMapping("/relationship/list")
+    public ApiResult<List<RelationshipDTO>> listRelationshipDropDown() {
+        List<RelationshipDTO> result = Arrays.stream(TaskRelationshipEnum.values())
+                .map(x -> new RelationshipDTO(x.getCode(),x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

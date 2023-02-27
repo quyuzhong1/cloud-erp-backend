@@ -4,7 +4,11 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.util.Date;
+
+import com.erp.model.plm.dto.PreTaskDTO;
+import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 任务的前置任务表
@@ -12,6 +16,7 @@ import lombok.Data;
  */
 @TableName(value ="pre_task")
 @Data
+@NoArgsConstructor
 public class PreTaskEntity implements Serializable {
     /**
      * 
@@ -47,6 +52,25 @@ public class PreTaskEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-    @TableField(exist = false)
+    /**
+     * 间隔工期
+     */
+    @TableField(value = "interval_work_period")
+    private Integer intervalWorkPeriod;
+
+    /**
+     * 依赖关系
+     */
+    @TableField(value = "relationship")
+    private TaskRelationshipEnum relationship;
+
     private static final long serialVersionUID = 1L;
+
+    public PreTaskEntity(PreTaskDTO preTask, String taskId, String productId) {
+        this.preTaskId = preTask.getPreTaskId();
+        this.taskId = taskId;
+        this.productId = productId;
+        this.intervalWorkPeriod = preTask.getIntervalWorkPeriod();
+        this.relationship = preTask.getRelationshipCode();
+    }
 }

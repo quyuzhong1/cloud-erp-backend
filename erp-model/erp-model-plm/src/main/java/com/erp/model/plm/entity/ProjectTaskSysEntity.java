@@ -153,4 +153,10 @@ public class ProjectTaskSysEntity implements Serializable {
 
     @TableField("template_id")
     private String templateId;
+
+    /**
+     * 工期
+     */
+    @TableField("work_period")
+    private Integer workPeriod;
 }

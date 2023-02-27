@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskChargeDistributionEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.model.plm.vo.TemplateTaskVO;
 
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      * @author Will
      * @date: 2022/11/18 11:39
      */
-    TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto);
+    TemplateTaskVO taskDetails(TemplateTaskParamDTO dto);
 
 
     List<TemplateTaskEntity> listByRoleId(String roleId);

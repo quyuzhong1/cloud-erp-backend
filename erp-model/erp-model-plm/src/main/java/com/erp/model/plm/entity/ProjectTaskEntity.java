@@ -221,6 +221,12 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("schedule_type")
     private String scheduleType;
 
+    /**
+     * 工期
+     */
+    @TableField("work_period")
+    private Integer workPeriod;
+
     public ProjectTaskEntity(String taskId, Date realityStart, Date realityEnd) {
         this.id = taskId;
         if(null != realityEnd){

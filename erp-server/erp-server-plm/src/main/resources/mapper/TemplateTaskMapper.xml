@@ -19,6 +19,7 @@
            tt.create_user_name,
            tt.create_user_id,
            tt.create_time,
+           tt.work_period,
            tpt.id as preTaskId,
            tpt.name as preTaskName,
            tdd.docsNames

@@ -177,4 +177,11 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("related_sku_type")
     private String relatedSkuType;
 
+
+    /**
+     * 工期
+     */
+    @TableField("work_period")
+    private Integer workPeriod;
+
 }

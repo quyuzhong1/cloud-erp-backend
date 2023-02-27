@@ -1,15 +1,13 @@
-package com.erp.model.plm.dto;
+package com.erp.model.plm.entity;
 
-import com.common.core.anno.StateEnumValue;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.TaskChargeDistributionDTO;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +21,7 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-public class ProjectTaskDTO  implements Serializable {
+public class ProjectTaskVO implements Serializable {
 
 
     /**
@@ -34,7 +32,6 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 项目id
      */
-    @NotBlank(message = "项目id不能为空")
     private String projectId;
 
 
@@ -46,15 +43,12 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 产品id
      */
-    @NotBlank(message = "产品id不能为空")
     private String productId;
 
 
     /**
      * 任务名
      */
-    @NotBlank(message = "任务名不能为空")
-    @Size(max = 50,message = "任务名最大50字符")
     private String name;
 
 
@@ -62,20 +56,17 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 任务类型 0 一般任务 1：审核任务
      */
-    @StateEnumValue(intValues = {0, 1}, message = "任务类型只能是0或者1")
     private Integer type;
 
     /**
      * 负责人id
      */
-    @NotNull(message = "任务负责人集合不能为空")
-    @Size(min = 1,message = "负责人至少有一个")
     private List<String> chargeIds;
 
     /**
      * 前置任务
      */
-    private List<PreTaskDTO> preTaskList;
+    private List<PreTaskVO> preTaskList;
 
     /**
      * 计划开始时间

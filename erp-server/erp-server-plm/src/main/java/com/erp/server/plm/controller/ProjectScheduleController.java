@@ -149,5 +149,10 @@ public class ProjectScheduleController extends BaseController {
         return success(list);
     }
 
+    @PostMapping("/auto")
+    public ApiResult autoSchedule(){
+        return success();
+    }
+
 }
 

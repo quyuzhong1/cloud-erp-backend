@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.PreTaskService;
@@ -117,9 +118,9 @@ public class ProjectTaskController extends BaseController {
 //            menuCode = "plm:task:taskDetails",
 //            serviceClass = ProjectTaskService.class
 //    )
-    public ApiResult<ProjectTaskDTO> taskDetails(String taskId) {
-        ProjectTaskDTO taskDTO = taskService.taskDetails(taskId);
-        return success(taskDTO);
+    public ApiResult<ProjectTaskVO> taskDetails(String taskId) {
+        ProjectTaskVO taskVO = taskService.taskDetails(taskId);
+        return success(taskVO);
     }
 
     /**
@@ -140,11 +141,11 @@ public class ProjectTaskController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/setPreTask")
-    public ApiResult setPreTask(@RequestBody @Validated SetPreTaskDTO dto) {
-        Boolean flag = preTaskService.addPreTask(dto);
-        return flag == true ? success() : failure();
-    }
+//    @PostMapping("/setPreTask")
+//    public ApiResult setPreTask(@RequestBody @Validated SetPreTaskDTO dto) {
+//        Boolean flag = preTaskService.addPreTask(dto);
+//        return flag == true ? success() : failure();
+//    }
 
     /**
      * 项目任务-任务详情-移除前置任务

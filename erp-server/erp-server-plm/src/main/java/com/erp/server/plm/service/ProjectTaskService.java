@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
@@ -67,7 +68,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     Boolean updateBaseTask(UpdateTaskDTO dto);
 
 
-    ProjectTaskDTO taskDetails(String taskId);
+    ProjectTaskVO taskDetails(String taskId);
 
     List<ProjectTaskEntity> getByTaskIds(List<String> taskIds);
 
