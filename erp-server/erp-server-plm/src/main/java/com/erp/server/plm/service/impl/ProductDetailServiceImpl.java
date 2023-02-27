@@ -2127,12 +2127,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
         ProductAttestationDTO productAttestationDTO = productAttestationList.stream().filter(attestation ->
                 skuId.equals(attestation.getSkuId())).findFirst().orElse(null);
+        if(productAttestationDTO!=null){
+            productAttestationDTO.setSkuNo(productDetail.getSkuNo());
+        }
         result.setProductAttestationDTO(productAttestationDTO);
 
         //产品包装辅料
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesList.stream().filter(obj ->
                 skuId.equals(obj.getParentSkuId())).collect(Collectors.toList());
+        for(ProductAccessoriesDTO accessories:accessoriesList){
+            accessories.setParentSkuNo(productDetail.getSkuNo());
+        }
         result.setProductAccessoriesList(accessoriesList);
 
         return result;

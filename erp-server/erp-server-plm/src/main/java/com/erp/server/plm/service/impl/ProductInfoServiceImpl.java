@@ -725,6 +725,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //基础信息 禁用字段
         List<String> manySpecBaseDisableFields = productDetailService.getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
         result.setDisableFieldList(manySpecBaseDisableFields);
+        //查询规划id
+        ProductPlanEntity productPlanEntity = productPlanService.getByProductId(id);
+        if (ObjectUtils.isNotEmpty(productPlanEntity)) {
+            result.setProductPlanId(productPlanEntity.getId());
+        }
         return result;
     }
 
