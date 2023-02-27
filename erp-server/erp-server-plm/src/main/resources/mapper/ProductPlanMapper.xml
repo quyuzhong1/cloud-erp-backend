@@ -209,7 +209,7 @@
             <if test="endTime != null ">
                 and pp.create_time &lt;= #{endTime}::timestamp
             </if>
-            <if test="params.year != null ">
+            <if test="params.year != null and startTime == null">
                 and pp.year = #{params.year}
             </if>
             <if test="params.chargeId != null and params.chargeId.size > 0">
@@ -243,6 +243,9 @@
             pp.is_deleted = false
             <if test="type != null and type == 1">
                 and pp.product_status = ''
+                <if test="params.year != null ">
+                    and pp.year = #{params.year}
+                </if>
             </if>
             <if test="type != null and (type == 2 or type == 6)">
                 and pst.status = '3'

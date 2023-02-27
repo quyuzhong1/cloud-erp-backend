@@ -521,10 +521,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         Integer deferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,null,null);
         Integer thisDeferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,startTime,endTime);
         setProductPlanStatisticsVO(reslutList,"立项延期",deferCount,"本月延期数",thisDeferCount);
-        //已取消
+        //已中止
         Integer cacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,null,null);
         Integer thisCacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"已取消",cacelCount,"本月已取消",thisCacelCount);
+        setProductPlanStatisticsVO(reslutList,"已中止",cacelCount,"本月已中止",thisCacelCount);
         return reslutList;
     }
 
