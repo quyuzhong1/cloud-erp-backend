@@ -5,17 +5,21 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.AttestationDTO;
 import com.erp.model.plm.dto.ProductAttestationDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductAttestationEntity;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductAttestationMapper;
+import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductAttestationService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +31,9 @@ import java.util.stream.Collectors;
 @Service
 public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestationMapper, ProductAttestationEntity> implements ProductAttestationService {
 
+
+    @Resource
+    private BasicDictService basicDictService;
 
     /**
      * 保存或者修改产品认证信息
@@ -71,6 +78,14 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
             List<String> skuIdList = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
             //先删除 去掉的 认证
             removeBySkuIds(skuIdList, idList);
+            //对应的字典表信息
+            List<String> dictIdList = attestationList.stream().map(AttestationDTO::getDictId).collect(Collectors.toList());
+            List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
+            for (AttestationDTO item : attestationList) {
+                String value = dictList.stream().filter(d -> d.getId().equals(item.getDictId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
+                item.setValue(value);
+            }
             List<ProductAttestationEntity> list = BeanMapper.copyList(attestationList, ProductAttestationEntity.class);
             return this.saveOrUpdateBatch(list);
         }
