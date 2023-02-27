@@ -150,12 +150,21 @@ public class ProjectTaskController extends BaseController {
 //        return flag == true ? success() : failure();
 //    }
 
+    /**
+     * 更新前置任务列表
+     * @param dto
+     * @return
+     */
     @PostMapping("/update/pre/task")
     public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
         Boolean flag = preTaskService.updatePreTask(dto);
         return flag == true ? success() : failure();
     }
-
+    /**
+     * 查询前置任务列表
+     * @param dto
+     * @return
+     */
     @PostMapping("/list/pre/task")
     public ApiResult<List<PreTaskListVO>> listPreTask(@RequestBody @Validated PreTaskDTO.ListPreTaskDTO dto) {
         List<PreTaskListVO> reusltList = preTaskService.ListPreTaskByTaskId(dto.getTaskId());
