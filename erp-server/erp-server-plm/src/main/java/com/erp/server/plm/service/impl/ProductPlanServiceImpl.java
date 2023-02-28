@@ -391,7 +391,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             BeanMapperUtils.copy(dto,productDTO);
             productDTO.setChargeIds(dto.getChargeIdList());
             //等级编码
-            BasicDictEntity grade = basicDictService.getById(dto.getId());
+            BasicDictEntity grade = basicDictService.getById(dto.getGradeId());
             if (ObjectUtils.isNotEmpty(grade)) {
                 productDTO.setGrade(grade.getValue());
             }
