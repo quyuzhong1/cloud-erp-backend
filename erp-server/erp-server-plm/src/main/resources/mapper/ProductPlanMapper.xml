@@ -264,9 +264,9 @@
                 </if>
             </if>
             <if test="type != null and type == 3">
-                 and pp.product_status in ('4','5','6')
+                 and pp.product_status in ('4','5')
                 <if test="startTime != null and endTime != null">
-                 and pjst.status in ('1','2','3')   and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
+                 and pjst.status in ('1','2')   and  pjst.status_time &gt;= #{startTime}::timestamp and pjst.status_time &lt;= #{endTime}::timestamp
                 </if>
                 <if test="params.year != null  and startTime == null">
                     and pp.year = #{params.year}
@@ -316,7 +316,7 @@
                ${params.groupFields},
                count(0) as totalCount,
                (select count(0) from product_plan where product_status = '3' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as approvalCount,
-               (select count(0) from product_plan where product_status in ('4','5','6') and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as progressCount,
+               (select count(0) from product_plan where product_status in ('4','5') and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as progressCount,
                (select count(0) from product_plan where product_status = '6' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as completeCount,
                (select count(0) from product_plan where product_status = '3' and year = #{params.year} and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}) as approvalDelayCount,
                (select count(0) from product_plan where product_status = '7' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as cancelCount
@@ -350,7 +350,7 @@
 
     <select id="countApprovalTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO">
         select
-            to_char(pst.status_time,'YYYYMM') as month,
+            to_char(pst.status_time,'MM') as month,
             count(0) as approvalCount
         from product_plan pp
         left join product_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false and pst.status = '3'
@@ -381,12 +381,12 @@
                 </foreach>
             </if>
         </where>
-        group by to_char(pst.status_time,'YYYYMM')
+        group by to_char(pst.status_time,'MM')
     </select>
 
     <select id="countCompleteTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO">
         select
-        to_char(pst.status_time,'YYYYMM') as month,
+        to_char(pst.status_time,'MM') as month,
         count(0) as complateCount
         from product_plan pp
         left join project_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false and pst.status = '3'
@@ -417,7 +417,7 @@
                 </foreach>
             </if>
         </where>
-        group by to_char(pst.status_time,'YYYYMM')
+        group by to_char(pst.status_time,'MM')
     </select>
 
 </mapper>

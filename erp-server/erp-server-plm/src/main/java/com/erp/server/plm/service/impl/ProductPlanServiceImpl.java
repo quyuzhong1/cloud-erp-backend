@@ -120,7 +120,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 }
                 //立项是否延期
                 if (ObjectUtils.isNotEmpty(obj.getProjectApprovalDate()) && ObjectUtils.isNotEmpty(obj.getPlanProjectApprovalDate())) {
-                    obj.setIsDelaySurvey(obj.getProjectApprovalDate().isAfter(obj.getPlanProjectApprovalDate()));
+                    obj.setIsDelayApproval(obj.getProjectApprovalDate().isAfter(obj.getPlanProjectApprovalDate()));
                 }
             });
         }
@@ -633,10 +633,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             Integer completeCount = MathUtil.ZERO;
             monthList.add(monthEnum.getCode().concat("月份"));
             if (CollectionUtils.isNotEmpty(approvalList)){
-                 approvalCount = approvalList.stream().filter(obj -> (year + monthEnum.getCode()).equals(String.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
+                 approvalCount = approvalList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
             }
             if (CollectionUtils.isNotEmpty(completeList)){
-                 completeCount = completeList.stream().filter(obj -> (year + monthEnum.getCode()).equals(String.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
+                 completeCount = completeList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
             }
             approvalCountList.add(approvalCount);
             completeCountList.add(completeCount);
