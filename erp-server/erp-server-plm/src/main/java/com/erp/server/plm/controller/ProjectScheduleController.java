@@ -1,12 +1,9 @@
 package com.erp.server.plm.controller;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProjectPlanTaskDTO;
 import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
@@ -161,7 +158,7 @@ public class ProjectScheduleController extends BaseController {
      * @return
      */
     @PostMapping("/auto")
-    public ApiResult<ProjectTaskPlanAutoVO> autoSchedule(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<ProjectPlanTaskDTO.AutoDTO> dto){
+    public ApiResult<ProjectTaskPlanAutoVO> autoSchedule(@RequestBody @Validated ProjectPlanTaskDTO.AutoDTo dto){
         ProjectTaskPlanAutoVO resultVO = projectPlanService.autoSchedule(dto);
         return success(resultVO);
     }

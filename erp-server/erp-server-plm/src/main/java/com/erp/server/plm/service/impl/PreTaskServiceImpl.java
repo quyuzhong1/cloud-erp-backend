@@ -2,12 +2,15 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.dto.PreTaskUpdateDTO;
+import com.erp.model.plm.dto.ProjectChildTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -354,6 +357,28 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         }
         List<PreTaskEntity> updateList = dto.stream().map(PreTaskEntity::new).collect(Collectors.toList());
         return updateBatchById(updateList);
+    }
+
+    @Override
+    public List<ProjectChildTaskDTO> listChildrenTaskOneByTaskId(String taskId) {
+        if (StrUtil.isBlank(taskId)) {
+            return Collections.emptyList();
+        }
+        List<PreTaskEntity> preTaskList = lambdaQuery()
+                .eq(PreTaskEntity::getPreTaskId, taskId)
+                .list();
+        if (CollectionUtils.isEmpty(preTaskList)) {
+           return Collections.emptyList();
+        }
+        Map<String, PreTaskEntity> preTaskMap = preTaskList.stream().collect(Collectors.toMap(PreTaskEntity::getTaskId, e -> e));
+        List<String> childTaskIds = preTaskList.stream().map(PreTaskEntity::getTaskId).collect(Collectors.toList());
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.listByIds(childTaskIds);
+        List<ProjectChildTaskDTO> resultList = projectTaskList.stream()
+                .map(task ->
+                    new ProjectChildTaskDTO(task, preTaskMap.get(task.getId()))
+                )
+                .collect(Collectors.toList());
+        return resultList;
     }
 
 

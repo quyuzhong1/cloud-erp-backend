@@ -35,7 +35,7 @@ public class SysCalendarController extends BaseController {
      * @return
      */
     @PostMapping("/list")
-    public ApiResult<List<SysCalendarListVO>> listByDate(@RequestBody @Validated SysCalendarDTO.ListDTO dto){
+    public ApiResult<List<SysCalendarListVO>> listByDate(@RequestBody @Validated(SysCalendarDTO.SysSelectList.class) SysCalendarDTO.ListDTO dto){
         List<SysCalendarListVO> resultList = sysCalendarService.listByCondition(dto);
         return success(resultList);
     }

@@ -5,9 +5,11 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Cloud
@@ -18,8 +20,25 @@ public class ProjectPlanTaskDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class AutoDTo{
+
+        /**
+         *  方法入口类型 1初始化排期 2是变更排期
+         */
+        @NotNull(message = "入口类型不能为空")
+        private Integer type;
+
+        @NotEmpty(message = "需要排期列表不能为空")
+        private List<AutoDateDTO> list;
+
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
     @Valid
-    public static class AutoDTO {
+    public static class AutoDateDTO {
 
         /**
          * 任务计划id
@@ -38,7 +57,10 @@ public class ProjectPlanTaskDTO implements Serializable {
         /**
          * 工期
          */
-        private String workPeriod;
+        @NotBlank(message = "工期不能为空")
+        private Integer workPeriod;
+
+
     }
 
 

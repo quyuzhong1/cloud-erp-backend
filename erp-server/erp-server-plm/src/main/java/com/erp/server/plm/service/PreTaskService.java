@@ -1,15 +1,14 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.dto.PreTaskUpdateDTO;
+import com.erp.model.plm.dto.ProjectChildTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.PreTaskVO;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
@@ -81,4 +80,11 @@ public interface PreTaskService extends IService<PreTaskEntity> {
      * @return
      */
     Boolean updatePreTask(List<PreTaskUpdateDTO> dto);
+
+    /**
+     * 根据任务id获取一级子任务列表
+     * @param taskId
+     * @return
+     */
+    List<ProjectChildTaskDTO> listChildrenTaskOneByTaskId(String taskId);
 }

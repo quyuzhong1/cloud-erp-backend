@@ -6,6 +6,7 @@ import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -117,6 +118,14 @@ public interface SysUserFeign {
     //根据部门名称查询部门负责人
     @PostMapping("sys/feign/dept/getByDeptNames")
     List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
+
+    /**
+     * 查询日历列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/sys/feign/calendar/list")
+    List<SysCalendarListVO> listCalendar(@RequestBody SysCalendarDTO.ListDTO dto);
 
 
 }

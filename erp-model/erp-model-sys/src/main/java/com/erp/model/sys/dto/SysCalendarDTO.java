@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.erp.model.sys.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,7 +31,7 @@ public class SysCalendarDTO implements Serializable {
         /**
          * 指定年月日
          */
-        @NotNull(message = "请指定年,月,日至少一种类型")
+        @NotNull(message = "请指定年,月,日至少一种类型", groups = SysSelectList.class)
         private LocalDate calendarDate;
 
         /**
@@ -72,4 +73,6 @@ public class SysCalendarDTO implements Serializable {
         private String remark;
 
     }
+
+    public static class SysSelectList{}
 }

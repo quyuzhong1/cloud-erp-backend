@@ -12,10 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
-import com.erp.model.plm.dto.ChangeScheduleDTO;
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
-import com.erp.model.plm.dto.HandleTaskScheduleDTO;
-import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
@@ -780,6 +777,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         }
 
 
+    }
+
+    @Override
+    public List<PlanTaskNameDTO> listByPlanId(List<String> planIdList) {
+        List<PlanTaskNameDTO> planTaskList = baseMapper.listByPlanIds(planIdList);
+        return planTaskList;
     }
 
 }

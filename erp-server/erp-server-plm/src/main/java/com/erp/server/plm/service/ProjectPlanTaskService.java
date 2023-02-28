@@ -2,10 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseIdDTO;
-import com.erp.model.plm.dto.ChangeScheduleDTO;
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
-import com.erp.model.plm.dto.HandleTaskScheduleDTO;
-import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.*;
@@ -140,4 +137,11 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @param projectPlanIds
      */
     void updateTaskInfo(List<String> projectPlanIds);
+
+    /**
+     * 通过计划ID查询任务相关信息
+     * @param planIdList
+     * @return
+     */
+    List<PlanTaskNameDTO> listByPlanId(List<String> planIdList);
 }

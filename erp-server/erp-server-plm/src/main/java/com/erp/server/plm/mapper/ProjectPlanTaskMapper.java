@@ -1,6 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.PlanTaskNameDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.vo.ScheduleChangeTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
@@ -25,4 +26,6 @@ public interface ProjectPlanTaskMapper extends BaseMapper<ProjectPlanTaskEntity>
     List<ScheduleTaskDetailsVO> getTaskByPlanType(@Param("productId") String productId, @Param("projectPlanType") String projectPlanType);
 
     List<ScheduleChangeTaskVO> getChangeTaskList(@Param("productId") String productId ,@Param("taskName") String taskName,@Param("scheduleStatus") String scheduleStatus);
+
+    List<PlanTaskNameDTO> listByPlanIds(@Param("planIdList") List<String> planIdList);
 }

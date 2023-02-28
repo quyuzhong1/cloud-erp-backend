@@ -92,5 +92,5 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * @param dto
      * @return
      */
-    ProjectTaskPlanAutoVO autoSchedule(List<ProjectPlanTaskDTO.AutoDTO> dto);
+    ProjectTaskPlanAutoVO autoSchedule(ProjectPlanTaskDTO.AutoDTo dto);
 }

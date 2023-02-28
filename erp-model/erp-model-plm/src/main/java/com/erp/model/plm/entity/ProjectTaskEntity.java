@@ -236,4 +236,9 @@ public class ProjectTaskEntity implements Serializable {
             this.realityStartTime = realityStart;
         }
     }
+
+    public ProjectTaskEntity(String id, Integer workPeriod) {
+        this.id = id;
+        this.workPeriod = workPeriod;
+    }
 }

@@ -1,9 +1,13 @@
 package com.common.core.utils.date;
 
+import cn.hutool.core.collection.CollectionUtil;
+
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Cloud
@@ -295,6 +299,19 @@ public class LocalDateUtil {
             return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MAX);
         }
         return LocalDateTime.of(LocalDate.now(),LocalTime.MAX);
+    }
+
+    public static Integer countDaysForLocalDate(LocalDate startDate, LocalDate endDate, List<LocalDate> dateList){
+        if (CollectionUtil.isEmpty(dateList)) {
+            return 0;
+        }
+        AtomicReference<Integer> count = new AtomicReference<>(0);
+        dateList.stream().forEach(date -> {
+            if(date.compareTo(startDate) >= 0 && date.compareTo(endDate) <= 0){
+                count.getAndSet(count.get() + 1);
+            }
+        });
+        return count.get();
     }
 }
 

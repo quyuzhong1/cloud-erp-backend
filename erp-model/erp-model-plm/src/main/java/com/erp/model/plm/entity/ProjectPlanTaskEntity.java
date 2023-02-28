@@ -1,11 +1,21 @@
 package com.erp.model.plm.entity;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.plm.dto.PlanTaskNameDTO;
+import com.erp.model.plm.dto.ProjectPlanTaskDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static com.common.core.utils.date.LocalDateUtil.countDaysForLocalDate;
 
 /**
  * 项目计划任务表(ProjectPlanTask)实体类
@@ -16,6 +26,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_plan_task")
+@NoArgsConstructor
 public class ProjectPlanTaskEntity implements Serializable {
     private static final long serialVersionUID = 184565397899617521L;
 
@@ -104,5 +115,23 @@ public class ProjectPlanTaskEntity implements Serializable {
     @TableField("work_period")
     private Integer workPeriod;
 
+    public ProjectPlanTaskEntity(String taskId, LocalDate startDate, Integer workPeriod, List<LocalDate> dateList, Integer type) {
+        this.id = taskId;
+        LocalDate endDate = startDate;
+        while (workPeriod > 0){
+            if(!dateList.contains(startDate.plusDays(1))){
+                endDate = startDate.plusDays(1);
+                workPeriod --;
+            }
+        }
+        if(1 == type){
+            this.originStartTime = LocalDateUtil.localDate2Date(startDate);
+            this.originStartTime = LocalDateUtil.localDate2Date(endDate);
+        }else {
+            this.changeStartTime = LocalDateUtil.localDate2Date(startDate);
+            this.changeEndTime = LocalDateUtil.localDate2Date(endDate);
+        }
+        this.workPeriod = workPeriod;
+    }
 }
 
