@@ -8,6 +8,7 @@
          pa.product_id,
          pd.id AS parentSkuId,
          pd.sku_no AS parentSkuNo,
+         pd.images_url AS parentSkuImagesUrl,
          pa.quantity,
          pa.accessories_sku_id
          FROM product_detail pd

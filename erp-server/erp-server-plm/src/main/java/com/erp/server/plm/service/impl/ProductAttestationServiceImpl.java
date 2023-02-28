@@ -83,16 +83,18 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
             List<String> skuIdList = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
             //先删除 去掉的 认证
             removeBySkuIds(skuIdList);
-            //对应的字典表信息
-            List<String> dictIdList = attestationList.stream().map(AttestationDTO::getDictId).collect(Collectors.toList());
-            List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
-            for (AttestationDTO item : attestationList) {
-                String value = dictList.stream().filter(d -> d.getId().equals(item.getDictId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
-                item.setValue(value);
+            if(CollectionUtils.isNotEmpty(attestationList)){
+                //对应的字典表信息
+                List<String> dictIdList = attestationList.stream().map(AttestationDTO::getDictId).collect(Collectors.toList());
+                List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
+                for (AttestationDTO item : attestationList) {
+                    String value = dictList.stream().filter(d -> d.getId().equals(item.getDictId())).
+                            findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
+                    item.setValue(value);
+                }
+                List<ProductAttestationEntity> list = BeanMapper.copyList(attestationList, ProductAttestationEntity.class);
+                return this.saveBatch(list);
             }
-            List<ProductAttestationEntity> list = BeanMapper.copyList(attestationList, ProductAttestationEntity.class);
-            return this.saveBatch(list);
         }
         return true;
     }

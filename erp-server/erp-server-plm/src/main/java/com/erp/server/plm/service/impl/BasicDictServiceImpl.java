@@ -7,8 +7,10 @@ import com.erp.model.plm.dto.BasicDictDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.server.plm.mapper.BasicDictMapper;
 import com.erp.server.plm.service.BasicDictService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,25 +57,29 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
 
     /**
      * 根据id集合批量查询字典信息
-     * @Author Luo_WG
-     * @Date 2022/10/22 19:50
+     *
      * @param list id集合
      * @return java.util.List<com.erp.model.plm.entity.BasicDictEntity>
+     * @Author Luo_WG
+     * @Date 2022/10/22 19:50
      **/
     @Override
     public List<BasicDictEntity> listByIds(List<String> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
         LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(BasicDictEntity::getId, list);
         return this.list(queryWrapper);
     }
 
     /**
-     * @Description 根据名称查询字段是否存在
-     * @Author Luo_WG
-     * @Date 2022/9/29 11:02
      * @param type:字典类型
      * @param value:字典值
      * @return com.erp.model.plm.entity.BasicDictEntity
+     * @Description 根据名称查询字段是否存在
+     * @Author Luo_WG
+     * @Date 2022/9/29 11:02
      **/
     public BasicDictEntity checkBasicDict(String type, String value) {
         LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();

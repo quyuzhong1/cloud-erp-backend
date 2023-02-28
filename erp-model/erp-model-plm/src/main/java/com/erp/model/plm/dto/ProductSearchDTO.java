@@ -4,6 +4,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public class ProductSearchDTO extends PermissionsDTO {
     /**
      * 阶段名称
      */
-    private String phaseName;
+    private List<String> phaseNameList;
 
     /**
      * 状态列表
@@ -45,5 +46,44 @@ public class ProductSearchDTO extends PermissionsDTO {
 
     //产品id 集合
     private List<String> productIds;
+
+
+    /**
+     * 产品等级
+     */
+    private List<String> gradeList;
+
+    /**
+     * 产品 品牌
+     */
+    private List<String> brandList;
+
+    /**
+     * 产品 属性
+     */
+    private List<String> propertyList;
+
+
+    /**
+     * 产品 经理
+     */
+    private List<String> productChargeIdList;
+
+    /**
+     * 项目 经理
+     */
+    private List<String> projectChargeIdList;
+
+
+    /**
+     * 开始时间
+     */
+    private Date startTime;
+
+    /**
+     * 结束时间
+     */
+    private Date endTime;
+
 
 }

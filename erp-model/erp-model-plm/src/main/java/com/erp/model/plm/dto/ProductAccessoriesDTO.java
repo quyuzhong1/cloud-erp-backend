@@ -3,6 +3,9 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +43,13 @@ public class ProductAccessoriesDTO implements Serializable {
     private String parentSkuNo;
 
 
+
+    /**
+     * 父级sku 图片
+     */
+    private String parentSkuImagesUrl;
+
+
     /**
      * 辅料的sku id
      */
@@ -66,6 +76,9 @@ public class ProductAccessoriesDTO implements Serializable {
     /**
      * 数量
      */
+    @NotNull(message = "数量不能为空")
+    @DecimalMax(value = "9999",message ="最大值为9999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Integer quantity;
 
 

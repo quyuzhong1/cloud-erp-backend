@@ -961,11 +961,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity, oldDto);
             }
-            ProductDetailEntity productDetailEntity = this.getById(obj.getAccessoriesSkuId());
+            ProductDetailEntity productDetailEntity = this.getById(obj.getParentSkuId());
             if (ObjectUtils.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
-            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getAccessoriesSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
+            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getParentSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
         });
     }
 
