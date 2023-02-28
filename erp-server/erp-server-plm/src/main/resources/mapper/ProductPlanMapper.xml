@@ -252,13 +252,10 @@
                     and pp.year = #{params.year}
                 </if>
             </if>
-            <if test="type != null and (type == 2 or type == 6)">
+            <if test="type != null and type == 2">
                  and pp.product_status = '3'
                 <if test="startTime != null and endTime != null">
                  and pst.status = '3'  and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
-                </if>
-                <if test="type == 6">
-                    and pp.project_approval_date > pp.plan_project_approval_date
                 </if>
                 <if test="params.year != null  and startTime == null">
                     and pp.year = #{params.year}
@@ -291,6 +288,18 @@
                     and pp.year = #{params.year}
                 </if>
             </if>
+            <if test="type != null and type == 6">
+                and pp.product_status in ('3','4','5')
+                <if test="startTime != null and endTime != null">
+                    and pst.status = '3'  and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
+                </if>
+                <if test="type == 6">
+                    and pp.project_approval_date > pp.plan_project_approval_date
+                </if>
+                <if test="params.year != null  and startTime == null">
+                    and pp.year = #{params.year}
+                </if>
+            </if>
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
@@ -316,11 +325,11 @@
         select
                ${params.groupFields},
                count(0) as totalCount,
-               (select count(0) from product_plan where product_status = '3' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as approvalCount,
-               (select count(0) from product_plan where product_status in ('4','5') and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as progressCount,
-               (select count(0) from product_plan where product_status = '6' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as completeCount,
-               (select count(0) from product_plan where product_status = '3' and year = #{params.year} and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}) as approvalDelayCount,
-               (select count(0) from product_plan where product_status = '7' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as cancelCount
+               (select count(0) from product_plan where is_deleted = false and product_status = '3' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as approvalCount,
+               (select count(0) from product_plan where is_deleted = false and product_status in ('4','5') and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as progressCount,
+               (select count(0) from product_plan where is_deleted = false and product_status = '6' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as completeCount,
+               (select count(0) from product_plan where is_deleted = false and product_status = '3' and year = #{params.year} and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}) as approvalDelayCount,
+               (select count(0) from product_plan where is_deleted = false and product_status = '7' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as cancelCount
         from  product_plan pp
         <where>
             pp.is_deleted = false
@@ -330,7 +339,7 @@
             <if test="params.chargeId != null and params.chargeId.size > 0">
                 and
                 <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
-                    string_to_array(pp.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                    #{item} = ANY(string_to_array(pp.charge_id,','))
                 </foreach>
             </if>
             <if test="params.gradeId != null and params.gradeId.size > 0">

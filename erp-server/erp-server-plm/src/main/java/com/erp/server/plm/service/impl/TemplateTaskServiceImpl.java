@@ -474,9 +474,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             this.updateByIdAndTemplateId(entity);
         }
         //保存审核人信息
-        approvalList.forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
-        List<TaskChargeDistributionEntity> taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
-        setTaskChargeDistribution(taskChargeDistributionList,dto.getChargeIds(),entity.getTemplateId(),entity.getId(),MathUtil.TWO);
+        if (CollectionUtils.isNotEmpty(approvalList)) {
+            approvalList.forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
+            List<TaskChargeDistributionEntity> taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
+            setTaskChargeDistribution(taskChargeDistributionList,dto.getChargeIds(),entity.getTemplateId(),entity.getId(),MathUtil.TWO);
+        }
         //保存交付文档
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
         //保存模板配置信息

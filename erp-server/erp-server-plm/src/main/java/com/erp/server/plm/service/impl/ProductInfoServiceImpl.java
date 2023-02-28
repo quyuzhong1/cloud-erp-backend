@@ -277,6 +277,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         //新增或修改产品经理角色和对应成员
         projectMembersService.saveByRoleAndMembers(entity.getId(), null, "产品经理", chargeIds);
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            entity.setApprovalStatus(oldEntity.getApprovalStatus());
+        }
         //关联产品规划
         productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(), entity);
         return entity.getId();
