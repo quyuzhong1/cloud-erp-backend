@@ -36,6 +36,10 @@
         <if test="params.categoryId!=null and params.categoryId!='' ">
             AND P.category_id = #{params.categoryId}
         </if>
+
+        <if test="params.phaseName != null and params.phaseName != ''  ">
+            AND pph.name = #{params.phaseName}
+        </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
@@ -374,7 +378,7 @@
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE P.id IN
+        WHERE  p.delete_state=0 and  P.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
 

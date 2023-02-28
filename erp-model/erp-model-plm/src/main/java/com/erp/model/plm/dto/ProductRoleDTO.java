@@ -6,7 +6,9 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
 
-/**人员分类
+/**
+ * 人员分类
+ *
  * @Classname ProductRoleDTO
  * @Description TODO
  * @Date 2022-10-09 19:24
@@ -26,6 +28,12 @@ public class ProductRoleDTO implements Serializable {
      * 产品角色名
      */
     private String name;
+
+
+    /**
+     * 产品数量
+     */
+    private Integer productQuantity;
 
 
     /**

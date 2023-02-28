@@ -112,4 +112,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     Boolean setProgressStatus(SetProductProgressStatusDTO dto);
 
     Boolean setSchematicImageUrl(SetSchematicImageUrlDTO dto);
+
+    /**
+     * 根据分类id 获取到产品信息
+     * @author yl
+     * @date 2023-02-28 17:10
+     * @param categoryIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     */
+    List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds);
 }

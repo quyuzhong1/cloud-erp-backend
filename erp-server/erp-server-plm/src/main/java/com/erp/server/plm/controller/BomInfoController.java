@@ -1,14 +1,16 @@
 package com.erp.server.plm.controller;
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
@@ -53,6 +55,11 @@ public class BomInfoController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:bom:paging",
+            tableAlias = "b"
+    )
     public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<List<BomPagingVO>> pagingVO = bomInfoService.paging(dto);
         return success(pagingVO);

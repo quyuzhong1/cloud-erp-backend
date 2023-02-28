@@ -13,6 +13,7 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
@@ -47,8 +48,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
-        checkCategoryName(categoryName,null);
-        checkCategoryCode(dto.getCode(),dto.getPid(),null);
+        checkCategoryName(categoryName, null);
+        checkCategoryCode(dto.getCode(), dto.getPid(), null);
         BasicCategoryEntity entity = new BasicCategoryEntity();
         entity.setPid(dto.getPid());
         entity.setName(categoryName);
@@ -67,15 +68,15 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
-        checkCategoryName(categoryName,dto.getId());
+        checkCategoryName(categoryName, dto.getId());
         BasicCategoryEntity found = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(found)) {
             throw new ServiceException(ApiError.ERROR_95072);
         }
-        checkCategoryCode(dto.getCode(),found.getPid(),dto.getId());
+        checkCategoryCode(dto.getCode(), found.getPid(), dto.getId());
         LambdaUpdateWrapper<BasicCategoryEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(BasicCategoryEntity::getName, categoryName);
-        updateWrapper.set(BasicCategoryEntity::getCode,dto.getCode());
+        updateWrapper.set(BasicCategoryEntity::getCode, dto.getCode());
         updateWrapper.eq(BasicCategoryEntity::getId, dto.getId());
         return this.update(updateWrapper);
     }
@@ -92,11 +93,17 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public List<BasicCategoryDTO> getTree() {
         List<BasicCategoryEntity> list = this.list();
+        List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        //根据分类id 获取产品信息
+        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds);
+
         List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {
-                    c.setChildrenList(getChildrenList(c, allList));
+                    Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(c.getId())).count();
+                    c.setProductQuantity(productQuantity);
+                    c.setChildrenList(getChildrenList(c, allList, productList));
                     return c;
                 }).collect(Collectors.toList());
 
@@ -143,20 +150,20 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     /**
+     * @param id
+     * @return String
      * @description: 根据产品分类id获取最高级分类
      * @author Will
      * @date: 2022/11/22 12:22
-     * @param id
-     * @return String
      */
     @Override
-    public void getBestEntity(String id,BasicCategoryEntity bestEntity) {
+    public void getBestEntity(String id, BasicCategoryEntity bestEntity) {
         BasicCategoryEntity entity = this.getById(id);
         if (entity.getPid().equals("0")) {
-            BeanMapperUtils.copy(entity,bestEntity);
+            BeanMapperUtils.copy(entity, bestEntity);
             return;
         }
-         getBestEntity(entity.getPid(),bestEntity);
+        getBestEntity(entity.getPid(), bestEntity);
     }
 
     @Override
@@ -168,16 +175,16 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         String name = params.get("name");
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         if (StringUtils.isNotBlank(id)) {
-            queryWrapper.eq(BasicCategoryEntity::getId,id);
+            queryWrapper.eq(BasicCategoryEntity::getId, id);
         }
         if (StringUtils.isNotBlank(name)) {
-            queryWrapper.eq(BasicCategoryEntity::getName,name);
+            queryWrapper.eq(BasicCategoryEntity::getName, name);
         }
         queryWrapper.last("limit 1");
         BasicCategoryEntity entity = this.getOne(queryWrapper);
         if (ObjectUtils.isNotEmpty(entity)) {
             BasicCategoryDTO dto = new BasicCategoryDTO();
-            BeanUtils.copyProperties(entity,dto);
+            BeanUtils.copyProperties(entity, dto);
             return dto;
         }
         return null;
@@ -186,19 +193,19 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public List<BasicCategoryEntity> listParentEntity(String categoryId) {
         List<BasicCategoryEntity> list = new ArrayList<>();
-        setParentEntity(categoryId,list);
+        setParentEntity(categoryId, list);
         return list;
     }
 
     /**
      * list加入父级品类
      */
-    private void setParentEntity(String pid,List<BasicCategoryEntity> list) {
+    private void setParentEntity(String pid, List<BasicCategoryEntity> list) {
         BasicCategoryEntity basicCategoryEntity = this.getById(pid);
         if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
             list.add(basicCategoryEntity);
             if (!"0".equals(basicCategoryEntity.getPid())) {
-                setParentEntity(basicCategoryEntity.getPid(),list);
+                setParentEntity(basicCategoryEntity.getPid(), list);
             }
         }
     }
@@ -267,17 +274,17 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @author yl
      * @date 2022-09-13 14:49
      */
-    private List<BasicCategoryDTO> getChildrenList(BasicCategoryDTO item, List<BasicCategoryDTO> allList) {
+    private List<BasicCategoryDTO> getChildrenList(BasicCategoryDTO item, List<BasicCategoryDTO> allList, List<ProductInfoEntity> productList) {
         List<BasicCategoryDTO> collectList = allList.stream().
                 filter(c -> item.getId().equals(c.getPid())).
                 map(b -> {
-                    b.setChildrenList(getChildrenList(b, allList));
+                    Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(b.getId())).count();
+                    b.setProductQuantity(productQuantity);
+                    b.setChildrenList(getChildrenList(b, allList,productList));
                     return b;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collectList) ? new ArrayList<>() : collectList;
     }
-
-
 
 
     /**
@@ -288,7 +295,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @author yl
      * @date 2022-09-13 12:17
      */
-    private void checkCategoryName(String categoryName,String id) {
+    private void checkCategoryName(String categoryName, String id) {
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
         queryWrapper.last("LIMIT 1");
@@ -299,14 +306,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     /**
-     * @description: 分类编码信息验证
-     * @author Will
-     * @date: 2022/11/22 12:11
      * @param code
      * @param pid
      * @param id
+     * @description: 分类编码信息验证
+     * @author Will
+     * @date: 2022/11/22 12:11
      */
-    private void checkCategoryCode(String code,String pid,String id) {
+    private void checkCategoryCode(String code, String pid, String id) {
         BasicCategoryEntity parent = this.getById(pid);
         //一二级分类必须填写代号
         if ("0".equals(pid) || (ObjectUtils.isNotEmpty(parent) && "0".equals(parent.getPid()))) {
@@ -323,10 +330,10 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
         if (StringUtils.isNotBlank(code)) {
             Boolean flag = false;
-            for (int i = 65;i <= 90; i++) {
+            for (int i = 65; i <= 90; i++) {
                 char c = (char) (i);
-                if ( code.equals(String.valueOf(c)) ) {
-                   flag = true;
+                if (code.equals(String.valueOf(c))) {
+                    flag = true;
                 }
             }
             if (!flag) {
