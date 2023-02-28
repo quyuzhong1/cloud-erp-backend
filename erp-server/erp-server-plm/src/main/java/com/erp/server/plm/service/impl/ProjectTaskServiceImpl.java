@@ -1589,6 +1589,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateTaskState(List<String> taskIds, Integer state, Date realityStart, Date realityEnd) {
         if (CollectionUtils.isNotEmpty(taskIds)) {
             LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
@@ -1599,7 +1600,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (null != realityEnd) {
                 updateWrapper.set(ProjectTaskEntity::getRealityEndTime, realityEnd);
             }
-            if (null != realityStart && null != realityEnd) {
+            if (null != realityStart || null != realityEnd) {
                 List<ProjectTaskEntity> updateOrSavEntitiyList = taskIds.stream()
                         .map(taskId -> new ProjectTaskEntity(taskId, realityStart, realityEnd))
                         .collect(Collectors.toList());
@@ -3380,15 +3381,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态
         checkTaskState(list);
-
-//        //如果  排期任务状态 要通过才能发布任务
-//        //审核通过
-//        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-//        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
-//        //当不包含就要去除
-//        if (!scheduleStatusList.contains(auditPassStatus)) {
-//            throw new ServiceException(ApiError.ERROR_95130);
-//        }
 
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();

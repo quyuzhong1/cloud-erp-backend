@@ -36,13 +36,13 @@ public class ProjectTaskTimeRecordPageVO implements Serializable {
      * 计划工时(天数)
      */
     @ExcelProperty(value = "计划工时(天数)", index = 3)
-    private String planTaskTime;
+    private Integer planTaskTime;
 
     /**
      * 完成任务耗时（天）
      */
     @ExcelProperty(value = "完成任务耗时(天)", index = 4)
-    private String consumerTime;
+    private Integer consumerTime;
     /**
      * 排期任务数量
      */
