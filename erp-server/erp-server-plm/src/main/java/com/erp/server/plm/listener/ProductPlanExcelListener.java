@@ -241,7 +241,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
             }
             if (MonthEnum.MAY.getCode().equals(monthEnum.getCode())) {
                 productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getMayQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getMayQtyStr()));
-                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getMarchAmountStr()));
+                productPlanSaleInfoEntity.setSalesAmount(MathUtil.valueOf(productPlanExcelDTO.getMayAmountStr()));
             }
             if (MonthEnum.JUNE.getCode().equals(monthEnum.getCode())) {
                 productPlanSaleInfoEntity.setSalesQty(StringUtils.isBlank(productPlanExcelDTO.getJuneQtyStr()) ? MathUtil.ZERO : Integer.valueOf(productPlanExcelDTO.getJuneQtyStr()));
