@@ -26,9 +26,9 @@ public class BeanMapUtil {
      * @return Map
      */
     public static Map objToMap(Object object)  {
-        String bean = JSONObject.toJSONString(object);
+        JSON bean = (JSON)JSON.toJSON(object);
         //bean  to Map
-        Map<String, JSONObject> tempMap = JSON.parseObject(bean, new HashMap<String, JSONObject>().getClass());
+        Map<String, JSONObject> tempMap = JSON.toJavaObject( bean, Map.class);
         return tempMap;
     }
 
