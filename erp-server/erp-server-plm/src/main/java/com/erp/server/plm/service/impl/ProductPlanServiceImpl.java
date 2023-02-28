@@ -51,10 +51,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -586,7 +583,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             return list;
         }
         for (ProductPlanGroupVO productPlanGroupVO: list) {
-            String deptNames = userDeptList.stream().filter(obj -> productPlanGroupVO.getChargeId().equals(obj.getUid())).map(SysUserDeptDTO::getDeptName).collect(Collectors.joining(","));
+            List<String> chargeIds = Arrays.stream(productPlanGroupVO.getChargeId().split(",")).collect(Collectors.toList());
+            String deptNames = userDeptList.stream().filter(obj -> chargeIds.contains(obj.getUid()) && StringUtils.isNotBlank(obj.getDeptName())).map(SysUserDeptDTO::getDeptName).collect(Collectors.joining(","));
             productPlanGroupVO.setDeptName(deptNames);
         }
         return list;

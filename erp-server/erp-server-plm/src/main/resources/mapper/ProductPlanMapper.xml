@@ -315,7 +315,7 @@
         select
                ${params.groupFields},
                count(0) as totalCount,
-               (select count(0) from product_plan where product_status = '3' and ${params.groupField} = pp.${params.groupField}) as approvalCount,
+               (select count(0) from product_plan where product_status = '3' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as approvalCount,
                (select count(0) from product_plan where product_status in ('4','5','6') and ${params.groupField} = pp.${params.groupField}) as progressCount,
                (select count(0) from product_plan where product_status = '6' and ${params.groupField} = pp.${params.groupField}) as completeCount,
                (select count(0) from product_plan where product_status = '3' and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}) as approvalDelayCount,

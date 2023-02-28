@@ -146,14 +146,9 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
                 productPlanEntity.setCategoryId(basicCategoryEntity.getId());
             }
         }
-
-        String errStr = "";
+        //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
-            for (int i = 0; i < errorMsgList.size(); i++) {
-                Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
-            }
-            productPlanExcelDTO.setErrorMsg(errStr);
+            productPlanExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             list.add(productPlanExcelDTO);
             return;
         }

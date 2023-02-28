@@ -176,7 +176,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileUrl(fileUrl);
                     entity.setOldFileUrl(fileUrl);
-                    entity.setOldUploadType(dto.getUploadType());
+                    entity.setOldUploadType(IsConstant.YES);
                     resultList.add(entity);
                 }
             }

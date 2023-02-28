@@ -118,13 +118,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
             }
         }
 
-        String errStr = "";
         if (errorMsgList.size() > 0) {
-            for (int i = 0; i < errorMsgList.size(); i++) {
-                Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
-            }
-            vo.setErrorMsg(errStr);
+            vo.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(vo);
             return;
         }
