@@ -156,7 +156,7 @@
 
         <if test="productIds !=null and productIds.size()>0">
             AND P.id IN
-            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+            <foreach collection="productIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
         </if>
