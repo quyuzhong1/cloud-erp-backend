@@ -33,19 +33,19 @@ public class ProductAttestationDTO implements Serializable {
     /**
      * 产品认证
      */
-    private List<AttestationDTO> productList;
+    private List<String> productList;
 
 
 
     /**
      * 运输认证
      */
-    private List<AttestationDTO> transportList;
+    private List<String> transportList;
 
 
 
     /**
      * 其它 认证
      */
-    private List<AttestationDTO> otherList;
+    private List<String> otherList;
 }

@@ -33,6 +33,7 @@ import com.erp.model.workflow.dto.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
@@ -3423,14 +3424,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //检查任务状态
         checkTaskState(list);
 
-        //如果  排期任务状态 要通过才能发布任务
-        //审核通过
-        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
-        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
-        //当不包含就要去除
-        if (!scheduleStatusList.contains(auditPassStatus)) {
-            throw new ServiceException(ApiError.ERROR_95130);
-        }
+//        //如果  排期任务状态 要通过才能发布任务
+//        //审核通过
+//        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+//        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
+//        //当不包含就要去除
+//        if (!scheduleStatusList.contains(auditPassStatus)) {
+//            throw new ServiceException(ApiError.ERROR_95130);
+//        }
 
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
@@ -3562,6 +3563,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         checkTaskState(list);
+
         //统计项目状态为  不是待发布的任务 和待审核的任务
         long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus()) && !waitConfirmCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
@@ -3582,6 +3584,28 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return flag;
 
     }
+
+    /**
+     *  如果 排期变更任务状态 要是不是审核通过 和 审核不通过 就不能 操作任务
+     */
+    public void checkScheduleChangeStatus(List<ProjectTaskEntity> list){
+        String  change= ProjectPlanConstant.PROJECT_PLAN_CHANGE;
+        String auditPass = BaseStatusEnum.AUDIT_PASS.getStatus();
+        String auditNoPass = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
+        List<String> status=new ArrayList<>(2);
+        status.add(auditPass);
+        status.add(auditNoPass);
+        List<String> scheduleStatusList = list.stream().filter(s->change.equals(s.getScheduleType())).
+                map(ProjectTaskEntity::getScheduleStatus).
+                collect(Collectors.toList());
+        //当不包含就要去除
+        if (!status.contains(scheduleStatusList)) {
+            throw new ServiceException(ApiError.ERROR_95144);
+        }
+    }
+
+
+
 
 
     /**

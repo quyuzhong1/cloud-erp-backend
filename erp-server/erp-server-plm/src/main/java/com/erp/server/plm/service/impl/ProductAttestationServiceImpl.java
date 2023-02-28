@@ -48,36 +48,41 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
             List<AttestationDTO> attestationList = new ArrayList<>(10);
             for (ProductAttestationDTO item : productAttestationList) {
                 //产品认证
-                List<AttestationDTO> productList = item.getProductList();
-                for (AttestationDTO product : productList) {
+                List<String> productDictList = item.getProductList();
+                for (String productDict : productDictList) {
+                    AttestationDTO product = new AttestationDTO();
                     product.setSkuId(item.getSkuId());
                     product.setType(ProductManyDetailConstant.PRODUCT_ATTESTATION);
-
+                    product.setDictId(productDict);
+                    attestationList.add(product);
                 }
-                attestationList.addAll(productList);
+
                 //其它认证
-                List<AttestationDTO> otherList = item.getOtherList();
-                for (AttestationDTO other : otherList) {
+                List<String> otherDictList = item.getOtherList();
+                for (String otherDict : otherDictList) {
+                    AttestationDTO other = new AttestationDTO();
+                    other.setDictId(otherDict);
                     other.setSkuId(item.getSkuId());
                     other.setType(ProductManyDetailConstant.OTHER_ATTESTATION);
+                    attestationList.add(other);
                 }
-                attestationList.addAll(otherList);
 
                 //运输认证
-                List<AttestationDTO> transportList = item.getTransportList();
-                for (AttestationDTO transport : transportList) {
+                List<String> transportDictList = item.getTransportList();
+                for (String transportDict : transportDictList) {
+                    AttestationDTO transport = new AttestationDTO();
                     transport.setSkuId(item.getSkuId());
                     transport.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
+                    transport.setDictId(transportDict);
+                    attestationList.add(transport);
                 }
-                attestationList.addAll(transportList);
+
             }
 
-            //这是传过来的id
-            List<String> idList = attestationList.stream().map(AttestationDTO::getId).collect(Collectors.toList());
             //这个是skuid
             List<String> skuIdList = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
             //先删除 去掉的 认证
-            removeBySkuIds(skuIdList, idList);
+            removeBySkuIds(skuIdList);
             //对应的字典表信息
             List<String> dictIdList = attestationList.stream().map(AttestationDTO::getDictId).collect(Collectors.toList());
             List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
@@ -87,22 +92,18 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 item.setValue(value);
             }
             List<ProductAttestationEntity> list = BeanMapper.copyList(attestationList, ProductAttestationEntity.class);
-            return this.saveOrUpdateBatch(list);
+            return this.saveBatch(list);
         }
         return true;
     }
 
     /**
      * @param skuIdList
-     * @param ids       存在的
      */
-    private void removeBySkuIds(List<String> skuIdList, List<String> ids) {
+    private void removeBySkuIds(List<String> skuIdList) {
         if (CollectionUtils.isNotEmpty(skuIdList)) {
             LambdaQueryWrapper<ProductAttestationEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ProductAttestationEntity::getSkuId, skuIdList);
-            if (CollectionUtils.isNotEmpty(ids)) {
-                queryWrapper.notIn(ProductAttestationEntity::getId, ids);
-            }
             this.remove(queryWrapper);
         }
     }
@@ -127,18 +128,18 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 ProductAttestationDTO attestation = new ProductAttestationDTO();
                 attestation.setSkuId(skuId);
                 //产品
-                List<ProductAttestationEntity> productList = valueList.stream().filter(v -> product.equals(v.getType())).
-                        collect(Collectors.toList());
-                attestation.setProductList(BeanMapper.copyList(productList, AttestationDTO.class));
+                List<String> productList = valueList.stream().filter(v -> product.equals(v.getType())).
+                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                attestation.setProductList(productList);
                 //运输
-                List<ProductAttestationEntity> transportList = valueList.stream().filter(v -> transport.equals(v.getType())).
-                        collect(Collectors.toList());
-                attestation.setTransportList(BeanMapper.copyList(transportList, AttestationDTO.class));
+                List<String> transportList = valueList.stream().filter(v -> transport.equals(v.getType())).
+                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                attestation.setTransportList(transportList);
 
                 //其它
-                List<ProductAttestationEntity> otherList = valueList.stream().filter(v -> other.equals(v.getType())).
-                        collect(Collectors.toList());
-                attestation.setOtherList(BeanMapper.copyList(otherList, AttestationDTO.class));
+                List<String> otherList = valueList.stream().filter(v -> other.equals(v.getType())).
+                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                attestation.setOtherList(otherList);
                 resultList.add(attestation);
             }
 
@@ -154,6 +155,24 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
         }
         LambdaQueryWrapper<ProductAttestationEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductAttestationEntity::getId, ids);
+        return this.list(queryWrapper);
+    }
+
+    
+    /**
+     * 获取根据sku id
+     * @author yl
+     * @date 2023-02-28 11:19
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductAttestationEntity>
+     */
+    @Override
+    public List<ProductAttestationEntity> getBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<ProductAttestationEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProductAttestationEntity::getSkuId, skuIds);
         return this.list(queryWrapper);
     }
 }

@@ -282,22 +282,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
 
-        List<ProductDetailEntity> detailEntityList=this.queryByProductId(productId);
+        List<ProductDetailEntity> detailEntityList = this.queryByProductId(productId);
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
-        for(ProductAccessoriesDTO accessories:productAccessoriesList){
-            String skuNo= detailEntityList.stream().filter(d->d.getId().equals(accessories.getParentSkuId())).
-                    findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
-            accessories.setParentSkuNo(skuNo);
+        List<String> accessoriesSkuIds = productAccessoriesList.stream().filter(a -> StringUtils.isNotBlank(a.getAccessoriesSkuId())).
+                map(ProductAccessoriesDTO::getAccessoriesSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailList = this.getByIdList(accessoriesSkuIds);
+        for (ProductAccessoriesDTO accessories : productAccessoriesList) {
+            ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
+                    findFirst().orElse(null);
+            if(detailEntity!=null){
+                accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
+                accessories.setAccessoriesSkuName(detailEntity.getName());
+                accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
+            }
         }
         productNoSpecDetailAllDTO.setProductAccessoriesList(productAccessoriesList);
 
         //产品认证信息
         List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
-        for(ProductAttestationDTO attestation:productAttestationList){
-            String skuNo= detailEntityList.stream().filter(d->d.getId().equals(attestation.getSkuId())).
-                    findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
+        for (ProductAttestationDTO attestation : productAttestationList) {
+            String skuNo = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
         }
         productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
@@ -321,7 +328,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductManyDetailDTO productManyDetail = new ProductManyDetailDTO();
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
-        if(!Objects.isNull(manySpecDetailById)){
+        if (!Objects.isNull(manySpecDetailById)) {
             //基础信息 禁用字段
             List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
             manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
@@ -427,18 +434,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
-        for(ProductAccessoriesDTO accessories:productAccessoriesList){
-            String skuNo= list.stream().filter(d->d.getId().equals(accessories.getParentSkuId())).
-                    findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
-            accessories.setParentSkuNo(skuNo);
+        List<String> accessoriesSkuIds = productAccessoriesList.stream().filter(a -> StringUtils.isNotBlank(a.getAccessoriesSkuId())).
+                map(ProductAccessoriesDTO::getAccessoriesSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailList = this.getByIdList(accessoriesSkuIds);
+
+        for (ProductAccessoriesDTO accessories : productAccessoriesList) {
+            ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
+                    findFirst().orElse(null);
+            if(detailEntity!=null){
+                accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
+                accessories.setAccessoriesSkuName(detailEntity.getName());
+                accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
+            }
         }
+
+
         productManyDetail.setProductAccessoriesList(productAccessoriesList);
 
         //产品认证信息
         List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
-        for(ProductAttestationDTO attestation:productAttestationList){
-           String skuNo= list.stream().filter(d->d.getId().equals(attestation.getSkuId())).
-                   findFirst().flatMap(obj->Optional.ofNullable(obj.getSkuNo())).orElse("");
+        for (ProductAttestationDTO attestation : productAttestationList) {
+            String skuNo = list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
         }
         productManyDetail.setProductAttestationList(productAttestationList);
@@ -851,43 +868,55 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @date 2023-02-27 10:02
      */
     private void addProductAttestationLog(List<ProductAttestationDTO> productAttestationList, String productId) {
+
+        if (CollectionUtils.isEmpty(productAttestationList)) {
+            return;
+        }
         List<AttestationDTO> attestationList = new ArrayList<>(10);
+
+        List<String> skuIds = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
+
+        List<ProductAttestationEntity> attestationDataList = productAttestationService.getBySkuIds(skuIds);
+
         for (ProductAttestationDTO item : productAttestationList) {
             //产品认证
-            List<AttestationDTO> productList = item.getProductList();
-            for (AttestationDTO product : productList) {
+            List<String> productDictList = item.getProductList();
+            for (String productDict : productDictList) {
+                AttestationDTO product = new AttestationDTO();
                 product.setSkuId(item.getSkuId());
                 product.setType(ProductManyDetailConstant.PRODUCT_ATTESTATION);
-
+                product.setDictId(productDict);
+                attestationList.add(product);
             }
-            attestationList.addAll(productList);
 
             //其它认证
-            List<AttestationDTO> otherList = item.getOtherList();
-            for (AttestationDTO other : otherList) {
+            List<String> otherDictList = item.getOtherList();
+            for (String otherDict : otherDictList) {
+                AttestationDTO other = new AttestationDTO();
+                other.setDictId(otherDict);
                 other.setSkuId(item.getSkuId());
                 other.setType(ProductManyDetailConstant.OTHER_ATTESTATION);
+                attestationList.add(other);
             }
-            attestationList.addAll(otherList);
 
             //运输认证
-            List<AttestationDTO> transportList = item.getTransportList();
-            for (AttestationDTO transport : transportList) {
+            List<String> transportDictList = item.getTransportList();
+            for (String transportDict : transportDictList) {
+                AttestationDTO transport = new AttestationDTO();
                 transport.setSkuId(item.getSkuId());
                 transport.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
+                transport.setDictId(transportDict);
+                attestationList.add(transport);
             }
-            attestationList.addAll(transportList);
         }
         if (CollectionUtils.isEmpty(attestationList)) {
             return;
         }
         List<String> ids = attestationList.stream().map(AttestationDTO::getId).collect(Collectors.toList());
 
-        List<ProductAttestationEntity> attestationEntityList = productAttestationService.getListByIds(ids);
-
         attestationList.forEach(obj -> {
             //SKU操作日志
-            ProductAttestationEntity oldEntity = attestationEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
+            ProductAttestationEntity oldEntity = attestationDataList.stream().filter(e -> e.getDictId().equals(obj.getDictId())).findFirst().orElse(null);
             AttestationDTO oldDto = new AttestationDTO();
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity, oldDto);
@@ -1043,10 +1072,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!bool) {
             throw new ServiceException(1, "新增sku明细失败！");
         }
+
+        //需要默认添加 产品认证 和 产品包装信息
+
+
         //SKU新增操作日志
         List<SysLogEntity> logs = new LinkedList<>();
         //SKU新增任务关联数据
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = new ArrayList<>();
+
+
         list.forEach(obj -> {
             //配置表单生成SKU需要建立关联关系
             if (IsConstant.YES.equals(variantAutoAddDTO.getFlag())) {
@@ -2132,17 +2167,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductAttestationDTO> productAttestationList = productAttestationService.getByProductId(productId);
         ProductAttestationDTO productAttestationDTO = productAttestationList.stream().filter(attestation ->
                 skuId.equals(attestation.getSkuId())).findFirst().orElse(null);
-        if(productAttestationDTO!=null){
+        if (productAttestationDTO != null) {
             productAttestationDTO.setSkuNo(productDetail.getSkuNo());
         }
         result.setProductAttestationDTO(productAttestationDTO);
 
         //产品包装辅料
-        List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
-        List<ProductAccessoriesDTO> accessoriesList = productAccessoriesList.stream().filter(obj ->
-                skuId.equals(obj.getParentSkuId())).collect(Collectors.toList());
-        for(ProductAccessoriesDTO accessories:accessoriesList){
-            accessories.setParentSkuNo(productDetail.getSkuNo());
+        List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
+        List<String> accessoriesSkuIds = accessoriesList.stream().filter(a -> StringUtils.isNotBlank(a.getAccessoriesSkuId())).
+                map(ProductAccessoriesDTO::getAccessoriesSkuId).collect(Collectors.toList());
+
+        List<ProductDetailEntity> detailList = this.getByIdList(accessoriesSkuIds);
+        for (ProductAccessoriesDTO accessories : accessoriesList) {
+            ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
+                    findFirst().orElse(null);
+            if(detailEntity!=null){
+                accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
+                accessories.setAccessoriesSkuName(detailEntity.getName());
+                accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
+            }
         }
         result.setProductAccessoriesList(accessoriesList);
 

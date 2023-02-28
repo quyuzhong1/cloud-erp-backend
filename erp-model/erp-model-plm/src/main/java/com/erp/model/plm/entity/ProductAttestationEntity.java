@@ -27,7 +27,7 @@ public class ProductAttestationEntity extends BaseEntity {
     /**
      * 认证值
      */
-    private String value;
+    private String dictValue;
 
     /**
      * 对应字典表id

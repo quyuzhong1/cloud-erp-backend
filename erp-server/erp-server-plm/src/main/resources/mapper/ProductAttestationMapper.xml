@@ -6,14 +6,14 @@
     <select id="getByProductId" resultType="com.erp.model.plm.entity.ProductAttestationEntity">
         SELECT
           pa.id,
-          pa.sku_id,
+          pd.id as skuId,
           pa.type,
-          pa.value,
+          pa.dict_value,
           pa.dict_id
-          FROM product_attestation pa
-          LEFT JOIN product_detail pd
-          ON pd.id=pa.sku_id
-          WHERE pd.product_id=#{productId} AND pa.is_deleted=false
+          FROM  product_detail pd
+          LEFT JOIN product_attestation pa
+          ON pd.id=pa.sku_id AND pa.is_deleted=false
+          WHERE pd.product_id=#{productId}
     </select>
 </mapper>
 

@@ -4,24 +4,15 @@
 
 
     <select id="getByProductId" resultType="com.erp.model.plm.dto.ProductAccessoriesDTO">
-         SELECT pa.id,
+      SELECT pa.id,
          pa.product_id,
-         pa.parent_sku_id,
+         pd.id AS parentSkuId,
+         pd.sku_no AS parentSkuNo,
          pa.quantity,
-         pa.accessories_sku_id,
-         pd.sku_no AS accessoriesSkuNo,
-         pd.name AS accessoriesSkuName,
-         pd.images_url AS accessoriesSkuImagesUrl
-         FROM product_accessories pa
-         LEFT JOIN product_detail pd
-         ON pa.accessories_sku_id=pd.id
-         WHERE pa.parent_sku_id IN (
-           SELECT id FROM product_detail WHERE product_id =#{productId}
-         )
-         AND pa.is_deleted=false
-
-
-
-
+         pa.accessories_sku_id
+         FROM product_detail pd
+         LEFT JOIN product_accessories pa
+         ON pa.parent_sku_id=pd.id AND pa.is_deleted=false
+         WHERE pd.product_id=#{productId}
     </select>
 </mapper>
