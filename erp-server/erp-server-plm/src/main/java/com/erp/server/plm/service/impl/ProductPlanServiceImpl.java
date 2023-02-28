@@ -233,6 +233,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
+        if (StringUtils.isNotBlank(productPlanEntity.getProductId())) {
+            throw new ServiceException(ApiError.ERROR_95149);
+        }
         //删除采购信息
         productPlanPurchaseService.removeByProductPlanId(id);
         //删除销售信息
@@ -772,7 +775,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         updateWrapper.set(ProductPlanEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanEntity::getDeletedUserId,userInfo.getUid());
-        return this.update(updateWrapper);
+        return this.remove(updateWrapper);
     }
 
     /**

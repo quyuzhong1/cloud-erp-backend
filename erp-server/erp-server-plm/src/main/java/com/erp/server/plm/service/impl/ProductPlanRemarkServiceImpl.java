@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.ProductPlanRemarkEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProductPlanningRemarkMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductPlanRemarkService;
@@ -43,7 +42,7 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
         updateWrapper.set(ProductPlanRemarkEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanRemarkEntity::getDeletedUserId,userInfo.getUid());
-        return this.update(updateWrapper);
+        return this.remove(updateWrapper);
     }
 
     @Override

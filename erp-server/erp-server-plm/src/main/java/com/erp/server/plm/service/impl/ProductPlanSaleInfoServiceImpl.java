@@ -42,7 +42,7 @@ public class ProductPlanSaleInfoServiceImpl extends ServiceImpl<ProductPlanSaleI
         updateWrapper.set(ProductPlanSaleInfoEntity::getIsDeleted, Boolean.TRUE);
         updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedTime, LocalDateTime.now());
         updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedUserId,userInfo.getUid());
-        return this.update(updateWrapper);
+        return this.remove(updateWrapper);
     }
 
     @Override

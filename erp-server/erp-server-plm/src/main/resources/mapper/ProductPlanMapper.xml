@@ -325,11 +325,111 @@
         select
                ${params.groupFields},
                count(0) as totalCount,
-               (select count(0) from product_plan where is_deleted = false and product_status = '3' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as approvalCount,
-               (select count(0) from product_plan where is_deleted = false and product_status in ('4','5') and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as progressCount,
-               (select count(0) from product_plan where is_deleted = false and product_status = '6' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as completeCount,
-               (select count(0) from product_plan where is_deleted = false and product_status = '3' and year = #{params.year} and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}) as approvalDelayCount,
-               (select count(0) from product_plan where is_deleted = false and product_status = '7' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}) as cancelCount
+               (
+                   select count(0) from product_plan where is_deleted = false and product_status = '3' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}
+                    <if test="params.chargeId != null and params.chargeId.size > 0">
+                        and
+                        <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(charge_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.gradeId != null and params.gradeId.size > 0">
+                        and
+                        <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(grade_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.categoryId != null and params.categoryId.size > 0">
+                        and
+                        <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(category_id,','))
+                        </foreach>
+                    </if>
+                    ) as approvalCount,
+               (
+                   select count(0) from product_plan where is_deleted = false and product_status in ('4','5') and year = #{params.year} and ${params.groupField} = pp.${params.groupField}
+                    <if test="params.chargeId != null and params.chargeId.size > 0">
+                        and
+                        <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(charge_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.gradeId != null and params.gradeId.size > 0">
+                        and
+                        <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(grade_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.categoryId != null and params.categoryId.size > 0">
+                        and
+                        <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(category_id,','))
+                        </foreach>
+                    </if>
+                   ) as progressCount,
+               (
+                   select count(0) from product_plan where is_deleted = false and product_status = '6' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}
+                    <if test="params.chargeId != null and params.chargeId.size > 0">
+                        and
+                        <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(charge_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.gradeId != null and params.gradeId.size > 0">
+                        and
+                        <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(grade_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.categoryId != null and params.categoryId.size > 0">
+                        and
+                        <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(category_id,','))
+                        </foreach>
+                    </if>
+                   ) as completeCount,
+               (
+                   select count(0) from product_plan where is_deleted = false and product_status = '3' and year = #{params.year} and project_approval_date > plan_project_approval_date and ${params.groupField} = pp.${params.groupField}
+                    <if test="params.chargeId != null and params.chargeId.size > 0">
+                        and
+                        <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(charge_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.gradeId != null and params.gradeId.size > 0">
+                        and
+                        <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(grade_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.categoryId != null and params.categoryId.size > 0">
+                        and
+                        <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(category_id,','))
+                        </foreach>
+                    </if>
+                   ) as approvalDelayCount,
+               (
+                   select count(0) from product_plan where is_deleted = false and product_status = '7' and year = #{params.year} and ${params.groupField} = pp.${params.groupField}
+                    <if test="params.chargeId != null and params.chargeId.size > 0">
+                        and
+                        <foreach collection="params.chargeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(charge_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.gradeId != null and params.gradeId.size > 0">
+                        and
+                        <foreach collection="params.gradeId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(grade_id,','))
+                        </foreach>
+                    </if>
+                    <if test="params.categoryId != null and params.categoryId.size > 0">
+                        and
+                        <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
+                            #{item} = ANY(string_to_array(category_id,','))
+                        </foreach>
+                    </if>
+                   ) as cancelCount
         from  product_plan pp
         <where>
             pp.is_deleted = false
