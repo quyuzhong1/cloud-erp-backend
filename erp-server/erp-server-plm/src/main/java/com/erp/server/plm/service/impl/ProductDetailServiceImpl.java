@@ -702,15 +702,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //9.修改/新增  包装辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productNoSpecDTO.getProductAccessoriesList();
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
+
+            for(ProductAccessoriesDTO accessories:productAccessoriesList){
+                accessories.setParentSkuId(skuId);
+                accessories.setProductId(id);
+            }
+
             //添加包装辅料的日志
             addProductAccessoriesLog(productAccessoriesList, id);
-            productAccessoriesList.stream().forEach(p -> p.setProductId(id));
+
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
 
         //10.修改/新增  认证信息
         List<ProductAttestationDTO> productAttestationList = productNoSpecDTO.getProductAttestationList();
         if (CollectionUtils.isNotEmpty(productAttestationList)) {
+            for(ProductAttestationDTO attestation:productAttestationList){
+                attestation.setSkuId(skuId);
+            }
+
             addProductAttestationLog(productAttestationList, id);
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
@@ -912,7 +922,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(attestationList)) {
             return;
         }
-        List<String> ids = attestationList.stream().map(AttestationDTO::getId).collect(Collectors.toList());
 
         attestationList.forEach(obj -> {
             //SKU操作日志

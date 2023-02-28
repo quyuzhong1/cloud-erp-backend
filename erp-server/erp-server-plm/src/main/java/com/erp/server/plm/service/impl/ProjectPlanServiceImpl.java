@@ -283,7 +283,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
             String auditPass = BaseStatusEnum.AUDIT_PASS.getStatus();
             planList.forEach(plan ->
-                    plan.setStatus(auditPass)
+                    plan.setStatus(BaseStatusEnum.CANCEL.getStatus())
             );
             List<String> ids = planList.stream().map(ProjectPlanEntity::getId).collect(Collectors.toList());
             WithDrawProcessBusinessDTO withDrawProcess = new WithDrawProcessBusinessDTO();
