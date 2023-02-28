@@ -28,7 +28,7 @@
             ppr.remark
         from  product_plan pp
         left join (select a.product_plan_id, a.remark from product_plan_remark a
-        left join (select product_plan_id,max(id) as id from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id) b
+        inner join (select product_plan_id,max(id) as id from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id) b
         on a.product_plan_id = b.product_plan_id and a.id = b.id) ppr  on pp.id = ppr.product_plan_id
         <where>
             pp.is_deleted = false
