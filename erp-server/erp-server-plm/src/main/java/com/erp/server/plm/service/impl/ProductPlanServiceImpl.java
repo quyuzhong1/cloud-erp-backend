@@ -122,6 +122,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 if (ObjectUtils.isNotEmpty(obj.getProjectApprovalDate()) && ObjectUtils.isNotEmpty(obj.getPlanProjectApprovalDate())) {
                     obj.setIsDelayApproval(obj.getProjectApprovalDate().isAfter(obj.getPlanProjectApprovalDate()));
                 }
+                //是否开发
+                if (StringUtils.isNotBlank(obj.getProductId())) {
+                    obj.setIsDevelop(Boolean.TRUE);
+                }
             });
         }
         return new PagingVO(pageData);

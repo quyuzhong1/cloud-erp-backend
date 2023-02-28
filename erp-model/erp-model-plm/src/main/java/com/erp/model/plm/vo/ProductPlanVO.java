@@ -27,6 +27,11 @@ public class ProductPlanVO implements Serializable {
     private Integer  year;
 
     /**
+     * 产品id
+     */
+    private String  productId;
+
+    /**
      * 产品示意图URL
      */
     private String imageUrl;
@@ -125,6 +130,11 @@ public class ProductPlanVO implements Serializable {
      * 立项是否延期
      */
     private Boolean isDelayApproval;
+
+    /**
+     * 是否开发
+     */
+    private Boolean isDevelop;
 
     /**
      * 备注
