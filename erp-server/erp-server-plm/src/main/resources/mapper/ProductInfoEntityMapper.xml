@@ -33,7 +33,7 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId!='' and params.categoryId!=null">
+        <if test="params.categoryId!=null and params.categoryId!='' ">
             AND P.category_id = #{params.categoryId}
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
@@ -112,7 +112,7 @@
             AND p.create_time &lt;= #{params.startTime}
         </if>
 
-        <if test="params.param!='' and params.param!=null">
+        <if test="params.param!=null  and params.param!=''">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             or p.id IN (SELECT pt.product_id FROM project_task pt WHERE (pt.charge_id is null or pt.charge_id = ''))
             or p.id IN (SELECT pi.product_id FROM project_info pi WHERE (pi.charge_id is null or pi.charge_id = ''))
@@ -131,10 +131,10 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId!='' and params.categoryId!=null">
+        <if test="params.categoryId!=null  and params.categoryId!=''">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseName != '' and params.phaseName != null">
+        <if test="params.phaseName != null  and params.phaseName != ''">
             AND pph.name = #{params.phaseName}
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
@@ -163,7 +163,7 @@
                 #{productId}
             </foreach>
         </if>
-        <if test="params.param!='' and params.param!=null">
+        <if test="params.param!=null  and params.param!=''">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             or p.id IN (SELECT pt.product_id FROM project_task pt WHERE (pt.charge_id is null or pt.charge_id = ''))
             or p.id IN (SELECT pi.product_id FROM project_info pi WHERE (pi.charge_id is null or pi.charge_id = ''))
@@ -206,13 +206,13 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId!='' and params.categoryId!=null">
+        <if test="params.categoryId!=null  and params.categoryId!=''">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseName != '' and params.phaseName != null">
+        <if test="params.phaseName != null  and params.phaseName != ''">
             AND pph.name = #{params.phaseName}
         </if>
-        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+        <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND P.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -287,7 +287,7 @@
         </if>
 
 
-        <if test="params.param!='' and params.param!=null">
+        <if test="params.param!=null  and params.param!=''">
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
         ORDER BY pi.create_time DESC
@@ -304,13 +304,13 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId!='' and params.categoryId!=null">
+        <if test="params.categoryId!=null and params.categoryId!=''  ">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+        <if test="params.searchKeyword!=null and params.searchKeyword!=''  ">
             AND P.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
-        <if test="params.phaseName != '' and params.phaseName != null">
+        <if test="params.phaseName != null  and  params.phaseName != ''">
             AND pph.name = #{params.phaseName}
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -333,7 +333,7 @@
                 #{productId}
             </foreach>
         </if>
-        <if test="params.param!='' and params.param!=null">
+        <if test="params.param!=null and params.param!=''  ">
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
         ORDER BY pi.create_time DESC

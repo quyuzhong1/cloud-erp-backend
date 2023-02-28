@@ -37,6 +37,11 @@ public class BasicCategoryDTO {
     private String pid;
 
     /**
+     * 产品数量
+     */
+    private Integer productQuantity;
+
+    /**
      * 分类集合
      */
     @JsonInclude(value= JsonInclude.Include.NON_EMPTY)

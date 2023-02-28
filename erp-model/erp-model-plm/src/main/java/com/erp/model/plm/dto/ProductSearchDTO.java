@@ -33,6 +33,9 @@ public class ProductSearchDTO extends PermissionsDTO {
      */
     private String categoryId;
 
+
+    private String phaseName;
+
     /**
      * 阶段名称
      */

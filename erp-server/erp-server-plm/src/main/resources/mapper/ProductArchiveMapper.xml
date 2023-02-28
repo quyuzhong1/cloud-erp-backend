@@ -11,10 +11,10 @@
         INNER JOIN product_archive pa
         ON pa.product_id=p.id
         <where>
-            <if test="params.categoryId!='' and params.categoryId!=null">
+            <if test="params.categoryId!=null and params.categoryId!=''  ">
                 P.category_id=#{params.categoryId}
             </if>
-            <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            <if test="params.searchKeyword!=null and  params.searchKeyword!=''  ">
                 AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
                 OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
                 OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
@@ -25,7 +25,7 @@
                     #{productId}
                 </foreach>
             </if>
-            <if test="params.param!='' and params.param!=null">
+            <if test="params.param!=null and params.param!=''  ">
                 AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             </if>
         </where>
