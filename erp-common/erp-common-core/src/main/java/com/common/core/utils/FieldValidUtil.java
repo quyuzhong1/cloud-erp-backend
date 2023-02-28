@@ -71,7 +71,7 @@ public class FieldValidUtil {
         //字段名称
         String fieldName = annotation.fieldName();
         //是否必填
-        boolean notNull = annotation.isNotNull();
+        boolean notNull = annotation.isNotBlank();
         //长度
         int length = annotation.maxLength();
         //类型/正则
@@ -97,16 +97,20 @@ public class FieldValidUtil {
         //正则校验
         if (StringUtils.isNotBlank(formatPattern) && StringUtils.isNotBlank(fieldValue)) {
             //判断是否存在正则
-            FieldFormatPatternTypeEnum fieldFormatPatternTypeEnum = FieldFormatPatternTypeEnum.getByName(formatPattern);
+            FieldFormatPatternTypeEnum fieldFormatPatternTypeEnum = FieldFormatPatternTypeEnum.getByCode(formatPattern);
             boolean matches;
             if (ObjectUtils.isNotEmpty(fieldFormatPatternTypeEnum)) {
                  matches = fieldValue.matches(fieldFormatPatternTypeEnum.getDesc());
+                //枚举格式未匹配正确
+                if (!matches) {
+                    msg.append(fieldName.concat("[").concat(fieldFormatPatternTypeEnum.getName()).concat("]格式不正确;"));
+                }
             } else {
                  matches = fieldValue.matches(formatPattern);
-            }
-            //格式未匹配正确
-            if (!matches) {
-                msg.append(fieldName.concat("格式不正确;"));
+                //格式未匹配正确
+                if (!matches) {
+                    msg.append(fieldName.concat("格式不正确;"));
+                }
             }
         }
         //固定值校验
@@ -135,4 +139,5 @@ public class FieldValidUtil {
         }
         return msg.toString();
     }
+
 }

@@ -29,14 +29,14 @@ public class ProductPlanExcelDTO implements Serializable {
      * 年份
      */
     @ExcelProperty(value = "*年份", index = 0)
-    @FieldValid(fieldName = "年份",isNotNull = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER,maxLength = 4)
+    @FieldValid(fieldName = "年份", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER,maxLength = 4)
     private String  yearStr;
 
     /**
      * 产品经理
      */
     @ExcelProperty(value = "*产品经理", index = 1)
-    @FieldValid(fieldName = "产品经理",isNotNull = true,maxLength = 50)
+    @FieldValid(fieldName = "产品经理", isNotBlank = true,maxLength = 50)
     private String chargeName;
 
     /**
@@ -84,7 +84,7 @@ public class ProductPlanExcelDTO implements Serializable {
      * 产品名称
      */
     @ExcelProperty(value = "*产品名称（中文）", index = 8)
-    @FieldValid(fieldName = "产品名称（中文）",isNotNull = true,maxLength = 200)
+    @FieldValid(fieldName = "产品名称（中文）", isNotBlank = true,maxLength = 200)
     private String name;
 
     /**

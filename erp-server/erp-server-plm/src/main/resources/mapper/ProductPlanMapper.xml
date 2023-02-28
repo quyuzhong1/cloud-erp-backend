@@ -237,7 +237,7 @@
         </where>
     </select>
 
-    <select id="listProductPlanStatusCount" resultType="java.lang.Integer">
+     <select id="listProductPlanStatusCount" resultType="java.lang.Integer">
         select
             count(DISTINCT pp.id)
         from product_plan pp

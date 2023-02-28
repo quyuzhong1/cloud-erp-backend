@@ -17,7 +17,7 @@ public @interface FieldValid {
     /**
      * 是否必填项，默认false
      */
-    boolean isNotNull() default false;
+    boolean isNotBlank() default false;
 
     /**
      * 表达式正则，默认空，FieldFormatPatternTypeEnum枚举

@@ -19,11 +19,11 @@ import lombok.NoArgsConstructor;
 public class ProductDetailExcelDTO {
 
     @ExcelProperty( value = "skuNo", index = 0)
-    @FieldValid(fieldName = "sku",isNotNull = true,maxLength = 10,formatPattern = "数字和字母")
+    @FieldValid(fieldName = "sku", isNotBlank = true,maxLength = 10,formatPattern = "数字和字母")
     private String skuNo;
 
     @ExcelProperty( value = "产品分类", index = 1)
-    @FieldValid(fieldName = "产品分类",isNotNull = true)
+    @FieldValid(fieldName = "产品分类", isNotBlank = true)
     private String category;
 
     @ExcelProperty( value = "销售方式", index = 2)
@@ -47,11 +47,11 @@ public class ProductDetailExcelDTO {
     private String materials;
 
     @ExcelProperty(value = "品名", index = 8)
-    @FieldValid(fieldName = "品名",isNotNull = true,maxLength = 250)
+    @FieldValid(fieldName = "品名", isNotBlank = true,maxLength = 250)
     private String name;
 
     @ExcelProperty(value = "品牌", index = 9)
-    @FieldValid(fieldName = "品牌",isNotNull = true,maxLength = 250)
+    @FieldValid(fieldName = "品牌", isNotBlank = true,maxLength = 250)
     private String brandName;
 
     @ExcelProperty(value = "产品属性", index = 10)
@@ -65,7 +65,7 @@ public class ProductDetailExcelDTO {
     private String unitName;
 
     @ExcelProperty(value = "产品经理", index = 13)
-    @FieldValid(fieldName = "产品经理",isNotNull = true,maxLength = 20)
+    @FieldValid(fieldName = "产品经理", isNotBlank = true,maxLength = 20)
     private String chargeName;
 
     @ExcelProperty(value = "目标含税成本", index = 14)

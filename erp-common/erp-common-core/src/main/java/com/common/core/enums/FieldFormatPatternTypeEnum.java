@@ -1,6 +1,5 @@
 package com.common.core.enums;
 
-import com.common.core.constant.EnumMessage;
 import lombok.Getter;
 
 /**
@@ -10,7 +9,7 @@ import lombok.Getter;
  * @date 2023/2/14 16:33
  */
 @Getter
-public enum FieldFormatPatternTypeEnum implements EnumMessage {
+public enum FieldFormatPatternTypeEnum  {
 
     ENUM_INTEGER("integer", "整数","^-?\\d+$"),
     ENUM_POSITIVE_INTEGER("positive_integer", "正整数","^[1-9]\\d*$"),
@@ -29,20 +28,20 @@ public enum FieldFormatPatternTypeEnum implements EnumMessage {
     ENUM_HTML("HTML", "HTML","<(/S*?)[^>]*>.*?<//1>|<.*? />"),
     ENUM_IP("IP", "IP","/d+/./d+/./d+/./d+");
 
-    public static final String INTEGER = "整数";
-    public static final String POSITIVEINTEGER = "正整数";
-    public static final String NUMBER = "数字";
-    public static final String DECIMAL = "小数";
-    public static final String NUMBER_LETTER = "数字和字母";
-    public static final String AMOUNT = "金额";
-    public static final String DATE = "日期";
-    public static final String YEARMONTH = "年-月";
-    public static final String MOBILE = "手机";
-    public static final String TELEPHONE = "电话";
+    public static final String INTEGER = "integer";
+    public static final String POSITIVEINTEGER = "positive_integer";
+    public static final String NUMBER = "number";
+    public static final String DECIMAL = "decimal";
+    public static final String NUMBER_LETTER = "number_letter";
+    public static final String AMOUNT = "amount";
+    public static final String DATE = "date";
+    public static final String YEARMONTH = "year_month";
+    public static final String MOBILE = "mobile";
+    public static final String TELEPHONE = "telephone";
     public static final String QQ = "QQ";
-    public static final String MAILBOX = "邮箱";
-    public static final String POSTAL_CODE = "邮政编码";
-    public static final String ID = "身份证";
+    public static final String MAILBOX = "mailbox";
+    public static final String POSTAL_CODE = "postal_code";
+    public static final String ID = "ID";
     public static final String HTML = "HTML";
     public static final String IP = "IP";
 
