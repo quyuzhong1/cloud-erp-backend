@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,6 +77,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
+
+    @Resource
+    private ProductInfoService productInfoService;
 
     /**
      * 启动项目 添加成员
@@ -381,7 +385,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     /**
      * 根据成员id 获取到 成员名 以及它参与了多少项目
      *
-     * @param memberList
+     * @param memberList 成员表 table id
      * @return java.util.List<com.erp.model.plm.dto.ProductRoleMemberDTO>
      * @author yl
      * @date 2022-10-10 11:37
@@ -398,6 +402,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             Map<String, List<ProjectMembersEntity>> memberMap = list.parallelStream().collect(Collectors.groupingBy(ProjectMembersEntity::getMemberId));
             for (Map.Entry<String, List<ProjectMembersEntity>> item : memberMap.entrySet()) {
                 ProductRoleMemberDTO dto = new ProductRoleMemberDTO();
+                //成员id
                 String memberId = item.getKey();
                 List<ProjectMembersEntity> projectMembers = item.getValue();
                 ProjectMembersEntity filterEntity = projectMembers.stream().filter(p -> memberId.equals(p.getMemberId())).findFirst().orElse(null);
@@ -406,8 +411,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 } else {
                     dto.setName("");
                 }
-                dto.setCount(projectMembers.size());
-                dto.setProductIds(projectMembers.stream().map(ProjectMembersEntity::getProductId).collect(Collectors.toList()));
+                List<String> productIds = projectMembers.stream().map(ProjectMembersEntity::getProductId).collect(Collectors.toList());
+                List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
+                dto.setCount(productList.size());
+                dto.setProductIds(productList.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList()));
                 resultList.add(dto);
             }
         }
@@ -661,7 +668,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     String roleId = item.getKey();
                     ProjectRoleEntity roleEntity = projectRoleList.stream().
                             filter(role -> roleId.equals(role.getId()) &&
-                                    !productManager.equals(role.getName())&&
+                                    !productManager.equals(role.getName()) &&
                                     !projectManager.equals(role.getName())).
                             findFirst().orElse(null);
                     //获取到对应的成员表id

@@ -39,7 +39,7 @@ public class BasicCategoryDTO {
     /**
      * 产品数量
      */
-    private Integer productQuantity;
+    private Long productQuantity;
 
     /**
      * 分类集合

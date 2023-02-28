@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BatchScheduleTaskDTO;
@@ -47,6 +49,11 @@ public class ProjectPlanTaskController extends BaseController {
      * @return
      */
     @PostMapping("/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:schedule:task:list",
+            tableAlias = "pt"
+    )
     public ApiResult<ProductItemScheduleVO> list(@Validated @RequestBody ProjectPlanTaskConditionDTO dto) {
         ProductItemScheduleVO scheduleVO = projectPlanTaskService.getTaskList(dto);
         return success(scheduleVO);

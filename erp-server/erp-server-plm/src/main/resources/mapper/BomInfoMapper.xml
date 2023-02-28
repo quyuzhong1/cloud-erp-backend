@@ -53,6 +53,9 @@
                         #{state}
                     </foreach>
                 </if>
+                <if test="params.param  !=null  and  params.param!='' ">
+                       ${params.param}
+                </if>
             </where>
             ORDER BY b.create_time DESC
 

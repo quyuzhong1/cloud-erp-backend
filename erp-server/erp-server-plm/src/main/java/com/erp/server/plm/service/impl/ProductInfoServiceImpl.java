@@ -1108,6 +1108,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 设置产品示意图
+     *
      * @param dto
      * @return
      */
@@ -1119,6 +1120,26 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         entity.setImageUrl(dto.getImageUrl());
         return this.updateById(entity);
+    }
+
+
+    /**
+     * 根据分类id 获取到产品信息
+     *
+     * @param categoryIds
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     * @author yl
+     * @date 2023-02-28 17:10
+     */
+    @Override
+    public List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds) {
+        if (CollectionUtils.isEmpty(categoryIds)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
+        return this.list(queryWrapper);
     }
 
     /**

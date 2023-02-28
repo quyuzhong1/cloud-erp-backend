@@ -1035,6 +1035,9 @@
                 #{taskId}
             </foreach>
         </if>
+        <if test="dto.param!=null and dto.param!=''">
+            ${dto.param}
+        </if>
         ORDER BY
         <if test="dto.sortList != null and dto.sortList.size > 0">
             <foreach collection="dto.sortList" item="item" separator="," close=",">
