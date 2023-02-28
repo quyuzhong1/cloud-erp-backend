@@ -16,6 +16,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -86,6 +87,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Resource
     private PreTaskService preTaskService;
 
+    @Resource
+    private TaskChargeDistributionService taskChargeDistributionService;
+
     /**
      * 提交项目计划
      *
@@ -108,6 +112,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (CollectionUtils.isNotEmpty(taskIds)) {
             checkTaskTime(taskList);
             checkTaskStatus(taskList);
+
+            //检查任务审核人不能为空
+            checkTaskAuditor(taskIds);
         }
         String phaseName = "立项阶段";
         long approvalTaskCount = taskList.stream().filter(t -> phaseName.equals(t.getPhaseName())).count();
@@ -138,6 +145,25 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //异步发送消息
         noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
         return saveResult;
+    }
+
+
+    /**
+     * 检查任务审核人不能为空
+     *
+     * @param taskIdList
+     */
+    private void checkTaskAuditor(List<String> taskIdList) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            Integer source = MathUtil.THREE;
+            //这个是任务列表 对应的审核人
+            List<TaskChargeDistributionEntity> distributionList = taskChargeDistributionService.listBySourceAndTaskIdList(source, taskIdList);
+            //这个是获取任务是不是有 审核人 大于0 就是没有
+            long count = distributionList.stream().filter(d -> StringUtils.isBlank(d.getChargeIds())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95145);
+            }
+        }
     }
 
 

@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 包装辅料信息
@@ -65,6 +67,12 @@ public class ProductAccessoriesDTO implements Serializable {
      * 数量
      */
     private Integer quantity;
+
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList=new ArrayList<>();
 
 
 }

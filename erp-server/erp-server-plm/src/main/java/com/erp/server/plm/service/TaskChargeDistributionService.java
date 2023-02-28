@@ -23,6 +23,16 @@ public interface TaskChargeDistributionService extends IService<TaskChargeDistri
      */
     List<TaskChargeDistributionEntity> listBySourceAndTaskId(Integer source, String taskId);
 
+    /**
+     * 根据来源和任务id 集合查询
+     * @author yl
+     * @date 2023-02-28 14:30
+     * @param source
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.entity.TaskChargeDistributionEntity>
+     */
+    List<TaskChargeDistributionEntity> listBySourceAndTaskIdList(Integer source, List<String> taskIds );
+
    /**
     * @description:删除并重新新增
     * @author Will

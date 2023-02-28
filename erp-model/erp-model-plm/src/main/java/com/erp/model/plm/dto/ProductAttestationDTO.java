@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,6 +29,8 @@ public class ProductAttestationDTO implements Serializable {
 
     private String skuNo;
 
+
+    private List<String> disableFieldList=new ArrayList<>();
 
 
     /**

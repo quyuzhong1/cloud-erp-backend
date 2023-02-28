@@ -393,6 +393,7 @@
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,
+        pd.images_url AS skuImagesUrl,
         pd.name AS skuName
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
