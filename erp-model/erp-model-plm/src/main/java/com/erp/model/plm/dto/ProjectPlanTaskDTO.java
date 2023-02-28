@@ -41,7 +41,7 @@ public class ProjectPlanTaskDTO implements Serializable {
     public static class AutoDateDTO {
 
         /**
-         * 任务计划id
+         * 任务id
          */
         @NotBlank(message = "记录ID不能为空")
         private String id;
@@ -53,13 +53,6 @@ public class ProjectPlanTaskDTO implements Serializable {
          * 任务计划结束时间
          */
         private LocalDate endDate;
-
-        /**
-         * 工期
-         */
-        @NotBlank(message = "工期不能为空")
-        private Integer workPeriod;
-
 
     }
 

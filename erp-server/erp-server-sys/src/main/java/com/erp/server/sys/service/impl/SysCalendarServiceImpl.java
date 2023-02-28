@@ -35,15 +35,16 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
         if(null == dto.getIsManualSet()){
             dto.setIsManualSet(Boolean.TRUE);
         }
-        if(null == dto.getDateType()){
+        if(null == dto.getDateType() && null != dto.getCalendarDate()){
             dto.setDateType(2);
         }
+        dto.setCalendarDate(LocalDate.now());
         List<SysCalendarEntity> calendarEntityList = lambdaQuery()
-                .eq(1 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate())
-                .ge(2 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.firstDayOfMonth()))
-                .le(2 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.lastDayOfMonth()))
-                .ge(3 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.firstDayOfYear()))
-                .le(4 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.lastDayOfYear()))
+                .eq(null != dto.getDateType() && 1 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate())
+                .ge(null != dto.getDateType() && 2 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.firstDayOfMonth()))
+                .le(null != dto.getDateType() && 2 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.lastDayOfMonth()))
+                .ge(null != dto.getDateType() && 3 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.firstDayOfYear()))
+                .le(null != dto.getDateType() && 4 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.lastDayOfYear()))
                 .eq(null != dto.getIsManualSet(),SysCalendarEntity::getIsManualSet, dto.getIsManualSet())
                 .eq(null != dto.getIsWorkDay(), SysCalendarEntity::getIsWorkDay, dto.getIsWorkDay())
                 .eq(null != dto.getOrganization(), SysCalendarEntity::getOrganization, dto.getOrganization())

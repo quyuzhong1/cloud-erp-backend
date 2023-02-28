@@ -21,6 +21,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.TaskRelationshipEnum;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
@@ -163,7 +164,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             //这个是获取任务是不是有 审核人 大于0 就是没有
             long count = distributionList.stream().filter(d -> StringUtils.isBlank(d.getChargeIds())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95145);
+                throw new ServiceException(ApiError.ERROR_95148);
             }
         }
     }
@@ -961,69 +962,103 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         Map<String, ProjectPlanTaskDTO.AutoDateDTO> dtoMap = list.stream().collect(Collectors.toMap(ProjectPlanTaskDTO.AutoDateDTO::getId, e -> e));
         List<String> planIdList = new ArrayList<>(dtoMap.keySet());
         // 查询计划
-        List<PlanTaskNameDTO> planEntityList = projectPlanTaskService.listByPlanId(planIdList);
+        List<PlanTaskNameDTO> planEntityList = null;
+        Integer type = dto.getType();
+        if (1== type){
+            List<ProjectTaskEntity> taskEntityList = taskService.listByTaskIds(planIdList);
+            planEntityList = taskEntityList.stream().map(PlanTaskNameDTO::new).collect(Collectors.toList());
+        }else {
+            planEntityList = projectPlanTaskService.listByPlanId(planIdList);
+        }
         if(CollectionUtil.isEmpty(planEntityList)){
             throw new ServiceException(ApiError.ERROR_95145);
         }
         // 查询任务列表
-        Map<String, PlanTaskNameDTO> taskNameMap = planEntityList.stream().collect(Collectors.toMap(PlanTaskNameDTO::getId, e -> e));
-        Map<String, PlanTaskNameDTO> taskIdMap = planEntityList.stream().collect(Collectors.toMap(PlanTaskNameDTO::getTaskId, e -> e));
+        Map<String, PlanTaskNameDTO> taskIdMap = planEntityList.stream().collect(Collectors.toMap(PlanTaskNameDTO::getId, e -> e));
 
         // 对当前日期进行排期-校验是否存在冲突重复id
        Iterator<ProjectPlanTaskDTO.AutoDateDTO> iterator = list.iterator();
        while (iterator.hasNext()) {
            ProjectPlanTaskDTO.AutoDateDTO autoEntity = iterator.next();
 
-           PlanTaskNameDTO planTaskNameDTO = taskNameMap.get(autoEntity.getId());
+           PlanTaskNameDTO planTaskNameDTO = taskIdMap.get(autoEntity.getId());
            if (checkData(dto.getType(), errorList, exitList, autoEntity, planTaskNameDTO)) {
                continue;
            }
-           // 构建task plan对象
-           ProjectPlanTaskEntity updateEntity = new ProjectPlanTaskEntity(autoEntity.getId(),autoDTO.getStartDate(),autoDTO.getWorkPeriod(), dateList,dto.getType());
-           projectPlanTaskService.updateById(updateEntity);
            // 更新任务工期
-           projectTaskService.updateById(new ProjectTaskEntity(planTaskNameDTO.getTaskId(), autoEntity.getWorkPeriod()));
-           sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateEntity, dto.getType()));
-           Date endDate = 2 == dto.getType() ?  updateEntity.getChangeEndTime() : updateEntity.getOriginEndTime();
+           LocalDate endDate;
+           LocalDate startDate;
+           if(1 == type){
+               ProjectTaskEntity updateTaskEntity = new ProjectTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
+               projectTaskService.updateById(updateTaskEntity);
+               endDate = LocalDateUtil.date2LocalDate(updateTaskEntity.getPlanEndTime());
+               startDate = LocalDateUtil.date2LocalDate(updateTaskEntity.getPlanStartTime());
+               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime(), updateTaskEntity.getPlanEndTime()));
+           }else {
+               ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
+               projectPlanTaskService.updateById(updateTaskEntity);
+               endDate = LocalDateUtil.date2LocalDate(updateTaskEntity.getChangeEndTime());
+               startDate = LocalDateUtil.date2LocalDate(updateTaskEntity.getChangeStartTime());
+               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
+           }
            // 对下一个节点进行排期
-           sonNodeSchedule(dto.getType(), dateList, errorList, sucessList, exitList, dtoMap, taskIdMap, planTaskNameDTO.getTaskId(), LocalDateUtil.date2LocalDate(endDate));
+           sonNodeSchedule(dto.getType(), dateList, errorList, sucessList, exitList, dtoMap, taskIdMap, autoEntity.getId(), startDate, endDate);
        }
-
         return new ProjectTaskPlanAutoVO(errorList, sucessList);
     }
 
+    /**
+     * 递归处理子节点
+     * @param type
+     * @param dateList
+     * @param errorList
+     * @param sucessList
+     * @param exitList
+     * @param dtoMap
+     * @param taskIdMap
+     * @param taskId
+     * @param endDate
+     */
     private void sonNodeSchedule(Integer type,List<LocalDate> dateList, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, List<ProjectTaskPlanAutoVO.ScheduleDateVO> sucessList,
                                  LinkedList<String> exitList, Map<String, ProjectPlanTaskDTO.AutoDateDTO> dtoMap, Map<String, PlanTaskNameDTO> taskIdMap,
-                                 String taskId, LocalDate endDate) {
+                                 String taskId, LocalDate startDate, LocalDate endDate) {
         // 查询下一个节点
         List<ProjectChildTaskDTO> childrenTaskList = preTaskService.listChildrenTaskOneByTaskId(taskId);
         Map<String, ProjectChildTaskDTO> childTaskMap = childrenTaskList.stream().collect(Collectors.toMap(ProjectChildTaskDTO::getId, e -> e));
         ArrayList<String> childTaskIds = new ArrayList<>(childTaskMap.keySet());
 
         Set<String> taskIds = taskIdMap.keySet();
-        taskIds.retainAll(childTaskIds);
+        childTaskIds.retainAll(taskIds);
         if(CollectionUtils.isEmpty(childrenTaskList) || CollectionUtils.isEmpty(taskIds)){
             return;
         }
         // 对子节点进行 更新
-        taskIds.stream().forEach( x -> {
+        for (String x : childTaskIds) {
             // 下级信息
             ProjectChildTaskDTO projectChildTaskDTO = childTaskMap.get(x);
             PlanTaskNameDTO planTask = taskIdMap.get(x);
-            ProjectPlanTaskDTO.AutoDateDTO autoPlanTask = dtoMap.get(planTask.getId());
+            ProjectPlanTaskDTO.AutoDateDTO autoPlanTask = dtoMap.get(x);
             if (checkData(type, errorList, exitList, autoPlanTask, planTask)) {
                 return;
             }
-            Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
-            ProjectPlanTaskEntity updatePlanTaskEntity = new ProjectPlanTaskEntity(planTask.getId(), endDate.plusDays(intervalWorkPeriod), autoPlanTask.getWorkPeriod(), dateList, type);
-            // 更新计划排期
-            projectPlanTaskService.updateById(updatePlanTaskEntity);
             // 更新任务工期
-            projectTaskService.updateById(new ProjectTaskEntity(projectChildTaskDTO.getId(), autoPlanTask.getWorkPeriod()));
-            sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoPlanTask.getId(), updatePlanTaskEntity, type));
-            Date sonEndDate = 2 == type ?  updatePlanTaskEntity.getChangeEndTime() : updatePlanTaskEntity.getOriginEndTime();
-            sonNodeSchedule(type,dateList,errorList,sucessList, exitList,dtoMap,taskIdMap,planTask.getTaskId(),LocalDateUtil.date2LocalDate(sonEndDate));
-        });
+            LocalDate planEndTime;
+            LocalDate planStartTime;
+            if(1 == type){
+                ProjectTaskEntity taskEntity = new ProjectTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
+                projectTaskService.updateById(taskEntity);
+                planEndTime = LocalDateUtil.date2LocalDate(taskEntity.getPlanEndTime());
+                planStartTime = LocalDateUtil.date2LocalDate(taskEntity.getPlanStartTime());
+                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(taskEntity.getId(), taskEntity.getPlanStartTime(), taskEntity.getPlanEndTime()));
+            }else {
+                ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
+                projectPlanTaskService.updateById(updateTaskEntity);
+                planEndTime = LocalDateUtil.date2LocalDate(updateTaskEntity.getChangeEndTime());
+                planStartTime = LocalDateUtil.date2LocalDate(updateTaskEntity.getChangeStartTime());
+                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(planTask.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
+            }
+            sonNodeSchedule(type,dateList,errorList,sucessList, exitList,dtoMap,taskIdMap,planTask.getId(), planStartTime,planEndTime);
+        }
     }
 
     /**
@@ -1041,7 +1076,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             return true;
         }
         if (exitList.contains(autoEntity.getId())) {
-            exitList.add(autoEntity.getId());
+//            errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(),"前后置任务冲突请手动排期"));
             return true;
         }
         exitList.add(autoEntity.getId());

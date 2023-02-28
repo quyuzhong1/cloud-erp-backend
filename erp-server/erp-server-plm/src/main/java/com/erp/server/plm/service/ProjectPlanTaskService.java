@@ -139,7 +139,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
     void updateTaskInfo(List<String> projectPlanIds);
 
     /**
-     * 通过计划ID查询任务相关信息
+     * 通过ID查询任务相关信息
      * @param planIdList
      * @return
      */

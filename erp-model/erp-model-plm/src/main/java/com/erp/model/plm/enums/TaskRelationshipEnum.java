@@ -11,7 +11,6 @@ import java.util.Arrays;
  * @Author Cloud
  * @Date 2023/2/27 11:20
  **/
-@Getter
 public enum TaskRelationshipEnum{
 
     FINISH_FINISH("ff", "完成-完成"),
@@ -19,6 +18,14 @@ public enum TaskRelationshipEnum{
     START_START("ss", "开始-开始"),
     START_FINISH("sf", "开始-完成"),
     ;
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getName() {
+        return name;
+    }
 
     @EnumValue
     private String code;

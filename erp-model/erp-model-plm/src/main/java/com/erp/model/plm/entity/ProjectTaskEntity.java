@@ -1,12 +1,19 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.plm.dto.PlanTaskNameDTO;
+import com.erp.model.plm.dto.ProjectChildTaskDTO;
+import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -240,5 +247,30 @@ public class ProjectTaskEntity implements Serializable {
     public ProjectTaskEntity(String id, Integer workPeriod) {
         this.id = id;
         this.workPeriod = workPeriod;
+    }
+    public ProjectTaskEntity(PlanTaskNameDTO task, LocalDate startDate, List<LocalDate> dateList) {
+        if(null != task.getId()){
+            this.id = task.getId();
+        }
+        LocalDate endDate = startDate;
+        Integer planWorkPeriod = task.getWorkPeriod();
+        while (planWorkPeriod > 0){
+            if(!dateList.contains(startDate.plusDays(1))){
+                endDate = startDate.plusDays(1);
+                planWorkPeriod --;
+            }
+        }
+        this.planStartTime = LocalDateUtil.localDate2Date(startDate);
+        this.planEndTime = LocalDateUtil.localDate2Date(endDate);
+    }
+    public ProjectTaskEntity(PlanTaskNameDTO task, LocalDate startDate, LocalDate endDate, ProjectChildTaskDTO projectChildTaskDTO, List<LocalDate> dateList) {
+        this.id = task.getId();
+        TaskRelationshipEnum relationship = projectChildTaskDTO.getRelationship();
+        Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
+        Integer planWorkPeriod = task.getWorkPeriod();
+        Map<String, LocalDate> resultMap = LocalDateUtil.relationshipLocalDate(relationship.getCode(), startDate, endDate, intervalWorkPeriod, planWorkPeriod, dateList);
+
+        this.planStartTime = LocalDateUtil.localDate2Date(resultMap.get("startDate"));
+        this.planEndTime = LocalDateUtil.localDate2Date(resultMap.get("endDate"));
     }
 }

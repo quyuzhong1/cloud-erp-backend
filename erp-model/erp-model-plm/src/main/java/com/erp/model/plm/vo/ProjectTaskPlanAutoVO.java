@@ -3,11 +3,13 @@ package com.erp.model.plm.vo;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.ProjectPlanTaskDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,15 +82,11 @@ public class ProjectTaskPlanAutoVO implements Serializable {
          */
         private LocalDate endDate;
 
-        public ScheduleDateVO(String id, ProjectPlanTaskEntity updateEntity, Integer type) {
+        public ScheduleDateVO(String id, Date startTime, Date endTime) {
             this.id = id;
-            if(1 == type){
-                this.startDate = LocalDateUtil.date2LocalDate(updateEntity.getOriginStartTime());
-                this.endDate = LocalDateUtil.date2LocalDate(updateEntity.getOriginEndTime());
-            }else {
-                this.startDate =  LocalDateUtil.date2LocalDate(updateEntity.getChangeStartTime());
-                this.endDate = LocalDateUtil.date2LocalDate(updateEntity.getChangeEndTime());
-            }
+            this.startDate = LocalDateUtil.date2LocalDate(startTime);
+            this.endDate = LocalDateUtil.date2LocalDate(endTime);
+
         }
     }
 

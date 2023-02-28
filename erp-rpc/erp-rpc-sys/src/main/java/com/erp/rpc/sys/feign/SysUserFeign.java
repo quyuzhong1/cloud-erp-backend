@@ -21,7 +21,7 @@ import java.util.List;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient("erp-sys")
+@FeignClient(name = "erp-sys", url = "http://localhost:9020")
 public interface SysUserFeign {
 
     //账号登录
@@ -124,7 +124,7 @@ public interface SysUserFeign {
      * @param dto
      * @return
      */
-    @PostMapping("/sys/feign/calendar/list")
+    @PostMapping("sys/feign/calendar/list")
     List<SysCalendarListVO> listCalendar(@RequestBody SysCalendarDTO.ListDTO dto);
 
 

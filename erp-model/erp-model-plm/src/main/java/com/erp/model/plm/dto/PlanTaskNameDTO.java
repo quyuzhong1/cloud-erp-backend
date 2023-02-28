@@ -1,5 +1,7 @@
 package com.erp.model.plm.dto;
 
+import com.erp.model.plm.entity.PreTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,23 +17,14 @@ import java.time.LocalDate;
 public class PlanTaskNameDTO {
 
     /**
-     * 计划id
+     * 任务id
      */
     private String id;
 
     /**
-     * 任务id
+     * 计划id
      */
-    private String taskId;
-
-    /**
-     * 源计划开始时间
-     */
-    private LocalDate originStartTime;
-    /**
-     * 源计划结束时间
-     */
-    private LocalDate originEndTime;
+    private String planId;
     /**
      * 变更后计划开始时间
      */
@@ -70,5 +63,14 @@ public class PlanTaskNameDTO {
     private Integer workPeriod;
 
 
+    public PlanTaskNameDTO(ProjectTaskEntity entity){
+        this.id = entity.getId();
+        this.workPeriod = entity.getWorkPeriod();
+        this.scheduleType = entity.getScheduleType();
+        this.scheduleStatus = entity.getScheduleStatus();
+        this.status = entity.getStatus();
+        this.taskName = entity.getName();
+        this.property = entity.getProperty();
+    }
 
 }

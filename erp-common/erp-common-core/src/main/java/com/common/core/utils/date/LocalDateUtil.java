@@ -6,7 +6,9 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -312,6 +314,53 @@ public class LocalDateUtil {
             }
         });
         return count.get();
+    }
+
+    public static Map<String, LocalDate> relationshipLocalDate(String code,LocalDate startDate, LocalDate endDate, Integer intervalWorkPeriod, Integer planWorkPeriod, List<LocalDate> dateList){
+        LocalDate planEndDate = null;
+        LocalDate planStartDate = null;
+        switch (code){
+            case "fs":
+                planStartDate = endDate.plusDays(intervalWorkPeriod);
+                while (planWorkPeriod > 0){
+                    if(!dateList.contains(planStartDate.plusDays(1))){
+                        planEndDate = planStartDate.plusDays(1);
+                        planWorkPeriod --;
+                    }
+                }
+                break;
+            case "ss":
+                planStartDate = startDate.plusDays(intervalWorkPeriod);
+                while (planWorkPeriod > 0){
+                    if(!dateList.contains(planStartDate.plusDays(1))){
+                        planEndDate = planStartDate.plusDays(1);
+                        planWorkPeriod --;
+                    }
+                }
+                break;
+            case "sf":
+                planEndDate = startDate.plusDays(intervalWorkPeriod);
+                while (planWorkPeriod > 0){
+                    if(!dateList.contains(planEndDate.minusDays(1))){
+                        planStartDate = planEndDate.minusDays(1);
+                        planWorkPeriod --;
+                    }
+                }
+                break;
+            default:
+                planEndDate = endDate.plusDays(intervalWorkPeriod);
+                while (planWorkPeriod > 0){
+                    if(!dateList.contains(planEndDate.minusDays(1))){
+                        planStartDate = planEndDate.minusDays(1);
+                        planWorkPeriod --;
+                    }
+                }
+                break;
+        }
+        HashMap<String, LocalDate> hashMap = new HashMap<>(6);
+        hashMap.put("startDate", planStartDate);
+        hashMap.put("endDate", planEndDate);
+        return hashMap;
     }
 }
 
