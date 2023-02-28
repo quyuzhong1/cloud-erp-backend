@@ -1,6 +1,8 @@
 package com.erp.model.plm.vo;
 
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.ProjectPlanTaskDTO;
+import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -34,6 +36,13 @@ public class ProjectTaskPlanAutoVO implements Serializable {
      */
     private List<ScheduleDateVO> sucessList;
 
+    public ProjectTaskPlanAutoVO(List<ScheduleVO> errorList, List<ScheduleDateVO> sucessList) {
+        this.succeedCount = sucessList.size();
+        this.failureCount = errorList.size();
+        this.sucessList = sucessList;
+        this.errorList = errorList;
+    }
+
     @Data
     @NoArgsConstructor
     public static class ScheduleVO {
@@ -60,6 +69,8 @@ public class ProjectTaskPlanAutoVO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ScheduleDateVO {
+
+        private String id;
         /**
          * 任务名称
          */
@@ -68,6 +79,17 @@ public class ProjectTaskPlanAutoVO implements Serializable {
          * 任务名称
          */
         private LocalDate endDate;
+
+        public ScheduleDateVO(String id, ProjectPlanTaskEntity updateEntity, Integer type) {
+            this.id = id;
+            if(1 == type){
+                this.startDate = LocalDateUtil.date2LocalDate(updateEntity.getOriginStartTime());
+                this.endDate = LocalDateUtil.date2LocalDate(updateEntity.getOriginEndTime());
+            }else {
+                this.startDate =  LocalDateUtil.date2LocalDate(updateEntity.getChangeStartTime());
+                this.endDate = LocalDateUtil.date2LocalDate(updateEntity.getChangeEndTime());
+            }
+        }
     }
 
 

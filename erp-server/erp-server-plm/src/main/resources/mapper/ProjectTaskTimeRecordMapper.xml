@@ -28,7 +28,7 @@
         regexp_split_to_table(pt.charge_name,',') as chargeName,
         sum(case when plan_start_time is not null and plan_end_time is not null
         then date_part('day', pt.plan_end_time + '1 day' - pt.plan_start_time) ELSE '0' END) as planTaskTime,
-        sum(case when pttr.reality_end_time is not null and pttr.reality_start_time is not null
+        sum(case when pttr.reality_end_time is not null and pttr.reality_start_time is not null and pttr.reality_end_time > '2023-01-01' and  pttr.reality_start_time > '2023-01-01'
         then date_part('day', pttr.reality_end_time +'1 day' - pttr.reality_start_time) ELSE '0' END) as consumerTime,
         SUM(case when plan_start_time is not null and plan_end_time is not null
         then 1 else 0 END)  as planTaskNum,

@@ -982,16 +982,18 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
            projectPlanTaskService.updateById(updateEntity);
            // 更新任务工期
            projectTaskService.updateById(new ProjectTaskEntity(planTaskNameDTO.getTaskId(), autoEntity.getWorkPeriod()));
-           exitList.add(autoEntity.getId());
+           sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateEntity, dto.getType()));
            Date endDate = 2 == dto.getType() ?  updateEntity.getChangeEndTime() : updateEntity.getOriginEndTime();
            // 对下一个节点进行排期
-           sonNodeSchedule(dto.getType(), dateList, errorList, exitList, dtoMap, taskIdMap, planTaskNameDTO.getTaskId(), LocalDateUtil.date2LocalDate(endDate));
+           sonNodeSchedule(dto.getType(), dateList, errorList, sucessList, exitList, dtoMap, taskIdMap, planTaskNameDTO.getTaskId(), LocalDateUtil.date2LocalDate(endDate));
        }
 
-        return null;
+        return new ProjectTaskPlanAutoVO(errorList, sucessList);
     }
 
-    private void sonNodeSchedule(Integer type,List<LocalDate> dateList, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, LinkedList<String> exitList, Map<String, ProjectPlanTaskDTO.AutoDateDTO> dtoMap, Map<String, PlanTaskNameDTO> taskIdMap, String taskId, LocalDate endDate) {
+    private void sonNodeSchedule(Integer type,List<LocalDate> dateList, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, List<ProjectTaskPlanAutoVO.ScheduleDateVO> sucessList,
+                                 LinkedList<String> exitList, Map<String, ProjectPlanTaskDTO.AutoDateDTO> dtoMap, Map<String, PlanTaskNameDTO> taskIdMap,
+                                 String taskId, LocalDate endDate) {
         // 查询下一个节点
         List<ProjectChildTaskDTO> childrenTaskList = preTaskService.listChildrenTaskOneByTaskId(taskId);
         Map<String, ProjectChildTaskDTO> childTaskMap = childrenTaskList.stream().collect(Collectors.toMap(ProjectChildTaskDTO::getId, e -> e));
@@ -1017,9 +1019,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectPlanTaskService.updateById(updatePlanTaskEntity);
             // 更新任务工期
             projectTaskService.updateById(new ProjectTaskEntity(projectChildTaskDTO.getId(), autoPlanTask.getWorkPeriod()));
-            exitList.add(planTask.getId());
+            sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoPlanTask.getId(), updatePlanTaskEntity, type));
             Date sonEndDate = 2 == type ?  updatePlanTaskEntity.getChangeEndTime() : updatePlanTaskEntity.getOriginEndTime();
-            sonNodeSchedule(type,dateList,errorList,exitList,dtoMap,taskIdMap,planTask.getTaskId(),LocalDateUtil.date2LocalDate(sonEndDate));
+            sonNodeSchedule(type,dateList,errorList,sucessList, exitList,dtoMap,taskIdMap,planTask.getTaskId(),LocalDateUtil.date2LocalDate(sonEndDate));
         });
     }
 
@@ -1038,8 +1040,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             return true;
         }
         if (exitList.contains(autoEntity.getId())) {
+            exitList.add(autoEntity.getId());
             return true;
         }
+        exitList.add(autoEntity.getId());
         if (1 == type && (BaseStatusEnum.WAIT_SUBMIT.getStatus().equals(planTaskNameDTO.getScheduleStatus()) || BaseStatusEnum.AUDIT_NO_PASS.getStatus().equals(planTaskNameDTO.getScheduleStatus()))) {
             errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "当前状态不允许修改排期"));
             return true;
