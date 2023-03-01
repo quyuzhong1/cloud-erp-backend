@@ -180,6 +180,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         checkTaskIfExistPid(id, templateId);
         //删除任务交付文档数据
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
+        //删除任务审核人
+        taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO,id);
         //删除模板任务
         return this.remove(queryWrapper);
     }

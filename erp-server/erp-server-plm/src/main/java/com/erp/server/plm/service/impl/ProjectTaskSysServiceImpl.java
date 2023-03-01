@@ -312,6 +312,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     public Boolean removeTask(String taskId) {
         Boolean flag = this.removeById(taskId);
         if (flag) {
+            //删除任务审核人
+            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.ONE,taskId);
+
             taskDeliveryService.removeByTaskId(taskId);
         }
         return flag;
