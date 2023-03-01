@@ -19,7 +19,7 @@ import java.util.Date;
 public class ProjectPlanEntity extends BaseEntity {
     private static final long serialVersionUID = 240838215899434939L;
 
-    private String id;
+
     /**
      * 产品id
      */
