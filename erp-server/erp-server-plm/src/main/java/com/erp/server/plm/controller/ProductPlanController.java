@@ -65,7 +65,11 @@ public class ProductPlanController extends BaseController {
      * @return ApiResult<ProductPlanDetailsDTO>
      */
     @GetMapping("/productPlanDetails")
-    public ApiResult<ProductPlanDetailsDTO> productPlanDetails(@Param("id") String id) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm/product/plan:productPlanDetails",
+            serviceClass = ProductPlanService.class
+    )    public ApiResult<ProductPlanDetailsDTO> productPlanDetails(@Param("id") String id) {
         ProductPlanDetailsDTO productPlanDTO = productPlanService.productPlanDetails(id);
         return success(productPlanDTO);
     }
