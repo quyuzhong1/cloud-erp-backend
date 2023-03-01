@@ -38,7 +38,9 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
         if(null == dto.getDateType() && null != dto.getCalendarDate()){
             dto.setDateType(2);
         }
-        dto.setCalendarDate(LocalDate.now());
+        if(null == dto.getDateType()){
+            dto.setCalendarDate(LocalDate.now());
+        }
         List<SysCalendarEntity> calendarEntityList = lambdaQuery()
                 .eq(null != dto.getDateType() && 1 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate())
                 .ge(null != dto.getDateType() && 2 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.firstDayOfMonth()))
