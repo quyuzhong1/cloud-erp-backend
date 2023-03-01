@@ -529,6 +529,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (CollectionUtils.isNotEmpty(list)) {
             String productId = dto.getProductId();
             List<String> taskIdList = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
+            //去重的任务id
+            List<String> deTaskIdList = taskIdList.stream().distinct().collect(Collectors.toList());
+            if (taskIdList.size() != deTaskIdList.size()) {
+                throw new ServiceException(ApiError.ERROR_95150);
+            }
             List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, taskIdList);
 
             Long subTaskCount = taskList.stream().filter(p -> !p.getPid().equals("0"))
@@ -704,11 +709,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             }
             vo.setErrorUrl(url);
             List<ChangeScheduleExportVO> succeedList = excelListener.getSucceedDateList();
-            succeedList = succeedList.stream().collect(
-                    Collectors.collectingAndThen(
-                            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ChangeScheduleExportVO::getTaskId))),
-                            ArrayList::new)
-            );
+//            succeedList = succeedList.stream().collect(
+//                    Collectors.collectingAndThen(
+//                            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ChangeScheduleExportVO::getTaskId))),
+//                            ArrayList::new)
+//            );
             vo.setSucceedList(succeedList);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);

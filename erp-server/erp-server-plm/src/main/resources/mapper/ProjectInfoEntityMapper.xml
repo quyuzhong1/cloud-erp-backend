@@ -27,9 +27,7 @@
         <if test="params.categoryId!=null and  params.categoryId!=''  ">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseName != null and params.phaseName != ''  ">
-            AND pph.name = #{params.phaseName}
-        </if>
+
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''  ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
@@ -46,6 +44,13 @@
             AND P.id IN
             <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
                 #{productId}
+            </foreach>
+        </if>
+
+        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+            AND p.progress_status IN
+            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                #{progressStatus}
             </foreach>
         </if>
 
@@ -138,9 +143,6 @@
         <if test="params.categoryId != '' and params.categoryId != null">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseName != null  and params.phaseName != ''  ">
-            AND pph.name = #{params.phaseName}
-        </if>
         <if test="params.searchKeyword!=null and params.searchKeyword!=''  ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
@@ -186,6 +188,13 @@
             AND p.property IN
             <foreach collection="params.propertyList" item="property" open="(" separator="," close=")">
                 #{property}
+            </foreach>
+        </if>
+
+        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+            AND p.progress_status IN
+            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                #{progressStatus}
             </foreach>
         </if>
 

@@ -36,10 +36,6 @@
         <if test="params.categoryId!=null and params.categoryId!='' ">
             AND P.category_id = #{params.categoryId}
         </if>
-
-        <if test="params.phaseName != null and params.phaseName != ''  ">
-            AND pph.name = #{params.phaseName}
-        </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
@@ -78,6 +74,13 @@
             AND p.brand_name IN
             <foreach collection="params.brandList" item="brand" open="(" separator="," close=")">
                 #{brand}
+            </foreach>
+        </if>
+
+        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+            AND p.progress_status IN
+            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                #{progressStatus}
             </foreach>
         </if>
 
@@ -213,9 +216,7 @@
         <if test="params.categoryId!=null  and params.categoryId!=''">
             AND P.category_id = #{params.categoryId}
         </if>
-        <if test="params.phaseName != null  and params.phaseName != ''">
-            AND pph.name = #{params.phaseName}
-        </if>
+
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND P.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -280,6 +281,12 @@
             AND pi.charge_id IN
             <foreach collection="params.projectChargeIdList" item="chargeId" open="(" separator="," close=")">
                 #{chargeId}
+            </foreach>
+        </if>
+        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+            AND p.progress_status IN
+            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                #{progressStatus}
             </foreach>
         </if>
         <if test="params.startTime !=null">
