@@ -96,7 +96,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                     AttestationDTO other = new AttestationDTO();
                     other.setDictValue(otherDictValue);
                     other.setSkuId(item.getSkuId());
-                    other.setType(otherDictType);
+                    other.setType(ProductManyDetailConstant.OTHER_ATTESTATION);
                     if (otherDict != null) {
                         other.setDictId(otherDict.getId());
                     } else {
@@ -128,7 +128,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                         String id = IdWorker.getIdStr();
                         transport.setDictId(id);
                         addTransportDict.setId(id);
-                        addTransportDict.setType(otherDictType);
+                        addTransportDict.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
                         addTransportDict.setValue(transportDictValue);
                         basicDictList.add(addTransportDict);
                     }
@@ -184,16 +184,16 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 attestation.setSkuId(skuId);
                 //产品
                 List<String> productList = valueList.stream().filter(v -> product.equals(v.getType())).
-                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
                 attestation.setProductList(productList);
                 //运输
                 List<String> transportList = valueList.stream().filter(v -> transport.equals(v.getType())).
-                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
                 attestation.setTransportList(transportList);
 
                 //其它
                 List<String> otherList = valueList.stream().filter(v -> other.equals(v.getType())).
-                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
                 attestation.setOtherList(otherList);
                 resultList.add(attestation);
             }
