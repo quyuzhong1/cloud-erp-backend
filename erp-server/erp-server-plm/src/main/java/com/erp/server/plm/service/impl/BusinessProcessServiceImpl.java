@@ -35,6 +35,7 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
     public List<BusinessProcessInfoDTO> getProcessList(String businessType) {
         LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BusinessProcessEntity::getBusinessType, businessType);
+        queryWrapper.orderByAsc(BusinessProcessEntity::getId);
         List<BusinessProcessEntity> list = this.list(queryWrapper);
         List<BusinessProcessInfoDTO> resultList = new ArrayList<>();
         for (BusinessProcessEntity item : list) {
