@@ -1528,28 +1528,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean approvalPass(ProductDetailOperateDTO dto) {
         ProductDetailEntity entity = this.getById(dto.getId());
         //验证是否设置审核人
-        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+       /* ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
         if (ObjectUtils.isEmpty(approverEntity)) {
             throw new ServiceException(ApiError.ERROR_95082);
-        }
+        }*/
         //只有待审核和审核中数据可以审核
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
-        }
-        //SKU字段关联任务尚未完成，不可审核
-        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
-        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(taskIds)) {
-                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-                    if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
-                    }
-                }
-
-            }
         }
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
@@ -2010,6 +1995,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(str)) {
             throw new ServiceException(new ApiResult(1, str));
         }
+        //SKU字段关联任务尚未完成，不可审核
+        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
+        //验证是否完成任务
+        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
+            //sku未完成
+            long skuNotFinish = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
+            if (skuNotFinish > 0) {
+                throw new ServiceException(ApiError.ERROR_95083);
+            }
+            //sku完成任务未完成
+            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(taskIds)) {
+                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
+                if (CollectionUtils.isNotEmpty(taskList)) {
+                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                    if (count > 0) {
+                        throw new ServiceException(ApiError.ERROR_95083);
+                    }
+                }
+            }
+        }
+
         //启动流程
         productDetailStartProcess(productDetailEntity);
 

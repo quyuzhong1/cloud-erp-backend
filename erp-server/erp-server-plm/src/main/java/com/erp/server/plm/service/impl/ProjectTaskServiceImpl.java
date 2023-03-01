@@ -3607,11 +3607,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> status = new ArrayList<>(2);
         status.add(auditPass);
         status.add(auditNoPass);
-        List<String> scheduleStatusList = list.stream().filter(s -> change.equals(s.getScheduleType())).
+        List<String> scheduleStatusList = list.stream().filter(s -> change.equals(s.getScheduleType()) && !status.contains(s.getScheduleStatus())).
                 map(ProjectTaskEntity::getScheduleStatus).
                 collect(Collectors.toList());
         //当不包含就要去除
-        if (!status.contains(scheduleStatusList)) {
+        if (CollectionUtils.isNotEmpty(scheduleStatusList)) {
             throw new ServiceException(ApiError.ERROR_95147);
         }
     }
