@@ -985,6 +985,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
            if (checkData(dto.getType(), errorList, exitList, autoEntity, planTaskNameDTO)) {
                continue;
            }
+           if(null == autoEntity.getStartDate() || null == autoEntity.getEndDate()){
+               errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "链路起点任务开始时间结束时间不能为空"));
+               continue;
+           }
            // 更新任务工期
            LocalDate endDate;
            LocalDate startDate;
@@ -1080,7 +1084,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             return true;
         }
         exitList.add(autoEntity.getId());
-        if (1 == type && (BaseStatusEnum.WAIT_SUBMIT.getStatus().equals(planTaskNameDTO.getScheduleStatus()) || BaseStatusEnum.AUDIT_NO_PASS.getStatus().equals(planTaskNameDTO.getScheduleStatus()))) {
+        if (1 == type && !(BaseStatusEnum.WAIT_SUBMIT.getStatus().equals(planTaskNameDTO.getScheduleStatus()) || BaseStatusEnum.AUDIT_NO_PASS.getStatus().equals(planTaskNameDTO.getScheduleStatus()))) {
             errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "当前状态不允许修改排期"));
             return true;
         }

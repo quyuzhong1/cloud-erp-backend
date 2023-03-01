@@ -1,7 +1,9 @@
 package com.erp.server.plm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -34,7 +36,12 @@ public class ProjectTaskTimeRecordController extends BaseController {
      * @param dto
      * @return
      */
+
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:time:record:paging",
+            tableAlias = "pt")
     public ApiResult<PagingVO<ProjectTaskTimeRecordPageVO>> pageTaskTimeRecord(@RequestBody PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto){
         PagingVO<ProjectTaskTimeRecordPageVO>  pageVO = projectTaskTimeRecordService.pageRecord(dto);
         return success(pageVO);
