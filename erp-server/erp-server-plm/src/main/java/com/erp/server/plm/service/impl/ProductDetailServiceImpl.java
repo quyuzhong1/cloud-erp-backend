@@ -2014,9 +2014,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productDetailEntity.getStatus())) {
+        //待审核、审核中的sku才能取消流程
+        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productDetailEntity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95118);
         }
+        //中止之前的流程
+        ApproveProcessDTO processDTO = new ApproveProcessDTO();
+        processDTO.setProcessInstanceId(productDetailEntity.getProcessId());
+        workflowFeign.terminate(processDTO);
+
+        //清除流程id
+        productDetailEntity.setProcessId("");
         //更新审核状态
         productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());
         return this.updateById(productDetailEntity);
@@ -2463,10 +2471,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             Map<String, Object> parameterMap = new HashMap<>();
 
-            parameterMap.put("firstApproveIdList", firstApproveIdList);
-            parameterMap.put("secondApproveIdList", secondApproveIdList);
-            parameterMap.put("thirdApproveIdList", thirdApproveIdList);
-            parameterMap.put("fourthApproveIdList", Arrays.asList(financial));
+            parameterMap.put("firstApproveIdList", Arrays.asList("1549948476757303297"));
+            parameterMap.put("secondApproveIdList", Arrays.asList("1549948476757303297"));
+            parameterMap.put("thirdApproveIdList", Arrays.asList("1549948476757303297"));
+            parameterMap.put("fourthApproveIdList", Arrays.asList("1549948476757303297"));
             startProcess.setParameterMap(parameterMap);
             //启动流程
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);

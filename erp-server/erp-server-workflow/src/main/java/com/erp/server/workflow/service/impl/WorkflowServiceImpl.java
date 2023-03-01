@@ -1,11 +1,10 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ProcessInstanceStateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.enums.BaseStatusEnum;
-import com.common.business.enums.ProcessInstanceStateEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
@@ -398,11 +397,6 @@ public class WorkflowServiceImpl implements WorkflowService {
     public void terminateProcess(ApproveProcessDTO dto) {
         String procId = dto.getProcessInstanceId();
 
-        Task task = taskService.createTaskQuery().
-                taskId(dto.getTaskId()).singleResult();
-        if (Objects.isNull(task)) {
-            return;
-        }
         //获取流程状态
         int state = checkProcessInstanceState(procId);
         if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
@@ -434,16 +428,6 @@ public class WorkflowServiceImpl implements WorkflowService {
             // 删除ACT_RU_EXECUTION 表中的实例
             workflowMapper.deleteTaskByIdArray(taskIdList);
         }
-
-
-        String nowActivityId = task.getTaskDefinitionKey();
-        ActivityDTO activityDTO = new ActivityDTO();
-        activityDTO.setNowActivityId(nowActivityId);
-        activityDTO.setProcessInstanceId(procId);
-        activityDTO.setAuditStatus(BaseStatusEnum.AUDIT_NO_PASS.getStatus());
-        //审批通过后 需要保存流程节点信息
-        actHistoryActivityService.saveActivity(activityDTO);
-
     }
 
     @Override
