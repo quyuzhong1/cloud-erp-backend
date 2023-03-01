@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.HolidayUtils;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.entity.SysCalendarEntity;
 import com.erp.model.sys.vo.SysCalendarListVO;
@@ -12,11 +13,13 @@ import com.erp.server.sys.service.SysCalendarService;
 import com.common.core.serveice.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

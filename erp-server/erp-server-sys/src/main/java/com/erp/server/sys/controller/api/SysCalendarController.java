@@ -1,7 +1,10 @@
 package com.erp.server.sys.controller.api;
 
 
+import cn.hutool.core.util.StrUtil;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.HolidayUtils;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.server.sys.service.SysCalendarService;
@@ -9,12 +12,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RestController;
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 系统日历相关
@@ -51,5 +55,24 @@ public class SysCalendarController extends BaseController {
         return success(result);
     }
 
+
+    @PostMapping("/save/year")
+    public ApiResult saveYearHoliday(@RequestBody SysCalendarDTO.SaveYearDTO dto){
+        if(null == dto.getYear()){
+            dto.setYear(LocalDate.now().getYear());
+        }
+        if(null == dto.getMonth()){
+            dto.setYear(LocalDate.now().getMonthValue());
+        }
+        Set<LocalDate> jjr = HolidayUtils.JJR(dto.getYear(), dto.getMonth());
+        SysCalendarDTO.SaveOrUpdateDTO updateDTO = new SysCalendarDTO.SaveOrUpdateDTO();
+        updateDTO.setCalendarDateList(new ArrayList<>(jjr));
+        updateDTO.setIsWorkDay(Boolean.FALSE);
+        if(StrUtil.isNotBlank(dto.getOrganization())){
+            updateDTO.setOrganization(dto.getOrganization());
+        }
+        Boolean result = sysCalendarService.saveOrUpdateBatchDate(updateDTO);
+        return success(result);
+    }
 
 }

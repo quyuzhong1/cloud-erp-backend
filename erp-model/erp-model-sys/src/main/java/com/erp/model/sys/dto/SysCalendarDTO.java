@@ -1,6 +1,5 @@
 package com.erp.model.sys.dto;
 
-import com.erp.model.sys.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -71,6 +70,26 @@ public class SysCalendarDTO implements Serializable {
         private Boolean isWorkDay;
 
         private String remark;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SaveYearDTO{
+
+        /**
+         * 年  空为当前年份
+         */
+        private Integer year;
+
+        /**
+         * 月份 填0选全年 空是当前月
+         */
+        private Integer month;
+        /**
+         * 组织
+         */
+        private String organization;
 
     }
 
