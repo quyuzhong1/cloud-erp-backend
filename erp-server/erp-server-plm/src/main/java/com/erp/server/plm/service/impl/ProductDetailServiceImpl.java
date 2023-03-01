@@ -2471,10 +2471,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             Map<String, Object> parameterMap = new HashMap<>();
 
-            parameterMap.put("firstApproveIdList", Arrays.asList("1549948476757303297"));
-            parameterMap.put("secondApproveIdList", Arrays.asList("1549948476757303297"));
-            parameterMap.put("thirdApproveIdList", Arrays.asList("1549948476757303297"));
-            parameterMap.put("fourthApproveIdList", Arrays.asList("1549948476757303297"));
+            parameterMap.put("firstApproveIdList", firstApproveIdList);
+            parameterMap.put("secondApproveIdList", secondApproveIdList);
+            parameterMap.put("thirdApproveIdList", thirdApproveIdList);
+            parameterMap.put("fourthApproveIdList", Arrays.asList(financial));
             startProcess.setParameterMap(parameterMap);
             //启动流程
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
