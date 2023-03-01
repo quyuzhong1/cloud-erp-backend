@@ -35,9 +35,6 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
 
     @Override
     public List<SysCalendarListVO> listByCondition(SysCalendarDTO.ListDTO dto) {
-        if(null == dto.getIsManualSet()){
-            dto.setIsManualSet(Boolean.TRUE);
-        }
         if(null == dto.getDateType() && null != dto.getCalendarDate()){
             dto.setDateType(2);
         }

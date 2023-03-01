@@ -269,7 +269,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         List<PreTaskVO> preTaskList = templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId());
         List<String> pretaskIdList = Collections.emptyList();
-        if(CollectionUtil.isEmpty(preTaskList)){
+        if(CollectionUtil.isNotEmpty(preTaskList)){
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
         }
         resultVO.setPreTaskList(pretaskIdList);

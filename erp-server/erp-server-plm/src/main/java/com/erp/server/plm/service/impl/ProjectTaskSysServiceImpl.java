@@ -418,7 +418,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         List<String> pretaskIdList = Collections.emptyList();
-        if(CollectionUtil.isEmpty(preTaskList)){
+        if(CollectionUtil.isNotEmpty(preTaskList)){
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
         }
         sysTaskVO.setPreTaskList(pretaskIdList);
