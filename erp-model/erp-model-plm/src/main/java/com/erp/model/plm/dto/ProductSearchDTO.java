@@ -79,6 +79,13 @@ public class ProductSearchDTO extends PermissionsDTO {
 
 
     /**
+     * 项目进展
+     * 列表
+     */
+    private List<String> progressStatusList;
+
+
+    /**
      * 开始时间
      */
     private Date startTime;

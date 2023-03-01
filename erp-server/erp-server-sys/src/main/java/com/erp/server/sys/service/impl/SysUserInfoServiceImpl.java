@@ -27,7 +27,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
-import com.common.business.enums.EmailTemplate;
+import com.common.business.constant.EmailTemplate;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;

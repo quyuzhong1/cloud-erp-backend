@@ -1,4 +1,4 @@
-package com.common.business.enums;
+package com.common.business.constant;
 
 /**
  * @Classname EmailTemplate
