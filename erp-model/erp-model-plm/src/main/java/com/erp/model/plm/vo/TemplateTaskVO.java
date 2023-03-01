@@ -118,7 +118,7 @@ public class TemplateTaskVO implements Serializable {
         /**
          * 前置任务列表
          */
-        private List<PreTaskVO> preTaskList;
+        private List<String> preTaskList;
 
         /**
          * 业务流程表id

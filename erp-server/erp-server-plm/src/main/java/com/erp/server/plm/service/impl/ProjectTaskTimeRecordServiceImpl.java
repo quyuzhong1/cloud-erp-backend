@@ -3,6 +3,8 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -107,6 +109,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList) {
+        log.info("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>{}", JSONUtil.toJsonStr(taskList));
         if (CollectionUtil.isEmpty(taskList)) {
             log.info("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>需要处理任务工时数据为空");
             return false;
@@ -114,6 +117,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         List<ProjectTaskTimeRecordEntity> exitTaskTimeEntities = lambdaQuery()
                 .in(ProjectTaskTimeRecordEntity::getProjectTaskId, taskList.stream().map(ProjectTaskEntity::getId).distinct().collect(Collectors.toList()))
                 .list();
+        log.info("exitTaskTimeEntities >>>{}", JSONUtil.toJsonStr(exitTaskTimeEntities));
         List<ProjectTaskTimeRecordEntity> insertList = new ArrayList<>();
         List<ProjectTaskTimeRecordEntity> updateList = new ArrayList<>();
         Map<String, ProjectTaskTimeRecordEntity> exitEntityMap = exitTaskTimeEntities.stream()
@@ -124,6 +128,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         List<LocalDate> holidayDateList = sysCalendarList.stream().map(SysCalendarListVO::getCalendarDate).collect(Collectors.toList());
         taskList.stream().forEach(entity -> {
             ProjectTaskTimeRecordEntity projectTaskTimeRecordEntity = exitEntityMap.get(entity.getId());
+            log.info("projectTaskTimeRecordEntity >>>{} exitEntityMap={}", JSONUtil.toJsonStr(projectTaskTimeRecordEntity), JSONUtil.toJsonStr(exitEntityMap));
             if (null == projectTaskTimeRecordEntity) {
                 insertList.add(new ProjectTaskTimeRecordEntity(entity,holidayDateList));
             } else {

@@ -328,7 +328,7 @@ public class LocalDateUtil {
             case "fs":
                 planStartDate = endDate.plusDays(intervalWorkPeriod);
                 planEndDate = planStartDate;
-                while (planWorkPeriod > 0){
+                while (planWorkPeriod >= 0){
                     planEndDate = planEndDate.plusDays(1);
                     if(!dateList.contains(planEndDate)){
                         planWorkPeriod --;
@@ -338,7 +338,7 @@ public class LocalDateUtil {
             case "ss":
                 planStartDate = startDate.plusDays(intervalWorkPeriod);
                 planEndDate = planStartDate;
-                while (planWorkPeriod > 0){
+                while (planWorkPeriod >= 0){
                     planEndDate = planEndDate.plusDays(1);
                     if(!dateList.contains(planEndDate)){
                         planWorkPeriod --;
@@ -348,7 +348,7 @@ public class LocalDateUtil {
             case "sf":
                 planEndDate = startDate.plusDays(intervalWorkPeriod);
                 planStartDate = planEndDate;
-                while (planWorkPeriod > 0){
+                while (planWorkPeriod >= 0){
                     planStartDate = planStartDate.minusDays(1);
                     if(!dateList.contains(planStartDate)){
                         planWorkPeriod --;
@@ -358,7 +358,7 @@ public class LocalDateUtil {
             default:
                 planEndDate = endDate.plusDays(intervalWorkPeriod);
                 planStartDate = planEndDate;
-                while (planWorkPeriod > 0){
+                while (planWorkPeriod >= 0){
                     planStartDate = planStartDate.minusDays(1);
                     if(!dateList.contains(planStartDate)){
                         planWorkPeriod --;

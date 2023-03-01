@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -416,7 +417,11 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         //前置任务id集合
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
-        sysTaskVO.setPreTaskList(preTaskList);
+        List<String> pretaskIdList = Collections.emptyList();
+        if(CollectionUtil.isEmpty(preTaskList)){
+            pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+        }
+        sysTaskVO.setPreTaskList(pretaskIdList);
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         if (refSku != null) {
             sysTaskVO.setFieldJson(refSku.getFieldJson());
