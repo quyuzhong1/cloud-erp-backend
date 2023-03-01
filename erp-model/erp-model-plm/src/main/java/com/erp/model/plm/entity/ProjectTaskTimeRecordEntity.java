@@ -83,7 +83,7 @@ public class ProjectTaskTimeRecordEntity extends BaseEntity<ProjectTaskTimeRecor
         }
         this.operatorType = "system";
         if(null != entity.getRealityStartTime() && null != entity.getRealityEndTime()){
-            this.taskTime = Integer.valueOf(String.valueOf(getRealityEndTime().toLocalDate().toEpochDay() - getRealityStartTime().toLocalDate().toEpochDay()))*8;
+            this.taskTime = Integer.valueOf(String.valueOf(getRealityEndTime().toLocalDate().plusDays(1).toEpochDay() - getRealityStartTime().toLocalDate().toEpochDay()))*8;
         }
 
     }
