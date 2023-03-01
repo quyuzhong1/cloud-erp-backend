@@ -257,6 +257,7 @@ public class ProductPlanController extends BaseController {
     * @return ApiResult
     */
     @PostMapping(value = "/exportProductPlan")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:plan:paging", tableAlias = "pp")
     public ApiResult exportProductPlan(@RequestBody ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response) {
         Boolean flag = productPlanService.exportProductPlan(productPlanSearchDTO, response);
         return flag == true ? success() : failure();

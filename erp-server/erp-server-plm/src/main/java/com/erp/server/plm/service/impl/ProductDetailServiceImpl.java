@@ -2015,7 +2015,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95084);
         }
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productDetailEntity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_95117);
+            throw new ServiceException(ApiError.ERROR_95118);
         }
         //更新审核状态
         productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());

@@ -117,7 +117,6 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         }
         //先设置成非默认，项目模板
         entity.setIsDefault(IsConstant.NO);
-        entity.setType(templateType);
         //当是立项模板的时候
         if (isApprovalTemplate) {
             //查询立项模板是否已存在
@@ -125,8 +124,9 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             if (approvalTemplate != null && !approvalTemplate.getId().equals(dto.getId())) {
                 throw new ServiceException(ApiError.ERROR_95063);
             }
+            entity.setType(templateType);
         }
-        if (ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getCode().equals(dto.getTemplateType()) ) {
+        if (ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getCode().equals(dto.getTemplateType())) {
             //查询项目默认模板是否已存在
             ProjectTemplateEntity projectDefaultTemplate = getProjectDefaultTemplate();
             if (projectDefaultTemplate != null && !projectDefaultTemplate.getId().equals(dto.getId())) {
@@ -134,6 +134,8 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             }
             entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
             entity.setIsDefault(IsConstant.YES);
+        } else if (ProjectTemplateShowTypeEnum.PROJECT_CUSTOM_TEMPLATE.getCode().equals(dto.getTemplateType()))  {
+            entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
         }
         return this.saveOrUpdate(entity);
     }
