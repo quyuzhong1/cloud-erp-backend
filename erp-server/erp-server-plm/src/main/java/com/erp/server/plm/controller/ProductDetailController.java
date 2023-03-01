@@ -1,20 +1,21 @@
 package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailApproverEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
@@ -33,8 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * 产品管理
@@ -47,7 +47,6 @@ import java.util.List;
 public class
 
 ProductDetailController extends BaseController {
-
 
 
     @Resource
@@ -837,13 +836,14 @@ ProductDetailController extends BaseController {
         return success(sku);
     }
 
-   /**
-    *  产品信息-提交
-    * @author Will
-    * @date: 2023/2/9 13:34
-    * @param dto
-    * @return ApiResult
-    */
+    /**
+     * 产品信息-提交
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Will
+     * @date: 2023/2/9 13:34
+     */
     @PostMapping("/commit")
     public ApiResult commit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.commit(dto.getId());
@@ -851,11 +851,12 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     *  产品信息-反提交
-     * @author Will
-     * @date: 2023/2/9 13:34
+     * 产品信息-反提交
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/2/9 13:34
      */
     @PostMapping("/unCommit")
     public ApiResult unCommit(@RequestBody @Validated BaseIdDTO dto) {
@@ -865,15 +866,30 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-发送金蝶数据
-     * @author Will
-     * @date: 2023/2/13 13:30
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/2/13 13:30
      */
     @PostMapping("/sendKingDeeData")
     public ApiResult sendKingDeeData(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.sendKingDeeData(dto.getId());
         return result == true ? success() : failure();
+    }
+
+
+    @GetMapping("/getSkuAuditStatus")
+    public ApiResult getSkuAuditStatus() {
+        List<Map<String, Object>> list = new ArrayList<>(10);
+        for (ProductDetailStatusEnum state : ProductDetailStatusEnum.values()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", state.getName());
+            map.put("status", state.getCode());
+            list.add(map);
+        }
+        return success(list);
+
     }
 
 }
