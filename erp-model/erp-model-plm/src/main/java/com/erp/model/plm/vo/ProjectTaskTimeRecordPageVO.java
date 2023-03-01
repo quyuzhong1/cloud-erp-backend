@@ -69,5 +69,7 @@ public class ProjectTaskTimeRecordPageVO implements Serializable {
     @ExcelProperty(value = "延期任务数量", index = 9)
     private Integer delayTaskNum;
 
+    private String taskIds;
+
 
 }

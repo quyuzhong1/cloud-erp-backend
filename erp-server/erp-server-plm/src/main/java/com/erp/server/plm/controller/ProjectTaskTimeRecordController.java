@@ -38,10 +38,10 @@ public class ProjectTaskTimeRecordController extends BaseController {
      */
 
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id",
-            menuCode = "plm:task:time:record:paging",
-            tableAlias = "pt")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "plm:task:time:record:paging",
+//            tableAlias = "pt")
     public ApiResult<PagingVO<ProjectTaskTimeRecordPageVO>> pageTaskTimeRecord(@RequestBody PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto){
         PagingVO<ProjectTaskTimeRecordPageVO>  pageVO = projectTaskTimeRecordService.pageRecord(dto);
         return success(pageVO);

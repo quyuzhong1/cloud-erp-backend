@@ -4,13 +4,16 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.date.LocalDateUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**
  * <p>
@@ -73,7 +76,7 @@ public class ProjectTaskTimeRecordEntity extends BaseEntity<ProjectTaskTimeRecor
     }
 
 
-    public ProjectTaskTimeRecordEntity(ProjectTaskEntity entity) {
+    public ProjectTaskTimeRecordEntity(ProjectTaskEntity entity, List<LocalDate> holidayDateList) {
         this.projectTaskId = entity.getId();
         if(null != entity.getRealityStartTime()){
             this.realityStartTime = LocalDateTimeUtil.of(entity.getRealityStartTime());
@@ -83,7 +86,8 @@ public class ProjectTaskTimeRecordEntity extends BaseEntity<ProjectTaskTimeRecor
         }
         this.operatorType = "system";
         if(null != entity.getRealityStartTime() && null != entity.getRealityEndTime()){
-            this.taskTime = Integer.valueOf(String.valueOf(getRealityEndTime().toLocalDate().plusDays(1).toEpochDay() - getRealityStartTime().toLocalDate().toEpochDay()))*8;
+            Integer diffDays = LocalDateUtil.countDaysForLocalDate(getRealityStartTime().toLocalDate(), getRealityEndTime().toLocalDate(), holidayDateList);
+            this.taskTime = diffDays * 8;
         }
 
     }

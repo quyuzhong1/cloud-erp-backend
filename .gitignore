@@ -5,3 +5,6 @@ target
 erp-common/erp-common-business/mvnw
 erp-common/erp-common-business/mvnw.cmd
 erp-common/erp-common-business/.mvn/
+*.env
+**/rebel.xml
+*.jar
