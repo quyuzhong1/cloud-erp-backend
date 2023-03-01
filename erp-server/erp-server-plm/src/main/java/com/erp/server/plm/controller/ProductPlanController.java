@@ -1,13 +1,15 @@
 package com.erp.server.plm.controller;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.business.vo.SeriesVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.common.business.vo.SeriesVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
@@ -49,6 +51,7 @@ public class ProductPlanController extends BaseController {
      * @return ApiResult<PagingVO<List<ProductPlanVO>>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:plan:paging", tableAlias = "pp")
     public ApiResult<PagingVO<List<ProductPlanVO>>> queryByPage(@RequestBody @Validated PagingDTO<ProductPlanSearchDTO> dto) {
         PagingVO<List<ProductPlanVO>> pagingVO = productPlanService.paging(dto);
         return success(pagingVO);
