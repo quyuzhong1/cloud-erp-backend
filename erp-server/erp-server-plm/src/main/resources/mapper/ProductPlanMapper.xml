@@ -497,7 +497,7 @@
     <select id="countCompleteTrend" resultType="com.erp.model.plm.dto.ProductPlanApprovalTrendDTO">
         select
         to_char(pst.status_time,'MM') as month,
-        count(0) as complateCount
+        count(0) as completeCount
         from product_plan pp
         left join project_status_time pst on pp.product_id = pst.product_id and pst.is_deleted = false and pst.status = '3'
         <where>
