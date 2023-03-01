@@ -99,18 +99,19 @@
         </if>
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
-            AND p.charge_id IN
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" separator="," close=")">
-                #{chargeId}
+            AND
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
+                   string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
-            AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" separator="," close=")">
-                #{chargeId}
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+            AND
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" separator="," close=")" >
+                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(pi.charge_id,',')
             </foreach>
         </if>
+
         <if test="params.startTime !=null">
           AND p.create_time &gt;=#{params.startTime}
         </if>
@@ -271,18 +272,21 @@
         </if>
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
-            AND p.charge_id IN
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" separator="," close=")">
-                #{chargeId}
+            AND
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
+                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
-            AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" separator="," close=")">
-                #{chargeId}
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+            AND
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" separator="," close=")" >
+                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(pi.charge_id,',')
             </foreach>
         </if>
+
+
+
         <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
             AND p.progress_status IN
             <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
