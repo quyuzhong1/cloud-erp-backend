@@ -450,8 +450,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<CountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
             //   获取到 产品迭代的数量
             List<CountDTO> productRelevance = this.getProductRelevanceList();
-            //查询阶段
-            List<ProjectPhaseEntity> phaseList = projectPhaseService.listByProductIds(productIds);
+
 
             for (ProductShowDTO item : list) {
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {

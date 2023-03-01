@@ -309,7 +309,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     }
 
 
-
     /**
      * 获取到审核的任务
      *
@@ -372,7 +371,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public List<ScheduleTaskVO> getByTaskIds(String productId, List<String> taskIdList) {
         return baseMapper.getByTaskIds(productId, taskIdList);
     }
-
 
 
     @Override
@@ -705,7 +703,13 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 }
             }
             vo.setErrorUrl(url);
-            vo.setSucceedList(excelListener.getSucceedDateList());
+            List<ChangeScheduleExportVO> succeedList = excelListener.getSucceedDateList();
+            succeedList = succeedList.stream().collect(
+                    Collectors.collectingAndThen(
+                            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ChangeScheduleExportVO::getTaskId))),
+                            ArrayList::new)
+            );
+            vo.setSucceedList(succeedList);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }

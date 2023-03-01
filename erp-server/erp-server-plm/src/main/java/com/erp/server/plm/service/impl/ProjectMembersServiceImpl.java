@@ -414,6 +414,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 List<String> productIds = projectMembers.stream().map(ProjectMembersEntity::getProductId).collect(Collectors.toList());
                 List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
                 dto.setCount(productList.size());
+                dto.setProductQuantity(productList.size());
                 dto.setProductIds(productList.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList()));
                 resultList.add(dto);
             }

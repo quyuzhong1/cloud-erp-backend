@@ -120,6 +120,70 @@
             </foreach>
         </if>
 
+        <if test="params.productName!=null and params.productName!=''">
+            AND pi.name LIKE concat('%',#{params.productName},'%')
+        </if>
+
+        <if test="params.gradeList !=null and params.gradeList.size>0">
+            AND pi.grade IN
+            <foreach collection="params.gradeList" item="grade" open="(" separator="," close=")">
+                #{grade}
+            </foreach>
+        </if>
+
+        <if test="params.brandList !=null and params.brandList.size>0">
+            AND pi.brand_name IN
+            <foreach collection="params.brandList" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+
+
+        <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+            AND pi.charge_id IN
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" separator="," close=")">
+                #{chargeId}
+            </foreach>
+        </if>
+
+
+        <if test="params.skuStateList !=null and params.skuStateList.size>0">
+            AND pd.status IN
+            <foreach collection="params.skuStateList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+
+        <if test="params.pirateRiskList !=null and params.pirateRiskList.size>0">
+            AND pi.pirate_risk IN
+            <foreach collection="params.pirateRiskList" item="pirateRisk" open="(" separator="," close=")">
+                #{pirateRisk}
+            </foreach>
+        </if>
+
+        <if test="params.saleMethodList !=null and params.saleMethodList.size>0">
+            AND pi.sale_method IN
+            <foreach collection="params.saleMethodList" item="saleMethod" open="(" separator="," close=")">
+                #{saleMethod}
+            </foreach>
+        </if>
+
+        <if test="params.eanList !=null and params.eanList.size>0">
+            AND pp.ean IN
+            <foreach collection="params.eanList" item="ean" open="(" separator="," close=")">
+                #{ean}
+            </foreach>
+        </if>
+
+
+        <if test="params.startTime !=null">
+            AND pi.create_time &gt;=#{params.startTime}
+        </if>
+
+        <if test="params.endTime !=null">
+            AND pi.create_time &lt;= #{params.startTime}
+        </if>
+
         <if test="params.param != '' and params.param != null">
             ${params.param}
         </if>

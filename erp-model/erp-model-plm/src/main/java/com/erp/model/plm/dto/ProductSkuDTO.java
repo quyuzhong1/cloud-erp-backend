@@ -4,6 +4,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -54,4 +55,73 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 流程id
      */
     private List<String> processIds;
+
+
+    /**
+     * 产品名称
+     */
+    private String productName;
+
+
+    /**
+     * 产品等级
+     */
+    private List<String> gradeList;
+
+    /**
+     * 产品 品牌
+     */
+    private List<String> brandList;
+
+
+
+    /**
+     * 产品 经理
+     */
+    private List<String> productChargeIdList;
+
+
+
+
+
+    /**
+     * 开始时间
+     */
+    private Date startTime;
+
+    /**
+     * 结束时间
+     */
+    private Date endTime;
+
+
+
+    /**
+     * sku 审核状态
+     *  0待审核，1审核中，2审核通过，3审核不通过，4待提交
+     */
+    private List<Integer> skuStateList;
+
+
+    /**
+     * 侵权风险
+     * 1：有侵权风险 2：无侵权风险
+     */
+    private List<Integer> pirateRiskList;
+
+
+    /**
+     * 销售方式
+     */
+    private List<String> saleMethodList;
+
+
+    /**
+     * ean 码
+     */
+    private List<String> eanList;
+
+
 }
+
+

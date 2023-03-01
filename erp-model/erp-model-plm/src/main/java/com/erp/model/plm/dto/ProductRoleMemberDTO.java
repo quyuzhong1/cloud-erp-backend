@@ -28,6 +28,9 @@ public class ProductRoleMemberDTO implements Serializable {
      */
     private Integer count ;
 
+
+    private Integer productQuantity;
+
     /**
      * 产品id 集合
      */
