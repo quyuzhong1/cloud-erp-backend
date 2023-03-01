@@ -65,7 +65,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         List<KingdeeReturnOrderEntity> pushToMqList = new ArrayList<>();
         for (KingdeeReturnOrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByBillNoAndOrderNo(entity.getFBillNo(), entity.getFOrderNo());
-            List<KingdeeReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeReturnOrderEntity.class);
+            List<KingdeeReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -81,10 +81,10 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(id);
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeReturnOrderEntity.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
             log.warn("金蝶退货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
