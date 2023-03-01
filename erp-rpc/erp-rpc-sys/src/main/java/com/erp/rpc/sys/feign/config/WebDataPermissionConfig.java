@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * web 配置 {@link WebConfig}
+ * web 配置 {@link WebDataPermissionConfig}
  *
  *
  */
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class WebDataPermissionConfig implements WebMvcConfigurer {
 
     @Bean
     public DataPermissionAspect getDataPermissionAspect(){
