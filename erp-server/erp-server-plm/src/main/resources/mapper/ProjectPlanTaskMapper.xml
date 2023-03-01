@@ -69,13 +69,13 @@
     </select>
     <select id="listByPlanIds" resultType="com.erp.model.plm.dto.PlanTaskNameDTO">
         SELECT
-            ppt."id",
-            ppt.task_id,
+            ppt."id" AS planId,
+            ppt.task_id AS id,
             ppt.origin_start_time,
             ppt.origin_end_time,
             ppt.change_start_time,
             ppt.change_end_time,
-            pt."name",
+            pt."name" AS taskName,
             pt.property,
             pt.status,
             pt.schedule_status,
@@ -86,7 +86,7 @@
             LEFT JOIN project_task pt ON ppt.task_id = pt."id"
         WHERE
             ppt.is_deleted = FALSE
-            and ppt.id in
+            and pt.id in
             <foreach collection="planIdList" item="item" separator="," open="(" close=")">
                 #{item}
             </foreach>

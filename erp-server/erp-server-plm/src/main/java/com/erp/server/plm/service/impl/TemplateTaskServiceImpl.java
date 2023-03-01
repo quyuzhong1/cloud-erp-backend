@@ -272,7 +272,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if(CollectionUtil.isNotEmpty(preTaskList)){
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
         }
-        resultVO.setPreTaskList(pretaskIdList);
+        resultVO.setPreTaskIdList(pretaskIdList);
         TemplateTaskRefSkuConfigEntity skuConfigEntity = templateTaskRefSkuConfigService.getByTaskId(taskEntity.getId());
         if (skuConfigEntity != null) {
             resultVO.setFieldJson(skuConfigEntity.getFieldJson());

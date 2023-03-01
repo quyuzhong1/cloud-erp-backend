@@ -421,7 +421,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if(CollectionUtil.isNotEmpty(preTaskList)){
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
         }
-        sysTaskVO.setPreTaskList(pretaskIdList);
+        sysTaskVO.setPreTaskIdList(pretaskIdList);
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         if (refSku != null) {
             sysTaskVO.setFieldJson(refSku.getFieldJson());

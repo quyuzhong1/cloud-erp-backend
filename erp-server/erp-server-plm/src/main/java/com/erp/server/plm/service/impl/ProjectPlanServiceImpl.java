@@ -436,7 +436,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             if(CollectionUtil.isNotEmpty(preTaskList)){
                 pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
             }
-            task.setPreTaskList(pretaskIdList);
+            task.setPreTaskIdList(pretaskIdList);
 
 
             List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());

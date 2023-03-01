@@ -1593,7 +1593,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if(CollectionUtil.isNotEmpty(preTaskList)){
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
         }
-        resultVO.setPreTaskList(pretaskIdList);
+        resultVO.setPreTaskIdList(pretaskIdList);
 
         return resultVO;
     }

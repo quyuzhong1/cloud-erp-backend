@@ -66,7 +66,7 @@ public class ProjectTaskVO implements Serializable {
     /**
      * 前置任务
      */
-    private List<String> preTaskList;
+    private List<String> preTaskIdList;
 
     /**
      * 计划开始时间
