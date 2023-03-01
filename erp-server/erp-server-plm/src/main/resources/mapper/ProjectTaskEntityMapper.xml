@@ -986,10 +986,10 @@
         pt.type,
         pt.charge_id AS chargeId,
         pt.charge_name AS chargeName,
-        to_char(pt.plan_start_time, 'yyyy/MM/dd') as planStartTime,
-        to_char(pt.plan_end_time, 'yyyy/MM/dd') as planEndTime,
-        to_char(pt.reality_start_time, 'yyyy/MM/dd') as realityStartTime,
-        to_char(pt.reality_end_time, 'yyyy/MM/dd') as realityEndTime,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as planStartTime,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as planEndTime,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as realityStartTime,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as realityEndTime,
         pt.priority,
         pt.phase_id AS phaseId,
         pt.phase_name AS phaseName,
@@ -1117,8 +1117,8 @@
         SELECT
         pt.id AS taskId,
         pt.name AS taskName,
-        to_char(pt.plan_start_time, 'yyyy/MM/dd') AS originStartTime,
-        to_char(pt.plan_end_time,'yyyy/MM/dd') AS originEndTime,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') AS originStartTime,
+        to_char(pt.plan_end_time,'yyyy-MM-dd') AS originEndTime,
         pt.charge_name,
         pt.status
         FROM project_task pt
