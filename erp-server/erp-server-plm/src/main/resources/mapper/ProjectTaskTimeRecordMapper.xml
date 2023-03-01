@@ -13,14 +13,13 @@
         <result column="update_user_name" property="updateUserName" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="deleted_time" property="deletedTime" />
-        <result column="deleted_user_id" property="deletedUserId" />
         <result column="reality_start_time" property="realityStartTime" />
         <result column="reality_end_time" property="realityEndTime" />
         <result column="operator_type" property="operatorType" />
         <result column="project_task_id" property="projectTaskId" />
         <result column="task_time" property="taskTime" />
     </resultMap>
+
     <select id="pageTaskTimeRecord" resultType="com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO">
         SELECT
         pi."name" as productName,

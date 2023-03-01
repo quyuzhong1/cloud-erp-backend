@@ -14,7 +14,6 @@ import com.erp.server.plm.service.ProductPlanSaleInfoService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -40,8 +39,6 @@ public class ProductPlanSaleInfoServiceImpl extends ServiceImpl<ProductPlanSaleI
         LambdaUpdateWrapper<ProductPlanSaleInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanSaleInfoEntity::getProductPlanId,productPlanId);
         updateWrapper.set(ProductPlanSaleInfoEntity::getIsDeleted, Boolean.TRUE);
-        updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedTime, LocalDateTime.now());
-        updateWrapper.set(ProductPlanSaleInfoEntity::getDeletedUserId,userInfo.getUid());
         return this.remove(updateWrapper);
     }
 

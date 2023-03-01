@@ -73,25 +73,6 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     @TableLogic
     private Boolean isDeleted;
 
-    /**
-     * 删除人id
-     */
-    @TableField(value = "deleted_user_id")
-    private String deletedUserId;
-
-    /**
-     * 删除人名称
-     */
-//    @TableField(value = "deleted_user_name")
-//    private String deletedUserName;
-
-    /**
-     * 删除时间
-     */
-    @TableField(value = "deleted_time")
-    private LocalDateTime deletedTime;
-
-
     public static final String ID = "id";
 
     public static final String CREATE_TIME = "create_time";

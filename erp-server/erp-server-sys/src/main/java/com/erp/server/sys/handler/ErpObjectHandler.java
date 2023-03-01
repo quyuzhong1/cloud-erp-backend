@@ -28,7 +28,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
         Date now = new Date();
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("deletedUserId")){
+        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("createTime", now, metaObject);
             this.setFieldValByName("updateTime", now, metaObject);
 
@@ -52,7 +52,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void updateFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("deletedUserId")){
+        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
             this.setFieldValByName("updateTime", new Date(), metaObject);
         }else {
             this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);

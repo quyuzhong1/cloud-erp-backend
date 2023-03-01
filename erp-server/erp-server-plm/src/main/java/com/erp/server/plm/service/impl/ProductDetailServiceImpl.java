@@ -178,13 +178,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
         //待审核查询分配给自己的数据
-        if (IsConstant.NO.equals(pagingDTO.getParams().getStatus())) {
+        if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
             LoginUser loginUser = CommonInterceptor.threadLocal.get();
             List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
-            if (CollectionUtils.isNotEmpty(workflowList)) {
-                List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
-                pagingDTO.getParams().setProcessIds(processIds);
+            //无待办则直接返回
+            if (CollectionUtils.isEmpty(workflowList)) {
+                IPage<ProductDetailShowDTO> list = new Page<>();
+                return new PagingVO(list);
             }
+            List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+            pagingDTO.getParams().setProcessIds(processIds);
+            //待审核，审核中
+            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(),ProductDetailStatusEnum.APPROVAL_ING.getCode()));
+        }
+        if (MathUtil.TWO.toString().equals(pagingDTO.getParams().getType())) {
+            //已审核
+            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
         }
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());

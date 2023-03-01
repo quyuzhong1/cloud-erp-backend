@@ -14,7 +14,6 @@ import com.erp.server.plm.service.ProductPlanPurchaseService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -38,8 +37,6 @@ public class ProductPlanPurchaseServiceImpl extends ServiceImpl<ProductPlanPurch
         LambdaUpdateWrapper<ProductPlanPurchaseEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanPurchaseEntity::getProductPlanId,productPlanId);
         updateWrapper.set(ProductPlanPurchaseEntity::getIsDeleted, Boolean.TRUE);
-        updateWrapper.set(ProductPlanPurchaseEntity::getDeletedTime, LocalDateTime.now());
-        updateWrapper.set(ProductPlanPurchaseEntity::getDeletedUserId,userInfo.getUid());
        return this.remove(updateWrapper);
     }
 

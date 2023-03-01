@@ -85,12 +85,15 @@
             AND pd.product_id = #{params.productId}
         </if>
 
-        <if test="params.status != null">
-            AND pd.status = #{params.status}
-        </if>
-
         <if test="params.isChange != null and params.isChange != ''  ">
             AND pd.is_change = #{params.isChange}
+        </if>
+
+        <if test="params.statusList != null and params.statusList.size() > 0 ">
+            AND pd.status in
+            <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
 
         <if test=" params.stateList != null  and params.stateList.size() > 0 ">
