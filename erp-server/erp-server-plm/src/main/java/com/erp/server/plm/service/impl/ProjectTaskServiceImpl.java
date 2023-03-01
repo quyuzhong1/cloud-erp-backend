@@ -886,7 +886,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         String scheduleStatus = entity.getScheduleStatus();
         if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(scheduleStatus)) {
-            if(!"admin".equals(loginUser.getUserAccount())){
+            if (!"admin".equals(loginUser.getUserAccount())) {
                 throw new ServiceException(ApiError.ERROR_95137);
             }
         }
@@ -1302,7 +1302,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //新增任务操作日志
         addProjectTaskDTOLog(dto, oldEntity, taskEntity.getId());
         //更新审核人
-        setTaskChargeDistributionEntity(dto,taskEntity);
+        setTaskChargeDistributionEntity(dto, taskEntity);
         boolean flag = this.updateById(taskEntity);
         if (flag) {
 
@@ -3341,6 +3341,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 && !TaskStateEnum.CLOSE.getCode().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95032);
         }
+        //检查是否在变更中
+        checkScheduleChangeStatus(list);
         Integer ingCode = TaskStateEnum.ING.getCode();
 
         //一般任务
@@ -3381,6 +3383,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态
         checkTaskState(list);
+        //检查任务审核人不能为空
+        checkTaskAuditor(taskIds);
+
 
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
@@ -3493,6 +3498,28 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return -1;
     }
 
+
+    /**
+     * 检查任务审核人
+     *
+     * @param taskIdList
+     * @return void
+     * @author yl
+     * @date 2023-03-01 15:10
+     */
+    private void checkTaskAuditor(List<String> taskIdList) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            Integer source = MathUtil.THREE;
+            //这个是任务列表 对应的审核人
+            List<TaskChargeDistributionEntity> distributionList = taskChargeDistributionService.listBySourceAndTaskIdList(source, taskIdList);
+            //这个是获取任务是不是有 审核人 大于0 就是没有
+            long count = distributionList.stream().filter(d -> StringUtils.isBlank(d.getChargeIds())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95148);
+            }
+        }
+    }
+
     /**
      * 取消发布
      * 取消发布任务
@@ -3535,16 +3562,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
-     *  如果 排期变更任务状态 要是不是审核通过 和 审核不通过 就不能 操作任务
+     * 如果 排期变更任务状态 要是不是审核通过 和 审核不通过 就不能 操作任务
      */
-    public void checkScheduleChangeStatus(List<ProjectTaskEntity> list){
-        String  change= ProjectPlanConstant.PROJECT_PLAN_CHANGE;
+    public void checkScheduleChangeStatus(List<ProjectTaskEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
         String auditPass = BaseStatusEnum.AUDIT_PASS.getStatus();
         String auditNoPass = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
-        List<String> status=new ArrayList<>(2);
+        List<String> status = new ArrayList<>(2);
         status.add(auditPass);
         status.add(auditNoPass);
-        List<String> scheduleStatusList = list.stream().filter(s->change.equals(s.getScheduleType())).
+        List<String> scheduleStatusList = list.stream().filter(s -> change.equals(s.getScheduleType())).
                 map(ProjectTaskEntity::getScheduleStatus).
                 collect(Collectors.toList());
         //当不包含就要去除
@@ -3552,9 +3582,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95144);
         }
     }
-
-
-
 
 
     /**
@@ -3571,6 +3598,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //进行中
         Integer ingCode = TaskStateEnum.ING.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+
+        //检查是否在变更中
+        checkScheduleChangeStatus(list);
         //检查任务状态是否一样
         Integer state = checkTaskState(list);
         //统计项目状态为  不是进行中的任务
@@ -3609,6 +3639,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态是否一样
         Integer state = checkTaskState(list);
+
+        //检查是否在变更中
+        checkScheduleChangeStatus(list);
 
         //评审任务code
         Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
@@ -3838,6 +3871,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查是否在变更中
+        checkScheduleChangeStatus(list);
         /**
          * 评审任务
          */
@@ -4006,6 +4041,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态是否一样
         Integer state = checkTaskState(list);
+
+        checkScheduleChangeStatus(list);
         //审核不通过
         Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         if (!approvalNoPass.equals(state)) {
@@ -4654,13 +4691,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
+     * @param dto
+     * @param taskEntity
      * @description: 更新审核人
      * @author Will
      * @date: 2023/2/28 15:34
-     * @param dto
-     * @param taskEntity
      */
-    private void setTaskChargeDistributionEntity (ProjectTaskDTO dto,ProjectTaskEntity taskEntity) {
+    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity) {
         List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         if (CollectionUtils.isNotEmpty(approvalList)) {
