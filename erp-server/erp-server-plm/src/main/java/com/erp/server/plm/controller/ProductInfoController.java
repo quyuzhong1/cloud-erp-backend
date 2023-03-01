@@ -43,7 +43,7 @@ public class ProductInfoController extends BaseController {
     private SysCodeService sysCodeService;
 
     /**
-     * 产品列表-普通分页
+     * 产品列表-普通分页【优化3】
      *
      * @param dto
      * @return com.common.core.vo.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>

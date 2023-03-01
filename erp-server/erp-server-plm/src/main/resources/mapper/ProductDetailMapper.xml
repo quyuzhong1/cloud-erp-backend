@@ -74,7 +74,7 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
-        left join product_sale ps on pd.id = ps.sku_id
+        LEFT join product_sale ps on pd.id = ps.sku_id
         WHERE pi.delete_state = 0
         <if test="params.no != '' and params.no != null">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
@@ -103,6 +103,21 @@
             AND pi.category_id in
             <foreach collection="params.categoryIds" item="category" open="(" separator="," close=")">
                 #{category}
+            </foreach>
+        </if>
+
+
+        <if test="params.propertyList !=null and params.propertyList.size>0">
+            AND pi.property IN
+            <foreach collection="params.propertyList" item="property" open="(" separator="," close=")">
+                #{property}
+            </foreach>
+        </if>
+
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+            AND pi.charge_id IN
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" separator="," close=")">
+                #{chargeId}
             </foreach>
         </if>
 
@@ -168,11 +183,8 @@
             </foreach>
         </if>
 
-        <if test="params.eanList !=null and params.eanList.size>0">
-            AND pp.ean IN
-            <foreach collection="params.eanList" item="ean" open="(" separator="," close=")">
-                #{ean}
-            </foreach>
+        <if test="params.ean !=null and params.ean!=''">
+            AND pp.ean LIKE concat('%',#{params.ean},'%')
         </if>
 
 

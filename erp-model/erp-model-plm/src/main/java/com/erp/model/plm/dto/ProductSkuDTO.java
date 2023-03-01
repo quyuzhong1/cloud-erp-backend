@@ -80,6 +80,16 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private List<String> productChargeIdList;
 
+    /**
+     * 项目经理列表
+     */
+    private List<String> projectChargeIdList;
+
+
+    /**
+     * 产品 属性
+     */
+    private List<String> propertyList;
 
 
 
@@ -119,7 +129,7 @@ public class ProductSkuDTO extends PermissionsDTO {
     /**
      * ean 码
      */
-    private List<String> eanList;
+    private String ean;
 
 
 }
