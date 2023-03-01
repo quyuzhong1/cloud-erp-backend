@@ -157,7 +157,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             }
 
         }
-        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+        if (null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
             entity.setWorkPeriod(dto.getWorkPeriod());
         }
         List<DocsDTO> docsList = dto.getDeliveryDocsList();
@@ -340,22 +340,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
 
 
     /**
-     * 获取系统任务名
-     *
-     * @param
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2022-09-22 16:43
-     */
-    @Override
-    public List<String> getSysTaskNames() {
-        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(ProjectTaskSysEntity::getName);
-        return this.listObjs(queryWrapper, Object::toString);
-    }
-
-
-    /**
+     * /**
      * 系统任务获取前置任务
      *
      * @return java.util.List<java.util.Map < java.lang.String, java.lang.String>>
@@ -363,9 +348,12 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
      * @date 2022-10-08 10:57
      */
     @Override
-    public List<Map<String, Object>> taskList() {
+    public List<Map<String, Object>> taskList(String templateId) {
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(ProjectTaskSysEntity::getId, ProjectTaskSysEntity::getName);
+        if (StringUtils.isNotBlank(templateId)) {
+            queryWrapper.eq(ProjectTaskSysEntity::getTemplateId, templateId);
+        }
         return this.listMaps(queryWrapper);
     }
 

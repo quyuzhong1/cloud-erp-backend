@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
 import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.server.plm.service.ProjectTaskSysService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -83,8 +84,8 @@ public class ProjectTaskSysController extends BaseController {
      */
     @GetMapping("/list")
     //  @RequestPermissions("plm:sys:task:list")
-    public ApiResult list() {
-        List<Map<String,Object>> list= projectTaskSysService.taskList();
+    public ApiResult list(@Param("templateId") String templateId) {
+        List<Map<String,Object>> list= projectTaskSysService.taskList(templateId);
         return success(list);
     }
 
