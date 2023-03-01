@@ -191,11 +191,11 @@
 
 
         <if test="params.startTime !=null">
-            AND pi.create_time &gt;=#{params.startTime}
+            AND pd.create_time &gt;=#{params.startTime}
         </if>
 
         <if test="params.endTime !=null">
-            AND pi.create_time &lt;= #{params.startTime}
+            AND pd.create_time &lt;= #{params.startTime}
         </if>
 
         <if test="params.param != '' and params.param != null">

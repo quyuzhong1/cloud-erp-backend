@@ -103,11 +103,11 @@
             </foreach>
         </if>
         <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
+            AND pi.create_time &gt;=#{params.startTime}
         </if>
 
         <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.startTime}
+            AND pi.create_time &lt;= #{params.startTime}
         </if>
 
 
@@ -220,11 +220,11 @@
         </if>
 
         <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
+            AND pi.create_time &gt;=#{params.startTime}
         </if>
 
         <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.startTime}
+            AND pi.create_time &lt;= #{params.startTime}
         </if>
 
 
