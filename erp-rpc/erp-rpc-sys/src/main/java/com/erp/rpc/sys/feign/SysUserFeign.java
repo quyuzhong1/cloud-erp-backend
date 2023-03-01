@@ -21,7 +21,7 @@ import java.util.List;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys", url = "http://localhost:9020")
+@FeignClient(name = "erp-sys")
 public interface SysUserFeign {
 
     //账号登录

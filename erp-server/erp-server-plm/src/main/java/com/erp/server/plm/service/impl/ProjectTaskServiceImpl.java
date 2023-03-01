@@ -3612,7 +3612,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 collect(Collectors.toList());
         //当不包含就要去除
         if (!status.contains(scheduleStatusList)) {
-            throw new ServiceException(ApiError.ERROR_95144);
+            throw new ServiceException(ApiError.ERROR_95147);
         }
     }
 
