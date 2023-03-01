@@ -326,9 +326,9 @@ public class LocalDateUtil {
         LocalDate planStartDate = null;
         switch (code){
             case "fs":
-                planStartDate = endDate.plusDays(intervalWorkPeriod);
+                planStartDate = endDate.plusDays(intervalWorkPeriod + 1);
                 planEndDate = planStartDate;
-                while (planWorkPeriod >= 0){
+                while (planWorkPeriod > 1){
                     planEndDate = planEndDate.plusDays(1);
                     if(!dateList.contains(planEndDate)){
                         planWorkPeriod --;
@@ -336,9 +336,9 @@ public class LocalDateUtil {
                 }
                 break;
             case "ss":
-                planStartDate = startDate.plusDays(intervalWorkPeriod);
+                planStartDate = startDate.plusDays(intervalWorkPeriod + 1);
                 planEndDate = planStartDate;
-                while (planWorkPeriod >= 0){
+                while (planWorkPeriod > 1){
                     planEndDate = planEndDate.plusDays(1);
                     if(!dateList.contains(planEndDate)){
                         planWorkPeriod --;
@@ -346,9 +346,9 @@ public class LocalDateUtil {
                 }
                 break;
             case "sf":
-                planEndDate = startDate.plusDays(intervalWorkPeriod);
+                planEndDate = startDate.plusDays(intervalWorkPeriod + 1);
                 planStartDate = planEndDate;
-                while (planWorkPeriod >= 0){
+                while (planWorkPeriod > 1){
                     planStartDate = planStartDate.minusDays(1);
                     if(!dateList.contains(planStartDate)){
                         planWorkPeriod --;
@@ -356,9 +356,9 @@ public class LocalDateUtil {
                 }
                 break;
             default:
-                planEndDate = endDate.plusDays(intervalWorkPeriod);
+                planEndDate = endDate.plusDays(intervalWorkPeriod + 1);
                 planStartDate = planEndDate;
-                while (planWorkPeriod >= 0){
+                while (planWorkPeriod > 1){
                     planStartDate = planStartDate.minusDays(1);
                     if(!dateList.contains(planStartDate)){
                         planWorkPeriod --;
