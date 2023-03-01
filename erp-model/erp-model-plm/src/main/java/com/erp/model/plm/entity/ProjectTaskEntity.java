@@ -252,11 +252,11 @@ public class ProjectTaskEntity implements Serializable {
         if(null != task.getId()){
             this.id = task.getId();
         }
-        LocalDate endDate = startDate;
         Integer planWorkPeriod = task.getWorkPeriod();
+        LocalDate endDate = startDate;
         while (planWorkPeriod > 0){
-            if(!dateList.contains(startDate.plusDays(1))){
-                endDate = startDate.plusDays(1);
+            endDate =  endDate.plusDays(1);
+            if(!dateList.contains(endDate)){
                 planWorkPeriod --;
             }
         }
