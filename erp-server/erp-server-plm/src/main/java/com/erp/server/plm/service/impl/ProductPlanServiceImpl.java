@@ -451,19 +451,19 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         ProjectInfoEntity projectInfoEntity = projectInfoService.getByProductId(productInfoEntity.getId());
         if (ObjectUtils.isNotEmpty(projectInfoEntity)) {
             //启动
-            if (ProjectStateEnum.YES_START.getState().equals(productInfoEntity.getApprovalStatus())) {
+            if (ProjectStateEnum.YES_START.getState().equals(projectInfoEntity.getProjectStatus())) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.YES_START.getCode());
             }
             //进行中
-            if (ProjectStateEnum.ING.getState().equals(productInfoEntity.getApprovalStatus())) {
+            if (ProjectStateEnum.ING.getState().equals(projectInfoEntity.getProjectStatus())) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.ING.getCode());
             }
             //完成
-            if (ProjectStateEnum.FINISH.getState().equals(productInfoEntity.getApprovalStatus())) {
+            if (ProjectStateEnum.FINISH.getState().equals(projectInfoEntity.getProjectStatus())) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
             }
             //中止
-            if (ProjectStateEnum.STOP.getState().equals(productInfoEntity.getApprovalStatus())) {
+            if (ProjectStateEnum.STOP.getState().equals(projectInfoEntity.getProjectStatus())) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
             }
         }
