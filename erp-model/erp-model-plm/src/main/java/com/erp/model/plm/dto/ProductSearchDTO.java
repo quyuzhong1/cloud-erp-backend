@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -88,11 +89,13 @@ public class ProductSearchDTO extends PermissionsDTO {
     /**
      * 开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date startTime;
 
     /**
      * 结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date endTime;
 
 

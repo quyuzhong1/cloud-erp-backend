@@ -62,23 +62,23 @@
         </if>
 
         <if test="params.gradeList !=null and params.gradeList.size>0">
-            AND p.grade IN
-            <foreach collection="params.gradeList" item="grade" open="(" separator="," close=")">
-                #{grade}
+            AND p.grade_id IN
+            <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
+                #{gradeId}
             </foreach>
         </if>
 
         <if test="params.brandList !=null and params.brandList.size>0">
-            AND p.brand_name IN
-            <foreach collection="params.brandList" item="brand" open="(" separator="," close=")">
-                #{brand}
+            AND p.brand_id IN
+            <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
+                #{brandId}
             </foreach>
         </if>
 
         <if test="params.propertyList !=null and params.propertyList.size>0">
-            AND p.property IN
-            <foreach collection="params.propertyList" item="property" open="(" separator="," close=")">
-                #{property}
+            AND p.property_id IN
+            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
             </foreach>
         </if>
 
@@ -171,23 +171,23 @@
 
 
         <if test="params.gradeList !=null and params.gradeList.size>0">
-            AND p.grade IN
-            <foreach collection="params.gradeList" item="grade" open="(" separator="," close=")">
-                #{grade}
+            AND p.grade_id IN
+            <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
+                #{gradeId}
             </foreach>
         </if>
 
         <if test="params.brandList !=null and params.brandList.size>0">
-            AND p.brand_name IN
-            <foreach collection="params.brandList" item="brand" open="(" separator="," close=")">
-                #{brand}
+            AND p.brand_id IN
+            <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
+                #{brandId}
             </foreach>
         </if>
 
         <if test="params.propertyList !=null and params.propertyList.size>0">
-            AND p.property IN
-            <foreach collection="params.propertyList" item="property" open="(" separator="," close=")">
-                #{property}
+            AND p.property_id IN
+            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
             </foreach>
         </if>
 
