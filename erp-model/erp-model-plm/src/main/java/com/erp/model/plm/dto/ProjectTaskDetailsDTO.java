@@ -1,9 +1,15 @@
 package com.erp.model.plm.dto;
 
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -212,5 +218,10 @@ public class ProjectTaskDetailsDTO implements Serializable {
      * sku 完成信息
      */
     private List<Map<String,Object>> refSkuFinishList;
+
+
+    private Integer planWorkTime;
+
+    private Integer realWorkTime;
 
 }
