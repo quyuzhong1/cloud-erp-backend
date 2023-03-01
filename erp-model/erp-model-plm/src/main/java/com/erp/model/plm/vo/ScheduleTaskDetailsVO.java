@@ -70,6 +70,6 @@ public class ScheduleTaskDetailsVO implements Serializable {
     /**
      * 前置任务关系列表
      */
-    private List<PreTaskVO> preTaskList;
+    private List<String> preTaskList;
 
 }

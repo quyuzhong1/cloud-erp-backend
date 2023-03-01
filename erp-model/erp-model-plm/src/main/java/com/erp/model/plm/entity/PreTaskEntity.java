@@ -76,6 +76,6 @@ public class PreTaskEntity implements Serializable {
     public PreTaskEntity(PreTaskUpdateDTO updateDTO) {
         this.id = updateDTO.getId();
         this.intervalWorkPeriod = updateDTO.getIntervalWorkPeriod();
-        this.relationship = updateDTO.getRelationshipCode();
+        this.relationship = TaskRelationshipEnum.getByCode(updateDTO.getRelationshipCode());
     }
 }

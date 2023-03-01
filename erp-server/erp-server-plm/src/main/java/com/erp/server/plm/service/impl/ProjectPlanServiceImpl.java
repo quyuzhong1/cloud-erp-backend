@@ -431,7 +431,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                     .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
             task.setDeliveryDocsNames(String.join(",", docsNameList));
-            task.setPreTaskList(preTaskGourpTaskIdMap.get(task.getId()));
+            List<String> pretaskIdList = Collections.emptyList();
+            List<PreTaskVO> preTaskList = preTaskGourpTaskIdMap.get(task.getId());
+            if(CollectionUtil.isNotEmpty(preTaskList)){
+                pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+            }
+            task.setPreTaskList(pretaskIdList);
 
 
             List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());

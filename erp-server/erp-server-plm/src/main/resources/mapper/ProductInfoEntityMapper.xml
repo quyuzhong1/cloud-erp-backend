@@ -117,7 +117,7 @@
         </if>
 
         <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.startTime}
+            AND p.create_time &lt;= #{params.endTime}
         </if>
 
         <if test="params.param!=null  and params.param!=''">
@@ -217,7 +217,6 @@
         <if test="params.categoryId!=null  and params.categoryId!=''">
             AND P.category_id = #{params.categoryId}
         </if>
-
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND P.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -227,29 +226,24 @@
                 #{state}
             </foreach>
         </if>
-
         <if test="productIds !=null and productIds.size()>0">
             AND P.id IN
             <foreach collection="productIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
         </if>
-
         <if test="archiveProductIds!=null and archiveProductIds.size()>0">
             AND P.id NOT IN
             <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
         </if>
-
-
         <if test="params.gradeList !=null and params.gradeList.size>0">
             AND p.grade_id IN
             <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
         </if>
-
         <if test="params.brandList !=null and params.brandList.size>0">
             AND p.brand_id IN
             <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
@@ -263,7 +257,6 @@
                 #{propertyId}
             </foreach>
         </if>
-
         <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
             AND pph.name IN
             <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
@@ -284,9 +277,6 @@
                 string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(pi.charge_id,',')
             </foreach>
         </if>
-
-
-
         <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
             AND p.progress_status IN
             <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
@@ -296,12 +286,9 @@
         <if test="params.startTime !=null">
             AND p.create_time &gt;=#{params.startTime}
         </if>
-
         <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.startTime}
+            AND p.create_time &lt;= #{params.endTime}
         </if>
-
-
         <if test="params.param!=null  and params.param!=''">
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>

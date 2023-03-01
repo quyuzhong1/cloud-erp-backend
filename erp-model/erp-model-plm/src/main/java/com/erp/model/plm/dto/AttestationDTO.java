@@ -27,7 +27,7 @@ public class AttestationDTO implements Serializable {
     private String dictId;
 
     @NotBlank(message = "值不能为空")
-    private String value;
+    private String dictValue;
 
     private String type;
 }

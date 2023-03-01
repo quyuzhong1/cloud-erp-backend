@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.util.DateUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -1587,7 +1588,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
         }
-        resultVO.setPreTaskList(preTaskService.getPreTaskIdList(taskId));
+        List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
+        List<String> pretaskIdList = Collections.emptyList();
+        if(CollectionUtil.isNotEmpty(preTaskList)){
+            pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+        }
+        resultVO.setPreTaskList(pretaskIdList);
 
         return resultVO;
     }

@@ -103,21 +103,17 @@
             </foreach>
         </if>
         <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
+            AND pi.create_time &gt;=#{params.startTime}
         </if>
-
         <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.startTime}
+            AND pi.create_time &lt;= #{params.endTime}
         </if>
-
-
         <if test="params.param!=null and params.param!=''  ">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             or p.id IN (SELECT pt.product_id FROM project_task pt WHERE (pt.charge_id is null or pt.charge_id = ''))
             or p.id IN (SELECT pi.product_id FROM project_info pi WHERE (pi.charge_id is null or pi.charge_id = ''))
             )
         </if>
-
         ORDER BY  pi.create_time DESC
     </select>
 
@@ -168,22 +164,18 @@
                 #{productId}
             </foreach>
         </if>
-
-
         <if test="params.gradeList !=null and params.gradeList.size>0">
             AND p.grade_id IN
             <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
         </if>
-
         <if test="params.brandList !=null and params.brandList.size>0">
             AND p.brand_id IN
             <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
                 #{brandId}
             </foreach>
         </if>
-
         <if test="params.propertyList !=null and params.propertyList.size>0">
             AND p.property_id IN
             <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
@@ -220,23 +212,14 @@
         </if>
 
         <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
+            AND pi.create_time &gt;=#{params.startTime}
         </if>
-
         <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.startTime}
+            AND pi.create_time &lt;= #{params.endTime}
         </if>
-
-
-
         <if test="params.param!=null  and  params.param!=''  ">
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
-
-
-
-
-
         ORDER BY  pi.create_time DESC
     </select>
 

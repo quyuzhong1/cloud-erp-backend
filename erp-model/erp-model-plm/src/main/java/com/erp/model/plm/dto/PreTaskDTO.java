@@ -21,7 +21,7 @@ public class PreTaskDTO {
     /**
      * 依赖关系
      */
-    private TaskRelationshipEnum relationshipCode;
+    private String relationshipCode;
     /**
      * 间隔工期
      */

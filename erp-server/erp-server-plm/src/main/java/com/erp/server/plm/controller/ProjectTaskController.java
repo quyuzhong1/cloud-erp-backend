@@ -116,11 +116,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/taskDetails")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "charge_id",
-//            menuCode = "plm:task:taskDetails",
-//            serviceClass = ProjectTaskService.class
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:taskDetails",
+            serviceClass = ProjectTaskService.class
+    )
     public ApiResult<ProjectTaskVO> taskDetails(String taskId) {
         ProjectTaskVO taskVO = taskService.taskDetails(taskId);
         return success(taskVO);

@@ -1,12 +1,14 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.AttestationDTO;
 import com.erp.model.plm.dto.ProductAttestationDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductAttestationEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductAttestationMapper;
 import com.erp.server.plm.service.BasicDictService;
@@ -19,7 +21,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -44,36 +45,93 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateBatchAttestation(List<ProductAttestationDTO> productAttestationList) {
+        Boolean result = true;
         if (CollectionUtils.isNotEmpty(productAttestationList)) {
+            //产品认证
+            String productDictType = BasicDictTypeEnum.PRODUCT_ATTESTATION.getCode();
+            List<BasicDictEntity> productDictEntityList = basicDictService.listByType(productDictType);
+
+            //运输认证
+            String transportDictType = BasicDictTypeEnum.TRANSPORT_ATTESTATION.getCode();
+            List<BasicDictEntity> transportDictEntityList = basicDictService.listByType(transportDictType);
+
+            //其它认证
+            String otherDictType = BasicDictTypeEnum.OTHER_ATTESTATION.getCode();
+            List<BasicDictEntity> otherDictEntityList = basicDictService.listByType(otherDictType);
+
+
             List<AttestationDTO> attestationList = new ArrayList<>(10);
+            List<BasicDictEntity> basicDictList = new ArrayList<>(10);
             for (ProductAttestationDTO item : productAttestationList) {
                 //产品认证
                 List<String> productDictList = item.getProductList();
-                for (String productDict : productDictList) {
+
+                for (String productDictValue : productDictList) {
+                    BasicDictEntity productDict = productDictEntityList.stream().filter(p -> p.getValue().equals(productDictValue)).
+                            findFirst().orElse(null);
                     AttestationDTO product = new AttestationDTO();
                     product.setSkuId(item.getSkuId());
                     product.setType(ProductManyDetailConstant.PRODUCT_ATTESTATION);
-                    product.setDictId(productDict);
+                    product.setDictValue(productDictValue);
+
+                    if (productDict != null) {
+                        product.setDictId(productDict.getId());
+                    } else {
+                        BasicDictEntity addProductDict = new BasicDictEntity();
+                        String id = IdWorker.getIdStr();
+                        product.setDictId(id);
+                        addProductDict.setId(id);
+                        addProductDict.setType(productDictType);
+                        addProductDict.setValue(productDictValue);
+                        basicDictList.add(addProductDict);
+                    }
                     attestationList.add(product);
                 }
 
                 //其它认证
                 List<String> otherDictList = item.getOtherList();
-                for (String otherDict : otherDictList) {
+                for (String otherDictValue : otherDictList) {
+                    BasicDictEntity otherDict = otherDictEntityList.stream().filter(p -> p.getValue().equals(otherDictValue)).
+                            findFirst().orElse(null);
                     AttestationDTO other = new AttestationDTO();
-                    other.setDictId(otherDict);
+                    other.setDictValue(otherDictValue);
                     other.setSkuId(item.getSkuId());
                     other.setType(ProductManyDetailConstant.OTHER_ATTESTATION);
+                    if (otherDict != null) {
+                        other.setDictId(otherDict.getId());
+                    } else {
+                        BasicDictEntity addOtherDict = new BasicDictEntity();
+                        String id = IdWorker.getIdStr();
+                        other.setDictId(id);
+                        addOtherDict.setId(id);
+                        addOtherDict.setType(otherDictType);
+                        addOtherDict.setValue(otherDictValue);
+                        basicDictList.add(addOtherDict);
+                    }
+
                     attestationList.add(other);
                 }
 
                 //运输认证
                 List<String> transportDictList = item.getTransportList();
-                for (String transportDict : transportDictList) {
+                for (String transportDictValue : transportDictList) {
+                    BasicDictEntity transportDict = transportDictEntityList.stream().filter(p -> p.getValue().equals(transportDictValue)).
+                            findFirst().orElse(null);
                     AttestationDTO transport = new AttestationDTO();
                     transport.setSkuId(item.getSkuId());
-                    transport.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
-                    transport.setDictId(transportDict);
+                    transport.setType(transportDictType);
+                    transport.setDictValue(transportDictValue);
+                    if (transportDict != null) {
+                        transport.setDictId(transportDict.getId());
+                    } else {
+                        BasicDictEntity addTransportDict = new BasicDictEntity();
+                        String id = IdWorker.getIdStr();
+                        transport.setDictId(id);
+                        addTransportDict.setId(id);
+                        addTransportDict.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
+                        addTransportDict.setValue(transportDictValue);
+                        basicDictList.add(addTransportDict);
+                    }
                     attestationList.add(transport);
                 }
 
@@ -83,20 +141,15 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
             List<String> skuIdList = productAttestationList.stream().map(ProductAttestationDTO::getSkuId).collect(Collectors.toList());
             //先删除 去掉的 认证
             removeBySkuIds(skuIdList);
-            if(CollectionUtils.isNotEmpty(attestationList)){
-                //对应的字典表信息
-                List<String> dictIdList = attestationList.stream().map(AttestationDTO::getDictId).collect(Collectors.toList());
-                List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
-                for (AttestationDTO item : attestationList) {
-                    String value = dictList.stream().filter(d -> d.getId().equals(item.getDictId())).
-                            findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
-                    item.setValue(value);
-                }
+            if (CollectionUtils.isNotEmpty(attestationList)) {
                 List<ProductAttestationEntity> list = BeanMapper.copyList(attestationList, ProductAttestationEntity.class);
-                return this.saveBatch(list);
+                result = this.saveBatch(list);
+            }
+            if (CollectionUtils.isNotEmpty(basicDictList)) {
+                result = basicDictService.saveBatch(basicDictList);
             }
         }
-        return true;
+        return result;
     }
 
     /**
@@ -131,16 +184,16 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 attestation.setSkuId(skuId);
                 //产品
                 List<String> productList = valueList.stream().filter(v -> product.equals(v.getType())).
-                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
                 attestation.setProductList(productList);
                 //运输
                 List<String> transportList = valueList.stream().filter(v -> transport.equals(v.getType())).
-                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
                 attestation.setTransportList(transportList);
 
                 //其它
                 List<String> otherList = valueList.stream().filter(v -> other.equals(v.getType())).
-                        map(ProductAttestationEntity::getDictId).collect(Collectors.toList());
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
                 attestation.setOtherList(otherList);
                 resultList.add(attestation);
             }
@@ -160,13 +213,14 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
         return this.list(queryWrapper);
     }
 
-    
+
     /**
      * 获取根据sku id
-     * @author yl
-     * @date 2023-02-28 11:19
+     *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.entity.ProductAttestationEntity>
+     * @author yl
+     * @date 2023-02-28 11:19
      */
     @Override
     public List<ProductAttestationEntity> getBySkuIds(List<String> skuIds) {

@@ -84,7 +84,7 @@ public class ProjectPlanTaskEntity extends BaseEntity {
         this.id = planTaskNameDTO.getPlanId();
         Integer planWorkPeriod = planTaskNameDTO.getWorkPeriod();
         LocalDate endDate = startDate;
-        while (planWorkPeriod > 0){
+        while (planWorkPeriod > 1){
             endDate = endDate.plusDays(1);
             if(!dateList.contains(endDate)){
                 planWorkPeriod --;

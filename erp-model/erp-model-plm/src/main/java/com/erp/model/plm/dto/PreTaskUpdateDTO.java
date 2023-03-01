@@ -24,8 +24,8 @@ public class PreTaskUpdateDTO {
     /**
      * 依赖关系
      */
-    @NotBlank()
-    private TaskRelationshipEnum relationshipCode;
+    @NotBlank(message = "依赖关系不能为空")
+    private String relationshipCode;
     /**
      * 间隔工期
      */
