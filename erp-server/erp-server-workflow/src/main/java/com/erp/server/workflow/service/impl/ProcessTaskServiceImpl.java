@@ -152,6 +152,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         activityDTO.setAuditStatus(BaseStatusEnum.AUDIT_NO_PASS.getStatus());
         //审批通过后 需要保存流程节点信息
         actHistoryActivityService.saveActivity(activityDTO);
+
+        //终止流程
+
         return new ProcessNodeDTO();
 
     }

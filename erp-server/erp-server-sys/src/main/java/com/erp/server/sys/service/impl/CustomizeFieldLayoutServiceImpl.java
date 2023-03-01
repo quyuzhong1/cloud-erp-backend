@@ -28,7 +28,7 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
     public Boolean add(CustomizeFieldLayoutDTO dto) {
         if (dto != null) {
             LoginUser loginUser = CommonInterceptor.threadLocal.get();
-            String userId = "admin";
+            String userId = "";
             if (loginUser != null) {
                 userId = loginUser.getUid();
             }
@@ -37,6 +37,7 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
             entity.setCreateTime(new Date());
             entity.setUpdateTime(new Date());
             entity.setCreateUserId(userId);
+            entity.setUserId(userId);
             entity.setUpdateUserId(userId);
             return this.save(entity);
         }

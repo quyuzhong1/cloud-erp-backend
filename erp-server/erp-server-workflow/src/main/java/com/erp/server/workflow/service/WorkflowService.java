@@ -39,7 +39,7 @@ public interface WorkflowService {
     List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto);
 
 
-    void terminateProcess(ApproveProcessDTO dto);
+    void terminateProcess(String  processInstanceId);
 
     List<ApproveNodeRecordVO> queryApproveRecordById(String id);
 

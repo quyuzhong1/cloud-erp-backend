@@ -3381,6 +3381,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        long blankChargeIdCount = list.stream().filter(t -> StringUtils.isBlank(t.getChargeId())).count();
+        if (blankChargeIdCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95097);
+        }
+
         //检查任务状态
         checkTaskState(list);
         //检查任务审核人不能为空

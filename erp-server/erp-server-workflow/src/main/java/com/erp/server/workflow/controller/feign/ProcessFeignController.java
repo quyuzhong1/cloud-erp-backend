@@ -101,7 +101,7 @@ public class ProcessFeignController extends BaseController {
     //终止流程
     @PostMapping("/terminate")
     public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
-        workflowService.terminateProcess(dto);
+        workflowService.terminateProcess(dto.getProcessInstanceId());
     }
 
     //驳回到源点

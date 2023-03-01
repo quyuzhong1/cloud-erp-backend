@@ -388,29 +388,30 @@ public class WorkflowServiceImpl implements WorkflowService {
     /**
      * 终止流程
      *
-     * @param dto
+     * @param
      * @return void
      * @author yl
      * @date 2023-02-01 11:12
      */
     @Override
-    public void terminateProcess(ApproveProcessDTO dto) {
-        String procId = dto.getProcessInstanceId();
-
+    public void terminateProcess(String processInstanceId) {
+        if (StringUtils.isBlank(processInstanceId)) {
+            return;
+        }
         //获取流程状态
-        int state = checkProcessInstanceState(procId);
+        int state = checkProcessInstanceState(processInstanceId);
         if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
             throw new ServiceException(ApiError.ERROR_94000);
         }
 
         //判断是否有任务
-        List<Task> taskList = taskService.createTaskQuery().processInstanceId(procId).list();
+        List<Task> taskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.ERROR_94001);
         }
 
         //获取到流程的节点
-        ActivityInstance activityInstance = runtimeService.getActivityInstance(procId);
+        ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
         if (ObjectUtils.isNull(activityInstance) || ObjectUtils.isEmpty(activityInstance.getChildActivityInstances())) {
             throw new ServiceException(ApiError.ERROR_94002);
         }
