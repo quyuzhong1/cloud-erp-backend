@@ -78,7 +78,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         List<ProjectTaskTimeRecordEntity> insertList = new ArrayList<>();
         List<ProjectTaskTimeRecordEntity> updateList = new ArrayList<>();
         Map<String, ProjectTaskTimeRecordEntity> exitEntityMap = exitTaskTimeEntities.stream()
-                .collect(Collectors.toMap(ProjectTaskTimeRecordEntity::getId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskTimeRecordEntity::getProjectTaskId, e -> e));
 
         taskList.stream().forEach(entity -> {
             ProjectTaskTimeRecordEntity projectTaskTimeRecordEntity = exitEntityMap.get(entity.getId());
