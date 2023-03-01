@@ -311,7 +311,7 @@ public class LocalDateUtil {
             return diffDays;
         }
         AtomicReference<Integer> count = new AtomicReference<>(0);
-        LocalDate finalEndDate = endDate;
+        LocalDate finalEndDate = endDate.minusDays(1);
         dateList.stream().forEach(date -> {
             if(date.compareTo(startDate) >= 0 && date.compareTo(finalEndDate) <= 0){
                 count.getAndSet(count.get() + 1);
