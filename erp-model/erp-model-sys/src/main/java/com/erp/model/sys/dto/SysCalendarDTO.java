@@ -93,5 +93,5 @@ public class SysCalendarDTO implements Serializable {
 
     }
 
-    public static class SysSelectList{}
+    public interface SysSelectList{}
 }
