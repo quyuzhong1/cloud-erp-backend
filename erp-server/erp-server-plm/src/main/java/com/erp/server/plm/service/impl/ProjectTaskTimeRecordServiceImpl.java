@@ -136,7 +136,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
                 if(null == entity.getRealityStartTime()){
                     updateEntity.setRealityStartTime(projectTaskTimeRecordEntity.getRealityStartTime());
                 }
-                updateEntity.setId(entity.getId());
+                updateEntity.setId(projectTaskTimeRecordEntity.getId());
                 updateList.add(updateEntity);
             }
         });
