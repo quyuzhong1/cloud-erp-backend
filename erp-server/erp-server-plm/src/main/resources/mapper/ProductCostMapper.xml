@@ -5,6 +5,7 @@
 <mapper namespace="com.erp.server.plm.mapper.ProductCostMapper">
 
     <sql id="Base_Column_List">
+        tax_rate,
         target_tax_cost,
         target_no_tax_cost,actual_tax_cost,actual_no_tax_cost,
         retail_price,target_gpm,actual_gpm_cny,

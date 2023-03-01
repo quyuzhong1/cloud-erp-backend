@@ -30,6 +30,9 @@ public class ProductAttestationDTO implements Serializable {
     private String skuNo;
 
 
+    private String skuImagesUrl;
+
+
     private List<String> disableFieldList=new ArrayList<>();
 
 

@@ -91,4 +91,11 @@ public class ProductCostDTO implements Serializable {
      */
     @Digits(integer = 20,fraction = 4,message = "项目成本最大20字符")
     private BigDecimal projectCost;
+
+
+    /**
+     *税率
+     */
+    @Digits(integer = 20,fraction = 4,message = "税率格式有误")
+    private BigDecimal taxRate;
 }

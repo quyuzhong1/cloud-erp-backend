@@ -77,6 +77,12 @@ public class ProductCostShowDTO implements Serializable {
      */
     private BigDecimal actualGpmUsd;
 
+
+    /**
+     *税率
+     */
+    private BigDecimal taxRate;
+
     /**
      * 创建时间
      */

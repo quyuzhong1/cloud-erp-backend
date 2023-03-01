@@ -306,6 +306,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             String skuNo = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
+
+            String skuImagesUrl=detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
+            attestation.setSkuImagesUrl(skuImagesUrl);
         }
         productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
         return productNoSpecDetailAllDTO;
@@ -457,6 +461,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             String skuNo = list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
+
+            String skuImagesUrl=list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
+            attestation.setSkuImagesUrl(skuImagesUrl);
         }
         productManyDetail.setProductAttestationList(productAttestationList);
         return productManyDetail;
@@ -2186,6 +2194,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 skuId.equals(attestation.getSkuId())).findFirst().orElse(null);
         if (productAttestationDTO != null) {
             productAttestationDTO.setSkuNo(productDetail.getSkuNo());
+            productAttestationDTO.setSkuImagesUrl(productDetail.getImagesUrl());
         }
         result.setProductAttestationDTO(productAttestationDTO);
 

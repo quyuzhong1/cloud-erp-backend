@@ -130,6 +130,12 @@ public class ProductCostEntity implements Serializable {
     private BigDecimal projectCost;
 
 
+    /**
+     * 税率
+     */
+    @TableField(value = "tax_rate")
+    private BigDecimal taxRate;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
