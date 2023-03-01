@@ -213,6 +213,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             item.setProductStateName(ProductDetailStateEnum.getNameByCode(productState));
             //是否可销售
             Integer isMarketable = item.getIsMarketable();
+            Integer saleState = item.getSaleState();
+            String saleStateName = SaleStateEnum.getNameByCode(saleState);
+            item.setSaleStateName(saleStateName);
             Integer yes = 0;
             if (yes.equals(isMarketable)) {
                 item.setIsMarketableName("是");
@@ -292,7 +295,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductAccessoriesDTO accessories : productAccessoriesList) {
             ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
                     findFirst().orElse(null);
-            if(detailEntity!=null){
+            if (detailEntity != null) {
                 accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
                 accessories.setAccessoriesSkuName(detailEntity.getName());
                 accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
@@ -307,7 +310,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
 
-            String skuImagesUrl=detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+            String skuImagesUrl = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
@@ -445,7 +448,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductAccessoriesDTO accessories : productAccessoriesList) {
             ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
                     findFirst().orElse(null);
-            if(detailEntity!=null){
+            if (detailEntity != null) {
                 accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
                 accessories.setAccessoriesSkuName(detailEntity.getName());
                 accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
@@ -462,7 +465,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
 
-            String skuImagesUrl=list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+            String skuImagesUrl = list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
@@ -711,7 +714,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductAccessoriesDTO> productAccessoriesList = productNoSpecDTO.getProductAccessoriesList();
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
 
-            for(ProductAccessoriesDTO accessories:productAccessoriesList){
+            for (ProductAccessoriesDTO accessories : productAccessoriesList) {
                 accessories.setParentSkuId(skuId);
                 accessories.setProductId(id);
             }
@@ -725,7 +728,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //10.修改/新增  认证信息
         List<ProductAttestationDTO> productAttestationList = productNoSpecDTO.getProductAttestationList();
         if (CollectionUtils.isNotEmpty(productAttestationList)) {
-            for(ProductAttestationDTO attestation:productAttestationList){
+            for (ProductAttestationDTO attestation : productAttestationList) {
                 attestation.setSkuId(skuId);
             }
 
@@ -2214,7 +2217,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductAccessoriesDTO accessories : accessoriesList) {
             ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
                     findFirst().orElse(null);
-            if(detailEntity!=null){
+            if (detailEntity != null) {
                 accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
                 accessories.setAccessoriesSkuName(detailEntity.getName());
                 accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());

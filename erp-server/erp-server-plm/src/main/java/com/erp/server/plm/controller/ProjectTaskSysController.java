@@ -80,7 +80,7 @@ public class ProjectTaskSysController extends BaseController {
     }
 
     /**
-     * 新建任务 获取前置任务列表
+     * 立项模板 新建任务 获取前置任务列表【优化3】
      */
     @GetMapping("/list")
     //  @RequestPermissions("plm:sys:task:list")

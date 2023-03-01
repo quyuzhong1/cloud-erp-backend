@@ -69,18 +69,19 @@
         ps.delisting_time,
         pi.sales_channel,
         pi.category,
-        pi.sale_method
+        pi.sale_method,
+        ps.sale_state
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
         LEFT join product_sale ps on pd.id = ps.sku_id
         WHERE pi.delete_state = 0
-        <if test="params.no != '' and params.no != null">
+        <if test="params.no != null  and params.no != ''">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
         </if>
 
-        <if test="params.productId != '' and params.productId != null">
+        <if test="params.productId != null and params.productId != ''  ">
             AND pd.product_id = #{params.productId}
         </if>
 
@@ -88,18 +89,19 @@
             AND pd.status = #{params.status}
         </if>
 
-        <if test="params.isChange != '' and params.isChange != null">
+        <if test="params.isChange != null and params.isChange != ''  ">
             AND pd.is_change = #{params.isChange}
         </if>
 
-        <if test="params.stateList.size() > 0 and params.stateList != null">
+        <if test=" params.stateList != null  and params.stateList.size() > 0 ">
             AND pd.product_state in
             <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
 
-        <if test="params.categoryIds.size() > 0 and params.categoryIds != null">
+
+        <if test="params.categoryIds != null and params.categoryIds.size() > 0  ">
             AND pi.category_id in
             <foreach collection="params.categoryIds" item="category" open="(" separator="," close=")">
                 #{category}
@@ -112,6 +114,13 @@
             <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
+        </if>
+
+        <if test="params.saleStateList !=null and params.saleStateList.size>0">
+           AND ps.sale_state IN
+           <foreach collection="params.saleStateList" item="saleState" open="(" separator="," close=")">
+                #{saleState}
+           </foreach>
         </if>
 
         <if test="params.brandList !=null and params.brandList.size>0">
@@ -152,18 +161,6 @@
         <if test="params.productName!=null and params.productName!=''">
             AND pi.name LIKE concat('%',#{params.productName},'%')
         </if>
-
-
-
-
-        <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
-            AND pi.charge_id IN
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" separator="," close=")">
-                #{chargeId}
-            </foreach>
-        </if>
-
-
         <if test="params.skuStateList !=null and params.skuStateList.size>0">
             AND pd.status IN
             <foreach collection="params.skuStateList" item="status" open="(" separator="," close=")">

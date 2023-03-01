@@ -132,6 +132,12 @@ public class ProductSkuDTO extends PermissionsDTO {
     private String ean;
 
 
+    /**
+     * 销售状态
+     */
+    private List<Integer> saleStateList;
+
+
 }
 
 
