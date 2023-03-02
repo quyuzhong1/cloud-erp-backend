@@ -1134,13 +1134,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2023-02-28 17:10
      */
     @Override
-    public List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds) {
+    public List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds,Integer isFinishedProductDev) {
         if (CollectionUtils.isEmpty(categoryIds)) {
             return new ArrayList<>();
         }
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
         queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
+        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev,isFinishedProductDev);
         return this.list(queryWrapper);
     }
 

@@ -13,6 +13,7 @@ import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.service.BasicCategoryService;
@@ -94,19 +95,16 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public List<BasicCategoryDTO> getTree(String type) {
         List<BasicCategoryEntity> list = this.list();
-        List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         //产品开发
         String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
         //产品开发
         if (StringUtils.isBlank(type) || productDevelop.equals(productDevelop)) {
-          return  getProductDevelopTreeList(categoryIds);
+            return getCategoryTreeList(list, IsConstant.YES);
+        } else {
+            return getCategoryTreeList(list, IsConstant.NO);
         }
         //根据分类id 获取产品信息
 
-
-
-
-        return null;
     }
 
 
@@ -118,9 +116,10 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @author yl
      * @date 2023-03-02 10:16
      */
-    public List<BasicCategoryDTO> getProductDevelopTreeList(List<String> categoryIds) {
-        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds);
-        List<BasicCategoryDTO> allList = BeanMapper.copyList(productList, BasicCategoryDTO.class);
+    public List<BasicCategoryDTO> getCategoryTreeList(List<BasicCategoryEntity> list , Integer isFinishedProductDev) {
+        List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds, isFinishedProductDev);
+        List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {

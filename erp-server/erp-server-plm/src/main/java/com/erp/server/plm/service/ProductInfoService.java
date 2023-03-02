@@ -120,5 +120,5 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @param categoryIds
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      */
-    List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds);
+    List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds,Integer isFinishedProductDev);
 }
