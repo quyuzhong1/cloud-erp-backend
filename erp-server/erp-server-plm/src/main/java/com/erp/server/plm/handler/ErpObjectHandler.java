@@ -2,7 +2,6 @@ package com.erp.server.plm.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
-import com.common.core.utils.MathUtil;
 import com.erp.server.plm.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +36,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
             this.setFieldValByName("updateTime", now, metaObject);
         }else {
             LocalDateTime localDateTime = LocalDateTime.now();
-            this.setFieldValByName("version", MathUtil.ONE, metaObject);
+//            this.setFieldValByName("version", MathUtil.ONE, metaObject);
             this.setFieldValByName("createTime", localDateTime, metaObject);
             this.setFieldValByName("updateTime", localDateTime, metaObject);
         }
