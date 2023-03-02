@@ -87,4 +87,11 @@ public interface PreTaskService extends IService<PreTaskEntity> {
      * @return
      */
     List<ProjectChildTaskDTO> listChildrenTaskOneByTaskId(String taskId);
+
+    /**
+     * 模板前置任务
+     * @param taskId
+     * @return
+     */
+    List<PreTaskListVO> ListSysPreTaskByTaskId(String taskId);
 }

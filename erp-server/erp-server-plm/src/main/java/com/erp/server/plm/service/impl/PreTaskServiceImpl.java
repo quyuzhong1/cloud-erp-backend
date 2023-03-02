@@ -14,15 +14,13 @@ import com.erp.model.plm.dto.ProjectChildTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.server.plm.mapper.PreTaskMapper;
-import com.erp.server.plm.service.PreTaskService;
-import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.TaskDeliveryService;
-import com.erp.server.plm.service.TaskDocsFinishService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +50,8 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
+    @Autowired
+    private ProjectTaskSysService projectTaskSysService;
 
     /**
      * 保存前置任务
@@ -379,6 +379,21 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
                 )
                 .collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    public List<PreTaskListVO> ListSysPreTaskByTaskId(String taskId) {
+        List<PreTaskEntity> entityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
+                .list();
+        if(CollectionUtil.isEmpty(entityList)){
+            return Collections.emptyList();
+        }
+        List<String> preTaskIds = entityList.stream().map(PreTaskEntity::getPreTaskId).distinct().collect(Collectors.toList());
+        List<ProjectTaskSysEntity> taskEntityList = projectTaskSysService.lambdaQuery()
+                .in(ProjectTaskSysEntity::getId, preTaskIds)
+                .list();
+        Map<String, ProjectTaskSysEntity> preTaskIdMap = taskEntityList.stream().collect(Collectors.toMap(ProjectTaskSysEntity::getId, e -> e));
+        return entityList.stream().map(x -> new PreTaskListVO(x, preTaskIdMap.get(x.getPreTaskId()))).collect(Collectors.toList());
     }
 
 

@@ -305,11 +305,10 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         // 根据模板类型查询模板及前置任务
         if(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode().equals(templateEntity.getType()) && 0 == templateEntity.getIsDefault()){
             // 模板表
-
             preTaskList = templatePreTaskService.getTemplatePreAndNameById(dto.getTaskId());
         }else {
             // 系统表
-            preTaskList = preTaskService.ListPreTaskByTaskId(dto.getTaskId());
+            preTaskList = preTaskService.ListSysPreTaskByTaskId(dto.getTaskId());
         }
         if(CollectionUtil.isEmpty(preTaskList)){
             return preTaskList;

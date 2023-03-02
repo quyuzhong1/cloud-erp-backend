@@ -2,6 +2,7 @@ package com.erp.model.plm.vo;
 
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.TemplatePreTaskEntity;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.AllArgsConstructor;
@@ -73,5 +74,17 @@ public class PreTaskListVO {
     public PreTaskListVO(String taskName, PreTaskVO preTask) {
         this.preTaskName = taskName;
 
+    }
+
+    public PreTaskListVO(PreTaskEntity entity, ProjectTaskSysEntity projectTaskSysEntity) {
+        this.id = entity.getId();
+        this.taskId = entity.getTaskId();
+        this.preTaskId = entity.getPreTaskId();
+        this.relationshipCode = entity.getRelationship().getCode();
+        this.relationshipName = entity.getRelationship().getName();
+        this.intervalWorkPeriod = entity.getIntervalWorkPeriod();
+        if(null != projectTaskSysEntity){
+            this.preTaskName = projectTaskSysEntity.getName();
+        }
     }
 }

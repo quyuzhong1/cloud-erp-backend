@@ -326,50 +326,54 @@ public class LocalDateUtil {
         LocalDate planStartDate = null;
         switch (code){
             case "fs":
+                // 间隔工期
                 planStartDate = endDate.plusDays(intervalWorkPeriod + 1);
-                planEndDate = planStartDate;
-                while (planWorkPeriod > 1){
-                    planEndDate = planEndDate.plusDays(1);
-                    if(!dateList.contains(planEndDate)){
-                        planWorkPeriod --;
-                    }
+                // 跳过休息日
+                while (dateList.contains(planStartDate)){
+                    planStartDate = planStartDate.plusDays(1);
                 }
+                planEndDate = planStartDate;
+                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, 1);
                 break;
             case "ss":
                 planStartDate = startDate.plusDays(intervalWorkPeriod);
-                planEndDate = planStartDate;
-                while (planWorkPeriod > 1){
-                    planEndDate = planEndDate.plusDays(1);
-                    if(!dateList.contains(planEndDate)){
-                        planWorkPeriod --;
-                    }
+                while (dateList.contains(planStartDate)){
+                    planStartDate = planStartDate.plusDays(1);
                 }
+                planEndDate = planStartDate;
+                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, 1);
                 break;
             case "sf":
                 planEndDate = startDate.plusDays(intervalWorkPeriod - 1);
-                planStartDate = planEndDate;
-                while (planWorkPeriod > 1){
-                    planStartDate = planStartDate.minusDays(1);
-                    if(!dateList.contains(planStartDate)){
-                        planWorkPeriod --;
-                    }
+                while (dateList.contains(planEndDate)){
+                    planEndDate = planEndDate.plusDays(-1);
                 }
+                planStartDate = planEndDate;
+                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1);
                 break;
             default:
                 planEndDate = endDate.plusDays(intervalWorkPeriod);
-                planStartDate = planEndDate;
-                while (planWorkPeriod > 1){
-                    planStartDate = planStartDate.minusDays(1);
-                    if(!dateList.contains(planStartDate)){
-                        planWorkPeriod --;
-                    }
+                while (dateList.contains(planEndDate)){
+                    planEndDate = planEndDate.plusDays(-1);
                 }
+                planStartDate = planEndDate;
+                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1);
                 break;
         }
         HashMap<String, LocalDate> hashMap = new HashMap<>(6);
         hashMap.put("startDate", planStartDate);
         hashMap.put("endDate", planEndDate);
         return hashMap;
+    }
+
+    private static LocalDate getPlanWorkPeriodDate(Integer planWorkPeriod, List<LocalDate> dateList, LocalDate planStartDate, Integer diffDay) {
+        while (planWorkPeriod > 1){
+            planStartDate = planStartDate.plusDays(diffDay);
+            if(!dateList.contains(planStartDate)){
+                planWorkPeriod--;
+            }
+        }
+        return planStartDate;
     }
 
     public static void main(String[] args) {
