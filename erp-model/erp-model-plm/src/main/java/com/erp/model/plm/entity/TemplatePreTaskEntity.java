@@ -72,4 +72,13 @@ public class TemplatePreTaskEntity implements Serializable {
         this.intervalWorkPeriod = entity.getIntervalWorkPeriod();
     }
 
+    public TemplatePreTaskEntity(String preTask, String taskId, String templateId, TemplatePreTaskEntity templatePreTaskEntity) {
+        this.taskId = taskId;
+        this.templateId = templateId;
+        this.preTaskId = preTask;
+        if(null != templatePreTaskEntity){
+            this.intervalWorkPeriod = templatePreTaskEntity.getIntervalWorkPeriod();
+            this.relationship = templatePreTaskEntity.getRelationship();
+        }
+    }
 }

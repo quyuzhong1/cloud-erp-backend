@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -17,11 +18,9 @@ import com.erp.server.plm.service.TemplatePreTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -98,18 +97,20 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void saveTemplatePreTaskList(String taskId, List<String> preTaskIdList, String templateId) {
-        //先删除前置任务
-        removeTemplatePreTask(taskId,templateId, preTaskIdList);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            List<TemplatePreTaskEntity> addList = new ArrayList<>();
-            for (String preTaskId : preTaskIdList) {
-                TemplatePreTaskEntity entity = new TemplatePreTaskEntity();
-                entity.setPreTaskId(preTaskId);
-                entity.setTaskId(taskId);
-                entity.setTemplateId(templateId);
-                addList.add(entity);
-            }
+        List<TemplatePreTaskEntity> oldTaskEntityList = lambdaQuery()
+                .eq(TemplatePreTaskEntity::getTaskId, taskId)
+                .eq(TemplatePreTaskEntity::getTemplateId, templateId)
+                .list();
+        if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
+            //先删除前置任务
+            removeTemplatePreTask(taskId,templateId, preTaskIdList);
+            Map<String, TemplatePreTaskEntity> oldTaskPreMap = oldTaskEntityList.stream()
+                    .collect(Collectors.toMap(task -> StrUtil.format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
+            List<TemplatePreTaskEntity> addList = preTaskIdList.stream()
+                    .map(preTask -> new TemplatePreTaskEntity(preTask, taskId, templateId,oldTaskPreMap.get(StrUtil.format("{}_{}", taskId, preTask))))
+                    .collect(Collectors.toList());
             this.saveBatch(addList);
         }
     }

@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,12 +65,17 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
      */
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void savePreTask(String taskId, List<String> preTaskList, String productId) {
-        //先删除前置任务
-        removePreTaskByTaskId(taskId, preTaskList);
-        if (CollectionUtils.isNotEmpty(preTaskList)) {
+        List<PreTaskEntity> oldTaskEntityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
+                .list();
+        if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
+            //先删除前置任务
+            removePreTaskByTaskId(taskId, preTaskList);
+            Map<String, PreTaskEntity> oldTaskPreMap = oldTaskEntityList.stream()
+                    .collect(Collectors.toMap(task -> StrUtil.format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
             List<PreTaskEntity> addList = preTaskList.stream()
-                    .map(preTask -> new PreTaskEntity(preTask, taskId, productId))
+                    .map(preTask -> new PreTaskEntity(preTask, taskId, productId,oldTaskPreMap.get(StrUtil.format("{}_{}", taskId, preTask))))
                     .collect(Collectors.toList());
             this.saveBatch(addList);
         }
