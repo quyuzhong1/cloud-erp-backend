@@ -52,7 +52,7 @@ public class ProductDetailExcelDTO {
     private String name;
 
     @ExcelProperty(value = "品牌", index = 9)
-    @FieldValid(fieldName = "品牌", isNotBlank = true,maxLength = 250)
+    @FieldValid(fieldName = "品牌", isNotBlank = true,maxLength = 30)
     private String brandName;
 
     @ExcelProperty(value = "产品属性", index = 10)
