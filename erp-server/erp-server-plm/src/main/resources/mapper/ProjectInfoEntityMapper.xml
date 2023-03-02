@@ -24,8 +24,11 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId!=null and  params.categoryId!=''  ">
-            AND P.category_id = #{params.categoryId}
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
         </if>
 
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''  ">
@@ -136,8 +139,11 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
         WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1
-        <if test="params.categoryId != '' and params.categoryId != null">
-            AND P.category_id = #{params.categoryId}
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
         </if>
         <if test="params.searchKeyword!=null and params.searchKeyword!=''  ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')

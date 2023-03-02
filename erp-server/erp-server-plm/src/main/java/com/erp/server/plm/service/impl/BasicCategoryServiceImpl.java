@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.dto.BasicCategoryTreeDTO;
 import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
@@ -97,14 +98,17 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         List<BasicCategoryEntity> list = this.list();
         List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         //根据分类id 获取产品信息
-        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds,IsConstant.YES);
+        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds, IsConstant.YES);
         List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
+        //获取到对应数据库的树结构
+        List<BasicCategoryTreeDTO> categoryTreeList = this.getDbTree();
+
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {
                     Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(c.getId())).count();
                     c.setProductQuantity(productQuantity);
-                    c.setChildrenList(getChildrenList(c, allList, productList));
+                    c.setChildrenList(getChildrenList(c, allList, productList, categoryTreeList));
                     return c;
                 }).collect(Collectors.toList());
 
@@ -121,21 +125,37 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @author yl
      * @date 2023-03-02 10:16
      */
-    public List<BasicCategoryDTO> getCategoryTreeList(List<BasicCategoryEntity> list , Integer isFinishedProductDev) {
+    public List<BasicCategoryDTO> getCategoryTreeList(List<BasicCategoryEntity> list, Integer isFinishedProductDev) {
         List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         List<ProductInfoEntity> productList = productInfoService.getListByCategoryIds(categoryIds, isFinishedProductDev);
         List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
+        //获取到对应数据库的树结构
+        List<BasicCategoryTreeDTO> categoryTreeList = this.getDbTree();
+
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {
-                    Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(c.getId())).count();
+                    List<String> categoryList = getChildCategory(categoryTreeList, c.getId());
+                    Long productQuantity = productList.stream().filter(p -> categoryList.contains(p.getCategoryId())).count();
                     c.setProductQuantity(productQuantity);
-                    c.setChildrenList(getChildrenList(c, allList, productList));
+                    c.setChildrenList(getChildrenList(c, allList, productList, categoryTreeList));
                     return c;
                 }).collect(Collectors.toList());
         return treeList;
     }
 
+
+    public List<String> getChildCategory(List<BasicCategoryTreeDTO> categoryTreeList, String id) {
+        List<String> categoryIds = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(categoryTreeList)) {
+            for (BasicCategoryTreeDTO item : categoryTreeList) {
+                if (item.getPath().contains(id)) {
+                    categoryIds.add(item.getId());
+                }
+            }
+        }
+        return categoryIds;
+    }
 
     /**
      * 删除分类
@@ -223,14 +243,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         return list;
     }
 
-    
-    
+
     /**
      * 获取列表的 分类树结构 根据产品类型
-     * @author yl
-     * @date 2023-03-02 11:09
+     *
      * @param type
      * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     * @author yl
+     * @date 2023-03-02 11:09
      */
     @Override
     public List<BasicCategoryDTO> getListTree(String type) {
@@ -243,6 +263,38 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         } else {
             return getCategoryTreeList(list, IsConstant.NO);
         }
+    }
+
+
+    /**
+     * 获取数据库的分类树结构
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryTreeDTO>
+     * @author yl
+     * @date 2023-03-02 15:10
+     */
+    @Override
+    public List<BasicCategoryTreeDTO> getDbTree() {
+        return baseMapper.getDbTree();
+    }
+
+
+    /**
+     * 获取到所有子
+     *
+     * @param categoryId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-02 15:44
+     */
+    @Override
+    public List<String> getChildrenCategoryIds(String categoryId) {
+        if (StringUtils.isBlank(categoryId)) {
+            return new ArrayList<>();
+        }
+        List<BasicCategoryTreeDTO> dbTreeList = getDbTree();
+        return getChildCategory(dbTreeList, categoryId);
     }
 
     /**
@@ -322,13 +374,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @author yl
      * @date 2022-09-13 14:49
      */
-    private List<BasicCategoryDTO> getChildrenList(BasicCategoryDTO item, List<BasicCategoryDTO> allList, List<ProductInfoEntity> productList) {
+    private List<BasicCategoryDTO> getChildrenList(BasicCategoryDTO item, List<BasicCategoryDTO> allList, List<ProductInfoEntity> productList, List<BasicCategoryTreeDTO> categoryTreeList) {
         List<BasicCategoryDTO> collectList = allList.stream().
                 filter(c -> item.getId().equals(c.getPid())).
                 map(b -> {
-                    Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(b.getId())).count();
+                    List<String> categoryIdList = getChildCategory(categoryTreeList, b.getId());
+                    Long productQuantity = productList.stream().filter(p -> categoryIdList.contains(p.getCategoryId())).count();
                     b.setProductQuantity(productQuantity);
-                    b.setChildrenList(getChildrenList(b, allList, productList));
+                    b.setChildrenList(getChildrenList(b, allList, productList, categoryTreeList));
                     return b;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collectList) ? new ArrayList<>() : collectList;

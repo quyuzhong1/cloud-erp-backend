@@ -49,7 +49,7 @@ public class PlmDropDownListController extends BaseController {
     @GetMapping("/relatedSkuType/list")
     public ApiResult<List<SelectShowDTO>> listRelatedSkuType() {
         List<SelectShowDTO> result = Arrays.stream(RelatedSkuTypeEnum.values())
-                .map(x -> new SelectShowDTO(0, x.getCode(), x.getName()))
+                .map(x -> new SelectShowDTO(IsConstant.NO, x.getCode(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
