@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -14,10 +13,12 @@ import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -91,13 +92,35 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-13 14:15
      */
     @Override
-    public List<BasicCategoryDTO> getTree() {
+    public List<BasicCategoryDTO> getTree(String type) {
         List<BasicCategoryEntity> list = this.list();
         List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        //产品开发
+        String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
+        //产品开发
+        if (StringUtils.isBlank(type) || productDevelop.equals(productDevelop)) {
+          return  getProductDevelopTreeList(categoryIds);
+        }
         //根据分类id 获取产品信息
-        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds);
 
-        List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
+
+
+
+        return null;
+    }
+
+
+    /**
+     * 查询产品开发管理 分类
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     * @author yl
+     * @date 2023-03-02 10:16
+     */
+    public List<BasicCategoryDTO> getProductDevelopTreeList(List<String> categoryIds) {
+        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds);
+        List<BasicCategoryDTO> allList = BeanMapper.copyList(productList, BasicCategoryDTO.class);
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {
@@ -106,7 +129,6 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                     c.setChildrenList(getChildrenList(c, allList, productList));
                     return c;
                 }).collect(Collectors.toList());
-
         return treeList;
     }
 
@@ -280,7 +302,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 map(b -> {
                     Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(b.getId())).count();
                     b.setProductQuantity(productQuantity);
-                    b.setChildrenList(getChildrenList(b, allList,productList));
+                    b.setChildrenList(getChildrenList(b, allList, productList));
                     return b;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collectList) ? new ArrayList<>() : collectList;

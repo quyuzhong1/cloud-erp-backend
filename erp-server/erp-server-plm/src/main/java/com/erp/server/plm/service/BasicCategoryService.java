@@ -23,7 +23,7 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
 
     Boolean updateCategory(UpdateBasicNameDTO dto);
 
-    List<BasicCategoryDTO> getTree();
+    List<BasicCategoryDTO> getTree(String type);
 
     Boolean deleteById(String id);
 

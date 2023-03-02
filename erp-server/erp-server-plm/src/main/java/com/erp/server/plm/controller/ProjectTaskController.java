@@ -2,12 +2,12 @@ package com.erp.server.plm.controller;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
@@ -21,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.*;
 
@@ -116,11 +115,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/taskDetails")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "charge_id",
-            menuCode = "plm:task:taskDetails",
-            serviceClass = ProjectTaskService.class
-    )
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "charge_id",
+//            menuCode = "plm:task:taskDetails",
+//            serviceClass = ProjectTaskService.class
+//    )
     public ApiResult<ProjectTaskVO> taskDetails(String taskId) {
         ProjectTaskVO taskVO = taskService.taskDetails(taskId);
         return success(taskVO);

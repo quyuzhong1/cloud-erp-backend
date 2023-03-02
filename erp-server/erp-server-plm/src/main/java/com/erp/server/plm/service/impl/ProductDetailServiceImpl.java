@@ -189,7 +189,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
             pagingDTO.getParams().setProcessIds(processIds);
             //待审核，审核中
-            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(),ProductDetailStatusEnum.APPROVAL_ING.getCode()));
+            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(), ProductDetailStatusEnum.APPROVAL_ING.getCode()));
         }
         if (MathUtil.TWO.toString().equals(pagingDTO.getParams().getType())) {
             //已审核

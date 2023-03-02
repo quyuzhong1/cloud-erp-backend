@@ -1591,7 +1591,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         List<String> pretaskIdList = Collections.emptyList();
         if(CollectionUtil.isNotEmpty(preTaskList)){
-            pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+            pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         resultVO.setPreTaskIdList(pretaskIdList);
 

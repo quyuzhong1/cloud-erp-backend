@@ -58,8 +58,8 @@ public class BasicCategoryController extends BaseController {
      * @return com.common.core.vo.ApiResult
      **/
     @GetMapping("/tree")
-    public ApiResult<List<BasicCategoryDTO>> tree() {
-        List<BasicCategoryDTO> treeList = categoryService.getTree();
+    public ApiResult<List<BasicCategoryDTO>> tree(String type) {
+        List<BasicCategoryDTO> treeList = categoryService.getTree(type);
         return success(treeList);
     }
 
