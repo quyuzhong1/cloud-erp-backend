@@ -131,10 +131,11 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             if (null == projectTaskTimeRecordEntity) {
                 insertList.add(new ProjectTaskTimeRecordEntity(entity,holidayDateList));
             } else {
-                ProjectTaskTimeRecordEntity updateEntity = new ProjectTaskTimeRecordEntity(entity,holidayDateList);
                 if(null == entity.getRealityStartTime()){
-                    updateEntity.setRealityStartTime(projectTaskTimeRecordEntity.getRealityStartTime());
+                    entity.setRealityStartTime(LocalDateUtil.localDateTime2Date(projectTaskTimeRecordEntity.getRealityStartTime()));
                 }
+                ProjectTaskTimeRecordEntity updateEntity = new ProjectTaskTimeRecordEntity(entity,holidayDateList);
+
                 updateEntity.setId(projectTaskTimeRecordEntity.getId());
                 updateList.add(updateEntity);
             }
