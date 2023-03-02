@@ -7,6 +7,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -273,6 +274,9 @@ public class ServletUtils {
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, contentType);
         ApiResult<?> result = ApiResult.error(code, value.toString());
         DataBuffer dataBuffer = response.bufferFactory().wrap(JSON.toJSONString(result).getBytes());
-        return response.writeWith(Mono.just(dataBuffer));
+        Mono<DataBuffer> just = Mono.just(dataBuffer);
+        Mono<Void> voidMono = response.writeWith(just);
+        DataBufferUtils.release(dataBuffer);
+        return voidMono;
     }
 }
