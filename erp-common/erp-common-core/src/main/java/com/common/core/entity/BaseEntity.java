@@ -38,7 +38,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time")
+    @TableField(value = "create_time" , fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
@@ -56,7 +56,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 更新时间
      */
-    @TableField(value = "update_time")
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     /**
