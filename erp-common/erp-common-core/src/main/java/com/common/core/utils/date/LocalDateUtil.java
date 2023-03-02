@@ -333,7 +333,7 @@ public class LocalDateUtil {
                     planStartDate = planStartDate.plusDays(1);
                 }
                 planEndDate = planStartDate;
-                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, 1);
+                planEndDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planEndDate, 1);
                 break;
             case "ss":
                 planStartDate = startDate.plusDays(intervalWorkPeriod);
@@ -341,7 +341,7 @@ public class LocalDateUtil {
                     planStartDate = planStartDate.plusDays(1);
                 }
                 planEndDate = planStartDate;
-                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, 1);
+                planEndDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planEndDate, 1);
                 break;
             case "sf":
                 planEndDate = startDate.plusDays(intervalWorkPeriod - 1);
