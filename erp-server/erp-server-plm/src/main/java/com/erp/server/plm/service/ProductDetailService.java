@@ -394,4 +394,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean sendKingDeeData(String id);
+    /**
+     * @description: 处理负责人id
+     * @author Will
+     * @date: 2023/3/2 17:34
+     */
+    void handleChargeId();
 }
