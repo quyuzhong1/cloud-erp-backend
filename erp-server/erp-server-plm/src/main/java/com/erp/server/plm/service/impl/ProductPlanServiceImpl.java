@@ -448,9 +448,13 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //根据产品id清空之前关联的规划
         ProductPlanEntity found = this.getByProductId(entity.getId());
         if (ObjectUtils.isNotEmpty(found)) {
-            found.setProductId("");
-            found.setProductStatus("");
-            this.updateById(found);
+                lambdaUpdate()
+                    .set(ProductPlanEntity::getProductId,"")
+                    .set(ProductPlanEntity::getProductStatus,"")
+                    .set(ProductPlanEntity::getSurveyDate, null)
+                    .set(ProductPlanEntity::getProjectApprovalDate, null)
+                    .eq(ProductPlanEntity::getId,found.getId())
+                    .update();
         }
         //未关联时
         if (StringUtils.isBlank(productPlanId)) {

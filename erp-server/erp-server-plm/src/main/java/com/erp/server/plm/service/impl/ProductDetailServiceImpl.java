@@ -2211,6 +2211,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
+        for(ProductAccessoriesDTO item:accessoriesList){
+            item.setProductId(productId);
+        }
         List<String> accessoriesSkuIds = accessoriesList.stream().filter(a -> StringUtils.isNotBlank(a.getAccessoriesSkuId())).
                 map(ProductAccessoriesDTO::getAccessoriesSkuId).collect(Collectors.toList());
 

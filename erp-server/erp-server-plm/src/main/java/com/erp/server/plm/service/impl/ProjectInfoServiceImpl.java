@@ -10,6 +10,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -367,6 +368,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         dto.getParams().setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
+        IPage pageData = new Page();
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = commonService.getUserInfo();
@@ -374,12 +376,19 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
+        Map<String, Object> paramsMap = BeanMapUtil.objToMap(params);
+        //是否包含 产品id  如果包含就说明 走了成员分类的  如果没有就是正常的搜索
+        Boolean isProduct=paramsMap.containsKey("productIds");
+        if(isProduct&&CollectionUtils.isEmpty(params.getProductIds())){
+            return new PagingVO(pageData);
+        }
+
         //分类id
         String categoryId = params.getCategoryId();
 
         List<String> categoryIdList =basicCategoryService.getChildrenCategoryIds(categoryId);
 
-        IPage pageData = new Page();
+
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {

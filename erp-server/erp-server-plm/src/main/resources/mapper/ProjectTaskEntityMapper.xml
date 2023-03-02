@@ -1004,6 +1004,7 @@
         pt.schedule_status AS scheduleStatus,
         pt.schedule_type AS scheduleType,
         pt.status,
+        pt.work_period as workPeriod,
         COALESCE((SELECT seq  FROM  project_phase  WHERE id=pt.phase_id  LIMIT 1),0) AS phaseSeq
         FROM project_task pt  LEFT JOIN  product_info pi
         ON pt.product_id=pi.id

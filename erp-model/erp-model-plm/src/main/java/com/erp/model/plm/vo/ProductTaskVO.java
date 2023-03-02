@@ -235,4 +235,8 @@ public class ProductTaskVO implements Serializable {
      * 是否是子任务
      */
     private Boolean isSubtask;
+    /**
+     * 工期
+     */
+    private Integer workPeriod;
 }
