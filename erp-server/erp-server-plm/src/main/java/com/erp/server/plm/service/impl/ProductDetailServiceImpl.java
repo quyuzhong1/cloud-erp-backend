@@ -28,6 +28,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
@@ -2521,9 +2522,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).distinct().collect(Collectors.toList());
             firstApproveIdList.addAll(firstApproveIds);
-            //审核人2(产品部经理/产品经理上级)
-            String secondDeptName = SkuApproveConfigureEnum.SECOND_APPROVE.getDesc();
-            List<String> secondApproveIdList = setApproveLead(secondDeptName);
+            //审核人2(产品经理上级)
+            List<UserSuperiorDTO> superiorList = sysUserFeign.listSuperiorByUserIds(firstApproveIds);
+            if (CollectionUtils.isEmpty(superiorList)) {
+                throw new ServiceException(ApiError.ERROR_95082);
+            }
+            List<String> secondApproveIdList = superiorList.stream().filter(obj -> ChargeSuperiorEnum.DIRECT_SUPERIOR.getName().equals(obj.getSuperiorType())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(secondApproveIdList)) {
+                throw new ServiceException(ApiError.ERROR_95082);
+            }
             //审核人3(产品研发中心负责人、供应链中心负责人)
             String thirdDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
             List<String> thirdApproveIdList = setApproveLead(thirdDeptName);
