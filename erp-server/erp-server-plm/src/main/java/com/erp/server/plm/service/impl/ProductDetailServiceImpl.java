@@ -1592,23 +1592,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-
-        //SKU字段关联任务尚未完成
-        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
-        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(taskIds)) {
-                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-                    if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
-                    }
-                }
-
-            }
-        }
-
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -1619,13 +1602,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!processInstanceIds.contains(entity.getProcessId())) {
             throw new ServiceException(ApiError.ERROR_95049);
         }
-
-        //退回至初始点
-        ApproveProcessDTO approveProcessDTO = new ApproveProcessDTO();
-        approveProcessDTO.setProcessInstanceId(entity.getProcessId());
-        approveProcessDTO.setUserId(userId);
-        approveProcessDTO.setFieldName("firstApproveId");
-        workflowFeign.withDraw(approveProcessDTO);
+        String taskId = myToDoList.stream().filter(obj -> entity.getProcessId().equals(obj.getProcessInstanceId())).map(TaskShowDTO::getTaskId).findFirst().orElse("");
+        //审核不通过
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(taskId);
+        approveProcess.setProcessInstanceId(entity.getProcessId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(dto.getComment());
+        workflowFeign.taskNoPass(approveProcess)
 
         Integer code = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
         //更新产品信息状态

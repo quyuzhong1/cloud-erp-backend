@@ -417,18 +417,24 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         // 删除任务表其它任务
-        List<String> taskIdList = new ArrayList<>();
-        List<String> actIdList = new ArrayList<>();
+      /*  List<String> taskIdList = new ArrayList<>();
+        List<String> actIdList = new ArrayList<>();*/
         for (int i = 0; i < taskList.size(); i++) {
-            taskIdList.add(taskList.get(i).getId());
-            actIdList.add(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()));
+           /* taskIdList.add(taskList.get(i).getId());
+            actIdList.add(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()));*/
+            //删除待审核节点的任务
+            runtimeService.createProcessInstanceModification(processInstanceId)
+                    .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
+                    .setAnnotation("进行了驳回到上一个任务节点操作")
+                    .execute();
         }
 
-        // 对于并行的任务，只能取消其中一个，另外的任务取消不了，所以只能自己操作表，去删除、更新数据状态
+      /*  // 对于并行的任务，只能取消其中一个，另外的任务取消不了，所以只能自己操作表，去删除、更新数据状态
         if (CollectionUtils.isNotEmpty(taskIdList) && CollectionUtils.isNotEmpty(actIdList)) {
             // 删除ACT_RU_EXECUTION 表中的实例
             workflowMapper.deleteTaskByIdArray(taskIdList);
-        }
+
+        }*/
     }
 
     @Override

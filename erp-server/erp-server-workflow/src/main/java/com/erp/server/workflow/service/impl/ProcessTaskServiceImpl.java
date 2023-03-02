@@ -13,6 +13,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
+import com.erp.server.workflow.service.WorkflowService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
@@ -51,6 +52,10 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private WorkflowService workflowService;
+
 
     /**
      * 查询我的任务待办
@@ -154,7 +159,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         actHistoryActivityService.saveActivity(activityDTO);
 
         //终止流程
-
+        workflowService.terminateProcess(processInstanceId);
         return new ProcessNodeDTO();
 
     }
@@ -285,10 +290,20 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                 .asc()
                 .list();
         List<AuditorHandleDTO> resultList = new ArrayList<>();
+        //为空则返回
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
         AuditorHandleDTO auditorHandleDTO = null;
         String approvalSuggestion = "";
         List<Comment> commentList = null;
         List<ActHistoryActivityEntity> historyActivityList = actHistoryActivityService.getByProcessId(processId);
+        //清除被删除的任务
+        list = list.stream().filter(obj -> !"deleted".equals(obj.getDeleteReason())).collect(Collectors.toList());
+        //为空则返回
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
         for (HistoricTaskInstance item : list) {
             auditorHandleDTO = new AuditorHandleDTO();
             commentList = taskService.getTaskComments(item.getId());
