@@ -75,6 +75,20 @@ public class ProductPlanController extends BaseController {
         return success(productPlanDTO);
     }
 
+
+    /**
+     * 产品规划-产品规划回显
+     * @author Will
+     * @date: 2023/2/21 10:01
+     * @param id
+     * @return ApiResult<ProductPlanDetailsDTO>
+     */
+    @GetMapping("/getProductPlanDevelopById")
+    public ApiResult<ProductPlanDevelopDTO> getProductPlanDevelopById(@Param("id") String id) {
+        ProductPlanDevelopDTO productPlanDTO = productPlanService.getProductPlanDevelopById(id);
+        return success(productPlanDTO);
+    }
+
     /**
      * 产品规划-图片上传
      * @author Will

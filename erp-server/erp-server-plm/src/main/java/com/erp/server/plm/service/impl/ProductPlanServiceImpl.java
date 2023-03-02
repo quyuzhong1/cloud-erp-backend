@@ -871,6 +871,22 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public ProductPlanDevelopDTO getProductPlanDevelopById(String id) {
+        ProductPlanEntity productPlanEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            throw new ServiceException(ApiError.ERROR_95134);
+        }
+        ProductPlanDevelopDTO dto = new ProductPlanDevelopDTO();
+        BeanMapperUtils.copy(productPlanEntity,dto);
+        String chargeId = productPlanEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            List<String> chargeIds = Arrays.stream(chargeId.split(",")).collect(Collectors.toList());
+            dto.setChargeIdList(chargeIds);
+        }
+        return dto;
+    }
+
     /**
      * 查询所有未关联产品的规划
      */
