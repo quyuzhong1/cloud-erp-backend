@@ -215,9 +215,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             }
         }
         //取值统计为已经有排期时间的统计数值
-        String waitSubmit = BaseStatusEnum.WAIT_SUBMIT.getStatus();
         Integer scheduleTaskCount = Math.toIntExact(taskList.stream().filter(t -> t.getPlanEndTime() != null &&
-                t.getPlanStartTime() != null && !waitSubmit.equals(t.getScheduleStatus())).count());
+                t.getPlanStartTime() != null ).count());
 
         /**
          * 未排期任务数
