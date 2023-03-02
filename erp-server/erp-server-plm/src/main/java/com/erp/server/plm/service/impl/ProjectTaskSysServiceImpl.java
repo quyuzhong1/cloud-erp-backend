@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -157,7 +158,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             }
 
         }
-        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+        if (null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
             entity.setWorkPeriod(dto.getWorkPeriod());
         }
         List<DocsDTO> docsList = dto.getDeliveryDocsList();
@@ -312,6 +313,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     public Boolean removeTask(String taskId) {
         Boolean flag = this.removeById(taskId);
         if (flag) {
+            //删除任务审核人
+            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.ONE,taskId);
+
             taskDeliveryService.removeByTaskId(taskId);
         }
         return flag;
@@ -337,22 +341,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
 
 
     /**
-     * 获取系统任务名
-     *
-     * @param
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2022-09-22 16:43
-     */
-    @Override
-    public List<String> getSysTaskNames() {
-        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(ProjectTaskSysEntity::getName);
-        return this.listObjs(queryWrapper, Object::toString);
-    }
-
-
-    /**
+     * /**
      * 系统任务获取前置任务
      *
      * @return java.util.List<java.util.Map < java.lang.String, java.lang.String>>
@@ -360,9 +349,12 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
      * @date 2022-10-08 10:57
      */
     @Override
-    public List<Map<String, Object>> taskList() {
+    public List<Map<String, Object>> taskList(String templateId) {
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(ProjectTaskSysEntity::getId, ProjectTaskSysEntity::getName);
+        if (StringUtils.isNotBlank(templateId)) {
+            queryWrapper.eq(ProjectTaskSysEntity::getTemplateId, templateId);
+        }
         return this.listMaps(queryWrapper);
     }
 
@@ -425,7 +417,11 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         //前置任务id集合
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
-        sysTaskVO.setPreTaskList(preTaskList);
+        List<String> pretaskIdList = Collections.emptyList();
+        if(CollectionUtil.isNotEmpty(preTaskList)){
+            pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+        }
+        sysTaskVO.setPreTaskIdList(pretaskIdList);
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         if (refSku != null) {
             sysTaskVO.setFieldJson(refSku.getFieldJson());

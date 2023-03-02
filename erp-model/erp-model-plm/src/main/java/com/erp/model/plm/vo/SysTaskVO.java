@@ -62,7 +62,7 @@ public class SysTaskVO implements Serializable {
     /**
      * 前置任务列表
      */
-    private List<PreTaskVO> preTaskList;
+    private List<String> preTaskIdList;
 
     /**
      * 计划开始时间

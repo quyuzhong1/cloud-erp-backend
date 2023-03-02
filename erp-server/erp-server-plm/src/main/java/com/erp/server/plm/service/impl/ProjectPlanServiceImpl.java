@@ -21,7 +21,6 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.TaskRelationshipEnum;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
@@ -431,7 +430,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                     .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
             task.setDeliveryDocsNames(String.join(",", docsNameList));
-            task.setPreTaskList(preTaskGourpTaskIdMap.get(task.getId()));
+            List<String> pretaskIdList = Collections.emptyList();
+            List<PreTaskVO> preTaskList = preTaskGourpTaskIdMap.get(task.getId());
+            if(CollectionUtil.isNotEmpty(preTaskList)){
+                pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+            }
+            task.setPreTaskIdList(pretaskIdList);
 
 
             List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());

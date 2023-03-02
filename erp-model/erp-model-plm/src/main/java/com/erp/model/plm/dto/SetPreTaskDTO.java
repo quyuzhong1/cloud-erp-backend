@@ -32,7 +32,7 @@ public class SetPreTaskDTO implements Serializable {
     /**
      * 依赖关系
      */
-    private TaskRelationshipEnum relationshipCode;
+    private String relationshipCode;
     /**
      * 间隔工期
      */

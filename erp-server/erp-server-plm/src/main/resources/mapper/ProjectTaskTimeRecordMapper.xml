@@ -13,30 +13,27 @@
         <result column="update_user_name" property="updateUserName" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="deleted_time" property="deletedTime" />
-        <result column="deleted_user_id" property="deletedUserId" />
         <result column="reality_start_time" property="realityStartTime" />
         <result column="reality_end_time" property="realityEndTime" />
         <result column="operator_type" property="operatorType" />
         <result column="project_task_id" property="projectTaskId" />
         <result column="task_time" property="taskTime" />
     </resultMap>
+
     <select id="pageTaskTimeRecord" resultType="com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO">
         SELECT
         pi."name" as productName,
         COALESCE(pi.spu_no, '') as spuNo,
         regexp_split_to_table(pt.charge_name,',') as chargeName,
-        sum(case when plan_start_time is not null and plan_end_time is not null
-        then date_part('day', pt.plan_end_time + '1 day' - pt.plan_start_time) ELSE '0' END) as planTaskTime,
-        sum(case when pttr.reality_end_time is not null and pttr.reality_start_time is not null and pttr.reality_end_time > '2023-01-01' and  pttr.reality_start_time > '2023-01-01'
-        then date_part('day', pttr.reality_end_time +'1 day' - pttr.reality_start_time) ELSE '0' END) as consumerTime,
-        SUM(case when plan_start_time is not null and plan_end_time is not null
-        then 1 else 0 END)  as planTaskNum,
+        0 as planTaskTime,
+        sum(CASE WHEN pttr.task_time is null THEN 0 else pttr.task_time end)/8 as consumerTime,
+        SUM(case when plan_start_time is not null and plan_end_time is not null then 1 else 0 END)  as planTaskNum,
         count(pt."id")  as totalTaskNum,
         SUM(CASE WHEN pt.status = 4 THEN 1 else 0 end)  finishedTaskNum,
         SUM(CASE WHEN pt.status != 4 THEN 1 else 0 end)  unfinishedTaskNum,
         SUM(CASE WHEN (pt.status = 0 OR pt.status = 1 OR  pt.status = 2 OR  pt.status = 3)
-        and pt.plan_end_time is not null and pt.plan_end_time  &lt; CURRENT_DATE THEN 1 else 0 end)  delayTaskNum
+        and pt.plan_end_time is not null and pt.plan_end_time  &lt; CURRENT_DATE THEN 1 else 0 end)  delayTaskNum,
+        array_to_string(array_agg(DISTINCT pt.id),',') taskIds
         FROM "project_task" pt
         LEFT JOIN product_info  pi on pt.product_id = pi.id
         LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id

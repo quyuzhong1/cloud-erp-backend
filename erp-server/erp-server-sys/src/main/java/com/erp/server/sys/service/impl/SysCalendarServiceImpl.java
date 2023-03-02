@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.HolidayUtils;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.entity.SysCalendarEntity;
 import com.erp.model.sys.vo.SysCalendarListVO;
@@ -13,13 +12,11 @@ import com.erp.server.sys.service.SysCalendarService;
 import com.common.core.serveice.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -35,13 +32,12 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
 
     @Override
     public List<SysCalendarListVO> listByCondition(SysCalendarDTO.ListDTO dto) {
-        if(null == dto.getIsManualSet()){
-            dto.setIsManualSet(Boolean.TRUE);
-        }
         if(null == dto.getDateType() && null != dto.getCalendarDate()){
             dto.setDateType(2);
         }
-        dto.setCalendarDate(LocalDate.now());
+        if(null == dto.getDateType()){
+            dto.setCalendarDate(LocalDate.now());
+        }
         List<SysCalendarEntity> calendarEntityList = lambdaQuery()
                 .eq(null != dto.getDateType() && 1 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate())
                 .ge(null != dto.getDateType() && 2 == dto.getDateType(), SysCalendarEntity::getCalendarDate, dto.getCalendarDate().with(TemporalAdjusters.firstDayOfMonth()))

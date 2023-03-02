@@ -4,6 +4,7 @@ import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.server.sys.service.SysCalendarService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,7 +27,7 @@ public class SysCalendarFeignController {
 
 
     @PostMapping("/list")
-    public List<SysCalendarListVO> listCalendar(SysCalendarDTO.ListDTO dto){
+    public List<SysCalendarListVO> listCalendar(@RequestBody SysCalendarDTO.ListDTO dto){
         return sysCalendarService.listByCondition(dto);
     }
 }

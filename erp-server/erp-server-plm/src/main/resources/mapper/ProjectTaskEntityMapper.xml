@@ -225,13 +225,11 @@
         t.product_id,t.business_process_id,t.related_sku_type,
         pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,
         pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName,
-        case when t.plan_start_time is not null and t.plan_end_time is not null
-        then date_part('day', t.plan_end_time + '1 day' -  t.plan_start_time) ELSE '0' END as planWorkTime,
-        case when t.reality_end_time is not null and t.reality_start_time is not null
-        then date_part('day',  t.reality_end_time + '1 day' -  t.reality_start_time) ELSE '0' END as realWorkTime
+        (CASE WHEN pttr.task_time is null THEN 0 else pttr.task_time end)/8 as realTaskTime
         FROM   project_task t
         LEFT JOIN product_info pi ON pi.id=t.product_id
         LEFT JOIN project_info pj ON pj.product_id=pi.id
+        LEFT JOIN project_task_time_record pttr on t.id = pttr.project_task_id
         WHERE t.id=#{taskId}
     </select>
 

@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.util.DateUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -22,13 +23,16 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
+import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.workflow.dto.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -48,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -1150,7 +1155,31 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsDTO.setRefSkuIdList(skuIdList);
         List<String> skuNoList = details.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
         detailsDTO.setRefSkuNoList(skuNoList);
+
+        SysCalendarDTO.ListDTO listDTO = new SysCalendarDTO.ListDTO();
+        listDTO.setIsWorkDay(Boolean.FALSE);
+        List<SysCalendarListVO> holidayList = sysUserFeign.listCalendar(listDTO);
+        List<LocalDate> holidays = holidayList.stream().map(SysCalendarListVO::getCalendarDate).collect(Collectors.toList());
+        // 计算计划工时
+        // 赋值
+        detailsDTO.setPlanWorkTime(initWorkTime(detailsDTO.getPlanStartTime(), detailsDTO.getPlanEndTime(), holidays));
+        detailsDTO.setRealWorkTime(initWorkTime(detailsDTO.getRealityStartTime(),detailsDTO.getRealityEndTime(), holidays));
         return detailsDTO;
+    }
+
+    /**
+     * 计算工期
+     * @param planStartTime
+     * @param planEndTime
+     * @param holidays
+     * @return
+     */
+    private Integer initWorkTime(Date planStartTime, Date planEndTime, List<LocalDate> holidays) {
+        Integer planWorkTime = 0;
+        if (null != planStartTime && null != planEndTime) {
+            planWorkTime = LocalDateUtil.countDaysForLocalDate(LocalDateUtil.date2LocalDate(planStartTime), LocalDateUtil.date2LocalDate(planEndTime), holidays);
+        }
+        return planWorkTime;
     }
 
 
@@ -1559,7 +1588,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
         }
-        resultVO.setPreTaskList(preTaskService.getPreTaskIdList(taskId));
+        List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
+        List<String> pretaskIdList = Collections.emptyList();
+        if(CollectionUtil.isNotEmpty(preTaskList)){
+            pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+        }
+        resultVO.setPreTaskIdList(pretaskIdList);
 
         return resultVO;
     }
@@ -3381,6 +3415,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        long blankChargeIdCount = list.stream().filter(t -> StringUtils.isBlank(t.getChargeId())).count();
+        if (blankChargeIdCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95097);
+        }
+
         //检查任务状态
         checkTaskState(list);
         //检查任务审核人不能为空
@@ -3574,12 +3613,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> status = new ArrayList<>(2);
         status.add(auditPass);
         status.add(auditNoPass);
-        List<String> scheduleStatusList = list.stream().filter(s -> change.equals(s.getScheduleType())).
+        List<String> scheduleStatusList = list.stream().filter(s -> change.equals(s.getScheduleType()) && !status.contains(s.getScheduleStatus())).
                 map(ProjectTaskEntity::getScheduleStatus).
                 collect(Collectors.toList());
         //当不包含就要去除
-        if (!status.contains(scheduleStatusList)) {
-            throw new ServiceException(ApiError.ERROR_95144);
+        if (CollectionUtils.isNotEmpty(scheduleStatusList)) {
+            throw new ServiceException(ApiError.ERROR_95147);
         }
     }
 
@@ -4754,5 +4793,4 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //保存交付文档的审核人
         taskChargeDistributionService.removeAndSave(taskEntity.getId(), taskChargeDistributionList, MathUtil.THREE);
     }
-
 }

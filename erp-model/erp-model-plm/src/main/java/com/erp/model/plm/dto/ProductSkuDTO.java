@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,19 +23,24 @@ public class ProductSkuDTO extends PermissionsDTO {
     private String no;
 
     /**
+     * 0所有产品，1待审核产品，2已审核产品
+     */
+    private String type;
+
+    /**
      * 产品SPU表id
      */
     private String productId;
 
     /**
-     * 审核状态 0：待审核 1：审核中 2：审核通过 3：审核不通过
-     */
-    private Integer status;
-
-    /**
      * 是否变更（0否，1是）
      */
     private Integer isChange;
+
+    /**
+     * 用于列表界面的（所有产品，带我审核产品，已审核产品） 0待审核，1审核中，2审核通过，3审核不通过，4待提交
+     */
+    private List<Integer> statusList;
 
     /**
      * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
@@ -97,11 +103,13 @@ public class ProductSkuDTO extends PermissionsDTO {
     /**
      * 开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date startTime;
 
     /**
      * 结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date endTime;
 
 
@@ -130,6 +138,12 @@ public class ProductSkuDTO extends PermissionsDTO {
      * ean 码
      */
     private String ean;
+
+
+    /**
+     * 销售状态
+     */
+    private List<Integer> saleStateList;
 
 
 }

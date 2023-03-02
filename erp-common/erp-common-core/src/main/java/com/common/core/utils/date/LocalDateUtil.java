@@ -5,10 +5,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -304,16 +301,24 @@ public class LocalDateUtil {
     }
 
     public static Integer countDaysForLocalDate(LocalDate startDate, LocalDate endDate, List<LocalDate> dateList){
-        if (CollectionUtil.isEmpty(dateList)) {
+        endDate = endDate.plusDays(1);
+        if (null == dateList) {
             return 0;
         }
+        long diffDaysLong = endDate.toEpochDay() - startDate.toEpochDay();
+        Integer diffDays = Integer.valueOf(String.valueOf(diffDaysLong));
+        if(CollectionUtil.isEmpty(dateList)){
+            return diffDays;
+        }
         AtomicReference<Integer> count = new AtomicReference<>(0);
+        LocalDate finalEndDate = endDate.minusDays(1);
         dateList.stream().forEach(date -> {
-            if(date.compareTo(startDate) >= 0 && date.compareTo(endDate) <= 0){
+            if(date.compareTo(startDate) >= 0 && date.compareTo(finalEndDate) <= 0){
                 count.getAndSet(count.get() + 1);
             }
+
         });
-        return count.get();
+        return diffDays - count.get();
     }
 
     public static Map<String, LocalDate> relationshipLocalDate(String code,LocalDate startDate, LocalDate endDate, Integer intervalWorkPeriod, Integer planWorkPeriod, List<LocalDate> dateList){
@@ -321,37 +326,41 @@ public class LocalDateUtil {
         LocalDate planStartDate = null;
         switch (code){
             case "fs":
-                planStartDate = endDate.plusDays(intervalWorkPeriod);
-                while (planWorkPeriod > 0){
-                    if(!dateList.contains(planStartDate.plusDays(1))){
-                        planEndDate = planStartDate.plusDays(1);
+                planStartDate = endDate.plusDays(intervalWorkPeriod + 1);
+                planEndDate = planStartDate;
+                while (planWorkPeriod > 1){
+                    planEndDate = planEndDate.plusDays(1);
+                    if(!dateList.contains(planEndDate)){
                         planWorkPeriod --;
                     }
                 }
                 break;
             case "ss":
-                planStartDate = startDate.plusDays(intervalWorkPeriod);
-                while (planWorkPeriod > 0){
-                    if(!dateList.contains(planStartDate.plusDays(1))){
-                        planEndDate = planStartDate.plusDays(1);
+                planStartDate = startDate.plusDays(intervalWorkPeriod + 1);
+                planEndDate = planStartDate;
+                while (planWorkPeriod > 1){
+                    planEndDate = planEndDate.plusDays(1);
+                    if(!dateList.contains(planEndDate)){
                         planWorkPeriod --;
                     }
                 }
                 break;
             case "sf":
-                planEndDate = startDate.plusDays(intervalWorkPeriod);
-                while (planWorkPeriod > 0){
-                    if(!dateList.contains(planEndDate.minusDays(1))){
-                        planStartDate = planEndDate.minusDays(1);
+                planEndDate = startDate.plusDays(intervalWorkPeriod + 1);
+                planStartDate = planEndDate;
+                while (planWorkPeriod > 1){
+                    planStartDate = planStartDate.minusDays(1);
+                    if(!dateList.contains(planStartDate)){
                         planWorkPeriod --;
                     }
                 }
                 break;
             default:
-                planEndDate = endDate.plusDays(intervalWorkPeriod);
-                while (planWorkPeriod > 0){
-                    if(!dateList.contains(planEndDate.minusDays(1))){
-                        planStartDate = planEndDate.minusDays(1);
+                planEndDate = endDate.plusDays(intervalWorkPeriod + 1);
+                planStartDate = planEndDate;
+                while (planWorkPeriod > 1){
+                    planStartDate = planStartDate.minusDays(1);
+                    if(!dateList.contains(planStartDate)){
                         planWorkPeriod --;
                     }
                 }
@@ -361,6 +370,16 @@ public class LocalDateUtil {
         hashMap.put("startDate", planStartDate);
         hashMap.put("endDate", planEndDate);
         return hashMap;
+    }
+
+    public static void main(String[] args) {
+        List<LocalDate> holidays = new ArrayList<>();
+        holidays.add(LocalDate.now().minusDays(1));
+        holidays.add(LocalDate.now().minusDays(2));
+        holidays.add(LocalDate.now().minusDays(4));
+        Integer integer = countDaysForLocalDate(LocalDate.now().minusDays(4), LocalDate.now(), holidays);
+
+        System.out.println("integer = " + integer);
     }
 }
 

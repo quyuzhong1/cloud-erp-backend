@@ -85,6 +85,12 @@ public class BomInfoController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:bom:view",
+            serviceClass = BomInfoService.class,
+            keyIdName="id"
+    )
     public ApiResult<BomDTO> details(@RequestBody @Validated BaseIdDTO dto) {
         BomDTO bom = bomInfoService.getBomDetails(dto.getId());
         return success(bom);

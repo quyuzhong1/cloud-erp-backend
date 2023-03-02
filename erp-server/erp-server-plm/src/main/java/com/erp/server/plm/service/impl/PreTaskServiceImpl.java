@@ -14,6 +14,7 @@ import com.erp.model.plm.dto.ProjectChildTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.enums.TaskRelationshipEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.PreTaskVO;
@@ -105,7 +106,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         entity.setTaskId(dto.getTaskId());
         entity.setPreTaskId(dto.getPreTaskId());
         entity.setIntervalWorkPeriod(dto.getIntervalWorkPeriod());
-        entity.setRelationship(dto.getRelationshipCode());
+        entity.setRelationship(TaskRelationshipEnum.getByCode(dto.getRelationshipCode()));
         return this.save(entity);
     }
 
@@ -346,7 +347,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         List<String> preTaskIds = entityList.stream().map(PreTaskEntity::getPreTaskId).distinct().collect(Collectors.toList());
         List<ProjectTaskEntity> taskEntityList = projectTaskService.listByTaskIds(preTaskIds);
         Map<String, ProjectTaskEntity> preTaskIdMap = taskEntityList.stream().collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
-        return entityList.stream().map(x -> new PreTaskListVO(x, preTaskIdMap.get(x.getId()))).collect(Collectors.toList());
+        return entityList.stream().map(x -> new PreTaskListVO(x, preTaskIdMap.get(x.getPreTaskId()))).collect(Collectors.toList());
     }
 
     @Override

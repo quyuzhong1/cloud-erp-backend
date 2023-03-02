@@ -14,7 +14,6 @@ import com.erp.server.plm.service.ProductPlanRemarkService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -40,8 +39,6 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
         LambdaUpdateWrapper<ProductPlanRemarkEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanRemarkEntity::getProductPlanId,productPlanId);
         updateWrapper.set(ProductPlanRemarkEntity::getIsDeleted, Boolean.TRUE);
-        updateWrapper.set(ProductPlanRemarkEntity::getDeletedTime, LocalDateTime.now());
-        updateWrapper.set(ProductPlanRemarkEntity::getDeletedUserId,userInfo.getUid());
         return this.remove(updateWrapper);
     }
 

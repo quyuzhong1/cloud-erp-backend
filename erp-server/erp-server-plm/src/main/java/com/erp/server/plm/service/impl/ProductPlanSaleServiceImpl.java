@@ -4,18 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.entity.ProductPlanSaleEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProductPlanSaleMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductPlanSaleService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -40,8 +38,6 @@ public class ProductPlanSaleServiceImpl extends ServiceImpl<ProductPlanSaleMappe
         LambdaUpdateWrapper<ProductPlanSaleEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanSaleEntity::getProductPlanId,productPlanId);
         updateWrapper.set(ProductPlanSaleEntity::getIsDeleted, Boolean.TRUE);
-        updateWrapper.set(ProductPlanSaleEntity::getDeletedTime, LocalDateTime.now());
-        updateWrapper.set(ProductPlanSaleEntity::getDeletedUserId,userInfo.getUid());
         return this.remove(updateWrapper);
     }
 

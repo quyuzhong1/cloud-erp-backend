@@ -178,13 +178,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
         //待审核查询分配给自己的数据
-        if (IsConstant.NO.equals(pagingDTO.getParams().getStatus())) {
+        if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
             LoginUser loginUser = CommonInterceptor.threadLocal.get();
             List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
-            if (CollectionUtils.isNotEmpty(workflowList)) {
-                List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
-                pagingDTO.getParams().setProcessIds(processIds);
+            //无待办则直接返回
+            if (CollectionUtils.isEmpty(workflowList)) {
+                IPage<ProductDetailShowDTO> list = new Page<>();
+                return new PagingVO(list);
             }
+            List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+            pagingDTO.getParams().setProcessIds(processIds);
+            //待审核，审核中
+            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(),ProductDetailStatusEnum.APPROVAL_ING.getCode()));
+        }
+        if (MathUtil.TWO.toString().equals(pagingDTO.getParams().getType())) {
+            //已审核
+            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
         }
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
@@ -213,6 +222,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             item.setProductStateName(ProductDetailStateEnum.getNameByCode(productState));
             //是否可销售
             Integer isMarketable = item.getIsMarketable();
+            Integer saleState = item.getSaleState();
+            String saleStateName = SaleStateEnum.getNameByCode(saleState);
+            item.setSaleStateName(saleStateName);
             Integer yes = 0;
             if (yes.equals(isMarketable)) {
                 item.setIsMarketableName("是");
@@ -292,7 +304,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductAccessoriesDTO accessories : productAccessoriesList) {
             ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
                     findFirst().orElse(null);
-            if(detailEntity!=null){
+            if (detailEntity != null) {
                 accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
                 accessories.setAccessoriesSkuName(detailEntity.getName());
                 accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
@@ -307,7 +319,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
 
-            String skuImagesUrl=detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+            String skuImagesUrl = detailEntityList.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
@@ -445,7 +457,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductAccessoriesDTO accessories : productAccessoriesList) {
             ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
                     findFirst().orElse(null);
-            if(detailEntity!=null){
+            if (detailEntity != null) {
                 accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
                 accessories.setAccessoriesSkuName(detailEntity.getName());
                 accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());
@@ -462,7 +474,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             attestation.setSkuNo(skuNo);
 
-            String skuImagesUrl=list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
+            String skuImagesUrl = list.stream().filter(d -> d.getId().equals(attestation.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getImagesUrl())).orElse("");
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
@@ -711,7 +723,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductAccessoriesDTO> productAccessoriesList = productNoSpecDTO.getProductAccessoriesList();
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
 
-            for(ProductAccessoriesDTO accessories:productAccessoriesList){
+            for (ProductAccessoriesDTO accessories : productAccessoriesList) {
                 accessories.setParentSkuId(skuId);
                 accessories.setProductId(id);
             }
@@ -725,7 +737,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //10.修改/新增  认证信息
         List<ProductAttestationDTO> productAttestationList = productNoSpecDTO.getProductAttestationList();
         if (CollectionUtils.isNotEmpty(productAttestationList)) {
-            for(ProductAttestationDTO attestation:productAttestationList){
+            for (ProductAttestationDTO attestation : productAttestationList) {
                 attestation.setSkuId(skuId);
             }
 
@@ -1528,28 +1540,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean approvalPass(ProductDetailOperateDTO dto) {
         ProductDetailEntity entity = this.getById(dto.getId());
         //验证是否设置审核人
-        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+       /* ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
         if (ObjectUtils.isEmpty(approverEntity)) {
             throw new ServiceException(ApiError.ERROR_95082);
-        }
+        }*/
         //只有待审核和审核中数据可以审核
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
-        }
-        //SKU字段关联任务尚未完成，不可审核
-        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
-        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(taskIds)) {
-                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-                    if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
-                    }
-                }
-
-            }
         }
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
@@ -1595,23 +1592,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-
-        //SKU字段关联任务尚未完成
-        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
-        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(taskIds)) {
-                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-                    if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
-                    }
-                }
-
-            }
-        }
-
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -1622,13 +1602,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!processInstanceIds.contains(entity.getProcessId())) {
             throw new ServiceException(ApiError.ERROR_95049);
         }
-
-        //退回至初始点
-        ApproveProcessDTO approveProcessDTO = new ApproveProcessDTO();
-        approveProcessDTO.setProcessInstanceId(entity.getProcessId());
-        approveProcessDTO.setUserId(userId);
-        approveProcessDTO.setFieldName("firstApproveId");
-        workflowFeign.withDraw(approveProcessDTO);
+        String taskId = myToDoList.stream().filter(obj -> entity.getProcessId().equals(obj.getProcessInstanceId())).map(TaskShowDTO::getTaskId).findFirst().orElse("");
+        //审核不通过
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(taskId);
+        approveProcess.setProcessInstanceId(entity.getProcessId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(dto.getComment());
+        workflowFeign.taskNoPass(approveProcess)
 
         Integer code = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
         //更新产品信息状态
@@ -2010,6 +1991,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(str)) {
             throw new ServiceException(new ApiResult(1, str));
         }
+        //SKU字段关联任务尚未完成，不可审核
+        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
+        //验证是否完成任务
+        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
+            //sku未完成
+            long skuNotFinish = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
+            if (skuNotFinish > 0) {
+                throw new ServiceException(ApiError.ERROR_95083);
+            }
+            //sku完成任务未完成
+            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(taskIds)) {
+                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
+                if (CollectionUtils.isNotEmpty(taskList)) {
+                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                    if (count > 0) {
+                        throw new ServiceException(ApiError.ERROR_95083);
+                    }
+                }
+            }
+        }
+
         //启动流程
         productDetailStartProcess(productDetailEntity);
 
@@ -2207,7 +2210,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (ProductAccessoriesDTO accessories : accessoriesList) {
             ProductDetailEntity detailEntity = detailList.stream().filter(d -> d.getId().equals(accessories.getAccessoriesSkuId())).
                     findFirst().orElse(null);
-            if(detailEntity!=null){
+            if (detailEntity != null) {
                 accessories.setAccessoriesSkuImagesUrl(detailEntity.getImagesUrl());
                 accessories.setAccessoriesSkuName(detailEntity.getName());
                 accessories.setAccessoriesSkuNo(detailEntity.getSkuNo());

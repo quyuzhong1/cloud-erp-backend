@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -23,6 +24,7 @@ import com.erp.model.plm.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.enums.DistributionTypeEnum;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.model.plm.enums.TaskTypeEnum;
+import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.TemplateTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -180,6 +182,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         checkTaskIfExistPid(id, templateId);
         //删除任务交付文档数据
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
+        //删除任务审核人
+        taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO,id);
         //删除模板任务
         return this.remove(queryWrapper);
     }
@@ -263,7 +267,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 resultVO.setBusinessName(processEntity.getBusinessName());
             }
         }
-        resultVO.setPreTaskList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId()));
+        List<PreTaskVO> preTaskList = templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId());
+        List<String> pretaskIdList = Collections.emptyList();
+        if(CollectionUtil.isNotEmpty(preTaskList)){
+            pretaskIdList = preTaskList.stream().map(PreTaskVO::getTaskId).collect(Collectors.toList());
+        }
+        resultVO.setPreTaskIdList(pretaskIdList);
         TemplateTaskRefSkuConfigEntity skuConfigEntity = templateTaskRefSkuConfigService.getByTaskId(taskEntity.getId());
         if (skuConfigEntity != null) {
             resultVO.setFieldJson(skuConfigEntity.getFieldJson());

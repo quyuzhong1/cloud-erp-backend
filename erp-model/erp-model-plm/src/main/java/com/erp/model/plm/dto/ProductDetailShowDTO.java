@@ -233,6 +233,19 @@ public class ProductDetailShowDTO implements Serializable {
     private String salesChannel;
 
 
+    /**
+     * 销售状态
+     * product_sale
+     */
+    private Integer saleState;
+
+    /**
+     * 销售状态名
+     * product_sale
+     */
+    private String saleStateName;
+
+
 
 
 

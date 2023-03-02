@@ -30,9 +30,8 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
 
     List<ProjectTaskSysEntity> getListByProperty(Integer state,String templateId);
 
-    List<String> getSysTaskNames();
 
-    List<Map<String, Object>> taskList();
+    List<Map<String, Object>> taskList(String templateId);
 
     SysTaskVO taskDetails(String taskId);
 
