@@ -379,7 +379,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 filter(c -> item.getId().equals(c.getPid())).
                 map(b -> {
                     List<String> categoryIdList = getChildCategory(categoryTreeList, b.getId());
-                    Long productQuantity = productList.stream().filter(p -> categoryIdList.contains(b.getId())).count();
+                    Long productQuantity = productList.stream().filter(p -> categoryIdList.contains(p.getCategoryId())).count();
                     b.setProductQuantity(productQuantity);
                     b.setChildrenList(getChildrenList(b, allList, productList, categoryTreeList));
                     return b;
