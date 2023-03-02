@@ -886,7 +886,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         String categoryId = productPlanEntity.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
-        dto.setChargeIdList(categoryIdList);
+        dto.setCategoryIdList(categoryIdList);
         return dto;
     }
 
