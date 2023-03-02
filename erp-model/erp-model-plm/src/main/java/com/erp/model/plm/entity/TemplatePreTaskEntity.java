@@ -1,8 +1,10 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -13,6 +15,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="template_pre_task")
+@NoArgsConstructor
 public class TemplatePreTaskEntity implements Serializable {
     /**
      * 
@@ -62,5 +65,11 @@ public class TemplatePreTaskEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+
+    public TemplatePreTaskEntity(PreTaskUpdateDTO entity){
+        this.id = entity.getId();
+        this.relationship = TaskRelationshipEnum.getByCode(entity.getRelationshipCode());
+        this.intervalWorkPeriod = entity.getIntervalWorkPeriod();
+    }
 
 }

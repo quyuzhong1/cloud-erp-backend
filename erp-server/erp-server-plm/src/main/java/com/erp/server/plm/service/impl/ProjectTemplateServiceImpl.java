@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,23 +15,23 @@ import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.ProjectTemplateEntity;
-import com.erp.model.plm.entity.TemplateRoleEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.ProjectTemplateShowTypeEnum;
 import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
+import com.erp.model.plm.vo.PreTaskListVO;
+import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
-import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.ProjectTemplateService;
-import com.erp.server.plm.service.TemplateRoleService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +57,14 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
     @Resource
     private BasicDictService basicDictService;
+    @Resource
+    private TemplateTaskService templateTaskService;
+    @Resource
+    private ProjectTaskSysService projectTaskSysService;
+    @Resource
+    private TemplatePreTaskService templatePreTaskService;
+    @Resource
+    private PreTaskService preTaskService;
 
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -281,6 +290,67 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         queryWrapper.eq(ProjectTemplateEntity::getStatus, IsConstant.YES);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<PreTaskListVO> ListPreTaskByTaskId(TemplatePreTaskDTO dto) {
+        // 根据id查模板类型
+        ProjectTemplateEntity templateEntity = lambdaQuery()
+                .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
+                .one();
+        if(null == templateEntity){
+            throw new ServiceException(ApiError.ERROR_95051);
+        }
+        List<PreTaskListVO>  preTaskList;
+        // 根据模板类型查询模板及前置任务
+        if(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode().equals(templateEntity.getType()) && 0 == templateEntity.getIsDefault()){
+            // 模板表
+
+            preTaskList = templatePreTaskService.getTemplatePreAndNameById(dto.getTaskId());
+        }else {
+            // 系统表
+            preTaskList = preTaskService.ListPreTaskByTaskId(dto.getTaskId());
+        }
+        if(CollectionUtil.isEmpty(preTaskList)){
+            return preTaskList;
+        }
+        preTaskList.stream().forEach(x -> {
+            if(null != x.getRelationship()){
+                x.setRelationshipName(x.getRelationship().getName());
+                x.setRelationshipCode(x.getRelationship().getCode());
+            }
+        });
+        //返回数据格式化
+        return preTaskList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updatePreTask(PreTemplateTaskUpdateDTO dto) {
+
+        // 根据任务id查询模板类型
+        ProjectTemplateEntity templateEntity = lambdaQuery()
+                .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
+                .one();
+        if(null == templateEntity){
+            throw new ServiceException(ApiError.ERROR_95051);
+        }
+        // 根据模板类型查询模板及前置任务
+        boolean result = Boolean.FALSE;
+        List<PreTaskUpdateDTO> list = dto.getList();
+        if(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode().equals(templateEntity.getType()) && 0 == templateEntity.getIsDefault()){
+            // 更新前置任务
+            List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
+            result = templatePreTaskService.updateBatchById(updateList);
+        }else {
+            // 更新前置任务
+            List<PreTaskEntity> updateList = list.stream().map(PreTaskEntity::new).collect(Collectors.toList());
+            result = preTaskService.updateBatchById(updateList);
+        }
+        if (!result){
+            throw new ServiceException(ApiError.ERROR_95151);
+        }
+        return Boolean.TRUE;
     }
 
 

@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
+import com.erp.model.plm.vo.PreTaskListVO;
 
 import java.util.List;
 import java.util.Map;
@@ -82,4 +83,19 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return
      */
     ProjectTemplateEntity getDefaultTemplate();
+
+    /**
+     * 根据任务id查询模板前置任务
+     *
+     * @param dto
+     * @return
+     */
+    List<PreTaskListVO> ListPreTaskByTaskId(TemplatePreTaskDTO dto);
+
+    /**
+     * 根据任务id更新关系
+     * @param dto
+     * @return
+     */
+    Boolean updatePreTask(PreTemplateTaskUpdateDTO dto);
 }

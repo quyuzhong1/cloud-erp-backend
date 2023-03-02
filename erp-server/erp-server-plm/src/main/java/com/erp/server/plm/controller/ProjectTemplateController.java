@@ -6,18 +6,17 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.ProjectTemplateDTO;
-import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
-import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
-import com.erp.model.plm.dto.SysRoleDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.vo.DropdownEnumVO;
+import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.server.plm.service.ProjectTemplateService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +117,27 @@ public class ProjectTemplateController extends BaseController {
     public ApiResult getProductPropertyList() {
         List<Map<String, Object>> list = projectTemplateService.getProductPropertyList();
         return success(list);
+    }
+
+    /**
+     * 更新前置任务列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update/pre/task")
+    public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") PreTemplateTaskUpdateDTO dto) {
+        Boolean flag = projectTemplateService.updatePreTask(dto);
+        return flag == true ? success() : failure();
+    }
+    /**
+     * 查询前置任务列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list/pre/task")
+    public ApiResult<List<PreTaskListVO>> listPreTask(@RequestBody @Validated TemplatePreTaskDTO dto) {
+        List<PreTaskListVO> reusltList = projectTemplateService.ListPreTaskByTaskId(dto);
+        return success(reusltList);
     }
 
 }

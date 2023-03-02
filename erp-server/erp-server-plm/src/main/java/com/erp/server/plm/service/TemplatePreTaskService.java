@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.entity.TemplatePreTaskEntity;
+import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.PreTaskVO;
 
 import java.util.List;
@@ -38,4 +39,12 @@ public interface TemplatePreTaskService extends IService<TemplatePreTaskEntity> 
      * @return List<String>
      */
     List<PreTaskVO> getTemplatePreTaskIdList(String taskId, String templateId);
+
+    /**
+     * 根据taskid 查询前置任务以及任务名
+     *
+     * @param taskId
+     * @return
+     */
+    List<PreTaskListVO> getTemplatePreAndNameById(String taskId);
 }

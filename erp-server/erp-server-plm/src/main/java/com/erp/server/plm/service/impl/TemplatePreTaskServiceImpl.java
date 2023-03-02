@@ -9,6 +9,7 @@ import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.TemplatePreTaskEntity;
+import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.server.plm.mapper.TemplatePreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
@@ -124,6 +125,11 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
             return Collections.emptyList();
         }
         return entityList.stream().map(PreTaskVO::new).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PreTaskListVO> getTemplatePreAndNameById(String taskId) {
+        return baseMapper.getPreAndNameByTaskId(taskId);
     }
 
     public List<TemplatePreTaskEntity> getByTemplateId(String templateId) {

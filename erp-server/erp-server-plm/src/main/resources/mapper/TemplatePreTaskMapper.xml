@@ -5,4 +5,19 @@
 <mapper namespace="com.erp.server.plm.mapper.TemplatePreTaskMapper">
 
 
+    <select id="getPreAndNameByTaskId" resultType="com.erp.model.plm.vo.PreTaskListVO">
+        SELECT
+            tpt.id,
+            tt."name" AS preTaskName,
+            tt.template_id,
+            tpt.task_id,
+            tpt.pre_task_id,
+            tpt.interval_work_period,
+            tpt.relationship
+        FROM
+            template_pre_task tpt
+                LEFT JOIN template_task tt ON tpt.pre_task_id = tt."id"
+        WHERE
+            tpt.task_id = #{taskId}
+    </select>
 </mapper>

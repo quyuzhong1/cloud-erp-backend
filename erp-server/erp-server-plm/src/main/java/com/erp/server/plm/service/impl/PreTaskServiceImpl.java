@@ -339,7 +339,6 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     @Override
     public List<PreTaskListVO> ListPreTaskByTaskId(String taskId) {
         List<PreTaskEntity> entityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
-                .ne(PreTaskEntity::getProductId, "")
                 .list();
         if(CollectionUtil.isEmpty(entityList)){
             return Collections.emptyList();

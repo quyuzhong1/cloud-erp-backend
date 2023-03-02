@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
