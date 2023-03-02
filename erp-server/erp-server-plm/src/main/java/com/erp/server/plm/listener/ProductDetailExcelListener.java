@@ -229,7 +229,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
         //spu信息
-        productInfoDTO.setName(dto.getName().concat("_").concat(IdUtil.getSnowflake().nextIdStr()));
+        productInfoDTO.setName(IdUtil.getSnowflake().nextIdStr());
 
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
         if (!ObjectUtils.isEmpty(categoryByName)) {

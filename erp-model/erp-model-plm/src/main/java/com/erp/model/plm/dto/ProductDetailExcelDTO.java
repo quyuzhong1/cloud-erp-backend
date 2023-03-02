@@ -48,7 +48,7 @@ public class ProductDetailExcelDTO {
     private String materials;
 
     @ExcelProperty(value = "品名", index = 8)
-    @FieldValid(fieldName = "品名", isNotBlank = true,maxLength = 50)
+    @FieldValid(fieldName = "品名", isNotBlank = true,maxLength = 255)
     private String name;
 
     @ExcelProperty(value = "品牌", index = 9)
