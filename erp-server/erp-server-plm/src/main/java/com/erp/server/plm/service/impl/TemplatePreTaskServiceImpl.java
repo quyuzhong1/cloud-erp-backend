@@ -103,16 +103,18 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
                 .eq(TemplatePreTaskEntity::getTaskId, taskId)
                 .eq(TemplatePreTaskEntity::getTemplateId, templateId)
                 .list();
+        Map<String, TemplatePreTaskEntity> oldTaskPreMap = new HashMap<>();
         if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
             //先删除前置任务
             removeTemplatePreTask(taskId,templateId, preTaskIdList);
-            Map<String, TemplatePreTaskEntity> oldTaskPreMap = oldTaskEntityList.stream()
+            oldTaskPreMap = oldTaskEntityList.stream()
                     .collect(Collectors.toMap(task -> StrUtil.format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
-            List<TemplatePreTaskEntity> addList = preTaskIdList.stream()
-                    .map(preTask -> new TemplatePreTaskEntity(preTask, taskId, templateId,oldTaskPreMap.get(StrUtil.format("{}_{}", taskId, preTask))))
-                    .collect(Collectors.toList());
-            this.saveBatch(addList);
         }
+        Map<String, TemplatePreTaskEntity> finalOldTaskPreMap = oldTaskPreMap;
+        List<TemplatePreTaskEntity> addList = preTaskIdList.stream()
+                .map(preTask -> new TemplatePreTaskEntity(preTask, taskId, templateId, finalOldTaskPreMap.get(StrUtil.format("{}_{}", taskId, preTask))))
+                .collect(Collectors.toList());
+        this.saveBatch(addList);
     }
 
     @Override
