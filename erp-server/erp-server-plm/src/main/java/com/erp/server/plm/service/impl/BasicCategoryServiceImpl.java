@@ -93,17 +93,22 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-13 14:15
      */
     @Override
-    public List<BasicCategoryDTO> getTree(String type) {
+    public List<BasicCategoryDTO> getTree() {
         List<BasicCategoryEntity> list = this.list();
-        //产品开发
-        String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
-        //产品开发
-        if (StringUtils.isBlank(type) || productDevelop.equals(productDevelop)) {
-            return getCategoryTreeList(list, IsConstant.YES);
-        } else {
-            return getCategoryTreeList(list, IsConstant.NO);
-        }
+        List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
         //根据分类id 获取产品信息
+        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds,IsConstant.YES);
+        List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
+        List<BasicCategoryDTO> treeList = allList.stream().
+                filter(item -> "0".equals(item.getPid())).
+                map(c -> {
+                    Long productQuantity = productList.stream().filter(p -> p.getCategoryId().equals(c.getId())).count();
+                    c.setProductQuantity(productQuantity);
+                    c.setChildrenList(getChildrenList(c, allList, productList));
+                    return c;
+                }).collect(Collectors.toList());
+
+        return treeList;
 
     }
 
@@ -216,6 +221,28 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         List<BasicCategoryEntity> list = new ArrayList<>();
         setParentEntity(categoryId, list);
         return list;
+    }
+
+    
+    
+    /**
+     * 获取列表的 分类树结构 根据产品类型
+     * @author yl
+     * @date 2023-03-02 11:09
+     * @param type
+     * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
+     */
+    @Override
+    public List<BasicCategoryDTO> getListTree(String type) {
+        List<BasicCategoryEntity> list = this.list();
+        //产品开发
+        String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
+        //产品开发
+        if (StringUtils.isBlank(type) || productDevelop.equals(productDevelop)) {
+            return getCategoryTreeList(list, IsConstant.YES);
+        } else {
+            return getCategoryTreeList(list, IsConstant.NO);
+        }
     }
 
     /**

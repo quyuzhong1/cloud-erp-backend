@@ -58,8 +58,20 @@ public class BasicCategoryController extends BaseController {
      * @return com.common.core.vo.ApiResult
      **/
     @GetMapping("/tree")
-    public ApiResult<List<BasicCategoryDTO>> tree(String type) {
-        List<BasicCategoryDTO> treeList = categoryService.getTree(type);
+    public ApiResult<List<BasicCategoryDTO>> tree() {
+        List<BasicCategoryDTO> treeList = categoryService.getTree();
+        return success(treeList);
+    }
+
+
+    /**
+     * 产品分类-获取分页列表的 分类树结构
+     * @Date 2022/10/17 15:32
+     * @return com.common.core.vo.ApiResult
+     **/
+    @GetMapping("/listTree")
+    public ApiResult<List<BasicCategoryDTO>> listTree(String type) {
+        List<BasicCategoryDTO> treeList = categoryService.getListTree(type);
         return success(treeList);
     }
 

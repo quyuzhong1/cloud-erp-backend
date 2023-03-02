@@ -944,6 +944,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (CollectionUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_1017);
         }
+        List<String> taskIds=list.stream().map(ProjectPlanTaskDTO.AutoDateDTO::getId).collect(Collectors.toList());
+        List<String> deTaskIds=taskIds.stream().distinct().collect(Collectors.toList());
+        if(taskIds.size()!=deTaskIds.size()){
+            throw new ServiceException(ApiError.ERROR_95150);
+        }
+
         // 校验第一条是否有开始时间
         List<ProjectPlanTaskDTO.AutoDateDTO> autoPlanTaskOrderList = list.stream()
                 .sorted(Comparator.comparing(ProjectPlanTaskDTO.AutoDateDTO::getId))
