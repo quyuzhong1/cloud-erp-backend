@@ -63,7 +63,6 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      * 乐观锁版本号
      */
     @Version
-    @TableField(fill = FieldFill.INSERT)
     private Integer version;
 
     /**
