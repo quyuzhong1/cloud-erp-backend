@@ -613,7 +613,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(ids)) {
                     //查询对应负责人的上级
                     List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
-                    if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                    if (CollectionUtils.isEmpty(userSuperiorDTOS)) {
                         continue;
                     }
                     List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
