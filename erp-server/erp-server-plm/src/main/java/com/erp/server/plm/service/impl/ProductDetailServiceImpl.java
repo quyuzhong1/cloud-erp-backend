@@ -1609,7 +1609,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveProcess.setProcessInstanceId(entity.getProcessId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(dto.getComment());
-        workflowFeign.taskNoPass(approveProcess)
+        workflowFeign.taskNoPass(approveProcess);
 
         Integer code = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
         //更新产品信息状态
