@@ -1,38 +1,37 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.EmailTemplate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.constant.UserStateConstants;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
-import com.erp.model.sys.utils.RedisKeyUtil;
-import com.common.core.utils.ValidatorUtil;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.sys.entity.password.PassEntity;
-import com.erp.model.sys.entity.password.PassHandler;
-import com.common.message.service.MailService;
-import com.common.business.service.RedisService;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.message.dto.email.EmailDTO;
-import com.common.message.dto.email.EmailVerifyCodeDTO;
-import com.common.business.constant.EmailTemplate;
-import com.erp.model.sys.vo.SysMenuVO;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.message.dto.email.EmailDTO;
+import com.common.message.dto.email.EmailVerifyCodeDTO;
+import com.common.message.service.MailService;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.password.PassEntity;
+import com.erp.model.sys.entity.password.PassHandler;
+import com.erp.model.sys.utils.RedisKeyUtil;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
@@ -95,11 +94,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
-        //当是新增加的时候才保校验用户是否存在
-        boolean ifExist = checkMobile(mobile);
-        if (ifExist) {
-            throw new ServiceException(ApiError.ERROR_9010);
-        }
+        //验证用户信息
+        checkUserInfo(sysUserInfoDTO);
         Integer createPasswordType = sysUserInfoDTO.getCreatePasswordType();
         String password = DEFAULT_PASS;
         //表示自己输入
@@ -141,6 +137,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
+        //验证用户信息
+        checkUserInfo(sysUserInfoDTO);
         entity.setRealName(sysUserInfoDTO.getRealName());
         entity.setMobile(sysUserInfoDTO.getMobile());
         entity.setUserName(sysUserInfoDTO.getUserName());
@@ -677,16 +675,34 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
 
-    /**
-     * 检查手机号是否存在
-     *
-     * @param mobile
-     */
-    private boolean checkMobile(String mobile) {
-        QueryWrapper<SysUserInfoEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.lambda().eq(SysUserInfoEntity::getUserAccount, mobile);
-        int count = this.count(queryWrapper);
-        return count > 0 ? true : false;
+   /**
+    * @description: 用户验证信息
+    * @author Will
+    * @date: 2023/3/2 10:37
+    * @param sysUserInfoDTO
+    * @return boolean
+    */
+    private void checkUserInfo(SysUserInfoDTO sysUserInfoDTO) {
+        //验证手机号是否已存在
+        LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
+        mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
+        if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
+            mobileQueryWrapper.ne(SysUserInfoEntity::getUid,sysUserInfoDTO.getUid());
+        }
+        int mobileCount = this.count(mobileQueryWrapper);
+        if (mobileCount > 0) {
+            throw new ServiceException(ApiError.ERROR_9010);
+        }
+        //验证用户名是否已存在
+        LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
+        userNameQueryWrapper.eq(SysUserInfoEntity::getUserName,sysUserInfoDTO.getUserName());
+        if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
+            userNameQueryWrapper.ne(SysUserInfoEntity::getUid,sysUserInfoDTO.getUid());
+        }
+        int userNameCount = this.count(userNameQueryWrapper);
+        if (userNameCount > 0) {
+            throw new ServiceException(ApiError.ERROR_9038);
+        }
     }
 
     /**
