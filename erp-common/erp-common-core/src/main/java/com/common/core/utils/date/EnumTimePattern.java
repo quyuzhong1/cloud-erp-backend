@@ -44,6 +44,11 @@ public enum EnumTimePattern {
 	y_m_d("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "yyyy-MM-dd", null, null),
 
 	/**
+	 * 日期格式：2019/04
+	 */
+	ymdSlash("^\\d{4}/\\d{1,2}/\\d{1,2}$", "yyyy/M/dd", null, null),
+
+	/**
 	 * 日期格式：2019-04-01 17:30
 	 */
 	y_m_dhm("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$", "yyyy-MM-dd HH:mm", null, null),

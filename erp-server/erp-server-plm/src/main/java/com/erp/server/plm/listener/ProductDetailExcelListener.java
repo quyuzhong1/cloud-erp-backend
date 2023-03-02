@@ -1,14 +1,16 @@
 package com.erp.server.plm.listener;
 
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.enums.ApiError;
-import com.common.business.dto.FindUserDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -23,7 +25,6 @@ import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductUnitService;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.util.CollectionUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //添加数据用于判断是否为空
         dataList.add(dto);
         List<String> msgList = FieldValidUtil.fieldValid(dto);
-        if (CollectionUtils.isEmpty(msgList)) {
+        if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
         ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
@@ -228,7 +229,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
         //spu信息
-        productInfoDTO.setName(dto.getName());
+        productInfoDTO.setName(dto.getName().concat("_").concat(IdUtil.getSnowflake().nextIdStr()));
 
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
         if (!ObjectUtils.isEmpty(categoryByName)) {
@@ -255,13 +256,13 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setPropertyId(productProperty.getId());
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        productSkuBaseInfoDTO.setPlanListingTime(DateUtil.stringToDate(dto.getPlanListingTime()));
+        productSkuBaseInfoDTO.setPlanListingTime(DateUtil.stringToDate(dto.getPlanListingTimeStr()));
         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
-        productSkuBaseInfoDTO.setFirstMassProductDate(DateUtil.stringToDate(dto.getFirstMassProductDate()));
+        productSkuBaseInfoDTO.setFirstMassProductDate(DateUtil.stringToDate(dto.getFirstMassProductDateStr()));
 
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
@@ -277,34 +278,32 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //采购信息信息
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
         productPurchaseDTO.setEan(dto.getEan());
-        productPurchaseDTO.setPlanOrderQty(Long.valueOf(dto.getPlanOrderQty()));
-        productPurchaseDTO.setPlaceOrderTime(DateUtil.stringToDate(dto.getPlaceOrderTime()));
-        productPurchaseDTO.setPlanArrivalTime(DateUtil.stringToDate(dto.getPlanArrivalTime()));
-        productPurchaseDTO.setMoq(Integer.valueOf(dto.getMoq()));
-        productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycle()));
-        productPurchaseDTO.setActualArrivalTime(DateUtil.stringToDate(dto.getActualArrivalTime()));
+        productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQtyStr()));
+        productPurchaseDTO.setPlaceOrderTime(DateUtil.stringToDate(dto.getPlaceOrderTimeStr()));
+        productPurchaseDTO.setPlanArrivalTime(DateUtil.stringToDate(dto.getPlanArrivalTimeStr()));
+        productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoqStr()));
+        productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycleStr()));
+        productPurchaseDTO.setActualArrivalTime(DateUtil.stringToDate(dto.getActualArrivalTimeStr()));
         productPurchaseDTO.setArrivalState(purchaseState);
         if (purchaseUserList.size() > 0) {
             productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
         }
         productPurchaseDTO.setMainSupplier(dto.getMainSupplier());
         productPurchaseDTO.setSecondSupplier(dto.getSecondSupplier());
-        productPurchaseDTO.setActualArrivalQty(Long.valueOf(dto.getActualArrivalQty()));
+        productPurchaseDTO.setActualArrivalQty(MathUtil.valueOfLong(dto.getActualArrivalQtyStr()));
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
 
         //产品销售信息
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
-        productSaleDTO.setYearSaleQty(Long.valueOf(dto.getYearSaleQty()));
-        productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmount()));
-        productSaleDTO.setMonthSaleQty(Long.valueOf(dto.getMonthSaleQty()));
-        productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmount()));
+        productSaleDTO.setYearSaleQty(MathUtil.valueOfLong(dto.getYearSaleQtyStr()));
+        productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmountStr()));
+        productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQtyStr()));
+        productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmountStr()));
+        productSaleDTO.setDelistingTime(DateUtil.stringToDate(dto.getDelistingTimeStr()));
+        productSaleDTO.setListingTime(DateUtil.stringToDate(dto.getListingTimeStr()));
         if (StringUtils.isNotBlank(saleCountryStr)) {
             productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
         }
-/*        productSaleDTO.setListingTime(dto.getListingTime());
-        productSaleDTO.setDelistingTime(dto.getDelistingTime());   */
-        productSaleDTO.setListingTime(null);
-        productSaleDTO.setDelistingTime(null);
         productSaleDTO.setSaleState(saleState);
         if (StringUtils.isNotBlank(isFinishedImg)) {
             if (isFinishedImg.equals("是")) {
@@ -327,6 +326,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         BeanMapper.copy(dto, productLogisticsDTO);
         productLogisticsDTO.setProductProperty(declareProperty.getValue());
         productLogisticsDTO.setProductPropertyId(declareProperty.getId());
+        productLogisticsDTO.setDeclarePrice(MathUtil.valueOf(dto.getDeclarePriceStr()));
         productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
 
         //产品包装信息
@@ -334,12 +334,12 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         BeanMapper.copy(dto, productPackDTO);
         String productSize = "";
         String boxSize ="";
-        String productSizeLength = dto.getProductSizeLength();
-        String productSizeWide = dto.getProductSizeWide();
-        String productSizeHigh = dto.getProductSizeHigh();
-        String boxSizeLength = dto.getBoxSizeLength();
-        String boxSizeWide = dto.getBoxSizeWide();
-        String boxSizeHigh = dto.getBoxSizeHigh();
+        String productSizeLength = dto.getProductSizeLengthStr();
+        String productSizeWide = dto.getProductSizeWideStr();
+        String productSizeHigh = dto.getProductSizeHighStr();
+        String boxSizeLength = dto.getBoxSizeLengthStr();
+        String boxSizeWide = dto.getBoxSizeWideStr();
+        String boxSizeHigh = dto.getBoxSizeHighStr();
 
         if (StringUtils.isNotBlank(productSizeLength)) {
             productSize = productSizeLength;
@@ -361,7 +361,11 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         if (StringUtils.isNotBlank(boxSizeHigh)) {
             boxSize = boxSize.concat("X").concat(boxSizeHigh);
         }
+        productPackDTO.setGrossWeight(MathUtil.valueOf(dto.getGrossWeightStr()));
+        productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeightStr()));
         productPackDTO.setBoxSize(boxSize);
+        productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQtyStr()));
+        productPackDTO.setBoxWeight(MathUtil.valueOf(dto.getBoxWeightStr()));
         productNoSpecDTO.setProductPackDTO(productPackDTO);
 
         /*//产品证书信息

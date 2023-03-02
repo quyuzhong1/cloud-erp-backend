@@ -6,21 +6,20 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.ProjectTemplateShowTypeEnum;
 import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +71,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
         List<ProjectTemplateDTO> list = paging.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(obj -> obj.setTypeName(obj.getIsDefault() == 1 ? ProjectTemplateTypeEnum.getNameByCode(obj.getType()).concat("【默认】") : ProjectTemplateTypeEnum.getNameByCode(obj.getType())));
+            list.forEach(obj -> obj.setTypeName(obj.getIsDefault() == 1 ? ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getName() : ProjectTemplateTypeEnum.getNameByCode(obj.getType())));
         }
         return new PagingVO(paging);
     }

@@ -404,13 +404,13 @@
         <if test="params.no != '' and params.no != null">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
         </if>
-        <if test="params.stateList.size() > 0 and params.stateList != null">
+        <if test="params.stateList != null and params.stateList.size() > 0">
             AND pd.product_state in
             <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
-        <if test="params.skuIds.size() > 0 and params.skuIds != null">
+        <if test="params.skuIds != null and params.skuIds.size() > 0">
             AND pd.id in
             <foreach collection="params.skuIds" item="skuId" open="(" separator="," close=")">
                 #{skuId}

@@ -9,8 +9,8 @@ package com.erp.model.plm.enums;
 public enum ProjectTemplateShowTypeEnum {
 
     APPROVAL_TEMPLATE(1, "立项模板"),
-    PROJECT_DEFAULT_TEMPLATE(2, "项目默认模板"),
-    PROJECT_CUSTOM_TEMPLATE(3, "项目自定义模板");
+    PROJECT_DEFAULT_TEMPLATE(2, "项目模板【默认】"),
+    PROJECT_CUSTOM_TEMPLATE(3, "项目模板");
 
     private Integer code;
     private String name;
