@@ -289,7 +289,7 @@
                 </if>
             </if>
             <if test="type != null and type == 6">
-                and pp.product_status in ('3','4','5')
+
                 <if test="startTime != null and endTime != null">
                     and pst.status = '3'  and  pst.status_time &gt;= #{startTime}::timestamp and pst.status_time &lt;= #{endTime}::timestamp
                 </if>
