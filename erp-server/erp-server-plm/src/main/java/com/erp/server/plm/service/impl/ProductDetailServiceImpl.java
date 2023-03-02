@@ -1991,7 +1991,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(str)) {
             throw new ServiceException(new ApiResult(1, str));
         }
-        //SKU字段关联任务尚未完成，不可审核
+        //验证自动关联任务是否已全部完成
+        List<ProjectTaskEntity> taskAllList = projectTaskService.listByProductId(productDetailEntity.getProductId());
+        if (CollectionUtils.isNotEmpty(taskAllList)) {
+            long relatedCount = taskAllList.stream().filter(obj -> RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+            if (relatedCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95083);
+            }
+        }
+        //验证非自动关联任务是否已全部完成
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
         //验证是否完成任务
         if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
