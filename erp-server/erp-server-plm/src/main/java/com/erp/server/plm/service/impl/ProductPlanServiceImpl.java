@@ -884,6 +884,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             List<String> chargeIds = Arrays.stream(chargeId.split(",")).collect(Collectors.toList());
             dto.setChargeIdList(chargeIds);
         }
+        String categoryId = productPlanEntity.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
+        dto.setChargeIdList(categoryIdList);
         return dto;
     }
 
