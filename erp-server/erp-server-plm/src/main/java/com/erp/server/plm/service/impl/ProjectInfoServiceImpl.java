@@ -127,6 +127,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private ProductPlanService productPlanService;
 
+    @Autowired
+    private BasicCategoryService basicCategoryService;
+
     /**
      * 项目概述
      *
@@ -371,14 +374,19 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
+        //分类id
+        String categoryId = params.getCategoryId();
+
+        List<String> categoryIdList =basicCategoryService.getChildrenCategoryIds(categoryId);
+
         IPage pageData = new Page();
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds);
+                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds,categoryIdList);
             }
         } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds);
+            pageData = baseMapper.paging(query, params, archiveProductIds,categoryIdList);
         }
 
         Integer finish = TaskStateEnum.FINISH.getCode();

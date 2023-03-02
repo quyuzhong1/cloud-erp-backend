@@ -1,9 +1,10 @@
 package com.erp.server.plm.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.dto.BasicCategoryTreeDTO;
 import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 
 import java.util.List;
@@ -65,4 +66,9 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     List<BasicCategoryEntity> listParentEntity(String categoryId);
 
     List<BasicCategoryDTO> getListTree(String type);
+
+
+    List<BasicCategoryTreeDTO> getDbTree();
+
+    List<String> getChildrenCategoryIds(String categoryId);
 }

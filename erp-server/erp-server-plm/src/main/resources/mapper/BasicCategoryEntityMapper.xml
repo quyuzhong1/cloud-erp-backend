@@ -3,5 +3,14 @@
 <mapper namespace="com.erp.server.plm.mapper.BasicCategoryMapper">
 
 
-
+    <select id="getDbTree" resultType="com.erp.model.plm.dto.BasicCategoryTreeDTO">
+            WITH RECURSIVE T ( ID, NAME, pid, PATH ) AS (
+                SELECT ID,NAME,pid,ID::text AS PATH FROM basic_category
+                    WHERE pid = '0'
+                UNION ALL
+                SELECT bc.ID,bc.NAME,bc.pid,T.PATH ||','|| bc.ID
+                    FROM basic_category bc JOIN T ON bc.pid = T.ID
+            )
+            SELECT ID,NAME,pid,PATH FROM T ORDER BY 	PATH;
+    </select>
 </mapper>

@@ -176,6 +176,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private ProjectStatusTimeService projectStatusTimeService;
 
 
+
+
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
     /**
@@ -419,13 +421,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = loginUser.getUid();
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
+
+        //分类id
+        String categoryId = params.getCategoryId();
+
+        List<String> categoryIdList =basicCategoryService.getChildrenCategoryIds(categoryId);
+
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds);
+                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds,categoryIdList);
             }
         } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds);
+            pageData = baseMapper.paging(query, params, archiveProductIds,categoryIdList);
         }
         List<ProductShowDTO> list = pageData.getRecords();
         Integer finish = TaskStateEnum.FINISH.getCode();
@@ -1165,7 +1173,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
         queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, isFinishedProductDev);
         if (CollectionUtils.isNotEmpty(archiveProductIds)) {
-            queryWrapper.notIn(ProductInfoEntity::getId,archiveProductIds);
+            queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
         }
         return this.list(queryWrapper);
 

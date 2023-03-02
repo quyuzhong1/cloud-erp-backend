@@ -21,7 +21,7 @@ import java.util.List;
 @Mapper
 public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
-    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params, @Param("archiveProductIds") List<String> archiveProductIds);
+    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params, @Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 
@@ -29,7 +29,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     List<CountDTO> getProductRelevanceList();
 
-    IPage<ProductShowDTO> myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
+    IPage<ProductShowDTO> myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 
