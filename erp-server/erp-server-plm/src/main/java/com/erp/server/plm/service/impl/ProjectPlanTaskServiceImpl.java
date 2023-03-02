@@ -188,6 +188,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     List<String> refSkuNoList = skuList.stream().filter(s -> skuIds.contains(s.getSkuId())).map(SkuVO::getSkuNo).collect(Collectors.toList());
                     vo.setRefSkuIdList(skuIds);
                     vo.setRefSkuNoList(refSkuNoList);
+                    vo.setWorkPeriod(vo.getWorkPeriod());
                     String priorityName = "";
                     if (TaskConstant.INTERMEDIATE_TASK.equals(priority)) {
                         priorityName = "中级";

@@ -82,8 +82,8 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
                         entity.setProductId(productId);
                         entity.setTaskId(taskSource.getNewCreateId());
                         entity.setPreTaskId(preSource.getNewCreateId());
-                        entity.setRelationship(exist.getRelationship());
-                        entity.setIntervalWorkPeriod(exist.getIntervalWorkPeriod());
+                        entity.setRelationship(item.getRelationship());
+                        entity.setIntervalWorkPeriod(item.getIntervalWorkPeriod());
                         copyList.add(entity);
                     }
                 }
