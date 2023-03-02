@@ -121,7 +121,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                             findFirst().orElse(null);
                     AttestationDTO transport = new AttestationDTO();
                     transport.setSkuId(item.getSkuId());
-                    transport.setType(transportDictType);
+                    transport.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
                     transport.setDictValue(transportDictValue);
                     if (transportDict != null) {
                         transport.setDictId(transportDict.getId());
@@ -130,7 +130,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                         String id = IdWorker.getIdStr();
                         transport.setDictId(id);
                         addTransportDict.setId(id);
-                        addTransportDict.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
+                        addTransportDict.setType(transportDictType);
                         addTransportDict.setName("运输认证");
                         addTransportDict.setValue(transportDictValue);
                         basicDictList.add(addTransportDict);
