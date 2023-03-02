@@ -121,4 +121,15 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      */
     List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds,Integer isFinishedProductDev);
+
+    
+    /**
+     * 查询产品列表 和产品开发列表的分类产品
+     * @author yl
+     * @date 2023-03-02 11:56
+     * @param categoryIds
+     * @param isFinishedProductDev
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     */
+    List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, Integer isFinishedProductDev);
 }

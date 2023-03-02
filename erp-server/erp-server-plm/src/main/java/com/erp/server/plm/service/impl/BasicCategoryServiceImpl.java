@@ -123,7 +123,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      */
     public List<BasicCategoryDTO> getCategoryTreeList(List<BasicCategoryEntity> list , Integer isFinishedProductDev) {
         List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
-        List<ProductInfoEntity> productList = productInfoService.getByCategoryIds(categoryIds, isFinishedProductDev);
+        List<ProductInfoEntity> productList = productInfoService.getListByCategoryIds(categoryIds, isFinishedProductDev);
         List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).

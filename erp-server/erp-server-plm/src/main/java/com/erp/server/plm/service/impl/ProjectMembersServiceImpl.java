@@ -81,6 +81,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Resource
     private ProductInfoService productInfoService;
 
+    @Autowired
+    private ProductArchiveService archiveService;
+
+
     /**
      * 启动项目 添加成员
      *
@@ -411,7 +415,13 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 } else {
                     dto.setName("");
                 }
-                List<String> productIds = projectMembers.stream().map(ProjectMembersEntity::getProductId).collect(Collectors.toList());
+                List<String> productIds = projectMembers.stream().map(ProjectMembersEntity::getProductId).distinct().collect(Collectors.toList());
+
+
+                //获取到归档的产品id
+                List<String> archiveProductIds = archiveService.getArchiveProductIds();
+                //产品id 要去掉已归档的
+                productIds=productIds.stream().filter(p->!archiveProductIds.contains(p)).collect(Collectors.toList());
                 List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
                 dto.setCount(productList.size());
                 dto.setProductQuantity(productList.size());

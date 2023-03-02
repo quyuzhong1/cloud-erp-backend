@@ -82,6 +82,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                         product.setDictId(id);
                         addProductDict.setId(id);
                         addProductDict.setType(productDictType);
+                        addProductDict.setName("产品认证");
                         addProductDict.setValue(productDictValue);
                         basicDictList.add(addProductDict);
                     }
@@ -106,6 +107,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                         addOtherDict.setId(id);
                         addOtherDict.setType(otherDictType);
                         addOtherDict.setValue(otherDictValue);
+                        addOtherDict.setName("其它认证");
                         basicDictList.add(addOtherDict);
                     }
 
@@ -129,6 +131,7 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                         transport.setDictId(id);
                         addTransportDict.setId(id);
                         addTransportDict.setType(ProductManyDetailConstant.TRANSPORT_ATTESTATION);
+                        addTransportDict.setName("运输认证");
                         addTransportDict.setValue(transportDictValue);
                         basicDictList.add(addTransportDict);
                     }

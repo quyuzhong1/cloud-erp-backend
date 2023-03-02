@@ -165,8 +165,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private SysCodeService sysCodeService;
 
-    @Autowired
-    private ProjectPhaseService projectPhaseService;
 
     @Autowired
     private ProductStatusTimeService productStatusTimeService;
@@ -1134,15 +1132,43 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2023-02-28 17:10
      */
     @Override
-    public List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds,Integer isFinishedProductDev) {
+    public List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds, Integer isFinishedProductDev) {
         if (CollectionUtils.isEmpty(categoryIds)) {
             return new ArrayList<>();
         }
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
         queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
-        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev,isFinishedProductDev);
+        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, isFinishedProductDev);
         return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 查询产品列表 和产品开发列表的分类产品
+     *
+     * @param categoryIds
+     * @param isFinishedProductDev
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     * @author yl
+     * @date 2023-03-02 11:56
+     */
+    @Override
+    public List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, Integer isFinishedProductDev) {
+        if (CollectionUtils.isEmpty(categoryIds)) {
+            return new ArrayList<>();
+        }
+        //获取到归档的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
+        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, isFinishedProductDev);
+        if (CollectionUtils.isNotEmpty(archiveProductIds)) {
+            queryWrapper.notIn(ProductInfoEntity::getId,archiveProductIds);
+        }
+        return this.list(queryWrapper);
+
     }
 
     /**
