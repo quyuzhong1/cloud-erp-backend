@@ -422,6 +422,30 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
+    public void relatedProductPlanByProduct(String productPlanId, ProductInfoEntity entity) {
+        if (ObjectUtils.isEmpty(entity.getApprovalStatus())) {
+            entity.setApprovalStatus(ApprovalStatusEnum.WAIT.getCode());
+        }
+        //根据产品id清空之前关联的规划
+        ProductPlanEntity found = this.getByProductId(entity.getId());
+        if (ObjectUtils.isNotEmpty(found)) {
+            found.setProductId("");
+            found.setProductStatus("");
+            this.updateById(found);
+        }
+        //未关联时
+        if (StringUtils.isBlank(productPlanId)) {
+            return;
+        }
+        ProductPlanEntity productPlanEntity = this.getById(productPlanId);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            throw new ServiceException(ApiError.ERROR_95134);
+        }
+        //更新同步规划数据
+        updateProductPlanByProduct(productPlanEntity,entity);
+    }
+
+    @Override
     public void updateProductPlanByProduct(ProductPlanEntity productPlanEntity,ProductInfoEntity productInfoEntity) {
         if (ObjectUtils.isEmpty(productPlanEntity)
                 || ObjectUtils.isEmpty(productInfoEntity)
@@ -467,31 +491,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
             }
         }
+        //同步入库日期和上市日期
+        syncProductPlanDate(productInfoEntity.getId(),productPlanEntity);
         this.updateById(productPlanEntity);
-    }
-
-    @Override
-    public void relatedProductPlanByProduct(String productPlanId, ProductInfoEntity entity) {
-        if (ObjectUtils.isEmpty(entity.getApprovalStatus())) {
-            entity.setApprovalStatus(ApprovalStatusEnum.WAIT.getCode());
-        }
-        //根据产品id清空之前关联的规划
-        ProductPlanEntity found = this.getByProductId(entity.getId());
-        if (ObjectUtils.isNotEmpty(found)) {
-            found.setProductId("");
-            found.setProductStatus("");
-            this.updateById(found);
-        }
-        //未关联时
-        if (StringUtils.isBlank(productPlanId)) {
-            return;
-        }
-        ProductPlanEntity productPlanEntity = this.getById(productPlanId);
-        if (ObjectUtils.isEmpty(productPlanEntity)) {
-            throw new ServiceException(ApiError.ERROR_95134);
-        }
-        //更新同步规划数据
-        updateProductPlanByProduct(productPlanEntity,entity);
     }
 
     @Override
@@ -500,29 +502,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             return;
         }
-        //查询产品信息最后的首批入库时间
-        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(productId);
-        if (CollectionUtils.isEmpty(skuList)) {
-            return;
-        }
-        List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(firstMassProductList)) {
-            Date firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
-                    .map(ProductDetailEntity::getFirstMassProductDate).get();
-            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : LocalDateUtil.date2LocalDate(firstMassProductDate));
-        }
-        List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-        //查询销售信息最后的上市时间
-        List<ProductSaleEntity> productSaleList = productSaleService.listBySkuIds(skuIds);
-        if (CollectionUtils.isNotEmpty(productSaleList)) {
-            productSaleList = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(productSaleList)) {
-                Date listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
-                        .map(ProductSaleEntity::getListingTime).get();
-                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : LocalDateUtil.date2LocalDate(listingTime));
-            }
-
-        }
+        //同步入库日期和上市日期
+        syncProductPlanDate(productId,productPlanEntity);
         this.updateById(productPlanEntity);
     }
 
@@ -871,5 +852,37 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductPlanEntity::getProductId,"");
         return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 同步首批入库时间和上市时间
+     * @author Will
+     * @date: 2023/3/2 10:49
+     * @param productId
+     * @param productPlanEntity
+     */
+    private void syncProductPlanDate (String productId,ProductPlanEntity productPlanEntity) {
+        //查询产品信息最后的首批入库时间
+        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(productId);
+        if (CollectionUtils.isEmpty(skuList)) {
+            return;
+        }
+        List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(firstMassProductList)) {
+            Date firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
+                    .map(ProductDetailEntity::getFirstMassProductDate).get();
+            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : LocalDateUtil.date2LocalDate(firstMassProductDate));
+        }
+        List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        //查询销售信息最后的上市时间
+        List<ProductSaleEntity> productSaleList = productSaleService.listBySkuIds(skuIds);
+        if (CollectionUtils.isNotEmpty(productSaleList)) {
+            productSaleList = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(productSaleList)) {
+                Date listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
+                        .map(ProductSaleEntity::getListingTime).get();
+                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : LocalDateUtil.date2LocalDate(listingTime));
+            }
+        }
     }
 }
