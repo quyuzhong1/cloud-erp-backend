@@ -409,10 +409,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
         ProductSearchDTO params = dto.getParams();
-        Map<String, Object> paramsMap = BeanMapUtil.objToMap(params);
-        //是否包含 产品id  如果包含就说明 走了成员分类的  如果没有就是正常的搜索
-        Boolean isProduct=paramsMap.containsKey("productIds");
-        if(isProduct&&CollectionUtils.isEmpty(params.getProductIds())){
+        List<String> productIdList=params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if(productIdList!=null&&productIdList.size()==0){
             return new PagingVO(pageData);
         }
 

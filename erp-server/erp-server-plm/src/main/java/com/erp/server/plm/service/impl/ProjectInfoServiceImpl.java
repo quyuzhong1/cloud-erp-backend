@@ -10,7 +10,6 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -376,10 +375,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
-        Map<String, Object> paramsMap = BeanMapUtil.objToMap(params);
-        //是否包含 产品id  如果包含就说明 走了成员分类的  如果没有就是正常的搜索
-        Boolean isProduct=paramsMap.containsKey("productIds");
-        if(isProduct&&CollectionUtils.isEmpty(params.getProductIds())){
+        List<String> productIdList=params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if(productIdList!=null&&productIdList.size()==0){
             return new PagingVO(pageData);
         }
 
