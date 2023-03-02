@@ -16,10 +16,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -174,8 +171,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProjectStatusTimeService projectStatusTimeService;
-
-
 
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
@@ -412,11 +407,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
         dto.getParams().setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = new Page();
         ProductSearchDTO params = dto.getParams();
+        Map<String, Object> paramsMap = BeanMapUtil.objToMap(params);
+        //是否包含 产品id  如果包含就说明 走了成员分类的  如果没有就是正常的搜索
+        Boolean isProduct=paramsMap.containsKey("productIds");
+        if(isProduct&&CollectionUtils.isEmpty(params.getProductIds())){
+            return new PagingVO(pageData);
+        }
+
         //获取到归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         //如果是我的收藏
-        IPage pageData = new Page();
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         //根据当前登录人id 获取收藏的列表
@@ -425,15 +427,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
 
-        List<String> categoryIdList =basicCategoryService.getChildrenCategoryIds(categoryId);
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds,categoryIdList);
+                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds, categoryIdList);
             }
         } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds,categoryIdList);
+            pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
         }
         List<ProductShowDTO> list = pageData.getRecords();
         Integer finish = TaskStateEnum.FINISH.getCode();
