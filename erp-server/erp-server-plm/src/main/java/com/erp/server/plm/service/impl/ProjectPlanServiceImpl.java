@@ -239,7 +239,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         /**
          *  这个是初次提交 且是待审核的
          *  取消后那么它的状态该成 取消
-         *  然后任务状态 也是已取消
+         *  然后任务状态 也是待提交
          */
         List<ProjectPlanEntity> initialList = planList.stream().filter(p ->
                 initial.equals(p.getType()) && waitAudit.equals(p.getStatus())).collect(Collectors.toList());
@@ -287,7 +287,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 List<ProjectPlanTaskEntity> initialTaskList = projectPlanTaskService.getByProjectPlanIdList(ids);
                 List<String> initialTaskIds = initialTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
-                taskService.updateScheduleStatus(productId, initialTaskIds, cancelStatus, initial);
+                taskService.updateScheduleStatus(productId, initialTaskIds, BaseStatusEnum.WAIT_SUBMIT.getStatus(), initial);
             }
 
             return result;
