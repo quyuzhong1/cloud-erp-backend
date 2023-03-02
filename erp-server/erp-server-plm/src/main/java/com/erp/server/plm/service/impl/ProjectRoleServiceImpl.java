@@ -104,7 +104,11 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
             List<String> memberList = roleRefList.stream().map(RoleRefMemberDTO::getMembersId).collect(Collectors.toList());
             //根据成员id 获取到参与了多少项目
             List<ProductRoleMemberDTO> productMemberList = projectMembersService.getProductCountByMemberList(memberList);
-            Integer productQuantity = productMemberList.stream().mapToInt(ProductRoleMemberDTO::getCount).sum();
+            List<String> productIdList=new ArrayList<>(20);
+            productMemberList.forEach(
+                    p->productIdList.addAll(p.getProductIds())
+            );
+            Integer productQuantity = Math.toIntExact(productIdList.stream().distinct().count());
             roleDTO.setProductRoleMembers(productMemberList);
             roleDTO.setProductQuantity(productQuantity);
             resultList.add(roleDTO);
