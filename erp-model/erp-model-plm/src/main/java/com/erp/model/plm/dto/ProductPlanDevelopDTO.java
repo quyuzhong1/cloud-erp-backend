@@ -49,6 +49,11 @@ public class ProductPlanDevelopDTO implements Serializable {
     private String categoryId;
 
     /**
+     * 产品类别
+     */
+    private String category;
+
+    /**
      * 产品属性ID
      */
     @NotBlank(message = "产品属性ID不能为空")
@@ -57,7 +62,6 @@ public class ProductPlanDevelopDTO implements Serializable {
     /**
      * 产品属性
      */
-    @NotBlank(message = "产品属性不能为空")
     private String property;
 
     /**
@@ -75,6 +79,11 @@ public class ProductPlanDevelopDTO implements Serializable {
     private String gradeId;
 
     /**
+     * 产品等级
+     */
+    private String  grade;
+
+    /**
      * 品牌ID
      */
     @NotBlank(message = "品牌ID不能为空")
@@ -83,7 +92,6 @@ public class ProductPlanDevelopDTO implements Serializable {
     /**
      * 产品品牌
      */
-    @NotBlank(message = "产品品牌不能为空")
     private String  brandName;
 
 

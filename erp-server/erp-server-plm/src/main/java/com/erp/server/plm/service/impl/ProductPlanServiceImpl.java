@@ -103,6 +103,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Resource
     private ProductSaleService productSaleService;
 
+    @Resource
+    private ProductStatusTimeService productStatusTimeService;
 
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
@@ -391,17 +393,34 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (StringUtils.isNotBlank(productPlanEntity.getProductId())) {
             throw new ServiceException(ApiError.ERROR_95138);
         }
+
+        //产品等级编码
+        BasicDictEntity grade = basicDictService.getById(dto.getGradeId());
+        if (ObjectUtils.isNotEmpty(grade)) {
+            dto.setGrade(grade.getValue());
+        }
+        //产品品牌
+        BasicDictEntity brand = basicDictService.getById(dto.getBrandId());
+        if (ObjectUtils.isNotEmpty(brand)) {
+            dto.setBrandName(brand.getValue());
+        }
+        //产品属性
+        BasicDictEntity property = basicDictService.getById(dto.getPropertyId());
+        if (ObjectUtils.isNotEmpty(property)) {
+            dto.setProperty(property.getValue());
+        }
+        //产品类型
+        BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
+        if (ObjectUtils.isNotEmpty(category)) {
+            dto.setCategory(category.getName());
+        }
+
         //根据产品名称判断是否已经存在开发产品
         ProductInfoEntity productInfoEntity = productInfoService.getByName(dto.getName());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
             ProductDTO productDTO = new ProductDTO();
             BeanMapperUtils.copy(dto,productDTO);
             productDTO.setChargeIds(dto.getChargeIdList());
-            //等级编码
-            BasicDictEntity grade = basicDictService.getById(dto.getGradeId());
-            if (ObjectUtils.isNotEmpty(grade)) {
-                productDTO.setGrade(grade.getValue());
-            }
             productDTO.setId(null);
             //当需要新增产品时
             String productId = productInfoService.saveOrUpdateProduct(productDTO);
@@ -492,9 +511,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             }
         }
         //同步入库日期和上市日期
-        syncProductPlanDate(productInfoEntity.getId(),productPlanEntity);
+        syncSkuDate(productInfoEntity.getId(),productPlanEntity);
+        //同步调研时间和立项时间
+        syncProductDate(productInfoEntity.getId(),productPlanEntity);
         this.updateById(productPlanEntity);
     }
+
 
     @Override
     public void updateRealDateByProductId(String productId) {
@@ -503,7 +525,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             return;
         }
         //同步入库日期和上市日期
-        syncProductPlanDate(productId,productPlanEntity);
+        syncSkuDate(productId,productPlanEntity);
         this.updateById(productPlanEntity);
     }
 
@@ -861,7 +883,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
      * @param productId
      * @param productPlanEntity
      */
-    private void syncProductPlanDate (String productId,ProductPlanEntity productPlanEntity) {
+    private void syncSkuDate (String productId,ProductPlanEntity productPlanEntity) {
         //查询产品信息最后的首批入库时间
         List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(productId);
         if (CollectionUtils.isEmpty(skuList)) {
@@ -885,4 +907,28 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             }
         }
     }
+
+    /**
+     * @description: 同步调研时间和立项时间
+     * @author Will
+     * @date: 2023/3/2 11:41
+     * @param productId
+     * @param productPlanEntity
+     */
+    private void syncProductDate (String productId,ProductPlanEntity productPlanEntity) {
+        List<ProductStatusTimeEntity> productStatusTimeList = productStatusTimeService.listByProductId(productId);
+        if (CollectionUtils.isNotEmpty(productStatusTimeList)) {
+            //同步实际调研日期
+            LocalDateTime surveyDate = productStatusTimeList.stream().filter(obj -> ApprovalStatusEnum.PROBE.getCode().toString().equals(obj.getStatus())).map(ProductStatusTimeEntity::getStatusTime).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(surveyDate)) {
+                productPlanEntity.setSurveyDate(surveyDate.toLocalDate());
+            }
+            //同步实际立项日期
+            LocalDateTime projectApprovalDate = productStatusTimeList.stream().filter(obj -> ApprovalStatusEnum.APPROVAL.getCode().toString().equals(obj.getStatus())).map(ProductStatusTimeEntity::getStatusTime).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(projectApprovalDate)) {
+                productPlanEntity.setProjectApprovalDate(projectApprovalDate.toLocalDate());
+            }
+        }
+    }
+
 }

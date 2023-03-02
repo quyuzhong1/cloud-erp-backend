@@ -9,6 +9,7 @@ import com.erp.server.plm.service.ProductStatusTimeService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Will
@@ -34,6 +35,13 @@ public class ProductStatusTimeServiceImpl extends ServiceImpl<ProductStatusTimeM
             productStatusTimeEntity.setStatus(String.valueOf(approvalStatus));
         }
          this.saveOrUpdate(productStatusTimeEntity);
+    }
+
+    @Override
+    public List<ProductStatusTimeEntity> listByProductId(String productId) {
+        LambdaQueryWrapper<ProductStatusTimeEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductStatusTimeEntity::getProductId,productId);
+        return this.list(queryWrapper);
     }
 
     /**

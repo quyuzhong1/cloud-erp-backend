@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.ProductStatusTimeEntity;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -19,4 +21,13 @@ public interface ProductStatusTimeService extends IService<ProductStatusTimeEnti
      * @return Boolean
      */
     void saveOrUpdateProductStatusTime(String productId, Integer approvalStatus);
+
+    /**
+     * @description: 根据产品id查询
+     * @author Will
+     * @date: 2023/3/2 11:33
+     * @param productId
+     * @return List<ProductStatusTimeEntity>
+     */
+    List<ProductStatusTimeEntity> listByProductId(String productId);
 }
