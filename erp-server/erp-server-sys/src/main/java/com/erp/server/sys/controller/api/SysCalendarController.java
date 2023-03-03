@@ -2,10 +2,13 @@ package com.erp.server.sys.controller.api;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.HolidayUtils;
 import com.erp.model.sys.dto.SysCalendarDTO;
+import com.erp.model.sys.entity.SysCalendarEntity;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.server.sys.service.SysCalendarService;
 import org.springframework.validation.annotation.Validated;
@@ -16,9 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 系统日历相关
@@ -64,14 +66,16 @@ public class SysCalendarController extends BaseController {
         if(null == dto.getMonth()){
             dto.setYear(LocalDate.now().getMonthValue());
         }
-        Set<LocalDate> jjr = HolidayUtils.JJR(dto.getYear(), dto.getMonth());
-        SysCalendarDTO.SaveOrUpdateDTO updateDTO = new SysCalendarDTO.SaveOrUpdateDTO();
-        updateDTO.setCalendarDateList(new ArrayList<>(jjr));
-        updateDTO.setIsWorkDay(Boolean.FALSE);
+        List<JSONObject> dataList = HolidayUtils.JJRRemarkMap(dto.getYear(), dto.getMonth());
+
+        List<SysCalendarEntity> list = dataList
+                .stream()
+                .map(str -> JSONUtil.toBean(str, SysCalendarEntity.class))
+                .collect(Collectors.toList());
         if(StrUtil.isNotBlank(dto.getOrganization())){
-            updateDTO.setOrganization(dto.getOrganization());
+            list.stream().forEach(x -> x.setOrganization(dto.getOrganization()));
         }
-        Boolean result = sysCalendarService.saveOrUpdateBatchDate(updateDTO);
+        Boolean result = sysCalendarService.initRemarkList(list);
         return success(result);
     }
 

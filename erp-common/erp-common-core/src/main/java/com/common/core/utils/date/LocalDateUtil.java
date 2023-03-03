@@ -375,15 +375,5 @@ public class LocalDateUtil {
         }
         return planStartDate;
     }
-
-    public static void main(String[] args) {
-        List<LocalDate> holidays = new ArrayList<>();
-        holidays.add(LocalDate.now().minusDays(1));
-        holidays.add(LocalDate.now().minusDays(2));
-        holidays.add(LocalDate.now().minusDays(4));
-        Integer integer = countDaysForLocalDate(LocalDate.now().minusDays(4), LocalDate.now(), holidays);
-
-        System.out.println("integer = " + integer);
-    }
 }
 

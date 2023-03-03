@@ -338,6 +338,9 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         if(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode().equals(templateEntity.getType()) && 0 == templateEntity.getIsDefault()){
             // 更新前置任务
             List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
+            // 递归查上级
+//            templatePreTaskService.getTemplatePreTaskIdList()
+
             result = templatePreTaskService.updateBatchById(updateList);
         }else {
             // 更新前置任务
