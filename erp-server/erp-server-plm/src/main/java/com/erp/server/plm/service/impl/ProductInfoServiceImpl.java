@@ -409,9 +409,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
         ProductSearchDTO params = dto.getParams();
-        List<String> productIdList=params.getProductIds();
+        List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
-        if(productIdList!=null&&productIdList.size()==0){
+        if (productIdList != null && productIdList.size() == 0) {
             return new PagingVO(pageData);
         }
 
@@ -1009,6 +1009,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @author yl
      * @date 2022-11-29 15:23
      */
+    @Override
     public void checkProduct(String productId) {
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         if (archiveProductIds.contains(productId)) {
@@ -1158,12 +1159,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      *
      * @param categoryIds
      * @param isFinishedProductDev
+     * @param isArchive            是否是归档产品 true 是
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      * @author yl
      * @date 2023-03-02 11:56
      */
     @Override
-    public List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, Integer isFinishedProductDev) {
+    public List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, boolean isFinishedProductDev, boolean isArchive) {
         if (CollectionUtils.isEmpty(categoryIds)) {
             return new ArrayList<>();
         }
@@ -1172,9 +1174,57 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
         queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
-        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, isFinishedProductDev);
+        if(isFinishedProductDev){
+            queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
+        }else{
+            queryWrapper.ne(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES).
+                    or().isNull(ProductInfoEntity::getIsFinishedProductDev);
+
+        }
+
         if (CollectionUtils.isNotEmpty(archiveProductIds)) {
-            queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
+            if (isArchive) {
+                queryWrapper.in(ProductInfoEntity::getId, archiveProductIds);
+            } else {
+                queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
+            }
+
+        }
+        return this.list(queryWrapper);
+
+    }
+
+
+    /**
+     * 查询角色分类 列表信息
+     *
+     * @param isFinishedProductDev 是否是产品开发管理
+     * @param isArchive            是否是归档
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     * @author yl
+     * @date 2023-03-03 15:15
+     */
+    @Override
+    public List<ProductInfoEntity> getRoleClassifyList(boolean isFinishedProductDev, boolean isArchive) {
+        //获取到归档的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
+        //如果是产品开发管理
+        if (isFinishedProductDev) {
+            queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
+        } else {
+            queryWrapper.ne(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES).
+                    or().isNull(ProductInfoEntity::getIsFinishedProductDev);
+        }
+
+        if (CollectionUtils.isNotEmpty(archiveProductIds)) {
+            if (isArchive) {
+                queryWrapper.in(ProductInfoEntity::getId, archiveProductIds);
+            } else {
+                queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
+            }
+
         }
         return this.list(queryWrapper);
 

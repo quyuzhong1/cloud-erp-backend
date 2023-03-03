@@ -33,7 +33,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;

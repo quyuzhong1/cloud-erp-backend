@@ -83,7 +83,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
-        checkTaskName(dto.getId(), dto.getName());
+        checkTaskName(dto.getId(), dto.getName(), dto.getTemplateId());
         //当前登录人
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskSysEntity entity = new ProjectTaskSysEntity();
@@ -225,13 +225,17 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
      *
      * @param id
      * @param name
+     * @param templateId 模板id
      * @return void
      * @author yl
      * @date 2022-10-20 19:54
      */
-    private void checkTaskName(String id, String name) {
+    private void checkTaskName(String id, String name, String templateId) {
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskSysEntity::getName, name);
+        if (StringUtils.isNotBlank(templateId)) {
+            queryWrapper.eq(ProjectTaskSysEntity::getTemplateId, templateId);
+        }
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProjectTaskSysEntity::getId, id);
         }
@@ -314,7 +318,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         Boolean flag = this.removeById(taskId);
         if (flag) {
             //删除任务审核人
-            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.ONE,taskId);
+            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.ONE, taskId);
 
             taskDeliveryService.removeByTaskId(taskId);
         }
@@ -418,7 +422,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         List<String> pretaskIdList = Collections.emptyList();
-        if(CollectionUtil.isNotEmpty(preTaskList)){
+        if (CollectionUtil.isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         sysTaskVO.setPreTaskIdList(pretaskIdList);

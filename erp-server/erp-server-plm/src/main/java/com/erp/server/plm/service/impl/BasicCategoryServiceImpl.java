@@ -120,14 +120,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     /**
      * 查询产品开发管理 分类
      *
-     * @param
+     * @param isArchive 是否归档
      * @return java.util.List<com.erp.model.plm.dto.BasicCategoryDTO>
      * @author yl
      * @date 2023-03-02 10:16
      */
-    public List<BasicCategoryDTO> getCategoryTreeList(List<BasicCategoryEntity> list, Integer isFinishedProductDev) {
+    public List<BasicCategoryDTO> getCategoryTreeList(List<BasicCategoryEntity> list, boolean isFinishedProductDev,boolean isArchive) {
         List<String> categoryIds = list.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
-        List<ProductInfoEntity> productList = productInfoService.getListByCategoryIds(categoryIds, isFinishedProductDev);
+        List<ProductInfoEntity> productList = productInfoService.getListByCategoryIds(categoryIds, isFinishedProductDev,isArchive);
         List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
         //获取到对应数据库的树结构
         List<BasicCategoryTreeDTO> categoryTreeList = this.getDbTree();
@@ -257,12 +257,24 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         List<BasicCategoryEntity> list = this.list();
         //产品开发
         String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
-        //产品开发
-        if (StringUtils.isBlank(type) || productDevelop.equals(productDevelop)) {
-            return getCategoryTreeList(list, IsConstant.YES);
-        } else {
-            return getCategoryTreeList(list, IsConstant.NO);
+        //产品
+        String product = ProductConstant.product;
+        //产品归档
+        String productArchive=ProductConstant.PRODUCT_ARCHIVE;
+
+
+        //产品归档管理分类
+        if (productArchive.equals(type)) {
+            return getCategoryTreeList(list, true,true);
         }
+        //产品管理列表分类
+        if(product.equals(type)){
+            return getCategoryTreeList(list, false,false);
+        }
+
+        //产品开发管理 分类
+        return getCategoryTreeList(list, true,false);
+
     }
 
 

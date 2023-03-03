@@ -81,9 +81,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Resource
     private ProductInfoService productInfoService;
 
-    @Autowired
-    private ProductArchiveService archiveService;
-
 
     /**
      * 启动项目 添加成员
@@ -389,18 +386,22 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     /**
      * 根据成员id 获取到 成员名 以及它参与了多少项目
      *
-     * @param memberList 成员表 table id
+     * @param memberList    成员表 table id
+     * @param productIdList 产品表id
      * @return java.util.List<com.erp.model.plm.dto.ProductRoleMemberDTO>
      * @author yl
      * @date 2022-10-10 11:37
      */
     @Override
-    public List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList) {
+    public List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList, List<String> productIdList) {
         List<ProductRoleMemberDTO> resultList = new LinkedList<>();
         //当不为空
         if (CollectionUtils.isNotEmpty(memberList)) {
             LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ProjectMembersEntity::getId, memberList);
+            if (CollectionUtils.isNotEmpty(productIdList)) {
+                queryWrapper.in(ProjectMembersEntity::getProductId, productIdList);
+            }
             List<ProjectMembersEntity> list = this.list(queryWrapper);
             //以成员id 分类
             Map<String, List<ProjectMembersEntity>> memberMap = list.parallelStream().collect(Collectors.groupingBy(ProjectMembersEntity::getMemberId));
@@ -416,16 +417,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     dto.setName("");
                 }
                 List<String> productIds = projectMembers.stream().map(ProjectMembersEntity::getProductId).distinct().collect(Collectors.toList());
-
-
-                //获取到归档的产品id
-                List<String> archiveProductIds = archiveService.getArchiveProductIds();
-                //产品id 要去掉已归档的
-                productIds=productIds.stream().filter(p->!archiveProductIds.contains(p)).collect(Collectors.toList());
-                List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
-                dto.setCount(productList.size());
-                dto.setProductQuantity(productList.size());
-                dto.setProductIds(productList.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList()));
+                dto.setCount(productIds.size());
+                dto.setProductQuantity(productIds.size());
+                dto.setProductIds(productIds);
                 resultList.add(dto);
             }
         }

@@ -29,7 +29,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.SearchType;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;

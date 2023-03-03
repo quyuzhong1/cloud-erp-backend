@@ -10,7 +10,7 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
