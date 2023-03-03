@@ -193,4 +193,13 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return ProductPlanEntity
      */
     ProductPlanEntity getByProductId(String productId);
+    
+    /**
+     * @description: 转开发回显
+     * @author Will
+     * @date: 2023/3/2 21:37
+     * @param id 
+     * @return ProductPlanDevelopDTO 
+     */
+    ProductPlanDevelopDTO getProductPlanDevelopById(String id);
 }

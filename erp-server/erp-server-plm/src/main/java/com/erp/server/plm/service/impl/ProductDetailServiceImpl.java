@@ -8,25 +8,27 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
@@ -36,7 +38,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
-import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -2062,6 +2063,46 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return Boolean.TRUE;
     }
 
+    @Override
+    public void handleChargeId() {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        if (CollectionUtils.isEmpty(userList)) {
+            return;
+        }
+        List<ProductDetailEntity> list = this.list();
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<ProductDetailEntity> resultList = new ArrayList<>();
+        List<ProductDetailEntity> productDetailEntityList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getChargeId()) && StringUtils.isNotBlank(obj.getChargeName())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(productDetailEntityList)) {
+            return;
+        }
+        productDetailEntityList.forEach(obj -> {
+            List<String> chargeNames = Arrays.stream(obj.getChargeName().split(",")).collect(Collectors.toList());
+            List<String> chargIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+            Boolean flag = false;
+            List<String> chargIdList = new ArrayList<>();
+            for (String chargeName: chargeNames) {
+                String chargId = userList.stream().filter(e -> e.getUserName().equals(chargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
+                if (!chargIds.contains(chargId)) {
+                    flag = true;
+                }
+                chargIdList.add(chargId);
+            }
+            if (flag) {
+                if (CollectionUtils.isNotEmpty(chargIdList)) {
+                    obj.setChargeId(String.join(",",chargIdList));
+                }
+                resultList.add(obj);
+            }
+        });
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            this.updateBatchById(resultList);
+        }
+
+    }
+
 
     private String checkRequiredData(ProductDetailEntity productDetailEntity) {
         StringBuffer str = new StringBuffer();
@@ -2481,9 +2522,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).distinct().collect(Collectors.toList());
             firstApproveIdList.addAll(firstApproveIds);
-            //审核人2(产品部经理/产品经理上级)
-            String secondDeptName = SkuApproveConfigureEnum.SECOND_APPROVE.getDesc();
-            List<String> secondApproveIdList = setApproveLead(secondDeptName);
+            //审核人2(产品经理上级)
+            List<UserSuperiorDTO> superiorList = sysUserFeign.listSuperiorByUserIds(firstApproveIds);
+            if (CollectionUtils.isEmpty(superiorList)) {
+                throw new ServiceException(ApiError.ERROR_95082);
+            }
+            List<String> secondApproveIdList = superiorList.stream().filter(obj -> ChargeSuperiorEnum.DIRECT_SUPERIOR.getName().equals(obj.getSuperiorType())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(secondApproveIdList)) {
+                throw new ServiceException(ApiError.ERROR_95082);
+            }
             //审核人3(产品研发中心负责人、供应链中心负责人)
             String thirdDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
             List<String> thirdApproveIdList = setApproveLead(thirdDeptName);

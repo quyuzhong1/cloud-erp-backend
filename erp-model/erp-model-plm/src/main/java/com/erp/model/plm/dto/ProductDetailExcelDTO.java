@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 public class ProductDetailExcelDTO {
 
     @ExcelProperty( value = "skuNo", index = 0)
-    @FieldValid(fieldName = "sku", isNotBlank = true,maxLength = 10,formatPattern = FieldFormatPatternTypeEnum.NUMBER_LETTER)
+    @FieldValid(fieldName = "sku", isNotBlank = true,maxLength = 10,formatPattern = FieldFormatPatternTypeEnum.NOT_CHINESE)
     private String skuNo;
 
     @ExcelProperty( value = "产品分类", index = 1)
@@ -48,7 +48,7 @@ public class ProductDetailExcelDTO {
     private String materials;
 
     @ExcelProperty(value = "品名", index = 8)
-    @FieldValid(fieldName = "品名", isNotBlank = true,maxLength = 50)
+    @FieldValid(fieldName = "品名", isNotBlank = true,maxLength = 255)
     private String name;
 
     @ExcelProperty(value = "品牌", index = 9)

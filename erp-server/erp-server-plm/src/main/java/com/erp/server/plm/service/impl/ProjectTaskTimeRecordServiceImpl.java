@@ -57,6 +57,10 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
     public PagingVO<ProjectTaskTimeRecordPageVO> pageRecord(PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto) {
         // 查询 产品数据分组
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        if (null != dto.getParams().getEndDate()) {
+            dto.getParams().setEndDate(dto.getParams().getEndDate().plusDays(1));
+        }
+
         IPage<ProjectTaskTimeRecordPageVO> recordPage  = baseMapper.pageTaskTimeRecord(query, dto.getParams(), dto.getParam());
         // 根据task id查询日期数据进行处理
         List<ProjectTaskTimeRecordPageVO> records = recordPage.getRecords();

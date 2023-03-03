@@ -358,7 +358,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             });
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/exportProductPlan.xlsx";
+        String excelPath = "excel/productPlanExport.xlsx";
         String name = "产品规划";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -746,17 +746,17 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Override
     public List<SelectShowDTO> listNotRelatedProductPlan(String productId) {
         List<SelectShowDTO> resultList = new ArrayList<>();
-        //查询所有未关联产品的规划
-        List<ProductPlanEntity> list = this.listAllNotRelatedProductPlan();
-        if (CollectionUtils.isEmpty(list)) {
-            return  resultList;
-        }
         //如果有传产品id则将关联的规划加入下拉框用于回显
         if (StringUtils.isNotBlank(productId)) {
             ProductPlanEntity productPlanEntity = this.getByProductId(productId);
             if (ObjectUtils.isNotEmpty(productPlanEntity)) {
                 resultList.add(new SelectShowDTO(null,productPlanEntity.getId(),productPlanEntity.getName()));
             }
+        }
+        //查询所有未关联产品的规划
+        List<ProductPlanEntity> list = this.listAllNotRelatedProductPlan();
+        if (CollectionUtils.isEmpty(list)) {
+            return  resultList;
         }
         list.forEach(obj -> {
             resultList.add(new SelectShowDTO(null,obj.getId(),obj.getName()));
@@ -869,6 +869,25 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductPlanEntity::getProductId,productId);
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public ProductPlanDevelopDTO getProductPlanDevelopById(String id) {
+        ProductPlanEntity productPlanEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productPlanEntity)) {
+            throw new ServiceException(ApiError.ERROR_95134);
+        }
+        ProductPlanDevelopDTO dto = new ProductPlanDevelopDTO();
+        BeanMapperUtils.copy(productPlanEntity,dto);
+        String chargeId = productPlanEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            List<String> chargeIds = Arrays.stream(chargeId.split(",")).collect(Collectors.toList());
+            dto.setChargeIdList(chargeIds);
+        }
+        String categoryId = productPlanEntity.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
+        dto.setCategoryIdList(categoryIdList);
+        return dto;
     }
 
     /**

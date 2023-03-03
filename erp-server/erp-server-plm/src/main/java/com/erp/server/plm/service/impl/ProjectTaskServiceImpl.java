@@ -265,6 +265,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             newPreTask.setTaskId(source.getNewCreateId());
                             newPreTask.setPreTaskId(preTask.getNewCreateId());
                             newPreTask.setProductId(productId);
+                            newPreTask.setIntervalWorkPeriod(sysPre.getIntervalWorkPeriod());
+                            newPreTask.setRelationship(sysPre.getRelationship());
                             savePreList.add(newPreTask);
                         }
                     }
@@ -489,6 +491,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             newPreTask.setTaskId(source.getNewCreateId());
                             newPreTask.setPreTaskId(preTask.getNewCreateId());
                             newPreTask.setProductId(saveProductId);
+                            newPreTask.setRelationship(sysPre.getRelationship());
+                            newPreTask.setIntervalWorkPeriod(sysPre.getIntervalWorkPeriod());
                             savePreList.add(newPreTask);
                         }
                     }

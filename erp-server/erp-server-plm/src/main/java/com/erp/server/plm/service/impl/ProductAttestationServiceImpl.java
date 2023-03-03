@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -149,6 +147,11 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
                 result = this.saveBatch(list);
             }
             if (CollectionUtils.isNotEmpty(basicDictList)) {
+                basicDictList = basicDictList.stream().collect(
+                        Collectors.collectingAndThen(
+                                Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(BasicDictEntity::getValue))),
+                                ArrayList::new)
+                );
                 result = basicDictService.saveBatch(basicDictList);
             }
         }

@@ -49,6 +49,11 @@ public class ProductPlanDevelopDTO implements Serializable {
     private String categoryId;
 
     /**
+     *  产品类别集合
+     */
+    private List<String> categoryIdList;
+
+    /**
      * 产品类别
      */
     private String category;

@@ -892,4 +892,14 @@ ProductDetailController extends BaseController {
 
     }
 
+    /**
+     * @description: 更新负责人id
+     * @author Will
+     * @date: 2023/3/2 19:17
+     */
+    @PostMapping("/handleChargeId")
+    public void handleChargeId() {
+        productDetailService.handleChargeId();
+    }
+
 }
