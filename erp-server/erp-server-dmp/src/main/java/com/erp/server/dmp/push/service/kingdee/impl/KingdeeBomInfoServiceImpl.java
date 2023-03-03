@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 public class KingdeeBomInfoServiceImpl implements KingdeePushService {
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void pushKingdee(Map<String, Object> map) {
 
     }
