@@ -114,7 +114,7 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
                 .collect(Collectors.toMap(SysCalendarEntity::getCalendarDate, e -> e));
         list.stream().forEach(x ->{
             SysCalendarEntity sysCalendarEntity = entityMap.get(x.getCalendarDate());
-            if(null != sysCalendarEntity){
+            if(null != sysCalendarEntity && StrUtil.isBlank(sysCalendarEntity.getRemark())){
                 x.setId(sysCalendarEntity.getId());
                 updateById(x);
             }else {
