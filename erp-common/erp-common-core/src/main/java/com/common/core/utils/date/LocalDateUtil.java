@@ -346,8 +346,8 @@ public class LocalDateUtil {
                 planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1, 1);
                 break;
             default:
-                planEndDate = endDate.plusDays(intervalWorkPeriod);
-                planEndDate = getPlanWorkPeriodDate(intervalWorkPeriod-1, dateList, planEndDate, 1, 0);
+                planEndDate = endDate;
+                planEndDate = getPlanWorkPeriodDate(intervalWorkPeriod, dateList, planEndDate, 1, 0);
                 planStartDate = planEndDate;
                 planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1, 1);
                 break;
@@ -359,6 +359,12 @@ public class LocalDateUtil {
     }
 
     private static LocalDate getPlanWorkPeriodDate(Integer planWorkPeriod, List<LocalDate> dateList, LocalDate planStartDate, Integer diffDay, Integer type) {
+        if (planWorkPeriod < 0) {
+            planStartDate = planStartDate.plusDays(planWorkPeriod);
+            while (dateList.contains(planStartDate)){
+                planStartDate = planStartDate.minusDays(diffDay);
+            }
+        }
         while (planWorkPeriod > type){
             planStartDate = planStartDate.plusDays(diffDay);
             if(!dateList.contains(planStartDate)){
