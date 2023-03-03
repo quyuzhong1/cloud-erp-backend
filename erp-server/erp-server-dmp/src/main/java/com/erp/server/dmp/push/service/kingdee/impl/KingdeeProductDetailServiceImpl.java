@@ -4,9 +4,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
@@ -71,7 +71,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void pushProductDetail(Map<String, Object> map) {
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
@@ -168,7 +168,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             return;
         }
        //查找到数据后，判断其审核状态
-        String documentStatus = (String)model.get("DocumentStatus");//单据状态
+        String documentStatus = (String)model.get("DocumentStatus");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
             documentStatus = unAudit(platformEntity, map,apiUtils, viewMap);
@@ -258,8 +258,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
      */
     private void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,LinkedHashMap<String,Object> viewMap) {
         JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        String documentStatus = (String)model.get("DocumentStatus");//单据状态
-        String id = String.valueOf(model.get("Id"));//单据id
+        //单据状态
+        String documentStatus = (String)model.get("DocumentStatus");
+        //单据id
+        String id = String.valueOf(model.get("Id"));
         if (!KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //非已审核继续审核
             ArrayList<String> ids = new ArrayList<>();
@@ -290,8 +292,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
      */
     private String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,LinkedHashMap<String,Object> viewMap) {
         JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        String documentStatus = (String) model.get("DocumentStatus");//单据状态
-        String id = String.valueOf(model.get("Id"));//单据id
+        //单据状态
+        String documentStatus = (String) model.get("DocumentStatus");
+        //单据id
+        String id = String.valueOf(model.get("Id"));
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
             ArrayList<String> ids = new ArrayList<>();
@@ -345,7 +349,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
         //发送成功后删除任务表数据
-        Map<String, Object> removeMap = new HashMap<>();
+        Map<String, Object> removeMap = new HashMap<>(MathUtil.THREE);
         removeMap.put("api_platform_id", platformEntity.getId());
         removeMap.put("module_type", ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
         removeMap.put("business_id", String.valueOf(map.get("id")));
