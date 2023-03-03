@@ -1,14 +1,14 @@
 package com.erp.server.dmp.controller;
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
 import com.erp.model.dmp.vo.CfgApiFieldMapVO;
-import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
+import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
@@ -32,8 +32,8 @@ public class CfgApiFieldMapController extends BaseController {
     @Resource
     private CfgApiFieldMapService cfgApiFieldMapService;
 
-    @Resource
-    private KingdeeProductDetailService kingdeeProductDetailService;
+    @Resource(name = "kingdeeProductDetailService")
+    private KingdeePushService kingdeeProductDetailService;
 
     /**
      * 分页查询
@@ -210,7 +210,7 @@ public class CfgApiFieldMapController extends BaseController {
         //采购员
         map.put("purchaseUser","王杰");
         map.put("mainSupplier","王杰");
-        this.kingdeeProductDetailService.pushProductDetail(map);
+        this.kingdeeProductDetailService.pushKingdee(map);
         return success();
     }
 

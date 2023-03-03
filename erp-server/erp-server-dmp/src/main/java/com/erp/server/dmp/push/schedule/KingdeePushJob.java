@@ -10,7 +10,7 @@ import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
+import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import com.erp.server.dmp.service.ApiSyncTaskService;
 import com.erp.server.dmp.service.PlatformService;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -39,8 +39,8 @@ public class KingdeePushJob {
     @Resource
     private ApiSyncTaskService apiSyncTaskService;
 
-    @Resource
-    private KingdeeProductDetailService kingdeeProductDetailService;
+    @Resource(name = "kingdeeProductDetailService")
+    private KingdeePushService kingdeeProductDetailService;
 
 
     // 拉取金蝶数据任务
@@ -60,7 +60,7 @@ public class KingdeePushJob {
             list.forEach(obj->{
                 String requestParamJson = obj.getRequestParamJson();
                 Map<String, Object> mapParam = JSONObject.parseObject(requestParamJson, Map.class);
-                kingdeeProductDetailService.pushProductDetail(mapParam);
+                kingdeeProductDetailService.pushKingdee(mapParam);
             });
         }
     }

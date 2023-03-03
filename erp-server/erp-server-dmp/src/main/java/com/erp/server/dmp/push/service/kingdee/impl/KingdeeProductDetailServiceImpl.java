@@ -14,7 +14,7 @@ import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.*;
-import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
+import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
  * @date 2023/1/11 18:03
  */
 @Slf4j
-@Service
-public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailService {
+@Service("kingdeeProductDetailService")
+public class KingdeeProductDetailServiceImpl implements KingdeePushService {
 
     @Resource
     private PlatformService platformService;
@@ -72,7 +72,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void pushProductDetail(Map<String, Object> map) {
+    public void pushKingdee(Map<String, Object> map) {
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
             throw new ServiceException(ApiError.Default);

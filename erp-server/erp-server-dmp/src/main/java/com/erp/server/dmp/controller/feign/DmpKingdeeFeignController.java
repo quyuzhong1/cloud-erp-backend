@@ -1,7 +1,7 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
+import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +19,9 @@ import java.util.Map;
 @RequestMapping("dmp/kigdee/feign")
 public class DmpKingdeeFeignController extends BaseController {
 
-    @Resource
-    private KingdeeProductDetailService kingdeeProductDetailService;
+    @Resource(name = "kingdeeProductDetailService")
+    private KingdeePushService kingdeeProductDetailService;
+
 
     /**
      * @description: 发送产品信息到金蝶
@@ -30,7 +31,7 @@ public class DmpKingdeeFeignController extends BaseController {
      */
     @PostMapping("/pushProductDetail")
     public void pushProductDetail(@RequestBody Map<String,Object> map) {
-        kingdeeProductDetailService.pushProductDetail(map);
+        kingdeeProductDetailService.pushKingdee(map);
     }
 
 }
