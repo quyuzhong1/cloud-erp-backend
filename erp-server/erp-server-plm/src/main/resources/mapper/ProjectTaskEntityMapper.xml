@@ -203,10 +203,8 @@
         to_char(t.reality_start_time,'yyyy-MM-dd') AS realityStartTime,to_char(t.reality_end_time,'yyyy-MM-dd') AS
         realityEndTime,
         t.status AS taskState,
-        case when date_part('day',t.plan_end_time - t.plan_start_time) = 0 then 1
-        else date_part('day',t.plan_end_time - t.plan_start_time) end AS expectedDay,
-        case when date_part('day',t.reality_end_time - t.reality_start_time) = 0 then 1
-        else date_part('day',t.reality_end_time - t.reality_start_time) end AS realityDay,
+        date_part('day',t.plan_end_time - t.plan_start_time) + 1 AS expectedDay,
+        date_part('day',t.reality_end_time - t.reality_start_time) + 1 AS realityDay,
         p.name AS productName
         FROM project_task t INNER JOIN product_info p
         on p.id=t.product_id
