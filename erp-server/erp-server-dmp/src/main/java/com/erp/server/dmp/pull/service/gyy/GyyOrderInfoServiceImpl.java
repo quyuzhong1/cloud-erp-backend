@@ -138,9 +138,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      **/
 
     public DmpOrderInfoEntity initOrderInfoEntity(GyyOrderEntity gyyOrderEntity){
-        if(true){
-            throw new ServiceException(ApiError.ERROR_95119);
-        }
         if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
             return null;
         }
