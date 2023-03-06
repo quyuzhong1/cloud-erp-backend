@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.TemplateRefPropertyMapper">
+
+
+    <select id="getByTemplateIds" resultType="com.erp.model.plm.dto.TemplatePropertyDTO">
+        SELECT
+         trp.template_id,
+         trp.product_property_id,
+         bd.value AS productPropertyValue
+        FROM  template_ref_property trp
+        INNER JOIN basic_dict bd
+        ON bd.id=trp.product_property_id
+        WHERE trp.is_deleted=false
+        <if test="templateIdList !=null and templateIdList.size>0">
+           AND trp.template_id IN
+           <foreach collection="templateIdList" item="templateId" open="(" separator="," close=")" >
+               #{templateId}
+           </foreach>
+        </if>
+
+    </select>
+
+</mapper>

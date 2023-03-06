@@ -109,7 +109,7 @@ public class ProjectTemplateController extends BaseController {
 
 
     /**
-     * 获取立项模板的产品属性
+     * 获取模板的产品属性
      *
      * @return
      */

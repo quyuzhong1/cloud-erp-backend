@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Will
@@ -31,30 +32,24 @@ public class ProjectTemplateDTO implements Serializable {
      */
     private String name;
 
-    /**
-     * 模板类型(1立项模板,2项目模板)
-     */
-    private Integer type;
+
 
     /**
-     * 模板类型名称
+     * 模板产品属性id集合
      */
-    private String typeName;
+    private List<String> productPropertyIdList;
 
     /**
-     * 立项模板的属性id
+     * 模板产品属性名
      */
-    private String productPropertyId;
+    private String productPropertyValues;
 
     /**
      * 模板状态(1启用，0禁用)
      */
     private Integer status;
 
-    /**
-     * 是否默认，项目模板存在默认数据(1默认，0非默认)
-     */
-    private Integer isDefault;
+
 
     /**
      * 创建人

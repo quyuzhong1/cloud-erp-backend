@@ -27,7 +27,6 @@
             SELECT
                 pt.id,
                 pt.name,
-                pt.type,
                 pt.product_id,
                 pt.create_time,
                 pt.update_time,
@@ -35,7 +34,6 @@
                 pt.create_user_name,
                 pt.update_user_id,
                 pt.update_user_name,
-                pt.is_default,
                 pt.product_property_id,
                 pt.status
             FROM project_template pt

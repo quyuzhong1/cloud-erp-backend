@@ -3,27 +3,29 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ChargeSuperiorEnum;
+import com.erp.model.plm.enums.DistributionTypeEnum;
+import com.erp.model.plm.enums.RelatedSkuTypeEnum;
+import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -181,14 +183,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                         List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                         //查询对应模板角色下的人员
                         //查询立项模板
-                        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getByType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
-                        if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
-                            List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIdList, projectTemplateEntity.getId());
-                            if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                                String approverIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
-                                taskChargeDistributionEntity.setChargeIds(approverIds);
-                            }
-                        }
+
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
                         //查询对应负责人的上级

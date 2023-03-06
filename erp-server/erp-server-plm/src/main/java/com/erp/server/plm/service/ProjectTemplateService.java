@@ -20,69 +20,51 @@ import java.util.Map;
  * @since 2022-09-13
  */
 public interface ProjectTemplateService extends IService<ProjectTemplateEntity> {
-    
-    String saveTemplate(String templateName , String productId , Integer templateType);
+
+    String saveTemplate(String templateName, String productId, Integer templateType);
 
     List<StartItemSourceDTO> startItemSource(Integer sourceType);
+
     /**
+     * @param dto
+     * @return PagingVO<ProjectTemplateDTO>
      * @description: 模板管理列表查询
      * @author Will
      * @date: 2022/11/11 12:01
-     * @param dto
-     * @return PagingVO<ProjectTemplateDTO>
      */
     PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto);
+
     /**
+     * @param dto
+     * @return Boolean
      * @description: 新增或修改模板
      * @author Will
      * @date: 2022/11/11 14:57
-     * @param dto
-     * @return Boolean
      */
     Boolean saveOrUpdate(ProjectTemplateSaveOrUpdateDTO dto);
+
     /**
+     * @param dto
+     * @return Boolean
      * @description: 更新模板状态
      * @author Will
      * @date: 2022/11/11 15:38
-     * @param dto
-     * @return Boolean
      */
     Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto);
+
     /**
+     * @param templateId
+     * @return List<SysRoleDTO>
      * @description: 根据模板id查询模板成员角色
      * @author Will
      * @date: 2023/1/9 15:33
-     * @param templateId
-     * @return List<SysRoleDTO>
      */
     List<SysRoleDTO> listTemplateRole(String templateId);
-    /**
-     * @description: 根据类型查询第一条模板
-     * @author Will
-     * @date: 2023/1/14 10:01
-     * @param code
-     * @return ProjectTemplateEntity
-     */
-    ProjectTemplateEntity getByType(Integer code);
+
+
 
     List<Map<String, Object>> getProductPropertyList();
 
-    /**
-     * 获取立项模板
-     * @author yl
-     * @date 2023-02-21 16:02
-     * @param code
-     * @param productPropertyId
-     * @return com.erp.model.plm.entity.ProjectTemplateEntity
-     */
-    ProjectTemplateEntity getApprovalTemplate(Integer code, String productPropertyId);
-
-
-    /**
-     * 获取默认的开启的模板
-     * @return
-     */
-    ProjectTemplateEntity getDefaultTemplate();
 
     /**
      * 根据任务id查询模板前置任务
@@ -94,6 +76,7 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
 
     /**
      * 根据任务id更新关系
+     *
      * @param dto
      * @return
      */

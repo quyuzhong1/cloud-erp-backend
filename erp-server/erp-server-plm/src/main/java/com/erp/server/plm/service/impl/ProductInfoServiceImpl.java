@@ -134,8 +134,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private TaskDocsFinishService finishService;
 
-    @Autowired
-    private TaskDocsNameService taskDocsNameService;
+
 
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
@@ -199,7 +198,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-16 17:06
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
@@ -211,7 +210,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String chargeId = StringUtils.join(chargeIds, ",");
         String chargeName = commonService.getNameByIds(chargeIds);
         dto.setChargeName(chargeName);
+        //项目经理
+        List<String> projectChargeIds = dto.getProjectChargeIds();
         String categoryId = dto.getCategoryId();
+        entity.setProjectChargeId(StringUtils.join(projectChargeIds, ","));
         BeanMapper.copy(dto, entity);
         BasicCategoryEntity category = basicCategoryService.getById(categoryId);
         if (category != null) {
@@ -247,14 +249,41 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setSpuNo(spuNo);
         }
         Boolean flag = this.saveOrUpdate(entity);
-        //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
-        if (flag && StringUtils.isBlank(dto.getId())) {
-            List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList, loginUser, entity.getPropertyId());
-            //异步发送通知
-            noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
-            //默认查询立项模板中的成员和角色信息
-            projectMembersService.addRoleAndMembersByApproval(entity.getId(), entity.getPropertyId());
+        /**
+         * 表示是新添加的
+         * 并且模板id 不为空
+         *
+         */
+        String templateId = dto.getTemplateId();
+        String productId = entity.getId();
+        if (flag && StringUtils.isBlank(dto.getId()) && StringUtils.isNotBlank(templateId)) {
+            ProjectTemplateEntity template = templateService.getById(templateId);
+            if (Objects.isNull(template)) {
+                throw new ServiceException(ApiError.ERROR_95051);
+            }
+            //复制模板团队成员
+            List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");
+            //复制模板角色
+            List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(templateId, productId, "");
+            //复制角色关系表
+            templateRoleRefMembersService.copyTemplateRoleRefMembers(templateId, productId, "", copyRoleSourceList, copyMembersSourceList);
+            //复制 项目任务阶段
+            List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(templateId, productId, "");
+
+            //复制任务文档名 可能数据库已有数据
+            List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(templateId, productId, "");
+
+            //这个是任务的
+            List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(templateId, productId, "", phaseSourceList);
+            //这个是复制前置任务关系
+            templatePreTaskService.copyTemplatePreTask(templateId, productId, taskSourceList);
+
+
+            //这个是交付文档
+            List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, docsNameSourceList);
+            //这个是文档权限
+            templateDocsPermissionService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, deliveryDocsSourceList);
+
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());
@@ -1174,9 +1203,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
         queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
-        if(isFinishedProductDev){
+        if (isFinishedProductDev) {
             queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
-        }else{
+        } else {
             queryWrapper.ne(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES).
                     or().isNull(ProductInfoEntity::getIsFinishedProductDev);
 

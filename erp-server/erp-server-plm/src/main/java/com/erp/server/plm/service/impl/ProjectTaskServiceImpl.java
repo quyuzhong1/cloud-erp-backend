@@ -98,9 +98,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private BusinessProcessService businessProcessService;
 
-    @Autowired
-    private TaskDocsNameService taskDocsNameService;
-
 
     @Autowired
     private TaskOperatorRecordService taskOperatorRecordService;
@@ -141,17 +138,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private SysLogService sysLogService;
 
     @Autowired
-    private ProjectTemplateService projectTemplateService;
-
-
-    @Autowired
-    private TemplateMembersService templateMembersService;
-
-    @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
 
-    @Autowired
-    private TemplateTaskService templateTaskService;
 
     @Resource
     private ProjectTaskTimeRecordService projectTaskTimeRecordService;
@@ -169,116 +157,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     @Override
     public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser, String productPropertyId) {
-        //添加立项阶段
-        String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
-        // 查询立项模板
-        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getApprovalTemplate(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode(), productPropertyId);
-        if (ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
-            return new ArrayList<>();
-        }
-        // 这是立项任务任务
-        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK, projectTemplateEntity.getId());
-        //添加前置任务
-        List<ProjectTaskEntity> addTaskList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<CopySourceDTO> sourceList = new ArrayList<>();
-            for (ProjectTaskSysEntity item : sysTaskList) {
-                CopySourceDTO source = new CopySourceDTO();
-                ProjectTaskEntity entity = new ProjectTaskEntity();
-                Integer taskType = item.getType();
-                BeanMapper.copy(item, entity);
-                entity.setQuoteSysTaskId(item.getId());
-                entity.setProductId(productId);
-                entity.setPhaseId(taskPhaseId);
-                entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-                String id = IdWorker.getIdStr();
-                entity.setId(id);
-                source.setNewCreateId(id);
-                source.setDataId(item.getId());
-                sourceList.add(source);
-                if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
-                    //判断负责人分配方式是否是角色
-                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getDistributionType())) {
-                        List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
-                        List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
-                        if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                            List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());
-                            List<String> memberNames = templateMembersList.stream().map(TemplateMembersEntity::getMemberName).distinct().collect(Collectors.toList());
-                            entity.setChargeId(StringUtils.join(memberIds, ","));
-                            entity.setChargeName(StringUtils.join(memberNames, ","));
-                        }
-                    }
-                }
-                boolean flag = this.save(entity);
-                if (flag) {
-                    addTaskList.add(entity);
-                    //查询模板任务下审核人
-                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
-                    List<String> chargeIds = new ArrayList<>();
-                    if (StringUtils.isNotBlank(entity.getChargeId())) {
-                        chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
-                    }
-                    //设置审核人信息
-                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), entity.getId(), MathUtil.THREE);
-
-                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
-                }
-                sysLogService.addSysLogBySave("新增了一个：[" + entity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), entity.getId(), null);
-
-            }
-
-
-            //处理前置任务
-            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-            //处理sku 关系
-            List<TaskRefSkuConfigEntity> sysTaskRefSkuConfigList = taskRefSkuConfigService.getByTaskIds(sysTaskIds);
-            List<TaskRefSkuConfigEntity> copyRefConfigList = new ArrayList<>(sysTaskRefSkuConfigList.size());
-            for (TaskRefSkuConfigEntity item : sysTaskRefSkuConfigList) {
-                CopySourceDTO source = sourceList.stream().filter(s -> s.getDataId().equals(item.getTaskId()))
-                        .findFirst().orElse(null);
-                if (source != null) {
-                    TaskRefSkuConfigEntity addRefConfig = new TaskRefSkuConfigEntity();
-                    addRefConfig.setTaskId(source.getNewCreateId());
-                    addRefConfig.setFieldConfigType(item.getFieldConfigType());
-                    addRefConfig.setFieldJson(item.getFieldJson());
-                    copyRefConfigList.add(addRefConfig);
-                }
-
-            }
-            taskRefSkuConfigService.saveBatch(copyRefConfigList);
-
-            List<PreTaskEntity> sysPreTaskList = preTaskService.getSysPreTask(sysTaskIds);
-            //以系统任务的id 分组
-            Map<String, List<PreTaskEntity>> preMap = sysPreTaskList.parallelStream().
-                    collect(Collectors.groupingBy(PreTaskEntity::getTaskId));
-            List<PreTaskEntity> savePreList = new ArrayList<>();
-            for (Map.Entry<String, List<PreTaskEntity>> item : preMap.entrySet()) {
-                String sysTaskId = item.getKey();
-                List<PreTaskEntity> sysPreTasks = item.getValue();
-                CopySourceDTO source = sourceList.stream().filter(s -> s.getDataId().equals(sysTaskId))
-                        .findFirst().orElse(null);
-                if (source != null) {
-                    for (PreTaskEntity sysPre : sysPreTasks) {
-                        CopySourceDTO preTask = sourceList.stream().filter(s -> s.getDataId().equals(sysPre.getPreTaskId())).findFirst().orElse(null);
-                        if (preTask != null) {
-                            PreTaskEntity newPreTask = new PreTaskEntity();
-                            newPreTask.setTaskId(source.getNewCreateId());
-                            newPreTask.setPreTaskId(preTask.getNewCreateId());
-                            newPreTask.setProductId(productId);
-                            newPreTask.setIntervalWorkPeriod(sysPre.getIntervalWorkPeriod());
-                            newPreTask.setRelationship(sysPre.getRelationship());
-                            savePreList.add(newPreTask);
-                        }
-                    }
-                }
-            }
-            if (savePreList.size() > 0) {
-                preTaskService.saveBatch(savePreList);
-            }
-        }
-
-        return addTaskList;
-
+        return new ArrayList<>();
     }
 
 
@@ -378,132 +257,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Pair<List<String>, List<ProjectTaskEntity>> copyTaskBySys(String saveProductId, String saveProjectId) {
-
-
-        //添加过的 sku 配置的列表
-        List<String> addTaskSkuConfigList = new ArrayList<>();
-        //这里要找项目模板【默认的】
-        ProjectTemplateEntity defaultTemplate = projectTemplateService.getDefaultTemplate();
-        if (Objects.isNull(defaultTemplate)) {
-            return new Pair<>(new ArrayList<>(), new ArrayList<>());
-        }
-        String templateId = defaultTemplate.getId();
-        //从系统拿到 项目任务
-        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK, templateId);
-        List<ProjectTaskEntity> addTaskList = new ArrayList<>(sysTaskList.size());
-
-        //保存除了立项阶段的 阶段名
-        List<CopySourceDTO> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
-
-        // 查询立项模板
-        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getByType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
-        if (ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
-            return new Pair<>(new ArrayList<>(), new ArrayList<>());
-        }
-
-        if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<CopySourceDTO> sourceList = new ArrayList<>(sysTaskList.size());
-            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.getDocsNameByProductId(saveProductId);
-            for (ProjectTaskSysEntity item : sysTaskList) {
-                CopySourceDTO phase = projectPhaseList.stream().filter(p -> p.getDataId().equals(item.getPhaseId())).findFirst().orElse(null);
-                ProjectTaskEntity entity = new ProjectTaskEntity();
-                BeanMapper.copy(item, entity);
-                entity.setQuoteSysTaskId(item.getId());
-                entity.setProductId(saveProductId);
-                entity.setProjectId(saveProjectId);
-                String id = IdWorker.getIdStr();
-                entity.setId(id);
-                CopySourceDTO source = new CopySourceDTO();
-                source.setDataId(item.getId());
-                source.setNewCreateId(id);
-                sourceList.add(source);
-                if (phase != null) {
-                    entity.setPhaseId(phase.getNewCreateId());
-                } else {
-                    entity.setPhaseId("");
-                }
-                //任务负责人
-                if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
-                    //判断负责人分配方式是否是角色
-                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getDistributionType())) {
-                        List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
-                        List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
-                        if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                            List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());
-                            List<String> memberNames = templateMembersList.stream().map(TemplateMembersEntity::getMemberName).distinct().collect(Collectors.toList());
-                            entity.setChargeId(StringUtils.join(memberIds, ","));
-                            entity.setChargeName(StringUtils.join(memberNames, ","));
-                        }
-                    }
-                }
-                boolean flag = this.save(entity);
-                if (flag) {
-                    addTaskList.add(entity);
-                    //查询模板任务下审核人
-                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
-                    List<String> chargeIds = new ArrayList<>();
-                    if (StringUtils.isNotBlank(entity.getChargeId())) {
-                        chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
-                    }
-                    //设置审核人信息
-                    templateTaskService.setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), entity.getId(), MathUtil.THREE);
-                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(), docsNameList);
-                }
-            }
-
-            //处理前置任务
-            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-
-            List<TaskRefSkuConfigEntity> sysTaskRefSkuConfigList = taskRefSkuConfigService.getByTaskIds(sysTaskIds);
-            List<TaskRefSkuConfigEntity> addTaskRefSkuList = new ArrayList<>(sysTaskRefSkuConfigList.size());
-            for (TaskRefSkuConfigEntity item : sysTaskRefSkuConfigList) {
-                CopySourceDTO source = sourceList.stream().filter(s -> s.getDataId().equals(item.getTaskId()))
-                        .findFirst().orElse(null);
-                if (source != null) {
-                    TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
-                    addEntity.setFieldJson(item.getFieldJson());
-                    addEntity.setFieldConfigType(item.getFieldConfigType());
-                    addEntity.setTaskId(source.getNewCreateId());
-                    addEntity.setProductId(saveProductId);
-                    addTaskRefSkuList.add(addEntity);
-                    addTaskSkuConfigList.add(source.getNewCreateId());
-                }
-            }
-            if (CollectionUtils.isNotEmpty(addTaskRefSkuList)) {
-                taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
-            }
-
-            List<PreTaskEntity> sysPreTaskList = preTaskService.getSysPreTask(sysTaskIds);
-            //以系统任务的id 分组
-            Map<String, List<PreTaskEntity>> preMap = sysPreTaskList.parallelStream().
-                    collect(Collectors.groupingBy(PreTaskEntity::getTaskId));
-            List<PreTaskEntity> savePreList = new ArrayList<>();
-            for (Map.Entry<String, List<PreTaskEntity>> item : preMap.entrySet()) {
-                String sysTaskId = item.getKey();
-                List<PreTaskEntity> sysPreTasks = item.getValue();
-                CopySourceDTO source = sourceList.stream().filter(s -> s.getDataId().equals(sysTaskId))
-                        .findFirst().orElse(null);
-                if (source != null) {
-                    for (PreTaskEntity sysPre : sysPreTasks) {
-                        CopySourceDTO preTask = sourceList.stream().filter(s -> s.getDataId().equals(sysPre.getPreTaskId())).findFirst().orElse(null);
-                        if (preTask != null) {
-                            PreTaskEntity newPreTask = new PreTaskEntity();
-                            newPreTask.setTaskId(source.getNewCreateId());
-                            newPreTask.setPreTaskId(preTask.getNewCreateId());
-                            newPreTask.setProductId(saveProductId);
-                            newPreTask.setRelationship(sysPre.getRelationship());
-                            newPreTask.setIntervalWorkPeriod(sysPre.getIntervalWorkPeriod());
-                            savePreList.add(newPreTask);
-                        }
-                    }
-                }
-            }
-            if (savePreList.size() > 0) {
-                preTaskService.saveBatch(savePreList);
-            }
-        }
-
-        return new Pair<>(addTaskSkuConfigList, addTaskList);
+        return null;
     }
 
     /**
@@ -1167,12 +921,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         // 计算计划工时
         // 赋值
         detailsDTO.setPlanWorkTime(initWorkTime(detailsDTO.getPlanStartTime(), detailsDTO.getPlanEndTime(), holidays));
-        detailsDTO.setRealWorkTime(initWorkTime(detailsDTO.getRealityStartTime(),detailsDTO.getRealityEndTime(), holidays));
+        detailsDTO.setRealWorkTime(initWorkTime(detailsDTO.getRealityStartTime(), detailsDTO.getRealityEndTime(), holidays));
         return detailsDTO;
     }
 
     /**
      * 计算工期
+     *
      * @param planStartTime
      * @param planEndTime
      * @param holidays
@@ -1193,6 +948,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      *
      * @return
      */
+    @Override
     public Integer getTaskProperty(ProjectTaskEntity taskEntity) {
         Integer taskType = taskEntity.getType();
         //一般任务
@@ -1594,7 +1350,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         List<String> pretaskIdList = Collections.emptyList();
-        if(CollectionUtil.isNotEmpty(preTaskList)){
+        if (CollectionUtil.isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         resultVO.setPreTaskIdList(pretaskIdList);

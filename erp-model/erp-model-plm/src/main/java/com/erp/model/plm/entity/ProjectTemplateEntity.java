@@ -40,8 +40,8 @@ public class ProjectTemplateEntity implements Serializable {
     /**
      * 模板类型(1立项模板,2项目模板)
      */
-    @TableField("type")
-    private Integer type;
+//    @TableField("type")
+//    private Integer type;
 
     /**
      * 模板状态(1启用，0禁用)
@@ -52,8 +52,8 @@ public class ProjectTemplateEntity implements Serializable {
     /**
      * 是否默认，项目模板存在默认数据(1默认，0非默认)
      */
-    @TableField("is_default")
-    private Integer isDefault;
+//    @TableField("is_default")
+//    private Integer isDefault;
 
     /**
      * 创建人
@@ -72,8 +72,8 @@ public class ProjectTemplateEntity implements Serializable {
      * 产品属性id
      * 对应basic_dict 表 type=productProperty 表id
      */
-    @TableField("product_property_id")
-    private String productPropertyId;
+//    @TableField("product_property_id")
+//    private String productPropertyId;
     /**
      * 创建时间
      */

@@ -13,12 +13,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.DistributionTypeEnum;
-import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
@@ -545,48 +543,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public void addRoleAndMembersByApproval(String productId, String productPropertyId) {
-        Integer code = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
-        ProjectTemplateEntity entity = projectTemplateService.getApprovalTemplate(code, productPropertyId);
-        if (ObjectUtils.isNotEmpty(entity)) {
-            //模板角色
-            List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
-            //新增角色
-            if (CollectionUtils.isNotEmpty(oldRoleList)) {
-                List<ProjectRoleEntity> projectRoleList = BeanMapperUtils.copyList(ProjectRoleEntity.class, oldRoleList);
-                projectRoleList.forEach(obj -> {
-                    obj.setProductId(productId);
-                    obj.setId(null);
-                });
-                projectRoleService.saveBatch(projectRoleList);
-                //模板角色成员关联表
-                List<TemplateRoleRefMembersEntity> oldRefList = templateRoleRefMembersService.getByTemplateId(entity.getId());
-                if (CollectionUtils.isNotEmpty(oldRefList)) {
-                    //模板成员
-                    List<TemplateMembersEntity> oldMembersList = templateMembersService.getByTemplateId(entity.getId());
-                    oldRefList.forEach(obj -> {
-                        TemplateRoleEntity oldRole = oldRoleList.stream().filter(e -> e.getId().equals(obj.getRoleId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
-                        if (ObjectUtils.isEmpty(oldRole)) {
-                            return;
-                        }
-                        String roleId = projectRoleList.stream().filter(e -> e.getName().equals(oldRole.getName())).map(ProjectRoleEntity::getId).findFirst().orElse("");
-                        TemplateMembersEntity oldMembers = oldMembersList.stream().filter(e -> e.getId().equals(obj.getMembersId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
-                        //新增成员
-                        ProjectMembersEntity newMembers = new ProjectMembersEntity();
-                        BeanMapperUtils.copy(oldMembers, newMembers);
-                        newMembers.setProductId(productId);
-                        newMembers.setId(null);
-                        this.save(newMembers);
-                        obj.setMembersId(newMembers.getId());
-                        obj.setRoleId(roleId);
-                    });
-                    List<RoleRefMemberEntity> roleRefMemberList = BeanMapperUtils.copyList(RoleRefMemberEntity.class, oldRefList);
-                    roleRefMemberList.stream().forEach(obj -> obj.setProductId(productId).setId(null));
-                    roleRefMemberService.saveBatch(roleRefMemberList);
-                }
-            }
 
-
-        }
 
     }
 

@@ -41,7 +41,6 @@ public class ProjectInfoController extends BaseController {
      */
 
     @PostMapping("/startProject")
-    //@RequestPermissions("plm:project:startProject")
     public ApiResult startProject(@RequestBody @Validated StartProjectDTO dto) {
         Boolean flag = projectInfoService.startProject(dto);
         return flag == true ? success() : failure();
