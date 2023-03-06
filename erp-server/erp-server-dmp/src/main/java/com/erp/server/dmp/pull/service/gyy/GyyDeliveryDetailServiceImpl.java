@@ -96,12 +96,12 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             return;
         }
         // 构造订单结构
-        List<DmpDeliveryDetailInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
                     msg, msg.getBillNo());
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){

@@ -122,12 +122,13 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             return;
         }
         // 构造订单结构
-        List<DmpOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
@@ -209,6 +210,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
      **/
     public static List<DmpOrderItemEntity> initOrderItem(OrderEntity orderEntity) {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
+        if(CollectionUtil.isEmpty(orderItems)){
+            log.warn("MabangOrderInfoServiceImpl>>>initOrderItem>>>orderEntity 详情列表为空 {}", JSONUtil.toJsonStr(orderItems));
+            return null;
+        }
         // 运费
         BigDecimal shippingFee = null != orderEntity.getShippingTotalOrigin() ? orderEntity.getShippingTotalOrigin() : BigDecimal.ZERO;
         BigDecimal itemTotal = orderEntity.getItemTotalOrigin();

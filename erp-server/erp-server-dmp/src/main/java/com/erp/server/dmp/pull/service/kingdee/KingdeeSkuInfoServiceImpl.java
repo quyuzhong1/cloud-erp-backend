@@ -92,13 +92,13 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
             return;
         }
         // 构造订单结构
-        List<DmpSkuInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpSkuInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SKU_INFO_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getSkuNo(), msg.getItemCode()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){

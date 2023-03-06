@@ -12,6 +12,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
@@ -41,6 +42,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void pullHistoryOrderInfo(RequestDTO requestDTO) {
         try {
             //拉取数据 存库

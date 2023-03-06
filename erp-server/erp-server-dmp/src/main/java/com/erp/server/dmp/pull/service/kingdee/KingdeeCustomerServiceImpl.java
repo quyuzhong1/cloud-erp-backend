@@ -91,13 +91,13 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
             return;
         }
         // 构造订单结构
-        List<DmpShopInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg -> {
+        entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SHOP_INFO_TAG.getName(),
                 msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
@@ -106,17 +106,6 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         }).collect(Collectors.toList());
 
     }
-
-//    @Override
-//    public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
-//        //拉取数据 存库
-//        pullDataSave(requestDTO);
-//        // 修改任务执行结果信息
-//        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
-//        if (!aBoolean) {
-//            throw new RuntimeException("修改任务下次执行时间失败！");
-//        }
-//    }
 
     private DmpShopInfoEntity initOrderInfoEntity(KingdeeShopEntity shopEntity) {
 //        if (!"1".equals(shopEntity.getFUseOrgId())) {

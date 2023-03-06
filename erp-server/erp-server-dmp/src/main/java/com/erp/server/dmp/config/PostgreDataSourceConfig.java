@@ -23,7 +23,7 @@ public class PostgreDataSourceConfig {
     /**
      * 事务默认使用pgsql数据库
      */
-    @Bean(name = "postgreTransactionManager")
+    @Bean(name = "postgresTransactionManager")
     @Primary
     public DataSourceTransactionManager testTransactionManager(@Qualifier("dataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);

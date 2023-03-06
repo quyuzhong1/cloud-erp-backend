@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -29,6 +30,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -88,12 +90,13 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
             return;
         }
         // 构造订单结构
-        List<DmpOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){

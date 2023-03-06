@@ -33,7 +33,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
+    public void pullHistoryOrderInfo(RequestDTO requestDTO) {
         //拉取数据 存库
         reportSaveService.pullDataSave(requestDTO);
         // 修改任务执行结果信息
