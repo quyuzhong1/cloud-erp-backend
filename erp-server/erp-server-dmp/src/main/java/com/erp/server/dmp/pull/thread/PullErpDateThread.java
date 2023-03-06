@@ -62,7 +62,7 @@ public class PullErpDateThread {
 
     public void executeTask(String taskName) {
         // 获取请求任务
-        String o = template.opsForList().leftPop(taskName);
+        String o = template.opsForList().rightPop(taskName);
         if(ObjectUtils.isEmpty(o) || "null".equals(o)) {
             return;
         }
