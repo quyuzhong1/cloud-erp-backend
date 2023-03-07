@@ -1,11 +1,11 @@
 package com.erp.server.plm.controller;
 
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.vo.DropdownEnumVO;
@@ -121,6 +121,7 @@ public class ProjectTemplateController extends BaseController {
 
     /**
      * 更新前置任务列表
+     *
      * @param dto
      * @return
      */
@@ -129,8 +130,10 @@ public class ProjectTemplateController extends BaseController {
         Boolean flag = projectTemplateService.updatePreTask(dto);
         return flag == true ? success() : failure();
     }
+
     /**
      * 查询前置任务列表
+     *
      * @param dto
      * @return
      */
@@ -138,6 +141,19 @@ public class ProjectTemplateController extends BaseController {
     public ApiResult<List<PreTaskListVO>> listPreTask(@RequestBody @Validated TemplatePreTaskDTO dto) {
         List<PreTaskListVO> reusltList = projectTemplateService.ListPreTaskByTaskId(dto);
         return success(reusltList);
+    }
+
+
+    /**
+     * 根据产品属性获取到对应模板【优化4】
+     * @param propertyId
+     * @return
+     */
+    @GetMapping("/getTemplateByProperty")
+    public ApiResult<List<Map<String,Object>>> getByPropertyId(@Param("propertyId") String propertyId) {
+        List<Map<String,Object>> templateList = projectTemplateService.getByPropertyId(propertyId);
+        return success(templateList);
+
     }
 
 }

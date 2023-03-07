@@ -23,6 +23,11 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     int countByCategoryId(String id);
 
+    /**
+     * 保存或者修改产品
+     * @param dto
+     * @return
+     */
     String saveOrUpdateProduct(ProductDTO dto);
 
     Boolean updateCategory(MoveCategoryDTO dto);
@@ -42,8 +47,23 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     List<BasicDTO> listProductInfo(ProductSearchDTO dto);
 
+    /**
+     * 保存模板
+     * @author yl
+     * @date 2023-03-07 9:36
+     * @param dto
+     * @return java.lang.Boolean
+     */
     Boolean saveTemplate(SaveProductTemplateDTO dto);
-
+     
+    /**
+     * 更改项目状态
+     * @author yl
+     * @date 2023-03-07 9:37
+     * @param productId
+     * @param state
+     * @return void
+     */
     void updateProjectStatus(String productId, Integer state);
 
     List<Map<String, Object>> getListObjs();

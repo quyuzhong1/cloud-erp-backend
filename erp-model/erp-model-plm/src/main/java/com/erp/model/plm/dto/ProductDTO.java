@@ -137,9 +137,8 @@ public class ProductDTO implements Serializable {
     /**
      * 项目经理
      */
-    @NotNull(message = "项目经理不能为空")
-    @Size(min=1,message = "项目经理至少需要一个")
-    private List<String> projectChargeIds;
+    @NotBlank(message = "项目经理不能为空")
+    private String projectChargeId;
 
     /**
      * 模板id

@@ -54,4 +54,15 @@
           )
     </select>
 
+    <select id="getByPropertyId" resultType="java.util.Map">
+         SELECT
+           pt.id,pt.name
+         FROM project_template pt
+         LEFT JOIN template_ref_property trp
+         ON pt.id=trp.template_id
+         WHERE trp.is_deleted=false
+         AND trp.product_property_id=#{propertyId}
+
+    </select>
+
 </mapper>

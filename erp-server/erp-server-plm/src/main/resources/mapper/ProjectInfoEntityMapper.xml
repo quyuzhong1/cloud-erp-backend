@@ -92,6 +92,13 @@
             </foreach>
         </if>
 
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+            AND pi.charge_id IN
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")"  separator="AND">
+                #{chargeId}
+            </foreach>
+        </if>
+
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
             <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
@@ -99,12 +106,7 @@
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
-            AND
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(pi.charge_id,',')
-            </foreach>
-        </if>
+
         <if test="params.startTime !=null">
             AND pi.create_time &gt;=#{params.startTime}
         </if>
@@ -203,17 +205,17 @@
             </foreach>
         </if>
 
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+            AND pi.charge_id IN
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")"  separator="AND">
+                #{chargeId}
+            </foreach>
+        </if>
+
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
             <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
                 string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
-            </foreach>
-        </if>
-
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
-            AND
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(pi.charge_id,',')
             </foreach>
         </if>
 

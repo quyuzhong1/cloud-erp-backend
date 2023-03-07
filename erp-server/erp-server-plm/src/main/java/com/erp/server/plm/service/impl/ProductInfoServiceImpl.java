@@ -135,7 +135,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private TaskDocsFinishService finishService;
 
 
-
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
 
@@ -211,10 +210,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String chargeName = commonService.getNameByIds(chargeIds);
         dto.setChargeName(chargeName);
         //项目经理
-        List<String> projectChargeIds = dto.getProjectChargeIds();
+        String projectChargeId = dto.getProjectChargeId();
         String categoryId = dto.getCategoryId();
-        entity.setProjectChargeId(StringUtils.join(projectChargeIds, ","));
+        entity.setProjectChargeId(projectChargeId);
         BeanMapper.copy(dto, entity);
+        String templateId = dto.getTemplateId();
+        entity.setTemplateId(templateId);
         BasicCategoryEntity category = basicCategoryService.getById(categoryId);
         if (category != null) {
             entity.setCategory(category.getName());
@@ -254,7 +255,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
          * 并且模板id 不为空
          *
          */
-        String templateId = dto.getTemplateId();
         String productId = entity.getId();
         if (flag && StringUtils.isBlank(dto.getId()) && StringUtils.isNotBlank(templateId)) {
             ProjectTemplateEntity template = templateService.getById(templateId);
@@ -539,7 +539,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 String projectChargeId = item.getProjectChargeId();
                 if (StringUtils.isNotBlank(projectChargeId)) {
-                    item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
+                    item.setProjectChargeId(projectChargeId);
                 }
                 String productChargeId = item.getProductChargeId();
                 if (StringUtils.isNotBlank(productChargeId)) {
@@ -647,10 +647,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //模板名
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
-        //模板类型（项目模板）
-        Integer templateType = ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode();
+
+        /**
+         * 产品信息
+         */
+        ProductInfoEntity productInfo = this.getById(productId);
+        if (Objects.isNull(productInfo)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+
         //保存模板
-        String templateId = templateService.saveTemplate(templateName, productId, templateType);
+        String templateId = templateService.saveTemplate(templateName, productId,productInfo.getPropertyId());
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);
@@ -892,10 +899,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             ProjectInfoEntity project = projectInfoService.getById(dto.getProjectId());
             if (!Objects.isNull(project)) {
                 Integer projectStatus = dto.getProjectStatus();
-                List<String> projectChargeIdList = dto.getProjectChargeIdList();
-                if (CollectionUtils.isNotEmpty(projectChargeIdList)) {
-                    String projectChargeName = commonService.getNameByIds(projectChargeIdList);
-                    project.setChargeId(String.join(",", projectChargeIdList));
+                String projectChargeId = dto.getProjectChargeId();
+                if (StringUtils.isNotBlank(projectChargeId)) {
+                    String projectChargeName = commonService.getNameById(projectChargeId);
+                    project.setChargeId(projectChargeId);
                     project.setChargeName(projectChargeName);
                 } else {
                     project.setChargeName("");

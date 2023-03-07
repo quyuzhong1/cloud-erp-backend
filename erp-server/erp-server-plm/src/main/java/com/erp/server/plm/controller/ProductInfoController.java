@@ -126,7 +126,6 @@ public class ProductInfoController extends BaseController {
     }
 
     @GetMapping("/exportTemplate")
-    //@RequestPermissions("plm:product:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         productInfoService.exportTemplate(request, response);
     }
@@ -150,7 +149,6 @@ public class ProductInfoController extends BaseController {
      * 保存模板
      */
     @PostMapping("/saveTemplate")
-    //@RequestPermissions("plm:product:saveTemplate")
     public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
         return flag == true ? success() : failure();

@@ -22,11 +22,11 @@ public interface TemplateRefPropertyService extends SuperService<TemplateRefProp
      * 保存模板与产品属性的关系表
      * @author yl
      * @date 2023-03-06 14:13
-     * @param id
+     * @param templateId 模板id
      * @param productPropertyIdList
      * @return void
      */
-    void saveRef(String id, List<String> productPropertyIdList);
+    void saveRef(String templateId, List<String> productPropertyIdList);
 
     /**
      * 根据模板id 集合获取到 属性信息

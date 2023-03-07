@@ -282,4 +282,11 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "project_charge_id")
     private String projectChargeId;
 
+
+    /**
+     * 模板id
+     */
+    @TableField(value = "template_id")
+    private String templateId;
+
 }

@@ -1,19 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-
-import java.time.LocalDateTime;
-
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * <p>
@@ -42,13 +34,7 @@ public class ProjectInfoEntity implements Serializable {
     private String name;
 
 
-    //对应的id
-    @TableField("flag_id")
-    private String flagId;
 
-    //来源类型 0 新建  1  项目复制  2，模板
-    @TableField("source_type" )
-    private Integer sourceType;
 
     /**
      *
@@ -75,7 +61,9 @@ public class ProjectInfoEntity implements Serializable {
     @TableField("end_time")
     private Date endTime;
 
-    //项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
+    /**
+      *项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
+     */
     @TableField("project_status")
     private Integer projectStatus;
 

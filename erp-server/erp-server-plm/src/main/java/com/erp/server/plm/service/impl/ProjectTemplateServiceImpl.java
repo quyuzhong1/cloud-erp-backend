@@ -30,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -242,17 +239,35 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据产品属性id查询对应的模板信息
+     *
+     * @param propertyId
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-03-06 18:18
+     */
+    @Override
+    public List<Map<String, Object>> getByPropertyId(String propertyId) {
+        if (StringUtils.isBlank(propertyId)) {
+            return new ArrayList<>();
+        }
+
+        return baseMapper.getByPropertyId(propertyId);
+    }
+
 
     /**
      * 保存模板 返回模板id
      *
      * @param templateName
+     * @param productPropertyId 产品属性id
      * @return java.lang.String
      * @author yl
      * @date 2022-09-20 14:30
      */
     @Override
-    public String saveTemplate(String templateName, String productId, Integer templateType) {
+    public String saveTemplate(String templateName, String productId, String productPropertyId) {
         checkTemplateName(templateName, "");
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
@@ -266,8 +281,12 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         entity.setProductId(productId);
         entity.setCreateUserId(uid);
         entity.setCreateUserName(userName);
-        if (this.save(entity)) {
-            return entity.getId();
+        boolean saveResult = this.save(entity);
+        if (saveResult) {
+            //模板id
+            String templateId=entity.getId();
+            templateRefPropertyService.saveRef(templateId, Arrays.asList(productPropertyId));
+            return templateId;
         }
         return "";
 

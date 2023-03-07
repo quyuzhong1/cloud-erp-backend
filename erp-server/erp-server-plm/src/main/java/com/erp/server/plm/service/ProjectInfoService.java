@@ -22,6 +22,11 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     ProjectInfoDTO projectInfo(ProductTaskCountShowDTO productTaskCountShowDTO);
 
 
+    /**
+     * 启动项目
+     * @param dto
+     * @return
+     */
     Boolean startProject(StartProjectDTO dto);
 
 

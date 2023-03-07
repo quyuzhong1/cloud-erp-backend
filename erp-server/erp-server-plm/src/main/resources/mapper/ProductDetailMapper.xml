@@ -135,6 +135,13 @@
             </foreach>
         </if>
 
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+            AND pi.project_charge_id IN
+            <foreach collection="params.projectChargeIdList" item="projectChargeId" open="(" separator="," close=")">
+                #{projectChargeId}
+            </foreach>
+        </if>
+
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
             <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">

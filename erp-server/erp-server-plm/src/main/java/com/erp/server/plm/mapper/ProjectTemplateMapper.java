@@ -43,4 +43,13 @@ public interface ProjectTemplateMapper extends BaseMapper<ProjectTemplateEntity>
      * @return java.util.List<java.util.Map<java.lang.String,java.lang.Object>>
      */
     List<Map<String, Object>> getProductPropertyList(@Param("type") String type);
+
+    /**
+     * 获取模板id 和名称
+     * @author yl
+     * @date 2023-03-06 18:31
+     * @param propertyId
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     */
+    List<Map<String, Object>> getByPropertyId(@Param("propertyId") String propertyId);
 }

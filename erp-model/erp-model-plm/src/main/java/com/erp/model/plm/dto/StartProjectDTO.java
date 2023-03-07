@@ -1,16 +1,12 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @Classname ProjectDTO
@@ -26,9 +22,8 @@ public class StartProjectDTO implements Serializable {
     /**
      * 负责人id集合
      */
-    @NotNull(message = "负责人id不能为空")
-    @Size(min=1,message = "负责人id不能为空")
-    private List<String>  chargeIdList;
+    @NotBlank(message = "负责人id不能为空")
+    private String  chargeId;
 
 
     /**
@@ -64,22 +59,5 @@ public class StartProjectDTO implements Serializable {
      */
     private String describe;
 
-    /**
-     * 来源类型
-     * 来源类型 0 新建 1,项目复制 2.模板复制
-     */
-    @StateEnumValue(intValues = {0,1,2}, message = "来源类型有误")
-    private Integer sourceType;
 
-    /**
-     * 标示id
-     */
-    private String flagId;
-
-
-    /**
-     * 成员
-     * 
-     */
-    private List<String> members;
 }

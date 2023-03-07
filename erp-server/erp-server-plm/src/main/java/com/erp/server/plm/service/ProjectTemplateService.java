@@ -21,7 +21,16 @@ import java.util.Map;
  */
 public interface ProjectTemplateService extends IService<ProjectTemplateEntity> {
 
-    String saveTemplate(String templateName, String productId, Integer templateType);
+    /**
+     * 保存产品模板
+     * @author yl
+     * @date 2023-03-07 9:46
+     * @param templateName
+     * @param productId
+     * @param productPropertyId
+     * @return java.lang.String
+     */
+    String saveTemplate(String templateName, String productId,String  productPropertyId);
 
     List<StartItemSourceDTO> startItemSource(Integer sourceType);
 
@@ -81,4 +90,13 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return
      */
     Boolean updatePreTask(PreTemplateTaskUpdateDTO dto);
+
+    /**
+     * 根据产品属性id获取模板名
+     * @author yl
+     * @date 2023-03-06 18:15
+     * @param propertyId
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     */
+    List<Map<String,Object>> getByPropertyId(String propertyId);
 }
