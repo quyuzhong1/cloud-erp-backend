@@ -407,4 +407,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<ProductDetailEntity>
      */
     List<ProductDetailEntity> listByAuditPass();
+    /**
+     * @description: 搜索父级sku
+     * @author Will
+     * @date: 2023/3/7 20:07
+     * @param searchKeyword
+     * @return List<SkuVO>
+     */
+    List<SkuVO> searchParentSku(String searchKeyword);
 }

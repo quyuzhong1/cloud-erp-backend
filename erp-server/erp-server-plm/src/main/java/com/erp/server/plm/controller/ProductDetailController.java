@@ -820,6 +820,19 @@ ProductDetailController extends BaseController {
         return success(skuList);
     }
 
+   /**
+    * @description: 搜索父级sku
+    * @author Will
+    * @date: 2023/3/7 20:06
+    * @param searchKeyword
+    * @return ApiResult<List<SkuVO>>
+    */
+    @GetMapping("/search/parentSku")
+    public ApiResult<List<SkuVO>> searchParentSku(String searchKeyword) {
+        List<SkuVO> skuList = productDetailService.searchParentSku(searchKeyword);
+        return success(skuList);
+    }
+
 
     /**
      * 在bom 管理 或者变更管理  获取到sku 信息

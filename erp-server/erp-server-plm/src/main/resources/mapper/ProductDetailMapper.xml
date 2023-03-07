@@ -520,4 +520,26 @@
             </foreach>
         </if>
     </select>
+
+    <select id="searchParentSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0 AND pd.status=#{state} and pd.id not in (select parent_sku_id from product_bom_sku)
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+            OR
+            pd.name LIKE  concat('%',#{searchKeyword},'%')
+            )
+        </if>
+    </select>
 </mapper>

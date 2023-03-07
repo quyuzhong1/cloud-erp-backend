@@ -185,7 +185,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<BomInfoExcelDTO> list = excelListenerUtil.getErrorList();
         if (list.size() > 0) {
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/bomInfo.xlsx";
+            String excelPath = "excel/bomInfoError.xlsx";
             String name = "bomInfo";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);

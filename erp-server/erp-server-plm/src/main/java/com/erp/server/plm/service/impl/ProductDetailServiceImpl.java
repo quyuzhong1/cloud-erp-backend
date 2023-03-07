@@ -2109,6 +2109,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return list;
     }
 
+    @Override
+    public List<SkuVO> searchParentSku(String searchKeyword) {
+        return baseMapper.searchParentSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+    }
+
 
     private String checkRequiredData(ProductDetailEntity productDetailEntity) {
         StringBuffer str = new StringBuffer();

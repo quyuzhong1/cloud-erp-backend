@@ -93,12 +93,12 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
         //已审核父级sku
         ProductDetailEntity parent = productDetailList.stream().filter(obj -> StringUtils.equals(parentSku, obj.getSkuNo())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(parent)) {
-            errorMsgList.add(ApiError.ERROR_95152.name());
+            errorMsgList.add(ApiError.ERROR_95152.msg);
         }
         //已审核子sku
         ProductDetailEntity child = productDetailList.stream().filter(obj -> StringUtils.equals(childSku, obj.getSkuNo())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(child)) {
-            errorMsgList.add(ApiError.ERROR_95153.name());
+            errorMsgList.add(ApiError.ERROR_95153.msg);
         }
         //添加数据用于判断是否为空
         dataList.add(bomInfoExcelDTO);
