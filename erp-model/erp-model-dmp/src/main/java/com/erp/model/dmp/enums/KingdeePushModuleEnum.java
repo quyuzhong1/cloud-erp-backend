@@ -8,7 +8,8 @@ package com.erp.model.dmp.enums;
  */
 public enum KingdeePushModuleEnum {
 
-    BD_MATERIAL("BD_MATERIAL","基础物料");
+    BD_MATERIAL("BD_MATERIAL","物料"),
+    ENG_BOM("ENG_BOM","物料清单");
 
     private String code;
 

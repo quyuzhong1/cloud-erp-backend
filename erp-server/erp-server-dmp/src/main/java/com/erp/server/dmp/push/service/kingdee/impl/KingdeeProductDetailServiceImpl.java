@@ -11,8 +11,6 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
-import com.erp.server.dmp.service.ApiPlmSyncLogService;
-import com.erp.server.dmp.service.ApiSyncTaskService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
@@ -45,12 +43,6 @@ public class KingdeeProductDetailServiceImpl implements KingdeePushService {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
-
-    @Resource
-    private ApiPlmSyncLogService apiPlmSyncLogService;
-
-    @Resource
-    private ApiSyncTaskService apiSyncTaskService;
 
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
