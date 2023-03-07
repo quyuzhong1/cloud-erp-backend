@@ -123,7 +123,6 @@
 //        List<KingdeeRefundOrderEntity> infoArrayList = new ArrayList<>();
 //        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
 //        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-//        dto.getJobTaskDTO().setLastTime(nextTime);
 //        LinkedList<String> queryFilters = new LinkedList<>();
 //        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 //        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));

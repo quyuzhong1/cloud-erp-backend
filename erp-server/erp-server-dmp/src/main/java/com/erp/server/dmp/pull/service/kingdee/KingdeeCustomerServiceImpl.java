@@ -155,8 +155,9 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         if(null == lastTime || null == nextTime){
             lastTime = LocalDateTime.parse("2021-01-01T00:00:00");
             nextTime = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(lastTime);
+            dto.getJobTaskDTO().setNextTime(nextTime);
         }
-        dto.getJobTaskDTO().setLastTime(nextTime);
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());

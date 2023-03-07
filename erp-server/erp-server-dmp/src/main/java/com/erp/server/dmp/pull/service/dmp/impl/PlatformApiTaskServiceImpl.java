@@ -28,10 +28,9 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
         LambdaUpdateWrapper<PlatformApiTaskEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         if (1 != type){
             Integer interval = jobTaskDTO.getIntervalTime();
-            LocalDateTime lastTime = jobTaskDTO.getLastTime();
-            LocalDateTime nextTime = lastTime.plusSeconds(interval);
-            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, jobTaskDTO.getLastTime());
-            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime);
+            LocalDateTime nextTime = jobTaskDTO.getNextTime();
+            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, nextTime);
+            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime.plusSeconds(interval));
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getRetryCount, 0);
         }else {
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getRetryCount, jobTaskDTO.getRetryCount() + 1);

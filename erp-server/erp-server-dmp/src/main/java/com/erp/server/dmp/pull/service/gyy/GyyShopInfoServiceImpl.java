@@ -135,8 +135,9 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
         if(null == lastTime || null == nextTime){
             lastTime = LocalDateTime.parse("2021-01-01T00:00:00");
             nextTime = LocalDateTime.now();
+            dto.getJobTaskDTO().setNextTime(nextTime);
+            dto.getJobTaskDTO().setLastTime(lastTime);
         }
-        dto.getJobTaskDTO().setLastTime(nextTime);
         return GyyApiUtils.queryShopList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 

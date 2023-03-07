@@ -100,9 +100,6 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
      * 请求马帮店铺信息接口
      */
     private List<ShopEntity> pullDate(RequestDTO dto) {
-//        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
-        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
         return MabangApiUtils.queryShopList(dto.getPlatformApiEnum().getTaskName());
     }
 

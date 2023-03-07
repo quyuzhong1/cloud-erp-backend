@@ -147,7 +147,6 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     private List<GyyReturnOrderEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
         return GyyApiUtils.queryReturnOrderList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 

@@ -154,7 +154,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        dto.getJobTaskDTO().setLastTime(nextTime);
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));

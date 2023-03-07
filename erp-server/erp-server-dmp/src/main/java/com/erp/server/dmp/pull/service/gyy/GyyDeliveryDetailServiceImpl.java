@@ -119,7 +119,6 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     private List<GyyDeliveryDetailEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
         boolean flag = Objects.equals(dto.getPlatformApiEnum(), PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET);
         return GyyApiUtils.queryDeliveryList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime, flag);
     }

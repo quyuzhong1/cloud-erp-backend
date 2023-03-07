@@ -42,7 +42,6 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void pullHistoryOrderInfo(RequestDTO requestDTO) {
         try {
             //拉取数据 存库
@@ -50,10 +49,10 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
             // 修改任务执行结果信息
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
             if (!aBoolean) {
-                throw new RuntimeException("修改任务下次执行时间失败！");
+                throw new RuntimeException("修改历史销售单任务下次执行时间失败！");
             }
         }catch (Exception e) {
-            XxlJobHelper.log(" 管易云拉取数据错误dto={}", JSONUtil.toJsonStr(requestDTO), e);
+            XxlJobHelper.log(" 管易云拉取历史销售单数据错误dto={}", JSONUtil.toJsonStr(requestDTO), e);
             String message = e.getMessage();
             DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
             dmpErrorLogService.save(dmpErrorLogEntity);
