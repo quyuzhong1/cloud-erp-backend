@@ -22,4 +22,12 @@ public interface BomSkuService extends IService<BomSkuEntity> {
     void updateBomSku(String bomId, List<BomSkuDTO> bomSkuList);
 
     void deleteByBomId(String id);
+    /**
+     * @description: 根据父级skuId查询
+     * @author Will
+     * @date: 2023/3/7 14:54
+     * @param parentSkuId
+     * @return List<BomSkuEntity>
+     */
+    List<BomSkuEntity> getByParentSkuId(String parentSkuId);
 }

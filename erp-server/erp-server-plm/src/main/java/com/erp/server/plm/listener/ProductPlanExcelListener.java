@@ -20,6 +20,7 @@ import com.erp.model.plm.enums.ThreeGenerationPlanningEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.*;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -76,6 +77,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
     }
 
     @Override
+    @Transactional
     public void invoke(ProductPlanExcelDTO productPlanExcelDTO, AnalysisContext analysisContext) {
         //列表返回错误信息
         List<String> errorMsgList = new ArrayList<>();

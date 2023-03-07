@@ -288,7 +288,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @description: 根据sku参数查询
      * @author Will
      * @date: 2022/12/26 11:56
-     * @param params
+     * @param params (id,skuNo)
      * @return ProductDetailDTO
      */
     ProductDetailDTO getSkuByParam(Map<String, String> params);
@@ -400,4 +400,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date: 2023/3/2 17:34
      */
     void handleChargeId();
+    /**
+     * @description: 查询审核通过的负责人
+     * @author Will
+     * @date: 2023/3/7 14:12
+     * @return List<ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listByAuditPass();
 }

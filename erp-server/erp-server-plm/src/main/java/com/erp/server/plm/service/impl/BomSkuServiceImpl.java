@@ -134,6 +134,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         this.remove(queryWrapper);
     }
 
+    @Override
+    public List<BomSkuEntity> getByParentSkuId(String parentSkuId) {
+        List<BomSkuEntity> list = lambdaQuery().eq(BomSkuEntity::getParentSkuId, parentSkuId).list();
+        return list;
+    }
+
     /**
      * 根据Bomid 删除 bom sku 信息
      *

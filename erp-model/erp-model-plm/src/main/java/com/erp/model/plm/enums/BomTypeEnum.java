@@ -39,4 +39,13 @@ public enum BomTypeEnum {
         }
         return "";
     }
+
+    public static String getType(String name) {
+        for (BomTypeEnum item : BomTypeEnum.values()) {
+            if (name.equals(item.getName())) {
+                return item.getType();
+            }
+        }
+        return "";
+    }
 }

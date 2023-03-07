@@ -2074,7 +2074,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<ProductDetailEntity> resultList = new ArrayList<>();
-        List<ProductDetailEntity> productDetailEntityList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getChargeId()) && StringUtils.isNotBlank(obj.getChargeName())).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = list.stream().filter(obj -> StringUtils.isBlank(obj.getChargeId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(productDetailEntityList)) {
             return;
         }
@@ -2101,6 +2101,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             this.updateBatchById(resultList);
         }
 
+    }
+
+    @Override
+    public List<ProductDetailEntity> listByAuditPass() {
+        List<ProductDetailEntity> list = lambdaQuery().eq(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode()).list();
+        return list;
     }
 
 

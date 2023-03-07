@@ -263,6 +263,9 @@ public enum ApiError implements Serializable {
     ERROR_95150(95150, "存在重复的任务"),
 
     ERROR_95151(95151, "模板前置数据修改失败"),
+    ERROR_95152(95152, "请录入已审核的父级SKU"),
+    ERROR_95153(95153, "请录入已审核的子级SKU"),
+    ERROR_95154(95154, "产品信息未发现已审核SKU"),
     /**
      * bi 错误
      * 从97000 开始  以端口号
