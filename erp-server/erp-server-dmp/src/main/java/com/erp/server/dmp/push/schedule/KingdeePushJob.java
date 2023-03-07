@@ -47,7 +47,7 @@ public class KingdeePushJob {
     //@Scheduled(cron = "*/5 * * * * ?")
     @XxlJob("kindeePushProductDetail")
     public void kindeePushProductDetail() {
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getName());
+        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             log.info("金蝶定时任务推送产品信息失败，未找到对应平台。");
             throw new ServiceException(ApiError.Default);
