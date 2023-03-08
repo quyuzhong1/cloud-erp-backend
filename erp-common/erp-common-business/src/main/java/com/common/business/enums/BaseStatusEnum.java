@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum BaseStatusEnum {
 
 
-    CANCEL("cancel", "取消"),
+    CANCEL("cancel", "已取消"),
     WAIT_SUBMIT("waitSubmit", "待提交"),
     WAIT_AUDIT("waitAudit", "待审核"),
     AUDIT_ING("auditIng", "审核中"),

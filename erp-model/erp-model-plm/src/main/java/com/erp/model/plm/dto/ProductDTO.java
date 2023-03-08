@@ -137,7 +137,6 @@ public class ProductDTO implements Serializable {
     /**
      * 项目经理
      */
-    @NotBlank(message = "项目经理不能为空")
     private String projectChargeId;
 
     /**
