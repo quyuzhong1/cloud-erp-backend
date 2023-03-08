@@ -601,12 +601,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
+        //分类id
+        String categoryId = params.getCategoryId();
+
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds);
+                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds,categoryIdList);
             }
         } else {
-            dataList = baseMapper.listNotPaging(params, archiveProductIds);
+            dataList = baseMapper.listNotPaging(params, archiveProductIds,categoryIdList);
         }
         return dataList;
     }

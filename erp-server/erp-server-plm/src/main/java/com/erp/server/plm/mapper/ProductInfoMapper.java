@@ -23,7 +23,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params, @Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
-    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
+    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
 
@@ -31,7 +31,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     IPage<ProductShowDTO> myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
-    List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
+    List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<ProductProjectDTO> getProductAndProjectList(@Param("archiveProductIdList") List<String> archiveProductIdList,@Param("projectStatus") Integer projectStatus);
 

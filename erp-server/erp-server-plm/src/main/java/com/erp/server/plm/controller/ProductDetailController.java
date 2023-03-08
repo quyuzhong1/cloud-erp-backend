@@ -821,7 +821,7 @@ ProductDetailController extends BaseController {
     }
 
    /**
-    * @description: 搜索父级sku
+    * 搜索父级sku
     * @author Will
     * @date: 2023/3/7 20:06
     * @param searchKeyword
