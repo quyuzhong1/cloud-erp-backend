@@ -32,7 +32,7 @@
         <commons-collections4.version>4.3</commons-collections4.version>
         <commons.io.version>2.5</commons.io.version>
         <commons-lang3.version>3.0</commons-lang3.version>
-        <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
+        <spring-cloud.version>Hoxton.SR9</spring-cloud.version>
         <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
         <mybatis-version>3.4.2</mybatis-version>
         <joda.time.version>2.9.9</joda.time.version>
