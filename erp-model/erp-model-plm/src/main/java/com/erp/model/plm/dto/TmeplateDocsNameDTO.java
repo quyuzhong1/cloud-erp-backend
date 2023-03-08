@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -25,6 +26,7 @@ public class TmeplateDocsNameDTO implements Serializable {
      * 文档名
      */
     @NotBlank(message = "文档名不能为空")
+    @Size(max = 50,message = "文档名最大50字符")
     private String name;
 
     /**

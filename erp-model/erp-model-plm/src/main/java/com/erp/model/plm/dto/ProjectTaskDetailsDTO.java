@@ -1,15 +1,9 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -178,10 +172,15 @@ public class ProjectTaskDetailsDTO implements Serializable {
     private List<RefTaskInfoDTO> childTasks;
 
     /**
-     * 输出文档 列表
+     * 交付文档 列表
      */
     private List<DeliveryDocsDTO> outputDocsList;
 
+
+    /**
+     * 项目文档 列表
+     */
+    private List<DeliveryDocsDTO> productDocsList;
 
     /**
      * 变更文档流程状态

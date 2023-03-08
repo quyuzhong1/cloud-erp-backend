@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.TmeplateDocsNameDTO;
@@ -26,10 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -152,6 +149,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
 
     /**
      * 获取到项目
+     *
      * @param templateId
      * @return
      */
@@ -162,32 +160,39 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     }
 
     /**
+     * @param templateId
+     * @return List<DocsDTO>
      * @description: 查询已存在的文档名称
      * @author Will
      * @date: 2022/11/16 12:58
-     * @param templateId
-     * @return List<DocsDTO>
      */
     @Override
     public List<DocsDTO> getDocsNameList(String templateId) {
         List<DocsDTO> resultList = new LinkedList<>();
-        LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
-        List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
-        List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
-        int noSys = IsConstant.NO;
-        for (DocsDTO item : docsNames) {
-            item.setIsSys(noSys);
+        List<TemplateDeliveryDocsEntity> deliveryDocsList = templateDeliveryDocsService.getByTemplateIds(Arrays.asList(templateId));
+        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            List<String> docsNameIds = deliveryDocsList.stream().filter(d -> d.getStatus().equals(1)).map(TemplateDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+            LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
+            queryWrapper.in(TemplateTaskDocsNameEntity::getId, docsNameIds);
+            List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
+            List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
+            resultList.addAll(docsNames);
+        }else{
+            LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
+            List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
+            List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
+            resultList.addAll(docsNames);
         }
-        resultList.addAll(docsNames);
         return resultList;
     }
 
     @Override
     public TemplateTaskDocsNameEntity getByIdAndTemplateId(String docsNameId, String templateId) {
         LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId,templateId);
-        queryWrapper.eq(TemplateTaskDocsNameEntity::getId,docsNameId);
+        queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
+        queryWrapper.eq(TemplateTaskDocsNameEntity::getId, docsNameId);
         return this.getOne(queryWrapper);
     }
 
@@ -201,10 +206,16 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
             throw new ServiceException(ApiError.ERROR_95012);
         }
+        TemplateDeliveryDocsEntity deliveryDocs = templateDeliveryDocsService.getById(dto.getDeliveryDocsId());
+        String docsNameId = null;
+        if (deliveryDocs != null) {
+            docsNameId = deliveryDocs.getDocsNameId();
+        }
         TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
+        entity.setId(docsNameId);
         entity.setName(name);
         entity.setTemplateId(templateId);
-        boolean flag = this.save(entity);
+        boolean flag = this.saveOrUpdate(entity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
@@ -214,15 +225,34 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         if (flag) {
             //更新输出物关联的文件名和文件名id
             LambdaUpdateWrapper<TemplateDeliveryDocsEntity> updateWrapper = new LambdaUpdateWrapper();
-            updateWrapper.eq(TemplateDeliveryDocsEntity::getId,dto.getDeliveryDocsId());
-            updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,dto.getTemplateId());
-            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsNameId,entity.getId());
-            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName,entity.getName());
-            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId,uid);
-            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName,userName);
-            templateDeliveryDocsService.update(updateWrapper);
+            updateWrapper.eq(TemplateDeliveryDocsEntity::getId, dto.getDeliveryDocsId());
+            updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, dto.getTemplateId());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsNameId, entity.getId());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName, entity.getName());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId, uid);
+            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName, userName);
+            return templateDeliveryDocsService.update(updateWrapper);
         }
         return true;
+    }
+
+    /**
+     * 根据模板id 集合获取模板文档名
+     *
+     * @param templateIds
+     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskDocsNameEntity>
+     * @author yl
+     * @date 2023-03-08 10:32
+     */
+    @Override
+    public List<TemplateTaskDocsNameEntity> getByTemplateIds(List<String> templateIds) {
+        if (CollectionUtils.isEmpty(templateIds)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TemplateTaskDocsNameEntity::getTemplateId, templateIds);
+
+        return this.list(queryWrapper);
     }
 
 

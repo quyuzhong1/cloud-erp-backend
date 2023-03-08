@@ -92,6 +92,33 @@ public class SysCalendarDTO implements Serializable {
         private String organization;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class InitDateDTO{
+        /**
+         * 组织
+         */
+        private String organization;
+
+        private List<DateAndRemarkDTO> dateRemarkList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DateAndRemarkDTO{
+        /**
+         * 指定年月日
+         */
+        private LocalDate date;
+
+        /**
+         * 是否工作日
+         */
+        private Boolean isWorkDay;
+
+        private String remark;
+    }
 
     public interface SysSelectList{}
 }

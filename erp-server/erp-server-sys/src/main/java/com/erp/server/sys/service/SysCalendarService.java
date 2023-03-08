@@ -30,4 +30,11 @@ public interface SysCalendarService extends SuperService<SysCalendarEntity> {
      * @return
      */
     Boolean saveOrUpdateBatchDate(SysCalendarDTO.SaveOrUpdateDTO updateDTO);
+
+    /**
+     * 初始化日期数据
+     * @param list
+     * @return
+     */
+    Boolean initRemarkList(List<SysCalendarEntity> list);
 }

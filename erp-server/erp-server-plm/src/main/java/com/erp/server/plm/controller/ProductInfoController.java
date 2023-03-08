@@ -86,7 +86,6 @@ public class ProductInfoController extends BaseController {
      * 产品列表-更改对应数据
      */
     @PostMapping("/updateProduct")
-    //@RequestPermissions("plm:product:updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
         productInfoService.updateProduct(dto);
         return success();
@@ -97,8 +96,6 @@ public class ProductInfoController extends BaseController {
      * 产品列表-新建产品
      */
     @PostMapping("/saveOrUpdate")
-    //@RequestPermissions("plm:product:saveOrUpdate")
-
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:updateOrUpdate",
@@ -114,7 +111,6 @@ public class ProductInfoController extends BaseController {
      * 产品列表-移动分类
      */
     @PostMapping("/updateCategory")
-    //@RequestPermissions("plm:product:updateCategory")
     public ApiResult updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
         Boolean flag = productInfoService.updateCategory(dto);
         return flag == true ? success() : failure();
@@ -124,19 +120,12 @@ public class ProductInfoController extends BaseController {
      * 产品列表-删除产品
      */
     @PostMapping("/remove")
-    //@RequestPermissions("plm:product:remove")
-    /*@DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
-            tableField = "charge_id",
-            menuCode = "plm:product:remove",
-            serviceClass = ProductInfoService.class,
-            keyIdName = "productId")*/
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
         return flag == true ? success() : failure();
     }
 
     @GetMapping("/exportTemplate")
-    //@RequestPermissions("plm:product:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         productInfoService.exportTemplate(request, response);
     }
@@ -160,7 +149,6 @@ public class ProductInfoController extends BaseController {
      * 保存模板
      */
     @PostMapping("/saveTemplate")
-    //@RequestPermissions("plm:product:saveTemplate")
     public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
         return flag == true ? success() : failure();

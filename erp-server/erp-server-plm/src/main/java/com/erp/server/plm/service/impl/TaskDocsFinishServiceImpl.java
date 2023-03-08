@@ -154,6 +154,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     if (StringUtils.isBlank(fileUrl)) {
                         throw new ServiceException(ApiError.ERROR_95018);
                     }
+                    if (fileName.length() > 200) {
+                        throw new ServiceException(ApiError.ERROR_1018);
+                    }
                     entity.setUploadType(IsConstant.NO);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileSuffix(fileSuffix);
@@ -332,6 +335,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
                     if (StringUtils.isBlank(fileUrl)) {
                         throw new ServiceException(ApiError.ERROR_95018);
+                    }
+                    if (fileName.length() > 200) {
+                        throw new ServiceException(ApiError.ERROR_1018);
                     }
                     entity.setUploadType(IsConstant.NO);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
@@ -593,6 +599,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                         String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
                         if (StringUtils.isBlank(fileUrl)) {
                             throw new ServiceException(ApiError.ERROR_95018);
+                        }
+                        if (fileName.length() > 200) {
+                            throw new ServiceException(ApiError.ERROR_1018);
                         }
                         finishEntity.setUploadType(IsConstant.NO);
                         entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());

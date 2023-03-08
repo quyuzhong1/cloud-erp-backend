@@ -2,16 +2,13 @@ package com.common.core.utils;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
-import com.alibaba.fastjson.JSONObject;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 
-import javax.annotation.Resource;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName: Holiday
@@ -52,6 +49,47 @@ public class HolidayUtils {
     }
 
     /**
+     * java获取国家法定节假日和周末,调休
+     * @param year /
+     * @param month /
+     * @return /
+     *
+     */
+    public static List<JSONObject> JJRRemarkMap(int year, int month) {
+        //获取所有的周末
+        Set<LocalDate> dateList = getMonthWekDay(year, month);
+        Map jjr = getJjr(year, month);
+        Integer code = (Integer) jjr.get("code");
+        List<JSONObject> resultJson = new ArrayList<>();
+        resultJson = dateList.stream().map(x -> {
+            JSONObject data = new JSONObject();
+            data.put("calendarDate", x);
+            data.put("isWorkDay", Boolean.FALSE);
+            data.put("remark", "周末");
+            return data;
+        }).collect(Collectors.toList());
+        if (code != 0) {
+            return resultJson;
+        }
+        Map<String, Map<String, Object>> holiday = (Map<String, Map<String, Object>>) jjr.get("holiday");
+        Set<String> strings = holiday.keySet();
+        for (String str : strings) {
+            Map<String, Object> stringObjectMap = holiday.get(str);
+            LocalDate date = LocalDate.parse((String) stringObjectMap.get("date")) ;
+            String remark = (String) stringObjectMap.get("name");
+            Boolean isWork = !(Boolean)stringObjectMap.get("holiday") ;
+
+            //筛选掉 补 班
+            JSONObject data = new JSONObject();
+            data.put("calendarDate", date);
+            data.put("remark", remark);
+            data.put("isWorkDay", isWork);
+            resultJson.add(data);
+        }
+        return resultJson;
+    }
+
+    /**
      * 获取节假日不含周末
      * @param year /
      * @param month /
@@ -67,7 +105,7 @@ public class HolidayUtils {
 
         //解密数据
         String rsa = HttpUtil.get(url);
-        return JSONObject.parseObject(rsa, LinkedHashMap.class);
+        return JSONUtil.toBean(rsa, LinkedHashMap.class);
     }
 
     /**
@@ -95,5 +133,9 @@ public class HolidayUtils {
         return dateList;
     }
 
+    public static void main(String[] args) {
+        List<JSONObject> jsonObjects = JJRRemarkMap(2023, 0);
+        Set<LocalDate> jjr = JJR(2023, 0);
+    }
 }
 

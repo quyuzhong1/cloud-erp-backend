@@ -70,7 +70,10 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         List<TemplatePhaseEntity> list = getByTemplateId(templateId);
         List<ProjectPhaseEntity> existList = projectPhaseService.getByProductId(productId);
         List<CopySourceDTO> sourceList = new ArrayList<>();
-        Integer seq = existList.stream().max(Comparator.comparingInt(ProjectPhaseEntity::getSeq)).map(ProjectPhaseEntity::getSeq).get();
+        Integer seq = 0;
+        if (CollectionUtils.isNotEmpty(existList)) {
+            seq = existList.stream().max(Comparator.comparingInt(ProjectPhaseEntity::getSeq)).map(ProjectPhaseEntity::getSeq).get();
+        }
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectPhaseEntity> copyList = new ArrayList<>();
             for (TemplatePhaseEntity item : list) {
@@ -120,8 +123,8 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     }
 
     @Override
-    public Boolean removeTemplatePhase(String id , String templateId) {
-        TemplatePhaseEntity phaseEntity = this.getByIdAndTemplateId(id,templateId);
+    public Boolean removeTemplatePhase(String id, String templateId) {
+        TemplatePhaseEntity phaseEntity = this.getByIdAndTemplateId(id, templateId);
         if (Objects.isNull(phaseEntity)) {
             throw new ServiceException(ApiError.ERROR_95041);
         }
@@ -130,10 +133,10 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         if (flagName.equals(name)) {
             throw new ServiceException(ApiError.ERROR_95042);
         }
-        checkPhaseTask(id,templateId);
+        checkPhaseTask(id, templateId);
         LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplatePhaseEntity::getId,id);
-        queryWrapper.eq(TemplatePhaseEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplatePhaseEntity::getId, id);
+        queryWrapper.eq(TemplatePhaseEntity::getTemplateId, templateId);
         return this.remove(queryWrapper);
     }
 
@@ -150,11 +153,11 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     }
 
     /**
+     * @param templateId
+     * @return List<TemplatePhaseEntity>
      * @description: 查询模板下所有阶段
      * @author Will
      * @date: 2022/11/17 10:29
-     * @param templateId
-     * @return List<TemplatePhaseEntity>
      */
     public List<TemplatePhaseEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -163,19 +166,38 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     }
 
     /**
-     * @description: 根据id和模板查询阶段
-     * @author Will
-     * @date: 2022/11/17 10:29
      * @param id
      * @param templateId
      * @return TemplatePhaseEntity
+     * @description: 根据id和模板查询阶段
+     * @author Will
+     * @date: 2022/11/17 10:29
      */
     @Override
-    public TemplatePhaseEntity getByIdAndTemplateId(String id,String templateId) {
+    public TemplatePhaseEntity getByIdAndTemplateId(String id, String templateId) {
         LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePhaseEntity::getTemplateId, templateId);
         queryWrapper.eq(TemplatePhaseEntity::getId, id);
         return this.getOne(queryWrapper);
+    }
+
+
+    /**
+     * 根据模板id 获取
+     *
+     * @param templateIds
+     * @return java.util.List<com.erp.model.plm.entity.TemplatePhaseEntity>
+     * @author yl
+     * @date 2023-03-07 20:13
+     */
+    @Override
+    public List<TemplatePhaseEntity> getByTemplateIds(List<String> templateIds) {
+        if (CollectionUtils.isEmpty(templateIds)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TemplatePhaseEntity::getTemplateId, templateIds);
+        return this.list(queryWrapper);
     }
 
     /**
@@ -208,14 +230,13 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     }
 
     /**
+     * @param id
+     * @param templateId
      * @description: 验证该阶段下是否存在任务
      * @author Will
      * @date: 2022/11/17 10:25
-     * @param id
-     * @param templateId
-
      */
-    private void checkPhaseTask(String id,String templateId) {
+    private void checkPhaseTask(String id, String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getPhaseId, id);
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
@@ -235,7 +256,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
             boolean flag = this.save(entry);
             if (flag) {
                 TemplatePhaseDTO dto = new TemplatePhaseDTO();
-                BeanMapperUtils.copy(entry,dto);
+                BeanMapperUtils.copy(entry, dto);
                 list.add(dto);
             }
         }

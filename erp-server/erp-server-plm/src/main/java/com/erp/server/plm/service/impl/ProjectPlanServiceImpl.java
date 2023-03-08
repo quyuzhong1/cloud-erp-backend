@@ -33,7 +33,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.ProjectPlanMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -534,7 +534,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-03 17:35
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean restartSchedule(String id) {
         ProjectPlanEntity plan = this.getById(id);
         if (Objects.isNull(plan)) {
@@ -684,7 +684,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-01-29 18:55
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approvalPass(AuditParamDTO dto) {
         String id = dto.getId();
         ProjectPlanEntity plan = this.getById(id);

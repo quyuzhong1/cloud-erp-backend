@@ -327,37 +327,29 @@ public class LocalDateUtil {
         switch (code){
             case "fs":
                 // 间隔工期
-                planStartDate = endDate.plusDays(intervalWorkPeriod + 1);
+                planStartDate = endDate;
                 // 跳过休息日
-                while (dateList.contains(planStartDate)){
-                    planStartDate = planStartDate.plusDays(1);
-                }
+                planStartDate = getPlanWorkPeriodDate(intervalWorkPeriod + 1, dateList, planStartDate, 1, 0);
                 planEndDate = planStartDate;
-                planEndDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planEndDate, 1);
+                planEndDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planEndDate, 1, 1);
                 break;
             case "ss":
-                planStartDate = startDate.plusDays(intervalWorkPeriod);
-                while (dateList.contains(planStartDate)){
-                    planStartDate = planStartDate.plusDays(1);
-                }
+                planStartDate = startDate;
+                planStartDate = getPlanWorkPeriodDate(intervalWorkPeriod, dateList, planStartDate, 1, 0);
                 planEndDate = planStartDate;
-                planEndDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planEndDate, 1);
+                planEndDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planEndDate, 1, 1);
                 break;
             case "sf":
-                planEndDate = startDate.plusDays(intervalWorkPeriod - 1);
-                while (dateList.contains(planEndDate)){
-                    planEndDate = planEndDate.plusDays(-1);
-                }
+                planEndDate = startDate;
+                planEndDate = getPlanWorkPeriodDate(intervalWorkPeriod-1, dateList, planEndDate, 1, 0);
                 planStartDate = planEndDate;
-                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1);
+                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1, 1);
                 break;
             default:
-                planEndDate = endDate.plusDays(intervalWorkPeriod);
-                while (dateList.contains(planEndDate)){
-                    planEndDate = planEndDate.plusDays(-1);
-                }
+                planEndDate = endDate;
+                planEndDate = getPlanWorkPeriodDate(intervalWorkPeriod, dateList, planEndDate, 1, 0);
                 planStartDate = planEndDate;
-                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1);
+                planStartDate = getPlanWorkPeriodDate(planWorkPeriod, dateList, planStartDate, -1, 1);
                 break;
         }
         HashMap<String, LocalDate> hashMap = new HashMap<>(6);
@@ -366,24 +358,20 @@ public class LocalDateUtil {
         return hashMap;
     }
 
-    private static LocalDate getPlanWorkPeriodDate(Integer planWorkPeriod, List<LocalDate> dateList, LocalDate planStartDate, Integer diffDay) {
-        while (planWorkPeriod > 1){
+    private static LocalDate getPlanWorkPeriodDate(Integer planWorkPeriod, List<LocalDate> dateList, LocalDate planStartDate, Integer diffDay, Integer type) {
+        if (planWorkPeriod < 0) {
+            planStartDate = planStartDate.plusDays(planWorkPeriod);
+            while (dateList.contains(planStartDate)){
+                planStartDate = planStartDate.minusDays(diffDay);
+            }
+        }
+        while (planWorkPeriod > type){
             planStartDate = planStartDate.plusDays(diffDay);
             if(!dateList.contains(planStartDate)){
                 planWorkPeriod--;
             }
         }
         return planStartDate;
-    }
-
-    public static void main(String[] args) {
-        List<LocalDate> holidays = new ArrayList<>();
-        holidays.add(LocalDate.now().minusDays(1));
-        holidays.add(LocalDate.now().minusDays(2));
-        holidays.add(LocalDate.now().minusDays(4));
-        Integer integer = countDaysForLocalDate(LocalDate.now().minusDays(4), LocalDate.now(), holidays);
-
-        System.out.println("integer = " + integer);
     }
 }
 

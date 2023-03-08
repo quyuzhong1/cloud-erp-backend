@@ -8,7 +8,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
 
 import java.util.List;
 

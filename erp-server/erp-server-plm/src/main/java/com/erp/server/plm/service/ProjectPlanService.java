@@ -13,7 +13,7 @@ import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
 
 import java.util.List;
 import java.util.Map;

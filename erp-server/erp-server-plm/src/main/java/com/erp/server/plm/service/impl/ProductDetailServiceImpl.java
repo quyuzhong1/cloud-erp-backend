@@ -1247,6 +1247,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
      **/
+    @Override
     public Boolean checkSkuNos(List<String> skuList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductDetailEntity::getSkuNo, skuList);
@@ -1263,6 +1264,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
      **/
+    @Override
     public Boolean checkSkuNo(String sku, String id) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getSkuNo, sku);
@@ -1284,6 +1286,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2022/9/27 9:28
      **/
+    @Override
     public Boolean checkSpuNo(String spuNo, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
@@ -1306,6 +1309,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2022/9/27 9:28
      **/
+    @Override
     public Boolean checkName(String name, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
@@ -1327,6 +1331,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2022/9/28 17:04
      **/
+    @Override
     public ProductDetailEntity getProductIdBySku(String sku) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getSkuNo, sku);
@@ -1341,6 +1346,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2022/9/28 17:04
      **/
+    @Override
     public CleanSkuDto getProductIdBySkuClean(String sku) {
         return baseMapper.getProductIdBySkuClean(sku);
     }
@@ -1461,7 +1467,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     /**
      * 获取数据导出excel
      *
-     * @param productSkuExcelDTO exportSkuExcelDTO
+     * @param productSkuExcelDTO
      * @param response           response
      * @return void
      * @Author Luo_WG
@@ -1470,10 +1476,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
-        exportSkuExcelDTO.forEach(req -> {
+        List<ProductDetailExcelDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
+        list.forEach(req -> {
             //销售状态编码转换成中文
-            req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
+            req.setProductStateName(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductStateName())));
             if (StringUtils.isNotBlank(req.getSaleState())) {
                 req.setSaleState(SaleStateEnum.getNameByCode(Integer.valueOf(req.getSaleState())));
             }
@@ -1487,7 +1493,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setPurchaseUser(findUserDTO.getUserName());
                 }
             }
-
             if (StringUtils.isNotBlank(req.getPurchaseUser())) {
                 String[] split = req.getSaleCountry().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
@@ -1497,13 +1502,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productSkuDetail.xlsx";
+        String excelPath = "excel/productNoSpecDetailExport.xlsx";
         String name = "产品sku明细表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
         try {
-            new ExcelPrintUtils().patchExport(exportSkuExcelDTO, response, sb.toString(), excelPath);
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -2074,7 +2079,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<ProductDetailEntity> resultList = new ArrayList<>();
-        List<ProductDetailEntity> productDetailEntityList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getChargeId()) && StringUtils.isNotBlank(obj.getChargeName())).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = list.stream().filter(obj -> StringUtils.isBlank(obj.getChargeId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(productDetailEntityList)) {
             return;
         }
@@ -2101,6 +2106,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             this.updateBatchById(resultList);
         }
 
+    }
+
+    @Override
+    public List<ProductDetailEntity> listByAuditPass() {
+        List<ProductDetailEntity> list = lambdaQuery().eq(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode()).list();
+        return list;
+    }
+
+    @Override
+    public List<SkuVO> searchParentSku(String searchKeyword,String bomId) {
+        return baseMapper.searchParentSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode(),bomId);
     }
 
 

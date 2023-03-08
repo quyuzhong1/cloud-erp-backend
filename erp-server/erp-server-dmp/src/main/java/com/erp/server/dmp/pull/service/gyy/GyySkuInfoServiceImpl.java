@@ -116,7 +116,6 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
     private List<GyySkuInfoEntity> pullDate(RequestDTO dto){
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
         return GyyApiUtils.querySkuList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 

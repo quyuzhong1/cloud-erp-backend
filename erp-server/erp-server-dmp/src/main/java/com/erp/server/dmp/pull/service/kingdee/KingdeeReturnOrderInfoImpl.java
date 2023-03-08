@@ -91,13 +91,13 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             return;
         }
         // 构造订单结构
-        List<DmpReturnOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_RETURN_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
@@ -115,7 +115,6 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         List<KingdeeReturnOrderEntity> infoArrayList = new ArrayList<>();
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
 
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());

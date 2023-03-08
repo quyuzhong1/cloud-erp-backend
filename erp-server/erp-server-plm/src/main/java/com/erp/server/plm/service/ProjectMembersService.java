@@ -32,7 +32,14 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto);
 
-    List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList);
+    /**
+     * 根据产品表id 集合
+     * 和 项目成员表id 集合获取对应数据
+     * @param memberList 项目成员表id 集合
+     * @param productIdList 产品表id 集合
+     * @return
+     */
+    List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList,List<String> productIdList);
 
 
 

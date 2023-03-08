@@ -132,7 +132,26 @@ public class ProductDTO implements Serializable {
     /**
      * 产品示意图url
      */
-
     private String imageUrl;
+
+    /**
+     * 项目经理
+     */
+    private String projectChargeId;
+
+    /**
+     * 模板id
+     */
+    private String templateId;
+
+
+    /**
+     * 模板名
+     */
+    private String templateName;
+
+
+
+
 
 }

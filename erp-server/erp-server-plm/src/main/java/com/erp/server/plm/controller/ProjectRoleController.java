@@ -36,9 +36,8 @@ public class ProjectRoleController extends BaseController {
      * @date 2022-10-09 19:33
      */
     @GetMapping("/sort/list")
-    // @RequestPermissions("plm:role:sort:list")
-    public ApiResult<List<ProductRoleDTO>> roleSortList() {
-        return success(projectRoleService.roleSortList());
+    public ApiResult<List<ProductRoleDTO>> roleSortList(String type) {
+        return success(projectRoleService.roleSortList(type));
     }
 
 

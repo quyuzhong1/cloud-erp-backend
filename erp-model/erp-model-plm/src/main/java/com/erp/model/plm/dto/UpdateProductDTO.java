@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -58,9 +57,9 @@ public class UpdateProductDTO  implements Serializable {
 
 
     /**
-     * 项目负责人
+     * 项目负责人 项目经理
      */
-    private List<String> projectChargeIdList;
+    private String projectChargeId;
 
 
 
@@ -69,7 +68,6 @@ public class UpdateProductDTO  implements Serializable {
      * 项目状态
      * 项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
      */
-  //  @StateEnumValue(intValues = {0,1,2,3,4}, message = "项目状态有误")
     private Integer projectStatus;
 
 
@@ -77,7 +75,6 @@ public class UpdateProductDTO  implements Serializable {
      * 立项状态
      * 0 待规划 1 调研中  2：ID设计中  3::已立项  4：已终止
      */
- //   @StateEnumValue(intValues = {0,1,2,3,4}, message = "立项状态有误")
     private Integer approvalStatus;
 
     /**

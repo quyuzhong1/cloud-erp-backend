@@ -13,12 +13,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.DistributionTypeEnum;
-import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
@@ -80,9 +78,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Resource
     private ProductInfoService productInfoService;
-
-    @Autowired
-    private ProductArchiveService archiveService;
 
 
     /**
@@ -389,18 +384,22 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     /**
      * 根据成员id 获取到 成员名 以及它参与了多少项目
      *
-     * @param memberList 成员表 table id
+     * @param memberList    成员表 table id
+     * @param productIdList 产品表id
      * @return java.util.List<com.erp.model.plm.dto.ProductRoleMemberDTO>
      * @author yl
      * @date 2022-10-10 11:37
      */
     @Override
-    public List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList) {
+    public List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList, List<String> productIdList) {
         List<ProductRoleMemberDTO> resultList = new LinkedList<>();
         //当不为空
         if (CollectionUtils.isNotEmpty(memberList)) {
             LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ProjectMembersEntity::getId, memberList);
+            if (CollectionUtils.isNotEmpty(productIdList)) {
+                queryWrapper.in(ProjectMembersEntity::getProductId, productIdList);
+            }
             List<ProjectMembersEntity> list = this.list(queryWrapper);
             //以成员id 分类
             Map<String, List<ProjectMembersEntity>> memberMap = list.parallelStream().collect(Collectors.groupingBy(ProjectMembersEntity::getMemberId));
@@ -416,16 +415,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     dto.setName("");
                 }
                 List<String> productIds = projectMembers.stream().map(ProjectMembersEntity::getProductId).distinct().collect(Collectors.toList());
-
-
-                //获取到归档的产品id
-                List<String> archiveProductIds = archiveService.getArchiveProductIds();
-                //产品id 要去掉已归档的
-                productIds=productIds.stream().filter(p->!archiveProductIds.contains(p)).collect(Collectors.toList());
-                List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
-                dto.setCount(productList.size());
-                dto.setProductQuantity(productList.size());
-                dto.setProductIds(productList.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList()));
+                dto.setCount(productIds.size());
+                dto.setProductQuantity(productIds.size());
+                dto.setProductIds(productIds);
                 resultList.add(dto);
             }
         }
@@ -551,48 +543,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public void addRoleAndMembersByApproval(String productId, String productPropertyId) {
-        Integer code = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
-        ProjectTemplateEntity entity = projectTemplateService.getApprovalTemplate(code, productPropertyId);
-        if (ObjectUtils.isNotEmpty(entity)) {
-            //模板角色
-            List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
-            //新增角色
-            if (CollectionUtils.isNotEmpty(oldRoleList)) {
-                List<ProjectRoleEntity> projectRoleList = BeanMapperUtils.copyList(ProjectRoleEntity.class, oldRoleList);
-                projectRoleList.forEach(obj -> {
-                    obj.setProductId(productId);
-                    obj.setId(null);
-                });
-                projectRoleService.saveBatch(projectRoleList);
-                //模板角色成员关联表
-                List<TemplateRoleRefMembersEntity> oldRefList = templateRoleRefMembersService.getByTemplateId(entity.getId());
-                if (CollectionUtils.isNotEmpty(oldRefList)) {
-                    //模板成员
-                    List<TemplateMembersEntity> oldMembersList = templateMembersService.getByTemplateId(entity.getId());
-                    oldRefList.forEach(obj -> {
-                        TemplateRoleEntity oldRole = oldRoleList.stream().filter(e -> e.getId().equals(obj.getRoleId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
-                        if (ObjectUtils.isEmpty(oldRole)) {
-                            return;
-                        }
-                        String roleId = projectRoleList.stream().filter(e -> e.getName().equals(oldRole.getName())).map(ProjectRoleEntity::getId).findFirst().orElse("");
-                        TemplateMembersEntity oldMembers = oldMembersList.stream().filter(e -> e.getId().equals(obj.getMembersId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
-                        //新增成员
-                        ProjectMembersEntity newMembers = new ProjectMembersEntity();
-                        BeanMapperUtils.copy(oldMembers, newMembers);
-                        newMembers.setProductId(productId);
-                        newMembers.setId(null);
-                        this.save(newMembers);
-                        obj.setMembersId(newMembers.getId());
-                        obj.setRoleId(roleId);
-                    });
-                    List<RoleRefMemberEntity> roleRefMemberList = BeanMapperUtils.copyList(RoleRefMemberEntity.class, oldRefList);
-                    roleRefMemberList.stream().forEach(obj -> obj.setProductId(productId).setId(null));
-                    roleRefMemberService.saveBatch(roleRefMemberList);
-                }
-            }
 
-
-        }
 
     }
 

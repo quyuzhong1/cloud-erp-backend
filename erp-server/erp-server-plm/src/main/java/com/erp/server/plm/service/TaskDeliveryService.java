@@ -53,4 +53,21 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
      * @return List<DeliveryDocsGroupDTO>
      */
     List<DeliveryDocsGroupDTO> listGroupByTaskId(String id);
+    /**
+     * @description: 查询项目文档
+     * @author Will
+     * @date: 2023/3/8 10:34
+     * @param productId
+     * @return List<DeliveryDocsDTO>
+     */
+    List<DeliveryDocsDTO> listProductDocs(String productId);
+
+    /**
+     * 根据任务id 获取对应数据
+     * @author yl
+     * @date 2023-03-08 10:48
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.entity.TaskDeliveryDocsEntity>
+     */
+    List<TaskDeliveryDocsEntity> geByTaskIds(List<String> taskIds);
 }

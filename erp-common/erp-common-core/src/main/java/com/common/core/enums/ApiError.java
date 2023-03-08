@@ -49,6 +49,7 @@ public enum ApiError implements Serializable {
     ERROR_1015(1015, "导出失败"),
     ERROR_1016(1016, "导入文件格式错误，请使用xlsx文件"),
     ERROR_1017(1017, "参数列表不能为空"),
+    ERROR_1018(1018, "导入名称不能大于200字符"),
     /**
      * 警告信息 从800 开始
      */
@@ -263,6 +264,9 @@ public enum ApiError implements Serializable {
     ERROR_95150(95150, "存在重复的任务"),
 
     ERROR_95151(95151, "模板前置数据修改失败"),
+    ERROR_95152(95152, "请录入已审核的父级SKU"),
+    ERROR_95153(95153, "请录入已审核的子级SKU"),
+    ERROR_95154(95154, "产品信息未发现已审核SKU"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

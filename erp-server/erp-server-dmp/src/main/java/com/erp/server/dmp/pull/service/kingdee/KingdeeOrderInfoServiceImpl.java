@@ -128,13 +128,13 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
             return;
         }
         // 构造订单结构
-        List<DmpOrderInfoEntity> mabangToMqlist = pushToMqList.stream()
+        List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SALE_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
@@ -154,7 +154,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        dto.getJobTaskDTO().setLastTime(nextTime);
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));

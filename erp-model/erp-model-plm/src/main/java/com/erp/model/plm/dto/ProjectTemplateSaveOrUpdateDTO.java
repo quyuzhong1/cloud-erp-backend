@@ -4,7 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -21,19 +24,19 @@ public class ProjectTemplateSaveOrUpdateDTO implements Serializable {
      */
     private String id;
 
-    /**
-     * 模板类型(1立项模板，2项目默认模板，3项目自定义模板)
-     */
-    private Integer templateType;
+
 
     /**
      * 模板名称
      */
     @NotBlank(message = "模板名称不能为空")
+    @Size(max = 50,message = "最大50字符")
     private String name;
 
     /**
      * 产品属性id
      */
-    private String productPropertyId;
+    @NotNull(message = "产品属性不能为空")
+    @Size(min = 1,message = "至少需要选择一个产品属性")
+    private List<String> productPropertyIdList;
 }

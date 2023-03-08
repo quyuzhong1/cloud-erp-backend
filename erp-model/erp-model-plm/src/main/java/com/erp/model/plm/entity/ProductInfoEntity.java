@@ -275,4 +275,18 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "progress_status")
     private String progressStatus;
 
+
+    /**
+     * 项目经理
+     */
+    @TableField(value = "project_charge_id")
+    private String projectChargeId;
+
+
+    /**
+     * 模板id
+     */
+    @TableField(value = "template_id")
+    private String templateId;
+
 }

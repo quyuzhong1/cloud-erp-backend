@@ -12,6 +12,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
@@ -48,10 +49,10 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
             // 修改任务执行结果信息
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
             if (!aBoolean) {
-                throw new RuntimeException("修改任务下次执行时间失败！");
+                throw new RuntimeException("修改历史销售单任务下次执行时间失败！");
             }
         }catch (Exception e) {
-            XxlJobHelper.log(" 管易云拉取数据错误dto={}", JSONUtil.toJsonStr(requestDTO), e);
+            XxlJobHelper.log(" 管易云拉取历史销售单数据错误dto={}", JSONUtil.toJsonStr(requestDTO), e);
             String message = e.getMessage();
             DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
             dmpErrorLogService.save(dmpErrorLogEntity);

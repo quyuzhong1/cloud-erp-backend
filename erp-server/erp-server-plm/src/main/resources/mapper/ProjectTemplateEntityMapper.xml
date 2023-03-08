@@ -27,7 +27,6 @@
             SELECT
                 pt.id,
                 pt.name,
-                pt.type,
                 pt.product_id,
                 pt.create_time,
                 pt.update_time,
@@ -35,7 +34,6 @@
                 pt.create_user_name,
                 pt.update_user_id,
                 pt.update_user_name,
-                pt.is_default,
                 pt.product_property_id,
                 pt.status
             FROM project_template pt
@@ -54,6 +52,18 @@
           AND id  NOT IN (
             SELECT product_property_id FROM  project_template WHERE type=1
           )
+    </select>
+
+    <select id="getByPropertyId" resultType="java.util.Map">
+         SELECT
+           pt.id,pt.name
+         FROM project_template pt
+         LEFT JOIN template_ref_property trp
+         ON pt.id=trp.template_id
+         WHERE trp.is_deleted=false
+         AND trp.product_property_id=#{propertyId}
+         AND pt.status=1
+
     </select>
 
 </mapper>

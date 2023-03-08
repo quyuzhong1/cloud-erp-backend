@@ -147,12 +147,6 @@
             <version>${alibaba.druid.verison}</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <!--      optional 表示依赖是否向下传递 true表示不向下传递  默认值是false向下传递      -->
-            <optional>true</optional>
-        </dependency>
-        <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-common-message</artifactId>
             <version>0.0.1-SNAPSHOT</version>
@@ -160,10 +154,6 @@
                 <exclusion>
                     <artifactId>commons-beanutils</artifactId>
                     <groupId>commons-beanutils</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>javassist</artifactId>
-                    <groupId>org.javassist</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

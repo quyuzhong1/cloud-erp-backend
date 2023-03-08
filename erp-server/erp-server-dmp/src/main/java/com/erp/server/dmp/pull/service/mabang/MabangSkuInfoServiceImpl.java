@@ -84,7 +84,6 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     private List<SkuInfoEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
         return MabangApiUtils.querySkuList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 

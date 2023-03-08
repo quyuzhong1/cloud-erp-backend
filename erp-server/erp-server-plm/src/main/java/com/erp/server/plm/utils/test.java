@@ -1,7 +1,5 @@
 package com.erp.server.plm.utils;
 
-import org.apache.commons.net.util.Base64;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;

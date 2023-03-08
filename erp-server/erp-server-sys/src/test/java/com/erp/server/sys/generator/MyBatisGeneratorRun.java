@@ -31,7 +31,7 @@ import java.util.Scanner;
 @Slf4j
 public class MyBatisGeneratorRun {
     // 项目路径
-    private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-sys","");
+    private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-plm","");
     // 当前环境是否Windows
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
     // 数据库链接配置
@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"product_plan_remark_test"};
+        String[] tables = new String[]{"template_ref_property"};
         autoGenerator(prefix, tables);
 
 

@@ -1,5 +1,7 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,13 +14,17 @@ import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.BusinessNoCreateUtil;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -33,16 +39,18 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.server.plm.listener.BomInfoExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,7 +86,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private ProductChangeService productChangeService;
-
 
     /**
      * 添加bom
@@ -152,6 +159,45 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         return skuIdList;
 
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //查询审核通过的sku
+        List<ProductDetailEntity> productDetailList = productDetailService.listByAuditPass();
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            throw new ServiceException(ApiError.ERROR_95154);
+        }
+        BomInfoExcelListener excelListenerUtil = new BomInfoExcelListener(this,productDetailService,bomSkuService,productDetailList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！",e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！",e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<BomInfoExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<BomInfoExcelDTO> list = excelListenerUtil.getErrorList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/bomInfoError.xlsx";
+            String name = "bomInfo";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     /**
@@ -294,6 +340,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+            if (CollectionUtils.isEmpty(skuIdList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
         }
 
         List<Integer> stateList = new ArrayList<>();
@@ -1119,7 +1169,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-01-10 14:58
      */
-    private Integer getMaxSequence() {
+    @Override
+    public Integer getMaxSequence() {
         return baseMapper.getMaxSequence();
     }
 }

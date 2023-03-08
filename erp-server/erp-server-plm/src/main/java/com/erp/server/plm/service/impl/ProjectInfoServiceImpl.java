@@ -25,7 +25,6 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -77,31 +76,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private TaskDocsFinishService finishService;
 
-    @Autowired
-    private TemplateMembersService templateMembersService;
-    @Autowired
-    private TemplateTaskService templateTaskService;
-
-    @Autowired
-    private TemplateRoleService templateRoleService;
-
-    @Autowired
-    private TemplatePhaseService templatePhaseService;
-
-    @Autowired
-    private TemplateDeliveryDocsService templateDeliveryDocsService;
-
-    @Autowired
-    private TemplateTaskDocsNameService templateTaskDocsNameService;
-
-    @Autowired
-    private TemplateRoleRefMembersService templateRoleRefMembersService;
-
-    @Autowired
-    private TemplatePreTaskService templatePreTaskService;
-
-    @Autowired
-    private TemplateDocsPermissionService templateDocsPermissionService;
 
     @Autowired
     @Lazy
@@ -111,15 +85,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private ProductDetailService productDetailService;
 
-
-    @Autowired
-    private ProjectTaskRefSkuService projectTaskRefSkuService;
-
-    @Autowired
-    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
-
-    @Autowired
-    private TaskRefSkuConfigService taskRefSkuConfigService;
 
     @Autowired
     private ProjectStatusTimeService projectStatusTimeService;
@@ -205,13 +170,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             throw new ServiceException(ApiError.ERROR_95067);
         }
 
-        List<String> chargeIdList = dto.getChargeIdList();
-        String chargeName = commonService.getNameByIds(chargeIdList);
+        String chargeId = dto.getChargeId();
+        String chargeName = commonService.getNameById(chargeId);
         //负责人id
-        project.setChargeId(StringUtils.join(chargeIdList, ","));
+        project.setChargeId(chargeId);
         project.setChargeName(chargeName);
-        //来源
-        project.setSourceType(dto.getSourceType());
+
         //开始时间
         project.setStartTime(dto.getStartTime());
         //结束时间
@@ -219,94 +183,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         project.setDescribe(dto.getDescribe());
         project.setProjectStatus(ProjectStateEnum.YES_START.getState());
         boolean flag = updateById(project);
-        Integer sourceType = dto.getSourceType();
         if (flag) {
             String productId = project.getProductId();
-            String flagId = dto.getFlagId();
-
+            ProductInfoEntity productInfo = productInfoService.getById(productId);
+            if (productInfo != null) {
+                productInfo.setProjectChargeId(chargeId);
+                productInfoService.updateById(productInfo);
+            }
             //异步启动消息
             noticeMessageService.startProjectNotice(loginUser.getUserName(), productId);
 
-            //如果是新建 就直接 复制成员
-            if (SourceType.NEW.equals(sourceType)) {
-                /**
-                 * 从复制系统项目任务
-                 * 返回已经添加过的sku配置的任务id
-                 * 和任务列表
-                 */
-                Pair<List<String>, List<ProjectTaskEntity>> pair = projectTaskService.copyTaskBySys(productId, projectId);
-                List<ProjectTaskEntity> addProjectTaskList = pair.getValue();
-                //已经添加的任务id
-                List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                List<String> alreadyRefSkuConfigTaskIdList = pair.getKey();
-                /**
-                 * 查找 当没有配置表单的时候 的任务id
-                 * 则要自动生成配置表单
-                 */
-                List<String> noRefSkuConfigTaskIdList = addTaskIdList.stream().filter(a -> !alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
-                    taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
-                }
-                //将已保存的任务id 与sku 关联 在一起
-                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
-                //异步发送通知
-                noticeMessageService.newTaskNotice(loginUser.getUserName(), addProjectTaskList, productId);
-            }
-            //如果是 从项目复制 那么从项目表 里面复制 复制成员
-            if (SourceType.PROJECT.equals(sourceType)) {
-                projectMembersService.saveMemberByProject(productId, projectId, flagId);
-                projectTaskService.copyTaskByProject(productId, projectId, flagId);
-            }
-
-            //如果是 从模板复制  那么模板复制数据
-            if (SourceType.TEMPLATE.equals(sourceType)) {
-                ProjectTemplateEntity template = templateService.getById(flagId);
-                if (Objects.isNull(template)) {
-                    throw new ServiceException(ApiError.ERROR_95051);
-                }
-                //复制模板团队成员
-                List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, projectId);
-                //复制模板角色
-                List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
-                //复制角色关系表
-                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList, copyMembersSourceList);
-                //复制 项目任务阶段
-                List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
-
-                //复制任务文档名 可能数据库已有数据
-                List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
-
-                //这个是任务的
-                List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(flagId, productId, projectId, phaseSourceList);
-                //这个是复制前置任务关系
-                templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
-
-
-                /**
-                 *  这个是复制任务与 sku 配置字段关系
-                 *  返回已经添加配置关系的 任务id 集合
-                 */
-                List<String> alreadyRefSkuConfigTaskIdList = templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
-                List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
-                /**
-                 * 查找 当没有配置表单的时候 的任务id
-                 * 则要自动生成配置表单
-                 */
-                List<String> noRefSkuConfigTaskIdList = addTaskIdList.stream().filter(a -> !alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
-                    taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
-                }
-
-                //这个是交付文档
-                List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
-                //这个是文档权限
-                templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
-                //将已保存的任务id 与sku 关联 在一起
-                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
-
-            }
-            if (CollectionUtils.isNotEmpty(chargeIdList)) {
-                projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", chargeIdList);
+            if (StringUtils.isNotBlank(chargeId)) {
+                projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", Arrays.asList(chargeId));
             }
             //记录产品状态更新时间
             projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), ProjectStateEnum.YES_START.getState());
@@ -375,25 +263,25 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
-        List<String> productIdList=params.getProductIds();
+        List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
-        if(productIdList!=null&&productIdList.size()==0){
+        if (productIdList != null && productIdList.size() == 0) {
             return new PagingVO(pageData);
         }
 
         //分类id
         String categoryId = params.getCategoryId();
 
-        List<String> categoryIdList =basicCategoryService.getChildrenCategoryIds(categoryId);
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
 
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds,categoryIdList);
+                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds, categoryIdList);
             }
         } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds,categoryIdList);
+            pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
         }
 
         Integer finish = TaskStateEnum.FINISH.getCode();
@@ -410,8 +298,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
-            //查询阶段
-            List<ProjectPhaseEntity> phaseList = projectPhaseService.listByProductIds(productIds);
 
             //根据产品id 获取项目成员 相关信息
             List<ItemMemberVO> ItemMemberList = projectMembersService.getByProductIds(productIds);
@@ -472,7 +358,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
                 String projectChargeId = item.getProjectChargeId();
                 if (StringUtils.isNotBlank(projectChargeId)) {
-                    item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
+                    item.setProjectChargeId(projectChargeId);
                 }
                 String productChargeId = item.getProductChargeId();
                 if (StringUtils.isNotBlank(productChargeId)) {
@@ -597,13 +483,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         newAdd.setSourceName("自研项目流程");
         newAdd.setFlagId(IdWorker.getIdStr());
         resultList.add(newAdd);
-
-//        StartItemSourceDTO project = new StartItemSourceDTO();
-//        project.setSourceType(SourceType.PROJECT);
-//        project.setSourceName("从项目中复制");
-//        project.setFlagId(IdWorker.getIdStr());
-//        project.setChildrenList(baseMapper.listMap(SourceType.PROJECT));
-//        resultList.add(project);
 
         StartItemSourceDTO template = new StartItemSourceDTO();
         template.setSourceType(SourceType.TEMPLATE);

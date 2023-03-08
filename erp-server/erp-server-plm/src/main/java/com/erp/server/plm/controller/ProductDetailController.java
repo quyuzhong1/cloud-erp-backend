@@ -21,6 +21,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -817,6 +818,19 @@ ProductDetailController extends BaseController {
     @GetMapping("/search/sku")
     public ApiResult<List<SkuVO>> searchSku(String searchKeyword) {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
+        return success(skuList);
+    }
+
+   /**
+    * 搜索父级sku
+    * @author Will
+    * @date: 2023/3/7 20:06
+    * @param searchKeyword
+    * @return ApiResult<List<SkuVO>>
+    */
+    @GetMapping("/search/parentSku")
+    public ApiResult<List<SkuVO>> searchParentSku(@Param("searchKeyword") String searchKeyword,@Param("bomId")String bomId) {
+        List<SkuVO> skuList = productDetailService.searchParentSku(searchKeyword,bomId);
         return success(skuList);
     }
 

@@ -11,6 +11,7 @@ import com.erp.server.sys.mapper.SysCalendarMapper;
 import com.erp.server.sys.service.SysCalendarService;
 import com.common.core.serveice.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -99,6 +100,27 @@ public class SysCalendarServiceImpl extends SuperServiceImpl<SysCalendarMapper, 
                 throw new ServiceException(ApiError.ERROR_9037);
             }
         }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean initRemarkList(List<SysCalendarEntity> list) {
+        List<SysCalendarEntity> calendarEntityList = lambdaQuery()
+                .in(SysCalendarEntity::getCalendarDate, list.stream().map(SysCalendarEntity::getCalendarDate).collect(Collectors.toList()))
+                .eq(StrUtil.isNotBlank(list.get(0).getOrganization()), SysCalendarEntity::getOrganization, list.get(0).getOrganization())
+                .list();
+        Map<LocalDate, SysCalendarEntity> entityMap = calendarEntityList.stream()
+                .collect(Collectors.toMap(SysCalendarEntity::getCalendarDate, e -> e));
+        list.stream().forEach(x ->{
+            SysCalendarEntity sysCalendarEntity = entityMap.get(x.getCalendarDate());
+            if(null != sysCalendarEntity && StrUtil.isBlank(sysCalendarEntity.getRemark())){
+                x.setId(sysCalendarEntity.getId());
+                updateById(x);
+            }else {
+                save(x);
+            }
+        });
         return Boolean.TRUE;
     }
 }

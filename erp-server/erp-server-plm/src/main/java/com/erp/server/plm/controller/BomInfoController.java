@@ -7,6 +7,8 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
@@ -15,14 +17,18 @@ import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -275,6 +281,54 @@ public class BomInfoController extends BaseController {
         bomInfoService.exportExcel(dto, response);
         return success();
     }
+
+
+    /**
+     * 导入bom
+     * @author Will
+     * @date: 2023/3/7 9:39
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/importFile")
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = bomInfoService.importFile(excelFile,response);
+        return flag == true ? success() : failure();
+    }
+
+   /**
+    * 下载模板
+    * @author Will
+    * @date: 2023/3/7 9:39
+    * @param request
+    * @param response
+    * @return ApiResult
+    */
+    @GetMapping("/exportTemplate")
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/bomInfoTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+
 
     /**
      * bom审核通过后改变 bom 状态

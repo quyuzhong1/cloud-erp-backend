@@ -1,4 +1,4 @@
-package com.erp.server.plm.controller;
+package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

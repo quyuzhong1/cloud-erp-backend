@@ -113,13 +113,13 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShop
             return;
         }
         // 构造订单结构
-        List<DmpShopInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg -> {
+        entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_ECC_SHOP_INFO_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getId()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
@@ -174,8 +174,9 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShop
         if(null == lastTime || null == nextTime){
             lastTime = LocalDateTime.parse("2021-01-01T00:00:00");
             nextTime = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(lastTime);
+            dto.getJobTaskDTO().setNextTime(nextTime);
         }
-        dto.getJobTaskDTO().setLastTime(nextTime);
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());

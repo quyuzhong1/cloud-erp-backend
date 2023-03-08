@@ -103,4 +103,14 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @return List<DocsDTO>
      */
     List<DocsDTO> getDocsByTaskIdAndTemplateId(String id, String templateId);
+
+    
+    /**
+     * 根据模板id 获取对应模板数据
+     * @author yl
+     * @date 2023-03-08 11:09
+     * @param templateIds
+     * @return java.util.List<com.erp.model.plm.entity.TemplateDeliveryDocsEntity>
+     */
+    List<TemplateDeliveryDocsEntity> getByTemplateIds(List<String> templateIds);
 }

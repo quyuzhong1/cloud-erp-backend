@@ -118,13 +118,13 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             return;
         }
         // 构造订单结构
-        List<DmpRefundInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+        List<DmpRefundInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        mabangToMqlist.stream().peek(msg ->{
+        entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId() + msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
@@ -141,7 +141,6 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     private List<GyyRefundEntity> pullDate(RequestDTO dto) {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        dto.getJobTaskDTO().setLastTime(nextTime);
         return GyyApiUtils.queryRefundList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 

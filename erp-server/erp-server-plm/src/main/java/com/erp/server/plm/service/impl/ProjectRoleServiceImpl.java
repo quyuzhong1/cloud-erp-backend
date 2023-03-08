@@ -8,13 +8,17 @@ import com.erp.model.plm.dto.ProductRoleDTO;
 import com.erp.model.plm.dto.ProductRoleMemberDTO;
 import com.erp.model.plm.dto.ProjectRoleDTO;
 import com.erp.model.plm.dto.RoleRefMemberDTO;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.ProjectRoleMapper;
+import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.ProjectRoleService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +42,8 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     @Autowired
     private ProjectMembersService projectMembersService;
 
+    @Autowired
+    private ProductInfoService productInfoService;
 
     /**
      * 保存项目角色名
@@ -78,15 +84,33 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     /**
      * 人员分类
      *
-     * @param
+     * @param type 类型  productDevelop产品开发管理  product 管理管理   productArchive 产品管理列表
      * @return java.util.List<com.erp.model.plm.dto.ProductRoleDTO>
      * @author yl
      * @date 2022-10-10 10:35
      */
     @Override
-    public List<ProductRoleDTO> roleSortList() {
+    public List<ProductRoleDTO> roleSortList(String type) {
         List<ProductRoleDTO> resultList = new ArrayList<>();
-        List<ProjectRoleEntity> allRoleList = this.list();
+
+        //产品开发
+        String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
+
+        //产品归档
+        String productArchive = ProductConstant.PRODUCT_ARCHIVE;
+
+        //产品列表
+        List<ProductInfoEntity> productList = new ArrayList<>();
+        // 这是产品归档
+        if (productArchive.equals(type)) {
+            productList = productInfoService.getRoleClassifyList(true, true);
+        } else if (StringUtils.isBlank(type) || productDevelop.equals(type)) {
+            productList = productInfoService.getRoleClassifyList(true, false);
+        }
+        //产品id 集合
+        List<String> productIds = productList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+
+        List<ProjectRoleEntity> allRoleList = this.getByProductIds(productIds);
         //以角色名分组
         Map<String, List<ProjectRoleEntity>> roleNameMap = allRoleList.parallelStream().collect(Collectors.groupingBy(ProjectRoleEntity::getName));
         for (Map.Entry<String, List<ProjectRoleEntity>> item : roleNameMap.entrySet()) {
@@ -103,10 +127,10 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
             roleDTO.setCount(roleRefList.size());
             List<String> memberList = roleRefList.stream().map(RoleRefMemberDTO::getMembersId).collect(Collectors.toList());
             //根据成员id 获取到参与了多少项目
-            List<ProductRoleMemberDTO> productMemberList = projectMembersService.getProductCountByMemberList(memberList);
-            List<String> productIdList=new ArrayList<>(20);
+            List<ProductRoleMemberDTO> productMemberList = projectMembersService.getProductCountByMemberList(memberList, productIds);
+            List<String> productIdList = new ArrayList<>(20);
             productMemberList.forEach(
-                    p->productIdList.addAll(p.getProductIds())
+                    p -> productIdList.addAll(p.getProductIds())
             );
             Integer productQuantity = Math.toIntExact(productIdList.stream().distinct().count());
             roleDTO.setProductRoleMembers(productMemberList);

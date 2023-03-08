@@ -65,9 +65,9 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2022/10/9 14:14
      * @param productSkuExcelDTO productSkuExcelDTO
-     * @return java.util.List<com.erp.model.plm.dto.ExportSkuExcelDTO>
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailExcelDTO>
      **/
-    List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
+    List<ProductDetailExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
 
     List<BaseIdDTO> getNotFinish(@Param("skuIdList") List<String> skuIdList);
 
@@ -87,6 +87,8 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<ChangeInfoDTO> searchStateSku(@Param("state") Integer state,@Param("searchKeyword") String searchKeyword);
 
     List<SkuVO> getSkuBySkuIds(@Param("skuIdList")List<String> skuIdList);
+
+    List<SkuVO> searchParentSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state,@Param("bomId") String bomId);
 }
 
 

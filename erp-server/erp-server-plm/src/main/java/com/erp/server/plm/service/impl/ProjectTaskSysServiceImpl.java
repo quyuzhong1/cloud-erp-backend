@@ -3,27 +3,29 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ChargeSuperiorEnum;
+import com.erp.model.plm.enums.DistributionTypeEnum;
+import com.erp.model.plm.enums.RelatedSkuTypeEnum;
+import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.SysTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -83,7 +85,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
-        checkTaskName(dto.getId(), dto.getName());
+        checkTaskName(dto.getId(), dto.getName(), dto.getTemplateId());
         //当前登录人
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskSysEntity entity = new ProjectTaskSysEntity();
@@ -181,14 +183,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                         List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                         //查询对应模板角色下的人员
                         //查询立项模板
-                        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getByType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
-                        if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
-                            List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIdList, projectTemplateEntity.getId());
-                            if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                                String approverIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
-                                taskChargeDistributionEntity.setChargeIds(approverIds);
-                            }
-                        }
+
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
                         //查询对应负责人的上级
@@ -225,13 +220,17 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
      *
      * @param id
      * @param name
+     * @param templateId 模板id
      * @return void
      * @author yl
      * @date 2022-10-20 19:54
      */
-    private void checkTaskName(String id, String name) {
+    private void checkTaskName(String id, String name, String templateId) {
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskSysEntity::getName, name);
+        if (StringUtils.isNotBlank(templateId)) {
+            queryWrapper.eq(ProjectTaskSysEntity::getTemplateId, templateId);
+        }
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProjectTaskSysEntity::getId, id);
         }
@@ -314,7 +313,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         Boolean flag = this.removeById(taskId);
         if (flag) {
             //删除任务审核人
-            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.ONE,taskId);
+            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.ONE, taskId);
 
             taskDeliveryService.removeByTaskId(taskId);
         }
@@ -418,7 +417,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         List<String> pretaskIdList = Collections.emptyList();
-        if(CollectionUtil.isNotEmpty(preTaskList)){
+        if (CollectionUtil.isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         sysTaskVO.setPreTaskIdList(pretaskIdList);

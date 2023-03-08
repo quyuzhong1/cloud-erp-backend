@@ -93,16 +93,13 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             productInfoDTO.setId(productBy.getId());
             if (!ObjectUtils.isEmpty(productDetailShow)) {
                 if (!productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
-                    errorMsgList.add(ApiError.ERROR_95007.msg);
+                    errorMsgList.add(ApiError.ERROR_95015.msg);
                 }
             }
         } else {
             //sku重复
             if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
                 errorMsgList.add(ApiError.ERROR_95015.msg);
-            }
-            if (productDetailService.checkName(dto.getName(), "")) {
-                errorMsgList.add(ApiError.ERROR_95007.msg);
             }
         }
 

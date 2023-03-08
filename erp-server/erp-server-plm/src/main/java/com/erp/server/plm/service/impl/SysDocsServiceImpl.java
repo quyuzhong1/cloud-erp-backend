@@ -141,7 +141,6 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
         List<DocsDTO> resultList = new ArrayList<>();
         for (SysDocsEntity item : list) {
             DocsDTO d = new DocsDTO();
-            d.setIsSys(IsConstant.YES);
             d.setId(item.getId());
             d.setName(item.getName());
             d.setState(item.getStartState());

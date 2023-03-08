@@ -134,8 +134,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private TaskDocsFinishService finishService;
 
-    @Autowired
-    private TaskDocsNameService taskDocsNameService;
 
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
@@ -199,7 +197,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-16 17:06
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
@@ -211,8 +209,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String chargeId = StringUtils.join(chargeIds, ",");
         String chargeName = commonService.getNameByIds(chargeIds);
         dto.setChargeName(chargeName);
+        //项目经理
+        String projectChargeId = dto.getProjectChargeId();
         String categoryId = dto.getCategoryId();
+        entity.setProjectChargeId(projectChargeId);
         BeanMapper.copy(dto, entity);
+        String templateId = dto.getTemplateId();
+        entity.setTemplateId(templateId);
         BasicCategoryEntity category = basicCategoryService.getById(categoryId);
         if (category != null) {
             entity.setCategory(category.getName());
@@ -247,14 +250,40 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setSpuNo(spuNo);
         }
         Boolean flag = this.saveOrUpdate(entity);
-        //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
-        if (flag && StringUtils.isBlank(dto.getId())) {
-            List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList, loginUser, entity.getPropertyId());
-            //异步发送通知
-            noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
-            //默认查询立项模板中的成员和角色信息
-            projectMembersService.addRoleAndMembersByApproval(entity.getId(), entity.getPropertyId());
+        /**
+         * 表示是新添加的
+         * 并且模板id 不为空
+         *
+         */
+        String productId = entity.getId();
+        if (flag && StringUtils.isBlank(dto.getId()) && StringUtils.isNotBlank(templateId)) {
+            ProjectTemplateEntity template = templateService.getById(templateId);
+            if (Objects.isNull(template)) {
+                throw new ServiceException(ApiError.ERROR_95051);
+            }
+            //复制模板团队成员
+            List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");
+            //复制模板角色
+            List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(templateId, productId, "");
+            //复制角色关系表
+            templateRoleRefMembersService.copyTemplateRoleRefMembers(templateId, productId, "", copyRoleSourceList, copyMembersSourceList);
+            //复制 项目任务阶段
+            List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(templateId, productId, "");
+
+            //复制任务文档名 可能数据库已有数据
+            List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(templateId, productId, "");
+
+            //这个是任务的
+            List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(templateId, productId, "", phaseSourceList);
+            //这个是复制前置任务关系
+            templatePreTaskService.copyTemplatePreTask(templateId, productId, taskSourceList);
+
+
+            //这个是交付文档
+            List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, docsNameSourceList);
+            //这个是文档权限
+            templateDocsPermissionService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, deliveryDocsSourceList);
+
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());
@@ -409,9 +438,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
         ProductSearchDTO params = dto.getParams();
-        List<String> productIdList=params.getProductIds();
+        List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
-        if(productIdList!=null&&productIdList.size()==0){
+        if (productIdList != null && productIdList.size() == 0) {
             return new PagingVO(pageData);
         }
 
@@ -510,7 +539,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 String projectChargeId = item.getProjectChargeId();
                 if (StringUtils.isNotBlank(projectChargeId)) {
-                    item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
+                    item.setProjectChargeId(projectChargeId);
                 }
                 String productChargeId = item.getProductChargeId();
                 if (StringUtils.isNotBlank(productChargeId)) {
@@ -572,12 +601,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
 
+        //分类id
+        String categoryId = params.getCategoryId();
+
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds);
+                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds, categoryIdList);
             }
         } else {
-            dataList = baseMapper.listNotPaging(params, archiveProductIds);
+            dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         }
         return dataList;
     }
@@ -618,10 +652,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //模板名
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
-        //模板类型（项目模板）
-        Integer templateType = ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode();
+
+        /**
+         * 产品信息
+         */
+        ProductInfoEntity productInfo = this.getById(productId);
+        if (Objects.isNull(productInfo)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+
         //保存模板
-        String templateId = templateService.saveTemplate(templateName, productId, templateType);
+        String templateId = templateService.saveTemplate(templateName, productId, productInfo.getPropertyId());
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);
@@ -739,6 +780,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(productPlanEntity)) {
             result.setProductPlanId(productPlanEntity.getId());
         }
+        String templateId = entity.getTemplateId();
+        ProjectTemplateEntity projectTemplate = templateService.getById(templateId);
+        if(projectTemplate!=null){
+            result.setTemplateName(projectTemplate.getName());
+        }
+
         return result;
     }
 
@@ -863,10 +910,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             ProjectInfoEntity project = projectInfoService.getById(dto.getProjectId());
             if (!Objects.isNull(project)) {
                 Integer projectStatus = dto.getProjectStatus();
-                List<String> projectChargeIdList = dto.getProjectChargeIdList();
-                if (CollectionUtils.isNotEmpty(projectChargeIdList)) {
-                    String projectChargeName = commonService.getNameByIds(projectChargeIdList);
-                    project.setChargeId(String.join(",", projectChargeIdList));
+                String projectChargeId = dto.getProjectChargeId();
+                if (StringUtils.isNotBlank(projectChargeId)) {
+                    String projectChargeName = commonService.getNameById(projectChargeId);
+                    project.setChargeId(projectChargeId);
                     project.setChargeName(projectChargeName);
                 } else {
                     project.setChargeName("");
@@ -1009,6 +1056,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @author yl
      * @date 2022-11-29 15:23
      */
+    @Override
     public void checkProduct(String productId) {
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         if (archiveProductIds.contains(productId)) {
@@ -1158,12 +1206,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      *
      * @param categoryIds
      * @param isFinishedProductDev
+     * @param isArchive            是否是归档产品 true 是
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      * @author yl
      * @date 2023-03-02 11:56
      */
     @Override
-    public List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, Integer isFinishedProductDev) {
+    public List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, boolean isFinishedProductDev, boolean isArchive) {
         if (CollectionUtils.isEmpty(categoryIds)) {
             return new ArrayList<>();
         }
@@ -1172,9 +1221,57 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
         queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
-        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, isFinishedProductDev);
+        if (isFinishedProductDev) {
+            queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
+        } else {
+            queryWrapper.ne(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES).
+                    or().isNull(ProductInfoEntity::getIsFinishedProductDev);
+
+        }
+
         if (CollectionUtils.isNotEmpty(archiveProductIds)) {
-            queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
+            if (isArchive) {
+                queryWrapper.in(ProductInfoEntity::getId, archiveProductIds);
+            } else {
+                queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
+            }
+
+        }
+        return this.list(queryWrapper);
+
+    }
+
+
+    /**
+     * 查询角色分类 列表信息
+     *
+     * @param isFinishedProductDev 是否是产品开发管理
+     * @param isArchive            是否是归档
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     * @author yl
+     * @date 2023-03-03 15:15
+     */
+    @Override
+    public List<ProductInfoEntity> getRoleClassifyList(boolean isFinishedProductDev, boolean isArchive) {
+        //获取到归档的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
+        //如果是产品开发管理
+        if (isFinishedProductDev) {
+            queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
+        } else {
+            queryWrapper.ne(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES).
+                    or().isNull(ProductInfoEntity::getIsFinishedProductDev);
+        }
+
+        if (CollectionUtils.isNotEmpty(archiveProductIds)) {
+            if (isArchive) {
+                queryWrapper.in(ProductInfoEntity::getId, archiveProductIds);
+            } else {
+                queryWrapper.notIn(ProductInfoEntity::getId, archiveProductIds);
+            }
+
         }
         return this.list(queryWrapper);
 

@@ -378,14 +378,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             //发送新建任务通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), copyList, productId);
 
-            //找出立项任务 的一般任务集合
-            Integer approvalTask = TaskConstant.APPROVAL_TASK;
-            //一般任务
-            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
-            List<ProjectTaskEntity> projectApprovalTaskList = copyList.stream().filter(p -> p.getProperty().equals(approvalTask)).collect(Collectors.toList());
-            //立项任务 发送发布任务通知
-            noticeMessageService.releaseTaskNotice(loginUser.getUserName(), projectApprovalTaskList, productId);
-
         }
         return sourceList;
 
@@ -447,7 +439,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         List<String> chargeIds = dto.getChargeIds();
         List<String> roleIds = dto.getRoleIds();
         //任务分配类型处理
-        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {//分配类型为角色
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {
+            //分配类型为角色
             List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
             entity.setRoleId(String.join(",", roleIds));
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
@@ -456,7 +449,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 entity.setChargeId("");
                 entity.setChargeName("");
             }
-        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {//分配类型为负责人
+        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {
+            //分配类型为负责人
             String chargeNames = commonService.getNameByIds(chargeIds);
             entity.setChargeId(String.join(",", chargeIds));
             entity.setChargeName(chargeNames);
@@ -583,6 +577,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         updateWrapper.set(TemplateTaskEntity::getRoleId, entity.getRoleId());
         updateWrapper.set(TemplateTaskEntity::getRoleName, entity.getRoleName());
         updateWrapper.set(TemplateTaskEntity::getDistributionType, entity.getDistributionType());
+        updateWrapper.set(TemplateTaskEntity::getRelatedSkuType, entity.getRelatedSkuType());
+        updateWrapper.set(TemplateTaskEntity::getWorkPeriod, entity.getWorkPeriod());
         this.update(updateWrapper);
     }
 

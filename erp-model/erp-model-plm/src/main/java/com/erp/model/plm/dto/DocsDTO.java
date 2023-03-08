@@ -30,11 +30,7 @@ public class DocsDTO {
     @NotBlank(message = "文档名不能为空")
     private String name;
 
-    /**
-     * 是否是系统文档
-     * 1 是  0 不是
-     */
-    private Integer isSys;
+
 
     /**
      * 1 启用 0 禁用

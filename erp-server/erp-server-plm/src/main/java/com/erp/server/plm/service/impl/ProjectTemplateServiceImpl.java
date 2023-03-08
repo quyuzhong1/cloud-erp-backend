@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,10 +18,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
-import com.erp.model.plm.enums.ProjectTemplateShowTypeEnum;
-import com.erp.model.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.model.plm.vo.migrateTempVO;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
 import com.erp.server.plm.service.*;
@@ -30,10 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,22 +43,47 @@ import java.util.stream.Collectors;
 @Service
 public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMapper, ProjectTemplateEntity> implements ProjectTemplateService {
 
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     @Resource
     private TemplateRoleService templateRoleService;
 
     @Resource
     private BasicDictService basicDictService;
-    @Resource
-    private TemplateTaskService templateTaskService;
-    @Resource
-    private ProjectTaskSysService projectTaskSysService;
+
     @Resource
     private TemplatePreTaskService templatePreTaskService;
+
+
     @Resource
-    private PreTaskService preTaskService;
+    private TemplateRefPropertyService templateRefPropertyService;
+
+
+    @Resource
+    private SysTaskPhaseService sysTaskPhaseService;
+
+    @Resource
+    private ProjectTaskSysService projectTaskSysService;
+
+
+    @Resource
+    private TemplatePhaseService templatePhaseService;
+
+
+    @Resource
+    private TemplateTaskService templateTaskService;
+
+    @Resource
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
+
+
+    @Resource
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+
+    @Resource
+    private SysDocsService sysDocsService;
+
+    @Resource
+    private TaskDeliveryService taskDeliveryService;
 
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -70,9 +91,18 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         BaseSearchDTO params = dto.getParams();
         IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
         List<ProjectTemplateDTO> list = paging.getRecords();
-        if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(obj -> obj.setTypeName(obj.getIsDefault() == 1 ? ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getName() : ProjectTemplateTypeEnum.getNameByCode(obj.getType())));
+        List<String> templateIdList = list.stream().map(ProjectTemplateDTO::getId).collect(Collectors.toList());
+        //根据模板id
+        List<TemplatePropertyDTO> templatePropertyList = templateRefPropertyService.getByTemplateIds(templateIdList);
+        for (ProjectTemplateDTO item : list) {
+            List<TemplatePropertyDTO> propertyList = templatePropertyList.stream().
+                    filter(temp -> temp.getTemplateId().equals(item.getId())).collect(Collectors.toList());
+            List<String> productPropertyIdList = propertyList.stream().map(TemplatePropertyDTO::getProductPropertyId).collect(Collectors.toList());
+            item.setProductPropertyIdList(productPropertyIdList);
+            List<String> productPropertyValueList = propertyList.stream().map(TemplatePropertyDTO::getProductPropertyValue).collect(Collectors.toList());
+            item.setProductPropertyValues(String.join(",", productPropertyValueList));
         }
+
         return new PagingVO(paging);
     }
 
@@ -84,23 +114,13 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @date: 2022/11/11 15:42
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdate(ProjectTemplateSaveOrUpdateDTO dto) {
         //验证模板名称是否已存在
-        checkTemplateName(dto.getName(),dto.getId());
-        //立项模板
-        Integer approvalTemplateCode = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
-        Integer templateType = dto.getTemplateType();
-        //立项模板产品属性
-        String productPropertyId = dto.getProductPropertyId();
-        //是否是立项模板
-        Boolean isApprovalTemplate = false;
-        if (approvalTemplateCode.equals(templateType)) {
-            isApprovalTemplate = true;
-            //当为空的时候
-            if (StringUtils.isBlank(productPropertyId)) {
-                throw new ServiceException(ApiError.ERROR_95132);
-            }
-        }
+        checkTemplateName(dto.getName(), dto.getId());
+
+        //产品属性id
+        List<String> productPropertyIdList = dto.getProductPropertyIdList();
 
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -122,57 +142,14 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
         }
-        //先设置成非默认，项目模板
-        entity.setIsDefault(IsConstant.NO);
-        //当是立项模板的时候
-        if (isApprovalTemplate) {
-            //查询立项模板是否已存在
-            ProjectTemplateEntity approvalTemplate = getApprovalTemplate(productPropertyId);
-            if (approvalTemplate != null && !approvalTemplate.getId().equals(dto.getId())) {
-                throw new ServiceException(ApiError.ERROR_95063);
-            }
-            entity.setType(templateType);
+        boolean result = this.saveOrUpdate(entity);
+        if (result) {
+            //保存模板与产品属性的关系表
+            templateRefPropertyService.saveRef(entity.getId(), productPropertyIdList);
         }
-        if (ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getCode().equals(dto.getTemplateType())) {
-            //查询项目默认模板是否已存在
-            ProjectTemplateEntity projectDefaultTemplate = getProjectDefaultTemplate();
-            if (projectDefaultTemplate != null && !projectDefaultTemplate.getId().equals(dto.getId())) {
-                throw new ServiceException(ApiError.ERROR_95064);
-            }
-            entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
-            entity.setIsDefault(IsConstant.YES);
-        } else if (ProjectTemplateShowTypeEnum.PROJECT_CUSTOM_TEMPLATE.getCode().equals(dto.getTemplateType()))  {
-            entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
-        }
-        return this.saveOrUpdate(entity);
+        return result;
     }
 
-    /**
-     * @return ProjectTemplateEntity
-     * @description: 查询立项模板
-     * @author Will
-     * @date: 2022/11/16 16:48
-     */
-    private ProjectTemplateEntity getApprovalTemplate(String productPropertyId) {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
-        queryWrapper.eq(ProjectTemplateEntity::getProductPropertyId, productPropertyId);
-        queryWrapper.last("LIMIT 1");
-        return this.getOne(queryWrapper);
-    }
-
-    /**
-     * @return ProjectTemplateEntity
-     * @description: 查询项目默认模板
-     * @author Will
-     * @date: 2022/11/16 16:48
-     */
-    private ProjectTemplateEntity getProjectDefaultTemplate() {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
-        queryWrapper.eq(ProjectTemplateEntity::getIsDefault, IsConstant.YES);
-        return this.getOne(queryWrapper);
-    }
 
     /**
      * @param dto
@@ -213,14 +190,6 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         return resultList;
     }
 
-    @Override
-    public ProjectTemplateEntity getByType(Integer type) {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType, type);
-        queryWrapper.last("limit 1");
-        return this.getOne(queryWrapper);
-    }
-
 
     /**
      * 获取立项模板的产品属性
@@ -234,19 +203,12 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     public List<Map<String, Object>> getProductPropertyList() {
         String type = BasicDictTypeEnum.PRODUCT_PROPERTY.getCode();
         List<BasicDictEntity> dictList = basicDictService.listByType(type);
-        Integer approvalTemplateCode = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
-
-        List<ProjectTemplateEntity> templateList = this.getTemplateByType(approvalTemplateCode);
-        List<String> productPropertyIdList = templateList.stream().
-                filter(t -> StringUtils.isNotBlank(t.getProductPropertyId())).
-                map(ProjectTemplateEntity::getProductPropertyId).collect(Collectors.toList());
         List<Map<String, Object>> resultList = new ArrayList<>(dictList.size());
         for (BasicDictEntity dict : dictList) {
             Map<String, Object> map = new HashMap<>();
             String productPropertyId = dict.getId();
             map.put("productPropertyId", productPropertyId);
             map.put("name", dict.getValue());
-            map.put("disable", productPropertyIdList.contains(productPropertyId));
             resultList.add(map);
         }
 
@@ -254,65 +216,25 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     }
 
 
-    /**
-     * 获取立项模板数据
-     *
-     * @param type
-     * @param productPropertyId
-     * @return com.erp.model.plm.entity.ProjectTemplateEntity
-     * @author yl
-     * @date 2023-02-21 16:03
-     */
-    @Override
-    public ProjectTemplateEntity getApprovalTemplate(Integer type, String productPropertyId) {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType, type);
-        queryWrapper.eq(ProjectTemplateEntity::getProductPropertyId, productPropertyId);
-        queryWrapper.last("limit 1");
-        return this.getOne(queryWrapper);
-    }
-
-
-    /**
-     * 获取默认的模板 项目模板【默认】
-     *
-     * @param
-     * @return com.erp.model.plm.entity.ProjectTemplateEntity
-     * @author yl
-     * @date 2023-02-21 17:41
-     */
-    @Override
-    public ProjectTemplateEntity getDefaultTemplate() {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getIsDefault, IsConstant.YES);
-        queryWrapper.eq(ProjectTemplateEntity::getStatus, IsConstant.YES);
-        queryWrapper.last("limit 1");
-        return this.getOne(queryWrapper);
-    }
-
     @Override
     public List<PreTaskListVO> ListPreTaskByTaskId(TemplatePreTaskDTO dto) {
         // 根据id查模板类型
         ProjectTemplateEntity templateEntity = lambdaQuery()
                 .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
                 .one();
-        if(null == templateEntity){
+        if (null == templateEntity) {
             throw new ServiceException(ApiError.ERROR_95051);
         }
-        List<PreTaskListVO>  preTaskList;
-        // 根据模板类型查询模板及前置任务
-        if(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode().equals(templateEntity.getType()) && 0 == templateEntity.getIsDefault()){
-            // 模板表
-            preTaskList = templatePreTaskService.getTemplatePreAndNameById(dto.getTaskId());
-        }else {
-            // 系统表
-            preTaskList = preTaskService.ListSysPreTaskByTaskId(dto.getTaskId());
-        }
-        if(CollectionUtil.isEmpty(preTaskList)){
+        List<PreTaskListVO> preTaskList;
+
+        // 模板表
+        preTaskList = templatePreTaskService.getTemplatePreAndNameById(dto.getTaskId());
+
+        if (CollectionUtil.isEmpty(preTaskList)) {
             return preTaskList;
         }
         preTaskList.stream().forEach(x -> {
-            if(null != x.getRelationship()){
+            if (null != x.getRelationship()) {
                 x.setRelationshipName(x.getRelationship().getName());
                 x.setRelationshipCode(x.getRelationship().getCode());
             }
@@ -329,40 +251,207 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         ProjectTemplateEntity templateEntity = lambdaQuery()
                 .eq(ProjectTemplateEntity::getId, dto.getTemplateId())
                 .one();
-        if(null == templateEntity){
+        if (null == templateEntity) {
             throw new ServiceException(ApiError.ERROR_95051);
         }
         // 根据模板类型查询模板及前置任务
         boolean result = Boolean.FALSE;
         List<PreTaskUpdateDTO> list = dto.getList();
-        if(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode().equals(templateEntity.getType()) && 0 == templateEntity.getIsDefault()){
-            // 更新前置任务
-            List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
-            result = templatePreTaskService.updateBatchById(updateList);
-        }else {
-            // 更新前置任务
-            List<PreTaskEntity> updateList = list.stream().map(PreTaskEntity::new).collect(Collectors.toList());
-            result = preTaskService.updateBatchById(updateList);
-        }
-        if (!result){
+        // 更新前置任务
+        List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
+        result = templatePreTaskService.updateBatchById(updateList);
+        if (!result) {
             throw new ServiceException(ApiError.ERROR_95151);
         }
         return Boolean.TRUE;
     }
 
+    /**
+     * 根据产品属性id查询对应的模板信息
+     *
+     * @param propertyId
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-03-06 18:18
+     */
+    @Override
+    public List<Map<String, Object>> getByPropertyId(String propertyId) {
+        if (StringUtils.isBlank(propertyId)) {
+            return new ArrayList<>();
+        }
+
+        return baseMapper.getByPropertyId(propertyId);
+    }
+
 
     /**
-     * 根据模板类型获取模板
+     * 模板改造  迁移阶段历史数据
      *
-     * @param type
-     * @return
+     * @param
+     * @return boolean
      * @author yl
-     * @date 2023-02-21 15:35
+     * @date 2023-03-07 19:06
      */
-    public List<ProjectTemplateEntity> getTemplateByType(Integer type) {
-        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTemplateEntity::getType, type);
-        return this.list(queryWrapper);
+    @Override
+    public boolean migratePhaseDb() {
+        //系统阶段
+        List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.list();
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.list();
+
+        List<String> templateIds = sysTaskList.stream().map(ProjectTaskSysEntity::getTemplateId).distinct().collect(Collectors.toList());
+        List<TemplatePhaseEntity> dbTemplatePhaseList = templatePhaseService.getByTemplateIds(templateIds);
+
+        List<TemplatePhaseEntity> saveTemplatePhaseList = new ArrayList<>(10);
+        //模板分组
+        Map<String, List<ProjectTaskSysEntity>> map = sysTaskList.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getTemplateId));
+        List<migrateTempVO> migrateTempList = new ArrayList<>(20);
+        for (Map.Entry<String, List<ProjectTaskSysEntity>> entry : map.entrySet()) {
+            //模板id
+            String templateId = entry.getKey();
+            List<ProjectTaskSysEntity> list = entry.getValue();
+            //以阶段分组
+            Map<String, List<ProjectTaskSysEntity>> phaseMap = list.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getPhaseId));
+            for (Map.Entry<String, List<ProjectTaskSysEntity>> phaseEntry : phaseMap.entrySet()) {
+                String phaseId = phaseEntry.getKey();
+                List<ProjectTaskSysEntity> phaseSysTaskList = phaseEntry.getValue();
+                for (ProjectTaskSysEntity sysTask : phaseSysTaskList) {
+                    SysTaskPhaseEntity sysTaskPhase = sysTaskPhaseList.stream().filter(p -> p.getId().equals(phaseId)).findFirst().orElse(null);
+                    if (sysTaskPhase != null) {
+                        //获取到阶段名
+                        String name = sysTaskPhase.getName();
+                        migrateTempVO vo = new migrateTempVO();
+                        //根据阶段名查询数据库是否存在
+                        TemplatePhaseEntity dbTemplatePhase = dbTemplatePhaseList.stream().filter(d -> d.getName().equals(name) &&
+                                d.getTemplateId().equals(templateId)).findFirst().orElse(null);
+                        if (dbTemplatePhase != null) {
+                            vo.setNewCreateId(dbTemplatePhase.getId());
+                        } else {
+                            TemplatePhaseEntity phaseEntity = saveTemplatePhaseList.stream().filter(s -> s.getTemplateId().equals(templateId)
+                                    && s.getName().equals(name)).findFirst().orElse(null);
+                            if (Objects.isNull(phaseEntity)) {
+                                TemplatePhaseEntity addEntity = new TemplatePhaseEntity();
+                                String id = IdWorker.getIdStr();
+                                addEntity.setTemplateId(templateId);
+                                addEntity.setId(id);
+                                addEntity.setName(sysTaskPhase.getName());
+                                saveTemplatePhaseList.add(addEntity);
+                                vo.setNewCreateId(id);
+                            } else {
+                                vo.setNewCreateId(phaseEntity.getId());
+                            }
+
+                        }
+                        vo.setTaskId(sysTask.getId());
+                        vo.setTemplateId(templateId);
+                        migrateTempList.add(vo);
+                    }
+                }
+            }
+
+        }
+
+
+        boolean result = true;
+
+        if (CollectionUtils.isNotEmpty(saveTemplatePhaseList)) {
+            result = templatePhaseService.saveBatch(saveTemplatePhaseList);
+        }
+
+        List<String> taskIdList = migrateTempList.stream().map(migrateTempVO::getTaskId).collect(Collectors.toList());
+        List<TemplateTaskEntity> templateTaskList = templateTaskService.listByIds(taskIdList);
+        for (TemplateTaskEntity item : templateTaskList) {
+            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getId())).findFirst().orElse(null);
+            if (tempVO != null) {
+                item.setPhaseId(tempVO.getNewCreateId());
+            }
+        }
+        templateTaskService.updateBatchById(templateTaskList);
+        return result;
+    }
+
+
+    /**
+     * 模板改造迁移 文档
+     *
+     * @param
+     * @return boolean
+     * @author yl
+     * @date 2023-03-08 10:26
+     */
+    @Override
+    public boolean migrateDocsDb() {
+        //系统文档
+        List<SysDocsEntity> sysDocsList = sysDocsService.list();
+
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.list();
+
+        List<String> templateIds = sysTaskList.stream().map(ProjectTaskSysEntity::getTemplateId).distinct().collect(Collectors.toList());
+        List<String> taskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).distinct().collect(Collectors.toList());
+        List<TemplateTaskDocsNameEntity> dbTemplateDocsNameList = templateTaskDocsNameService.getByTemplateIds(templateIds);
+
+
+        List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.geByTaskIds(taskIds);
+
+        List<TemplateTaskDocsNameEntity> addList = new ArrayList<>(10);
+
+        List<migrateTempVO> migrateTempList = new ArrayList<>(20);
+        boolean result = true;
+        //模板分组
+        Map<String, List<ProjectTaskSysEntity>> map = sysTaskList.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getTemplateId));
+        for (Map.Entry<String, List<ProjectTaskSysEntity>> entry : map.entrySet()) {
+            //模板id
+            String templateId = entry.getKey();
+            List<ProjectTaskSysEntity> list = entry.getValue();
+            for (ProjectTaskSysEntity item : list) {
+                String taskId = item.getId();
+                TaskDeliveryDocsEntity deliveryDocs = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (deliveryDocs != null) {
+                    String docsName = deliveryDocs.getDocsName();
+                    migrateTempVO vo = new migrateTempVO();
+                    //看数据库有没有
+                    TemplateTaskDocsNameEntity templateDocsEntity = dbTemplateDocsNameList.stream().filter(db -> db.getTemplateId().equals(templateId) &&
+                            db.getName().equals(docsName)).findFirst().orElse(null);
+                    //当为空
+                    if (Objects.isNull(templateDocsEntity)) {
+                        TemplateTaskDocsNameEntity addTaskDocs = addList.stream().filter(add -> add.getName().equals(docsName) &&
+                                add.getTemplateId().equals(templateId)).findFirst().orElse(null);
+                        if (Objects.isNull(addTaskDocs)) {
+                            TemplateTaskDocsNameEntity add = new TemplateTaskDocsNameEntity();
+                            String id = IdWorker.getIdStr();
+                            add.setId(id);
+                            add.setName(docsName);
+                            add.setTemplateId(templateId);
+                            addList.add(add);
+                            vo.setNewCreateId(id);
+                        } else {
+                            vo.setNewCreateId(addTaskDocs.getId());
+                        }
+
+                    } else {
+                        //表示有
+                        vo.setNewCreateId(templateDocsEntity.getId());
+                    }
+                    vo.setTemplateId(templateId);
+                    vo.setTaskId(taskId);
+                    migrateTempList.add(vo);
+                }
+            }
+
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            result = templateTaskDocsNameService.saveBatch(addList);
+        }
+
+        List<TemplateDeliveryDocsEntity> dbTemplateDeliveryList = templateDeliveryDocsService.getByTemplateIds(templateIds);
+        for (TemplateDeliveryDocsEntity item : dbTemplateDeliveryList) {
+            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getTaskId())).findFirst().orElse(null);
+            if (tempVO != null) {
+                item.setDocsNameId(tempVO.getNewCreateId());
+            }
+        }
+        templateDeliveryDocsService.updateBatchById(dbTemplateDeliveryList);
+
+        return result;
     }
 
 
@@ -370,13 +459,14 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * 保存模板 返回模板id
      *
      * @param templateName
+     * @param productPropertyId 产品属性id
      * @return java.lang.String
      * @author yl
      * @date 2022-09-20 14:30
      */
     @Override
-    public String saveTemplate(String templateName, String productId, Integer templateType) {
-        checkTemplateName(templateName,"");
+    public String saveTemplate(String templateName, String productId, String productPropertyId) {
+        checkTemplateName(templateName, "");
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
@@ -387,11 +477,14 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
         entity.setName(templateName);
         entity.setProductId(productId);
-        entity.setType(templateType);
         entity.setCreateUserId(uid);
         entity.setCreateUserName(userName);
-        if (this.save(entity)) {
-            return entity.getId();
+        boolean saveResult = this.save(entity);
+        if (saveResult) {
+            //模板id
+            String templateId = entity.getId();
+            templateRefPropertyService.saveRef(templateId, Arrays.asList(productPropertyId));
+            return templateId;
         }
         return "";
 
@@ -410,10 +503,10 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @author yl
      * @date 2022-09-20 14:34
      */
-    private void checkTemplateName(String templateName,String id) {
+    private void checkTemplateName(String templateName, String id) {
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTemplateEntity::getName, templateName);
-        if(StringUtils.isNotBlank(id)){
+        if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProjectTemplateEntity::getId, id);
         }
         int count = this.count(queryWrapper);

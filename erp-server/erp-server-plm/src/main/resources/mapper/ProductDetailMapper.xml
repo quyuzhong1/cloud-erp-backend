@@ -135,6 +135,13 @@
             </foreach>
         </if>
 
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+            AND pi.project_charge_id IN
+            <foreach collection="params.projectChargeIdList" item="projectChargeId" open="(" separator="," close=")">
+                #{projectChargeId}
+            </foreach>
+        </if>
+
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
             <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
@@ -327,70 +334,72 @@
             AND pi.id = #{productId}
     </select>
 
-    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
+    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelDTO">
         SELECT
-        pi.spu_no,
-        pd.name,
-        pi.sale_method,
-        pi.category,
-        pi.sell_spot,
-        pi.function_desc,
-        pi.usage_desc,
-        CASE WHEN pi.pirate_risk = 1 THEN '有侵权风险' ELSE '无侵权风险' END pirate_risk,
-        pi.materials,
-        pi.property,
-        pi.brand_name,
-        pd.variant_property,
-        pd.sku_no,
-        pd."name" sku_name,
-        pd.plan_listing_time,
-        unit.name AS unit_name,
-        pd.charge_name,
-        pd.product_state,
-        target_tax_cost,
-        target_no_tax_cost,
-        actual_tax_cost,
-        actual_no_tax_cost,
-        retail_price,
-        target_gpm,
-        actual_gpm_cny,
-        actual_gpm_usd,
-        year_sale_qty,
-        year_sale_amount,
-        month_sale_qty,
-        month_sale_amount,
-        ps.sale_country,
-        listing_time,
-        delisting_time,
-        CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END is_finished_img,
-        CASE WHEN is_finished_video = 1 THEN '是' ELSE '否' END is_finished_video,
-        sale_state,
-        product_size,
-        gross_weight,
-        net_weight,
-        box_size,
-        box_weight,
-        box_qty,
-        dp.value AS product_property,
-        declare_chinese_name,
-        declare_english_name,
-        declare_price,
-        customs_code,
-        declare_element,
-        english_material,
-        english_usage,
-        pp.ean,
-        pp.plan_order_qty,
-        pp.place_order_time,
-        pp.plan_arrival_time,
-        pp.moq,
-        pp.delivery_cycle,
-        pp.actual_arrival_time,
-        pp.arrival_state,
-        pp.purchase_user_id AS purchase_user,
-        pp.main_supplier,
-        pp.second_supplier,
-        pp.actual_arrival_qty
+            pd.sku_no as skuNo,
+            pi.category,
+            pi.sale_method as saleMethod,
+            pi.sell_spot as sellSpot,
+            pi.function_desc as functionDesc,
+            pi.usage_desc as usageDesc,
+            CASE WHEN pi.pirate_risk = 1 THEN '是' ELSE '否' END pirate_risk,
+            pi.materials,
+            pd.name,
+            pi.brand_name as brandName,
+            pi.property,
+            to_char(pd.plan_listing_time, 'YYYY/MM/dd') as planListingTimeStr,
+            unit.name as unitName,
+            pd.charge_name as chargeName,
+            target_tax_cost as targetTaxCost,
+            target_no_tax_cost as targetNoTaxCost,
+            actual_tax_cost as actualTaxCost,
+            actual_no_tax_cost as actualNoTaxCost,
+            retail_price as retailPrice,
+            target_gpm as targetGpm,
+            actual_gpm_cny as actualGpmCny,
+            actual_gpm_usd as actualGpmUsd,
+            year_sale_qty as yearSaleQtyStr,
+            year_sale_amount as yearSaleAmountStr,
+            month_sale_qty as monthSaleQtyStr,
+            month_sale_amount as monthSaleAmountStr,
+            ps.sale_country as saleCountry,
+            to_char(listing_time, 'YYYY/MM/dd') as listingTimeStr,
+            to_char(delisting_time, 'YYYY/MM/dd') as delistingTimeStr,
+            CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END isFinishedImg,
+            CASE WHEN is_finished_video = 1 THEN '是' ELSE '否' END isFinishedVideo,
+            sale_state as saleState,
+            dp.value AS productProperty,
+            declare_chinese_name as declareChineseName,
+            declare_english_name as declareEnglishName,
+            declare_price as declarePriceStr,
+            customs_code as customsCode,
+            declare_element as declareElement,
+            english_material as englishMaterial,
+            english_usage as englishUsage,
+            split_part(product_size, 'X',1) as productSizeLengthStr,
+            split_part(product_size, 'X',2) as productSizeWideStr,
+            split_part(product_size, 'X',3) as productSizeHighStr,
+            gross_weight as grossWeightStr,
+            net_weight as netWeightStr,
+            split_part(box_size, 'X',1) as boxSizeLengthStr,
+            split_part(box_size, 'X',2) as boxSizeWideStr,
+            split_part(box_size, 'X',3) as boxSizeHighStr,
+            box_weight as boxWeightStr,
+            box_qty as boxQtyStr,
+            pp.ean,
+            pp.plan_order_qty as planOrderQtyStr,
+            to_char(pp.place_order_time, 'YYYY/MM/dd') as placeOrderTimeStr,
+            to_char(pp.plan_arrival_time, 'YYYY/MM/dd') as planArrivalTimeStr,
+            pp.moq as moqStr,
+            pp.delivery_cycle as deliveryCycleStr,
+            to_char(pp.actual_arrival_time, 'YYYY/MM/dd') as actualArrivalTimeStr,
+            pp.actual_arrival_qty as actualArrivalQtyStr,
+            pp.arrival_state as arrivalState,
+            pp.purchase_user_id AS purchaseUser,
+            pp.main_supplier as mainSupplier,
+            pp.second_supplier as secondSupplier,
+            pd.product_state as productStateName,
+            to_char(pd.first_mass_product_date, 'YYYY/MM/dd') as firstMassProductDateStr
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
@@ -488,7 +497,7 @@
         pd.name
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
-        WHERE pi.delete_state = 0 AND pd.status=#{state}
+        WHERE pi.delete_state = 0 AND pd.status = #{state}
         <if test="searchKeyword != null and searchKeyword!=''">
             AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
         </if>
@@ -511,6 +520,36 @@
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
+        </if>
+    </select>
+
+    <select id="searchParentSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.images_url AS skuImagesUrl,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0 AND pd.status = #{state}
+        and pd.id not in (
+            select DISTINCT parent_sku_id from product_bom_sku
+            <where>
+                <if test="bomId != null and bomId!=''">
+                    bom_id != #{bomId}
+                </if>
+            </where>
+            )
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+            OR
+            pd.name LIKE  concat('%',#{searchKeyword},'%')
+            )
         </if>
     </select>
 </mapper>

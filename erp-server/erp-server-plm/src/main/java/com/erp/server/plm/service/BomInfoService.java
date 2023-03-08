@@ -10,7 +10,8 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.server.plm.controller.AuditParamDTO;
+import com.erp.model.plm.dto.AuditParamDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -73,4 +74,17 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     void checkAuditor(List<BomSkuDTO> skuList);
 
     List<String> getSkuIdList(List<BomSkuDTO> skuList);
+
+    Integer getMaxSequence();
+    /**
+     * @description: 导入bom
+     * @author Will
+     * @date: 2023/3/7 9:39
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+
 }

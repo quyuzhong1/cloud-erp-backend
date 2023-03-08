@@ -19,7 +19,12 @@ public interface ProjectRoleService extends IService<ProjectRoleEntity> {
 
     List<ProjectRoleEntity> listByProductId(String projectId);
 
-    List<ProductRoleDTO> roleSortList();
+    /**
+     * 获取角色分类 列表
+     * @param type 类型
+     * @return
+     */
+    List<ProductRoleDTO> roleSortList(String type);
 
     List<String> getRoleIdsByProductId(String productId);
 

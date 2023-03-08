@@ -23,6 +23,11 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     int countByCategoryId(String id);
 
+    /**
+     * 保存或者修改产品
+     * @param dto
+     * @return
+     */
     String saveOrUpdateProduct(ProductDTO dto);
 
     Boolean updateCategory(MoveCategoryDTO dto);
@@ -42,8 +47,23 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     List<BasicDTO> listProductInfo(ProductSearchDTO dto);
 
+    /**
+     * 保存模板
+     * @author yl
+     * @date 2023-03-07 9:36
+     * @param dto
+     * @return java.lang.Boolean
+     */
     Boolean saveTemplate(SaveProductTemplateDTO dto);
-
+     
+    /**
+     * 更改项目状态
+     * @author yl
+     * @date 2023-03-07 9:37
+     * @param productId
+     * @param state
+     * @return void
+     */
     void updateProjectStatus(String productId, Integer state);
 
     List<Map<String, Object>> getListObjs();
@@ -128,8 +148,19 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @author yl
      * @date 2023-03-02 11:56
      * @param categoryIds
-     * @param isFinishedProductDev
+     * @param isFinishedProductDev  是否是产品开发
+     * @param  isArchive 是否 是产品归档数据 true 是
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      */
-    List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, Integer isFinishedProductDev);
+    List<ProductInfoEntity> getListByCategoryIds(List<String> categoryIds, boolean isFinishedProductDev,boolean isArchive);
+
+    /**
+     * 查询角色分类 列表信息
+     * @author yl
+     * @date 2023-03-03 15:15
+     * @param isFinishedProductDev 是否是产品开发管理
+     * @param isArchive 是否是归档
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     */
+    List<ProductInfoEntity> getRoleClassifyList(boolean isFinishedProductDev, boolean isArchive);
 }

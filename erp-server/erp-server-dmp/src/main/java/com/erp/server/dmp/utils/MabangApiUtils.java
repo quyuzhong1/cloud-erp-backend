@@ -263,7 +263,7 @@ public class MabangApiUtils {
             }
             JSONObject dataJson = JSONObject.parseObject(responseMap.getString("data"));
             List<OrderEntity> dataList = JSONObject.parseArray(dataJson.getString("list"), OrderEntity.class);
-            hasNext = dataJson.getBoolean("hasNext");
+            hasNext = null != dataJson.getBoolean("hasNext") ?dataJson.getBoolean("hasNext"):Boolean.FALSE;
             pageIndex = dataJson.getString("nextCursor");
             if(CollectionUtil.isNotEmpty(dataList)){
                 infoArrayList.addAll(dataList);

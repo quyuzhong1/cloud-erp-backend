@@ -51,4 +51,6 @@ public interface TemplatePhaseService extends IService<TemplatePhaseEntity> {
      * @return TemplatePhaseEntity
      */
     TemplatePhaseEntity getByIdAndTemplateId(String phaseId, String templateId);
+
+    List<TemplatePhaseEntity> getByTemplateIds(List<String> templateIds);
 }

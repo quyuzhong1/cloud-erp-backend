@@ -71,6 +71,7 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
      * @author yl
      * @date 2022-09-22 14:02
      */
+    @Override
     public List<DocsDTO> getDocsNameList(String productId) {
         List<DocsDTO> resultList = new LinkedList<>();
         LambdaQueryWrapper<TaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -78,9 +79,6 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         List<TaskDocsNameEntity> list = list(queryWrapper);
         List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
         int noSys = IsConstant.NO;
-        for (DocsDTO item : docsNames) {
-            item.setIsSys(noSys);
-        }
         resultList.addAll(docsNames);
         return resultList;
 

@@ -100,13 +100,13 @@
 //            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_REFUND);
 //        }
 //        // 构造订单结构
-//        List<DmpRefundInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+//        List<DmpRefundInfoEntity> entityToMqlist = pushToMqList.stream()
 //                .map(this::initOrderInfoEntity)
 //                .filter(ObjectUtil::isNotEmpty)
 //                .collect(Collectors.toList());
 //
 //        // 异步推送到MQ
-//        mabangToMqlist.stream().peek(msg ->
+//        entityToMqlist.stream().peek(msg ->
 //                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TAG.getName(),
 //                        msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
 //                .collect(Collectors.toList());
@@ -123,7 +123,6 @@
 //        List<KingdeeRefundOrderEntity> infoArrayList = new ArrayList<>();
 //        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
 //        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-//        dto.getJobTaskDTO().setLastTime(nextTime);
 //        LinkedList<String> queryFilters = new LinkedList<>();
 //        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 //        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
