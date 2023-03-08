@@ -112,7 +112,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 }
                 docsPermissionService.saveBatch(docsPermissionList);
             }
-        }else{
+        } else {
             //当传来空 删除所有的
             removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
@@ -314,7 +314,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
-        }else{//当传来空 删除所有的
+        } else {//当传来空 删除所有的
             removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
         }
@@ -449,7 +449,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             return resultList;
         }
         Map<String, List<DeliveryDocsDTO>> map = list.stream().collect(Collectors.groupingBy(DeliveryDocsDTO::getId));
-        for (Map.Entry<String, List<DeliveryDocsDTO>>  entry: map.entrySet()) {
+        for (Map.Entry<String, List<DeliveryDocsDTO>> entry : map.entrySet()) {
             DeliveryDocsGroupDTO deliveryDocsGroupDTO = new DeliveryDocsGroupDTO();
             List<DeliveryDocsDTO> value = entry.getValue();
             deliveryDocsGroupDTO.setId(entry.getKey());
@@ -461,6 +461,24 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             resultList.add(deliveryDocsGroupDTO);
         }
         return resultList;
+    }
+
+    /**
+     * 根据任务id 获取对应数据
+     *
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.entity.TaskDeliveryDocsEntity>
+     * @author yl
+     * @date 2023-03-08 10:48
+     */
+    @Override
+    public List<TaskDeliveryDocsEntity> geByTaskIds(List<String> taskIds) {
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TaskDeliveryDocsEntity::getTaskId, taskIds);
+        return this.list(queryWrapper);
     }
 
 
@@ -496,8 +514,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (intersectionList.size() != 0) {
             if (CollectionUtils.isNotEmpty(existDocsIds)) {
                 //删除 存在的id 不包含交集的
-                List<String> deleteIdList=existDocsIds.stream().filter(e->!intersectionList.contains(e)).collect(Collectors.toList());
-                if(CollectionUtils.isNotEmpty(deleteIdList)){
+                List<String> deleteIdList = existDocsIds.stream().filter(e -> !intersectionList.contains(e)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(deleteIdList)) {
                     LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
                     queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
                     queryWrapper.in(TaskDeliveryDocsEntity::getId, deleteIdList);

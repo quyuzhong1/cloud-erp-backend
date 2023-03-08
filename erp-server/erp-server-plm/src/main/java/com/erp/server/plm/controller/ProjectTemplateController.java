@@ -174,7 +174,7 @@ public class ProjectTemplateController extends BaseController {
      */
     @GetMapping("/migrateDocs")
     public ApiResult migrateDocsDb() {
-        boolean result = projectTemplateService.migratePhaseDb();
+        boolean result = projectTemplateService.migrateDocsDb();
         return result == true ? success() : failure();
     }
 }

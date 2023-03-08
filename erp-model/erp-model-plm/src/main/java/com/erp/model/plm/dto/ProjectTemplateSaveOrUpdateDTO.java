@@ -30,6 +30,7 @@ public class ProjectTemplateSaveOrUpdateDTO implements Serializable {
      * 模板名称
      */
     @NotBlank(message = "模板名称不能为空")
+    @Size(max = 50,message = "最大50字符")
     private String name;
 
     /**

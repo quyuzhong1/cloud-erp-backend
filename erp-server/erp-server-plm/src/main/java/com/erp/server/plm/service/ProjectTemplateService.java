@@ -109,4 +109,14 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return boolean
      */
     boolean migratePhaseDb();
+
+    
+    /**
+     * 模板改造 迁移文档
+     * @author yl
+     * @date 2023-03-08 10:24
+     * @param
+     * @return boolean
+     */
+    boolean migrateDocsDb();
 }

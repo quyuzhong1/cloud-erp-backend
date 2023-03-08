@@ -62,6 +62,7 @@
          ON pt.id=trp.template_id
          WHERE trp.is_deleted=false
          AND trp.product_property_id=#{propertyId}
+         AND pt.status=1
 
     </select>
 

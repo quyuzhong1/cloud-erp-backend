@@ -50,4 +50,14 @@ public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNa
      * @return Boolean
      */
     Boolean updateDocsName(TmeplateDocsNameDTO dto);
+
+    
+    /**
+     * 根据模板id 集合获取模板文档名
+     * @author yl
+     * @date 2023-03-08 10:32
+     * @param templateIds
+     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskDocsNameEntity>
+     */
+    List<TemplateTaskDocsNameEntity> getByTemplateIds(List<String> templateIds);
 }

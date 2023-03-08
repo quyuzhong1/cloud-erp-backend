@@ -72,6 +72,19 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     @Resource
     private TemplateTaskService templateTaskService;
 
+    @Resource
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
+
+
+    @Resource
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+
+    @Resource
+    private SysDocsService sysDocsService;
+
+    @Resource
+    private TaskDeliveryService taskDeliveryService;
+
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -310,12 +323,12 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                         //根据阶段名查询数据库是否存在
                         TemplatePhaseEntity dbTemplatePhase = dbTemplatePhaseList.stream().filter(d -> d.getName().equals(name) &&
                                 d.getTemplateId().equals(templateId)).findFirst().orElse(null);
-                        if(dbTemplatePhase!=null){
+                        if (dbTemplatePhase != null) {
                             vo.setNewCreateId(dbTemplatePhase.getId());
-                        }else{
-                            TemplatePhaseEntity phaseEntity= saveTemplatePhaseList.stream().filter(s->s.getTemplateId().equals(templateId)
-                                    &&s.getName().equals(name)).findFirst().orElse(null);
-                            if(Objects.isNull(phaseEntity)){
+                        } else {
+                            TemplatePhaseEntity phaseEntity = saveTemplatePhaseList.stream().filter(s -> s.getTemplateId().equals(templateId)
+                                    && s.getName().equals(name)).findFirst().orElse(null);
+                            if (Objects.isNull(phaseEntity)) {
                                 TemplatePhaseEntity addEntity = new TemplatePhaseEntity();
                                 String id = IdWorker.getIdStr();
                                 addEntity.setTemplateId(templateId);
@@ -323,7 +336,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                                 addEntity.setName(sysTaskPhase.getName());
                                 saveTemplatePhaseList.add(addEntity);
                                 vo.setNewCreateId(id);
-                            }else{
+                            } else {
                                 vo.setNewCreateId(phaseEntity.getId());
                             }
 
@@ -341,7 +354,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         boolean result = true;
 
         if (CollectionUtils.isNotEmpty(saveTemplatePhaseList)) {
-              result = templatePhaseService.saveBatch(saveTemplatePhaseList);
+            result = templatePhaseService.saveBatch(saveTemplatePhaseList);
         }
 
         List<String> taskIdList = migrateTempList.stream().map(migrateTempVO::getTaskId).collect(Collectors.toList());
@@ -352,7 +365,92 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 item.setPhaseId(tempVO.getNewCreateId());
             }
         }
-       templateTaskService.updateBatchById(templateTaskList);
+        templateTaskService.updateBatchById(templateTaskList);
+        return result;
+    }
+
+
+    /**
+     * 模板改造迁移 文档
+     *
+     * @param
+     * @return boolean
+     * @author yl
+     * @date 2023-03-08 10:26
+     */
+    @Override
+    public boolean migrateDocsDb() {
+        //系统文档
+        List<SysDocsEntity> sysDocsList = sysDocsService.list();
+
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.list();
+
+        List<String> templateIds = sysTaskList.stream().map(ProjectTaskSysEntity::getTemplateId).distinct().collect(Collectors.toList());
+        List<String> taskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).distinct().collect(Collectors.toList());
+        List<TemplateTaskDocsNameEntity> dbTemplateDocsNameList = templateTaskDocsNameService.getByTemplateIds(templateIds);
+
+
+        List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.geByTaskIds(taskIds);
+
+        List<TemplateTaskDocsNameEntity> addList = new ArrayList<>(10);
+
+        List<migrateTempVO> migrateTempList = new ArrayList<>(20);
+        boolean result = true;
+        //模板分组
+        Map<String, List<ProjectTaskSysEntity>> map = sysTaskList.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getTemplateId));
+        for (Map.Entry<String, List<ProjectTaskSysEntity>> entry : map.entrySet()) {
+            //模板id
+            String templateId = entry.getKey();
+            List<ProjectTaskSysEntity> list = entry.getValue();
+            for (ProjectTaskSysEntity item : list) {
+                String taskId = item.getId();
+                TaskDeliveryDocsEntity deliveryDocs = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (deliveryDocs != null) {
+                    String docsName = deliveryDocs.getDocsName();
+                    migrateTempVO vo = new migrateTempVO();
+                    //看数据库有没有
+                    TemplateTaskDocsNameEntity templateDocsEntity = dbTemplateDocsNameList.stream().filter(db -> db.getTemplateId().equals(templateId) &&
+                            db.getName().equals(docsName)).findFirst().orElse(null);
+                    //当为空
+                    if (Objects.isNull(templateDocsEntity)) {
+                        TemplateTaskDocsNameEntity addTaskDocs = addList.stream().filter(add -> add.getName().equals(docsName) &&
+                                add.getTemplateId().equals(templateId)).findFirst().orElse(null);
+                        if (Objects.isNull(addTaskDocs)) {
+                            TemplateTaskDocsNameEntity add = new TemplateTaskDocsNameEntity();
+                            String id = IdWorker.getIdStr();
+                            add.setId(id);
+                            add.setName(docsName);
+                            add.setTemplateId(templateId);
+                            addList.add(add);
+                            vo.setNewCreateId(id);
+                        } else {
+                            vo.setNewCreateId(addTaskDocs.getId());
+                        }
+
+                    } else {
+                        //表示有
+                        vo.setNewCreateId(templateDocsEntity.getId());
+                    }
+                    vo.setTemplateId(templateId);
+                    vo.setTaskId(taskId);
+                    migrateTempList.add(vo);
+                }
+            }
+
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            result = templateTaskDocsNameService.saveBatch(addList);
+        }
+
+        List<TemplateDeliveryDocsEntity> dbTemplateDeliveryList = templateDeliveryDocsService.getByTemplateIds(templateIds);
+        for (TemplateDeliveryDocsEntity item : dbTemplateDeliveryList) {
+            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getTaskId())).findFirst().orElse(null);
+            if (tempVO != null) {
+                item.setDocsNameId(tempVO.getNewCreateId());
+            }
+        }
+        templateDeliveryDocsService.updateBatchById(dbTemplateDeliveryList);
+
         return result;
     }
 

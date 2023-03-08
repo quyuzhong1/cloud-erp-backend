@@ -340,6 +340,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+            if (CollectionUtils.isEmpty(skuIdList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
         }
 
         List<Integer> stateList = new ArrayList<>();
