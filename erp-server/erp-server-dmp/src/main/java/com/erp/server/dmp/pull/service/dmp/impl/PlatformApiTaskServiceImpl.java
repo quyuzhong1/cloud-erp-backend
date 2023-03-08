@@ -47,7 +47,7 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
     public PlatformApiTaskEntity getByApiCode(String taskName) {
         return lambdaQuery()
                 .eq(PlatformApiTaskEntity::getApiCode, taskName)
-                .le(PlatformApiTaskEntity::getLastTime, LocalDateTime.now())
+                .le(PlatformApiTaskEntity::getNextTime, LocalDateTime.now())
                 .eq(PlatformApiTaskEntity::getState, 3)
                 .one();
     }
