@@ -100,20 +100,23 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
         if (ObjectUtils.isEmpty(child)) {
             errorMsgList.add(ApiError.ERROR_95153.msg);
         }
-        //查询是否已存在bom信息
-        List<BomSkuEntity> bomSkuList = bomSkuService.getByParentSkuId(parent.getId());
+        List<BomSkuEntity> bomSkuList = new ArrayList<>();
 
-        if (CollectionUtils.isNotEmpty(bomSkuList)) {
-            String bomId = bomSkuList.get(0).getBomId();
-            BomInfoEntity bomInfoEntity = bomInfoService.getById(bomId);
-            if (ObjectUtils.isEmpty(bomInfoEntity)) {
-                errorMsgList.add("未发现父级SKU对应BOM");
-            }
-            if (BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState())) {
-                errorMsgList.add("BOM已审核不支持更新");
+        if (ObjectUtils.isNotEmpty(parent)) {
+            //查询是否已存在bom信息
+             bomSkuList = bomSkuService.getByParentSkuId(parent.getId());
+
+            if (CollectionUtils.isNotEmpty(bomSkuList)) {
+                String bomId = bomSkuList.get(0).getBomId();
+                BomInfoEntity bomInfoEntity = bomInfoService.getById(bomId);
+                if (ObjectUtils.isEmpty(bomInfoEntity)) {
+                    errorMsgList.add("未发现父级SKU对应BOM");
+                }
+                if (BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState())) {
+                    errorMsgList.add("BOM已审核不支持更新");
+                }
             }
         }
-
         //添加数据用于判断是否为空
         dataList.add(bomInfoExcelDTO);
         //存在错误数据则直接返回
@@ -135,7 +138,7 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
             BomInfoEntity bomInfoEntity = new BomInfoEntity();
             bomInfoEntity.setVersion(MathUtil.ONE);
             bomInfoEntity.setType(BomTypeEnum.getType(bomInfoExcelDTO.getTypeName()));
-            bomInfoEntity.setState(BomStateEnum.AUDIT_PASS.getState());
+            bomInfoEntity.setState(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
             Integer maxSequence = bomInfoService.getMaxSequence();
             //获取到 编号
             String serialNumber = BusinessNoCreateUtil.getBusinessNo(BomConstant.BOM, maxSequence);
