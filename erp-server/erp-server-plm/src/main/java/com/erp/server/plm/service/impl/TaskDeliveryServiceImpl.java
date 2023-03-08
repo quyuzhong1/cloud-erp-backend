@@ -94,7 +94,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 entity.setDocsName(item.getName());
                 entity.setTaskId(taskId);
                 entity.setDocsNameId(item.getId());
-                entity.setIsSys(item.getIsSys());
                 saveList.add(entity);
             }
             Boolean flag = this.saveBatch(saveList);

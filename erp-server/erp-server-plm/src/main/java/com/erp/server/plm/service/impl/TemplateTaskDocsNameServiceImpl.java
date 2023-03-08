@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.TmeplateDocsNameDTO;
@@ -26,10 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -172,15 +169,22 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     @Override
     public List<DocsDTO> getDocsNameList(String templateId) {
         List<DocsDTO> resultList = new LinkedList<>();
-        LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
-        List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
-        List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
-        int noSys = IsConstant.NO;
-        for (DocsDTO item : docsNames) {
-            item.setIsSys(noSys);
+        List<TemplateDeliveryDocsEntity> deliveryDocsList = templateDeliveryDocsService.getByTemplateIds(Arrays.asList(templateId));
+        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            List<String> docsNameIds = deliveryDocsList.stream().filter(d -> d.getStatus().equals(1)).map(TemplateDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+            LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
+            queryWrapper.in(TemplateTaskDocsNameEntity::getId, docsNameIds);
+            List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
+            List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
+            resultList.addAll(docsNames);
+        }else{
+            LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
+            List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
+            List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
+            resultList.addAll(docsNames);
         }
-        resultList.addAll(docsNames);
         return resultList;
     }
 
@@ -227,7 +231,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
             updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName, entity.getName());
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId, uid);
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName, userName);
-           return templateDeliveryDocsService.update(updateWrapper);
+            return templateDeliveryDocsService.update(updateWrapper);
         }
         return true;
     }

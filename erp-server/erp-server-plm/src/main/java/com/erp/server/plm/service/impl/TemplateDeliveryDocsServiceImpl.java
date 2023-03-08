@@ -225,7 +225,6 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
                 entity.setDocsName(item.getName());
                 entity.setTaskId(taskId);
                 entity.setDocsNameId(item.getId());
-                entity.setIsSys(item.getIsSys());
                 entity.setCreateUserId(uid);
                 entity.setCreateUserName(userName);
                 saveList.add(entity);
