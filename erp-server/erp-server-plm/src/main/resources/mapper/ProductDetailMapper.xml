@@ -532,7 +532,15 @@
         pd.name AS skuName
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
-        WHERE pi.delete_state = 0 AND pd.status = #{state} and pd.id not in (select DISTINCT parent_sku_id from product_bom_sku where bom_id != #{bomId})
+        WHERE pi.delete_state = 0 AND pd.status = #{state}
+        and pd.id not in (
+            select DISTINCT parent_sku_id from product_bom_sku
+            <where>
+                <if test="bomId != null and bomId!=''">
+                    bom_id != #{bomId}
+                </if>
+            </where>
+            )
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
