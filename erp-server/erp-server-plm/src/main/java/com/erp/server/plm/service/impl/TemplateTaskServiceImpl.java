@@ -439,7 +439,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         List<String> chargeIds = dto.getChargeIds();
         List<String> roleIds = dto.getRoleIds();
         //任务分配类型处理
-        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {//分配类型为角色
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {
+            //分配类型为角色
             List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
             entity.setRoleId(String.join(",", roleIds));
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
@@ -448,7 +449,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 entity.setChargeId("");
                 entity.setChargeName("");
             }
-        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {//分配类型为负责人
+        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {
+            //分配类型为负责人
             String chargeNames = commonService.getNameByIds(chargeIds);
             entity.setChargeId(String.join(",", chargeIds));
             entity.setChargeName(chargeNames);

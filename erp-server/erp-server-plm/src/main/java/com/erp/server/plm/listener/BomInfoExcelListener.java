@@ -100,6 +100,20 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
         if (ObjectUtils.isEmpty(child)) {
             errorMsgList.add(ApiError.ERROR_95153.msg);
         }
+        //查询是否已存在bom信息
+        List<BomSkuEntity> bomSkuList = bomSkuService.getByParentSkuId(parent.getId());
+
+        if (CollectionUtils.isNotEmpty(bomSkuList)) {
+            String bomId = bomSkuList.get(0).getBomId();
+            BomInfoEntity bomInfoEntity = bomInfoService.getById(bomId);
+            if (ObjectUtils.isEmpty(bomInfoEntity)) {
+                errorMsgList.add("未发现父级SKU对应BOM");
+            }
+            if (BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState())) {
+                errorMsgList.add("BOM已审核不支持更新");
+            }
+        }
+
         //添加数据用于判断是否为空
         dataList.add(bomInfoExcelDTO);
         //存在错误数据则直接返回
@@ -114,8 +128,7 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
         bomSkuEntity.setParentSkuId(parent.getId());
         bomSkuEntity.setParentSkuNo(parent.getSkuNo());
         bomSkuEntity.setQuantity(Integer.valueOf(bomInfoExcelDTO.getQuantityStr()));
-        //查询是否已存在bom信息
-        List<BomSkuEntity> bomSkuList = bomSkuService.getByParentSkuId(parent.getId());
+
 
         if (CollectionUtils.isEmpty(bomSkuList)) {
             //新增

@@ -1487,7 +1487,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setPurchaseUser(findUserDTO.getUserName());
                 }
             }
-
             if (StringUtils.isNotBlank(req.getPurchaseUser())) {
                 String[] split = req.getSaleCountry().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
