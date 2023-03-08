@@ -88,7 +88,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
 
     List<SkuVO> getSkuBySkuIds(@Param("skuIdList")List<String> skuIdList);
 
-    List<SkuVO> searchParentSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
+    List<SkuVO> searchParentSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state,@Param("bomId") String bomId);
 }
 
 

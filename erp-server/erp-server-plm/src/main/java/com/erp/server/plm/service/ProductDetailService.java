@@ -414,5 +414,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param searchKeyword
      * @return List<SkuVO>
      */
-    List<SkuVO> searchParentSku(String searchKeyword);
+    List<SkuVO> searchParentSku(String searchKeyword,String bomId);
 }

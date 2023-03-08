@@ -495,7 +495,7 @@
         pd.name
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
-        WHERE pi.delete_state = 0 AND pd.status=#{state}
+        WHERE pi.delete_state = 0 AND pd.status = #{state}
         <if test="searchKeyword != null and searchKeyword!=''">
             AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
         </if>
@@ -532,7 +532,7 @@
         pd.name AS skuName
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
-        WHERE pi.delete_state = 0 AND pd.status=#{state} and pd.id not in (select parent_sku_id from product_bom_sku)
+        WHERE pi.delete_state = 0 AND pd.status = #{state} and pd.id not in (select DISTINCT parent_sku_id from product_bom_sku where bom_id != #{bomId})
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (
