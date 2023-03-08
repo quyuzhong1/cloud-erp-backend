@@ -864,8 +864,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
             }
         }
-
         detailsDTO.setOutputDocsList(docsList);
+        //查询项目文档（同产品输出物）
+        if (StringUtils.isNotBlank(detailsDTO.getProductId())) {
+            List<DeliveryDocsDTO> productDocsList = taskDeliveryService.listProductDocs(detailsDTO.getProductId());
+            if (CollectionUtils.isNotEmpty(productDocsList)) {
+                productDocsList.forEach(obj -> obj.setTaskStatusName(TaskStateEnum.getName(detailsDTO.getTaskState())));
+                detailsDTO.setProductDocsList(productDocsList);
+            }
+        }
+
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
         List<Map<String, Object>> refSkuFinishList = new ArrayList<>(taskRefSkuList.size());

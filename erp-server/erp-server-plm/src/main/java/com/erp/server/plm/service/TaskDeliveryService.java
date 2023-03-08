@@ -53,4 +53,12 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
      * @return List<DeliveryDocsGroupDTO>
      */
     List<DeliveryDocsGroupDTO> listGroupByTaskId(String id);
+    /**
+     * @description: 查询项目文档
+     * @author Will
+     * @date: 2023/3/8 10:34
+     * @param productId
+     * @return List<DeliveryDocsDTO>
+     */
+    List<DeliveryDocsDTO> listProductDocs(String productId);
 }

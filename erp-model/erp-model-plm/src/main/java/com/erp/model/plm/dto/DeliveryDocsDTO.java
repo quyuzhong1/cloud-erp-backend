@@ -46,6 +46,10 @@ public class DeliveryDocsDTO implements Serializable {
      */
     private String taskName;
 
+    /**
+     * 任务状态名称
+     */
+    private String taskStatusName;
 
     /**
      * 交付文档名

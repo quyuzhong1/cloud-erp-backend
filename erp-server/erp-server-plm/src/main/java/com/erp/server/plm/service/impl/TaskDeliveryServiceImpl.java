@@ -146,54 +146,10 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        String userId = "";
-        if (loginUser != null) {
-            userId = loginUser.getUid();
-        }
+
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
-        List<String> findDeliveryDocsIds = new ArrayList<>();
-
-        //如果是管理员
-        if (userId.equals(AdminUserConstant.ID)) {
-            List<String> allDeliveryDocsIdsAdmin = docsPermissionService.getAllDeliveryDocsIdsAdmin(params.getFlagId());
-            findDeliveryDocsIds.addAll(allDeliveryDocsIdsAdmin);
-        } else {
-            /**
-             * 根据产品id 获取当前登录人 是否是 任务负责人
-             * 如果是就要添加对应的 文档id
-             */
-            List<String> taskChargeDeliveryDocsIds = getTaskChargeDeliveryDocsIds(params.getFlagId(), userId);
-            if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
-                findDeliveryDocsIds.addAll(taskChargeDeliveryDocsIds);
-            }
-            /**
-             * 查询用户是否在该角色下 在的话 就查询对应的文档id
-             */
-            List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
-            if (CollectionUtils.isNotEmpty(userRoleIds)) {
-                List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, params.getFlagId());
-                if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
-                    findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
-                }
-            }
-            /**
-             * 查询设置全部的的人可以看的
-             */
-            List<String> allDeliveryDocsIds = docsPermissionService.getAllDeliveryDocsIds(params.getFlagId());
-            if (CollectionUtils.isNotEmpty(allDeliveryDocsIds)) {
-                //查询是否是项目成员
-                Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
-                //如果是项目成员 可以看到所有设置全部的
-                if (ifExistProjectMember) {
-                    findDeliveryDocsIds.addAll(allDeliveryDocsIds);
-                }
-            }
-        }
-
-        findDeliveryDocsIds = findDeliveryDocsIds.stream().distinct().collect(Collectors.toList());
-
+        List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
         IPage pageData = new Page();
         if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
             pageData = baseMapper.paging(query, params, findDeliveryDocsIds);
@@ -213,6 +169,28 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             }
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<DeliveryDocsDTO> listProductDocs(String productId) {
+        BaseSearchDTO params = new BaseSearchDTO();
+        params.setFlagId(productId);
+        List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
+        List<DeliveryDocsDTO> list = baseMapper.list(params, findDeliveryDocsIds);
+        if (CollectionUtils.isNotEmpty(list)) {
+            Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
+            for (DeliveryDocsDTO item : list) {
+                ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
+                //当没审核通过
+                if (Objects.isNull(entity) || !entity.getStatus().equals(approvalPass)) {
+                    item.setFileUrl(item.getOldFileUrl());
+                    item.setFileName(item.getOldFileName());
+                    item.setUploadType(item.getOldUploadType());
+                }
+            }
+        }
+        return list;
     }
 
     /**
@@ -486,6 +464,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
 
+
+
     /**
      * 根据任务id 获取对应要交付的文档
      *
@@ -537,5 +517,58 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
     }
 
+    /**
+     * 设置查看权限
+     */
+    private List<String> setTaskDeliveryAuth(BaseSearchDTO params) {
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        String userId = "";
+        if (loginUser != null) {
+            userId = loginUser.getUid();
+        }
+
+        List<String> findDeliveryDocsIds = new ArrayList<>();
+
+        //如果是管理员
+        if (userId.equals(AdminUserConstant.ID)) {
+            List<String> allDeliveryDocsIdsAdmin = docsPermissionService.getAllDeliveryDocsIdsAdmin(params.getFlagId());
+            findDeliveryDocsIds.addAll(allDeliveryDocsIdsAdmin);
+        } else {
+            /**
+             * 根据产品id 获取当前登录人 是否是 任务负责人
+             * 如果是就要添加对应的 文档id
+             */
+            List<String> taskChargeDeliveryDocsIds = getTaskChargeDeliveryDocsIds(params.getFlagId(), userId);
+            if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
+                findDeliveryDocsIds.addAll(taskChargeDeliveryDocsIds);
+            }
+            /**
+             * 查询用户是否在该角色下 在的话 就查询对应的文档id
+             */
+            List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
+            if (CollectionUtils.isNotEmpty(userRoleIds)) {
+                List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, params.getFlagId());
+                if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
+                    findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
+                }
+            }
+            /**
+             * 查询设置全部的的人可以看的
+             */
+            List<String> allDeliveryDocsIds = docsPermissionService.getAllDeliveryDocsIds(params.getFlagId());
+            if (CollectionUtils.isNotEmpty(allDeliveryDocsIds)) {
+                //查询是否是项目成员
+                Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
+                //如果是项目成员 可以看到所有设置全部的
+                if (ifExistProjectMember) {
+                    findDeliveryDocsIds.addAll(allDeliveryDocsIds);
+                }
+            }
+        }
+
+        findDeliveryDocsIds = findDeliveryDocsIds.stream().distinct().collect(Collectors.toList());
+
+        return findDeliveryDocsIds;
+    }
 
 }
