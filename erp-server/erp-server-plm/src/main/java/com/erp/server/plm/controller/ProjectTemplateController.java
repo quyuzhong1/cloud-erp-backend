@@ -146,15 +146,36 @@ public class ProjectTemplateController extends BaseController {
 
     /**
      * 根据产品属性获取到对应模板【优化4】
+     *
      * @param propertyId
      * @return
      */
     @GetMapping("/getTemplateByProperty")
-    public ApiResult<List<Map<String,Object>>> getByPropertyId(@Param("propertyId") String propertyId) {
-        List<Map<String,Object>> templateList = projectTemplateService.getByPropertyId(propertyId);
+    public ApiResult<List<Map<String, Object>>> getByPropertyId(@Param("propertyId") String propertyId) {
+        List<Map<String, Object>> templateList = projectTemplateService.getByPropertyId(propertyId);
         return success(templateList);
 
     }
 
+
+    /**
+     * 同步阶段
+     * @return
+     */
+    @GetMapping("/migratePhase")
+    public ApiResult migratePhaseDb() {
+        boolean result = projectTemplateService.migratePhaseDb();
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 迁移文档名
+     * @return
+     */
+    @GetMapping("/migrateDocs")
+    public ApiResult migrateDocsDb() {
+        boolean result = projectTemplateService.migratePhaseDb();
+        return result == true ? success() : failure();
+    }
 }
 

@@ -38,6 +38,7 @@ public class ProjectPhaseEntity implements Serializable {
 
     /**
      * 顺序
+     * 必须有值 且 同产品 这个序号不同
      */
     private Integer seq;
 

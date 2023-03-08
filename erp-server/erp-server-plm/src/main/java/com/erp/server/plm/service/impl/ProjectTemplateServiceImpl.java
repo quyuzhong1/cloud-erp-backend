@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,12 +16,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.ProjectTemplateEntity;
-import com.erp.model.plm.entity.TemplatePreTaskEntity;
-import com.erp.model.plm.entity.TemplateRoleEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
+import com.erp.model.plm.vo.migrateTempVO;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
 import com.erp.server.plm.service.*;
@@ -57,6 +56,21 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
     @Resource
     private TemplateRefPropertyService templateRefPropertyService;
+
+
+    @Resource
+    private SysTaskPhaseService sysTaskPhaseService;
+
+    @Resource
+    private ProjectTaskSysService projectTaskSysService;
+
+
+    @Resource
+    private TemplatePhaseService templatePhaseService;
+
+
+    @Resource
+    private TemplateTaskService templateTaskService;
 
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -258,6 +272,92 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
 
     /**
+     * 模板改造  迁移阶段历史数据
+     *
+     * @param
+     * @return boolean
+     * @author yl
+     * @date 2023-03-07 19:06
+     */
+    @Override
+    public boolean migratePhaseDb() {
+        //系统阶段
+        List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.list();
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.list();
+
+        List<String> templateIds = sysTaskList.stream().map(ProjectTaskSysEntity::getTemplateId).distinct().collect(Collectors.toList());
+        List<TemplatePhaseEntity> dbTemplatePhaseList = templatePhaseService.getByTemplateIds(templateIds);
+
+        List<TemplatePhaseEntity> saveTemplatePhaseList = new ArrayList<>(10);
+        //模板分组
+        Map<String, List<ProjectTaskSysEntity>> map = sysTaskList.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getTemplateId));
+        List<migrateTempVO> migrateTempList = new ArrayList<>(20);
+        for (Map.Entry<String, List<ProjectTaskSysEntity>> entry : map.entrySet()) {
+            //模板id
+            String templateId = entry.getKey();
+            List<ProjectTaskSysEntity> list = entry.getValue();
+            //以阶段分组
+            Map<String, List<ProjectTaskSysEntity>> phaseMap = list.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getPhaseId));
+            for (Map.Entry<String, List<ProjectTaskSysEntity>> phaseEntry : phaseMap.entrySet()) {
+                String phaseId = phaseEntry.getKey();
+                List<ProjectTaskSysEntity> phaseSysTaskList = phaseEntry.getValue();
+                for (ProjectTaskSysEntity sysTask : phaseSysTaskList) {
+                    SysTaskPhaseEntity sysTaskPhase = sysTaskPhaseList.stream().filter(p -> p.getId().equals(phaseId)).findFirst().orElse(null);
+                    if (sysTaskPhase != null) {
+                        //获取到阶段名
+                        String name = sysTaskPhase.getName();
+                        migrateTempVO vo = new migrateTempVO();
+                        //根据阶段名查询数据库是否存在
+                        TemplatePhaseEntity dbTemplatePhase = dbTemplatePhaseList.stream().filter(d -> d.getName().equals(name) &&
+                                d.getTemplateId().equals(templateId)).findFirst().orElse(null);
+                        if(dbTemplatePhase!=null){
+                            vo.setNewCreateId(dbTemplatePhase.getId());
+                        }else{
+                            TemplatePhaseEntity phaseEntity= saveTemplatePhaseList.stream().filter(s->s.getTemplateId().equals(templateId)
+                                    &&s.getName().equals(name)).findFirst().orElse(null);
+                            if(Objects.isNull(phaseEntity)){
+                                TemplatePhaseEntity addEntity = new TemplatePhaseEntity();
+                                String id = IdWorker.getIdStr();
+                                addEntity.setTemplateId(templateId);
+                                addEntity.setId(id);
+                                addEntity.setName(sysTaskPhase.getName());
+                                saveTemplatePhaseList.add(addEntity);
+                                vo.setNewCreateId(id);
+                            }else{
+                                vo.setNewCreateId(phaseEntity.getId());
+                            }
+
+                        }
+                        vo.setTaskId(sysTask.getId());
+                        vo.setTemplateId(templateId);
+                        migrateTempList.add(vo);
+                    }
+                }
+            }
+
+        }
+
+
+        boolean result = true;
+
+        if (CollectionUtils.isNotEmpty(saveTemplatePhaseList)) {
+              result = templatePhaseService.saveBatch(saveTemplatePhaseList);
+        }
+
+        List<String> taskIdList = migrateTempList.stream().map(migrateTempVO::getTaskId).collect(Collectors.toList());
+        List<TemplateTaskEntity> templateTaskList = templateTaskService.listByIds(taskIdList);
+        for (TemplateTaskEntity item : templateTaskList) {
+            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getId())).findFirst().orElse(null);
+            if (tempVO != null) {
+                item.setPhaseId(tempVO.getNewCreateId());
+            }
+        }
+       templateTaskService.updateBatchById(templateTaskList);
+        return result;
+    }
+
+
+    /**
      * 保存模板 返回模板id
      *
      * @param templateName
@@ -284,7 +384,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         boolean saveResult = this.save(entity);
         if (saveResult) {
             //模板id
-            String templateId=entity.getId();
+            String templateId = entity.getId();
             templateRefPropertyService.saveRef(templateId, Arrays.asList(productPropertyId));
             return templateId;
         }

@@ -99,4 +99,14 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
      */
     List<Map<String,Object>> getByPropertyId(String propertyId);
+
+    
+    /**
+     * 模板改造  迁移历史数据
+     * @author yl
+     * @date 2023-03-07 19:06
+     * @param
+     * @return boolean
+     */
+    boolean migratePhaseDb();
 }
