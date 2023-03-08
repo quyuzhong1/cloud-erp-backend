@@ -90,6 +90,10 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
         String parentSku = bomInfoExcelDTO.getParentSku();
         //子sku
         String childSku = bomInfoExcelDTO.getChildSku();
+
+        if (StringUtils.equals(parentSku,childSku)) {
+            errorMsgList.add("父级sku和子级sku不能重复");
+        }
         //已审核父级sku
         ProductDetailEntity parent = productDetailList.stream().filter(obj -> StringUtils.equals(parentSku, obj.getSkuNo())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(parent)) {
