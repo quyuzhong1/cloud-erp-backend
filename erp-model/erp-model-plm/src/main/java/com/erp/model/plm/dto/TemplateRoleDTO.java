@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -25,6 +26,7 @@ public class TemplateRoleDTO implements Serializable {
      * 角色名
      */
     @NotBlank(message = "角色名称不能为空")
+    @Size(max = 50,message = "角色名最长50字符")
     private String name;
 
     /**

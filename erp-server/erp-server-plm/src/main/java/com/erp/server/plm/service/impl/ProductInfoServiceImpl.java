@@ -608,10 +608,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds,categoryIdList);
+                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds, categoryIdList);
             }
         } else {
-            dataList = baseMapper.listNotPaging(params, archiveProductIds,categoryIdList);
+            dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         }
         return dataList;
     }
@@ -662,7 +662,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
 
         //保存模板
-        String templateId = templateService.saveTemplate(templateName, productId,productInfo.getPropertyId());
+        String templateId = templateService.saveTemplate(templateName, productId, productInfo.getPropertyId());
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);
@@ -780,6 +780,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(productPlanEntity)) {
             result.setProductPlanId(productPlanEntity.getId());
         }
+        String templateId = entity.getTemplateId();
+        ProjectTemplateEntity projectTemplate = templateService.getById(templateId);
+        if(projectTemplate!=null){
+            result.setTemplateName(projectTemplate.getName());
+        }
+
         return result;
     }
 

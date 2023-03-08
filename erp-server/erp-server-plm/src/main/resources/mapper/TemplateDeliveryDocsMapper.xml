@@ -13,7 +13,9 @@
            tdd.create_time,
            tdd.update_time,
            tdd.task_id,
-           tdd.status
+           tdd.status,
+           tdd.create_user_name,
+           tdd.update_user_name
         from template_delivery_docs tdd
         <where>
             <if test="params.searchKeyword != '' and params.searchKeyword != null">

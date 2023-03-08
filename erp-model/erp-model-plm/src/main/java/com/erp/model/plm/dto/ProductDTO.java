@@ -145,6 +145,12 @@ public class ProductDTO implements Serializable {
     private String templateId;
 
 
+    /**
+     * 模板名
+     */
+    private String templateName;
+
+
 
 
 

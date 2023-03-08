@@ -40,6 +40,7 @@ public class ProductPlanDevelopDTO implements Serializable {
      * 产品名称
      */
     @NotBlank(message = "产品名称不能为空")
+    @Size(max = 50,message = "最大50字符")
     private String name;
 
     /**
@@ -98,6 +99,19 @@ public class ProductPlanDevelopDTO implements Serializable {
      * 产品品牌
      */
     private String  brandName;
+
+
+    /**
+     * 模板id
+     */
+    @NotBlank(message = "模板id不能为空")
+    private String templateId;
+
+
+    /**
+     * 项目经理
+     */
+    private String projectChargeId;
 
 
 

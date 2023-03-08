@@ -202,10 +202,16 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
             throw new ServiceException(ApiError.ERROR_95012);
         }
+        TemplateDeliveryDocsEntity deliveryDocs = templateDeliveryDocsService.getById(dto.getDeliveryDocsId());
+        String docsNameId = null;
+        if (deliveryDocs != null) {
+            docsNameId = deliveryDocs.getDocsNameId();
+        }
         TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
+        entity.setId(docsNameId);
         entity.setName(name);
         entity.setTemplateId(templateId);
-        boolean flag = this.save(entity);
+        boolean flag = this.saveOrUpdate(entity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
@@ -221,7 +227,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
             updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName, entity.getName());
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId, uid);
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName, userName);
-            templateDeliveryDocsService.update(updateWrapper);
+           return templateDeliveryDocsService.update(updateWrapper);
         }
         return true;
     }

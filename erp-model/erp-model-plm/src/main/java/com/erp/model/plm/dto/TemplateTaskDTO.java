@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +31,7 @@ public class TemplateTaskDTO implements Serializable {
          * 任务名
          */
         @NotBlank(message = "任务名称不能为空")
+        @Size(max = 50,message = "任务名称最长50字符")
         private String name;
 
         /**
