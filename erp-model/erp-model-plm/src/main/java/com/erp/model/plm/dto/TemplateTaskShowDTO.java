@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -92,5 +91,10 @@ public class TemplateTaskShowDTO implements Serializable {
      * 工期
      */
     private Integer workPeriod;
+
+    /**
+     * 阶段名
+     */
+    private String phaseName;
 
 }

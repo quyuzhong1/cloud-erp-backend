@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,7 +14,7 @@ import java.io.Serializable;
  */
 @NoArgsConstructor
 @Data
-public class TemplateSearchDTO implements Serializable {
+public class TemplateSearchDTO extends SortDTO implements Serializable {
 
     /**
      * 搜索关键字
@@ -26,4 +27,7 @@ public class TemplateSearchDTO implements Serializable {
     private String templateId;
 
     private String flagId;
+
+
+
 }

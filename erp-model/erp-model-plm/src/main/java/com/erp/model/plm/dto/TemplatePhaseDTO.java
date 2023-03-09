@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -25,6 +26,7 @@ public class TemplatePhaseDTO implements Serializable {
      * 阶段名
      */
     @NotBlank(message = "阶段名不能为空")
+    @Size(min = 0, max = 50, message = "阶段名长度不能超过50个字符")
     private String name;
 
     /**

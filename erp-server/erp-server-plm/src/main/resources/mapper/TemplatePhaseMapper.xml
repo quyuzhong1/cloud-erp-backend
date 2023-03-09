@@ -7,7 +7,7 @@
 
     <select id="getTemplatePhaseByTemplateId" resultType="com.erp.model.plm.dto.TemplatePhaseDTO">
         SELECT ID,NAME FROM  template_phase WHERE template_id = #{templateId}
-        ORDER BY create_time ASC
+          ORDER BY seq asc ,update_time asc ,id asc
     </select>
 
 </mapper>

@@ -20,6 +20,7 @@
            tt.create_user_id,
            tt.create_time,
            tt.work_period,
+           tp.name as phaseName,
            tpt.id as preTaskId,
            tpt.name as preTaskName,
            tdd.docsNames
@@ -33,6 +34,8 @@
         left join (
             select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs group by template_id, task_id
             ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
+
+        left join template_phase tp  on tp.id=tt.phase_id
         <where>
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                 and tt.name like concat('%', #{params.searchKeyword} ,'%')
@@ -41,7 +44,20 @@
                 and tt.template_id like concat('%', #{params.templateId} ,'%')
             </if>
         </where>
-        order by tt.create_time asc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                <choose >
+                    <when test="item.field == 'phaseName'">
+                        tp.seq ${item.sort}
+                    </when>
+                    <otherwise>
+                        ${item.field} ${item.sort}
+                    </otherwise>
+                </choose>
+            </foreach>
+        </if>
+        tt.create_time asc
     </select>
 
     <select id="listByRoleId" resultType="com.erp.model.plm.entity.TemplateTaskEntity">

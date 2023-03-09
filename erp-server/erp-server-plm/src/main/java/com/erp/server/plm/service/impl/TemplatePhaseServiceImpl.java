@@ -8,6 +8,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BasicTemplateIdDTO;
 import com.erp.model.plm.dto.BatchTemplatePhaseDTO;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -123,13 +124,32 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         //查询模板下是否已存在该阶段名称
         chekPhaseName(list, templateId);
         List<TemplatePhaseEntity> updateList = new LinkedList<>();
+        Integer seq = MathUtil.ONE;
+        //需要更新的任务
+        List<TemplateTaskEntity> updateTaskList = new LinkedList<>();
+
         for (TemplatePhaseDTO item : list) {
+
+            if (StringUtils.isNotBlank(item.getId())) {
+                TemplateTaskEntity task = new TemplateTaskEntity();
+                task.setPhaseId(item.getId());
+                task.setPhaseName(item.getName());
+                task.setTemplateId(templateId);
+                updateTaskList.add(task);
+            }
             TemplatePhaseEntity entity = new TemplatePhaseEntity();
             entity.setId(item.getId());
             entity.setName(item.getName());
             entity.setTemplateId(templateId);
+            entity.setSeq(seq);
             updateList.add(entity);
+            seq++;
         }
+        if(CollectionUtils.isNotEmpty(updateTaskList)){
+            //更改阶段名称
+            templateTaskService.updatePhase(updateTaskList);
+        }
+
         this.saveOrUpdateBatch(updateList);
     }
 

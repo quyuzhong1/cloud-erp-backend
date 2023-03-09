@@ -36,6 +36,9 @@ public class TemplatePhaseEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+
+    private Integer seq;
+
     /**
      * 模板id
      */

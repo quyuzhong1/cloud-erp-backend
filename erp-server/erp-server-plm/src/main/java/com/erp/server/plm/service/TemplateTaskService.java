@@ -99,4 +99,14 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      * 设置审核人信息
      */
     void setTaskChargeDistribution(List<TaskChargeDistributionEntity> taskChargeDistributionList, List<String> ids, String templateId, String taskId, Integer source);
+
+    
+    /**
+     * 更改阶段名称
+     * @author yl
+     * @date 2023-03-09 16:54
+     * @param updateTaskList
+     * @return void
+     */
+    void updatePhase(List<TemplateTaskEntity> updateTaskList);
 }

@@ -76,7 +76,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      * @date 2022-09-14 16:52
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void batchSaveOrUpdate(BatchTaskPhaseDTO dto) {
         List<TaskPhaseDTO> list = dto.getTaskPhases();
         String productId = dto.getProductId();

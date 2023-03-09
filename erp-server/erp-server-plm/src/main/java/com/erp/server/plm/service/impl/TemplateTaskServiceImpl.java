@@ -105,7 +105,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      */
     @Override
     @Transactional
-    public List<CopySourceDTO> saveTemplateTask(String templateId, String productId,List<CopySourceDTO>  phaseSourceList) {
+    public List<CopySourceDTO> saveTemplateTask(String templateId, String productId, List<CopySourceDTO> phaseSourceList) {
         List<ProjectTaskEntity> projectTaskList = taskService.getByProductId(productId);
         List<CopySourceDTO> copySourceList = new ArrayList<>(20);
         if (CollectionUtils.isNotEmpty(projectTaskList)) {
@@ -121,8 +121,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 entity.setTemplateId(templateId);
                 entity.setSourceTaskId(item.getId());
                 //新的阶段id
-                String newPhaseId=phaseSourceList.stream().filter(p->p.getDataId().
-                        equals(item.getPhaseId())).findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                String newPhaseId = phaseSourceList.stream().filter(p -> p.getDataId().
+                        equals(item.getPhaseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
                 entity.setPhaseId(newPhaseId);
                 copySourceList.add(source);
                 if (ObjectUtils.isEmpty(item.getDistributionType())) {
@@ -635,5 +635,26 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         //保存交付文档的审核人
         taskChargeDistributionService.removeAndSave(taskId, taskChargeDistributionList, source);
+    }
+
+
+    /**
+     * 更改阶段名称
+     *
+     * @param updateTaskList
+     * @return void
+     * @author yl
+     * @date 2023-03-09 16:54
+     */
+    @Override
+    public void updatePhase(List<TemplateTaskEntity> updateTaskList) {
+        for (TemplateTaskEntity item : updateTaskList) {
+            LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(TemplateTaskEntity::getTemplateId, item.getTemplateId());
+            updateWrapper.eq(TemplateTaskEntity::getPhaseId, item.getPhaseId());
+            updateWrapper.set(TemplateTaskEntity::getPhaseName, item.getPhaseName());
+            this.update(updateWrapper);
+        }
+
     }
 }
