@@ -175,7 +175,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         BaseSearchDTO params = new BaseSearchDTO();
         params.setFlagId(productId);
         List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
-        if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
+        if (CollectionUtils.isEmpty(findDeliveryDocsIds)) {
             return new ArrayList<>();
         }
         List<DeliveryDocsDTO> list = baseMapper.list(params, findDeliveryDocsIds);
@@ -484,8 +484,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
 
-
-
     /**
      * 根据任务id 获取对应要交付的文档
      *
@@ -542,17 +540,20 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     private List<String> setTaskDeliveryAuth(BaseSearchDTO params) {
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        String userAccount = "";
         String userId = "";
         if (loginUser != null) {
+            userAccount = loginUser.getUserAccount();
             userId = loginUser.getUid();
         }
+
 
         List<String> findDeliveryDocsIds = new ArrayList<>();
 
         //如果是管理员
-        if (userId.equals(AdminUserConstant.ID)) {
-            List<String> allDeliveryDocsIdsAdmin = docsPermissionService.getAllDeliveryDocsIdsAdmin(params.getFlagId());
-            findDeliveryDocsIds.addAll(allDeliveryDocsIdsAdmin);
+        if (userAccount.equals(AdminUserConstant.ACCOUNT)) {
+            List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(params.getFlagId());
+            findDeliveryDocsIds.addAll(deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList()));
         } else {
             /**
              * 根据产品id 获取当前登录人 是否是 任务负责人

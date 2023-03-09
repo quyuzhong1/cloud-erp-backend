@@ -711,7 +711,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId, taskSourceList);
 
             //同步任务审核人
-
+            taskChargeDistributionService.syncTemplateTaskChargeDistribution(taskSourceList);
 
         }
 

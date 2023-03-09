@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.TaskChargeDistributionEntity;
 
 import java.util.List;
@@ -60,4 +61,14 @@ public interface TaskChargeDistributionService extends IService<TaskChargeDistri
      * @return List<TaskChargeDistributionEntity> 
      */
     List<TaskChargeDistributionEntity> listBySourceAndRoleName(List<Integer> source, String name);
+
+    
+    /**
+     * 产品另存为模板 同步任务审核人
+     * @author yl
+     * @date 2023-03-09 20:15
+     * @param taskSourceList
+     * @return void
+     */
+    void syncTemplateTaskChargeDistribution(List<CopySourceDTO> taskSourceList);
 }
