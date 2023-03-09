@@ -55,10 +55,6 @@ public class BomInfoEntity implements Serializable {
     private Integer state;
 
     /**
-     *
-     */
-    private Integer sequence;
-    /**
      * 版本
      */
     private Integer version;

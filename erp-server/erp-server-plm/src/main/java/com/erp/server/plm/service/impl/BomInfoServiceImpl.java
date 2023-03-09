@@ -111,8 +111,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(bomSkuList)) {
             throw new ServiceException(ApiError.ERROR_95094);
         }
-        //获取到最大的序号
-        Integer maxSequence = getMaxSequence();
         //获取到 编号
         String serialNumber = sysCodeService.getBusinessNo(BusinessNoConstant.BOM, BusinessNoTypeEnum.Bom_NO);
         BomInfoEntity bom = new BomInfoEntity();
@@ -121,7 +119,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setVersion(dto.getVersion());
         bom.setId(bomId);
         bom.setSerialNumber(serialNumber);
-        bom.setSequence(maxSequence + 1);
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
@@ -1191,17 +1188,4 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
     }
 
-
-    /**
-     * 获取到最大的编号
-     *
-     * @param
-     * @return java.lang.Integer
-     * @author yl
-     * @date 2023-01-10 14:58
-     */
-    @Override
-    public Integer getMaxSequence() {
-        return baseMapper.getMaxSequence();
-    }
 }

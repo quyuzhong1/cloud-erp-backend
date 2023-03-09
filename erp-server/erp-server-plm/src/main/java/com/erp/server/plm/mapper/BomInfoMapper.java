@@ -23,8 +23,6 @@ import java.util.List;
 public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
 
 
-    Integer getMaxSequence();
-
     IPage<BomPagingVO> paging(Page query, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
 
     List<BomVO> getByIds(@Param("bomIdList") List<String> bomIdList);

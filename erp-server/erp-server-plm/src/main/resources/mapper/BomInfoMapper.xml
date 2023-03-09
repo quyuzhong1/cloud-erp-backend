@@ -3,10 +3,6 @@
 <mapper namespace="com.erp.server.plm.mapper.BomInfoMapper">
 
 
-    <select id="getMaxSequence" resultType="java.lang.Integer">
-         SELECT COALESCE( max(sequence),0) as maxSequence FROM product_bom_info
-    </select>
-
     <select id="paging" resultType="com.erp.model.plm.vo.BomPagingVO">
            SELECT
                b.id,

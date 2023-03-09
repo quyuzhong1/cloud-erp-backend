@@ -152,11 +152,9 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
             bomInfoEntity.setVersion(MathUtil.ONE);
             bomInfoEntity.setType(BomTypeEnum.getType(bomInfoExcelDTO.getTypeName()));
             bomInfoEntity.setState(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
-            Integer maxSequence = bomInfoService.getMaxSequence();
             //获取到 编号
             String serialNumber = sysCodeService.getBusinessNo(BusinessNoConstant.BOM, BusinessNoTypeEnum.Bom_NO);
             bomInfoEntity.setSerialNumber(serialNumber);
-            bomInfoEntity.setSequence(maxSequence + 1);
             bomInfoEntity.setId(IdUtil.getSnowflake().nextIdStr());
             bomInfoService.save(bomInfoEntity);
 

@@ -75,8 +75,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     List<String> getSkuIdList(List<BomSkuDTO> skuList);
 
-    Integer getMaxSequence();
-
     String getExcelUpdateContent(List<BomSkuEntity> newBomList, List<BomSkuEntity> oldBomList);
 
      String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList);
