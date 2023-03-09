@@ -515,7 +515,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public List<TemplateTaskEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
-        queryWrapper.eq(TemplateTaskEntity::getProperty, TaskConstant.PROJECT_TASK);
         queryWrapper.orderByAsc(TemplateTaskEntity::getPid);
         return this.list(queryWrapper);
     }

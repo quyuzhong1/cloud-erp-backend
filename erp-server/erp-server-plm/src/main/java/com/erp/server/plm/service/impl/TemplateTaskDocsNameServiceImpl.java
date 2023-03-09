@@ -181,6 +181,9 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         List<TemplateDeliveryDocsEntity> deliveryDocsList = templateDeliveryDocsService.getByTemplateIds(Arrays.asList(templateId));
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
             List<String> docsNameIds = deliveryDocsList.stream().filter(d -> d.getStatus().equals(1)).map(TemplateDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(docsNameIds)) {
+                return resultList;
+            }
             LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
             queryWrapper.in(TemplateTaskDocsNameEntity::getId, docsNameIds);

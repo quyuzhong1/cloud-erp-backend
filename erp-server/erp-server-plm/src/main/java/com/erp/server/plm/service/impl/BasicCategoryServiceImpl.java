@@ -272,7 +272,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         if(product.equals(type)){
             return getCategoryTreeList(list, false,false);
         }
-
+ 
         //产品开发管理 分类
         return getCategoryTreeList(list, true,false);
 
