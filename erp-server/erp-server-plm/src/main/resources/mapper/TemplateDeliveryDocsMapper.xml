@@ -9,7 +9,7 @@
         select
            ttd.id,
            ttd.template_id,
-           ttd.docs_name  AS docsName,
+           ttd.name  AS docsName,
            ttd.create_time,
            ttd.update_time,
            ttd.status,
@@ -19,7 +19,7 @@
         from template_task_docs_name ttd
         <where>
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
-               and ttd.docs_name like concat('%', #{params.searchKeyword} ,'%')
+               and ttd.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
             <if test="params.templateId != '' and params.templateId != null">
                 and  ttd.template_id like concat('%', #{params.templateId} ,'%')
