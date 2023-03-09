@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -161,6 +162,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductAttestationService productAttestationService;
 
+    @Autowired
+    private ProductArchiveService archiveService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -198,7 +202,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
+
+
+        //获取到归档的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+
+        IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams(),archiveProductIds);
         List<ProductDetailShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);

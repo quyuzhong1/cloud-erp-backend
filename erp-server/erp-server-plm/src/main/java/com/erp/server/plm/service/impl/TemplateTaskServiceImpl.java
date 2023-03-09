@@ -96,24 +96,35 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
 
     /**
-     * 保存模板任务
+     * 产品保存模板 保存任务
      *
      * @param templateId
      * @param productId
-     * @return void
-     * @author yl
-     * @date 2022-09-20 15:40
+     * @param phaseSourceList 阶段的源数据
+     * @return
      */
     @Override
     @Transactional
-    public void saveTemplateTask(String templateId, String productId) {
+    public List<CopySourceDTO> saveTemplateTask(String templateId, String productId,List<CopySourceDTO>  phaseSourceList) {
         List<ProjectTaskEntity> projectTaskList = taskService.getByProductId(productId);
+        List<CopySourceDTO> copySourceList = new ArrayList<>(20);
         if (CollectionUtils.isNotEmpty(projectTaskList)) {
             List<TemplateTaskEntity> saveList = new ArrayList<>();
             for (ProjectTaskEntity item : projectTaskList) {
+                CopySourceDTO source = new CopySourceDTO();
                 TemplateTaskEntity entity = new TemplateTaskEntity();
+                String newCreateId = IdWorker.getIdStr();
+                source.setNewCreateId(newCreateId);
+                source.setDataId(item.getId());
                 BeanMapper.copy(item, entity);
+                entity.setId(newCreateId);
                 entity.setTemplateId(templateId);
+                entity.setSourceTaskId(item.getId());
+                //新的阶段id
+                String newPhaseId=phaseSourceList.stream().filter(p->p.getDataId().
+                        equals(item.getPhaseId())).findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setPhaseId(newPhaseId);
+                copySourceList.add(source);
                 if (ObjectUtils.isEmpty(item.getDistributionType())) {
                     entity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
                 }
@@ -125,6 +136,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             }
             this.saveBatch(saveList);
         }
+        return copySourceList;
     }
 
 
@@ -140,7 +152,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public List<TemplateTaskEntity> getTaskByTemplateId(String flagTemplateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, flagTemplateId);
-        queryWrapper.isNull(TemplateTaskEntity::getQuoteSysTaskId);
+        queryWrapper.isNull(TemplateTaskEntity::getSourceTaskId);
         return this.list(queryWrapper);
     }
 
@@ -183,7 +195,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //删除任务交付文档数据
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
         //删除任务审核人
-        taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO,id);
+        taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO, id);
         //删除模板任务
         return this.remove(queryWrapper);
     }
@@ -224,7 +236,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             if (StringUtils.isNotBlank(roleId)) {
                 resultVO.setRoleIds(Arrays.asList(roleId.split(",")));
             }
-        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskEntity.getDistributionType())){
+        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskEntity.getDistributionType())) {
             String chargeId = taskEntity.getChargeId();
             if (StringUtils.isNotBlank(chargeId)) {
                 resultVO.setChargeIds(Arrays.asList(chargeId.split(",")));
@@ -233,8 +245,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //查询模板任务下审核人
         List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, dto.getId());
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-            List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class,taskChargeDistributionList);
-            list.forEach(obj->{
+            List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
+            list.forEach(obj -> {
                 List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
                 obj.setChargeList(collect);
                 //回显名称
@@ -243,7 +255,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                     List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
                     if (CollectionUtils.isNotEmpty(userList)) {
                         List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                        obj.setChargeNames(String.join(",",usrNameList));
+                        obj.setChargeNames(String.join(",", usrNameList));
                     }
                 }
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
@@ -253,7 +265,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
                     //上级分配取枚举
                     List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
-                    obj.setChargeNames(String.join(",",superiors));
+                    obj.setChargeNames(String.join(",", superiors));
                 }
 
             });
@@ -269,7 +281,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         List<PreTaskVO> preTaskList = templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId());
         List<String> pretaskIdList = Collections.emptyList();
-        if(CollectionUtil.isNotEmpty(preTaskList)){
+        if (CollectionUtil.isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         resultVO.setPreTaskIdList(pretaskIdList);
@@ -284,7 +296,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Override
     public List<TemplateTaskEntity> listByRoleId(String roleId) {
-       return this.baseMapper.listByRoleId(roleId);
+        return this.baseMapper.listByRoleId(roleId);
     }
 
     /**
@@ -354,7 +366,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 }
                 //查询模板任务下审核人
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
-                setTaskChargeDistribution(taskChargeDistributionList,chargeIds,projectTemplateEntity.getId(),taskEntity.getId(),MathUtil.THREE);
+                setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), taskEntity.getId(), MathUtil.THREE);
             }
         }
 
@@ -412,10 +424,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //配置表单属性
         String fieldJson = dto.getFieldJson();
         //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst =  (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
+        Boolean needCheckFirst = (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
 
         //第二种 sku 没有  并且 表单属性不为空 且为生成
-        Boolean needCheckSecond =  (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
+        Boolean needCheckSecond = (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
         Integer type = dto.getType();
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
@@ -468,7 +480,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         //因为模板任务无主键，则无法用saveOrUpdate进行操作
-        if(null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
+        if (null != dto.getWorkPeriod() && 0 < dto.getWorkPeriod()) {
             entity.setWorkPeriod(dto.getWorkPeriod());
         }
         if (StringUtils.isBlank(entity.getId())) {
@@ -478,9 +490,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         //保存审核人信息
         if (CollectionUtils.isNotEmpty(approvalList)) {
-            approvalList.forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
+            approvalList.forEach(obj -> obj.setCharges(String.join(",", obj.getChargeList())));
             List<TaskChargeDistributionEntity> taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
-            setTaskChargeDistribution(taskChargeDistributionList,dto.getChargeIds(),entity.getTemplateId(),entity.getId(),MathUtil.TWO);
+            setTaskChargeDistribution(taskChargeDistributionList, dto.getChargeIds(), entity.getTemplateId(), entity.getId(), MathUtil.TWO);
         }
         //保存交付文档
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
@@ -586,11 +598,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      * 添加任务审核人信息
      */
     @Override
-    public void setTaskChargeDistribution (List<TaskChargeDistributionEntity> taskChargeDistributionList,List<String> ids, String templateId,String taskId,Integer source) {
+    public void setTaskChargeDistribution(List<TaskChargeDistributionEntity> taskChargeDistributionList, List<String> ids, String templateId, String taskId, Integer source) {
 
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
             //根据分配类型查询模板中的数据
-            for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
+            for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                 if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
                     throw new ServiceException(ApiError.ERROR_95097);
                 }
@@ -600,7 +612,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                     List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                     //查询对应模板角色下的人员
-                    List<TemplateMembersEntity> templateMembersList= templateMembersService.listByRoleIds(roleIdList, templateId);
+                    List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIdList, templateId);
                     if (CollectionUtils.isNotEmpty(templateMembersList)) {
                         String approverIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
                         taskChargeDistributionEntity.setChargeIds(approverIds);
@@ -613,7 +625,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                         continue;
                     }
                     List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                    for (String superiorType: superiorTypeList) {
+                    for (String superiorType : superiorTypeList) {
                         String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
                         if (StringUtils.isNotBlank(userIds)) {
                             taskChargeDistributionEntity.setChargeIds(userIds);
@@ -623,6 +635,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             }
         }
         //保存交付文档的审核人
-        taskChargeDistributionService.removeAndSave(taskId,taskChargeDistributionList,source);
+        taskChargeDistributionService.removeAndSave(taskId, taskChargeDistributionList, source);
     }
 }

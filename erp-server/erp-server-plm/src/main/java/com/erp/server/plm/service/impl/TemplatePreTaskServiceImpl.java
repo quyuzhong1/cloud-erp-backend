@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.TemplatePreTaskEntity;
 import com.erp.model.plm.vo.PreTaskListVO;
@@ -34,8 +33,18 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
     @Autowired
     private PreTaskService preTaskService;
 
+    
+    /**
+     * 产品管理 另存为模板 保存前置任务
+     * @author yl
+     * @date 2023-03-09 10:01
+     * @param templateId
+     * @param productId
+     * @param taskSourceList
+     * @return void
+     */
     @Override
-    public void saveTemplatePreTask(String templateId, String productId) {
+    public void saveTemplatePreTask(String templateId, String productId,List<CopySourceDTO> taskSourceList) {
         List<PreTaskEntity> list = preTaskService.getPreTaskByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplatePreTaskEntity> saveList = new ArrayList<>();
@@ -43,6 +52,13 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
                 TemplatePreTaskEntity entity = new TemplatePreTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                String newTaskId=taskSourceList.stream().filter(t->t.getDataId().equals(item.getTaskId())).
+                        findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");
+
+                String newPreTaskId=taskSourceList.stream().filter(t->t.getDataId().equals(item.getPreTaskId())).
+                        findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setTaskId(newTaskId);
+                entity.setPreTaskId(newPreTaskId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);

@@ -22,7 +22,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param productSkuDTO:查询参数
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
-    IPage<ProductDetailShowDTO> paging(Page query, @Param("params") ProductSkuDTO productSkuDTO);
+    IPage<ProductDetailShowDTO> paging(Page query, @Param("params") ProductSkuDTO productSkuDTO,@Param("archiveProductIds") List<String> archiveProductIds);
 
     /**
      * @Description 条件查询产品信息

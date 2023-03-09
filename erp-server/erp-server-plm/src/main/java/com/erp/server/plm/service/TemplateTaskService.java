@@ -19,7 +19,13 @@ import java.util.Map;
  */
 public interface TemplateTaskService extends IService<TemplateTaskEntity> {
 
-    void saveTemplateTask(String templateId, String productId);
+    /**
+     * 产品保存模板 保存任务
+     * @param templateId
+     * @param productId
+     * @return
+     */
+    List<CopySourceDTO> saveTemplateTask(String templateId, String productId, List<CopySourceDTO>  phaseSourceList);
 
     List<TemplateTaskEntity> getTaskByTemplateId(String flagTemplateId);
 

@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface TemplatePhaseService extends IService<TemplatePhaseEntity> {
 
-    void saveTemplatePhase(String templateId, String productId);
+    List<CopySourceDTO> saveTemplatePhase(String templateId, String productId);
 
     List<CopySourceDTO> copyTemplatePhase(String flagId, String productId, String projectId);
 

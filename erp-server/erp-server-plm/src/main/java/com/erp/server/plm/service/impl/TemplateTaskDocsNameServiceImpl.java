@@ -54,18 +54,27 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
      * @date 2022-10-27 15:51
      */
     @Override
-    public void saveTemplateDocsName(String templateId, String productId) {
+    public List<CopySourceDTO> saveTemplateDocsName(String templateId, String productId) {
         List<TaskDocsNameEntity> list = taskDocsNameService.getDocsNameByProductId(productId);
+        List<CopySourceDTO> sourceList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplateTaskDocsNameEntity> saveList = new ArrayList<>();
             for (TaskDocsNameEntity item : list) {
                 TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
                 BeanMapper.copy(item, entity);
+                String newCreateId = IdWorker.getIdStr();
+                entity.setId(newCreateId);
                 entity.setTemplateId(templateId);
                 saveList.add(entity);
+
+                CopySourceDTO source = new CopySourceDTO();
+                source.setDataId(item.getId());
+                source.setNewCreateId(newCreateId);
+                sourceList.add(source);
             }
             this.saveBatch(saveList);
         }
+        return sourceList;
     }
 
 
@@ -178,7 +187,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
             List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
             List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
             resultList.addAll(docsNames);
-        }else{
+        } else {
             LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
             List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
@@ -231,6 +240,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
             updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName, entity.getName());
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId, uid);
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName, userName);
+            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateTime, new Date());
             return templateDeliveryDocsService.update(updateWrapper);
         }
         return true;

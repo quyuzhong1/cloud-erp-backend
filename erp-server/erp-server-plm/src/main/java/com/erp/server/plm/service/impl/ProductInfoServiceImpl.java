@@ -663,28 +663,35 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //保存模板
         String templateId = templateService.saveTemplate(templateName, productId, productInfo.getPropertyId());
+        //保存成功
         if (StringUtils.isNotBlank(templateId)) {
+
+            //任务阶段
+            List<CopySourceDTO>  sourcePhaseList=  templatePhaseService.saveTemplatePhase(templateId, productId);
+
+            //保存模板任务
+            List<CopySourceDTO> taskSourceList = templateTaskService.saveTemplateTask(templateId, productId,sourcePhaseList);
+
             //保存团队成员
-            templateMembersService.saveMember(templateId, productId);
+            List<CopySourceDTO> sourceMembersList = templateMembersService.saveMember(templateId, productId);
 
             //保存角色
-            templateRoleService.saveTemplateRole(templateId, productId);
+            List<CopySourceDTO>  sourceRoleList= templateRoleService.saveTemplateRole(templateId, productId);
 
-            templateRoleRefMembersService.saveRoleRefMembers(templateId, productId);
-            //任务阶段
-            templatePhaseService.saveTemplatePhase(templateId, productId);
+            //保存角色关系
+            templateRoleRefMembersService.saveRoleRefMembers(templateId, productId,sourceMembersList,sourceRoleList);
+
             //任务文档名称
-            templateTaskDocsNameService.saveTemplateDocsName(templateId, productId);
+            List<CopySourceDTO>  sourceDocsNameList= templateTaskDocsNameService.saveTemplateDocsName(templateId, productId);
             //保存交付文档
-            templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId, productId);
-            //保存模板任务
-            templateTaskService.saveTemplateTask(templateId, productId);
+            List<CopySourceDTO> sourceDeliveryList=  templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId, productId,taskSourceList,sourceDocsNameList);
+
             //保存前置任务
-            templatePreTaskService.saveTemplatePreTask(templateId, productId);
+            templatePreTaskService.saveTemplatePreTask(templateId, productId,taskSourceList);
             //保存文档权限
-            templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId);
+            templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId,sourceDeliveryList,taskSourceList,sourceRoleList);
             //保存sku 与任务 配置关系
-            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId);
+            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId,taskSourceList);
         }
 
         return true;
@@ -782,7 +789,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         String templateId = entity.getTemplateId();
         ProjectTemplateEntity projectTemplate = templateService.getById(templateId);
-        if(projectTemplate!=null){
+        if (projectTemplate != null) {
             result.setTemplateName(projectTemplate.getName());
         }
 

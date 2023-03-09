@@ -136,7 +136,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {
                     List<String> categoryList = getChildCategory(categoryTreeList, c.getId());
-                    Long productQuantity = productList.stream().filter(p -> categoryList.contains(p.getCategoryId())).count();
+
+                    Long productQuantity = productList.stream().filter(p -> categoryList.contains(p.getCategoryId())).map(ProductInfoEntity::getId).distinct().count();
                     c.setProductQuantity(productQuantity);
                     c.setChildrenList(getChildrenList(c, allList, productList, categoryTreeList));
                     return c;
@@ -471,6 +472,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @Author Luo_WG
      * @Date 2022/9/28 18:51
      **/
+    @Override
     public BasicCategoryEntity getCategoryByName(String categoryName) {
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);

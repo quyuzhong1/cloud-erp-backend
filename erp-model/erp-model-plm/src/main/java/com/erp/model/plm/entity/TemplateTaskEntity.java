@@ -126,10 +126,10 @@ public class TemplateTaskEntity implements Serializable {
     private String updateUserId;
 
     /**
-     * 引用系统任务的id
+     * 引用任务的id
      */
-    @TableField("quote_sys_task_id")
-    private String quoteSysTaskId;
+    @TableField("source_task_id")
+    private String sourceTaskId;
 
     /**
      * 模板表id

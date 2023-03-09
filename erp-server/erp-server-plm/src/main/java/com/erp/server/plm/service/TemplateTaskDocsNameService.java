@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNameEntity> {
 
-    void saveTemplateDocsName(String templateId, String productId);
+    List<CopySourceDTO>  saveTemplateDocsName(String templateId, String productId);
 
     List<CopySourceDTO> copyTemplateDocsName(String flagId, String productId, String projectId);
     /**

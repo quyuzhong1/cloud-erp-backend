@@ -44,25 +44,36 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     private TemplateTaskService templateTaskService;
 
     /**
-     * 保存模板阶段
+     * 产品保存模板
+     * 保存任务阶段
      *
      * @return void
      * @author yl
      * @date 2022-10-27 15:25
      */
     @Override
-    public void saveTemplatePhase(String templateId, String productId) {
+    public List<CopySourceDTO> saveTemplatePhase(String templateId, String productId) {
         List<ProjectPhaseEntity> list = projectPhaseService.getByProductId(productId);
+        List<CopySourceDTO> sourceList = new ArrayList<>(10);
+
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplatePhaseEntity> saveList = new ArrayList<>();
             for (ProjectPhaseEntity item : list) {
                 TemplatePhaseEntity entity = new TemplatePhaseEntity();
+                String newCreateId = IdWorker.getIdStr();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                entity.setId(newCreateId);
                 saveList.add(entity);
+
+                CopySourceDTO source = new CopySourceDTO();
+                source.setDataId(item.getId());
+                source.setNewCreateId(newCreateId);
+                sourceList.add(source);
             }
             this.saveBatch(saveList);
         }
+        return sourceList;
     }
 
     @Override

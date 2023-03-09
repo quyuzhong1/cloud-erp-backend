@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 
 /**
@@ -30,15 +31,32 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
     @Autowired
     private RoleRefMemberService roleRefMemberService;
 
+
+    /**
+     * 产品存模板 保存角色与成员表 关系
+     * @author yl
+     * @date 2023-03-09 9:38
+     * @param templateId
+     * @param productId
+     * @param sourceMembersList
+     * @param sourceRoleList
+     * @return void
+     */
     @Override
-    public void saveRoleRefMembers(String templateId, String productId) {
+    public void saveRoleRefMembers(String templateId, String productId,List<CopySourceDTO> sourceMembersList, List<CopySourceDTO>  sourceRoleList) {
         List<RoleRefMemberEntity> list = roleRefMemberService.getByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplateRoleRefMembersEntity> saveList = new ArrayList<>();
             for (RoleRefMemberEntity item : list) {
                 TemplateRoleRefMembersEntity entity = new TemplateRoleRefMembersEntity();
-                BeanMapper.copy(item, entity);
+                String membersTableId=sourceMembersList.stream().filter(m->m.getDataId().equals(item.getMembersId())).findFirst().
+                        flatMap(obj-> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+
+                String roleId=sourceRoleList.stream().filter(m->m.getDataId().equals(item.getRoleId())).findFirst().
+                        flatMap(obj-> Optional.ofNullable(obj.getNewCreateId())).orElse("");
                 entity.setTemplateId(templateId);
+                entity.setMembersId(membersTableId);
+                entity.setRoleId(roleId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);

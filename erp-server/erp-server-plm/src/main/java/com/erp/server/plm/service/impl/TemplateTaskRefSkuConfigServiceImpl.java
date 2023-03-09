@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 模板任务与sku字段配置关系表(TemplateTaskRefSkuConfig)表服务实现类
@@ -39,8 +41,8 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
      * @date 2022-09-20 15:40
      */
     @Override
-    @Transactional
-    public void saveTemplateTaskRefSkuConfig(String templateId, String productId) {
+    @Transactional(rollbackFor = Exception.class)
+    public void saveTemplateTaskRefSkuConfig(String templateId, String productId,List<CopySourceDTO> taskSourceList) {
         List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByProductId(productId);
         if (CollectionUtils.isNotEmpty(refSkuConfigList)) {
             List<TemplateTaskRefSkuConfigEntity> saveList = new ArrayList<>();
@@ -48,6 +50,10 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
                 TemplateTaskRefSkuConfigEntity entity = new TemplateTaskRefSkuConfigEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                entity.setId(IdWorker.getIdStr());
+                String taskId=taskSourceList.stream().filter(t->t.getDataId().equals(item.getTaskId())).findFirst().
+                        flatMap(obj-> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setTaskId(taskId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);

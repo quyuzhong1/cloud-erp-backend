@@ -14,7 +14,16 @@ import java.util.List;
  */
 public interface TemplateMembersService extends IService<TemplateMembersEntity> {
 
-    void saveMember(String templateId, String productId);
+
+    /**
+     * 产品保存模板 保存成员信息
+     * @author yl
+     * @date 2023-03-08 18:33
+     * @param templateId
+     * @param productId
+     * @return void
+     */
+    List<CopySourceDTO> saveMember(String templateId, String productId);
 
     List<CopySourceDTO> copyTemplateMembers(String id, String productId, String projectId);
     /**

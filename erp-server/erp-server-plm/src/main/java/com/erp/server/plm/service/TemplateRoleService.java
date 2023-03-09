@@ -17,7 +17,15 @@ import java.util.List;
  */
 public interface TemplateRoleService extends IService<TemplateRoleEntity> {
 
-    void saveTemplateRole(String templateId, String productId);
+    /**
+     * 产品另存为 模板保存角色
+     * @author yl
+     * @date 2023-03-08 18:37
+     * @param templateId
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.dto.CopySourceDTO>
+     */
+    List<CopySourceDTO>   saveTemplateRole(String templateId, String productId);
 
     List<CopySourceDTO> copyTemplateRole(String flagId, String productId, String projectId);
     /**

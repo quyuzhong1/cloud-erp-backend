@@ -76,18 +76,26 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
      * @date 2022-10-27 15:12
      */
     @Override
-    public void saveMember(String templateId, String productId) {
+    public List<CopySourceDTO> saveMember(String templateId, String productId) {
         List<ProjectMembersEntity> list = projectMembersService.getListByProductId(productId);
         List<TemplateMembersEntity> saveList = new ArrayList<>();
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectMembersEntity item : list) {
                 TemplateMembersEntity entity = new TemplateMembersEntity();
+                String newCreateId = IdWorker.getIdStr();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                entity.setId(newCreateId);
                 saveList.add(entity);
+                CopySourceDTO source = new CopySourceDTO();
+                source.setDataId(item.getId());
+                source.setNewCreateId(newCreateId);
+                sourceList.add(source);
             }
             this.saveBatch(saveList);
         }
+        return sourceList;
     }
 
 
@@ -126,10 +134,10 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     }
 
     @Override
-    public Boolean removeByIdAndTemplateId(String id,String templateId) {
+    public Boolean removeByIdAndTemplateId(String id, String templateId) {
         LambdaQueryWrapper<TemplateMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateMembersEntity::getTemplateId,templateId);
-        queryWrapper.eq(TemplateMembersEntity::getId,id);
+        queryWrapper.eq(TemplateMembersEntity::getTemplateId, templateId);
+        queryWrapper.eq(TemplateMembersEntity::getId, id);
         return this.remove(queryWrapper);
     }
 
@@ -175,9 +183,9 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //根据成员id集合查询
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
         if (CollectionUtils.isEmpty(userList)) {
-            throw  new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.ERROR_9011);
         }
-        membersEntityList.stream().forEach(obj->{
+        membersEntityList.stream().forEach(obj -> {
             //成员数据处理
             String memberName = userList.stream().filter(e -> e.getUserId().equals(obj.getMemberId())).map(FindUserDTO::getUserName).findAny().orElse(null);
             obj.setMemberName(memberName);
@@ -189,7 +197,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         if (!flag) {
             throw new ServiceException(ApiError.Default);
         }
-        membersEntityList.stream().forEach(obj->{
+        membersEntityList.stream().forEach(obj -> {
             //关联表数据处理
             TemplateRoleRefMembersEntity roleRefMembersEntity = new TemplateRoleRefMembersEntity();
             roleRefMembersEntity.setCreateUserId(uid);
@@ -240,7 +248,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         }
         //根据id和模板id修改
         TemplateMembersEntity templateMembersEntity = new TemplateMembersEntity();
-        BeanMapperUtils.copy(templateMembersDTO,templateMembersEntity);
+        BeanMapperUtils.copy(templateMembersDTO, templateMembersEntity);
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(templateMembersDTO.getMemberId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
             throw new ServiceException(ApiError.ERROR_9011);
@@ -282,7 +290,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             }
             TemplateRoleEntity templateRoleEntity = templateRoleService.getByTemplateIdAndRoleId(roleRefMembers.getTemplateId(), roleRefMembers.getRoleId());
             if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
-                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndRoleName(Arrays.asList(MathUtil.ONE,MathUtil.TWO) , templateRoleEntity.getName());
+                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndRoleName(Arrays.asList(MathUtil.ONE, MathUtil.TWO), templateRoleEntity.getName());
                 if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
                     throw new ServiceException(ApiError.ERROR_95129);
                 }
@@ -301,7 +309,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     }
 
     @Override
-    public List<TemplateMembersEntity> listByRoleIds(List<String> roleIds,String templateId) {
+    public List<TemplateMembersEntity> listByRoleIds(List<String> roleIds, String templateId) {
         List<TemplateRoleRefMembersEntity> list = templateRoleRefMembersService.getByRoleIdsAndTemplateId(roleIds, templateId);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -312,24 +320,24 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
 
     @Override
     public List<TemplateMembersEntity> listByRoleNames(List<String> roleNames, String templateId) {
-        return this.baseMapper.listByRoleNames(roleNames,templateId);
+        return this.baseMapper.listByRoleNames(roleNames, templateId);
     }
 
     /**
+     * @param templateMembersEntity
+     * @return Boolean
      * @description: 根据id和模板id修改
      * @author Will
      * @date: 2022/11/15 15:51
-     * @param templateMembersEntity
-     * @return Boolean
      */
     private Boolean updateByTemplateId(TemplateMembersEntity templateMembersEntity) {
         LambdaUpdateWrapper<TemplateMembersEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(TemplateMembersEntity::getTemplateId, templateMembersEntity.getTemplateId());
         updateWrapper.eq(TemplateMembersEntity::getId, templateMembersEntity.getId());
-        updateWrapper.set(TemplateMembersEntity::getMemberId,templateMembersEntity.getMemberId());
-        updateWrapper.set(TemplateMembersEntity::getMemberName,templateMembersEntity.getMemberName());
-        updateWrapper.set(TemplateMembersEntity::getUpdateUserId,templateMembersEntity.getUpdateUserId());
-        updateWrapper.set(TemplateMembersEntity::getUpdateUserName,templateMembersEntity.getUpdateUserName());
+        updateWrapper.set(TemplateMembersEntity::getMemberId, templateMembersEntity.getMemberId());
+        updateWrapper.set(TemplateMembersEntity::getMemberName, templateMembersEntity.getMemberName());
+        updateWrapper.set(TemplateMembersEntity::getUpdateUserId, templateMembersEntity.getUpdateUserId());
+        updateWrapper.set(TemplateMembersEntity::getUpdateUserName, templateMembersEntity.getUpdateUserName());
         return this.update(updateWrapper);
     }
 }

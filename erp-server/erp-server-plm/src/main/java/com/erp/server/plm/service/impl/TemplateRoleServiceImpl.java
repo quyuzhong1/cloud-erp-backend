@@ -43,20 +43,37 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     private ProjectRoleService projectRoleService;
 
 
-    //保存模板项目角色
+    /**
+     * 产品另存为 模板保存角色
+     *
+     * @param templateId
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.dto.CopySourceDTO>
+     * @author yl
+     * @date 2023-03-08 18:37
+     */
     @Override
-    public void saveTemplateRole(String templateId, String productId) {
+    public List<CopySourceDTO> saveTemplateRole(String templateId, String productId) {
         List<ProjectRoleEntity> list = projectRoleService.listByProductId(productId);
+        List<CopySourceDTO> sourceList = new ArrayList<>(10);
+
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplateRoleEntity> saveList = new ArrayList<>();
             for (ProjectRoleEntity role : list) {
                 TemplateRoleEntity entity = new TemplateRoleEntity();
+                String newCreateId = IdWorker.getIdStr();
                 BeanMapper.copy(role, entity);
                 entity.setTemplateId(templateId);
+                entity.setId(newCreateId);
                 saveList.add(entity);
+                CopySourceDTO source = new CopySourceDTO();
+                source.setNewCreateId(newCreateId);
+                source.setDataId(role.getId());
+                sourceList.add(source);
             }
             this.saveBatch(saveList);
         }
+        return sourceList;
     }
 
 
@@ -97,16 +114,16 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     @Override
     public void removeByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateRoleEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateRoleEntity::getTemplateId, templateId);
         this.remove(queryWrapper);
     }
 
     /**
+     * @param dto
+     * @return PagingVO<List < TemplateRoleDTO>>
      * @description: 角色成员列表查询
      * @author Will
      * @date: 2022/11/15 12:28
-     * @param dto
-     * @return PagingVO<List<TemplateRoleDTO>>
      */
     @Override
     public PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<TemplateSearchDTO> dto) {
@@ -119,9 +136,9 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     @Override
     public Boolean saveTemplateRole(TemplateRoleDTO dto) {
         //验证角色名称是否已存在
-        checkRoleName(dto.getName(),dto.getTemplateId());
+        checkRoleName(dto.getName(), dto.getTemplateId());
         TemplateRoleEntity entity = new TemplateRoleEntity();
-        BeanMapperUtils.copy(dto,entity);
+        BeanMapperUtils.copy(dto, entity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
@@ -171,17 +188,16 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     }
 
     /**
+     * @param roleName
+     * @param tempalteId
      * @description: 验证该模板下是否存在该角色
      * @author Will
      * @date: 2022/11/15 14:18
-     * @param roleName
-     * @param tempalteId
-
      */
-    private void checkRoleName(String roleName , String tempalteId) {
+    private void checkRoleName(String roleName, String tempalteId) {
         LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateRoleEntity::getName,roleName);
-        queryWrapper.eq(TemplateRoleEntity::getTemplateId,tempalteId);
+        queryWrapper.eq(TemplateRoleEntity::getName, roleName);
+        queryWrapper.eq(TemplateRoleEntity::getTemplateId, tempalteId);
         int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95059);

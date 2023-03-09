@@ -12,7 +12,18 @@ import java.util.List;
  */
 public interface TemplateRoleRefMembersService extends IService<TemplateRoleRefMembersEntity> {
 
-    void saveRoleRefMembers(String templateId, String productId);
+    
+    /**
+     * 产品存模板 保存角色与成员表 关系
+     * @author yl
+     * @date 2023-03-09 9:38
+     * @param templateId
+     * @param productId
+     * @param sourceMembersList
+     * @param sourceRoleList
+     * @return void
+     */
+    void saveRoleRefMembers(String templateId, String productId,List<CopySourceDTO> sourceMembersList, List<CopySourceDTO>  sourceRoleList);
 
     void copyTemplateRoleRefMembers(String flagId, String productId, String projectId, List<CopySourceDTO> copyRoleSourceList, List<CopySourceDTO> copyMembersSourceList);
     /**

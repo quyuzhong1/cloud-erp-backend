@@ -15,7 +15,7 @@ import java.util.List;
 public interface TemplateDocsPermissionService extends IService<TemplateDocsPermissionEntity> {
 
 
-    void saveTemplateDocsPermission(String templateId, String productId);
+    void saveTemplateDocsPermission(String templateId, String productId, List<CopySourceDTO> sourceDeliveryList,List<CopySourceDTO> taskSourceList,List<CopySourceDTO> sourceRoleList);
 
     void copyTemplateDeliveryDocs(String flagId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> deliveryDocsSourceList);
     /**

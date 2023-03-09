@@ -11,12 +11,14 @@ import com.erp.server.plm.mapper.TemplateDocsPermissionMapper;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TemplateDocsPermissionService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @Classname TemplateDocsPermissionServiceiMPL
@@ -42,14 +44,27 @@ public class TemplateDocsPermissionServiceImpl extends ServiceImpl<TemplateDocsP
      * @date 2022-10-31 9:51
      */
     @Override
-    public void saveTemplateDocsPermission(String templateId, String productId) {
+    public void saveTemplateDocsPermission(String templateId, String productId, List<CopySourceDTO> sourceDeliveryList, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> sourceRoleList) {
         List<DocsPermissionEntity> list = docsPermissionService.getDocsPermissionByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplateDocsPermissionEntity> saveList = new ArrayList<>();
             for (DocsPermissionEntity item : list) {
                 TemplateDocsPermissionEntity entity = new TemplateDocsPermissionEntity();
-                BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                String deliveryDocsId = sourceDeliveryList.stream().filter(d -> d.getDataId().equals(item.getDeliveryDocsId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setDeliveryDocsId(deliveryDocsId);
+                String taskId = taskSourceList.stream().filter(t -> t.getDataId().equals(item.getTaskId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setTaskId(taskId);
+                String queryRoleId = item.getQueryRoleId();
+                if(StringUtils.isNotBlank(queryRoleId)){
+                    String roleId=sourceRoleList.stream().filter(r -> r.getDataId().equals(item.getQueryRoleId())).
+                            findFirst().flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                    item.setQueryRoleId(roleId);
+                }else{
+                    item.setQueryRoleId("");
+                }
                 saveList.add(entity);
             }
             this.saveBatch(saveList);

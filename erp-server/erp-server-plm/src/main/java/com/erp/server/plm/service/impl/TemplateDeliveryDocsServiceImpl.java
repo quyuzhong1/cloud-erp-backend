@@ -30,10 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 
 /**
@@ -61,18 +58,33 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
      * @date 2022-10-27 16:07
      */
     @Override
-    public void saveTemplateDeliveryDocs(String templateId, String productId) {
+    public List<CopySourceDTO> saveTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> sourceDocsNameList) {
         List<TaskDeliveryDocsEntity> list = taskDeliveryService.getByProductId(productId);
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplateDeliveryDocsEntity> saveList = new ArrayList<>();
             for (TaskDeliveryDocsEntity item : list) {
                 TemplateDeliveryDocsEntity entity = new TemplateDeliveryDocsEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                String newTaskId = taskSourceList.stream().filter(t -> t.getDataId().equals(item.getTaskId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setTaskId(newTaskId);
+
+                String newDocsNameId = sourceDocsNameList.stream().filter(d -> d.getDataId().equals(item.getDocsNameId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getNewCreateId())).orElse("");
+                entity.setTaskId(newTaskId);
+                entity.setDocsNameId(newDocsNameId);
+                String newCreateId = IdWorker.getIdStr();
                 saveList.add(entity);
+                CopySourceDTO source = new CopySourceDTO();
+                source.setDataId(item.getId());
+                source.setNewCreateId(newCreateId);
+                sourceList.add(source);
             }
             this.saveBatch(saveList);
         }
+        return sourceList;
     }
 
     /**
