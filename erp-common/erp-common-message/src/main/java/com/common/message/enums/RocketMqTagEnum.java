@@ -110,6 +110,10 @@ public enum RocketMqTagEnum {
      * 产品信息同步金蝶
      */
     KINGDEE_PRODUCT_DETAIL_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+    /**
+     * BOM管理同步金蝶
+     */
+    KINGDEE_BOM_INFO_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
     ;
     
     

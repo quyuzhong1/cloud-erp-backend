@@ -200,6 +200,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus) {
+        return  this.lambdaUpdate()
+                .eq(BomInfoEntity::getId,id)
+                .set(BomInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .update();
+    }
+
     /**
      * 获取到skuId
      *
