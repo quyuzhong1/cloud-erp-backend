@@ -178,6 +178,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    //任务审核人
+    @Autowired
+    private TaskChargeDistributionService  taskChargeDistributionService;
+
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -705,6 +709,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId, sourceDeliveryList, taskSourceList, sourceRoleList);
             //保存sku 与任务 配置关系
             templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId, taskSourceList);
+
+            //同步任务审核人
+
+
         }
 
         return true;

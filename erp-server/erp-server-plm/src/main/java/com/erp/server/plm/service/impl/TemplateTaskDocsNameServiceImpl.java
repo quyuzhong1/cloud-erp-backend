@@ -127,8 +127,8 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     public Boolean saveDocsName(TmeplateDocsNameDTO dto) {
         String name = dto.getName();
         String templateId = dto.getTemplateId();
-        List<DocsDTO> docksNames = getDocsNameList(templateId);
-        List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
+        List<TemplateTaskDocsNameEntity> docksNames = getByTemplateId(templateId);
+        List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
             throw new ServiceException(ApiError.ERROR_95012);
         }
@@ -194,13 +194,13 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     public Boolean updateDocsName(TmeplateDocsNameDTO dto) {
         String name = dto.getName();
         String templateId = dto.getTemplateId();
-        List<DocsDTO> docksNames = getDocsNameList(templateId);
+        List<TemplateTaskDocsNameEntity> docksNames = getByTemplateId(templateId);
         String docsNameId = dto.getDeliveryDocsId();
         TemplateTaskDocsNameEntity docsNameEntity=this.getById(docsNameId);
         if(Objects.isNull(docsNameEntity)){
             throw new ServiceException(ApiError.ERROR_DOCS_NO);
         }
-        List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
+        List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)&&!docsNameEntity.getName().equals(name)) {
             throw new ServiceException(ApiError.ERROR_95012);
         }
