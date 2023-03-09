@@ -18,7 +18,7 @@
            tt.is_fixed,
            tt.create_user_name,
            tt.create_user_id,
-           tt.create_time,
+           tt.create_time as createTime,
            tt.work_period,
            tp.name as phaseName,
            tpt.id as preTaskId,

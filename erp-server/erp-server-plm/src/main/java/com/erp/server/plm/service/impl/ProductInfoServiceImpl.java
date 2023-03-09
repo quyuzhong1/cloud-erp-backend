@@ -10,18 +10,23 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ItemMemberVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
@@ -169,6 +174,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProjectStatusTimeService projectStatusTimeService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
@@ -470,6 +478,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
 
         if (CollectionUtils.isNotEmpty(list)) {
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
 
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
@@ -541,6 +550,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (StringUtils.isNotBlank(projectChargeId)) {
                     item.setProjectChargeId(projectChargeId);
                 }
+                String projectChargeName = userList.stream().filter(u -> u.getUserId().equals(projectChargeId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
+
+                item.setProjectChargeName(projectChargeName);
                 String productChargeId = item.getProductChargeId();
                 if (StringUtils.isNotBlank(productChargeId)) {
                     item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
@@ -667,31 +680,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (StringUtils.isNotBlank(templateId)) {
 
             //任务阶段
-            List<CopySourceDTO>  sourcePhaseList=  templatePhaseService.saveTemplatePhase(templateId, productId);
+            List<CopySourceDTO> sourcePhaseList = templatePhaseService.saveTemplatePhase(templateId, productId);
 
             //保存模板任务
-            List<CopySourceDTO> taskSourceList = templateTaskService.saveTemplateTask(templateId, productId,sourcePhaseList);
+            List<CopySourceDTO> taskSourceList = templateTaskService.saveTemplateTask(templateId, productId, sourcePhaseList);
 
             //保存团队成员
             List<CopySourceDTO> sourceMembersList = templateMembersService.saveMember(templateId, productId);
 
             //保存角色
-            List<CopySourceDTO>  sourceRoleList= templateRoleService.saveTemplateRole(templateId, productId);
+            List<CopySourceDTO> sourceRoleList = templateRoleService.saveTemplateRole(templateId, productId);
 
             //保存角色关系
-            templateRoleRefMembersService.saveRoleRefMembers(templateId, productId,sourceMembersList,sourceRoleList);
+            templateRoleRefMembersService.saveRoleRefMembers(templateId, productId, sourceMembersList, sourceRoleList);
 
             //任务文档名称
-            List<CopySourceDTO>  sourceDocsNameList= templateTaskDocsNameService.saveTemplateDocsName(templateId, productId);
+            List<CopySourceDTO> sourceDocsNameList = templateTaskDocsNameService.saveTemplateDocsName(templateId, productId);
             //保存交付文档
-            List<CopySourceDTO> sourceDeliveryList=  templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId, productId,taskSourceList,sourceDocsNameList);
+            List<CopySourceDTO> sourceDeliveryList = templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId, productId, taskSourceList, sourceDocsNameList);
 
             //保存前置任务
-            templatePreTaskService.saveTemplatePreTask(templateId, productId,taskSourceList);
+            templatePreTaskService.saveTemplatePreTask(templateId, productId, taskSourceList);
             //保存文档权限
-            templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId,sourceDeliveryList,taskSourceList,sourceRoleList);
+            templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId, sourceDeliveryList, taskSourceList, sourceRoleList);
             //保存sku 与任务 配置关系
-            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId,taskSourceList);
+            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId, taskSourceList);
         }
 
         return true;

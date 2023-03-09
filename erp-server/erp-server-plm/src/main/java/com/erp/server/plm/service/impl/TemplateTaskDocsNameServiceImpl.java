@@ -195,37 +195,36 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         String name = dto.getName();
         String templateId = dto.getTemplateId();
         List<DocsDTO> docksNames = getDocsNameList(templateId);
+        String docsNameId = dto.getDeliveryDocsId();
+        TemplateTaskDocsNameEntity docsNameEntity=this.getById(docsNameId);
+        if(Objects.isNull(docsNameEntity)){
+            throw new ServiceException(ApiError.ERROR_DOCS_NO);
+        }
         List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
+        if (CollectionUtils.isNotEmpty(names) && names.contains(name)&&!docsNameEntity.getName().equals(name)) {
             throw new ServiceException(ApiError.ERROR_95012);
         }
-        TemplateDeliveryDocsEntity deliveryDocs = templateDeliveryDocsService.getById(dto.getDeliveryDocsId());
-        String docsNameId = null;
-        if (deliveryDocs != null) {
-            docsNameId = deliveryDocs.getDocsNameId();
-        }
-        TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
-        entity.setId(docsNameId);
-        entity.setName(name);
-        entity.setTemplateId(templateId);
-        boolean flag = this.saveOrUpdate(entity);
+
+        docsNameEntity.setName(name);
+        boolean flag = this.updateById(docsNameEntity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
         String uid = loginUser.getUid();
-        String userName = loginUser.getUserName();
+        String userName =loginUser.getUserName();
         if (flag) {
             //更新输出物关联的文件名和文件名id
             LambdaUpdateWrapper<TemplateDeliveryDocsEntity> updateWrapper = new LambdaUpdateWrapper();
-            updateWrapper.eq(TemplateDeliveryDocsEntity::getId, dto.getDeliveryDocsId());
             updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, dto.getTemplateId());
-            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsNameId, entity.getId());
-            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName, entity.getName());
+            updateWrapper.eq(TemplateDeliveryDocsEntity::getDocsNameId, docsNameEntity.getId());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName, docsNameEntity.getName());
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId, uid);
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName, userName);
             updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateTime, new Date());
-            return templateDeliveryDocsService.update(updateWrapper);
+             templateDeliveryDocsService.update(updateWrapper);
+
+             return flag;
         }
         return true;
     }
