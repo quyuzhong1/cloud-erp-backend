@@ -34,7 +34,7 @@ public interface KingdeeCommonService {
      * @param jsonData
      * @param msg
      */
-    void insertFailureLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg);
+    void insertFailureLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type);
     /**
      * 操作成功添加日志
      * @author Will
@@ -44,16 +44,8 @@ public interface KingdeeCommonService {
      * @param jsonData
      * @param msg
      */
-    void insertSuccessLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg);
+    void insertSuccessLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type);
 
-    /**
-     * 添加定时任务
-     * @author Will
-     * @date: 2023/3/3 14:09
-     * @param platformEntity
-     * @param map
-     */
-    void insertApiSyncTask(PlatformEntity platformEntity, Map<String, Object> map);
     /**
      * @description: 新增或修改
      * @author Will
@@ -64,7 +56,7 @@ public interface KingdeeCommonService {
      * @param json
      * @param param
      */
-    void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param);
+    void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
 
     /**
      * 提交及审核
@@ -75,7 +67,7 @@ public interface KingdeeCommonService {
      * @param apiUtils
      * @param id
      */
-    void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id);
+    void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,Integer type);
 
     /**
      *  反审核
@@ -87,5 +79,5 @@ public interface KingdeeCommonService {
      * @param id
      * @return String
      */
-    String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id);
+    String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
 }

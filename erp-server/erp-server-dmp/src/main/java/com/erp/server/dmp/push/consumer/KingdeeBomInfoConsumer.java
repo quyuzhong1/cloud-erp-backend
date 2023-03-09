@@ -1,4 +1,4 @@
-package com.erp.server.dmp.push.service.kingdee.impl;
+package com.erp.server.dmp.push.consumer;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiModuleTypeEnum;
@@ -13,13 +15,14 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,12 +33,13 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: BOM发送金蝶
- * @date 2023/3/3 11:06
+ * @description: TODO
+ * @date 2023/3/9 16:20
  */
+@Service
 @Slf4j
-@Service("kingdeeBomInfoService")
-public class KingdeeBomInfoServiceImpl implements KingdeePushService {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_bom_info_tag", consumerGroup = RocketMqTagEnum.SYNC_KINGDEE)
+public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private PlatformService platformService;
@@ -47,13 +51,9 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
     private KingdeeCommonService kingdeeCommonService;
 
 
-    public static void main(String[] args) {
-
-    }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void pushKingdee(Map<String, Object> map) {
+    public void onMessage(Map<String, Object> map) {
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
             throw new ServiceException(ApiError.Default);
@@ -64,13 +64,14 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
-        dto.setModuleType(ApiModuleTypeEnum.BOMMANAGE.getCode());
+        Integer type = ApiModuleTypeEnum.BOMMANAGE.getCode();
+        dto.setModuleType(type);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
         if (CollectionUtils.isEmpty(mapList)) {
             log.error(ApiError.ERROR_97025.msg);
-            //新增定时同步任务
-            kingdeeCommonService.insertApiSyncTask(platformEntity, map);
+            //错误日志
+            kingdeeCommonService.insertFailureLog(platformEntity, map,"","未配置同步字段",type);
             return;
         }
         //读取配置，初始化SDK
@@ -79,9 +80,9 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
         //判断金蝶系统是否已存在该数据
-        String skuNo = (String)map.get("skuNo");
+        String version = (String)map.get("version");
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("number",skuNo);
+        viewMap.put("number",version);
         //默认唯迹科技
         viewMap.put("CreateOrgId",1);
         JSONObject model;
@@ -90,7 +91,7 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
             model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
         } catch (Exception e) {
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param);
+            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -98,7 +99,7 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
         String id = (String) model.get("Id");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, id);
+            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, id,type);
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
@@ -107,8 +108,7 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
             queryFilters.add(String.format("FMATERIALID = '%s'", id));
             String filterStr = String.join(" and ", queryFilters);
             //查询子单据id
-            String fieldKeys = "FSubHeadEntity_FEntryId,SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
-                    "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId";
+            String fieldKeys = "FTreeEntity_FEntryId";
             List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
             if (CollectionUtils.isEmpty(queryList)) {
                 return;
@@ -130,8 +130,7 @@ public class KingdeeBomInfoServiceImpl implements KingdeePushService {
             }
             param.setNeedUpDateFields(needUpDateFields);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param);
+            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
     }
-
 }

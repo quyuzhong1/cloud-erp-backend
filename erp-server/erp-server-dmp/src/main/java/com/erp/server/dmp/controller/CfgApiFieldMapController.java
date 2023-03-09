@@ -8,16 +8,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
 import com.erp.model.dmp.vo.CfgApiFieldMapVO;
-import com.erp.server.dmp.push.service.kingdee.KingdeePushService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * API字段映射
@@ -31,9 +28,6 @@ public class CfgApiFieldMapController extends BaseController {
 
     @Resource
     private CfgApiFieldMapService cfgApiFieldMapService;
-
-    @Resource(name = "kingdeeProductDetailService")
-    private KingdeePushService kingdeeProductDetailService;
 
     /**
      * 分页查询
@@ -127,91 +121,6 @@ public class CfgApiFieldMapController extends BaseController {
     public ApiResult listDetails(@Param("fieldMapId") String fieldMapId){
        List<CfgApiFieldMapValueDTO> list = this.cfgApiFieldMapService.listDetails(fieldMapId);
         return success(list);
-    }
-
-    /**
-     * 编辑
-     * @author Will
-     * @date: 2023/1/11 12:13
-     * @return ApiResult
-     */
-    @GetMapping("/pushProductDetail")
-    public ApiResult pushProductDetail() {
-        Map<String,Object> map = new HashMap<>();
-        //id
-        map.put("id","444");
-        //sku
-        map.put("skuNo","SKU1333333");
-        //sku
-        map.put("name","永诺YN300Air双色3200K-5500K可调色温超簿LED摄影灯");
-        //spu
-        map.put("spuNo","");
-        //产品功能描述
-        map.put("functionDesc","");
-        //属性
-        map.put("property","7777");
-        //单位
-        map.put("unitName","Pcs");
-        //一级分类名称
-        map.put("oneLevelCategory","手机");
-        //一级分类编码
-        map.put("oneLevelCategoryCode","M");
-        //二级分类名称
-        map.put("secondLevelCategory","耳机");
-        //二级分类编码
-        map.put("secondLevelCategoryCode","AE");
-        //产品经理
-        map.put("chargeName","王杰");
-        //销售信息
-        //上市时间
-        map.put("listingTime","23");
-        //物流信息
-        //报关中文名
-        map.put("declareChineseName","补光灯");
-        //报关英文名
-        map.put("declareEnglishName","light");
-        //报关申报价
-        map.put("declarePrice","7");
-        //产品属性（是否带电）
-        map.put("productProperty_electric",false);
-        //产品属性（是否带磁）
-        map.put("productProperty_magnetism",false);
-        //海关编码
-        map.put("customsCode","");
-        //申报要素
-        map.put("declareElement","");
-        //毛重
-        map.put("grossWeight", 517);
-        //净重
-        map.put("netWeight", 509);
-        //产品尺寸
-        //产品尺寸-长(cm)
-        map.put("productSize_length",  13);
-        //产品尺寸-宽(cm)
-        map.put("productSize_width",  12);
-        //产品尺寸-高(cm)
-        map.put("productSize_height",  12);
-        //单箱数量
-        map.put("boxQty", 12);
-        //单箱重量
-        map.put("boxWeight", 12);
-        //单箱尺寸
-        //产品尺寸-长(cm)
-        map.put("boxSize_length", 12);
-        //产品尺寸-宽(cm)
-        map.put("boxSize_width", 12);
-        //产品尺寸-高(cm)
-        map.put("boxSize_height", 12);
-        //实际不含税成本
-        map.put("actualNoTaxCost","");
-        //实际含税成本
-        map.put("actualTaxCost", "");
-        map.put("moq","22");
-        //采购员
-        map.put("purchaseUser","王杰");
-        map.put("mainSupplier","王杰");
-        this.kingdeeProductDetailService.pushKingdee(map);
-        return success();
     }
 
 }
