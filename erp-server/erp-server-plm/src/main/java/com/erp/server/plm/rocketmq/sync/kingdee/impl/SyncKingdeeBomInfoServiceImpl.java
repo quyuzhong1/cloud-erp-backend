@@ -37,6 +37,9 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
     public void syncDataToKingdee(BomInfoEntity entity) {
 
         Map<String, Object> resultMap = new HashMap<>();
+        //版本
+        resultMap.put("version",entity.getVersion());
+
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
