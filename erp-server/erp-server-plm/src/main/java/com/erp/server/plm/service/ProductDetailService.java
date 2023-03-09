@@ -415,4 +415,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return List<SkuVO>
      */
     List<SkuVO> searchParentSku(String searchKeyword,String bomId);
+    /**
+     * 更新同步状态
+     * @author Will
+     * @date: 2023/3/9 9:26
+     * @param id
+     * @param syncKingdeeStatus
+     */
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus);
 }

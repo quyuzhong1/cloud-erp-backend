@@ -33,13 +33,13 @@ import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -53,6 +53,7 @@ import org.thymeleaf.util.ListUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -147,7 +148,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProjectTaskService projectTaskService;
 
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
+    private SyncKingdeeProductDetailService syncKingdeeProductDetailService;
 
     @Resource
     private ProductChangeService productChangeService;
@@ -1665,189 +1666,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
         //审核通过后发送到金蝶系统
-        try {
-            sendDataToKingdee(entity);
-        } catch (Exception e) {
-            log.error("同步产品信息至金蝶失败！", e);
-        }
+        syncKingdeeProductDetailService.syncDataToKingdee(entity);
+
         return this.updateById(entity);
     }
 
-    /**
-     * 组装数据发送到金蝶
-     */
-    private void sendDataToKingdee(ProductDetailEntity entity) {
-        //产品信息
-        ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
-        if (ObjectUtils.isEmpty(productInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_95084);
-        }
-        //销售信息
-        ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(entity.getId());
-        //物流信息
-        ProductLogisticsEntity productLogisticsEntity = productLogisticsService.getBySkuId(entity.getId());
-        //包装信息
-        ProductPackEntity productPackEntity = productPackService.getBySkuId(entity.getId());
-        //成本信息
-        ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
-        //采购信息
-        ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(entity.getId());
-
-        Map<String, Object> resultMap = new HashMap<>();
-        //sku
-        resultMap.put("id", entity.getId());
-        //sku
-        resultMap.put("skuNo", entity.getSkuNo());
-        //名称
-        resultMap.put("name", entity.getName());
-        //spu
-        resultMap.put("spuNo", productInfoEntity.getSpuNo());
-        //产品功能描述
-        resultMap.put("functionDesc", productInfoEntity.getFunctionDesc());
-        //属性
-        resultMap.put("property", productInfoEntity.getProperty());
-        //单位
-        resultMap.put("unitName", entity.getUnitName());
-
-        BasicCategoryEntity basicCategoryEntity = basicCategoryService.getById(productInfoEntity.getCategoryId());
-        if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
-            List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
-            if (CollectionUtils.isEmpty(basicCategoryList)) {
-                //TODO代码结构优化，有异常立即抛出
-                //一级分类
-                BasicCategoryEntity basicCategoryEntity1 = basicCategoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(basicCategoryEntity1)) {
-                    resultMap.put("oneLevelCategory", basicCategoryEntity1.getName());
-                    //一级分类编码
-                    resultMap.put("oneLevelCategoryCode", basicCategoryEntity1.getCode());
-                    //二级分类
-                    BasicCategoryEntity basicCategoryEntity2 = basicCategoryList.stream().filter(obj -> basicCategoryEntity1.getId().equals(obj.getPid())).findFirst().orElse(null);
-                    if (ObjectUtils.isNotEmpty(basicCategoryEntity2)) {
-                        resultMap.put("secondLevelCategory", basicCategoryEntity2.getName());
-                        if (StringUtils.isNotBlank(basicCategoryEntity1.getCode()) && StringUtils.isNotBlank(basicCategoryEntity2.getCode())) {
-                            //二级分类编码
-                            resultMap.put("secondLevelCategoryCode", basicCategoryEntity1.getCode().concat(basicCategoryEntity2.getCode()));
-                        }
-                    }
-                }
-            }
-        }
-        //产品经理
-        resultMap.put("chargeName", productInfoEntity.getChargeName());
-        //销售信息
-        if (ObjectUtils.isNotEmpty(productSaleEntity)) {
-            //上市时间
-            resultMap.put("listingTime", productSaleEntity.getListingTime());
-        }
-        //物流信息
-        if (ObjectUtils.isNotEmpty(productLogisticsEntity)) {
-            //报关中文名
-            resultMap.put("declareChineseName", productLogisticsEntity.getDeclareChineseName());
-            //报关英文名
-            resultMap.put("declareEnglishName", productLogisticsEntity.getDeclareEnglishName());
-            //报关申报价
-            resultMap.put("declarePrice", productLogisticsEntity.getDeclarePrice());
-            //产品属性
-            if (StringUtils.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
-                List<String> list = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
-                for (String id : list) {
-                    BasicDictEntity declareProperty = basicDictService.getById(id);
-                    if (ObjectUtils.isNotEmpty(declareProperty)) {
-                        String value = declareProperty.getValue();
-                        //产品属性（是否带电）
-                        if ("内电".equals(value) || "可拆卸电池".equals(value) || "纯电池".equals(value)) {
-                            resultMap.put("productProperty_electric", true);
-                        }
-                        //产品属性（是否带磁）
-                        if ("带磁".equals(value)) {
-                            resultMap.put("productProperty_magnetism", true);
-                        }
-                    }
-                }
-            }
-            //海关编码
-            resultMap.put("customsCode", productLogisticsEntity.getCustomsCode());
-            //申报要素
-            resultMap.put("declareElement", productLogisticsEntity.getDeclareElement());
-        }
-        //包装信息
-        if (ObjectUtils.isNotEmpty(productPackEntity)) {
-            //毛重
-            resultMap.put("grossWeight", productPackEntity.getGrossWeight());
-            //净重
-            resultMap.put("netWeight", productPackEntity.getNetWeight());
-            //产品尺寸
-            String productSize = productPackEntity.getProductSize();
-            if (StringUtils.isNotBlank(productSize)) {
-                List<String> productSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
-                if (productSizeList.size() == 1) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("productSize_length", productSizeList.get(0));
-                } else if (productSizeList.size() == 2) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("productSize_length", productSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("productSize_width", productSizeList.get(1));
-                } else {
-                    //产品尺寸-长(cm)
-                    resultMap.put("productSize_length", productSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("productSize_width", productSizeList.get(1));
-                    //产品尺寸-高(cm)
-                    resultMap.put("productSize_height", productSizeList.get(2));
-                }
-            }
-            //单箱数量
-            resultMap.put("boxQty", productPackEntity.getBoxQty());
-            //单箱重量
-            resultMap.put("boxWeight", productPackEntity.getBoxWeight());
-            //单箱尺寸
-            String boxSize = productPackEntity.getBoxSize();
-            if (StringUtils.isNotBlank(boxSize)) {
-                List<String> boxSizeList = Arrays.stream(boxSize.split("X")).collect(Collectors.toList());
-                if (boxSizeList.size() == 1) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("boxSize_length", boxSizeList.get(0));
-                } else if (boxSizeList.size() == 2) {
-                    //产品尺寸-长(cm)
-                    resultMap.put("boxSize_length", boxSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("boxSize_width", boxSizeList.get(1));
-                } else {
-                    //产品尺寸-长(cm)
-                    resultMap.put("boxSize_length", boxSizeList.get(0));
-                    //产品尺寸-宽(cm)
-                    resultMap.put("boxSize_width", boxSizeList.get(1));
-                    //产品尺寸-高(cm)
-                    resultMap.put("boxSize_height", boxSizeList.get(2));
-                }
-            }
-        }
-        //成本信息
-        if (ObjectUtils.isNotEmpty(productCostEntity)) {
-            //实际不含税成本
-            resultMap.put("actualNoTaxCost", productCostEntity.getActualNoTaxCost());
-            //实际含税成本
-            resultMap.put("actualTaxCost", productCostEntity.getActualTaxCost());
-        }
-        //采购信息
-        if (ObjectUtils.isNotEmpty(productPurchaseEntity)) {
-            //MOQ(最小起订量)
-            resultMap.put("moq", productPurchaseEntity.getMoq());
-            //EAN码
-            resultMap.put("ean", productPurchaseEntity.getEan());
-            if (StringUtils.isNotBlank(productPurchaseEntity.getPurchaseUserId())) {
-                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(productPurchaseEntity.getPurchaseUserId());
-                if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                    //采购员
-                    resultMap.put("purchaseUser", findUserDTO.getUserName());
-                }
-            }
-            //一级供应商
-            resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
-        }
-        dmpTaskFeign.pushProductDetail(resultMap);
-    }
 
     @Override
     @Transactional
@@ -2064,7 +1887,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
         }
-        this.sendDataToKingdee(productDetailEntity);
+        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity);
         return Boolean.TRUE;
     }
 
@@ -2117,6 +1940,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public List<SkuVO> searchParentSku(String searchKeyword,String bomId) {
         return baseMapper.searchParentSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode(),bomId);
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus) {
+           return   this.lambdaUpdate()
+                    .eq(ProductDetailEntity::getId,id)
+                    .set(ProductDetailEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                    .set(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                    .update();
     }
 
 

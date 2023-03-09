@@ -27,6 +27,7 @@ public class RocketMQProducerController extends BaseController {
     @Resource
     private MQProducerService<MQConsumerDemoService.ProducerDto.EntityDto> mQProducerService;
 
+
     @PostMapping("/syncClassMsg")
     public ApiResult syncClassMsg(@RequestBody MQConsumerDemoService.ProducerDto dto){
         mQProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, dto.getTag(), dto.getEntity(), dto.getEntity().getId().toString());
