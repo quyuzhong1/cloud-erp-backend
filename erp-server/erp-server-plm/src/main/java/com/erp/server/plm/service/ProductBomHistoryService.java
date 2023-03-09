@@ -22,4 +22,6 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
     void deleteByBomId(String id);
 
     List<BomVersionVO> getVersionList(String id);
+
+    List<ProductBomHistoryEntity> listByBomId(String bomId);
 }

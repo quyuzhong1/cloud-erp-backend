@@ -109,4 +109,10 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
         }
         return list;
     }
+
+    @Override
+    public List<ProductBomHistoryEntity> listByBomId(String bomId) {
+        List<ProductBomHistoryEntity> list = lambdaQuery().eq(ProductBomHistoryEntity::getBomId, bomId).list();
+        return list;
+    }
 }

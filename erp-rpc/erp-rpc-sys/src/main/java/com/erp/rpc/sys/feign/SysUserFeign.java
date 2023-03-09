@@ -85,6 +85,10 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/code/getSpuNo")
     String getSpuNo(@RequestBody SysCodeDTO dto);
 
+    //查询时间格式的业务编码
+    @PostMapping("sys/feign/code/getBusinessNo")
+    String getBusinessNo(SysCodeDTO dto);
+
     @PostMapping("sys/feign/user/getUserDeptList")
     List<SysUserDeptDTO> getUserDeptList();
 
@@ -126,6 +130,7 @@ public interface SysUserFeign {
      */
     @PostMapping("sys/feign/calendar/list")
     List<SysCalendarListVO> listCalendar(@RequestBody SysCalendarDTO.ListDTO dto);
+
 
 
 }

@@ -1,5 +1,7 @@
 package com.erp.server.plm.service;
 
+import com.erp.model.plm.enums.BusinessNoTypeEnum;
+
 /**
  * @author Will
  * @version 1.0
@@ -25,4 +27,14 @@ public interface SysCodeService {
      * @return String
      */
     String getSpuNo(String categoryId);
+
+    /**
+     * @description: 根据编号头和编号类型生成编号
+     * @author Will
+     * @date: 2023/3/9 10:27
+     * @param businesshead
+     * @param businessNoTypeEnum
+     * @return String
+     */
+    String getBusinessNo(String businesshead, BusinessNoTypeEnum businessNoTypeEnum);
 }

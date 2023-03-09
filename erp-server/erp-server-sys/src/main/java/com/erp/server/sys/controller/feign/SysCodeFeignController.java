@@ -48,4 +48,10 @@ public class SysCodeFeignController extends BaseController {
         String sysCode = sysCodeService.getSpuNo(dto);
         return sysCode;
     }
+
+    @PostMapping("/getBusinessNo")
+    public String getBusinessNo(@RequestBody SysCodeDTO dto) {
+        String sysCode = sysCodeService.getBusinessNo(dto);
+        return sysCode;
+    }
 }

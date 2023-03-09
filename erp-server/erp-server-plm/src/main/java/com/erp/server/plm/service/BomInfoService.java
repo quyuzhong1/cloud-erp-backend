@@ -3,14 +3,14 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.model.plm.dto.AuditParamDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -76,6 +76,10 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     List<String> getSkuIdList(List<BomSkuDTO> skuList);
 
     Integer getMaxSequence();
+
+    String getExcelUpdateContent(List<BomSkuEntity> newBomList, List<BomSkuEntity> oldBomList);
+
+     String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList);
     /**
      * @description: 导入bom
      * @author Will

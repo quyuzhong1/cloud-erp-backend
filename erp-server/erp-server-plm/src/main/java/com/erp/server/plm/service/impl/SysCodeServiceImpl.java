@@ -6,11 +6,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.enums.BusinessNoTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
-import com.erp.model.plm.enums.SysNoEnum;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.SysCodeService;
@@ -67,7 +67,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         dto.setCategory(bestEntity.getCode());
         //产品颜色
         dto.setColorCode(variantColorProperty);
-        dto.setType(SysNoEnum.SKU_NO.getCode());
+        dto.setType(BusinessNoTypeEnum.SKU_NO.getCode());
         //产品销售渠道
         if (StringUtils.isBlank(entity.getSalesChannel())) {
             throw new ServiceException(ApiError.ERROR_95073);
@@ -128,11 +128,23 @@ public class SysCodeServiceImpl implements SysCodeService {
         //分类组合
         String category = bestEntity.getCode() + secondEntity.getCode();
         dto.setCategory(category);
-        dto.setType(SysNoEnum.SPU_NO.getCode());
+        dto.setType(BusinessNoTypeEnum.SPU_NO.getCode());
         String sysNo = sysUserFeign.getSpuNo(dto);
         isExistSpuNo(sysNo,dto);
         return sysNo;
     }
+
+
+
+    @Override
+    public String getBusinessNo(String businessHead, BusinessNoTypeEnum businessNoTypeEnum) {
+        SysCodeDTO dto = new SysCodeDTO();
+        dto.setCategory(businessHead);
+        dto.setType(businessNoTypeEnum.getCode());
+        String sysNo = sysUserFeign.getBusinessNo(dto);
+        return sysNo;
+    }
+
 
     /**
      * 判断spu编号是否存在

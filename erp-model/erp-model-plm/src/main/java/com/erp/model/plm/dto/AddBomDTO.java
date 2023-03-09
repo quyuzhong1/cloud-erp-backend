@@ -25,7 +25,10 @@ public class AddBomDTO implements Serializable {
     @NotNull(message = "版本不能为空")
     private Integer version;
 
-
+    /**
+     * 主键id
+     */
+    private String id;
 
     /**
      * 类型

@@ -5,12 +5,12 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.business.service.RedisLock;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.service.RedisLock;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author Will
@@ -98,7 +100,33 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         }
     }
 
-
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public String getBusinessNo(SysCodeDTO dto) {
+        //加锁
+        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
+        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
+            throw new ServiceException(ApiError.ERROR_9026);
+        }
+        try {
+            //生成单号
+            getOrSaveSysCode(dto);
+            StringBuffer sysCode = new StringBuffer();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            sysCode.append(dto.getCategory())
+                    .append(LocalDateTime.now().format(formatter))
+                    .append(String.format("%04d",dto.getNum()));
+            if (StringUtils.isBlank(sysCode)) {
+                throw new ServiceException(ApiError.ERROR_9027);
+            }
+            //更新当前顺序码
+            updateNumByCode(dto.getId(),dto.getNum());
+            return sysCode.toString();
+        } finally {
+            //解锁
+            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+        }
+    }
 
 
     /**

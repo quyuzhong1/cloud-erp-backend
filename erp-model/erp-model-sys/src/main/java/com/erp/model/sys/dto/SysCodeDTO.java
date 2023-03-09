@@ -21,7 +21,7 @@ public class SysCodeDTO implements Serializable {
     private String id;
 
     /**
-     * 类目
+     * 类目(编号前缀)
      */
     private String category;
 

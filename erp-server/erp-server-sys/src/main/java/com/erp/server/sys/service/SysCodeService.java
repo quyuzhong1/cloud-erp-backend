@@ -29,4 +29,13 @@ public interface SysCodeService extends IService<SysCodeEntity> {
      * @return String
      */
     String getSpuNo(SysCodeDTO dto);
+
+    /**
+     * @description: 根据编码信息生成时间格式的业务编码
+     * @author Will
+     * @date: 2023/3/9 10:28
+     * @param dto
+     * @return String
+     */
+    String getBusinessNo(SysCodeDTO dto);
 }

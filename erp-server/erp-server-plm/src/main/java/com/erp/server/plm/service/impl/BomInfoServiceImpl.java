@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
@@ -18,16 +19,17 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.BusinessNoCreateUtil;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.BusinessNoTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
@@ -85,7 +87,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     private ProductBomHistoryService productBomHistoryService;
 
     @Resource
+    private ProductBomSkuHistoryService productBomSkuHistoryService;
+
+    @Resource
     private ProductChangeService productChangeService;
+
+    @Resource
+    private SysCodeService sysCodeService;
 
     /**
      * 添加bom
@@ -106,7 +114,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //获取到最大的序号
         Integer maxSequence = getMaxSequence();
         //获取到 编号
-        String serialNumber = BusinessNoCreateUtil.getBusinessNo(BomConstant.BOM, maxSequence);
+        String serialNumber = sysCodeService.getBusinessNo(BusinessNoConstant.BOM, BusinessNoTypeEnum.Bom_NO);
         BomInfoEntity bom = new BomInfoEntity();
         String bomId = IdWorker.getIdStr();
         bom.setType(dto.getType());
@@ -168,7 +176,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(productDetailList)) {
             throw new ServiceException(ApiError.ERROR_95154);
         }
-        BomInfoExcelListener excelListenerUtil = new BomInfoExcelListener(this,productDetailService,bomSkuService,productDetailList);
+        List<BomSkuEntity> bomSkuList = bomSkuService.list();
+
+        BomInfoExcelListener excelListenerUtil = new BomInfoExcelListener(this,productDetailService,bomOperateLogService,productBomHistoryService,productBomSkuHistoryService,bomSkuService,sysCodeService,productDetailList,bomSkuList);
         try {
             EasyExcel.read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -450,6 +460,26 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         return result;
     }
 
+    @Override
+    public String getExcelUpdateContent( List<BomSkuEntity> newBomList,  List<BomSkuEntity> oldBomList) {
+        List<String> contentList = new ArrayList<>(10);
+        if (CollectionUtils.isNotEmpty(oldBomList) && CollectionUtils.isNotEmpty(newBomList)) {
+            String oldSkuNo = oldBomList.get(0).getParentSkuNo();
+            String newSkuNo = newBomList.get(0).getParentSkuNo();
+            if (!oldSkuNo.equals(newSkuNo)) {
+                String parentContent = "父物料" + oldSkuNo + " 变更到" + newSkuNo;
+                contentList.add(parentContent);
+            }
+            if (!newBomList.equals(oldBomList)) {
+                List<BomChildrenSkuDTO> oldList = BeanMapperUtils.copyList(BomChildrenSkuDTO.class, oldBomList);
+                List<BomChildrenSkuDTO> newList = BeanMapperUtils.copyList(BomChildrenSkuDTO.class, newBomList);
+                getChildrenUpdateContent(oldList, newList, contentList);
+            }
+        }
+
+        return String.join(";", contentList);
+    }
+
 
     /**
      * 获取 修改的信息
@@ -460,7 +490,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-07 17:07
      */
-    private String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList) {
+    @Override
+    public String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList) {
         List<String> contentList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(oldBomList) && CollectionUtils.isNotEmpty(newBomList)) {
             BomSkuDTO oldParent = oldBomList.get(0);

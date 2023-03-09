@@ -238,6 +238,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setApprovalStatus(0);
         productInfoDTO.setSpecType(1);
         productInfoDTO.setGrade("");
+        productInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
         if (!CollectionUtils.isEmpty(chargeNameList)) {
             productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
             productInfoDTO.setChargeId(chargeNameList.get(0).getUserId());

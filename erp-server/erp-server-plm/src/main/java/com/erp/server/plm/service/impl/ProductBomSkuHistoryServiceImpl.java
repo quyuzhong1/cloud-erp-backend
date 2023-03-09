@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.server.plm.mapper.ProductBomSkuHistoryMapper;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
@@ -64,6 +65,15 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public void removeByBomSku(BomSkuEntity bomSkuEntity) {
+        LambdaQueryWrapper<ProductBomSkuHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductBomSkuHistoryEntity::getParentSkuId,bomSkuEntity.getParentSkuId());
+        queryWrapper.eq(ProductBomSkuHistoryEntity::getSkuId,bomSkuEntity.getSkuId());
+        queryWrapper.eq(ProductBomSkuHistoryEntity::getProductId,bomSkuEntity.getProductId());
+        this.remove(queryWrapper);
     }
 
 
