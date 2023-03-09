@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
  */
 @TableName(value ="notice_message_log")
 @Data
+@NoArgsConstructor
 public class NoticeMessageRecordEntity implements Serializable {
     /**
      * 
@@ -97,4 +99,12 @@ public class NoticeMessageRecordEntity implements Serializable {
     private Integer isTask;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public NoticeMessageRecordEntity(String titleContent, String id, String flag, String userId, String productId, String name, String chargeName) {
+        this.messageContent = titleContent;
+        this.noticeMessageId = id;
+        this.noticeNode = flag;
+        this.noticeUserId = userId;
+        this.chargeName = chargeName;
+    }
 }

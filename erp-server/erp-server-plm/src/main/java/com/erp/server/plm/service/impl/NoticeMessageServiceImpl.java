@@ -90,8 +90,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
 
-    private String taskCharge = "任务负责人";
-    private String productCharge = "产品经理";
+    public static final String taskCharge = "任务负责人";
+    public static final String productCharge = "产品经理";
 
     @Override
     public PagingVO<List<NoticeMessageDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -290,11 +290,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> noticeUserIds = getSetNotice(notice, product);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
-            //获取飞书的unionid 与用户关系
-            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+
             for (ProjectTaskEntity task : taskList) {
+                String messageContent = String.format(NoticeMessageConstant.NEW_TASK, userName);
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 List<String> allNoticeUserIds = new ArrayList<>();
                 String chargeId = task.getChargeId();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
@@ -306,16 +308,16 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 }
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
+                //获取飞书的unionid 与用户关系
+                List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.NEW_TASK, userName);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -497,7 +499,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
         sendMessage.setContentMap(contentMap);
         //发送消息的结果
-        Boolean sendResult = fsService.batchSendMessage(sendMessage);
+        Boolean sendResult = fsService.sendMessage(sendMessage);
         return sendResult;
     }
 
@@ -550,7 +552,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -628,7 +630,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -723,7 +725,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -796,7 +798,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -872,7 +874,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(content, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -956,7 +958,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, scheduleTaskSubmitCard, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //发送成功
             if (sendResult) {
                 //消息通知记录
@@ -1051,7 +1053,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, scheduleTaskAudit, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //发送成功
             if (sendResult) {
                 //消息通知记录
@@ -1204,7 +1206,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         sendMessage.setUnionIds(unionIds);
         sendMessage.setContentMap(contentMap);
         //发送消息的结果
-        Boolean sendResult = fsService.batchSendMessage(sendMessage);
+        Boolean sendResult = fsService.sendMessage(sendMessage);
         return sendResult;
     }
 
@@ -1259,7 +1261,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         Map contentMap = getCardMessageMap(messageContent, scheduleTaskSubmitCard, fsAppUrl);
         sendMessage.setContentMap(contentMap);
         //发送消息的结果
-        Boolean sendResult = fsService.batchSendMessage(sendMessage);
+        Boolean sendResult = fsService.sendMessage(sendMessage);
         //发送成功
         if (sendResult) {
             //消息通知记录
@@ -1282,6 +1284,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
         }
 
+    }
+
+    @Override
+    public NoticeMessageEntity getByNodeFlag(NoticeEnum flagEnum) {
+        return baseMapper.getByNodeFlag(flagEnum.getFlag());
     }
 
 
@@ -1362,7 +1369,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1439,7 +1446,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1526,7 +1533,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1603,7 +1610,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1679,7 +1686,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1755,7 +1762,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1832,7 +1839,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1907,7 +1914,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -1982,7 +1989,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -2055,7 +2062,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -2127,7 +2134,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -2176,8 +2183,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> noticeUserIds = getSetNotice(notice, product);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
-            //获取飞书的unionid 与用户关系
-            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
             ProjectTaskEntity task = projectTaskService.getById(taskId);
@@ -2192,6 +2198,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
             //排除关闭通知的人员 并去重
             List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
@@ -2201,7 +2209,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -2289,7 +2297,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                Boolean sendResult = fsService.sendMessage(sendMessage);
                 //当发送成功后
                 if (sendResult) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -2364,8 +2372,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
+            sendMessage.setUnionIds(unionIds);
             //发送消息的结果
-            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            Boolean sendResult = fsService.sendMessage(sendMessage);
             //当发送成功后
             if (sendResult) {
                 List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());

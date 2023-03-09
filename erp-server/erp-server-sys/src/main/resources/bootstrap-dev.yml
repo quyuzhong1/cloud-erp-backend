@@ -8,7 +8,7 @@ spring:
         server-addr: 172.16.100.12
         namespace: dev
         file-extension: yml
-        shared-configs: common.yml,db-sys.yml,druid-common.yml
+        shared-configs: common.yml,db-sys.yml,druid-common.yml,erp-third-party.yml
 #  mail:
 #    host: smtp.feishu.cn
 #    nickname: erp

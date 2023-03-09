@@ -11,6 +11,7 @@ import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.enums.NoticeEnum;
 
 import java.util.List;
 
@@ -113,6 +114,13 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
      * 排期任务 审核人通知
      */
     void scheduleTaskAuditor(String userName, List<ProjectTaskEntity> taskList, String productId,List<String> auditorList);
+
+    /**
+     * 根据flag 查询节点
+     * @param flagEnum
+     * @return
+     */
+    NoticeMessageEntity getByNodeFlag(NoticeEnum flagEnum);
 
 
 

@@ -1,18 +1,32 @@
 package com.erp.sdk.fs.service;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.common.business.constant.ThirdConstants;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.constant.LoginConstant;
+import com.erp.sdk.fs.dto.LarkResultDTO;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static com.erp.model.sys.vo.FsBatchSendMessageDTO.getTextMessageMap;
 
 /**
  * @Classname FsService
@@ -20,11 +34,15 @@ import java.util.Map;
  * @Date 2022-08-22 9:22
  * @Created by yl
  */
+@Slf4j
 @Component
 public class FsService {
 
     @Autowired
     private FsProperties fsProperties;
+
+    @Value("${third.fs.appUrl}")
+    private String fsAppUrl;
 
 
     /**
@@ -144,7 +162,7 @@ public class FsService {
      * @author yl
      * @date 2022-11-15 10:27
      */
-    public Boolean batchSendMessage(FsBatchSendMessageDTO dto) {
+    public Boolean sendMessage(FsBatchSendMessageDTO dto) {
         //获取飞书的应用token
         String tenantAccessToken = getFsTenantAccessToken();
         if (StringUtils.isNotBlank(tenantAccessToken)) {
@@ -171,4 +189,76 @@ public class FsService {
         return false;
     }
 
+
+    public LarkResultDTO sendMessage(String unionId, String titleContent, String textContent,String msgType) {
+        //获取飞书的应用token
+        String tenantAccessToken = getFsTenantAccessToken();
+        if (StringUtils.isBlank(tenantAccessToken)) {
+            log.error("批量发送飞书消息失败 token为空 ={}", JSONUtil.toJsonStr(tenantAccessToken));
+            throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
+        }
+        Map<String, String> headerMap = new HashMap<>();
+        String authorization = LoginConstant.FS_AUTHORIZATION + tenantAccessToken;
+        headerMap.put("Authorization", authorization);
+        headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("msg_type", msgType);
+        //用户的unionIds
+        bodyMap.put("receive_id", unionId);
+        String content;
+        switch (msgType){
+            case ThirdConstants.FS_MESSAGE_INTERACTIVE:
+                content = JSONUtil.toJsonStr(FsBatchSendMessageDTO.getCardMessageMap(titleContent, textContent, fsAppUrl));
+                break;
+            default:
+                content = JSONUtil.toJsonStr(getTextMessageMap(textContent));
+        }
+        bodyMap.put("content", content);
+        String resultStr = OkHttpUtils.doPostJson(ThirdConstants.LARK_SEND_MESSAGE_URL, bodyMap, headerMap);
+        LarkResultDTO resultMap = JSONObject.parseObject(resultStr, LarkResultDTO.class);
+
+        if(null == resultMap || 0 != resultMap.getCode()){
+            log.error("批量发送飞书消息失败 result ={}", JSONUtil.toJsonStr(resultMap));
+            throw new ServiceException(ApiError.ERROR_LARK_SEND_MSG_FAIL);
+        }
+        return resultMap;
+    }
+
+    public LarkResultDTO pressMessage(String messageId, List<String> unionIds) {
+        if(StrUtil.isBlank(messageId) || CollectionUtil.isEmpty(unionIds)){
+            throw new ServiceException(ApiError.ERROR_MSG_ID_OR_UNION_ID_IS_NULL);
+        }
+        //获取飞书的应用token
+        String tenantAccessToken = getFsTenantAccessToken();
+        if (StringUtils.isBlank(tenantAccessToken)) {
+            log.error("批量加急飞书消息失败 token为空 ={}", JSONUtil.toJsonStr(tenantAccessToken));
+            throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
+        }
+        String authorization = LoginConstant.FS_AUTHORIZATION + tenantAccessToken;
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .build();
+        MediaType mediaType = MediaType.parse("application/json");
+        HashMap<String, Object> paramMap = new HashMap<>();
+        paramMap.put("user_id_list", unionIds);
+        RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(paramMap));
+        Request request = new Request.Builder()
+                .url(StrUtil.format(ThirdConstants.LARK_PRESS_URL,messageId))
+                .method("PATCH", body)
+                .addHeader("Content-Type", ThirdConstants.CONTENT_TYPE)
+                .addHeader("Authorization", authorization)
+                .build();
+        LarkResultDTO larkResultDTO = new LarkResultDTO();
+        try {
+            Response response = client.newCall(request).execute();
+            larkResultDTO = JSONObject.parseObject(response.body().string(), LarkResultDTO.class);
+            if(0 != larkResultDTO.getCode()){
+                log.error(StrUtil.format("发送应用内加急失败！param={}, messageId={},返回数据larkResultDTO={}",JSONUtil.toJsonStr(paramMap), messageId, JSONUtil.toJsonStr(larkResultDTO)));
+                throw new RuntimeException(StrUtil.format("发送应用内加急失败！param={}, messageId={},返回数据larkResultDTO={}",JSONUtil.toJsonStr(paramMap), messageId, JSONUtil.toJsonStr(larkResultDTO)));
+            }
+        } catch (IOException e) {
+            log.error("调用发送应急消息方法失败url={}", StrUtil.format(ThirdConstants.LARK_PRESS_URL,messageId), e);
+            throw new RuntimeException(e);
+        }
+        return larkResultDTO;
+    }
 }

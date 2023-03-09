@@ -269,6 +269,14 @@ public enum ApiError implements Serializable {
     ERROR_95154(95154, "产品信息未发现已审核SKU"),
     ERROR_95155(95155, "文档不存在"),
     ERROR_95156(95156, "该文档已被引用状态不能关闭"),
+    ERROR_MSG_IS_NOT_NULL(95157, "消息模板不能为空"),
+
+    ERROR_LARK_TOKEN_IS_NULL(95158, "飞书应用token为空"),
+    ERROR_LARK_SEND_MSG_FAIL(95159, "飞书发送消息失败"),
+    ERROR_TASK_AUDIT_STATUS(95160, "任务不存在或已审核"),
+    ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
+
+    ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
     ERROR_DOCS_NO(95157,"文档不存在"),
     /**
      * bi 错误
