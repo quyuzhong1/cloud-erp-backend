@@ -267,6 +267,8 @@ public enum ApiError implements Serializable {
     ERROR_95152(95152, "请录入已审核的父级SKU"),
     ERROR_95153(95153, "请录入已审核的子级SKU"),
     ERROR_95154(95154, "产品信息未发现已审核SKU"),
+    ERROR_95155(95155, "文档不存在"),
+    ERROR_95156(95156, "该文档已被引用状态不能关闭"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

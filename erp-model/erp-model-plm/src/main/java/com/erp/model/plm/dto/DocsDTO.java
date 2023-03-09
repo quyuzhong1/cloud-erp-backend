@@ -35,5 +35,5 @@ public class DocsDTO {
     /**
      * 1 启用 0 禁用
      */
-    private Integer state=1;
+    private boolean state;
 }

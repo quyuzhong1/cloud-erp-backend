@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -27,8 +26,7 @@ public class TemplateDeliveryDocsUpdateStatusDTO implements Serializable {
      * 状态
      */
     @NotNull(message = "状态不能为空")
-    @StateEnumValue(intValues = {0, 1}, message = "状态只能是0或者1")
-    private Integer status;
+    private Boolean status;
 
     /**
      * 模板id

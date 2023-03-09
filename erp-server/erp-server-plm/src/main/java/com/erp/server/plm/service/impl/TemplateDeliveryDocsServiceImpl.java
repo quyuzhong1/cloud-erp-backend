@@ -8,19 +8,18 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.TemplateDeliveryDocsMapper;
 import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
@@ -183,8 +182,6 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         if (StringUtils.isBlank(dto.getId())) {
             entity.setCreateUserId(uid);
             entity.setCreateUserName(userName);
-            //输出物状态默认启用
-            entity.setStatus(IsConstant.YES);
         } else {
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
@@ -255,11 +252,21 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
 
     @Override
     public Boolean updateStatus(TemplateDeliveryDocsUpdateStatusDTO dto) {
-        LambdaUpdateWrapper<TemplateDeliveryDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, dto.getTemplateId());
-        updateWrapper.eq(TemplateDeliveryDocsEntity::getId, dto.getId());
-        updateWrapper.set(TemplateDeliveryDocsEntity::getStatus, dto.getStatus());
-        return this.update(updateWrapper);
+        TemplateTaskDocsNameEntity taskDocsNameEntity = templateTaskDocsNameService.getById(dto.getId());
+        if (Objects.isNull(taskDocsNameEntity)) {
+            throw new ServiceException(ApiError.ERROR_95155);
+        }
+        //当是关闭的时候 要查询是否有引用 有就不能管
+        if (!dto.getStatus()) {
+            List<TemplateDeliveryDocsEntity> deliveryDocsList = this.getByTemplateId(dto.getTemplateId());
+            Long count = deliveryDocsList.stream().filter(d -> d.getDocsNameId().equals(dto.getId())).count();
+            //表示有引用
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95156);
+            }
+        }
+        taskDocsNameEntity.setStatus(dto.getStatus());
+        return templateTaskDocsNameService.updateById(taskDocsNameEntity);
     }
 
     @Override

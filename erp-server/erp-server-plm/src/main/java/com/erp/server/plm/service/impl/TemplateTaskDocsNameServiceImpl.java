@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
@@ -16,7 +17,6 @@ import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.TemplateTaskDocsNameMapper;
 import com.erp.server.plm.service.TaskDocsNameService;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
@@ -140,20 +140,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
-        String uid = loginUser.getUid();
-        String userName = loginUser.getUserName();
-        if (flag) {
-            //保存交付文档名称的同时保存输出物数据
-            TemplateDeliveryDocsEntity templateDeliveryDocsEntity = new TemplateDeliveryDocsEntity();
-            templateDeliveryDocsEntity.setTemplateId(templateId);
-            templateDeliveryDocsEntity.setDocsNameId(entity.getId());
-            templateDeliveryDocsEntity.setDocsName(name);
-            templateDeliveryDocsEntity.setStatus(IsConstant.YES);
-            templateDeliveryDocsEntity.setCreateUserId(uid);
-            templateDeliveryDocsEntity.setCreateUserName(userName);
-            templateDeliveryDocsService.save(templateDeliveryDocsEntity);
-        }
-        return true;
+        return flag;
     }
 
     /**
@@ -177,25 +164,19 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
      */
     @Override
     public List<DocsDTO> getDocsNameList(String templateId) {
-        List<DocsDTO> resultList = new LinkedList<>();
-        List<TemplateDeliveryDocsEntity> deliveryDocsList = templateDeliveryDocsService.getByTemplateIds(Arrays.asList(templateId));
-        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
-            List<String> docsNameIds = deliveryDocsList.stream().filter(d -> d.getStatus().equals(1)).map(TemplateDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(docsNameIds)) {
-                return resultList;
-            }
-            LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
-            queryWrapper.in(TemplateTaskDocsNameEntity::getId, docsNameIds);
-            List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
-            List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
-            resultList.addAll(docsNames);
-        } else {
-            LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
-            List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
-            List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
-            resultList.addAll(docsNames);
+        if (StringUtils.isBlank(templateId)) {
+            return new ArrayList<>();
+        }
+
+        List<TemplateTaskDocsNameEntity> list = getByTemplateId(templateId);
+        List<TemplateTaskDocsNameEntity> openList = list.stream().filter(t -> t.getStatus()).collect(Collectors.toList());
+        List<DocsDTO> resultList = new ArrayList<>(openList.size());
+        for (TemplateTaskDocsNameEntity item : openList) {
+            DocsDTO dto = new DocsDTO();
+            dto.setName(item.getName());
+            dto.setId(item.getId());
+            dto.setState(true);
+            resultList.add(dto);
         }
         return resultList;
     }

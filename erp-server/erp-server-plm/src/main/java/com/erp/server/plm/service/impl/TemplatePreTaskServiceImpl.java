@@ -4,6 +4,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -51,6 +52,7 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
             for (PreTaskEntity item : list) {
                 TemplatePreTaskEntity entity = new TemplatePreTaskEntity();
                 BeanMapper.copy(item, entity);
+                entity.setId(IdWorker.getIdStr());
                 entity.setTemplateId(templateId);
                 String newTaskId=taskSourceList.stream().filter(t->t.getDataId().equals(item.getTaskId())).
                         findFirst().flatMap(obj->Optional.ofNullable(obj.getNewCreateId())).orElse("");

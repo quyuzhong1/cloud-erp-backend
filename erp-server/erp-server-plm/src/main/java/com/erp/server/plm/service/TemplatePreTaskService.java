@@ -14,6 +14,15 @@ import java.util.List;
  */
 public interface TemplatePreTaskService extends IService<TemplatePreTaskEntity> {
 
+    /**
+     * 产品管理 另存为模板 保存前置任务
+     * @author yl
+     * @date 2023-03-09 10:01
+     * @param templateId
+     * @param productId
+     * @param taskSourceList
+     * @return void
+     */
     void saveTemplatePreTask(String templateId, String productId,List<CopySourceDTO> taskSourceList);
 
     void copyTemplatePreTask(String flagId, String productId, List<CopySourceDTO> taskSourceList);

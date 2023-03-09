@@ -80,10 +80,7 @@ public class TemplateDeliveryDocsEntity implements Serializable {
      */
     private String docsNameId;
 
-    /**
-     * 输出物状态(0禁用,1启用)
-     */
-    private Integer status;
+
 
 
     private static final long serialVersionUID = 1L;

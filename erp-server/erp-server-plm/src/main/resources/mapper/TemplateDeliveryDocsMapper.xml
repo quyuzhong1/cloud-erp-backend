@@ -7,25 +7,25 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO">
         select
-           tdd.id,
-           tdd.template_id,
-           tdd.docs_name,
-           tdd.create_time,
-           tdd.update_time,
-           tdd.task_id,
-           tdd.status,
-           tdd.create_user_name,
-           tdd.update_user_name
-        from template_delivery_docs tdd
+           ttd.id,
+           ttd.template_id,
+           ttd.docs_name  AS docsName,
+           ttd.create_time,
+           ttd.update_time,
+           ttd.status,
+           ttd.id AS docsNameId,
+           ttd.create_user_name,
+           ttd.update_user_name
+        from template_task_docs_name ttd
         <where>
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
-               and tdd.docs_name like concat('%', #{params.searchKeyword} ,'%')
+               and ttd.docs_name like concat('%', #{params.searchKeyword} ,'%')
             </if>
             <if test="params.templateId != '' and params.templateId != null">
-                and  tdd.template_id like concat('%', #{params.templateId} ,'%')
+                and  ttd.template_id like concat('%', #{params.templateId} ,'%')
             </if>
         </where>
-        ORDER BY tdd.create_time DESC
+        ORDER BY ttd.create_time DESC
     </select>
 
     <select id="getDocsByTaskIdAndTemplateId" resultType="com.erp.model.plm.dto.DocsDTO">
