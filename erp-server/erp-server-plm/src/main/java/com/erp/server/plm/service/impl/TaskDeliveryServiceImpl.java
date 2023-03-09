@@ -175,6 +175,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         BaseSearchDTO params = new BaseSearchDTO();
         params.setFlagId(productId);
         List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
+        if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
+            return new ArrayList<>();
+        }
         List<DeliveryDocsDTO> list = baseMapper.list(params, findDeliveryDocsIds);
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
