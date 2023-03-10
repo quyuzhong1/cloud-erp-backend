@@ -21,6 +21,7 @@ import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -105,6 +106,23 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         try {
             model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
         } catch (Exception e) {
+            //未查找到数据，新增数据
+            SaveResult save;
+            try {
+                save = apiUtils.save(param);
+            } catch (Exception ex) {
+                //新增失败时添加日志及定时任务
+                kingdeeCommonService.insertFailureLog(platformEntity, map,JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type);
+                return;
+            }
+            //新增成功后编辑用量
+            String id = save.getResult().getId();
+            //给修改json对象赋值ID
+            setQueryJSONObject(Integer.valueOf(id),apiUtils,platformEntity,map,type,json);
+            //需要修改字段添加二级类目
+            ArrayList<String> needUpDateFields = new ArrayList<>();
+            needUpDateFields.add("FNUMERATOR");
+            param.setNeedUpDateFields(needUpDateFields);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
@@ -118,33 +136,8 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
-
-            LinkedList<String> queryFilters = new LinkedList<>();
-            queryFilters.add(String.format("FId = '%s'", id));
-            String filterStr = String.join(" and ", queryFilters);
-            //查询子单据id
-            String fieldKeys = "FTreeEntity_FEntryId,FMATERIALIDCHILD.FNumber";
-            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-            if (CollectionUtils.isEmpty(queryList)) {
-                //错误日志
-                kingdeeCommonService.insertFailureLog(platformEntity, map,filterStr,"未查询到子单据id",type);
-                return;
-            }
-            //主单据id
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            //比较
-            for (Map<String, Object> queryMap: queryList) {
-                ArrayList obj = (ArrayList) json.get("FTreeEntity");
-                for (Object o : obj) {
-                   JSONObject jsonObject = (JSONObject) o;
-                    Object o1 = queryMap.get("FMATERIALIDCHILD.FNumber");
-                    JSONObject o2 = (JSONObject)jsonObject.get("FMATERIALIDCHILD");
-                    Object fNumber = o2.get("FNumber");
-                    if (o1.equals(fNumber)) {
-                       jsonObject.put("FEntryId",queryMap.get("FTreeEntity_FEntryId"));
-                   }
-                }
-            }
+            //给修改json对象赋值ID
+            setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
             //需要更新的字段
             List<String> apiFieldList = mapList.stream().map(obj -> obj.getApiField()).sorted().distinct().collect(Collectors.toList());
             ArrayList<String> needUpDateFields = new ArrayList<>();
@@ -157,4 +150,34 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
     }
+
+    private void setQueryJSONObject (Integer id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FId = '%s'", id));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FTreeEntity_FEntryId,FMATERIALIDCHILD.FNumber";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        if (CollectionUtils.isEmpty(queryList)) {
+            //错误日志
+            kingdeeCommonService.insertFailureLog(platformEntity, map,filterStr,"未查询到子单据id",type);
+            return;
+        }
+        //主单据id
+        KingdeeUtils.makeFieldJson(json,"FId",".", id);
+        //比较
+        for (Map<String, Object> queryMap: queryList) {
+            ArrayList obj = (ArrayList) json.get("FTreeEntity");
+            for (Object o : obj) {
+                JSONObject jsonObject = (JSONObject) o;
+                Object o1 = queryMap.get("FMATERIALIDCHILD.FNumber");
+                JSONObject o2 = (JSONObject)jsonObject.get("FMATERIALIDCHILD");
+                Object fNumber = o2.get("FNumber");
+                if (o1.equals(fNumber)) {
+                    jsonObject.put("FEntryId",queryMap.get("FTreeEntity_FEntryId"));
+                }
+            }
+        }
+    }
+
 }

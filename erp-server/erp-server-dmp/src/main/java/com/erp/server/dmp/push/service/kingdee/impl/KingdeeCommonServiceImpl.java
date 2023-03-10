@@ -108,9 +108,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Override
     public void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type) {
         SaveResult save;
-        String msg = "新增成功";
+        String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
-            msg = "修改成功";
+            msg = "修改数据";
         }
         try {
             save = apiUtils.save(param);
