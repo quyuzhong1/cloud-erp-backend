@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.erp.model.plm.dto.LarkPressMessageDTO;
 import com.erp.model.plm.enums.NoticeEnum;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 
 import java.util.List;
 
@@ -25,5 +26,5 @@ public interface LarkMessageService {
      * @param isPress
      * @return
      */
-    Boolean sendMessage(List<String> noticeUserIds, String titleContent, String textContent, NoticeEnum noticeFlag,String msgType, Boolean isPress);
+    Boolean sendMessage(List<AuditorHandleDTO> noticeUserIds, String titleContent, String textContent, NoticeEnum noticeFlag, String msgType, Boolean isPress);
 }
