@@ -6,11 +6,14 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.*;
+import com.common.message.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -35,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_bom_info_tag", consumerGroup = RocketMqTagEnum.SYNC_KINGDEE)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_bom_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_BOM_INFO)
 public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -54,7 +57,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FNumber = '%s'", "0011010001_V1.0"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FTreeEntity_FEntryId";
+        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FMATERIALIDCHILD.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -104,16 +107,16 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         }
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
-        String id = (String) model.get("Id");
+        Integer id = (Integer) model.get("Id");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, id,type);
+            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, String.valueOf(id),type);
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
 
             LinkedList<String> queryFilters = new LinkedList<>();
-            queryFilters.add(String.format("FMATERIALID = '%s'", id));
+            queryFilters.add(String.format("FId = '%s'", id));
             String filterStr = String.join(" and ", queryFilters);
             //查询子单据id
             String fieldKeys = "FTreeEntity_FEntryId";
@@ -125,7 +128,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             }
             Map<String, Object> queryMap = queryList.get(0);
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FMATERIALID",".", id);
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
             Iterator iter = queryMap.entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
@@ -143,6 +146,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
 
             //更新业务单据状态 TODO
+
         }
     }
 }

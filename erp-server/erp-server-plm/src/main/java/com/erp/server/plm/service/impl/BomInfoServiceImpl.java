@@ -41,6 +41,7 @@ import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.listener.BomInfoExcelListener;
 import com.erp.server.plm.mapper.BomInfoMapper;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -86,6 +87,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private ProductChangeService productChangeService;
+
+    @Resource
+    private SyncKingdeeBomInfoService syncKingdeeBomInfoService;
+
 
     /**
      * 添加bom
@@ -971,7 +976,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_PASS.getName());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
-
+            // 发送到金蝶
+            syncKingdeeBomInfoService.syncDataToKingdee(bom);
         }
     }
 

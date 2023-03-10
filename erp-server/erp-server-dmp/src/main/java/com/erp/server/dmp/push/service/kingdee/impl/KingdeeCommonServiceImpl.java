@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
@@ -56,14 +57,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //查询配置的值映射
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
-        mapList = mapList.stream().filter(obj -> ApiGroupTypeEnum.NORMAL.getCode().equals(obj.getGroupType()) ||  ApiGroupTypeEnum.PARENT.getCode().equals(obj.getGroupType())).collect(Collectors.toList());
+       List<CfgApiFieldMapDTO> mainList = mapList.stream().filter(obj -> ApiGroupTypeEnum.NORMAL.getCode().equals(obj.getGroupType()) ||  ApiGroupTypeEnum.PARENT.getCode().equals(obj.getGroupType())).collect(Collectors.toList());
 
         //无值直接返回
-        if (CollectionUtils.isEmpty(mapList)) {
+        if (CollectionUtils.isEmpty(mainList)) {
             return json;
         }
 
-        for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
+        for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mainList) {
             String apiField = cfgApiFieldMapDTO.getApiField();
             //给集合父项填充数据
             if (ApiGroupTypeEnum.PARENT.getCode().equals(cfgApiFieldMapDTO.getGroupType())) {

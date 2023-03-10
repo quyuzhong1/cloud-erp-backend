@@ -127,6 +127,7 @@ public enum RocketMqTagEnum {
 
     public static final String SYNC_KINGDEE = "sync_kingdee";
 
+
     private Integer code;
 
     private String type;

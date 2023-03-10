@@ -6,11 +6,13 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -36,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_product_detail_tag", consumerGroup = RocketMqTagEnum.SYNC_KINGDEE)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_product_detail_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PRODUCT_DETAIL)
 public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -47,6 +49,9 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();

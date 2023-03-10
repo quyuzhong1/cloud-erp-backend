@@ -57,6 +57,8 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         //父级物料
         BomSkuDTO parent = bomList.get(0);
         //父级sku编码
+        resultMap.put("id",entity.getId());
+        //父级sku编码
         resultMap.put("parentSkuNo",parent.getSkuNo());
         //版本
         resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getVersion().toString()));
@@ -74,7 +76,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         resultMap.put("list",mapList);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName(), resultMap, entity.getId());
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
                 return bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode());

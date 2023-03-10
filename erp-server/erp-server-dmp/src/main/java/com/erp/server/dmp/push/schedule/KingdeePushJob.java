@@ -1,13 +1,9 @@
 package com.erp.server.dmp.push.schedule;
 
-import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.service.PlatformService;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -16,8 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Will
