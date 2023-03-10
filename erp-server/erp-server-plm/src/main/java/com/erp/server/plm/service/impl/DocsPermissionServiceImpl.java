@@ -108,12 +108,10 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
      * @date 2022-11-01 19:13
      */
     @Override
-    public List<String> getAllDeliveryDocsIds(String productId) {
+    public List<DocsPermissionEntity> getAllDeliveryDocsIds(String productId) {
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
         queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
-        queryWrapper.eq(DocsPermissionEntity::getQueryRoleId, "");
-        return this.listObjs(queryWrapper, Object::toString);
+        return this.list(queryWrapper);
     }
 
     /**

@@ -550,7 +550,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         String productId = params.getFlagId();
         List<String> findDeliveryDocsIds = new ArrayList<>();
         List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(productId);
-        List<String>  allDeliveryDocsIds=deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+        List<String> allDeliveryDocsIds = deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
 
         //如果是管理员
         if (userAccount.equals(AdminUserConstant.ACCOUNT)) {
@@ -564,22 +564,28 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
                 findDeliveryDocsIds.addAll(taskChargeDeliveryDocsIds);
             }
-            /**
-             * 查询用户是否在该角色下 在的话 就查询对应的文档id
-             */
+
+            //查询当前用户的角色
             List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
-            if (CollectionUtils.isNotEmpty(userRoleIds)) {
-                List<String> allDeliveryDocsIdList = docsPermissionService.getAllDeliveryDocsIdsAdmin(productId);
-                //加入项目成员，未设置文档权限，可见所有输出文档
-                if (CollectionUtils.isEmpty(allDeliveryDocsIdList)) {
-                    findDeliveryDocsIds.addAll(allDeliveryDocsIds);
-                }else{
-                    List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, productId);
-                    if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
-                        findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
+
+            //获取所有的设置文档的权限的文档id
+            List<DocsPermissionEntity> allPermissionDeliveryDocsList = docsPermissionService.getAllDeliveryDocsIds(productId);
+            for (TaskDeliveryDocsEntity item : deliveryDocsList) {
+                String deliveryDocsId = item.getId();
+                DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
+                        findFirst().orElse(null);
+                //表示有权限
+                if (permission != null) {
+                    if (userRoleIds.contains(permission.getQueryRoleId())) {
+                        findDeliveryDocsIds.add(deliveryDocsId);
                     }
+                } else {
+                    //没有权限
+                    findDeliveryDocsIds.add(deliveryDocsId);
                 }
+
             }
+
         }
 
         findDeliveryDocsIds = findDeliveryDocsIds.stream().distinct().collect(Collectors.toList());

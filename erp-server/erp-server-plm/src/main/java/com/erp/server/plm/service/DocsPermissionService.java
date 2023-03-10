@@ -26,7 +26,7 @@ public interface DocsPermissionService extends IService<DocsPermissionEntity> {
 
     List<String> getDocsIdsByRoleIds(List<String> userRoleIds,String productId);
 
-    List<String> getAllDeliveryDocsIds(String productId);
+    List<DocsPermissionEntity> getAllDeliveryDocsIds(String productId);
 
     List<String> getAllDeliveryDocsIdsAdmin(String productId);
 
