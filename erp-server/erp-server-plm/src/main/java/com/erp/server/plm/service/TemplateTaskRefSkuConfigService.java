@@ -26,9 +26,20 @@ public interface TemplateTaskRefSkuConfigService  extends IService<TemplateTaskR
      */
     void saveTemplateTaskRefSkuConfig(String templateId, String productId,List<CopySourceDTO> taskSourceList);
 
+    
+    /**
+     * 新增产品 复制模板任务与sku 关系
+     * @author yl
+     * @date 2023-03-10 10:30
+     * @param flagId
+     * @param productId
+     * @param taskSourceList
+     * @return java.util.List<java.lang.String>
+     */
     List<String> copyTemplateTaskSkuConfig(String flagId, String productId, List<CopySourceDTO> taskSourceList);
 
     void addTemplateTaskRefSkuConfig(String taskId,String templateId, String fieldConfigType, String fieldJson);
 
     TemplateTaskRefSkuConfigEntity getByTaskId(String id);
+
 }

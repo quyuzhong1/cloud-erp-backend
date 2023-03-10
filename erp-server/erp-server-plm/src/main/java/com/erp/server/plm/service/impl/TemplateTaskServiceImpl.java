@@ -233,6 +233,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //判断任务分配类型
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             String roleId = taskEntity.getRoleId();
+            //当角色id 为空的时候
+            if (StringUtils.isBlank(roleId)) {
+                List<TemplateRoleEntity> templateRoleList = templateRoleService.getAllRoles(dto.getTemplateId());
+                roleId = templateRoleList.stream().filter(t -> t.getName().equals(taskEntity.getRoleName())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            }
             if (StringUtils.isNotBlank(roleId)) {
                 resultVO.setRoleIds(Arrays.asList(roleId.split(",")));
             }
