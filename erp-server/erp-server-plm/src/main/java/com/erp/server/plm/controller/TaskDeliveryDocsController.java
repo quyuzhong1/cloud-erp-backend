@@ -42,7 +42,6 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    //  @RequestPermissions("plm:taskDocs:paging")
     public ApiResult<PagingVO<List<DeliveryDocsDTO>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<List<DeliveryDocsDTO>> pagingVO = taskDeliveryService.paging(dto);
         return success(pagingVO);
@@ -56,7 +55,6 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/list")
-    //  @RequestPermissions("plm:taskDocs:list")
     public ApiResult<List<DeliveryDocsDTO>> list(@RequestBody @Validated BaseIdDTO dto) {
         List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
         return success(list);
@@ -77,7 +75,6 @@ public class TaskDeliveryDocsController extends BaseController {
 
 
     @PostMapping("/deliveryDocsList")
-    //  @RequestPermissions("plm:taskDocs:list")
     public ApiResult<List<DeliveryDocsDTO>> getDeliveryDocsByTaskId(@RequestBody @Validated BaseIdDTO dto) {
         List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
         return success(list);
@@ -94,7 +91,6 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return
      */
     @PostMapping("/setPower")
-    // @RequestPermissions("plm:taskDocs:setPower")
     public ApiResult setPower(@RequestBody @Validated SetDocsPowerDTO dto) {
         taskDeliveryService.setPower(dto);
         return success();
@@ -108,7 +104,6 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return
      */
     @GetMapping("/getPower")
-    // @RequestPermissions("plm:taskDocs:setPower")
     public ApiResult<SetDocsPowerDTO> getPower(@RequestParam(value = "id") String id) {
         SetDocsPowerDTO docsPower = docsPermissionService.getDocsPower(id);
         return success(docsPower);

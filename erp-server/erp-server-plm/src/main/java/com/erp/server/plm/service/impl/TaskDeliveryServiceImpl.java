@@ -240,18 +240,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                     docsPermission.setTaskId(deliveryDocsEntity.getTaskId());
                     docsPermissionList.add(docsPermission);
                 }
-            } else {
-                //当为空 就是全部的
-                DocsPermissionEntity save = new DocsPermissionEntity();
-                save.setDeliveryDocsId(docsId);
-                save.setProductId(deliveryDocsEntity.getProductId());
-                save.setTaskId(deliveryDocsEntity.getTaskId());
-                save.setQueryRoleId("");
-                docsPermissionList.add(save);
+                docsPermissionService.saveBatch(docsPermissionList);
             }
         }
 
-        docsPermissionService.saveBatch(docsPermissionList);
+
     }
 
 
@@ -577,6 +570,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 //表示有权限
                 if (permission != null) {
                     if (userRoleIds.contains(permission.getQueryRoleId())) {
+                        findDeliveryDocsIds.add(deliveryDocsId);
+                    }
+                    if(StringUtils.isBlank(permission.getQueryRoleId())){
                         findDeliveryDocsIds.add(deliveryDocsId);
                     }
                 } else {
