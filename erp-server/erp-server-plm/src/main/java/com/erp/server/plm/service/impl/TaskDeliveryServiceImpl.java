@@ -547,13 +547,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             userId = loginUser.getUid();
         }
 
-
+        String productId = params.getFlagId();
         List<String> findDeliveryDocsIds = new ArrayList<>();
+        List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(productId);
+        List<String>  allDeliveryDocsIds=deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
 
         //如果是管理员
         if (userAccount.equals(AdminUserConstant.ACCOUNT)) {
-            List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(params.getFlagId());
-            findDeliveryDocsIds.addAll(deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList()));
+            findDeliveryDocsIds.addAll(allDeliveryDocsIds);
         } else {
             /**
              * 根据产品id 获取当前登录人 是否是 任务负责人
@@ -568,21 +569,15 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
              */
             List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
             if (CollectionUtils.isNotEmpty(userRoleIds)) {
-                List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, params.getFlagId());
-                if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
-                    findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
-                }
-            }
-            /**
-             * 查询设置全部的的人可以看的
-             */
-            List<String> allDeliveryDocsIds = docsPermissionService.getAllDeliveryDocsIds(params.getFlagId());
-            if (CollectionUtils.isNotEmpty(allDeliveryDocsIds)) {
-                //查询是否是项目成员
-                Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
-                //如果是项目成员 可以看到所有设置全部的
-                if (ifExistProjectMember) {
+                List<String> allDeliveryDocsIdList = docsPermissionService.getAllDeliveryDocsIdsAdmin(productId);
+                //加入项目成员，未设置文档权限，可见所有输出文档
+                if (CollectionUtils.isEmpty(allDeliveryDocsIdList)) {
                     findDeliveryDocsIds.addAll(allDeliveryDocsIds);
+                }else{
+                    List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, productId);
+                    if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
+                        findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
+                    }
                 }
             }
         }

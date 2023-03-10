@@ -259,7 +259,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         //当是关闭的时候 要查询是否有引用 有就不能管
         if (!dto.getStatus()) {
             List<TemplateDeliveryDocsEntity> deliveryDocsList = this.getByTemplateId(dto.getTemplateId());
-            Long count = deliveryDocsList.stream().filter(d -> d.getDocsNameId().equals(dto.getId())).count();
+            Long count = deliveryDocsList.stream().filter(d -> d.getDocsNameId().equals(dto.getId())&& StringUtils.isNotBlank(d.getTaskId())).count();
             //表示有引用
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95156);

@@ -140,6 +140,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
+
         return flag;
     }
 

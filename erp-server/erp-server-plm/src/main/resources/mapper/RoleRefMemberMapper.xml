@@ -5,4 +5,11 @@
 <mapper namespace="com.erp.server.plm.mapper.RoleRefMemberMapper">
 
 
+    <select id="getUserRole" resultType="java.lang.String">
+        SELECT
+          rr.role_id
+        FROM role_ref_members rr
+        INNER JOIN project_members pm ON rr.members_id = pm.ID
+        WHERE rr.product_id=#{productId} AND pm.member_id=#{userId}
+    </select>
 </mapper>
