@@ -194,101 +194,105 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         }
         //成员新增成功后，需要更新产品下面的未发布、未开始、进行中的任务
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
-        if (CollectionUtils.isNotEmpty(projectTaskList)) {
-            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(obj.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(obj.getStatus()) || TaskStateEnum.ING.getCode().equals(obj.getStatus()))).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(list)) {
-                List<ProjectTaskEntity> addTaskList = new ArrayList<>();
-                List<TaskChargeDistributionEntity> addTaskChargeDistributionList = new ArrayList<>();
-                list.forEach(obj -> {
-                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
-                        List<String> collect = Arrays.stream(obj.getRoleName().split(",")).collect(Collectors.toList());
-                        if (collect.contains(projectRoleEntity.getName())) {
-                            //更新任务负责人
-                            if (StringUtils.isNotBlank(obj.getChargeId())) {
-                                List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(projectTaskList)) {
+            return flag;
+        }
+        List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(obj.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(obj.getStatus()) || TaskStateEnum.ING.getCode().equals(obj.getStatus()))).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(list)) {
+            return flag;
+        }
+        List<ProjectTaskEntity> addTaskList = new ArrayList<>();
+        List<TaskChargeDistributionEntity> addTaskChargeDistributionList = new ArrayList<>();
+        list.forEach(obj -> {
+            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
+                List<String> collect = Arrays.stream(obj.getRoleName().split(",")).collect(Collectors.toList());
+                if (collect.contains(projectRoleEntity.getName())) {
+                    //更新任务负责人
+                    if (StringUtils.isNotBlank(obj.getChargeId())) {
+                        List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                        for (String userId : dto.getUserIdList()) {
+                            if (!chargetIds.contains(userId)) {
+                                chargetIds.add(userId);
+                            }
+                        }
+                        chargetIds = chargetIds.stream().distinct().collect(Collectors.toList());
+                        List<String> finalChargetIds = chargetIds;
+                        //人员名称
+                        List<String> userNameList = userList.stream().filter(e -> finalChargetIds.contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                        obj.setChargeId(StringUtils.join(chargetIds, ","));
+                        if (CollectionUtils.isNotEmpty(userNameList)) {
+                            obj.setChargeName(StringUtils.join(userNameList, ","));
+                        }
+                    } else {
+                        obj.setChargeId(StringUtils.join(dto.getUserIdList(), ","));
+                        //人员名称
+                        List<String> userNameList = userList.stream().filter(e -> dto.getUserIdList().contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                        if (CollectionUtils.isNotEmpty(userNameList)) {
+                            obj.setChargeName(StringUtils.join(userNameList, ","));
+                        }
+                    }
+                    addTaskList.add(obj);
+                }
+            }
+            //查询任务下审核人
+            List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, obj.getId());
+            if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                //根据分配类型查询模板中的数据
+                for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
+                    if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
+                        throw new ServiceException(ApiError.ERROR_95097);
+                    }
+                    List<String> chargeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                    //按角色分配
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                        if (chargeList.contains(projectRoleEntity.getName())) {
+                            //更新任务审核人
+                            if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                                List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
                                 for (String userId : dto.getUserIdList()) {
                                     if (!chargetIds.contains(userId)) {
                                         chargetIds.add(userId);
                                     }
                                 }
-                                chargetIds = chargetIds.stream().distinct().collect(Collectors.toList());
-                                List<String> finalChargetIds = chargetIds;
-                                //人员名称
-                                List<String> userNameList = userList.stream().filter(e -> finalChargetIds.contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                obj.setChargeId(StringUtils.join(chargetIds, ","));
-                                if (CollectionUtils.isNotEmpty(userNameList)) {
-                                    obj.setChargeName(StringUtils.join(userNameList, ","));
-                                }
+                                taskChargeDistributionEntity.setChargeIds(StringUtils.join(chargetIds, ","));
                             } else {
-                                obj.setChargeId(StringUtils.join(dto.getUserIdList(), ","));
-                                //人员名称
-                                List<String> userNameList = userList.stream().filter(e -> dto.getUserIdList().contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                if (CollectionUtils.isNotEmpty(userNameList)) {
-                                    obj.setChargeName(StringUtils.join(userNameList, ","));
-                                }
+                                taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(), ","));
                             }
-                            addTaskList.add(obj);
+                            addTaskChargeDistributionList.add(taskChargeDistributionEntity);
                         }
                     }
-                    //查询任务下审核人
-                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, obj.getId());
-                    if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                        //根据分配类型查询模板中的数据
-                        for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
-                            if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                                throw new ServiceException(ApiError.ERROR_95097);
-                            }
-                            List<String> chargeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                            //按角色分配
-                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                                if (chargeList.contains(projectRoleEntity.getName())) {
-                                    //更新任务审核人
+                    //按上级分配
+                    if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && StringUtils.isNotBlank(obj.getChargeId())) {
+                        //查询对应负责人的上级
+                        List<String> ids = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                        List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                        if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                            for (String superiorType : chargeList) {
+                                List<String> userIds = userSuperiorDTOS.stream().filter(e -> e.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+                                //判断是否存在上级
+                                if (CollectionUtils.isNotEmpty(userIds)) {
                                     if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
                                         List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
-                                        for (String userId : dto.getUserIdList()) {
-                                            if (!chargetIds.contains(userId)) {
-                                                chargetIds.add(userId);
-                                            }
-                                        }
-                                        taskChargeDistributionEntity.setChargeIds(StringUtils.join(chargetIds, ","));
-                                    } else {
-                                        taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(), ","));
+                                        userIds.addAll(chargetIds);
+                                        userIds = userIds.stream().distinct().collect(Collectors.toList());
                                     }
+                                    taskChargeDistributionEntity.setChargeIds(StringUtils.join(userIds, ","));
                                     addTaskChargeDistributionList.add(taskChargeDistributionEntity);
                                 }
                             }
-                            //按上级分配
-                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && StringUtils.isNotBlank(obj.getChargeId())) {
-                                //查询对应负责人的上级
-                                List<String> ids = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
-                                List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
-                                if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
-                                    for (String superiorType : chargeList) {
-                                        List<String> userIds = userSuperiorDTOS.stream().filter(e -> e.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
-                                        //判断是否存在上级
-                                        if (CollectionUtils.isNotEmpty(userIds)) {
-                                            if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
-                                                List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
-                                                userIds.addAll(chargetIds);
-                                                userIds = userIds.stream().distinct().collect(Collectors.toList());
-                                            }
-                                            taskChargeDistributionEntity.setChargeIds(StringUtils.join(userIds, ","));
-                                            addTaskChargeDistributionList.add(taskChargeDistributionEntity);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (CollectionUtils.isNotEmpty(addTaskChargeDistributionList)) {
-                            taskChargeDistributionService.updateBatchById(addTaskChargeDistributionList);
                         }
                     }
-                });
-                if (CollectionUtils.isNotEmpty(addTaskList)) {
-                    projectTaskService.updateBatchById(addTaskList);
+                }
+                if (CollectionUtils.isNotEmpty(addTaskChargeDistributionList)) {
+                    taskChargeDistributionService.updateBatchById(addTaskChargeDistributionList);
                 }
             }
+        });
+        if (CollectionUtils.isNotEmpty(addTaskList)) {
+            projectTaskService.updateBatchById(addTaskList);
         }
+
+
 
         return flag;
 
