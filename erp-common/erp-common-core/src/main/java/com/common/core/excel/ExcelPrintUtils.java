@@ -3,6 +3,7 @@ package com.common.core.excel;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.converters.ConverterKeyBuild;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.util.IoUtils;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
@@ -636,6 +637,19 @@ public class ExcelPrintUtils {
 			out = response.getOutputStream();
 			bos = new BufferedOutputStream(out);
 			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
+			// LocalDate转化器，导入导出都可以使用
+			LocalDateTimeConverter converter = new LocalDateTimeConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+			// LocalDateTime转化器，导入导出都可以使用
+			EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+			// LocalDate转化器，导入导出都可以使用
+			EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
 			WriteSheet writeSheet = EasyExcel.writerSheet().build();
 
 			//列表数据
