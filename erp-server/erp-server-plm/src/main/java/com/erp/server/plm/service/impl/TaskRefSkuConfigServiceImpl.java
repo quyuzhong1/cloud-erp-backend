@@ -193,7 +193,20 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
 
     }
 
-
+    /**
+     * 修改任务的时候  如果选择不关联就要删除sku 与任务的关系
+     *
+     * @param taskId
+     * @return void
+     * @author yl
+     * @date 2023-03-10 17:27
+     */
+    @Override
+    public void removeTaskRefSkuByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskRefSkuConfigEntity::getTaskId, taskId);
+        this.remove(queryWrapper);
+    }
 
 
     /**

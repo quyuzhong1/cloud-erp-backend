@@ -502,13 +502,19 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-10-12 10:49
      */
     @Override
-    public void addProject(String productId, String productName) {
+    public void addProject(String productId, String productName, String projectChargeId) {
         int getIfExist = getIfExist(productId);
         if (getIfExist == 0) {
             ProjectInfoEntity project = new ProjectInfoEntity();
             project.setName(productName);
             project.setProductId(productId);
             project.setProjectStatus(ProjectStateEnum.NOT_START.getState());
+            if (StringUtils.isNotBlank(projectChargeId)) {
+                project.setChargeId(projectChargeId);
+                String name = commonService.getNameById(projectChargeId);
+                project.setChargeName(name);
+            }
+
             this.save(project);
         }
 

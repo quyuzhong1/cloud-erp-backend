@@ -934,7 +934,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (yesApproval && updateFlag) {
                 //异步通知 产品立项
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
-                projectInfoService.addProject(dto.getProductId(), newProduct.getName());
+                projectInfoService.addProject(dto.getProductId(), newProduct.getName(),product.getProjectChargeId());
             }
             //如果状态为已中止则更新产品开发列表开发状态为中止开发
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(approvalStatus)) {
