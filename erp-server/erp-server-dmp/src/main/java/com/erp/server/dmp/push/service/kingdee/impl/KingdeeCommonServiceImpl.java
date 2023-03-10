@@ -2,12 +2,18 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.ApiFieldTypeEnum;
+import com.erp.model.dmp.enums.ApiGroupTypeEnum;
+import com.erp.model.dmp.enums.ApiSendStatusEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.CfgApiFieldMapValueService;
@@ -21,10 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +46,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private ApiPlmSyncLogService apiPlmSyncLogService;
 
-
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map,List<CfgApiFieldMapDTO> mapList) {
@@ -262,8 +266,20 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
-        //更新业务单据状态 TODO
+        //更新业务单据状态
+        this.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
     }
+
+    @Override
+    public void updateBusinessSyncKingdeeStatus(String code,String businessId,String status){
+        //更新业务单据状态
+        Map<String,String> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",code);
+        params.put("businessId",businessId);
+        params.put("status", status);
+        plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+    }
+
 
     /**
      * 填充数据

@@ -716,6 +716,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-30 16:41
      */
     @Override
+    @Transactional
     public void processPass(ProcessPassDTO dto) {
         //从流程那边获取到具体业务表id
         String id = dto.getBusinessTableId();

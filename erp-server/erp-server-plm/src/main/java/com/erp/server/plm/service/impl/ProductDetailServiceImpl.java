@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -1662,6 +1663,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_PASS.getCode());
         entity.setUpdateUserId(loginUser.getUid());
         entity.setUpdateUserName(loginUser.getUserName());
+        entity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
@@ -2132,6 +2134,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @date 2023-01-30 17:12
      */
     @Override
+    @Transactional
     public void changeSku(ProductSmallestUnitDTO skuDTO) {
         String id = skuDTO.getProductManySpecBaseDTO().getId();
         ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
@@ -2163,6 +2166,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         addProductDetailLog(detail, oldEntity, detail.getId(), detailEntity.getProductId());
         //2.修改/新增 sku信息
         if (detailEntity != null) {
+            detailEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             this.updateById(detailEntity);
         }
         //3.修改/新增 成本信息
@@ -2258,8 +2262,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
         //编辑通过后发送金蝶
-        this.sendKingDeeData(detailEntity.getId());
-
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity);
     }
 
 

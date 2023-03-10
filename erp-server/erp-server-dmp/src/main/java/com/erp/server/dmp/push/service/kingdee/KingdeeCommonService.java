@@ -45,6 +45,15 @@ public interface KingdeeCommonService {
      * @param msg
      */
     void insertSuccessLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type);
+    /**
+     * @description: 更新业务模块同步状态
+     * @author Will
+     * @date: 2023/3/10 14:57
+     * @param code
+     * @param businessId
+     * @param status
+     */
+    void updateBusinessSyncKingdeeStatus(String code,String businessId,String status);
 
     /**
      * @description: 新增或修改

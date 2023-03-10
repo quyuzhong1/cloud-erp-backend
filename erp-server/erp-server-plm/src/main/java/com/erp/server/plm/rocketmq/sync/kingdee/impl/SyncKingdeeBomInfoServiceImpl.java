@@ -70,7 +70,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         for (BomChildrenSkuDTO bomChildrenSkuDTO: childrenList) {
             Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("skuNo",bomChildrenSkuDTO.getSkuNo());
-            detailMap.put("quantity",bomChildrenSkuDTO.getQuantity());
+            detailMap.put("quantity",bomChildrenSkuDTO.getQuantity().toString());
             mapList.add(detailMap);
         }
         resultMap.put("list",mapList);

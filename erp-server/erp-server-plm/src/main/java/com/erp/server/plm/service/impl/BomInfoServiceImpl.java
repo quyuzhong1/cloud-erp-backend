@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -971,6 +972,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomInfoEntity bom = this.getById(bomId);
         if (bom != null) {
             bom.setState(BomStateEnum.AUDIT_PASS.getState());
+            bom.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             this.updateById(bom);
 
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_PASS.getName());
@@ -991,6 +993,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-30 16:52
      */
     @Override
+    @Transactional
     public void changeBom(BomDTO bom) {
         String bomId = bom.getId();
         BomInfoEntity bomEntity = this.getById(bomId);
@@ -998,6 +1001,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             Integer bomVersion = bomEntity.getVersion();
             bomEntity.setVersion(bomVersion + 1);
             bomEntity.setType(bom.getType());
+            bomEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
             Boolean result = this.updateById(bomEntity);
@@ -1009,6 +1013,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
                 String operateContent = getUpdateContent(oldBomList, bomSkuList);
                 bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
+                //再次发送到金蝶
+                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity);
             }
         }
     }

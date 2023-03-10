@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -11,8 +12,10 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.*;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -50,8 +53,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
+
 
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
@@ -176,7 +178,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
 
-            //更新业务单据状态 TODO
+            //更新业务单据状态
+            kingdeeCommonService.updateBusinessSyncKingdeeStatus(ApiModuleTypeEnum.PRODUCTDETAIL.getCode().toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
         }
     }
 }
