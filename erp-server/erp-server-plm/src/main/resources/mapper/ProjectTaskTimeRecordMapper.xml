@@ -33,7 +33,9 @@
         SUM(CASE WHEN pt.status != 4 THEN 1 else 0 end)  unfinishedTaskNum,
         SUM(CASE WHEN (pt.status = 0 OR pt.status = 1 OR  pt.status = 2 OR  pt.status = 3)
         and pt.plan_end_time is not null and pt.plan_end_time  &lt; CURRENT_DATE THEN 1 else 0 end)  delayTaskNum,
-        array_to_string(array_agg(DISTINCT pt.id),',') taskIds
+        array_to_string(array_agg(DISTINCT pt.id),',') taskIds,
+        pi.create_time AS productCreateDate,
+        pi.approval_time AS productApprovalDate
         FROM "project_task" pt
         LEFT JOIN product_info  pi on pt.product_id = pi.id
         LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id
@@ -55,7 +57,7 @@
                 ${param}
             </if>
         </where>
-        GROUP BY pi."name", chargeName,spuNo,pi.create_time
+        GROUP BY pi."name", chargeName,spuNo,pi.create_time,productCreateDate,productApprovalDate
         ORDER BY pi.create_time DESC
     </select>
 

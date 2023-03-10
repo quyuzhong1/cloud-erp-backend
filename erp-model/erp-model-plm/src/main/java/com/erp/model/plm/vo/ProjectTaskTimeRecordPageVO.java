@@ -69,6 +69,17 @@ public class ProjectTaskTimeRecordPageVO implements Serializable {
     @ExcelProperty(value = "延期任务数量", index = 9)
     private Integer delayTaskNum;
 
+    /**
+     * 产品创建时间
+     */
+    @ExcelProperty(value = "产品创建时间", index = 10)
+    private LocalDate productCreateDate;
+    /**
+     * 产品立项时间
+     */
+    @ExcelProperty(value = "产品创建时间", index = 11)
+    private LocalDate productApprovalDate;
+
     private String taskIds;
 
 
