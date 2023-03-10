@@ -27,12 +27,12 @@ public class EasyExcelLocalDateConverter implements Converter<LocalDate> {
 
     @Override
     public LocalDate convertToJavaData(CellData cellData, ExcelContentProperty contentProperty, GlobalConfiguration globalConfiguration) throws Exception {
-        return LocalDate.parse(cellData.getStringValue(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return LocalDate.parse(cellData.getStringValue(), DateTimeFormatter.ofPattern("yyyy/MM/dd"));
     }
 
     @Override
     public CellData<LocalDate> convertToExcelData(LocalDate value, ExcelContentProperty contentProperty, GlobalConfiguration globalConfiguration) throws Exception {
-        return new CellData<>(value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        return new CellData<>(value.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")));
     }
 }
 
