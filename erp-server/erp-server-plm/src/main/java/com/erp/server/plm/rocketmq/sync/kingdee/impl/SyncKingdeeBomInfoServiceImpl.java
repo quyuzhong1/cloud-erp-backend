@@ -64,7 +64,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         //父级sku编码
         resultMap.put("parentSkuNo",parent.getSkuNo());
         //版本
-        resultMap.put("version",entity.getVersion().toString());
+        resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getVersion().toString()));
         //子级物料
         List<BomChildrenSkuDTO> childrenList = parent.getChildren();
         if (CollectionUtils.isEmpty(childrenList)) {
