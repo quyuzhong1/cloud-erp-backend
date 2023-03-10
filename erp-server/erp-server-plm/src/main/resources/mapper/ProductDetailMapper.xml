@@ -84,13 +84,6 @@
             AND pd.product_id = #{params.productId}
         </if>
 
-        <if test="archiveProductIds!=null and archiveProductIds.size()>0">
-            AND pi.id NOT IN
-            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
-                #{productId}
-            </foreach>
-        </if>
-
         <if test="params.isChange != null and params.isChange != ''  ">
             AND pd.is_change = #{params.isChange}
         </if>

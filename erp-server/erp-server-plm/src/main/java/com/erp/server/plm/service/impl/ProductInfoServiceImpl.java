@@ -180,7 +180,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     //任务审核人
     @Autowired
-    private TaskChargeDistributionService  taskChargeDistributionService;
+    private TaskChargeDistributionService taskChargeDistributionService;
 
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
@@ -1308,6 +1308,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.list(queryWrapper);
 
     }
+
+
+
 
     /**
      * /**

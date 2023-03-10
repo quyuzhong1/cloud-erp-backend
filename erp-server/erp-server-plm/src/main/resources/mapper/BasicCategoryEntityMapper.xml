@@ -13,4 +13,23 @@
             )
             SELECT ID,NAME,pid,PATH FROM T ORDER BY 	PATH;
     </select>
+
+
+    <select id="getSkuByCategoryIds" resultType="com.erp.model.plm.dto.SkuCategoryDTO">
+          SELECT
+             pi.id AS productId,
+             pi.category_id,
+             pd.id AS sku_id
+          FROM product_info pi
+          INNER JOIN product_detail pd ON pi.id = pd.product_id
+          WHERE pi.delete_state=0
+          <if test="categoryIds!=null and categoryIds.size>0">
+             AND pi.category_id  IN
+              <foreach collection="categoryIds" item="categoryId" open="(" separator="," close=")">
+                  #{categoryId}
+              </foreach>
+
+          </if>
+
+    </select>
 </mapper>

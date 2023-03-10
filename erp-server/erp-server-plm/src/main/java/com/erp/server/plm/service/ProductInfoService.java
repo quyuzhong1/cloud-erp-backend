@@ -163,4 +163,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      */
     List<ProductInfoEntity> getRoleClassifyList(boolean isFinishedProductDev, boolean isArchive);
+
+    
+
 }

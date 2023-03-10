@@ -204,10 +204,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
 
 
-        //获取到归档的产品id
-        List<String> archiveProductIds = archiveService.getArchiveProductIds();
-
-        IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams(),archiveProductIds);
+        IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         List<ProductDetailShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
