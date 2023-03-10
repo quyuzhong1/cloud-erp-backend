@@ -482,6 +482,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 throw new ServiceException(ApiError.ERROR_95041);
             }
             entity.setPhaseName(phaseEntity.getName());
+
+            if (TaskConstant.APPROVAL_TASK_PHASE.equals(phaseEntity.getName())) {
+                entity.setProperty(TaskConstant.APPROVAL_TASK);
+            } else {
+                entity.setProperty(TaskConstant.PROJECT_TASK);
+            }
         }
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();

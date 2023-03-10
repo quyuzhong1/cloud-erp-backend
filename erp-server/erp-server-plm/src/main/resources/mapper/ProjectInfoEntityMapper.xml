@@ -115,8 +115,6 @@
         </if>
         <if test="params.param!=null and params.param!=''  ">
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
-            or p.id IN (SELECT pt.product_id FROM project_task pt WHERE (pt.charge_id is null or pt.charge_id = ''))
-            or p.id IN (SELECT pi.product_id FROM project_info pi WHERE (pi.charge_id is null or pi.charge_id = ''))
             )
         </if>
         ORDER BY  pi.create_time DESC

@@ -24,7 +24,7 @@ public interface TaskConstant {
 
     Integer PROJECT_TASK = 2;
 
-    String APPROVAL_TASK_NAME = "立项阶段";
+    String APPROVAL_TASK_PHASE = "立项阶段";
 
 
     Integer MY_FINISH_TASK = 0;

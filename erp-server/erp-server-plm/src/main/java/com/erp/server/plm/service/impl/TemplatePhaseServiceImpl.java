@@ -160,7 +160,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
             throw new ServiceException(ApiError.ERROR_95041);
         }
         String name = phaseEntity.getName();
-        String flagName = TaskConstant.APPROVAL_TASK_NAME;
+        String flagName = TaskConstant.APPROVAL_TASK_PHASE;
         if (flagName.equals(name)) {
             throw new ServiceException(ApiError.ERROR_95042);
         }
@@ -279,7 +279,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
 
     private List<TemplatePhaseDTO> getTaskPhaseByTemplateId(String templateId) {
         List<TemplatePhaseDTO> list = baseMapper.getTemplatePhaseByTemplateId(templateId);
-        String flagName = TaskConstant.APPROVAL_TASK_NAME;
+        String flagName = TaskConstant.APPROVAL_TASK_PHASE;
         if (CollectionUtils.isEmpty(list)) {
             TemplatePhaseEntity entry = new TemplatePhaseEntity();
             entry.setName(flagName);
