@@ -897,6 +897,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 newProduct.setGradeId(gradeId);
             }
+
+            String projectChargeId = dto.getProjectChargeId();
+            if (StringUtils.isNotBlank(projectChargeId)) {
+                newProduct.setProjectChargeId(projectChargeId);
+            } else {
+                newProduct.setProjectChargeId("");
+            }
+
+
             if (CollectionUtils.isNotEmpty(productChargeIdList)) {
                 String productChargeName = commonService.getNameByIds(productChargeIdList);
                 newProduct.setChargeId(String.join(",", productChargeIdList));
@@ -945,6 +954,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             BeanMapperUtils.copy(newProduct, updateDto);
             //产品信息修改操作日志
             saveProductLog(updateDto, product, productId, productId);
+
+            //新增或修改产品经理角色和对应成员
+            if (CollectionUtils.isNotEmpty(productChargeIdList)) {
+                projectMembersService.saveByRoleAndMembers(productId, null, "产品经理", productChargeIdList);
+            }
+
+            /**
+             * 当项目经理不为空的时候保经理
+             */
+            if(StringUtils.isNotBlank(projectChargeId)){
+                //新增或修改项目经理角色和对应成员
+                projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(projectChargeId));
+
+            }
+
+
         }
 
         //项目信息
