@@ -15,7 +15,7 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.enums.RocketMqTagEnum;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;

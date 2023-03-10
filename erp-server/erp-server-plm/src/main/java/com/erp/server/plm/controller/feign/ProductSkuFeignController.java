@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductInfoService;
@@ -35,6 +36,9 @@ public class ProductSkuFeignController {
     private BasicCategoryService basicCategoryService;
     @Resource
     private ProductInfoService productInfoService;
+
+    @Resource
+    private SyncKingdeeService syncKingdeeService;
 
     /**
      * 根据sku查询sku表信息
@@ -89,5 +93,16 @@ public class ProductSkuFeignController {
     @PostMapping("/getSpuByParam")
     public ProductInfoDTO getSpuByParam(@RequestBody Map<String,String> params) {
         return productInfoService.getSpuByParam(params);
+    }
+
+    /**
+     * @description: 更新业务状态
+     * @author Will
+     * @date: 2023/3/10 15:46
+     * @param params
+     */
+    @PostMapping("/updateBusinessSyncKingdeeStatus")
+    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String,String> params) {
+         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 }

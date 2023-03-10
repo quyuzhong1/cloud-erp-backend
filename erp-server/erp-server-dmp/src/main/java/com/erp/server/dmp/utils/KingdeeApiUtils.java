@@ -219,7 +219,7 @@ public class KingdeeApiUtils {
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
-                throw new RuntimeException("【查看单据】出错:"+result.get("errors").toString());
+                throw new RuntimeException("【查看单据】出错:"+ result.get("errors"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

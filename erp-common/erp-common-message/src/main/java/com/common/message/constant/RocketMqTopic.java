@@ -14,4 +14,8 @@ public class RocketMqTopic {
      */
     public static final String DMP_ERP_ORDER_TOPIC = "${spring.profiles.active}-dmp_erp_pull_topic";
 
+    /**
+     * 推送数据到金蝶
+     */
+    public static final String SYNC_KINGDEE_ERP_TOPIC = "${spring.profiles.active}-sync_kingdee_erp_topic";
 }

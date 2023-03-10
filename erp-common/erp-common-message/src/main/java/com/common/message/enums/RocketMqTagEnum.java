@@ -1,4 +1,4 @@
-package com.erp.model.dmp.enums;
+package com.common.message.enums;
 
 import cn.hutool.core.collection.CollectionUtil;
 
@@ -103,6 +103,17 @@ public enum RocketMqTagEnum {
      * 马帮sku信息tag
      */
     MABANG_SKU_INFO_TAG(20, RocketMqTagEnum.SKU_INFO,"mabang_sku_info_tag"),
+
+
+    //---------------------------------金蝶数据同步------------------------------------------------------------------------------------------
+    /**
+     * 产品信息同步金蝶
+     */
+    KINGDEE_PRODUCT_DETAIL_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+    /**
+     * BOM管理同步金蝶
+     */
+    KINGDEE_BOM_INFO_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
     ;
     
     
@@ -113,6 +124,9 @@ public enum RocketMqTagEnum {
     public static final String SHOP_INFO = "shop";
 
     public static final String SKU_INFO = "sku";
+
+    public static final String SYNC_KINGDEE = "sync_kingdee";
+
 
     private Integer code;
 

@@ -113,4 +113,15 @@ public class CfgApiFieldMapEntity implements Serializable {
     @TableField(value = "default_value")
     private String defaultValue;
 
+    /**
+     * 组别类型（0正常级别，1集合父项，2集合子项）
+     */
+    @TableField(value = "group_type")
+    private String groupType;
+
+    /**
+     * 集合父项id(组别类型为集合子项时，需要填父级id)
+     */
+    @TableField(value = "parent_id")
+    private String parentId;
 }

@@ -16,7 +16,7 @@ import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.enums.RocketMqTagEnum;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.gyy.GyyReturnOrderEntity;
 import com.erp.model.dmp.gyy.bean.ReturnOrderDetailsBean;
 import com.erp.model.dmp.gyy.bean.ReturnOrderPayments;

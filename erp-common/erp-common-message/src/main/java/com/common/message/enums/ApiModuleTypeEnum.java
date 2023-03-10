@@ -1,4 +1,4 @@
-package com.erp.model.dmp.enums;
+package com.common.message.enums;
 
 /**
  * @author Will

@@ -15,8 +15,5 @@ import java.util.Map;
 @FeignClient("erp-dmp")
 public interface DmpTaskFeign {
 
-    //发生产品信息数据到金蝶云星空
-    @PostMapping("dmp/kigdee/feign/pushProductDetail")
-    void pushProductDetail(@RequestBody Map<String,Object> params);
 
 }

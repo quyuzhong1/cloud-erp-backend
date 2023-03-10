@@ -2,10 +2,7 @@ package com.erp.server.dmp.utils;
 
 import com.alibaba.fastjson.JSONObject;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class KingdeeUtils {
 
@@ -81,12 +78,13 @@ public class KingdeeUtils {
 //        System.out.println(stringStringMap);
 
         JSONObject json=new JSONObject();
+        json.put("FTreeEntity",new ArrayList<Map<String,Object>>());
 //        json.putIfAbsent("root",new JSONObject());
 //        System.out.println(makeFieldJson(null,"a_b_c","_","kk").toJSONString());
-        System.out.println(makeFieldJson(json,"A.B.C",".","c").toJSONString());
+        System.out.println(makeFieldJson(json,"FTreeEntity_trr",".","c").toJSONString());
         System.out.println(makeFieldJson(json,"A.B.D",".","d").toJSONString());
         System.out.println(makeFieldJson(json,"E.F.G",".","g").toJSONString());
-
+        System.out.println(json.toJSONString());
 
     }
 }

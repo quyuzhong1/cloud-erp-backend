@@ -18,6 +18,13 @@
     </properties>
     <dependencies>
 
+        <!-- 公共包 -->
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-common-message</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
         <!-- xxl-job-core -->
         <dependency>
             <groupId>com.xuxueli</groupId>
