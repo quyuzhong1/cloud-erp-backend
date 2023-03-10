@@ -15,12 +15,14 @@ import javax.validation.constraints.NotBlank;
 public class LarkPressMessageDTO {
     /**
      * 催办业务ID
+     * 如 taskId
      */
     @NotBlank(message = "业务ID不能为空")
     private String businessId;
 
     /**
      * 催办业务类型
+     *  product_task 任务
      */
     @NotBlank(message = "业务类型不能为空")
     private String businessType;

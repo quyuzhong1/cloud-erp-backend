@@ -51,7 +51,7 @@ public class FsBatchSendMessageDTO implements Serializable {
         actionMap.put("value", actionValueMap);
 
         List<Map> actionList = new ArrayList<>();
-        actionList.add(actionMap);
+//        actionList.add(actionMap);
 
         List<Map> fieldMapList = new ArrayList<>();
         fieldMapList.add(fieldMap);
