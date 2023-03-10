@@ -6,10 +6,7 @@ import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiFieldTypeEnum;
-import com.erp.model.dmp.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.CfgApiFieldMapValueService;
@@ -59,34 +56,44 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //查询配置的值映射
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
+        mapList = mapList.stream().filter(obj -> ApiGroupTypeEnum.NORMAL.getCode().equals(obj.getGroupType()) ||  ApiGroupTypeEnum.PARENT.getCode().equals(obj.getGroupType())).collect(Collectors.toList());
+
+        //无值直接返回
+        if (CollectionUtils.isEmpty(mapList)) {
+            return json;
+        }
+
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
             String apiField = cfgApiFieldMapDTO.getApiField();
-            //无本身字段时取默认值
-            if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
-                KingdeeUtils.makeFieldJson(json,apiField,".",cfgApiFieldMapDTO.getDefaultValue());
-                continue;
-            }
-            //直接复制值
-            if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-                KingdeeUtils.makeFieldJson(json,apiField,".",map.get(cfgApiFieldMapDTO.getSelfField()));
-                continue;
-            }
-            if (ApiFieldTypeEnum.FIELD_VALUE_MAP.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-                //无值映射则直接返回
-                if (CollectionUtils.isEmpty(cfgApiFieldMapValueList)) {
-                    return json;
+            //给集合父项填充数据
+            if (ApiGroupTypeEnum.PARENT.getCode().equals(cfgApiFieldMapDTO.getGroupType())) {
+                //业务系统传参
+                List<Map<String,Object>> listMap = (List<Map<String,Object>>)map.get(cfgApiFieldMapDTO.getSelfField());
+                //集合子项参数配置
+                List<CfgApiFieldMapDTO> childList = mapList.stream().filter(obj -> ApiGroupTypeEnum.CHILD.getCode().equals(obj.getGroupType()) && obj.getParentId().equals(cfgApiFieldMapDTO.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childList)) {
+                    continue;
                 }
-                //根据值映射转换
-                String apiValue = cfgApiFieldMapValueList.stream()
-                        .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(map.get(cfgApiFieldMapDTO.getSelfField())))
-                        .map(CfgApiFieldMapValueEntity::getApiValue)
-                        .findFirst()
-                        .orElse(null);
-                KingdeeUtils.makeFieldJson(json,apiField,".",apiValue);
+                //json集合
+                List<JSONObject> detailList = new ArrayList<>();
+                for (Map<String,Object> fieldMap: listMap) {
+                    JSONObject detailJson = new JSONObject();
+                    //给集合填充数据
+                    childList.forEach(obj-> formatJsonObject(obj, detailJson, fieldMap, cfgApiFieldMapValueList));
+                    detailList.add(detailJson);
+                }
+                KingdeeUtils.makeFieldJson(json,apiField,".",detailList);
+
             }
+
+            //给常规参数填充数据
+            formatJsonObject(cfgApiFieldMapDTO,json,map,cfgApiFieldMapValueList);
         }
         return json;
     }
+
+
+
 
     @Override
     public void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type) {
@@ -230,12 +237,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
-        //发送成功后更新业务单价状态
-       /* Map<String, Object> removeMap = new HashMap<>(MathUtil.THREE);
-        removeMap.put("api_platform_id", platformEntity.getId());
-        removeMap.put("module_type", ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
-        removeMap.put("business_id", String.valueOf(map.get("id")));
-        apiSyncTaskService.removeByMap(removeMap);*/
     }
 
     /**
@@ -246,6 +247,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @param map
      * @param jsonData
      * @param msg
+     * @param type 数据类型
      */
     @Override
     public void insertFailureLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type) {
@@ -259,8 +261,35 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
-        //新增定时同步任务
-       /* insertApiSyncTask(platformEntity, map);*/
+        //更新业务单据状态 TODO
     }
 
+    /**
+     * 填充数据
+     */
+    private void formatJsonObject (CfgApiFieldMapDTO cfgApiFieldMapDTO,JSONObject json,Map<String, Object> map,List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList){
+        //无本身字段时取默认值
+        if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
+            KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",cfgApiFieldMapDTO.getDefaultValue());
+            return;
+        }
+        //直接复制值
+        if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
+            KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",map.get(cfgApiFieldMapDTO.getSelfField()));
+            return;
+        }
+        if (ApiFieldTypeEnum.FIELD_VALUE_MAP.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
+            //无值映射则直接返回
+            if (CollectionUtils.isEmpty(cfgApiFieldMapValueList)) {
+                return;
+            }
+            //根据值映射转换
+            String apiValue = cfgApiFieldMapValueList.stream()
+                    .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(map.get(cfgApiFieldMapDTO.getSelfField())))
+                    .map(CfgApiFieldMapValueEntity::getApiValue)
+                    .findFirst()
+                    .orElse(null);
+            KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",apiValue);
+        }
+    }
 }

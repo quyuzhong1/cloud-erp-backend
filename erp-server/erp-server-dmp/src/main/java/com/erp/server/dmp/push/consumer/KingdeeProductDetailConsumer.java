@@ -170,6 +170,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             param.setNeedUpDateFields(needUpDateFields);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+
+            //更新业务单据状态 TODO
         }
     }
 }

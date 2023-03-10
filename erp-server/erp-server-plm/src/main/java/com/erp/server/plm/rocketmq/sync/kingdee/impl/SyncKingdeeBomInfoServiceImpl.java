@@ -45,6 +45,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
     @Override
     public void syncDataToKingdee(BomInfoEntity entity) {
 
+
         Map<String, Object> resultMap = new HashMap<>();
 
         List<Map<String, Object>> mapList = new ArrayList<>();

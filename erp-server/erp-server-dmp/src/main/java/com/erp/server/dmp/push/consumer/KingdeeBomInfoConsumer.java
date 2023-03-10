@@ -10,10 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -50,6 +47,17 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
+    public static void main(String[] args) {
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FNumber = '%s'", "0011010001_V1.0"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FTreeEntity_FEntryId";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        System.out.println(queryList);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -111,6 +119,8 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             String fieldKeys = "FTreeEntity_FEntryId";
             List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
             if (CollectionUtils.isEmpty(queryList)) {
+                //错误日志
+                kingdeeCommonService.insertFailureLog(platformEntity, map,filterStr,"未查询到子单据id",type);
                 return;
             }
             Map<String, Object> queryMap = queryList.get(0);
@@ -131,6 +141,8 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             param.setNeedUpDateFields(needUpDateFields);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+
+            //更新业务单据状态 TODO
         }
     }
 }

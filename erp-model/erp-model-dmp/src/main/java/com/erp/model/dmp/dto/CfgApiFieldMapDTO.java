@@ -71,6 +71,16 @@ public class CfgApiFieldMapDTO {
     private String defaultValue;
 
     /**
+     * 组别类型（0正常级别，1集合父项，2集合子项）
+     */
+    private String groupType;
+
+    /**
+     * 集合父项id
+     */
+    private String parentId;
+
+    /**
      * 选项值集合
      */
     @Valid
