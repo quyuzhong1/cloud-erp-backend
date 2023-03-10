@@ -92,7 +92,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
             SysTaskPhaseEntity entity = new SysTaskPhaseEntity();
             entity.setName(item.getName());
             entity.setId(item.getId());
-            if (TaskConstant.APPROVAL_TASK_NAME.equals(item.getName())) {
+            if (TaskConstant.APPROVAL_TASK_PHASE.equals(item.getName())) {
                 entity.setIsProjectApproval(IsConstant.YES);
             } else {
                 entity.setIsProjectApproval(IsConstant.NO);

@@ -54,9 +54,8 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @GetMapping("/startItemList")
-    public ApiResult<List<StartItemSourceDTO>> getList() {
-        List<StartItemSourceDTO> resultList=projectInfoService.getStartItemSourceList();
-        return success(resultList);
+    public ApiResult getList() {
+        return success();
     }
 
     /**
@@ -65,7 +64,6 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    //@RequestPermissions("plm:project:paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "pt")
     public ApiResult<PagingVO<List<ProductShowDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
