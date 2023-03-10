@@ -2,6 +2,7 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -16,6 +17,8 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,15 +64,16 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         //父级sku编码
         resultMap.put("parentSkuNo",parent.getSkuNo());
         //版本
-        resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getVersion().toString()));
+        resultMap.put("version",entity.getVersion().toString());
         //子级物料
         List<BomChildrenSkuDTO> childrenList = parent.getChildren();
         if (CollectionUtils.isEmpty(childrenList)) {
             return;
         }
         for (BomChildrenSkuDTO bomChildrenSkuDTO: childrenList) {
-            Map<String, Object> detailMap = new HashMap<>();
+            Map<String, Object> detailMap = new HashMap<>(MathUtil.THREE);
             detailMap.put("skuNo",bomChildrenSkuDTO.getSkuNo());
+            detailMap.put("date", LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
             detailMap.put("quantity",bomChildrenSkuDTO.getQuantity().toString());
             mapList.add(detailMap);
         }

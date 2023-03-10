@@ -108,7 +108,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         BasicCategoryEntity basicCategoryEntity = basicCategoryService.getById(productInfoEntity.getCategoryId());
         if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
-            if (CollectionUtils.isEmpty(basicCategoryList)) {
+            if (CollectionUtils.isNotEmpty(basicCategoryList)) {
                 //TODO代码结构优化，有异常立即抛出
                 //一级分类
                 BasicCategoryEntity basicCategoryEntity1 = basicCategoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);

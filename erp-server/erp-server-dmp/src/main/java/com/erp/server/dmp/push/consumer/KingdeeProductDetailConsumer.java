@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -141,10 +140,10 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         }
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
-        String id = (String) model.get("Id");
+        Integer id = (Integer) model.get("Id");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, id,type);
+            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils,String.valueOf(id),type);
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
@@ -177,9 +176,6 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             param.setNeedUpDateFields(needUpDateFields);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-
-            //更新业务单据状态
-            kingdeeCommonService.updateBusinessSyncKingdeeStatus(ApiModuleTypeEnum.PRODUCTDETAIL.getCode().toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
         }
     }
 }

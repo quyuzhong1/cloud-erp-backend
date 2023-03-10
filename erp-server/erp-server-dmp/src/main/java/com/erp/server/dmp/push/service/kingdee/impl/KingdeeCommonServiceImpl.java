@@ -47,6 +47,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     private ApiPlmSyncLogService apiPlmSyncLogService;
 
     @Resource
+    private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Override
@@ -81,11 +84,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 }
                 //json集合
                 List<JSONObject> detailList = new ArrayList<>();
-                for (Map<String,Object> fieldMap: listMap) {
-                    JSONObject detailJson = new JSONObject();
-                    //给集合填充数据
-                    childList.forEach(obj-> formatJsonObject(obj, detailJson, fieldMap, cfgApiFieldMapValueList));
-                    detailList.add(detailJson);
+                if (CollectionUtils.isNotEmpty(listMap)) {
+                    for (Map<String,Object> fieldMap: listMap) {
+                        JSONObject detailJson = new JSONObject();
+                        //给集合填充数据
+                        childList.forEach(obj-> formatJsonObject(obj, detailJson, fieldMap, cfgApiFieldMapValueList));
+                        detailList.add(detailJson);
+                    }
                 }
                 KingdeeUtils.makeFieldJson(json,apiField,".",detailList);
 
@@ -184,6 +189,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //当审核状态非已审核时继续审核
             audit(platformEntity, map,apiUtils,id,type);
         }
+        //更新业务单据状态
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
     }
 
 

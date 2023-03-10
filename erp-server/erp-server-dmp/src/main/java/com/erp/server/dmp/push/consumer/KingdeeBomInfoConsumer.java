@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -60,9 +59,9 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "0011010001_V1.0"));
+        queryFilters.add(String.format("FNumber = '%s'", "1001010005_1"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FMATERIALIDCHILD.FNumber";
+        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FDENOMINATOR,FNUMERATOR";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -156,9 +155,6 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             param.setNeedUpDateFields(needUpDateFields);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-
-            //更新业务单据状态
-            kingdeeCommonService.updateBusinessSyncKingdeeStatus(ApiModuleTypeEnum.BOMMANAGE.getCode().toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
         }
     }
 }
