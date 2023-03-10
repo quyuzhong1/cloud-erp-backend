@@ -42,4 +42,12 @@ public interface TemplateTaskRefSkuConfigService  extends IService<TemplateTaskR
 
     TemplateTaskRefSkuConfigEntity getByTaskId(String id);
 
+    /**
+     * 修改任务的时候  如果选择不关联就要删除sku 与任务的关系
+     * @author yl
+     * @date 2023-03-10 17:27
+     * @param taskId
+     * @return void
+     */
+    void removeByTaskId(String taskId);
 }

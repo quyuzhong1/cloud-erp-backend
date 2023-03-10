@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.plm.vo.PreTaskVO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -171,8 +170,6 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
      */
- //   @NotBlank(message = "字段配置类型 不能为空")
-  //  @StateEnumValue(strValues = {"createSku","fillProductInfo"}, message = "字段配置类型有误")
     private String fieldConfigType;
 
 

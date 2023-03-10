@@ -139,7 +139,21 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
         queryWrapper.eq(TemplateTaskRefSkuConfigEntity::getTaskId, taskId);
         queryWrapper.last("LIMIT 1");
         return getOne(queryWrapper);
+    }
 
+
+    /**
+     * 修改任务的时候  如果选择不关联就要删除sku 与任务的关系
+     * @author yl
+     * @date 2023-03-10 17:27
+     * @param taskId
+     * @return void
+     */
+    @Override
+    public void removeByTaskId(String taskId) {
+        LambdaQueryWrapper<TemplateTaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskRefSkuConfigEntity::getTaskId, taskId);
+         this.remove(queryWrapper);
     }
 
 

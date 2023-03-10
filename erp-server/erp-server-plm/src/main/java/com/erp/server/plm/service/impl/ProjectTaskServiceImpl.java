@@ -993,6 +993,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
+
+        String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
+
+        boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
         //验证表单数据
         checkFieldConfig(dto);
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
@@ -1041,8 +1045,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskEntity.setBusinessProcessId(businessProcessId);
         taskEntity.setProcessId(processId);
         LoginUser loginUser = commonService.getUserInfo();
-        Integer type = dto.getType();
-        Boolean isGeneral = TaskTypeEnum.GENERAL_TASK.getCode().equals(type);
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
         String phaseName = "";
         if (phaseEntity != null) {
@@ -1114,8 +1116,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
-            //保存SKU配置 字段 关系表
-            taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+            //保存SKU配置 字段 关系表 当不关联的时候删除
+            if(!isNotRelated){
+                taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+            }else{
+                taskRefSkuConfigService.removeTaskRefSkuByTaskId(taskEntity.getId());
+            }
             //保存任务与SKU 关系表
             projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
 

@@ -421,6 +421,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             throw new ServiceException(ApiError.ERROR_9011);
         }
 
+        String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
+
+        boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
         //配置表单属性
         String fieldConfigType = dto.getFieldConfigType();
         //生成sku
@@ -508,8 +511,14 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         //保存交付文档
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
-        //保存模板配置信息
-        templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(), dto.getTemplateId(), dto.getFieldConfigType(), dto.getFieldJson());
+        //保存SKU配置 字段 关系表 当不关联的时候删除
+        if (!isNotRelated) {
+            //保存模板配置信息
+            templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(), dto.getTemplateId(), dto.getFieldConfigType(), dto.getFieldJson());
+        } else {
+            templateTaskRefSkuConfigService.removeByTaskId(entity.getId());
+        }
+
         //保存前置任务
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
@@ -527,7 +536,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public List<TemplateTaskEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
-        queryWrapper.orderByAsc(TemplateTaskEntity::getPid);
+        queryWrapper.orderByAsc(TemplateTaskEntity::getCreateTime);
         return this.list(queryWrapper);
     }
 

@@ -49,4 +49,12 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
     void autoCreateSkuConfig(List<String> taskIdList,String configType,String productId);
 
 
+    /**
+     * 修改任务的时候  如果选择不关联就要删除sku 与任务的关系
+     * @author yl
+     * @date 2023-03-10 17:27
+     * @param taskId
+     * @return void
+     */
+    void removeTaskRefSkuByTaskId(String taskId);
 }
