@@ -27,10 +27,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.erp.server.plm.service.impl.NoticeMessageServiceImpl.taskCharge;
@@ -115,25 +112,34 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         List<String> noticeUserList = noticeUserIds.stream().filter(n -> !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
         //获取飞书的 unionId 与用户关系
         List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
-        Map<String, String> unionIdUserNameMap = unionIdList.stream()
-                .collect(Collectors.toMap(ThirdUnionDTO::getThirdUnionId, unionDto -> userIdNameMap.getOrDefault(unionDto.getUserId(), "")));
-        List<ThirdUnionDTO> noticeUnionList = unionIdList.stream().filter(u -> noticeUserList.contains(u.getUserId())).collect(Collectors.toList());
-        List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+        List<ThirdUnionDTO> noticeUnionList = unionIdList
+                .stream()
+                .filter(u -> noticeUserList.contains(u.getUserId()))
+                .collect(Collectors.toList());
+        Map<String, String> unionIdUserNameMap = noticeUnionList.stream()
+                .collect(Collectors.toMap(ThirdUnionDTO::getThirdUnionId,
+                        unionDto -> userIdNameMap.getOrDefault(unionDto.getUserId(), ""))
+                );
+        List<String> unionIds = noticeUnionList
+                .stream()
+                .map(ThirdUnionDTO::getThirdUnionId)
+                .distinct()
+                .collect(Collectors.toList());
 //        Boolean isLog = false;
         //发送消息的结果
-        unionIds.stream().forEach(unionId ->{
+        for (String unionId : unionIds) {
             String userName = unionIdUserNameMap.get(unionId);
-            if(StrUtil.isNotBlank(userName)){
-                StrUtil.format(titleContent, userName);
+            if (StrUtil.isNotBlank(userName)) {
+                titleContent = StrUtil.format(titleContent, userName);
             }
             LarkResultDTO larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
             // 催办
             if (isPress) {
                 SingleResultDTO resultDTO = JSONObject.parseObject(larkResult.getData().toString(), SingleResultDTO.class);
                 String messageId = resultDTO.getMessage_id();
-                LarkResultDTO larkResultDTO = fsService.pressMessage(messageId, Arrays.asList(unionId));
+                LarkResultDTO larkResultDTO = fsService.pressMessage(messageId, Collections.singletonList(unionId));
             }
-        });
+        }
 
         // 写入日志
 //        if (isLog) {

@@ -304,6 +304,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         for (HistoricTaskInstance item : list) {
             auditorHandleDTO = new AuditorHandleDTO();
             commentList = taskService.getTaskComments(item.getId());
@@ -329,7 +330,8 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                     auditorHandleDTO.setHandContent("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
                 }
             }
-
+            FindUserDTO findUser = userList.stream().filter(u -> item.getAssignee().equals(u.getUserId())).findFirst().orElse(null);
+            auditorHandleDTO.setHandleUserName(null != findUser ? findUser.getUserName() : "");
             auditorHandleDTO.setActivityName(item.getName());
             auditorHandleDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
             if("待审核".equals(auditorHandleDTO.getHandContent())){

@@ -81,7 +81,7 @@ public class ProjectTaskTimeRecordPageVO implements Serializable {
     /**
      * 产品立项时间
      */
-    @ExcelProperty(value = "产品创建时间", index = 11)
+    @ExcelProperty(value = "产品立项时间", index = 11)
     private LocalDate productApprovalDate;
 
     private String taskIds;
