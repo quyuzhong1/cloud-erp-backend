@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -24,7 +25,7 @@ public class ProductPurchaseEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 创建人id
@@ -36,7 +37,7 @@ public class ProductPurchaseEntity implements Serializable {
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 修改人id
@@ -78,13 +79,13 @@ public class ProductPurchaseEntity implements Serializable {
      * 首批下单时间
      */
     @TableField(value = "place_order_time")
-    private Date placeOrderTime;
+    private LocalDateTime placeOrderTime;
 
     /**
      * 预计首批到货时间
      */
     @TableField(value = "plan_arrival_time")
-    private Date planArrivalTime;
+    private LocalDateTime planArrivalTime;
 
     /**
      * MOQ(最小起订量)
@@ -102,7 +103,7 @@ public class ProductPurchaseEntity implements Serializable {
      * 实际首批到货时间
      */
     @TableField(value = "actual_arrival_time")
-    private Date actualArrivalTime;
+    private LocalDateTime actualArrivalTime;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货

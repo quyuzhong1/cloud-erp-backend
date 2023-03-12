@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -49,7 +50,7 @@ public class TaskOperatorRecordEntity implements Serializable {
      */
     @TableField(value = "create_time",fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date createTime;
+    private LocalDateTime createTime;
 
 
     /**

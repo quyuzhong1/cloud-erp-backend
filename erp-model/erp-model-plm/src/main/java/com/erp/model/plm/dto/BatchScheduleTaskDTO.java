@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -69,13 +70,13 @@ public class BatchScheduleTaskDTO  implements Serializable {
      */
 
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * 计划结束时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
 
     /**

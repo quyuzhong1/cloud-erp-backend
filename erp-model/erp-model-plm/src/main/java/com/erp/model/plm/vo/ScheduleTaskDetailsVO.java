@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -42,12 +43,12 @@ public class ScheduleTaskDetailsVO implements Serializable {
     /**
      * 计划开始时间
      */
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * 计划结束时间
      */
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
 
     private List<ScheduleTaskDetailsVO> historyList;

@@ -53,6 +53,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -587,7 +590,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (processEntity != null) {
                 //评审任务 由任务负责人审核
                 if (CollectionUtils.isNotEmpty(chargeIdList)) {
-                    Date nowDate = new Date();
+                    LocalDateTime nowDate = LocalDateTime.now();
                     //待审核
                     Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
                     StartProcessDTO startProcess = new StartProcessDTO();
@@ -786,6 +789,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public ProjectTaskDetailsDTO getTaskDetails(String taskId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProjectTaskDetailsDTO detailsDTO = baseMapper.getTaskDetails(taskId);
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -802,21 +806,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         StringBuffer planTime = new StringBuffer();
         if (detailsDTO.getPlanStartTime() != null) {
-            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanStartTime(), DateUtil.fmt_day));
+            planTime.append(dateTimeFormatter.format(detailsDTO.getPlanStartTime()));
         }
         planTime.append(" - ");
         if (detailsDTO.getPlanEndTime() != null) {
-            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanEndTime(), DateUtil.fmt_day));
+            planTime.append(dateTimeFormatter.format(detailsDTO.getPlanEndTime()));
         }
         detailsDTO.setPlanTime(planTime.toString());
 
         StringBuffer realityTime = new StringBuffer();
         if (detailsDTO.getRealityStartTime() != null) {
-            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityStartTime(), DateUtil.fmt_day));
+            realityTime.append(dateTimeFormatter.format(detailsDTO.getRealityStartTime()));
         }
         realityTime.append(" - ");
         if (detailsDTO.getRealityEndTime() != null) {
-            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityEndTime(), DateUtil.fmt_day));
+            realityTime.append(dateTimeFormatter.format(detailsDTO.getRealityEndTime()));
         }
         detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
@@ -947,10 +951,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @param holidays
      * @return
      */
-    private Integer initWorkTime(Date planStartTime, Date planEndTime, List<LocalDate> holidays) {
+    private Integer initWorkTime(LocalDateTime planStartTime, LocalDateTime planEndTime, List<LocalDate> holidays) {
         Integer planWorkTime = 0;
         if (null != planStartTime && null != planEndTime) {
-            planWorkTime = LocalDateUtil.countDaysForLocalDate(LocalDateUtil.date2LocalDate(planStartTime), LocalDateUtil.date2LocalDate(planEndTime), holidays);
+            planWorkTime = LocalDateUtil.countDaysForLocalDate(planStartTime.toLocalDate(), planEndTime.toLocalDate(), holidays);
         }
         return planWorkTime;
     }
@@ -1178,6 +1182,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public Boolean updateBaseTask(UpdateTaskDTO dto) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         String updateJson = JSONObject.toJSONString(dto);
         Map<String, Object> updateMap = JSONObject.parseObject(updateJson, Map.class);
         ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
@@ -1198,12 +1203,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (updateMap.containsKey("planStartTime")) {
             String planStartTime = dto.getPlanStartTime();
-            taskEntity.setPlanStartTime(DateUtil.stringToDate(planStartTime));
+            taskEntity.setPlanStartTime(LocalDateTime.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planStartTime)));
         }
         if (updateMap.containsKey("planEndTime")) {
             //结束时间
             String planEndTime = dto.getPlanEndTime();
-            taskEntity.setPlanEndTime(DateUtil.stringToDate(planEndTime));
+            taskEntity.setPlanEndTime(LocalDateTime.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planEndTime)));
         }
         List<String> chargeIdList = dto.getChargeIdList();
         if (StringUtils.isNotBlank(name)) {
@@ -1411,7 +1416,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean updateTaskState(List<String> taskIds, Integer state, Date realityStart, Date realityEnd) {
+    public boolean updateTaskState(List<String> taskIds, Integer state, LocalDateTime realityStart, LocalDateTime realityEnd) {
         if (CollectionUtils.isNotEmpty(taskIds)) {
             LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
             updateWrapper.set(ProjectTaskEntity::getStatus, state);
@@ -1699,8 +1704,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
-                params.setStartTime(planTimeMap.get("startTime"));
-                params.setEndTime(planTimeMap.get("endTime"));
+                params.setStartTime(planTimeMap.get("startTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
+                params.setEndTime(planTimeMap.get("endTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
                 params.setSearchCategory(TaskSearchCategoryEnum.ALLPLANTIMETASKLIST.getCode());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -1849,8 +1858,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime"));
-                params.setEndTime(planTimeMap.get("endTime"));
+                params.setStartTime(planTimeMap.get("startTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
+                params.setEndTime(planTimeMap.get("endTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
@@ -2006,8 +2019,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime"));
-                params.setEndTime(planTimeMap.get("endTime"));
+                params.setStartTime(planTimeMap.get("startTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
+                params.setEndTime(planTimeMap.get("endTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
                 params.setProcessInstanceIds(processInstanceIds);
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -2546,8 +2563,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime"));
-                params.setEndTime(planTimeMap.get("endTime"));
+                params.setStartTime(planTimeMap.get("startTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
+                params.setEndTime(planTimeMap.get("endTime").toInstant()
+                        .atZone( ZoneId.systemDefault() )
+                        .toLocalDateTime());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
@@ -3176,7 +3197,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> generalTasks = list.stream().filter(t -> generalTaskCode.equals(t.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(generalTasks)) {
             List<String> taskIdList = generalTasks.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-            this.updateTaskState(taskIdList, ingCode, new Date(), null);
+            this.updateTaskState(taskIdList, ingCode, LocalDateTime.now(), null);
             taskOperatorRecordService.batchSaveRecord(taskIds, TaskStateEnum.NOT_START.getCode(), ingCode, loginUser.getUid(), loginUser.getUserName(), "");
 
             //操作日志
@@ -3252,7 +3273,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //该流程是 任务负责人会签审核的
             if (!Objects.isNull(processEntity)) {
                 List<TaskOperatorRecordEntity> recordEntityList = new ArrayList<>();
-                Date nowDate = new Date();
+                LocalDateTime nowDate = LocalDateTime.now();
                 Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
                 List<ProjectTaskEntity> noticeList = new ArrayList<>();
                 for (ProjectTaskEntity review : reviewList) {
@@ -3548,7 +3569,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          *
          */
         List<String> noProcessTaskIds = noProcessList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-        Date nowDate = new Date();
+        LocalDateTime nowDate = LocalDateTime.now();
         Integer noFinish = IsConstant.NO;
         //任务与sku 的关联
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskIdList(noProcessTaskIds);
@@ -3961,7 +3982,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             } else {
                 taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
             }
-            taskEntity.setRealityEndTime(new Date());
+            taskEntity.setRealityEndTime(LocalDateTime.now());
             this.updateById(taskEntity);
             if (!projectTaskTimeRecordService.saveOrUpdateByProjectTaskList(new ArrayList<>(Arrays.asList(taskEntity)))) {
                 log.error("ProjectTaskServiceImpl>>>approvalTaskPass>>更新/保存工时记录失败请重试！");
@@ -4232,7 +4253,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state, List<FindUserDTO> userList, List<AuditorHandleDTO> approveRecordShowList, List<TaskChargeDistributionEntity> taskChargeDistributionList) {
         boolean flag = !Objects.isNull(entity);
         String operatorName = "";
-        Date operatorTime = null;
+        LocalDateTime operatorTime = null;
         if (flag) {
             operatorName = entity.getOperatorName();
             operatorTime = entity.getCreateTime();
@@ -4243,7 +4264,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         waitReleasedDTO.setOperateUserName(operatorName);
         waitReleasedDTO.setOperateTime(operatorTime);
         waitReleasedDTO.setIfFinishNode(flag);
-        List<Pair<String, Date>> dateList = new ArrayList<>();
+        List<Pair<String, LocalDateTime>> dateList = new ArrayList<>();
 
         if (CollectionUtils.isEmpty(approveRecordShowList)) {
             return waitReleasedDTO;
@@ -4269,10 +4290,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     //已经审核通过的数据格式化时间
                     if (ObjectUtils.isNotEmpty(auditorHandleDTO.getEndTime())) {
                         try {
-                            Date date = DateUtils.parseDate(auditorHandleDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
+                            LocalDateTime date = LocalDateTime.parse(auditorHandleDTO.getEndTime(), DateTimeFormatter.ofPattern(DateUtils.DATE_FORMAT_19));
                             taskProcessNodeDTO.setOperateTime(date);
-
-                        } catch (ParseException e) {
+                        } catch (Exception e) {
                             throw new ServiceException(ApiError.Default);
                         }
                     }
@@ -4286,7 +4306,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (BaseStatusEnum.WAIT_AUDIT.getName().equals(auditorHandleDTO.getHandContent())) {
                         isShwoDate = Boolean.FALSE;
                     }
-                    dateList.add(new Pair<>(userName, taskProcessNodeDTO.getOperateTime()));
+                    dateList.add(new Pair(userName, taskProcessNodeDTO.getOperateTime()));
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }
                 taskProcessNodeDetailDTO.setIfFinishNode(Boolean.TRUE);
@@ -4299,10 +4319,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 waitReleasedDTO.setDetailList(collect);
             }
             if (CollectionUtils.isNotEmpty(dateList)) {
-                Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(e -> e.getValue(), Comparator.nullsLast(Date::compareTo))).get();
+                Pair<String, LocalDateTime> pair = dateList.stream().max(Comparator.comparing(e -> e.getValue(), Comparator.nullsLast(LocalDateTime::compareTo))).get();
                 waitReleasedDTO.setOperateUserName(pair.getKey());
                 if (CollectionUtils.isNotEmpty(dateList) && isShwoDate) {
-                    Date date = pair.getValue();
+                    LocalDateTime date = pair.getValue();
                     waitReleasedDTO.setOperateTime(date);
                 } else {
                     waitReleasedDTO.setOperateTime(null);
@@ -4448,14 +4468,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     //获取预警信息
-    public String getWarning(Integer state, Integer finishState, Date planEndTime) {
+    public String getWarning(Integer state, Integer finishState, LocalDateTime planEndTime) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtils.DATE_FORMAT_10);
         Date nowDay = new Date();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         String warning = "";
         if (planEndTime != null) {
             //状态
             if (!finishState.equals(state) && !approvalPass.equals(state)) {
-                Long difference = DateUtil.getDiffDay(DateUtils.format(planEndTime, DateUtils.DATE_FORMAT_10), DateUtils.format(nowDay, DateUtils.DATE_FORMAT_10));
+                Long difference = DateUtil.getDiffDay(dateTimeFormatter.format(planEndTime), DateUtils.format(nowDay, DateUtils.DATE_FORMAT_10));
                 if (difference > 0) {
                     warning = "过期" + difference + "天";
                 }

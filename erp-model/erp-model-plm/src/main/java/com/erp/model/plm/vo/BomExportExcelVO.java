@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -125,14 +126,14 @@ public class BomExportExcelVO  implements Serializable {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "创建时间", index = 12)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "更新时间", index = 13)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
 
 

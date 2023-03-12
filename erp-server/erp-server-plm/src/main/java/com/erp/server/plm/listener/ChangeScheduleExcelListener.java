@@ -13,6 +13,8 @@ import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -128,8 +130,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month));
-        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month));
+        changeVO.setChangeStartTime(LocalDateTime.parse(vo.getPlanStartTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        changeVO.setChangeEndTime(LocalDateTime.parse(vo.getPlanEndTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());

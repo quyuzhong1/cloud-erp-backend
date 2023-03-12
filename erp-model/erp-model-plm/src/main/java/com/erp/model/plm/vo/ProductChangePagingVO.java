@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -42,13 +43,13 @@ public class ProductChangePagingVO implements Serializable {
     /**
      * 变更时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
 
     /**
      * 变更时间
      */
-    private Date approvalFinishTime;
+    private LocalDateTime approvalFinishTime;
 
 
     /**

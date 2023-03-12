@@ -33,6 +33,7 @@ import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.cglib.core.Local;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -675,7 +676,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        changeEntity.setApprovalFinishTime(new Date());
+        changeEntity.setApprovalFinishTime(LocalDateTime.now());
         changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         this.updateById(changeEntity);
 
@@ -725,7 +726,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             ProductChangeEntity change = this.getById(id);
             if (change != null) {
                 String type = change.getType();
-                change.setApprovalFinishTime(new Date());
+                change.setApprovalFinishTime(LocalDateTime.now());
                 change.setState(ProductChangeStateEnum.AUDIT_PASS.getState());
                 this.updateById(change);
                 //获取到对应的 json

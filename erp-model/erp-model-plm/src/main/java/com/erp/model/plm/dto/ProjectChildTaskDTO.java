@@ -7,6 +7,7 @@ import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -44,9 +45,9 @@ public class ProjectChildTaskDTO {
     private Integer property;
 
 
-    private Date realityStartTime;
+    private LocalDateTime realityStartTime;
 
-    private Date realityEndTime;
+    private LocalDateTime realityEndTime;
 
     /**
      * 计划状态

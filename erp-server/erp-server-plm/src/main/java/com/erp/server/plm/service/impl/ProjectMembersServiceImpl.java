@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -500,7 +502,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Override
     public List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList, List<Integer> stateList) {
-        Date date = new Date();
+        LocalDateTime date = LocalDateTime.now();
         List<TaskConductDTO> resultList = new ArrayList<>();
         List<ProjectTaskEntity> list = projectTaskService.list();
         Integer finishState = TaskStateEnum.FINISH.getCode();

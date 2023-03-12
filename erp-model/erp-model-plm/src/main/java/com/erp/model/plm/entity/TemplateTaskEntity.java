@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -54,13 +55,13 @@ public class TemplateTaskEntity implements Serializable {
      * 计划开始时间
      */
     @TableField("plan_start_time")
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * j计划结束时间
      */
     @TableField("plan_end_time")
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
@@ -93,7 +94,7 @@ public class TemplateTaskEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 创建人
@@ -111,7 +112,7 @@ public class TemplateTaskEntity implements Serializable {
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 更新人

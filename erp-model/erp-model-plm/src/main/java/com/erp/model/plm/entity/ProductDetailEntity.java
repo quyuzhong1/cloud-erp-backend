@@ -54,14 +54,14 @@ public class ProductDetailEntity implements Serializable {
      */
     @TableField(value = "plan_listing_time")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planListingTime;
+    private LocalDateTime planListingTime;
 
     /**
      * 首批量产入库时间
      */
     @TableField(value = "first_mass_product_date")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date firstMassProductDate;
+    private LocalDateTime firstMassProductDate;
     
     /**
      * 单位表id
@@ -79,7 +79,7 @@ public class ProductDetailEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 创建人id
@@ -91,7 +91,7 @@ public class ProductDetailEntity implements Serializable {
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 修改人id

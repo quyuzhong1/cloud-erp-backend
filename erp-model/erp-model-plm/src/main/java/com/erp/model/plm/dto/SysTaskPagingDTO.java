@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -62,13 +63,13 @@ public class SysTaskPagingDTO implements Serializable {
      * 计划开始时间
      */
     @NotNull(message = "计划开始时间不能为空")
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * j计划结束时间
      */
     @NotNull(message = "计划结束时间不能为空")
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
@@ -114,7 +115,7 @@ public class SysTaskPagingDTO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
 
     /**

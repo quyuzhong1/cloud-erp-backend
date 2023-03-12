@@ -43,6 +43,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -293,10 +295,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
 
             for (ProjectTaskEntity task : taskList) {
                 String messageContent = String.format(NoticeMessageConstant.NEW_TASK, userName);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 List<String> allNoticeUserIds = new ArrayList<>();
                 String chargeId = task.getChargeId();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
@@ -403,14 +406,14 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             String productChargeId = product.getProductChargeId();
-            Date endTime = product.getEndTime();
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeUserIds);
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(taskList)) {
                 String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK_OTHER, userName, taskList.size());
                 String taskName = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
-                String projectContent = getTaskProjectContent(taskName, product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+                String projectContent = getTaskProjectContent(taskName, product.getName(), dateTimeFormatter.format(product.getEndTime()), productCharge, product.getProductChargeName());
                 Boolean result = batchSendFsMessage(unionIds, messageContent, projectContent);
                 if (result) {
                     List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
@@ -421,7 +424,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(endTime);
+                        recordEntity.setPlanEndTime(product.getEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId("");
@@ -457,7 +460,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 Long count = taskList.stream().filter(t -> t.getChargeId().contains(userId)).count();
                 String taskName = taskList.stream().filter(t -> t.getChargeId().contains(userId)).map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
                 String taskChargeMessageContent = String.format(NoticeMessageConstant.RELEASE_TASK, userName, count);
-                String taskChargeProjectContent = getTaskProjectContent(taskName, product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+                String taskChargeProjectContent = getTaskProjectContent(taskName, product.getName(), dateTimeFormatter.format(product.getEndTime()), productCharge, product.getProductChargeName());
                 //发送消息的结果
                 Boolean sendResult = batchSendFsMessage(taskChargeUnionIds, taskChargeMessageContent, taskChargeProjectContent);
                 //当发送成功后
@@ -468,7 +471,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setNoticeMessageId(noticeMessageId);
                     recordEntity.setNoticeNode(flag);
                     recordEntity.setNoticeUserId(userId);
-                    recordEntity.setPlanEndTime(endTime);
+                    recordEntity.setPlanEndTime(product.getEndTime());
                     recordEntity.setProductId(product.getProductId());
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
@@ -545,10 +548,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
                 String messageContent = String.format(NoticeMessageConstant.CANCEL_RELEASE, userName);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -592,6 +596,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean startTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -626,7 +631,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
                 String messageContent = String.format(NoticeMessageConstant.START_TASK, userName);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -669,6 +674,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean finishTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -721,7 +727,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -766,7 +772,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     public void finishWaitConfirmNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
-
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return;
@@ -794,7 +800,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 sendMessage.setUnionIds(unionIds);
 
                 String messageContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM, task.getChargeName());
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -831,6 +837,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Async("customExecutor")
     @Transactional
     public Boolean flyingBookReminder(FlyingBookReminderDTO dto) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         //需要发生通知的人员
         List<String> sendIds = new ArrayList<>();
         //抄送人id
@@ -870,7 +877,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, sendIds);
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String projectContent = getTaskProjectContent(task.getName(), productInfoEntity.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            String projectContent = getTaskProjectContent(task.getName(), productInfoEntity.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(content, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
@@ -1317,6 +1324,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean portionFinishTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1365,7 +1373,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
                 String messageContent = String.format(NoticeMessageConstant.PORTION_FINISH_TASK, userName);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -1408,6 +1416,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean closeTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1442,7 +1451,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
                 String messageContent = String.format(NoticeMessageConstant.CLOSE_TASK, userName);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -1486,6 +1495,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean approvalTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1529,7 +1539,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 }
 
                 String messageContent = String.format(NoticeMessageConstant.APPROVAL_TASK, userName, approvalResult);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -1573,6 +1583,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean editTaskNotice(String userName, ProjectTaskEntity task, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1606,7 +1617,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             String messageContent = String.format(NoticeMessageConstant.EDIT_TASK, userName, task.getName());
-            String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
@@ -1649,6 +1660,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean deleteTaskNotice(String userName, ProjectTaskEntity task, String productId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1682,7 +1694,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             String messageContent = String.format(NoticeMessageConstant.DELETE_TASK, userName, task.getName());
-            String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
@@ -2171,6 +2183,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean remindRemarkNotice(String userName, String productId, String taskId, String comment) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -2205,7 +2218,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             String messageContent = String.format(NoticeMessageConstant.REMIND_REMARK, userName, comment);
-            String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
@@ -2246,6 +2259,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     public void sendEarlyWarning() {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         //获取即将到期的 任务列表
         Date nowDay = new Date();
         int flagDays = 3;
@@ -2280,7 +2294,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                Date planEndTime = task.getPlanEndTime();
+
+                Date planEndTime = Date.from(task.getPlanEndTime().atZone( ZoneId.systemDefault()).toInstant());;
                 //获取计划时间的开始时间
                 Date planEndStartTime = DateUtil.getStartTime(planEndTime);
                 //比较差值
@@ -2293,7 +2308,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     warning = task.getName() + " 已过期" + Math.abs(diffDay) + "天";
                 }
                 String messageContent = String.format(NoticeMessageConstant.EARLY_WARNING, warning);
-                String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+                String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
                 //发送消息的结果
@@ -2336,6 +2351,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     @Async("customExecutor")
     public Boolean docChangesNotice(String userName, String productId, String taskId, String docName) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -2369,7 +2385,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             String messageContent = String.format(NoticeMessageConstant.DOC_CHANGES, userName, docName);
-            String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            String projectContent = getTaskProjectContent(task.getName(), product.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             sendMessage.setUnionIds(unionIds);

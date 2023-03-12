@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.io.Serializable;
 
@@ -51,21 +52,21 @@ public class TaskRefSkuConfigEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
     /**
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
     /**
      * 创建人
      */
-    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
+    @TableField(value = "create_user_id")
     private String createUserId;
     /**
      * 更改人
      */
-    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_id")
     private String updateUserId;
 
 

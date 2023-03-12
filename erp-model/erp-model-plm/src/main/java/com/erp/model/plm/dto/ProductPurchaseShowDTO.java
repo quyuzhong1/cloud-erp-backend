@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -51,13 +52,13 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 首批下单时间
      */
-    private Date placeOrderTime;
+    private LocalDateTime placeOrderTime;
 
     /**
      * 预计首批到货时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date planArrivalTime;
+    private LocalDateTime planArrivalTime;
 
     /**
      * MOQ(最小起订量)
@@ -73,7 +74,7 @@ public class ProductPurchaseShowDTO implements Serializable {
      * 实际首批到货时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date actualArrivalTime;
+    private LocalDateTime actualArrivalTime;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货
@@ -113,7 +114,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 修改人名称
@@ -128,7 +129,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 修改时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 实际首批到货量
