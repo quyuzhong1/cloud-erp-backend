@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -607,7 +608,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         for (int i = days; i >= 0; i--) {
             Map<String, Object> finishTaskMap = new HashMap<>();
             Date date = LocalDateUtil.localDateTime2Date(dateTime.plusDays(-i));
-            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, t.getRealityEndTime())).count();
+            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, Date.from( t.getRealityEndTime().atZone( ZoneId.systemDefault()).toInstant()))).count();
             finishTaskMap.put("date", sdf.format(date.getTime()));
             finishTaskMap.put("quantity", count);
             finishTaskTrend.add(finishTaskMap);

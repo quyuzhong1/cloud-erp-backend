@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -73,13 +74,13 @@ public class ProductSaleShowDTO implements Serializable {
      * 上市时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date listingTime;
+    private LocalDateTime listingTime;
 
     /**
      * 退市时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date delistingTime;
+    private LocalDateTime delistingTime;
 
     /**
      * 图片是否完成 1.是 2.否
@@ -120,7 +121,7 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 创建人id
@@ -135,7 +136,7 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 修改时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 修改人id

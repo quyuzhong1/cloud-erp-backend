@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class ChangeTaskScheduleDTO implements Serializable {
      */
     @NotNull(message = "计划开始时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
 
     /**
@@ -43,7 +44,7 @@ public class ChangeTaskScheduleDTO implements Serializable {
      */
     @NotNull(message = "计划结束时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
 
     /**

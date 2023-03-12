@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -19,10 +20,10 @@ public class ProductMilepostDateDTO implements Serializable {
     /**
      * 实际结束时间
      */
-    private Date realityEndTime;
+    private LocalDateTime realityEndTime;
 
     /**
      *预计结束时间
      */
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 }

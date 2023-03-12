@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -23,10 +24,10 @@ public class ScheduleTaskExcelDTO  implements Serializable {
     private String taskId;
 
 
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
 
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
 
     private String chargeId;

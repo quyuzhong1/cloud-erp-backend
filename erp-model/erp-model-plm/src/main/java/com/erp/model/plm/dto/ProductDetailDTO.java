@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -46,13 +47,13 @@ public class ProductDetailDTO implements Serializable {
      * 计划上市时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planListingTime;
+    private LocalDateTime planListingTime;
 
     /**
      * 首批量产入库时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date firstMassProductDate;
+    private LocalDateTime firstMassProductDate;
 
     /**
      * 单位表id

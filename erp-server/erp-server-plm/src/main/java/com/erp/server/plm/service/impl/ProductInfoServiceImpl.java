@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -928,7 +929,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
-                        newProduct.setApprovalTime(new Date());
+                        newProduct.setApprovalTime(LocalDateTime.now());
                     }
 
                 }

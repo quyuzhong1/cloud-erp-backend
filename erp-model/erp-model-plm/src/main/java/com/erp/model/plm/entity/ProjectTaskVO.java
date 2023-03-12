@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -73,13 +74,13 @@ public class ProjectTaskVO implements Serializable {
      */
 
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * 计划结束时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级

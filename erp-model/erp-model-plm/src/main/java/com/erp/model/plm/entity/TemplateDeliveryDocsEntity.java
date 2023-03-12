@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -33,7 +34,7 @@ public class TemplateDeliveryDocsEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 创建人
@@ -51,7 +52,7 @@ public class TemplateDeliveryDocsEntity implements Serializable {
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 更新人

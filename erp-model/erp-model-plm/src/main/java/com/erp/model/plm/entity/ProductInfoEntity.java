@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -92,7 +93,7 @@ public class ProductInfoEntity implements Serializable {
      * 立项日期
      */
     @TableField(value = "approval_time")
-    private Date approvalTime;
+    private LocalDateTime approvalTime;
 
     /**
      * 以JSON 字符串保存
@@ -132,13 +133,13 @@ public class ProductInfoEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * spu

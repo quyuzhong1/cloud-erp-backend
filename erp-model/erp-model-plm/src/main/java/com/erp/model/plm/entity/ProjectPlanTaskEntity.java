@@ -1,5 +1,6 @@
 package com.erp.model.plm.entity;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.date.LocalDateUtil;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -42,19 +44,19 @@ public class ProjectPlanTaskEntity extends BaseEntity {
     /**
      * 源计划开始时间
      */
-    private Date originStartTime;
+    private LocalDateTime originStartTime;
     /**
      * 源计划结束时间
      */
-    private Date originEndTime;
+    private LocalDateTime originEndTime;
     /**
      * 变更后计划开始时间
      */
-    private Date changeStartTime;
+    private LocalDateTime changeStartTime;
     /**
      * 变更后计划结束时间
      */
-    private Date changeEndTime;
+    private LocalDateTime changeEndTime;
     /**
      * 项目变更表id
      */
@@ -90,8 +92,8 @@ public class ProjectPlanTaskEntity extends BaseEntity {
                 planWorkPeriod --;
             }
         }
-        this.changeStartTime = LocalDateUtil.localDate2Date(startDate);
-        this.changeEndTime = LocalDateUtil.localDate2Date(endDate);
+        this.changeStartTime = LocalDateTimeUtil.of(startDate);
+        this.changeEndTime = LocalDateTimeUtil.of(endDate);
     }
 
     public ProjectPlanTaskEntity(String taskId, LocalDate startDate, Integer workPeriod, List<LocalDate> dateList, Integer type) {
@@ -104,11 +106,11 @@ public class ProjectPlanTaskEntity extends BaseEntity {
             }
         }
         if(1 == type){
-            this.originStartTime = LocalDateUtil.localDate2Date(startDate);
-            this.originStartTime = LocalDateUtil.localDate2Date(endDate);
+            this.originStartTime = LocalDateTimeUtil.of(startDate);
+            this.originStartTime = LocalDateTimeUtil.of(endDate);
         }else {
-            this.changeStartTime = LocalDateUtil.localDate2Date(startDate);
-            this.changeEndTime = LocalDateUtil.localDate2Date(endDate);
+            this.changeStartTime = LocalDateTimeUtil.of(startDate);
+            this.changeEndTime = LocalDateTimeUtil.of(endDate);
         }
         this.workPeriod = workPeriod;
     }
@@ -119,8 +121,8 @@ public class ProjectPlanTaskEntity extends BaseEntity {
         Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
         Integer planWorkPeriod = task.getWorkPeriod();
         Map<String, LocalDate> resultMap = LocalDateUtil.relationshipLocalDate(relationship.getCode(), startDate, endDate, intervalWorkPeriod, planWorkPeriod, dateList);
-        this.changeStartTime = LocalDateUtil.localDate2Date(resultMap.get("startDate"));
-        this.changeEndTime = LocalDateUtil.localDate2Date(resultMap.get("endDate"));
+        this.changeStartTime = LocalDateTimeUtil.of(resultMap.get("startDate"));
+        this.changeEndTime = LocalDateTimeUtil.of(resultMap.get("endDate"));
     }
 }
 

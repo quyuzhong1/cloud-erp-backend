@@ -90,7 +90,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             });
             //立项前的任务,排序：已完成，实际完成时间，创建时间
             List<ProjectTaskEntity> beforeList;
-            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && (ObjectUtils.isEmpty(productInfoEntity.getApprovalTime()) || (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime()) && e.getCreateTime().before(productInfoEntity.getApprovalTime()))))
+            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && (ObjectUtils.isEmpty(productInfoEntity.getApprovalTime()) || (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime()) && e.getCreateTime().isBefore(productInfoEntity.getApprovalTime()))))
                     .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
                             .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
                             .thenComparing(ProjectTaskEntity::getCreateTime))
@@ -125,7 +125,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             //立项后的任务
             List<ProjectTaskEntity> afterList = new ArrayList<>();
             if (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime())) {
-                afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().after(productInfoEntity.getApprovalTime()))
+                afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().isAfter(productInfoEntity.getApprovalTime()))
                         .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
                                 .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
                                 .thenComparing(ProjectTaskEntity::getCreateTime))

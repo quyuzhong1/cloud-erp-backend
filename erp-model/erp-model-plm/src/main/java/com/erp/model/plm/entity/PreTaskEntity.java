@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import com.erp.model.plm.dto.PreTaskDTO;
@@ -45,13 +46,13 @@ public class PreTaskEntity implements Serializable {
      * 
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 间隔工期

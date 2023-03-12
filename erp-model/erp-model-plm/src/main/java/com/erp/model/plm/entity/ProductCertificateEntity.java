@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -36,13 +37,13 @@ public class ProductCertificateEntity implements Serializable {
      * 证书有效期
      */
     @TableField(value = "certificate_valid_time")
-    private Date certificateValidTime;
+    private LocalDateTime certificateValidTime;
 
     /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 创建人id
@@ -54,7 +55,7 @@ public class ProductCertificateEntity implements Serializable {
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 修改人id
