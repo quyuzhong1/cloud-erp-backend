@@ -62,6 +62,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     ProjectTaskDetailsDTO getTaskDetails(String taskId);
 
+    /**
+     * 修改任务
+     * @author yl
+     * @date 2023-03-13 9:55
+     * @param dto
+     * @return java.lang.Boolean
+     */
     Boolean updateTask(ProjectTaskDTO dto);
 
     ProductTaskCountDTO getProductTaskCount(ProductTaskCountShowDTO showDTO, Date date);
