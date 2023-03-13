@@ -12,4 +12,7 @@ public class RocketMqConsumerGroup {
 
     public static final String SYNC_KINGDEE_BOM_INFO = "${spring.profiles.active}-sync_kingdee_bom_info";
 
+    public static final String SYNC_KINGDEE_CATEGORY = "${spring.profiles.active}-sync_kingdee_category";
+
+
 }

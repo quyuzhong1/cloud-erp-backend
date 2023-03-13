@@ -58,11 +58,11 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "1001010005_1"));
+        queryFilters.add(String.format("FNumber = '%s'", "01"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FDENOMINATOR,FNUMERATOR";
+        String fieldKeys = "FNumber,FName";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -151,6 +151,9 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         }
     }
 
+    /**
+     * 给修改json对象赋值ID
+     */
     private void setQueryJSONObject (Integer id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FId = '%s'", id));
