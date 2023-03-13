@@ -903,10 +903,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             String projectChargeId = dto.getProjectChargeId();
             if (StringUtils.isNotBlank(projectChargeId)) {
                 newProduct.setProjectChargeId(projectChargeId);
-            } else {
-                newProduct.setProjectChargeId("");
             }
-
 
             if (CollectionUtils.isNotEmpty(productChargeIdList)) {
                 String productChargeName = commonService.getNameByIds(productChargeIdList);
