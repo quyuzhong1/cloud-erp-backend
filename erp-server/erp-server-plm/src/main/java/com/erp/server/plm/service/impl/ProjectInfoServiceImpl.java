@@ -452,9 +452,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     public void updateChargeByProductId(String productId, String projectChargeId) {
         String userName = commonService.getNameById(projectChargeId);
-        if (StringUtils.isBlank(userName)) {
-            throw  new ServiceException(ApiError.ERROR_9011);
-        }
         lambdaUpdate().eq(ProjectInfoEntity::getProductId,productId)
                 .set(ProjectInfoEntity::getChargeId,projectChargeId)
                 .set(ProjectInfoEntity::getChargeName,userName)
