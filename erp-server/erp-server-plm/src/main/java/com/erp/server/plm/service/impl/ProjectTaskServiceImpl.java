@@ -995,7 +995,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
 
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
-
+        //是否关联
         boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
         //验证表单数据
         checkFieldConfig(dto);
@@ -1112,7 +1112,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //新增任务操作日志
         addProjectTaskDTOLog(dto, oldEntity, taskEntity.getId());
         //更新审核人
-        setTaskChargeDistributionEntity(dto, taskEntity,ifUpdateProcess);
+        setTaskChargeDistributionEntity(dto, taskEntity, ifUpdateProcess);
         boolean flag = this.updateById(taskEntity);
         if (flag) {
 
@@ -1124,11 +1124,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存SKU配置 字段 关系表 当不关联的时候删除
             if (!isNotRelated) {
                 taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+                //保存任务与SKU 关系表
+                projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
             } else {
+                projectTaskRefSkuService.removeTaskSkuRefByTaskId(taskEntity.getId());
                 taskRefSkuConfigService.removeTaskRefSkuByTaskId(taskEntity.getId());
             }
-            //保存任务与SKU 关系表
-            projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
+
 
             noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         }
@@ -4525,7 +4527,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author Will
      * @date: 2023/2/28 15:34
      */
-    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity,boolean ifUpdateProcess) {
+    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity, boolean ifUpdateProcess) {
         List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         if (CollectionUtils.isNotEmpty(approvalList)) {
@@ -4584,8 +4586,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
 
                 //如果改了 流程就按人员
-                if(ifUpdateProcess){
-                    if(CollectionUtils.isEmpty(chargeList)){
+                if (ifUpdateProcess) {
+                    if (CollectionUtils.isEmpty(chargeList)) {
                         throw new ServiceException(ApiError.ERROR_95045);
                     }
                     taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));

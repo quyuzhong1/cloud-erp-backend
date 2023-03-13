@@ -443,9 +443,16 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
         List<TemplateDeliveryDocsEntity> dbTemplateDeliveryList = templateDeliveryDocsService.getByTemplateIds(templateIds);
         for (TemplateDeliveryDocsEntity item : dbTemplateDeliveryList) {
-            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTemplateId().equals(item.getTemplateId())&& item.getDocsName().equals(t.getName())).findFirst().orElse(null);
+            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTemplateId().equals(item.getTemplateId()) && item.getDocsName().equals(t.getName())).findFirst().orElse(null);
             if (tempVO != null) {
                 item.setDocsNameId(tempVO.getNewCreateId());
+            } else {
+                TemplateTaskDocsNameEntity  dbDocsName=dbTemplateDocsNameList.stream().filter(db -> db.getTemplateId().equals(item.getTemplateId()) && item.getDocsName().equals(db.getName())).findFirst().orElse(null);
+                if(dbDocsName!=null){
+                    item.setDocsNameId(dbDocsName.getId());
+                }
+
+
             }
         }
         templateDeliveryDocsService.updateBatchById(dbTemplateDeliveryList);

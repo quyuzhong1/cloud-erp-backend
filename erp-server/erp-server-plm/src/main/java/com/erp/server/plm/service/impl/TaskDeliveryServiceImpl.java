@@ -566,7 +566,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
                 //表示 是项目成员，未设置文档权限可以看所有
-                if(CollectionUtils.isNotEmpty(userRoleIds)){
+                if (CollectionUtils.isNotEmpty(userRoleIds)) {
                     DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
                             findFirst().orElse(null);
                     //表示有权限
@@ -574,12 +574,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                         if (userRoleIds.contains(permission.getQueryRoleId())) {
                             findDeliveryDocsIds.add(deliveryDocsId);
                         }
-                        if(StringUtils.isBlank(permission.getQueryRoleId())){
+                        if (StringUtils.isBlank(permission.getQueryRoleId())) {
                             findDeliveryDocsIds.add(deliveryDocsId);
                         }
+                    } else {
+                        //没有设置权限 也应该看到
+                        findDeliveryDocsIds.add(deliveryDocsId);
                     }
                 }
-
 
 
             }
