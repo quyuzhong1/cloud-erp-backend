@@ -4,6 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
@@ -58,6 +60,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
 
     @Override
     public Boolean press(LarkPressMessageDTO dto) {
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         // 查询业务相关内容
         LarkPressBusinessTypeEnum businessType = LarkPressBusinessTypeEnum.getByCode(dto.getBusinessType());
         String titleContent = null;
@@ -77,7 +80,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     throw new ServiceException(ApiError.ERROR_95010);
                 }
                 processId = task.getProcessId();
-                titleContent= String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
+                titleContent= String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, null != loginUser && StrUtil.isNotBlank(loginUser.getUserName()) ? loginUser.getUserName() : "" );
                 textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());;
                 break;
             default:
@@ -108,7 +111,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //排除关闭通知的人员 并去重
         List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(notice.getId());
         List<String> noticeUserIds = auditorHandleDTOList.stream().map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
-        Map<String, String> userIdNameMap = auditorHandleDTOList.stream().collect(Collectors.toMap(AuditorHandleDTO::getHandleUserId, AuditorHandleDTO::getHandleUserName));
+//        Map<String, String> userIdNameMap = auditorHandleDTOList.stream().collect(Collectors.toMap(AuditorHandleDTO::getHandleUserId, AuditorHandleDTO::getHandleUserName));
         List<String> noticeUserList = noticeUserIds.stream().filter(n -> !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
         //获取飞书的 unionId 与用户关系
         List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
@@ -116,10 +119,10 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 .stream()
                 .filter(u -> noticeUserList.contains(u.getUserId()))
                 .collect(Collectors.toList());
-        Map<String, String> unionIdUserNameMap = noticeUnionList.stream()
-                .collect(Collectors.toMap(ThirdUnionDTO::getThirdUnionId,
-                        unionDto -> userIdNameMap.getOrDefault(unionDto.getUserId(), ""))
-                );
+//        Map<String, String> unionIdUserNameMap = noticeUnionList.stream()
+//                .collect(Collectors.toMap(ThirdUnionDTO::getThirdUnionId,
+//                        unionDto -> userIdNameMap.getOrDefault(unionDto.getUserId(), ""))
+//                );
         List<String> unionIds = noticeUnionList
                 .stream()
                 .map(ThirdUnionDTO::getThirdUnionId)
@@ -128,10 +131,10 @@ public class LarkMessageServiceImpl implements LarkMessageService {
 //        Boolean isLog = false;
         //发送消息的结果
         for (String unionId : unionIds) {
-            String userName = unionIdUserNameMap.get(unionId);
-            if (StrUtil.isNotBlank(userName)) {
-                titleContent = StrUtil.format(titleContent, userName);
-            }
+//            String userName = unionIdUserNameMap.get(unionId);
+//            if (StrUtil.isNotBlank(userName)) {
+//                titleContent = StrUtil.format(titleContent, userName);
+//            }
             LarkResultDTO larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
             // 催办
             if (isPress) {
