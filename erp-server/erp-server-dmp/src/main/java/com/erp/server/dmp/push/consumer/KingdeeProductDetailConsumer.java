@@ -82,7 +82,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
-        Integer type = ApiModuleTypeEnum.PRODUCTDETAIL.getCode();
+        Integer type = ApiModuleTypeEnum.PRODUCT_DETAIL.getCode();
         dto.setModuleType(type);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段

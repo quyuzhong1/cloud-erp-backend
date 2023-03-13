@@ -8,8 +8,9 @@ package com.common.message.enums;
  */
 public enum ApiModuleTypeEnum {
 
-    PRODUCTDETAIL(0, "productDetail", "产品信息"),
-    BOMMANAGE(1, "bomManage", "BOM管理");
+    PRODUCT_DETAIL(0, "productDetail", "产品信息"),
+    BOM_INFO(1, "bomInfo", "BOM管理"),
+    ONE_LEVEL_CATEGORY(2, "oneLevelCategory", "一级类目");
 
     private Integer code;
 

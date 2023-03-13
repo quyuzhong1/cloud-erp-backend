@@ -14,7 +14,6 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -52,9 +51,6 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
@@ -80,7 +76,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
-        Integer type = ApiModuleTypeEnum.BOMMANAGE.getCode();
+        Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
         dto.setModuleType(type);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
@@ -119,7 +115,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             String id = save.getResult().getId();
             //给修改json对象赋值ID
             setQueryJSONObject(Integer.valueOf(id),apiUtils,platformEntity,map,type,json);
-            //需要修改字段添加二级类目
+            //需要修改字段添加用量分子
             ArrayList<String> needUpDateFields = new ArrayList<>();
             needUpDateFields.add("FNUMERATOR");
             param.setNeedUpDateFields(needUpDateFields);

@@ -33,11 +33,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //更新状态
         String status = params.get("status");
         //产品管理
-        if (ApiModuleTypeEnum.PRODUCTDETAIL.getCode().toString().equals(code)) {
+        if (ApiModuleTypeEnum.PRODUCT_DETAIL.getCode().toString().equals(code)) {
             productDetailService.updateSyncKingdeeStatus(businessId,status);
         }
         //bom管理
-        if (ApiModuleTypeEnum.BOMMANAGE.getCode().toString().equals(code)) {
+        if (ApiModuleTypeEnum.BOM_INFO.getCode().toString().equals(code)) {
             bomInfoService.updateSyncKingdeeStatus(businessId,status);
         }
     }
