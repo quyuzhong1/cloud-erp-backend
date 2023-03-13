@@ -14,7 +14,10 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProjectInfoEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.server.plm.constant.ProductConstant;
@@ -444,6 +447,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         queryWrapper.in(ProjectInfoEntity::getProductId, productIdList);
         return this.list(queryWrapper);
 
+    }
+
+    @Override
+    public void updateChargeByProductId(String productId, String projectChargeId) {
+        String userName = commonService.getNameById(projectChargeId);
+        if (StringUtils.isBlank(userName)) {
+            throw  new ServiceException(ApiError.ERROR_9011);
+        }
+        lambdaUpdate().eq(ProjectInfoEntity::getProductId,productId)
+                .set(ProjectInfoEntity::getChargeId,projectChargeId)
+                .set(ProjectInfoEntity::getChargeName,userName)
+                .update();
     }
 
     /**
