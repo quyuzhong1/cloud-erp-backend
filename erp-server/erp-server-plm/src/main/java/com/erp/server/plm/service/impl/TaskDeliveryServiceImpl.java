@@ -414,7 +414,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public List<TaskDeliveryDocsEntity> getByProductId(String productId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDeliveryDocsEntity::getProductId, productId);
-        return this.list(queryWrapper);
+        List<TaskDeliveryDocsEntity> list=this.list(queryWrapper);
+        return list.stream().filter(t->StringUtils.isNotBlank(t.getTaskId())).collect(Collectors.toList());
     }
 
     /**
