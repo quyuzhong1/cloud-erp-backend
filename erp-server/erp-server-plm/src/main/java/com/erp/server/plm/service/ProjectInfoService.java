@@ -60,4 +60,6 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     List<BasicDTO> listProjectInfo(ProductSearchDTO dto);
 
     List<ProjectInfoEntity> getByProductIdList(List<String> productIdList);
+
+    void updateChargeByProductId(String productId, String projectChargeId);
 }

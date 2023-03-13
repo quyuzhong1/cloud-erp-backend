@@ -324,7 +324,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(StringUtils.isNotBlank(projectChargeId)){
             //新增或修改项目经理角色和对应成员
             projectMembersService.saveByRoleAndMembers(entity.getId(), null, "项目经理", Arrays.asList(projectChargeId));
-
         }
 
         if (ObjectUtils.isNotEmpty(oldEntity)) {
@@ -332,6 +331,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         //关联产品规划
         productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(), entity);
+        //更新项目列表的项目经理
+        projectInfoService.updateChargeByProductId(productId,dto.getProjectChargeId());
+
         return entity.getId();
     }
 
@@ -901,10 +903,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             String projectChargeId = dto.getProjectChargeId();
             if (StringUtils.isNotBlank(projectChargeId)) {
                 newProduct.setProjectChargeId(projectChargeId);
-            } else {
-                newProduct.setProjectChargeId("");
             }
-
 
             if (CollectionUtils.isNotEmpty(productChargeIdList)) {
                 String productChargeName = commonService.getNameByIds(productChargeIdList);

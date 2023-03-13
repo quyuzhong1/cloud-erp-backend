@@ -1836,7 +1836,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //配置表单信息
             List<TaskRefSkuConfigEntity> configList = taskRefSkuConfigService.getByTaskIds(taskIdList);
             
-            if (CollectionUtils.isEmpty(configList)) {
+            if (CollectionUtils.isNotEmpty(configList)) {
                 List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
 
                 //验证自动关联任务是否已全部完成
