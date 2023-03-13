@@ -93,13 +93,11 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 任务优先级 1 低级 2 中级 3 高级
      */
-  //  @StateEnumValue(intValues = {1, 2, 3}, message = "任务优先级有误")
     private Integer priority;
 
     /**
      * 任务阶段id
      */
-  //  @NotBlank(message = "阶段id 不能为空")
     private String phaseId;
 
     /**

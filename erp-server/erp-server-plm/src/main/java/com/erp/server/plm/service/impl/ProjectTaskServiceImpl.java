@@ -51,7 +51,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -997,7 +996,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
-
+        //sku不关联
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
 
         boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
@@ -1112,6 +1111,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         addProjectTaskDTOLog(dto, oldEntity, taskEntity.getId());
         //更新审核人
         setTaskChargeDistributionEntity(dto, taskEntity);
+
+
         boolean flag = this.updateById(taskEntity);
         if (flag) {
 
@@ -1121,9 +1122,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
             //保存SKU配置 字段 关系表 当不关联的时候删除
-            if(!isNotRelated){
+            if (!isNotRelated) {
                 taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
-            }else{
+            } else {
                 taskRefSkuConfigService.removeTaskRefSkuByTaskId(taskEntity.getId());
             }
             //保存任务与SKU 关系表
@@ -2826,10 +2827,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已取消
         Integer closeState = TaskStateEnum.CLOSE.getCode();
 
+        //进行中
+        Integer ingState = TaskStateEnum.ING.getCode();
+
         List<Integer> stateList = new ArrayList<>(5);
         stateList.add(releasedState);
         stateList.add(notStartState);
         stateList.add(closeState);
+        stateList.add(ingState);
 
         return stateList.contains(taskState);
     }
@@ -4546,11 +4551,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<String> chargeList = taskChargeDistributionDTO.getChargeList();
                 //分配值
                 String charges = taskChargeDistributionDTO.getCharges();
-
+                //按人员分配
                 if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionDTO.getDistributionType())) {
                     taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                     taskChargeDistributionDTO.setCharges(String.join(",", chargeList));
                 }
+                //按角色分配
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionDTO.getDistributionType())) {
                     List<String> chargesList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
                     //删除保存到后台的角色
@@ -4559,7 +4565,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             chargeList.remove(chargeName);
                         }
                     }
+
+                    if(CollectionUtils.isNotEmpty(chargeList)){
+                        taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
+                    }
                 }
+                //按上级
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionDTO.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
                     //查询对应负责人的上级
                     List<String> ids = dto.getChargeIds();

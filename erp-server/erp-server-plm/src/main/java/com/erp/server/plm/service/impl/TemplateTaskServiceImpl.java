@@ -355,7 +355,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                     //判断负责人分配方式是否是角色
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
                         List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
-                        List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
+                        List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(roleIds, projectTemplateEntity.getId());
                         if (CollectionUtils.isNotEmpty(templateMembersList)) {
                             List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());
                             List<String> memberNames = templateMembersList.stream().map(TemplateMembersEntity::getMemberName).distinct().collect(Collectors.toList());
@@ -372,6 +372,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 }
                 //查询模板任务下审核人
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
+
                 setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), taskEntity.getId(), MathUtil.THREE);
             }
         }
@@ -616,6 +617,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     /**
      * 添加任务审核人信息
+     * ids 任务负责人
+     *
      */
     @Override
     public void setTaskChargeDistribution(List<TaskChargeDistributionEntity> taskChargeDistributionList, List<String> ids, String templateId, String taskId, Integer source) {
@@ -626,18 +629,21 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
                     throw new ServiceException(ApiError.ERROR_95097);
                 }
+                //如果按人员分配的话
                 if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                     taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
                 }
+                //按角色分配
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                    List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                    List<String> roleNames = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                     //查询对应模板角色下的人员
-                    List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIdList, templateId);
+                    List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(roleNames, templateId);
                     if (CollectionUtils.isNotEmpty(templateMembersList)) {
                         String approverIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
                         taskChargeDistributionEntity.setChargeIds(approverIds);
                     }
                 }
+                //按上级
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(ids)) {
                     //查询对应负责人的上级
                     List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
