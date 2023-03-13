@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
-import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
@@ -243,7 +242,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-        apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        apiPlmSyncLogDTO.setModuleType(type);
         apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
         apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
         apiPlmSyncLogDTO.setMsg(msg);
@@ -267,7 +266,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-        apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        apiPlmSyncLogDTO.setModuleType(type);
         apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
         apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
         apiPlmSyncLogDTO.setMsg(msg);
