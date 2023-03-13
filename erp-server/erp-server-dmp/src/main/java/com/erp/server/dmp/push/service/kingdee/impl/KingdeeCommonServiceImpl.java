@@ -286,7 +286,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 
-
     /**
      * 填充数据
      */

@@ -69,6 +69,8 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
+        //同步模块类型
+        Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
             log.error("同步数据不存在！");
@@ -77,11 +79,11 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
+            kingdeeCommonService.insertFailureLog(platformEntity, map,"",String.format("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc()),type);
             return;
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
-        Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
         dto.setModuleType(type);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
