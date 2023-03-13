@@ -2375,18 +2375,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //审核人1(产品经理)
             List<String> firstApproveIdList = new ArrayList<>();
             if (StringUtils.isBlank(productDetailEntity.getChargeId())) {
-                throw new ServiceException(ApiError.ERROR_95082);
+                throw new ServiceException(ApiError.ERROR_9030);
             }
             List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).distinct().collect(Collectors.toList());
             firstApproveIdList.addAll(firstApproveIds);
             //审核人2(产品经理上级)
             List<UserSuperiorDTO> superiorList = sysUserFeign.listSuperiorByUserIds(firstApproveIds);
             if (CollectionUtils.isEmpty(superiorList)) {
-                throw new ServiceException(ApiError.ERROR_95082);
+                throw new ServiceException(ApiError.ERROR_9039);
             }
             List<String> secondApproveIdList = superiorList.stream().filter(obj -> ChargeSuperiorEnum.DIRECT_SUPERIOR.getName().equals(obj.getSuperiorType())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(secondApproveIdList)) {
-                throw new ServiceException(ApiError.ERROR_95082);
+                throw new ServiceException(ApiError.ERROR_9034);
             }
             //审核人3(产品研发中心负责人、供应链中心负责人)
             String thirdDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
@@ -2418,7 +2418,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> deptNames = Arrays.stream(deptName.split(",")).distinct().collect(Collectors.toList());
         List<SysUserDeptDTO> list = sysUserFeign.getByDeptNames(deptNames);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95082);
+            throw new ServiceException(ApiResult.error(1,deptName.concat("，未找到直属上级")));
         }
         List<String> leadIds = list.stream().map(SysUserDeptDTO::getUid).distinct().collect(Collectors.toList());
         return leadIds;
