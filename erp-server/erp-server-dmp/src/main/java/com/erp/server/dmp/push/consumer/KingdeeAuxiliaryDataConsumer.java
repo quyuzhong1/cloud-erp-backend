@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -33,13 +32,13 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 金蝶辅助资料同步
  * @date 2023/3/13 14:45
  */
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_category_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CATEGORY)
-public class KingdeeCategoryConsumer implements RocketMQListener<Map<String, Object>> {
+public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private PlatformService platformService;
@@ -54,11 +53,11 @@ public class KingdeeCategoryConsumer implements RocketMQListener<Map<String, Obj
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "01"));
+        queryFilters.add(String.format("FNumber = '%s'", "AM"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FTopClassId.FNumber,FParentId.FNumber,FNumber,FName";
+        String fieldKeys = "FNumber,FDataValue,FId.FNumber,FParentId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -68,15 +67,17 @@ public class KingdeeCategoryConsumer implements RocketMQListener<Map<String, Obj
     public void onMessage(Map<String, Object> map) {
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
-            throw new ServiceException(ApiError.Default);
+            log.error("同步数据不存在！");
+            return;
         }
         PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.Default);
+            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
+            return;
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
-        Integer type = ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode();
+        Integer type = ApiModuleTypeEnum.AUXILIARY_DATA.getCode();
         dto.setModuleType(type);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
@@ -87,7 +88,7 @@ public class KingdeeCategoryConsumer implements RocketMQListener<Map<String, Obj
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 

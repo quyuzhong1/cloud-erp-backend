@@ -10,7 +10,7 @@ public enum ApiModuleTypeEnum {
 
     PRODUCT_DETAIL(0, "productDetail", "产品信息"),
     BOM_INFO(1, "bomInfo", "BOM管理"),
-    ONE_LEVEL_CATEGORY(2, "oneLevelCategory", "一级类目");
+    AUXILIARY_DATA(2, "auxiliaryData", "辅助资料");
 
     private Integer code;
 

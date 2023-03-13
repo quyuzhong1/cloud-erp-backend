@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -14,6 +13,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 金蝶物料清单同步
  * @date 2023/3/9 16:20
  */
 @Service
@@ -51,14 +51,17 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "01"));
+        queryFilters.add(String.format("FNumber = '%s'", "1001010005_1"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FNumber,FName";
+        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FDENOMINATOR,FNUMERATOR";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -68,11 +71,13 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     public void onMessage(Map<String, Object> map) {
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
-            throw new ServiceException(ApiError.Default);
+            log.error("同步数据不存在！");
+            return;
         }
         PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.Default);
+            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
+            return;
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
@@ -115,7 +120,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             String id = save.getResult().getId();
             //给修改json对象赋值ID
             setQueryJSONObject(Integer.valueOf(id),apiUtils,platformEntity,map,type,json);
-            //需要修改字段添加用量分子
+            //需要修改字段添加二级类目
             ArrayList<String> needUpDateFields = new ArrayList<>();
             needUpDateFields.add("FNUMERATOR");
             param.setNeedUpDateFields(needUpDateFields);
@@ -147,9 +152,6 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         }
     }
 
-    /**
-     * 给修改json对象赋值ID
-     */
     private void setQueryJSONObject (Integer id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FId = '%s'", id));

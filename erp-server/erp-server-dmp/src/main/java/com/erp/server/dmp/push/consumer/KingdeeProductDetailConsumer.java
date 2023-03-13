@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 金蝶物料同步
  * @date 2023/3/9 16:24
  */
 @Service
@@ -74,11 +73,13 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
     public void onMessage(Map<String, Object> map) {
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
-            throw new ServiceException(ApiError.Default);
+            log.error("同步数据不存在！");
+            return;
         }
         PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.Default);
+            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
+            return;
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
