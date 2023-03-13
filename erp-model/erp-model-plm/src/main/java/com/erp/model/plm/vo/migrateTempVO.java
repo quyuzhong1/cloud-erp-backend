@@ -20,6 +20,8 @@ public class migrateTempVO implements Serializable {
      */
     private String newCreateId;
 
+    private String  name;
+
 
     /**
      * 任务id

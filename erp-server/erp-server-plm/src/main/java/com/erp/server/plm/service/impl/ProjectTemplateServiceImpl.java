@@ -380,8 +380,6 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      */
     @Override
     public boolean migrateDocsDb() {
-        //系统文档
-        List<SysDocsEntity> sysDocsList = sysDocsService.list();
 
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.list();
 
@@ -433,6 +431,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                     }
                     vo.setTemplateId(templateId);
                     vo.setTaskId(taskId);
+                    vo.setName(docsName);
                     migrateTempList.add(vo);
                 }
             }
@@ -444,13 +443,12 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
         List<TemplateDeliveryDocsEntity> dbTemplateDeliveryList = templateDeliveryDocsService.getByTemplateIds(templateIds);
         for (TemplateDeliveryDocsEntity item : dbTemplateDeliveryList) {
-            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getTaskId())).findFirst().orElse(null);
+            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTemplateId().equals(item.getTemplateId())&& item.getDocsName().equals(t.getName())).findFirst().orElse(null);
             if (tempVO != null) {
                 item.setDocsNameId(tempVO.getNewCreateId());
             }
         }
         templateDeliveryDocsService.updateBatchById(dbTemplateDeliveryList);
-
         return result;
     }
 
