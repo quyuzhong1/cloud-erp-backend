@@ -414,7 +414,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public List<TaskDeliveryDocsEntity> getByProductId(String productId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDeliveryDocsEntity::getProductId, productId);
-        return this.list(queryWrapper);
+        List<TaskDeliveryDocsEntity> list=this.list(queryWrapper);
+        return list.stream().filter(t->StringUtils.isNotBlank(t.getTaskId())).collect(Collectors.toList());
     }
 
     /**
@@ -565,20 +566,24 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             List<DocsPermissionEntity> allPermissionDeliveryDocsList = docsPermissionService.getAllDeliveryDocsIds(productId);
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
-                DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
-                        findFirst().orElse(null);
-                //表示有权限
-                if (permission != null) {
-                    if (userRoleIds.contains(permission.getQueryRoleId())) {
+                //表示 是项目成员，未设置文档权限可以看所有
+                if (CollectionUtils.isNotEmpty(userRoleIds)) {
+                    DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
+                            findFirst().orElse(null);
+                    //表示有权限
+                    if (permission != null) {
+                        if (userRoleIds.contains(permission.getQueryRoleId())) {
+                            findDeliveryDocsIds.add(deliveryDocsId);
+                        }
+                        if (StringUtils.isBlank(permission.getQueryRoleId())) {
+                            findDeliveryDocsIds.add(deliveryDocsId);
+                        }
+                    } else {
+                        //没有设置权限 也应该看到
                         findDeliveryDocsIds.add(deliveryDocsId);
                     }
-                    if(StringUtils.isBlank(permission.getQueryRoleId())){
-                        findDeliveryDocsIds.add(deliveryDocsId);
-                    }
-                } else {
-                    //没有权限
-                    findDeliveryDocsIds.add(deliveryDocsId);
                 }
+
 
             }
 

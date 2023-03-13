@@ -145,7 +145,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //提交失败操作日志及定时任务
             log.error("提交失败",e);
-            insertFailureLog(platformEntity,map,"提交失败",e.getMessage(),type);
+            insertFailureLog(platformEntity,map,JSONObject.toJSONString(ids),e.getMessage(),type);
             return;
         }
         log.info("提交成功,数据Id = 【{}】", JSONObject.toJSONString(ids));
