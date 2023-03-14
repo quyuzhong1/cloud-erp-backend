@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
@@ -55,9 +54,9 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "AM"));
+        queryFilters.add(String.format("FNumber = '%s'", "SouthChina"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FNumber,FDataValue,FId.FNumber,FParentId";
+        String fieldKeys = "FNumber,FDataValue,FId.FNumber,FParentId,";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -65,8 +64,10 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
-        //同步模块类型
-        Integer type = ApiModuleTypeEnum.AUXILIARY_DATA.getCode();
+
+        //模块类型
+        Integer type = (Integer)map.get("moduleType");
+
         //传入map数据不能为空
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
             log.error("同步数据不存在！");
@@ -91,6 +92,7 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
+
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
@@ -162,4 +164,5 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
             }
         }
     }
+
 }
