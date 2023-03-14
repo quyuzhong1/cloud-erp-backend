@@ -9,8 +9,8 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Description 产品销售信息表
@@ -105,15 +105,13 @@ public class ProductSaleEntity implements Serializable {
      * 上市时间
      */
     @TableField(value = "listing_time", fill = FieldFill.INSERT_UPDATE)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime listingTime;
+    private LocalDate listingTime;
 
     /**
      * 退市时间
      */
     @TableField(value = "delisting_time", fill = FieldFill.INSERT_UPDATE)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime delistingTime;
+    private LocalDate delistingTime;
 
     /**
      * 图片是否完成 1.是 2.否

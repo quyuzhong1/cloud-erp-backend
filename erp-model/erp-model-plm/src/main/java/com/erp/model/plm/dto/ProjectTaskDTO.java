@@ -10,8 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -81,14 +80,12 @@ public class ProjectTaskDTO  implements Serializable {
      * 计划开始时间
      */
 
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime planStartTime;
+    private LocalDate planStartTime;
 
     /**
      * 计划结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime planEndTime;
+    private LocalDate planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
