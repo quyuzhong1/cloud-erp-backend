@@ -126,7 +126,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         // 标准销售出库单
         queryFilters.add(StrUtil.format("FBillTypeID = '{}'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
         //300 B2B线下国内 301 B2B线下国外 3003 官网线上
-        queryFilters.add(StrUtil.format("F_ulz_BaseProperty2.FId in ('{}','{}','{}')", "300","301","3003"));
+        queryFilters.add(StrUtil.format("F_ulz_BaseProperty2.FNumber in ('{}','{}','{}')", "300","301","3003"));
         // 审核通过
         queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));
         String filterStr = String.join(" and ", queryFilters);
