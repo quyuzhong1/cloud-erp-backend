@@ -1,4 +1,4 @@
-package com.erp.server.scm.service.impl;
+package com.erp.server.wms.service.impl;
 
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;

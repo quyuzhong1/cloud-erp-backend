@@ -1,4 +1,4 @@
-package com.erp.server.scm.handler;
+package com.erp.server.wms.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;

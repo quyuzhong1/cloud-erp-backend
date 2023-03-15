@@ -31,11 +31,11 @@ import java.util.Scanner;
 @Slf4j
 public class MyBatisGeneratorRun {
     // 项目路径
-    private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-plm","");
+    private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-sys","");
     // 当前环境是否Windows
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
     // 数据库链接配置
-    static String MODEL = "plm";
+    static String MODEL = "scm";
     private static String DB_URL = StrUtil.format("jdbc:postgresql://172.16.100.12:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
     private static final String USER_NAME = "postgres";
     private static final String PASSWORD = "admin@viji";
@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"template_ref_property"};
+        String[] tables = new String[]{"scm_document"};
         autoGenerator(prefix, tables);
 
 

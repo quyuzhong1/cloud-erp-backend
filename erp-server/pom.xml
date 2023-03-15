@@ -23,6 +23,7 @@
         <module>erp-server-dmp</module>
         <module>erp-server-bi</module>
         <module>erp-server-wms</module>
+        <module>erp-server-scm</module>
     </modules>
     <dependencies>
         <dependency>

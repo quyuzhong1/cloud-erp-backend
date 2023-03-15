@@ -9,9 +9,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.erp.server</groupId>
-    <artifactId>erp-server-scm</artifactId>
+    <artifactId>erp-server-wms</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>erp-server-scm</name>
+    <name>erp-server-wms</name>
     <description>仓储系统</description>
 
     <properties>

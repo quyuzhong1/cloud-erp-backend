@@ -5,6 +5,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
+
+/**
+ * @author yl
+ */
 @Slf4j
 @SpringBootApplication(scanBasePackages = {"com.erp.*","com.common.*"})
 @EnableDiscoveryClient
@@ -12,7 +16,7 @@ public class ErpServerWmsApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ErpServerWmsApplication.class, args);
-        log.info("================ WMS 启动成功 ================");
+        log.info("================ SCM 启动成功 ================");
     }
 
 }
