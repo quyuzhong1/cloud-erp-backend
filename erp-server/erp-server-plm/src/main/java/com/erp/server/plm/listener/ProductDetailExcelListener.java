@@ -27,6 +27,7 @@ import com.erp.server.plm.service.ProductUnitService;
 import org.apache.commons.lang.StringUtils;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -279,11 +280,11 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
         productPurchaseDTO.setEan(dto.getEan());
         productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQtyStr()));
-        productPurchaseDTO.setPlaceOrderTime(LocalDateTime.parse(dto.getPlaceOrderTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        productPurchaseDTO.setPlanArrivalTime(LocalDateTime.parse(dto.getPlanArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoqStr()));
         productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycleStr()));
-        productPurchaseDTO.setActualArrivalTime(LocalDateTime.parse(dto.getActualArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         productPurchaseDTO.setArrivalState(purchaseState);
         if (purchaseUserList.size() > 0) {
             productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
