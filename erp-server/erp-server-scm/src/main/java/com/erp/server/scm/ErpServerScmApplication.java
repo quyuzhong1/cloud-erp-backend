@@ -1,4 +1,4 @@
-package com.erp.server.wms;
+package com.erp.server.scm;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;

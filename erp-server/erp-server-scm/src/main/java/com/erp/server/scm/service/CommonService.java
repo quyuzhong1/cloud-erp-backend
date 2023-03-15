@@ -1,4 +1,4 @@
-package com.erp.server.wms.service;
+package com.erp.server.scm.service;
 
 import com.common.business.vo.LoginUser;
 

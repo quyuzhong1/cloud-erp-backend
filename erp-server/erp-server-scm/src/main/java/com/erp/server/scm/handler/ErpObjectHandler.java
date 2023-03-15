@@ -1,9 +1,9 @@
-package com.erp.server.wms.handler;
+package com.erp.server.scm.handler;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.core.utils.MathUtil;
-import com.erp.server.wms.service.CommonService;
+import com.erp.server.scm.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
