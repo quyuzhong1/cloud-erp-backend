@@ -76,4 +76,6 @@ public class ScmPurchaseApplicationViewDTO implements Serializable {
      * 入库数量
      */
     private Integer inStockQty;
+
+
 }

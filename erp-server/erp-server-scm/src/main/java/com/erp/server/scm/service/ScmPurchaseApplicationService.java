@@ -1,0 +1,85 @@
+package com.erp.server.scm.service;
+
+import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationDTO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationSearchDTO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationViewDTO;
+import com.erp.model.scm.entity.ScmPurchaseApplicationEntity;
+import com.common.core.serveice.SuperService;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ * <p>
+ * 采购申请表 服务类
+ * </p>
+ *
+ * @author will
+ * @since 2023-03-15
+ */
+public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseApplicationEntity> {
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/3/15 18:07
+     * @param dto
+     * @return PagingVO<List<ScmPurchaseApplicationViewDTO>>
+     */
+    PagingVO<List<ScmPurchaseApplicationViewDTO>> paging(PagingDTO<ScmPurchaseApplicationSearchDTO> dto);
+    /**
+     * @description: 新增或者修改
+     * @author Will
+     * @date: 2023/3/15 18:09
+     * @param scmPurchaseApplicationDTO
+     * @return Boolean
+     */
+    Boolean addOrUpdateScmPurchaseApplication(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO);
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/3/15 18:20
+     * @param baseAuditParamDTO
+
+     */
+    void audit(BaseAuditParamDTO baseAuditParamDTO);
+    /**
+     * @description: 批量反审核
+     * @author Will
+     * @date: 2023/3/15 18:20
+     * @param ids
+     * @return Boolean
+     */
+    Boolean unAudit(List<String> ids);
+    /**
+     * @description: 生成采购单
+     * @author Will
+     * @date: 2023/3/15 18:26
+     * @param id
+     * @return Boolean
+     */
+    Boolean generatePurchaseOrder(String id);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/3/15 18:24
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/3/15 18:24
+     * @param scmPurchaseApplicationSearchDTO
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(ScmPurchaseApplicationSearchDTO scmPurchaseApplicationSearchDTO, HttpServletResponse response);
+
+
+}
