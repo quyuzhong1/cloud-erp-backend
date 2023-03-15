@@ -14,7 +14,10 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProjectInfoEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.server.plm.constant.ProductConstant;
@@ -196,7 +199,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
             if (StringUtils.isNotBlank(chargeId)) {
                 projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", Arrays.asList(chargeId));
-            }
+                }
             //记录产品状态更新时间
             projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), ProjectStateEnum.YES_START.getState());
             //更新产品规划的产品状态
@@ -445,6 +448,15 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         queryWrapper.in(ProjectInfoEntity::getProductId, productIdList);
         return this.list(queryWrapper);
 
+    }
+
+    @Override
+    public void updateChargeByProductId(String productId, String projectChargeId) {
+        String userName = commonService.getNameById(projectChargeId);
+        lambdaUpdate().eq(ProjectInfoEntity::getProductId,productId)
+                .set(ProjectInfoEntity::getChargeId,projectChargeId)
+                .set(ProjectInfoEntity::getChargeName,userName)
+                .update();
     }
 
     /**

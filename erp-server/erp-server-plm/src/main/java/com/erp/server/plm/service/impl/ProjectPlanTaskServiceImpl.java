@@ -335,10 +335,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             List<String> taskId = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             for (ProjectTaskEntity item : taskList) {
                 ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
-                entity.setChangeEndTime(item.getPlanEndTime());
-                entity.setChangeStartTime(item.getPlanStartTime());
-                entity.setOriginEndTime(item.getPlanEndTime());
-                entity.setOriginStartTime(item.getPlanStartTime());
+                entity.setChangeEndTime(item.getPlanEndTime().toLocalDate());
+                entity.setChangeStartTime(item.getPlanStartTime().toLocalDate());
+                entity.setOriginEndTime(item.getPlanEndTime().toLocalDate());
+                entity.setOriginStartTime(item.getPlanStartTime().toLocalDate());
                 entity.setProductId(productId);
                 entity.setProjectPlanId(projectPlanId);
                 entity.setTaskId(item.getId());
@@ -582,8 +582,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
             entity.setProjectPlanId(projectPlanId);
             entity.setOriginChargeId(item.getChargeId());
-            entity.setOriginStartTime(item.getPlanStartTime());
-            entity.setOriginEndTime(item.getPlanEndTime());
+            entity.setOriginStartTime(item.getPlanStartTime().toLocalDate());
+            entity.setOriginEndTime(item.getPlanEndTime().toLocalDate());
             entity.setTaskId(taskId);
             entity.setProductId(productId);
 
@@ -602,8 +602,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     entity.setIsRestart(changeTask.getIsRestart());
                 }
             } else {
-                entity.setChangeStartTime(item.getPlanStartTime());
-                entity.setChangeEndTime(item.getPlanEndTime());
+                entity.setChangeStartTime(item.getPlanStartTime().toLocalDate());
+                entity.setChangeEndTime(item.getPlanEndTime().toLocalDate());
                 entity.setChangeChargeId(item.getChargeId());
             }
 
@@ -772,12 +772,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             String taskId = item.getTaskId();
             ProjectTaskEntity taskEntity = taskList.stream().filter(t -> t.getId().equals(taskId)).findFirst().orElse(null);
             if (taskEntity != null) {
-                item.setOriginStartTime(taskEntity.getPlanStartTime());
-                item.setOriginEndTime(taskEntity.getPlanEndTime());
+                item.setOriginStartTime(taskEntity.getPlanStartTime().toLocalDate());
+                item.setOriginEndTime(taskEntity.getPlanEndTime().toLocalDate());
                 item.setOriginChargeId(taskEntity.getChargeId());
                 item.setChangeChargeId(taskEntity.getChargeId());
-                item.setChangeStartTime(taskEntity.getPlanStartTime());
-                item.setChangeEndTime(taskEntity.getPlanEndTime());
+                item.setChangeStartTime(taskEntity.getPlanStartTime().toLocalDate());
+                item.setChangeEndTime(taskEntity.getPlanEndTime().toLocalDate());
 
             }
         }

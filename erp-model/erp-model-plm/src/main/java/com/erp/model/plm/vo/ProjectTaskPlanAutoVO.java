@@ -83,10 +83,10 @@ public class ProjectTaskPlanAutoVO implements Serializable {
          */
         private LocalDate endDate;
 
-        public ScheduleDateVO(String id, LocalDateTime startTime, LocalDateTime endTime) {
+        public ScheduleDateVO(String id, LocalDate startTime, LocalDate endTime) {
             this.id = id;
-            this.startDate = startTime.toLocalDate();
-            this.endDate = endTime.toLocalDate();
+            this.startDate = startTime;
+            this.endDate = endTime;
 
         }
     }

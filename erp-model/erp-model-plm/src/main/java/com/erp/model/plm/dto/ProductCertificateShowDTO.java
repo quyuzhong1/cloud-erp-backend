@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -47,8 +47,7 @@ public class ProductCertificateShowDTO implements Serializable {
     /**
      * 证书有效期
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime certificateValidTime;
+    private LocalDate certificateValidTime;
 
     /**
      * 创建时间

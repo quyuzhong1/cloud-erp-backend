@@ -387,9 +387,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         List<String> taskIdList = planTaskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
 
         //最小计划开始时间
-        LocalDateTime minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
+        LocalDate minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
         //最大计划结束时间
-        LocalDateTime maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeEndTime).get();
+        LocalDate maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeEndTime).get();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         vo.setScheduleStartTine(dateTimeFormatter.format(minStartTime));
         vo.setScheduleEndTine(dateTimeFormatter.format(maxEndTime));
@@ -1008,12 +1008,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                projectTaskService.updateById(updateTaskEntity);
                endDate = updateTaskEntity.getPlanEndTime().toLocalDate();
                startDate = updateTaskEntity.getPlanStartTime().toLocalDate();
-               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime(), updateTaskEntity.getPlanEndTime()));
+               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime().toLocalDate(), updateTaskEntity.getPlanEndTime().toLocalDate()));
            }else {
                ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
                projectPlanTaskService.updateById(updateTaskEntity);
-               endDate = updateTaskEntity.getChangeEndTime().toLocalDate();
-               startDate = updateTaskEntity.getChangeStartTime().toLocalDate();
+               endDate = updateTaskEntity.getChangeEndTime();
+               startDate = updateTaskEntity.getChangeStartTime();
                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
            }
            // 对下一个节点进行排期
@@ -1064,12 +1064,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 projectTaskService.updateById(taskEntity);
                 planEndTime = taskEntity.getPlanEndTime().toLocalDate();
                 planStartTime = taskEntity.getPlanStartTime().toLocalDate();
-                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(taskEntity.getId(), taskEntity.getPlanStartTime(), taskEntity.getPlanEndTime()));
+                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(taskEntity.getId(), taskEntity.getPlanStartTime().toLocalDate(), taskEntity.getPlanEndTime().toLocalDate()));
             }else {
                 ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
                 projectPlanTaskService.updateById(updateTaskEntity);
-                planEndTime = updateTaskEntity.getChangeEndTime().toLocalDate();
-                planStartTime = updateTaskEntity.getChangeStartTime().toLocalDate();
+                planEndTime = updateTaskEntity.getChangeEndTime();
+                planStartTime = updateTaskEntity.getChangeStartTime();
                 sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(planTask.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
             }
             sonNodeSchedule(type,dateList,errorList,sucessList, exitList,dtoMap,taskIdMap,planTask.getId(), planStartTime,planEndTime);

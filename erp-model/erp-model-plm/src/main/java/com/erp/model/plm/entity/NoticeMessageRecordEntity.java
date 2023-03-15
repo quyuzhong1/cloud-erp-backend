@@ -6,8 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 消息通知记录表
@@ -73,8 +73,7 @@ public class NoticeMessageRecordEntity implements Serializable {
     /**
      *预计结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime planEndTime;
+    private LocalDate planEndTime;
     /**
      * 通知的用户id
      */

@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
-import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
@@ -145,7 +144,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //提交失败操作日志及定时任务
             log.error("提交失败",e);
-            insertFailureLog(platformEntity,map,"提交失败",e.getMessage(),type);
+            insertFailureLog(platformEntity,map,JSONObject.toJSONString(ids),e.getMessage(),type);
             return;
         }
         log.info("提交成功,数据Id = 【{}】", JSONObject.toJSONString(ids));
@@ -243,7 +242,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-        apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        apiPlmSyncLogDTO.setModuleType(type);
         apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
         apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
         apiPlmSyncLogDTO.setMsg(msg);
@@ -267,7 +266,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-        apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        apiPlmSyncLogDTO.setModuleType(type);
         apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
         apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
         apiPlmSyncLogDTO.setMsg(msg);

@@ -38,4 +38,13 @@ public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEnti
     List<ProjectTaskRefSkuEntity> listBySkuId(String skuId);
 
     void batchUpdate(String productId, List<String> taskIdList, List<String> refSkuIdList);
+    
+    /**
+     * 根据任务id 删除对应关系
+     * @author yl
+     * @date 2023-03-13 17:30
+     * @param taskId
+     * @return void
+     */
+    void removeTaskSkuRefByTaskId(String taskId);
 }

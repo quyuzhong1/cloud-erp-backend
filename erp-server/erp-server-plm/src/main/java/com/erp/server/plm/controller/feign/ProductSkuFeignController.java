@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller.feign;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
@@ -54,7 +55,7 @@ public class ProductSkuFeignController {
                 .eq(ProductSaleEntity::getSkuId, sku)
                 .oneOpt();
         if (productSaleEntity.isPresent()) {
-            productIdBySkuClean.setListingTime(productSaleEntity.get().getListingTime());
+            productIdBySkuClean.setListingTime(LocalDateTimeUtil.of(productSaleEntity.get().getListingTime()));
         }
         return productIdBySkuClean;
     }

@@ -1820,7 +1820,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        if (!ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(productDetailEntity.getStatus())) {
+        if (!ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(productDetailEntity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95117);
         }
         //验证必填信息
@@ -1828,36 +1828,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(str)) {
             throw new ServiceException(new ApiResult(1, str));
         }
-        //验证自动关联任务是否已全部完成
+
         List<ProjectTaskEntity> taskAllList = projectTaskService.listByProductId(productDetailEntity.getProductId());
+        //存在关联任务并且含配置表单的任务需要验证是否完成
         if (CollectionUtils.isNotEmpty(taskAllList)) {
-            long relatedCount = taskAllList.stream().filter(obj -> RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-            if (relatedCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95083);
-            }
-        }
-        //验证非自动关联任务是否已全部完成
-        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
-        //验证是否完成任务
-        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            //sku未完成
-            long skuNotFinish = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
-            if (skuNotFinish > 0) {
-                throw new ServiceException(ApiError.ERROR_95083);
-            }
-            //sku完成任务未完成
-            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(taskIds)) {
-                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-                    if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
+            List<String> taskIdList = taskAllList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            //配置表单信息
+            List<TaskRefSkuConfigEntity> configList = taskRefSkuConfigService.getByTaskIds(taskIdList);
+            
+            if (CollectionUtils.isNotEmpty(configList)) {
+                List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+
+                //验证自动关联任务是否已全部完成
+                long relatedCount = taskAllList.stream().filter(obj -> RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
+                if (relatedCount > 0) {
+                    throw new ServiceException(ApiError.ERROR_95083);
+                }
+    
+                //验证选择关联任务是否已全部完成
+                List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
+                if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
+                    //sku完成任务未完成
+                    List<String> taskIds = projectTaskRefSkuList.stream().distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(taskIds)) {
+                        List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
+                        if (CollectionUtils.isNotEmpty(taskList)) {
+                            long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
+                            if (count > 0) {
+                                throw new ServiceException(ApiError.ERROR_95083);
+                            }
+                        }
                     }
                 }
             }
         }
-
         //启动流程
         productDetailStartProcess(productDetailEntity);
 
@@ -2375,18 +2379,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //审核人1(产品经理)
             List<String> firstApproveIdList = new ArrayList<>();
             if (StringUtils.isBlank(productDetailEntity.getChargeId())) {
-                throw new ServiceException(ApiError.ERROR_95082);
+                throw new ServiceException(ApiError.ERROR_9030);
             }
             List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).distinct().collect(Collectors.toList());
             firstApproveIdList.addAll(firstApproveIds);
             //审核人2(产品经理上级)
             List<UserSuperiorDTO> superiorList = sysUserFeign.listSuperiorByUserIds(firstApproveIds);
             if (CollectionUtils.isEmpty(superiorList)) {
-                throw new ServiceException(ApiError.ERROR_95082);
+                throw new ServiceException(ApiError.ERROR_9039);
             }
             List<String> secondApproveIdList = superiorList.stream().filter(obj -> ChargeSuperiorEnum.DIRECT_SUPERIOR.getName().equals(obj.getSuperiorType())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(secondApproveIdList)) {
-                throw new ServiceException(ApiError.ERROR_95082);
+                throw new ServiceException(ApiError.ERROR_9034);
             }
             //审核人3(产品研发中心负责人、供应链中心负责人)
             String thirdDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
@@ -2418,7 +2422,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> deptNames = Arrays.stream(deptName.split(",")).distinct().collect(Collectors.toList());
         List<SysUserDeptDTO> list = sysUserFeign.getByDeptNames(deptNames);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95082);
+            throw new ServiceException(ApiResult.error(1,deptName.concat("，未找到直属上级")));
         }
         List<String> leadIds = list.stream().map(SysUserDeptDTO::getUid).distinct().collect(Collectors.toList());
         return leadIds;

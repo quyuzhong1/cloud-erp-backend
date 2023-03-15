@@ -509,7 +509,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             approvalList.forEach(obj -> obj.setCharges(String.join(",", obj.getChargeList())));
             List<TaskChargeDistributionEntity> taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
             setTaskChargeDistribution(taskChargeDistributionList, dto.getChargeIds(), entity.getTemplateId(), entity.getId(), MathUtil.TWO);
+        } else {
+            //删除交付文档的审核人
+            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO,entity.getId());
         }
+
         //保存交付文档
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
         //保存SKU配置 字段 关系表 当不关联的时候删除

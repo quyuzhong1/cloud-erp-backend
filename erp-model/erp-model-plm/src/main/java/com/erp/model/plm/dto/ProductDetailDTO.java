@@ -6,8 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @Description: 多规格sku信息请求参数
@@ -46,14 +45,12 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 计划上市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime planListingTime;
+    private LocalDate planListingTime;
 
     /**
      * 首批量产入库时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime firstMassProductDate;
+    private LocalDate firstMassProductDate;
 
     /**
      * 单位表id

@@ -1,13 +1,12 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,15 +52,13 @@ public class ProductDetailEntity implements Serializable {
      * 计划上市时间
      */
     @TableField(value = "plan_listing_time")
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime planListingTime;
+    private LocalDate planListingTime;
 
     /**
      * 首批量产入库时间
      */
     @TableField(value = "first_mass_product_date")
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime firstMassProductDate;
+    private LocalDate firstMassProductDate;
     
     /**
      * 单位表id

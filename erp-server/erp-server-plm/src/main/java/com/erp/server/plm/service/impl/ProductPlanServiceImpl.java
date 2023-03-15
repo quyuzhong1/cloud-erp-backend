@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.excel.util.DateUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -917,9 +916,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(firstMassProductList)) {
-            LocalDateTime firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
+            LocalDate firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
                     .map(ProductDetailEntity::getFirstMassProductDate).get();
-            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : firstMassProductDate.toLocalDate());
+            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : firstMassProductDate);
         }
         List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //查询销售信息最后的上市时间
@@ -927,9 +926,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isNotEmpty(productSaleList)) {
             productSaleList = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(productSaleList)) {
-                LocalDateTime listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
+                LocalDate listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
                         .map(ProductSaleEntity::getListingTime).get();
-                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null :listingTime.toLocalDate());
+                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null :listingTime);
             }
         }
     }

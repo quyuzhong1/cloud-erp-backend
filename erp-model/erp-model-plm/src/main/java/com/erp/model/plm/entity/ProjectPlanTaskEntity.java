@@ -44,19 +44,19 @@ public class ProjectPlanTaskEntity extends BaseEntity {
     /**
      * 源计划开始时间
      */
-    private LocalDateTime originStartTime;
+    private LocalDate originStartTime;
     /**
      * 源计划结束时间
      */
-    private LocalDateTime originEndTime;
+    private LocalDate originEndTime;
     /**
      * 变更后计划开始时间
      */
-    private LocalDateTime changeStartTime;
+    private LocalDate changeStartTime;
     /**
      * 变更后计划结束时间
      */
-    private LocalDateTime changeEndTime;
+    private LocalDate changeEndTime;
     /**
      * 项目变更表id
      */
@@ -92,8 +92,8 @@ public class ProjectPlanTaskEntity extends BaseEntity {
                 planWorkPeriod --;
             }
         }
-        this.changeStartTime = LocalDateTimeUtil.of(startDate);
-        this.changeEndTime = LocalDateTimeUtil.of(endDate);
+        this.changeStartTime = startDate;
+        this.changeEndTime = endDate;
     }
 
     public ProjectPlanTaskEntity(String taskId, LocalDate startDate, Integer workPeriod, List<LocalDate> dateList, Integer type) {
@@ -106,11 +106,11 @@ public class ProjectPlanTaskEntity extends BaseEntity {
             }
         }
         if(1 == type){
-            this.originStartTime = LocalDateTimeUtil.of(startDate);
-            this.originStartTime = LocalDateTimeUtil.of(endDate);
+            this.originStartTime = startDate;
+            this.originStartTime = endDate;
         }else {
-            this.changeStartTime = LocalDateTimeUtil.of(startDate);
-            this.changeEndTime = LocalDateTimeUtil.of(endDate);
+            this.changeStartTime = startDate;
+            this.changeEndTime = endDate;
         }
         this.workPeriod = workPeriod;
     }
@@ -121,8 +121,8 @@ public class ProjectPlanTaskEntity extends BaseEntity {
         Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
         Integer planWorkPeriod = task.getWorkPeriod();
         Map<String, LocalDate> resultMap = LocalDateUtil.relationshipLocalDate(relationship.getCode(), startDate, endDate, intervalWorkPeriod, planWorkPeriod, dateList);
-        this.changeStartTime = LocalDateTimeUtil.of(resultMap.get("startDate"));
-        this.changeEndTime = LocalDateTimeUtil.of(resultMap.get("endDate"));
+        this.changeStartTime = resultMap.get("startDate");
+        this.changeEndTime = resultMap.get("endDate");
     }
 }
 

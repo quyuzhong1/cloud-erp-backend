@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.util.DateUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -998,11 +999,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         //sku不关联
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
-
+        //是否关联
         boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
         //验证表单数据
         checkFieldConfig(dto);
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
+        String dbBusinessProcessId = taskEntity.getBusinessProcessId();
+        String parameterBusinessProcessId = dto.getBusinessProcessId();
+
+        //是否修改流程 true 是
+        boolean ifUpdateProcess = !dbBusinessProcessId.equals(parameterBusinessProcessId);
+
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -1037,7 +1044,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        String businessProcessId = taskEntity.getBusinessProcessId();
         String processId = taskEntity.getProcessId();
         BeanMapper.copy(dto, taskEntity);
         Integer priority = dto.getPriority();
@@ -1045,7 +1051,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setPriority(0);
         }
 
-        taskEntity.setBusinessProcessId(businessProcessId);
+        taskEntity.setBusinessProcessId(parameterBusinessProcessId);
         taskEntity.setProcessId(processId);
         LoginUser loginUser = commonService.getUserInfo();
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
@@ -1110,7 +1116,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //新增任务操作日志
         addProjectTaskDTOLog(dto, oldEntity, taskEntity.getId());
         //更新审核人
-        setTaskChargeDistributionEntity(dto, taskEntity);
+        setTaskChargeDistributionEntity(dto, taskEntity, ifUpdateProcess);
 
 
         boolean flag = this.updateById(taskEntity);
@@ -1124,11 +1130,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存SKU配置 字段 关系表 当不关联的时候删除
             if (!isNotRelated) {
                 taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+                //保存任务与SKU 关系表
+                projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
             } else {
+                projectTaskRefSkuService.removeTaskSkuRefByTaskId(taskEntity.getId());
                 taskRefSkuConfigService.removeTaskRefSkuByTaskId(taskEntity.getId());
             }
-            //保存任务与SKU 关系表
-            projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
+
 
             noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         }
@@ -2362,8 +2370,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         item.setChargeName(String.join(",", names));
                     }
 
-                    item.setPlanStartTime(planTask.getChangeStartTime());
-                    item.setPlanEndTime(planTask.getChangeEndTime());
+                    item.setPlanStartTime(LocalDateTimeUtil.of(planTask.getChangeStartTime()));
+                    item.setPlanEndTime(LocalDateTimeUtil.of(planTask.getChangeEndTime()));
                     item.setScheduleStatus(status);
                     //如果是重启
                     if (planTask.getIsRestart()) {
@@ -4542,7 +4550,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author Will
      * @date: 2023/2/28 15:34
      */
-    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity) {
+    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity, boolean ifUpdateProcess) {
         List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         if (CollectionUtils.isNotEmpty(approvalList)) {
@@ -4566,7 +4574,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         }
                     }
 
-                    if(CollectionUtils.isNotEmpty(chargeList)){
+                    if (CollectionUtils.isNotEmpty(chargeList)) {
                         taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                     }
                 }
@@ -4598,6 +4606,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                         }
                     }
+                }
+
+                //如果改了 流程就按人员
+                if (ifUpdateProcess) {
+                    if (CollectionUtils.isEmpty(chargeList)) {
+                        throw new ServiceException(ApiError.ERROR_95045);
+                    }
+                    taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
+                    taskChargeDistributionDTO.setCharges(String.join(",", chargeList));
+                    taskChargeDistributionDTO.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
                 }
             }
             taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, dto.getApprovalList());
