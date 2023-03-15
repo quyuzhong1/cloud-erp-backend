@@ -12,7 +12,7 @@ import java.util.Date;
 
 /**
  * <p>
- * 销售需求主表
+ * 采购申请表
  * </p>
  *
  * @author will
@@ -21,8 +21,8 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("scm_sales_demand")
-public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
+@TableName("scm_purchase_application")
+public class ScmPurchaseApplicationEntity extends BaseEntity<ScmPurchaseApplicationEntity> {
 
     /**
      * 审核状态 
@@ -72,36 +72,6 @@ public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
     @TableField("is_first_mass_product")
     private Boolean isFirstMassProduct;
 
-    /**
-     * 店铺id
-     */
-    @TableField("shop_id")
-    private String shopId;
-
-    /**
-     * 店铺名称
-     */
-    @TableField("shop_name")
-    private String shopName;
-
-    /**
-     * 备货原因
-     */
-    @TableField("reason")
-    private String reason;
-
-    /**
-     * 作废状态（0未作废，1已作废）
-     */
-    @TableField("invalid_status")
-    private String invalidStatus;
-
-    /**
-     * 作废时间
-     */
-    @TableField("invalid_time")
-    private Date invalidTime;
-
 
     public static final String AUDIT_STATUS = "audit_status";
 
@@ -118,16 +88,6 @@ public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
     public static final String APPLY_DEPT_NAME = "apply_dept_name";
 
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
-
-    public static final String SHOP_ID = "shop_id";
-
-    public static final String SHOP_NAME = "shop_name";
-
-    public static final String REASON = "reason";
-
-    public static final String INVALID_STATUS = "invalid_status";
-
-    public static final String INVAILD_TIME = "invaild_time";
 
     @Override
     public Serializable pkVal() {

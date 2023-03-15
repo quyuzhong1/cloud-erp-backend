@@ -94,7 +94,7 @@ public class ScmPurchaseOrderEntity extends BaseEntity<ScmPurchaseOrderEntity> {
      * 作废时间
      */
     @TableField("invaild_time")
-    private Date invaildTime;
+    private Date invalidTime;
 
     /**
      * 到货状态（0未到货，1部分到货，2已到货）
