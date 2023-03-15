@@ -1,0 +1,20 @@
+package com.erp.server.scm.service.impl;
+
+import com.common.core.serveice.SuperServiceImpl;
+import com.erp.model.scm.entity.ScmPurchaseApplicationDetailEntity;
+import com.erp.server.scm.mapper.ScmPurchaseApplicationDetailMapper;
+import com.erp.server.scm.service.ScmPurchaseApplicationDetailService;
+import org.springframework.stereotype.Service;
+
+/**
+ * <p>
+ *  服务实现类
+ * </p>
+ *
+ * @author will
+ * @since 2023-03-15
+ */
+@Service
+public class ScmPurchaseApplicationDetailServiceImpl extends SuperServiceImpl<ScmPurchaseApplicationDetailMapper, ScmPurchaseApplicationDetailEntity> implements ScmPurchaseApplicationDetailService {
+
+}

@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 公共附件表 前端控制器
+ *  前端控制器
  * </p>
  *
- * @author admin
+ * @author will
  * @since 2023-03-15
  */
 @RestController
-@RequestMapping("/scm-document-entity")
-public class ScmDocumentController extends BaseController {
+@RequestMapping("/scm-purchase-change-detail-entity")
+public class ScmPurchaseChangeDetailController extends BaseController {
 
 }

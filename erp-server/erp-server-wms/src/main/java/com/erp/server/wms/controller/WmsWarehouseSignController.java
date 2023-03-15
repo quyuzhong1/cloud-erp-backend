@@ -1,4 +1,4 @@
-package com.erp.server.scm.controller;
+package com.erp.server.wms.controller;
 
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,17 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 供应商表 前端控制器
+ * 仓库签收单 前端控制器
  * </p>
  *
- * @author yl
+ * @author will
  * @since 2023-03-15
  */
 @RestController
-@RequestMapping("/supplier")
-public class ScmSupplierController extends BaseController {
-
-
-
+@RequestMapping("/wms-warehouse-sign-entity")
+public class WmsWarehouseSignController extends BaseController {
 
 }

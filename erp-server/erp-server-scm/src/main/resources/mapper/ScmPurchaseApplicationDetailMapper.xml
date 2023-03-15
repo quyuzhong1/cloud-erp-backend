@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.ScmPurchaseApplicationDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.ScmPurchaseApplicationDetailEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="sku_id" property="skuId" />
+        <result column="sku_no" property="skuNo" />
+        <result column="product_name" property="productName" />
+        <result column="qty" property="qty" />
+        <result column="is_urgent" property="isUrgent" />
+        <result column="plan_delivery_date" property="planDeliveryDate" />
+        <result column="apply_qty" property="applyQty" />
+        <result column="dest_warehouse_id" property="destWarehouseId" />
+        <result column="dest_warehouse_name" property="destWarehouseName" />
+        <result column="purch_org_id" property="purchOrgId" />
+        <result column="purch_org_name" property="purchOrgName" />
+        <result column="receive_org_id" property="receiveOrgId" />
+        <result column="receive_org_name" property="receiveOrgName" />
+        <result column="real_purch_qty" property="realPurchQty" />
+        <result column="sign_qty" property="signQty" />
+        <result column="in_stock_qty" property="inStockQty" />
+        <result column="is_create_purch_order" property="isCreatePurchOrder" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+</mapper>

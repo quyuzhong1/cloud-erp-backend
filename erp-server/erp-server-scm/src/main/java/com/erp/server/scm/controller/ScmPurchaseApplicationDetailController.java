@@ -8,17 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 供应商表 前端控制器
+ *  前端控制器
  * </p>
  *
- * @author yl
+ * @author will
  * @since 2023-03-15
  */
 @RestController
-@RequestMapping("/supplier")
-public class ScmSupplierController extends BaseController {
-
-
-
+@RequestMapping("/scm-purchase-application-detail-entity")
+public class ScmPurchaseApplicationDetailController extends BaseController {
 
 }
