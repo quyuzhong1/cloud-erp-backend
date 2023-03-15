@@ -22,6 +22,7 @@
         <module>erp-server-plm</module>
         <module>erp-server-dmp</module>
         <module>erp-server-bi</module>
+        <module>erp-server-wms</module>
     </modules>
     <dependencies>
         <dependency>

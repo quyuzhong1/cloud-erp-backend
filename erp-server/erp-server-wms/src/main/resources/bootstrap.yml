@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: erp-sys
+  profiles:
+    active: dev
+server:
+  port: 9020
+
+logging:
+  config: classpath:logback-spring.xml
+
+
+
+
