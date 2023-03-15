@@ -1,0 +1,30 @@
+package com.erp.server.wms.service.impl;
+
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
+import com.erp.server.wms.service.CommonService;
+
+import java.util.Objects;
+
+/**
+ * @author yl
+ * @Classname CommonServiceImpl
+ * @Description TODO
+ * @Date 2023-03-15 11:50
+ * @Created by yl
+ */
+public class CommonServiceImpl  implements CommonService {
+    @Override
+    public LoginUser getUserInfo() {
+        String userId = "";
+        String userName = "";
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if (Objects.isNull(loginUser)) {
+            loginUser = new LoginUser();
+            loginUser.setUid(userId);
+            loginUser.setUserName(userName);
+            loginUser.setUserAccount("");
+        }
+        return loginUser;
+    }
+}
