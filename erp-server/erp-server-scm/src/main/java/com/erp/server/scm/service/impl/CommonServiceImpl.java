@@ -2,7 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
-import com.erp.server.wms.service.CommonService;
+import com.erp.server.scm.service.CommonService;
 
 import java.util.Objects;
 

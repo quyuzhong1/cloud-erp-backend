@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("scm_document")
-public class ScmDocumentEntity extends BaseEntity<ScmDocumentEntity> {
+@TableName("scm_attachment")
+public class ScmAttachmentEntity extends BaseEntity<ScmAttachmentEntity> {
 
     /**
      * 业务表id

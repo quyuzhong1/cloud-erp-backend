@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 供应商结算信息
+ * 供应商账户信息
  * </p>
  *
  * @author admin
@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("scm_supplier_settlement")
+@TableName("scm_supplier_account")
 public class ScmSupplierSettlementEntity extends BaseEntity<ScmSupplierSettlementEntity> {
 
     /**
@@ -29,23 +29,13 @@ public class ScmSupplierSettlementEntity extends BaseEntity<ScmSupplierSettlemen
     @TableField("supplier_id")
     private String supplierId;
 
-    /**
-     * 结算方式
-     */
-    @TableField("method")
-    private String method;
 
-    /**
-     * 币种
-     */
-    @TableField("currency")
-    private String currency;
 
     /**
      * 收款方
      */
-    @TableField("remittee")
-    private String remittee;
+    @TableField("payee")
+    private String payee;
 
     /**
      * 银行名称

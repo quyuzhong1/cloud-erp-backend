@@ -32,8 +32,8 @@ public class ScmSupplierContactEntity extends BaseEntity<ScmSupplierContactEntit
     /**
      * 联系人名
      */
-    @TableField("name")
-    private String name;
+    @TableField("person")
+    private String person;
 
     /**
      * 职位

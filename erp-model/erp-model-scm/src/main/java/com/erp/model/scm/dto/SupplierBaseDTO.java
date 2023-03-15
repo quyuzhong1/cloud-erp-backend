@@ -43,4 +43,36 @@ public class SupplierBaseDTO implements Serializable {
      * 采购员id
      */
     private String purchaseUserId;
+
+
+    /**
+     * 公司地址
+     */
+    @Size(max = 100,message = "最大50字符")
+    private String companyAddress;
+
+
+    /**
+     * 公司网址
+     */
+    @Size(max = 100,message = "最大50字符")
+    private String companyWebsite;
+
+
+    /**
+     * 结算付款方式
+     */
+    private String payMethod;
+
+    /**
+     * 结算付款币种
+     */
+    private String payCurrency;
+
+
+    /**
+     * true 启用   false 禁用
+     */
+    private Boolean openStatus;
+
 }

@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -30,17 +30,19 @@ public class ScmSupplierAptitudesEntity extends BaseEntity<ScmSupplierAptitudesE
     @TableField("name")
     private String name;
 
+
+
     /**
      * 有效开始时间
      */
     @TableField("valid_start_time")
-    private Date validStartTime;
+    private LocalDate validStartTime;
 
     /**
      * 有效结束时间
      */
     @TableField("valid_end_time")
-    private Date validEndTime;
+    private LocalDate validEndTime;
 
     /**
      * 供应商表id

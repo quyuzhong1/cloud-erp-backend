@@ -30,6 +30,13 @@ public class ScmSupplierEntity extends BaseEntity<ScmSupplierEntity> {
     private String name;
 
     /**
+     * 编号
+     */
+    @TableField("code")
+    private String code;
+
+
+    /**
      * 分类名
      */
     @TableField("category_name")
@@ -40,6 +47,20 @@ public class ScmSupplierEntity extends BaseEntity<ScmSupplierEntity> {
      */
     @TableField("category_id")
     private String categoryId;
+
+    /**
+     * 采购员id
+     */
+    @TableField("purchase_user_id")
+    private String purchaseUserId;
+
+
+    /**
+     * 采购员
+     */
+    @TableField("purchase_user_name")
+    private String purchaseUserName;
+
 
     /**
      * 生命周期
@@ -53,6 +74,14 @@ public class ScmSupplierEntity extends BaseEntity<ScmSupplierEntity> {
     @TableField("company_address")
     private String companyAddress;
 
+
+    /**
+     * 公司网址
+     */
+    @TableField("company_website")
+    private String companyWebsite;
+
+
     /**
      * 审核状态 
      */
@@ -60,10 +89,23 @@ public class ScmSupplierEntity extends BaseEntity<ScmSupplierEntity> {
     private String auditStatus;
 
     /**
-     * 禁用状态 true  禁用 false 
+     * 启用 状态 true 启用 false 禁用
      */
-    @TableField("disable_status")
-    private Boolean disableStatus;
+    @TableField("open_status")
+    private Boolean openStatus;
+
+
+    /**
+     * 付款方式
+     */
+    @TableField("pay_method")
+    private String payMethod;
+
+    /**
+     * 付款币种
+     */
+    @TableField("pay_currency")
+    private String payCurrency;
 
 
     public static final String NAME = "name";

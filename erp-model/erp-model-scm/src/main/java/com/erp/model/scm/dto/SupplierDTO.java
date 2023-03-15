@@ -3,10 +3,13 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 供应商信息
+ *
  * @author yl
  * @Classname SupplierDTO
  * @Description TODO
@@ -15,7 +18,27 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class SupplierDTO  implements Serializable {
+public class SupplierDTO implements Serializable {
 
-    private SupplierBaseDTO   supplierBase;
+
+    /**
+     * 供应商基础信息
+     */
+    @Valid
+    private SupplierBaseDTO supplierBase;
+
+    /**
+     * 供应商联系信息
+     */
+    private List<SupplierContactDTO> supplierContactList;
+
+    /**
+     * 供应商结算信息
+     */
+    private List<SupplierSettlementDTO> supplierSettlementList;
+
+    /**
+     * 供应商资质信息
+     */
+    private List<SupplierAptitudesDTO> supplierAptitudesList;
 }
