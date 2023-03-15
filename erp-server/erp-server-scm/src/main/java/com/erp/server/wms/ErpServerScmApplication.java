@@ -15,7 +15,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 public class ErpServerScmApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ErpServerWmsApplication.class, args);
+        SpringApplication.run(ErpServerScmApplication.class, args);
         log.info("================ SCM 启动成功 ================");
     }
 
