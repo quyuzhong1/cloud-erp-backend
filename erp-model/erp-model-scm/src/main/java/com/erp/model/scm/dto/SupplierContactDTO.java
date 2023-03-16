@@ -1,5 +1,7 @@
 package com.erp.model.scm.dto;
 
+import com.common.core.anno.RegularValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -37,11 +39,13 @@ public class SupplierContactDTO implements Serializable {
     /**
      * 电话
      */
+    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
     private String phone;
 
     /**
      * 邮箱
      */
+    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
     private String email;
 
     /**

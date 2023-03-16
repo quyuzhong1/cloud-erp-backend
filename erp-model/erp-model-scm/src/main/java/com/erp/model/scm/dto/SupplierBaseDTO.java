@@ -1,5 +1,7 @@
 package com.erp.model.scm.dto;
 
+import com.common.core.anno.RegularValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -38,6 +40,12 @@ public class SupplierBaseDTO implements Serializable {
     @NotBlank(message = "分类id不能为空")
     private String categoryId;
 
+    /**
+     * 等级id
+     */
+    @NotBlank(message = "等级id")
+    private String gradeId;
+
 
     /**
      * 采购员id
@@ -48,15 +56,23 @@ public class SupplierBaseDTO implements Serializable {
     /**
      * 公司地址
      */
-    @Size(max = 100,message = "最大50字符")
+    @Size(max = 100, message = "最大50字符")
     private String companyAddress;
 
 
     /**
      * 公司网址
      */
-    @Size(max = 100,message = "最大50字符")
+    @Size(max = 100, message = "最大50字符")
+    @RegularValid(formatPattern= FieldFormatPatternTypeEnum.URL,message = "网址有误")
     private String companyWebsite;
+
+
+    /**
+     * 生命周期
+     */
+    @NotBlank(message = "阶段不能为空")
+    private String phase;
 
 
     /**

@@ -30,15 +30,17 @@ public class SupplierDTO implements Serializable {
     /**
      * 供应商联系信息
      */
+    @Valid
     private List<SupplierContactDTO> supplierContactList;
 
     /**
      * 供应商结算信息
      */
-    private List<SupplierSettlementDTO> supplierSettlementList;
+    @Valid
+    private List<SupplierAccountDTO> supplierAccountList;
 
     /**
      * 供应商资质信息
      */
-    private List<SupplierAptitudesDTO> supplierAptitudesList;
+    private List<SupplierCredentialDTO> supplierAptitudesList;
 }
