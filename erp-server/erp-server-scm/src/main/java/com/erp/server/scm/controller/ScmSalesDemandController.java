@@ -60,18 +60,30 @@ public class ScmSalesDemandController extends BaseController {
     }
 
     /**
-     * 新增或修改
+     * 新增
      * @author Will
      * @date: 2023/3/15 17:34
      * @param scmSalesDemandDTO
      * @return ApiResult
      */
-    @PostMapping("/addOrUpdate")
-    public ApiResult addOrUpdate(@RequestBody @Validated ScmSalesDemandDTO scmSalesDemandDTO) {
-        Boolean flag = scmSalesDemandService.addOrUpdateScmSalesDemand(scmSalesDemandDTO);
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated ScmSalesDemandDTO scmSalesDemandDTO) {
+        Boolean flag = scmSalesDemandService.add(scmSalesDemandDTO);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 修改
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param scmSalesDemandDTO
+     * @return ApiResult
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated ScmSalesDemandDTO scmSalesDemandDTO) {
+        Boolean flag = scmSalesDemandService.update(scmSalesDemandDTO);
+        return flag == true ? success() : failure();
+    }
 
     /**
      * 查询详情
@@ -82,7 +94,7 @@ public class ScmSalesDemandController extends BaseController {
      */
     @GetMapping("/view")
     public ApiResult<ScmSalesDemandDTO> view(@Param("id") String id) {
-        ScmSalesDemandDTO scmSalesDemandDTO = scmSalesDemandService.viewScmSalesDemand(id);
+        ScmSalesDemandDTO scmSalesDemandDTO = scmSalesDemandService.view(id);
         return success(scmSalesDemandDTO);
     }
 
@@ -95,7 +107,7 @@ public class ScmSalesDemandController extends BaseController {
      */
     @PostMapping("/delete")
     public ApiResult delete(@RequestParam("id") String id) {
-        Boolean flag = scmSalesDemandService.removeById(id);
+        Boolean flag = scmSalesDemandService.delete(id);
         return flag == true ? success() : failure();
     }
 
@@ -114,7 +126,7 @@ public class ScmSalesDemandController extends BaseController {
     }
 
     /**
-     * 审核
+     * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
      * @param baseApproveParamDTO

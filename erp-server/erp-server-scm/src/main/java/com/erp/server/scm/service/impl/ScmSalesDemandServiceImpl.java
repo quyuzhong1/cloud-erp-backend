@@ -32,12 +32,17 @@ public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMa
     }
 
     @Override
-    public Boolean addOrUpdateScmSalesDemand(ScmSalesDemandDTO scmSalesDemandDTO) {
+    public Boolean add(ScmSalesDemandDTO scmSalesDemandDTO) {
         return null;
     }
 
     @Override
-    public ScmSalesDemandDTO viewScmSalesDemand(String id) {
+    public Boolean update(ScmSalesDemandDTO scmSalesDemandDTO) {
+        return null;
+    }
+
+    @Override
+    public ScmSalesDemandDTO view(String id) {
         return null;
     }
 
@@ -68,6 +73,11 @@ public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMa
 
     @Override
     public String getCode() {
+        return null;
+    }
+
+    @Override
+    public Boolean delete(String id) {
         return null;
     }
 }

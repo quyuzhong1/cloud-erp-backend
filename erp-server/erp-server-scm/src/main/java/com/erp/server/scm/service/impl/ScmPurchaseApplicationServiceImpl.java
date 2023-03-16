@@ -33,7 +33,12 @@ public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurch
     }
 
     @Override
-    public Boolean addOrUpdateScmPurchaseApplication(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO) {
+    public Boolean add(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO) {
+        return null;
+    }
+
+    @Override
+    public Boolean update(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO) {
         return null;
     }
 
@@ -64,6 +69,11 @@ public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurch
 
     @Override
     public String getCode() {
+        return null;
+    }
+
+    @Override
+    public Boolean delete(String id) {
         return null;
     }
 

@@ -56,17 +56,31 @@ public class ScmPurchaseApplicationController extends BaseController {
 
 
     /**
-     * 新增或修改
+     * 新增
      * @author Will
      * @date: 2023/3/15 17:34
      * @param scmPurchaseApplicationDTO
      * @return ApiResult
      */
-    @PostMapping("/addOrUpdate")
-    public ApiResult addOrUpdate(@RequestBody @Validated ScmPurchaseApplicationDTO scmPurchaseApplicationDTO) {
-        Boolean flag = scmPurchaseApplicationService.addOrUpdateScmPurchaseApplication(scmPurchaseApplicationDTO);
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated ScmPurchaseApplicationDTO scmPurchaseApplicationDTO) {
+        Boolean flag = scmPurchaseApplicationService.add(scmPurchaseApplicationDTO);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 修改
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param scmPurchaseApplicationDTO
+     * @return ApiResult
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated ScmPurchaseApplicationDTO scmPurchaseApplicationDTO) {
+        Boolean flag = scmPurchaseApplicationService.update(scmPurchaseApplicationDTO);
+        return flag == true ? success() : failure();
+    }
+
 
     /**
      * 获取申请单号
@@ -117,12 +131,12 @@ public class ScmPurchaseApplicationController extends BaseController {
      */
     @PostMapping("/delete")
     public ApiResult delete(@RequestParam("id") String id) {
-        Boolean flag = scmPurchaseApplicationService.removeById(id);
+        Boolean flag = scmPurchaseApplicationService.delete(id);
         return flag == true ? success() : failure();
     }
 
     /**
-     * @description: 生成采购单
+     * 生成采购单
      * @author Will
      * @date: 2023/3/15 18:26
      * @param id
