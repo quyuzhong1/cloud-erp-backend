@@ -18,7 +18,7 @@ import java.util.Date;
 @Data
 @TableName("sys_log")
 @Accessors(chain = true)
-public class SysLogEntity extends BaseEntity {
+public class SysLogEntity {
 
     private static final long serialVersionUID = 1L;
 
@@ -71,33 +71,40 @@ public class SysLogEntity extends BaseEntity {
     private String content;
 
     /**
+     * 主键
+     */
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
+
+
+    /**
      * 创建人id
      */
-    @TableField("create_user_id")
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
+    private String CreateUserName;
 
     /**
      * 创建时间
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    @TableField(value = "create_time" , fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
-     * 创建人
+     * 修改人id
      */
-    @TableField("create_user_name")
-    private String createUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField("update_user_id")
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
 
     /**
-     * 更新人
+     * 修改人名称
      */
-    @TableField("update_user_name")
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
 
     /**
@@ -105,6 +112,12 @@ public class SysLogEntity extends BaseEntity {
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    /**
+     * 乐观锁版本号
+     */
+    @Version
+    private Integer version;
 
     /**
      * 描述

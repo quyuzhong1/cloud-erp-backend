@@ -33,7 +33,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      * 创建人名称
      */
     @TableField(value = "create_user_name", fill = FieldFill.INSERT)
-    private String createUserName;
+    private String CreateUserName;
 
     /**
      * 创建时间
