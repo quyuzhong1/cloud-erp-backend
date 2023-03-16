@@ -9,22 +9,7 @@ spring:
         namespace: prod
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml,erp-third-party.yml
-#  mail:
-#    host: smtp.feishu.cn
-#    nickname: erp
-#    username: pm@ulanzi.cn
-#    password: 74F9yA8jWHZr3f4r
-#    default-encoding: utf-8
-#    properties:
-#      mail:
-#        smtp:
-#          socketFactory:
-#            class: javax.net.ssl.SSLSocketFactory
-#            port: 465
-#          auth: true
-#          starttls:
-#            enable: true
-#            required: true
+
 
 
 
