@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 供应商升降级
+ * 供应商等级表
  * </p>
  *
  * @author admin
@@ -24,37 +24,21 @@ import java.io.Serializable;
 public class ScmSupplierGradeEntity extends BaseEntity<ScmSupplierGradeEntity> {
 
     /**
-     * 供应商表id
+     * 名称
      */
-    @TableField("supplier_id")
-    private String supplierId;
+    @TableField("name")
+    private String name;
 
     /**
-     * 操作类型
+     * 排序
      */
-    @TableField("type")
-    private String type;
-
-    /**
-     * 当前等级
-     */
-    @TableField("current_grade")
-    private String currentGrade;
-
-    /**
-     * 目标等级
-     */
-    @TableField("target_grade")
-    private String targetGrade;
-
-    /**
-     * 审核状态 
-     */
-    @TableField("approve_status")
-    private String approveStatus;
+    @TableField("seq")
+    private Integer seq;
 
 
+    public static final String NAME = "name";
 
+    public static final String SEQ = "seq";
 
     @Override
     public Serializable pkVal() {
