@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.server.scm.service.ScmPurchaseApplicationService;
+import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -67,6 +68,18 @@ public class ScmPurchaseApplicationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 获取申请单号
+     * @author Will
+     * @date: 2023/3/16 10:52
+     * @return ApiResult
+     */
+    @GetMapping("/getCode")
+    public ApiResult getCode() {
+        String code = scmPurchaseApplicationService.getCode();
+        return success(code);
+    }
+
 
     /**
      * 审核
@@ -75,9 +88,9 @@ public class ScmPurchaseApplicationController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
-    @PostMapping("/audit")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        scmPurchaseApplicationService.audit(baseApproveParamDTO);
+    @PostMapping("/approve")
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        scmPurchaseApplicationService.approve(baseApproveParamDTO);
         return success();
     }
 
@@ -88,9 +101,9 @@ public class ScmPurchaseApplicationController extends BaseController {
      * @param ids
      * @return ApiResult
      */
-    @PostMapping("/unAudit")
+    @PostMapping("/unApprove")
     public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = scmPurchaseApplicationService.unAudit(ids);
+        Boolean flag = scmPurchaseApplicationService.unApprove(ids);
         return flag == true ? success() : failure();
     }
 

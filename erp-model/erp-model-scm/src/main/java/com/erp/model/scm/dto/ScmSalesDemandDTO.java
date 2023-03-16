@@ -80,4 +80,8 @@ public class ScmSalesDemandDTO implements Serializable {
     @Valid
     private List<ScmSalesDemandDetailDTO> details;
 
+    /**
+     * 操作日志（仅显示，无需传参）
+     */
+    private List<ScmModuleLogDTO> logs;
 }

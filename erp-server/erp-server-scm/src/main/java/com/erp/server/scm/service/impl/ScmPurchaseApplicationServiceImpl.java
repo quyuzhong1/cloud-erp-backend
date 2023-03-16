@@ -38,12 +38,12 @@ public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurch
     }
 
     @Override
-    public void audit(BaseApproveParamDTO baseApproveParamDTO) {
+    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
 
     }
 
     @Override
-    public Boolean unAudit(List<String> ids) {
+    public Boolean unApprove(List<String> ids) {
         return null;
     }
 
@@ -59,6 +59,11 @@ public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurch
 
     @Override
     public Boolean exportExcel(ScmPurchaseApplicationPagingParamDTO scmPurchaseApplicationPagingParamDTO, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public String getCode() {
         return null;
     }
 
