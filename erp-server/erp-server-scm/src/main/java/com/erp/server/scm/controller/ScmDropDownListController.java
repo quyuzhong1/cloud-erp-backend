@@ -37,5 +37,16 @@ public class ScmDropDownListController extends BaseController {
         return success(result);
     }
 
-
+    /**
+     * 作废状态下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/invalidStatus/list")
+    public ApiResult<List<BaseDropDownDTO>> listInvalidStatusDropDown() {
+        List<BaseDropDownDTO> result = Arrays.stream(ApproveStatusEnum.values())
+                .map(x -> new BaseDropDownDTO(x.getStatus(),x.getName(),""))
+                .collect(Collectors.toList());
+        return success(result);
+    }
 }
