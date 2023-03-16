@@ -70,7 +70,7 @@ public class GyyPullServiceTest {
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
-        jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 8, 10, 0));
+        jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 9, 8, 0));
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
