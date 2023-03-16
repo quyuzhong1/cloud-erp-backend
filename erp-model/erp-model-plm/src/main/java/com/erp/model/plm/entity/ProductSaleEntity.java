@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -21,50 +22,7 @@ import java.time.LocalDateTime;
  **/
 @TableName(value ="product_sale")
 @Data
-public class ProductSaleEntity implements Serializable {
-    /**
-     * 主键id
-     */
-    @TableId(value = "id")
-    private String id;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 修改人id
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value = "create_user_name")
-    private String createUserName;
-
-    /**
-     * 修改人名称
-     */
-    @TableField(value = "update_user_name")
-    private String updateUserName;
-
-
+public class ProductSaleEntity extends BaseEntity implements Serializable {
     /**
      * 产品sku表id
      */
@@ -104,14 +62,13 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 上市时间
      */
-    @TableField(value = "listing_time", fill = FieldFill.INSERT_UPDATE)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @TableField(value = "listing_time")
     private LocalDate listingTime;
 
     /**
      * 退市时间
      */
-    @TableField(value = "delisting_time", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "delisting_time")
     private LocalDate delistingTime;
 
     /**
@@ -155,8 +112,6 @@ public class ProductSaleEntity implements Serializable {
      */
     @TableField(value = "data_url")
     private String dataUrl;
-
-
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

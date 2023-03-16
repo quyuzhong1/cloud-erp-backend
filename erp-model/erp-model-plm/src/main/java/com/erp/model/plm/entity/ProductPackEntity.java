@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -15,12 +16,7 @@ import java.util.Date;
  **/
 @TableName(value ="product_pack")
 @Data
-public class ProductPackEntity implements Serializable {
-    /**
-     * 主键id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class ProductPackEntity extends BaseEntity implements Serializable {
 
     /**
      * 产品sku表id
@@ -63,42 +59,6 @@ public class ProductPackEntity implements Serializable {
      */
     @TableField(value = "box_qty", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal boxQty;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value = "create_user_name")
-    private String createUserName;
-
-    /**
-     * 修改人id
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
-
-    /**
-     * 修改人名称
-     */
-    @TableField(value = "update_user_name")
-    private String updateUserName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

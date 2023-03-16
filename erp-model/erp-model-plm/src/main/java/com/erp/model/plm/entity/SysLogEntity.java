@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -17,16 +18,9 @@ import java.util.Date;
 @Data
 @TableName("sys_log")
 @Accessors(chain = true)
-public class SysLogEntity {
-
+public class SysLogEntity extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 类路径
@@ -64,7 +58,6 @@ public class SysLogEntity {
     @TableField("old_value")
     private String oldValue;
 
-
     /**
      * 新值
      */
@@ -76,42 +69,6 @@ public class SysLogEntity {
      */
     @TableField("content")
     private String content;
-
-    /**
-     * 创建人id
-     */
-    @TableField("create_user_id")
-    private String createUserId;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 创建人
-     */
-    @TableField("create_user_name")
-    private String createUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField("update_user_id")
-    private String updateUserId;
-
-    /**
-     * 更新人
-     */
-    @TableField("update_user_name")
-    private String updateUserName;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
 
     /**
      * 描述

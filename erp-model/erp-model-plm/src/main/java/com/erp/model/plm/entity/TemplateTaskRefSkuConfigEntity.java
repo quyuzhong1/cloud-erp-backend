@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,12 +20,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("template_task_ref_sku_config")
-public class TemplateTaskRefSkuConfigEntity implements Serializable {
+public class TemplateTaskRefSkuConfigEntity extends BaseEntity implements Serializable {
     private static final long serialVersionUID = 443047567565109376L;
-    /**
-     * id
-     */
-    private String id;
+
     /**
      * 任务id
      */
@@ -41,18 +39,6 @@ public class TemplateTaskRefSkuConfigEntity implements Serializable {
      * 模板id
      */
     private String templateId;
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-
 
 }
 

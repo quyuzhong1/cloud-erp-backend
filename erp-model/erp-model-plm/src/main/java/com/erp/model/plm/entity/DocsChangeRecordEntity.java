@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 /**
@@ -13,13 +15,7 @@ import lombok.Data;
  */
 @TableName(value ="docs_change_log")
 @Data
-public class DocsChangeRecordEntity implements Serializable {
-    /**
-     * id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
+public class DocsChangeRecordEntity extends BaseEntity implements Serializable {
     /**
      * 任务id
      */
@@ -39,28 +35,6 @@ public class DocsChangeRecordEntity implements Serializable {
      * 变更流程id
      */
     private String processId;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 创建人id
-     */
-    private String createUserId;
-
-    /**
-     * 创建人名
-     */
-    private String createUserName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

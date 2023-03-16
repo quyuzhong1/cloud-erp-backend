@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,15 +27,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("task_finish_docs")
-public class TaskDocsFinishEntity implements Serializable {
+public class TaskDocsFinishEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 任务文档关联表id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 文件名
@@ -51,12 +46,6 @@ public class TaskDocsFinishEntity implements Serializable {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 创建时间
-     */
     @TableField(value = "file_type")
     private String fileType;
 
@@ -66,20 +55,8 @@ public class TaskDocsFinishEntity implements Serializable {
     @TableField(value = "file_suffix")
     private String fileSuffix;
 
-    /**
-     * 创建人
-     */
-    @TableField("create_user_name")
-    private String createUserName;
-
     @TableField("file_size")
     private Double fileSize;
-
-    /**
-     * 创建人id
-     */
-    @TableField("create_user_id")
-    private String createUserId;
 
     @TableField("task_id")
     private String taskId;
@@ -92,18 +69,6 @@ public class TaskDocsFinishEntity implements Serializable {
      */
     @TableField("product_id")
     private String productId;
-
-    /**
-     * 更改人id
-     */
-    @TableField("update_user_id")
-    private String updateUserId;
-
-    /**
-     * 更改人名
-     */
-    @TableField("update_user_name")
-    private String updateUserName;
 
     @TableField("upload_type")
     private Integer uploadType;

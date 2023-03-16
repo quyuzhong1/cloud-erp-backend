@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,12 +14,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="template_delivery_docs")
-public class TemplateDeliveryDocsEntity implements Serializable {
-    /**
-     * id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
+public class TemplateDeliveryDocsEntity extends BaseEntity implements Serializable {
 
     /**
      * 模板id
@@ -29,42 +25,6 @@ public class TemplateDeliveryDocsEntity implements Serializable {
      * 文档名
      */
     private String docsName;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 创建人
-     */
-    @TableField("create_user_name")
-    private String createUserName;
-
-    /**
-     * 创建人id
-     */
-    @TableField("create_user_id")
-    private String createUserId;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
-     * 更新人
-     */
-    @TableField("update_user_name")
-    private String updateUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField("update_user_id")
-    private String updateUserId;
 
     /**
      * 任务id
@@ -81,10 +41,5 @@ public class TemplateDeliveryDocsEntity implements Serializable {
      */
     private String docsNameId;
 
-
-
-
     private static final long serialVersionUID = 1L;
-
-
 }

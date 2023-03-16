@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,14 +18,7 @@ import java.util.Date;
 @TableName(value ="product_archive")
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class ProductArchiveEntity implements Serializable {
-
-    /**
-     *表id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
+public class ProductArchiveEntity extends BaseEntity implements Serializable {
     /**
      * 归档时间
      */
@@ -34,18 +28,6 @@ public class ProductArchiveEntity implements Serializable {
      * 产品id
      */
     private String productId;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
 
     /**
      * 操作人

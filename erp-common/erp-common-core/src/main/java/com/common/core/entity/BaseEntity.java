@@ -91,4 +91,10 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
         return this.id;
     }
 
+    public BaseEntity(String id) {
+        super();
+        if(null != id){
+            this.id = id;
+        }
+    }
 }

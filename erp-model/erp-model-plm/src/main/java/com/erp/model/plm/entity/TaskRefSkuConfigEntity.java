@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,13 +18,9 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("task_ref_sku_config")
-public class TaskRefSkuConfigEntity implements Serializable {
+public class TaskRefSkuConfigEntity extends BaseEntity implements Serializable {
     private static final long serialVersionUID = 942529455380352989L;
-    /**
-     * 表id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
+
     /**
      * 任务id
      */
@@ -48,28 +45,6 @@ public class TaskRefSkuConfigEntity implements Serializable {
      * 勾选字段后的json 字段
      */
     private String fieldJson;
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-    /**
-     * 创建人
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-    /**
-     * 更改人
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
-
-
 
 }
 

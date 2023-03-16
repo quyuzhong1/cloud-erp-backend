@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -22,15 +23,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("basic_category")
-public class BasicCategoryEntity implements Serializable {
+public class BasicCategoryEntity extends BaseEntity implements Serializable{
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 分类名
@@ -49,18 +44,4 @@ public class BasicCategoryEntity implements Serializable {
      */
     @TableField("pid")
     private String pid;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-
 }

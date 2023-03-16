@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import org.apache.ibatis.annotations.Result;
 
@@ -15,13 +16,7 @@ import java.util.Date;
  */
 @TableName(value = "notice_node")
 @Data
-public class NoticeNodeEntity implements Serializable {
-    /**
-     *
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
+public class NoticeNodeEntity extends BaseEntity implements Serializable {
     /**
      * 节点名称
      */
@@ -34,33 +29,9 @@ public class NoticeNodeEntity implements Serializable {
     private String nodeFlag;
 
     /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
      * 是否已添加 1 已添加 0  没有
      */
     private Integer existAdd;
-
-    /**
-     * 创建人
-     */
-    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
-    private String createUserId;
-
-    /**
-     * 更新人
-     */
-    @TableField(value = "update_user_id",fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

@@ -2,6 +2,7 @@ package com.erp.model.plm.entity;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.PlanTaskNameDTO;
 import com.erp.model.plm.dto.ProjectChildTaskDTO;
@@ -29,12 +30,9 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_task")
 @NoArgsConstructor
-public class ProjectTaskEntity implements Serializable {
+public class ProjectTaskEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 任务名
@@ -119,24 +117,11 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("description")
     private String description;
 
-
     /**
      * 项目Id
      */
     @TableField("project_id")
     private String projectId;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
 
     /**
      * 流程id
@@ -171,18 +156,6 @@ public class ProjectTaskEntity implements Serializable {
 
     @TableField("pid")
     private String pid;
-
-    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
-    private String createUserId;
-
-    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
-    private String createUserName;
-
-    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
-
-    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
-    private String updateUserName;
 
     //流程表id
     @TableField("business_process_id")
@@ -237,7 +210,7 @@ public class ProjectTaskEntity implements Serializable {
     private Integer workPeriod;
 
     public ProjectTaskEntity(String taskId, LocalDateTime realityStart, LocalDateTime realityEnd) {
-        this.id = taskId;
+        super(taskId);
         if(null != realityEnd){
             this.realityEndTime = realityEnd;
         }
@@ -247,13 +220,11 @@ public class ProjectTaskEntity implements Serializable {
     }
 
     public ProjectTaskEntity(String id, Integer workPeriod) {
-        this.id = id;
+        super(id);
         this.workPeriod = workPeriod;
     }
     public ProjectTaskEntity(PlanTaskNameDTO task, LocalDate startDate, List<LocalDate> dateList) {
-        if(null != task.getId()){
-            this.id = task.getId();
-        }
+        super(task.getId());
         Integer planWorkPeriod = task.getWorkPeriod();
         LocalDate endDate = startDate;
         while (planWorkPeriod > 1){
@@ -266,12 +237,11 @@ public class ProjectTaskEntity implements Serializable {
         this.planEndTime =  LocalDateTimeUtil.of(endDate);
     }
     public ProjectTaskEntity(PlanTaskNameDTO task, LocalDate startDate, LocalDate endDate, ProjectChildTaskDTO projectChildTaskDTO, List<LocalDate> dateList) {
-        this.id = task.getId();
+        super(task.getId());
         TaskRelationshipEnum relationship = projectChildTaskDTO.getRelationship();
         Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
         Integer planWorkPeriod = task.getWorkPeriod();
         Map<String, LocalDate> resultMap = LocalDateUtil.relationshipLocalDate(relationship.getCode(), startDate, endDate, intervalWorkPeriod, planWorkPeriod, dateList);
-
         this.planStartTime = LocalDateTimeUtil.of(resultMap.get("startDate"));
         this.planEndTime = LocalDateTimeUtil.of(resultMap.get("endDate"));
     }

@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,12 +20,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_template")
-public class ProjectTemplateEntity implements Serializable {
+public class ProjectTemplateEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 模板名
@@ -39,12 +37,6 @@ public class ProjectTemplateEntity implements Serializable {
     private String productId;
 
     /**
-     * 模板类型(1立项模板,2项目模板)
-     */
-//    @TableField("type")
-//    private Integer type;
-
-    /**
      * 模板状态(1启用，0禁用)
      */
     @TableField("status")
@@ -56,18 +48,6 @@ public class ProjectTemplateEntity implements Serializable {
 //    @TableField("is_default")
 //    private Integer isDefault;
 
-    /**
-     * 创建人
-     */
-    @TableField("create_user_name")
-    private String createUserName;
-
-    /**
-     * 创建人id
-     */
-    @TableField("create_user_id")
-    private String createUserId;
-
 
     /**
      * 产品属性id
@@ -75,29 +55,5 @@ public class ProjectTemplateEntity implements Serializable {
      */
 //    @TableField("product_property_id")
 //    private String productPropertyId;
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新人
-     */
-    @TableField("update_user_name")
-    private String updateUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField("update_user_id")
-    private String updateUserId;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
 
 }

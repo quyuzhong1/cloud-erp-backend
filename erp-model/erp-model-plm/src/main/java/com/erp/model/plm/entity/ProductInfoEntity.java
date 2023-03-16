@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -20,12 +21,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_info")
-public class ProductInfoEntity implements Serializable {
+public class ProductInfoEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 产品名
@@ -81,8 +79,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField("brand_name")
     private String brandName;
 
-
-
     /**
      * 立项状态 0 待规划 1 调研中  3：ID设计中  4::已立项  5：已终止
      */
@@ -101,13 +97,11 @@ public class ProductInfoEntity implements Serializable {
     @TableField("sys_field")
     private String sysField;
 
-
     /**
      * 产品属性id
      */
     @TableField("property_id")
     private String propertyId;
-
 
     /**
      * 品牌id
@@ -126,20 +120,6 @@ public class ProductInfoEntity implements Serializable {
 
     @TableField("type")
     private Integer type;
-
-
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
 
     /**
      * spu
@@ -189,7 +169,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField("sale_method")
     private String saleMethod;
 
-
     /**
      * 关联产品id
      */
@@ -197,40 +176,10 @@ public class ProductInfoEntity implements Serializable {
     private String relevanceProductId;
 
     /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value = "create_user_name")
-    private String createUserName;
-
-    /**
-     * 修改人id
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
-
-    /**
-     * 修改人名称
-     */
-    @TableField(value = "update_user_name")
-    private String updateUserName;
-
-    /**
      * 是否是产品开发管理的数据：1 是
      */
     @TableField(value = "is_finished_product_dev")
     private Integer isFinishedProductDev;
-
-    /**
-     * 版本
-     */
-    @TableField(value = "version")
-    private Integer version;
 
     /**
      * 委托开发成本
@@ -262,7 +211,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "sales_channel")
     private String salesChannel;
 
-
     /**
      * 示意图url
      */
@@ -276,13 +224,11 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "progress_status")
     private String progressStatus;
 
-
     /**
      * 项目经理
      */
     @TableField(value = "project_charge_id")
     private String projectChargeId;
-
 
     /**
      * 模板id

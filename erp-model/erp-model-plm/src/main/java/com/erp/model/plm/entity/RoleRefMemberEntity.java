@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -15,12 +16,7 @@ import java.util.Date;
 @TableName(value ="role_ref_members")
 @Data
 @Accessors(chain = true)
-public class RoleRefMemberEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class RoleRefMemberEntity extends BaseEntity implements Serializable {
 
     /**
      * 成员表id
@@ -33,19 +29,6 @@ public class RoleRefMemberEntity implements Serializable {
     private String roleId;
 
     private String productId;
-
-
-    /**
-     * 
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

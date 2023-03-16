@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,7 +18,7 @@ import java.util.Date;
 @TableName(value ="project_role")
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class ProjectRoleEntity implements Serializable {
+public class ProjectRoleEntity extends BaseEntity implements Serializable {
 
     /**
      *角色id
@@ -31,31 +32,14 @@ public class ProjectRoleEntity implements Serializable {
     private String name;
 
     /**
-     *
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     *
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    /**
      * 产品id
      */
     private String productId;
-
-
-
 
     /**
      * 项目id
      */
     private String projectId;
-
-
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
