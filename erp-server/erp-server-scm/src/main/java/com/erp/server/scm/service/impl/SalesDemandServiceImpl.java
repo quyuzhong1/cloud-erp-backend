@@ -80,4 +80,9 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public Boolean delete(String id) {
         return null;
     }
+
+    @Override
+    public Boolean commit(String id) {
+        return null;
+    }
 }

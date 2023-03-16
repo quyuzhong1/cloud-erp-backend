@@ -109,4 +109,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public Boolean exportExcel(PurchaseOrderPagingParamDTO purchaseOrderPagingParamDTO, HttpServletResponse response) {
         return null;
     }
+
+    @Override
+    public Boolean commit(String id) {
+        return null;
+    }
 }

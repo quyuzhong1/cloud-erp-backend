@@ -109,4 +109,12 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return Boolean
      */
     Boolean delete(String id);
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/3/16 16:10
+     * @param id
+     * @return Boolean
+     */
+    Boolean commit(String id);
 }

@@ -62,12 +62,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String declareName;
 
     /**
-     * 单箱数量
-     */
-    @TableField("unit_qty")
-    private Integer unitQty;
-
-    /**
      * 含税单价
      */
     @TableField("tax_price")
@@ -151,6 +145,37 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("tax_rate")
     private BigDecimal taxRate;
 
+    /**
+     * 签收数量
+     */
+    @TableField("receive_qty")
+    private Integer receiveQty;
+
+    /**
+     * 入库数量
+     */
+    @TableField("stock_in_qty")
+    private Integer stockInQty;
+
+
+    /**
+     * 交货数量
+     */
+    @TableField("delivery_qty")
+    private Integer deliveryQty;
+
+    /**
+     * 退货数量
+     */
+    @TableField("return_qty")
+    private Integer returnQty;
+
+    /**
+     * 是否加急（false否，true是）
+     */
+    @TableField("is_urgent")
+    private Boolean isUrgent;
+
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
@@ -163,8 +188,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String DECLARE_MODEL = "declare_model";
 
     public static final String DECLARE_NAME = "declare_name";
-
-    public static final String UNIT_QTY = "unit_qty";
 
     public static final String TAX_PRICE = "tax_price";
 
@@ -193,6 +216,17 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String ARRIVAL_TIME = "arrival_time";
 
     public static final String TAX_RATE = "tax_rate";
+
+    public static final String RECEIVE_QTY = "receive_qty";
+
+    public static final String STOCK_IN_QTY = "stock_in_qty";
+
+    public static final String DELIVERY_QTY = "delivery_qty";
+
+    public static final String RETURN_QTY = "return_qty";
+
+    public static final String IS_URGENT = "is_urgent";
+
 
     @Override
     public Serializable pkVal() {

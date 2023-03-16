@@ -123,6 +123,20 @@ public class PurchaseChangeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 提交
+     * @author Will
+     * @date: 2023/3/15 17:47
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/commit")
+    public ApiResult commit(@RequestParam("id") String id) {
+        Boolean flag = purchaseChangeService.commit(id);
+        return flag == true ? success() : failure();
+    }
+
     /**
      * 批量审核
      * @author Will

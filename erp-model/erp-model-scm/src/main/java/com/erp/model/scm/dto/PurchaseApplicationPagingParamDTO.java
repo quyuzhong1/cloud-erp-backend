@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +18,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class PurchaseApplicationPagingParamDTO implements Serializable {
+public class PurchaseApplicationPagingParamDTO extends SortDTO {
 
     /**
      * 审核状态

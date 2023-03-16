@@ -156,4 +156,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean exportExcel(PurchaseOrderPagingParamDTO purchaseOrderPagingParamDTO, HttpServletResponse response);
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/3/16 16:11
+     * @param id
+     * @return Boolean
+     */
+    Boolean commit(String id);
 }

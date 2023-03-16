@@ -4,48 +4,40 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2023/3/16 12:04
+ * @date 2023/3/16 15:49
  */
 @Data
 @NoArgsConstructor
-public class PurchaseChangePagingViewDTO implements Serializable {
+public class PurchaseChangeDetailDTO implements Serializable {
 
     /**
      * 主键id
      */
     private String id;
-    /**
-     * 变更单号
-     */
-    private String code;
 
     /**
-     * 采购订单号
+     * 采购变更单id
      */
-    private String purchaseOrderCode;
+    private String purchaseChangeId;
 
     /**
-     * 供应商名称
+     * 采购订单明细id
      */
-    private String supplierName;
+    private String purchaseOrderDetailId;
 
     /**
-     * 审核状态
+     * skuId
      */
-    private String approveStatus;
-
-    /**
-     * 作废状态（0未作废，1已作废）
-     */
-    private String invalidStatusName;
+    private String skuId;
 
     /**
      * sku编码
@@ -63,11 +55,6 @@ public class PurchaseChangePagingViewDTO implements Serializable {
     private Integer oldQty;
 
     /**
-     * 交货仓库名称
-     */
-    private String deliveryWarehouseName;
-
-    /**
      * 原含税单价
      */
     private BigDecimal oldPrice;
@@ -80,11 +67,13 @@ public class PurchaseChangePagingViewDTO implements Serializable {
     /**
      * 新采购数量
      */
+    @NotEmpty(message = "采购数量不能为空")
     private Integer qty;
 
     /**
      * 新含税单价
      */
+    @NotEmpty(message = "新含税单价不能为空")
     private BigDecimal price;
 
     /**
@@ -95,25 +84,6 @@ public class PurchaseChangePagingViewDTO implements Serializable {
     /**
      * 变更备注
      */
+    @Size(max = 255,message = "变更备注不能大于255字符")
     private String remark;
-
-    /**
-     * 变更人名称
-     */
-    private String changeUserName;
-
-    /**
-     * 审核人
-     */
-    private String approveUserName;
-
-    /**
-     * 创建人
-     */
-    private String createUserName;
-
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
 }

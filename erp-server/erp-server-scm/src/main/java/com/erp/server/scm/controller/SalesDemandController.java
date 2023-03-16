@@ -17,6 +17,8 @@ import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -126,6 +128,19 @@ public class SalesDemandController extends BaseController {
     }
 
     /**
+     * 提交
+     * @author Will
+     * @date: 2023/3/15 17:47
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/commit")
+    public ApiResult commit(@RequestParam("id") String id) {
+        Boolean flag = salesDemandService.commit(id);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
@@ -165,6 +180,50 @@ public class SalesDemandController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 导入
+     * @author Will
+     * @date: 2023/3/15 18:22
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/importFile")
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = salesDemandService.importFile(excelFile,response);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author Will
+     * @date: 22023/3/15 18:22
+     * @param request
+     * @param response
+     */
+    @GetMapping("/exportTemplate")
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/salesDemand.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
 
     /**
      * 导出
@@ -179,6 +238,7 @@ public class SalesDemandController extends BaseController {
         Boolean flag = salesDemandService.exportExcel(salesDemandPagingParamDTO, response);
         return flag == true ? success() : failure();
     }
+
 
 
 }

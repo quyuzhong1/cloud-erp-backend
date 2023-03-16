@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -110,6 +107,7 @@ public class PurchaseApplicationDetailDTO implements Serializable {
     /**
      * 备注
      */
+    @Size(max = 255,message = "备注不能大于255字符")
     private String remark;
 
 

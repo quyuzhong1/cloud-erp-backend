@@ -76,5 +76,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         return null;
     }
 
+    @Override
+    public Boolean commit(String id) {
+        return null;
+    }
+
 
 }

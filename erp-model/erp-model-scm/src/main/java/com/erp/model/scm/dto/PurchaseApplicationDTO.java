@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -61,6 +62,12 @@ public class PurchaseApplicationDTO implements Serializable {
      */
     @NotEmpty(message = "新品首批不能为空")
     private Boolean isFirstMassProduct;
+
+    /**
+     * 提交类型
+     */
+    @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
+    private String submitType;
 
     /**
      * 采购申请明细

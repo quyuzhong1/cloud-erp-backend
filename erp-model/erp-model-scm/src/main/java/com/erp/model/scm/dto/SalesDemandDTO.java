@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -71,6 +72,12 @@ public class SalesDemandDTO implements Serializable {
      */
     @Size(max = 255,message = "备货原因不能大于255字符")
     private String remark;
+
+    /**
+     * 提交类型
+     */
+    @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
+    private String submitType;
 
     /**
      * 产品信息

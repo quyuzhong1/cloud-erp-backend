@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: TODO
  * @date 2023/3/15 17:28
  */
-public enum AuditStatusEnum {
+public enum ApproveStatusEnum {
 
     WAIT_SUBMIT("waitSubmit", "待提交"),
     AUDIT_ING("auditIng", "审核中"),
@@ -18,7 +18,7 @@ public enum AuditStatusEnum {
     private String status;
     private String name;
 
-    AuditStatusEnum(String status, String name) {
+    ApproveStatusEnum(String status, String name) {
         this.status = status;
         this.name = name;
     }
@@ -33,7 +33,7 @@ public enum AuditStatusEnum {
 
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {
-            for (AuditStatusEnum item : AuditStatusEnum.values()) {
+            for (ApproveStatusEnum item : ApproveStatusEnum.values()) {
                 if (state.equals(item.getStatus())) {
                     return item.getName();
                 }

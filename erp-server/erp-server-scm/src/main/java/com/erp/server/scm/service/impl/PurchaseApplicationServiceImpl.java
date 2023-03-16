@@ -77,5 +77,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         return null;
     }
 
+    @Override
+    public Boolean commit(String id) {
+        return null;
+    }
+
 
 }

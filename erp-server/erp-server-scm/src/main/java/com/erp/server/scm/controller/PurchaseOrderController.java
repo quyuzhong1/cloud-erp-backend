@@ -119,6 +119,19 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 提交
+     * @author Will
+     * @date: 2023/3/15 17:47
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/commit")
+    public ApiResult commit(@RequestParam("id") String id) {
+        Boolean flag = purchaseOrderService.commit(id);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54
@@ -261,7 +274,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @GetMapping("/exportExcelTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/scmPurchaseOrder.xlsx";
+        String path = "classpath:excel/purchaseOrder.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
