@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 供应商资质表 前端控制器
+ * 供应商升降级 前端控制器
  * </p>
  *
  * @author admin
  * @since 2023-03-15
  */
 @RestController
-@RequestMapping("/scm-supplier-aptitudes-entity")
-public class ScmSupplierAptitudesController extends BaseController {
+@RequestMapping("/scm-supplier-relegation-entity")
+public class ScmSupplierGradeController extends BaseController {
 
 }

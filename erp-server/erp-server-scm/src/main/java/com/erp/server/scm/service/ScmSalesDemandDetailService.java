@@ -1,7 +1,7 @@
 package com.erp.server.scm.service;
 
-import com.erp.server.scm.entity.ScmSalesDemandDetailEntity;
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.entity.ScmSalesDemandDetailEntity;
 
 /**
  * <p>

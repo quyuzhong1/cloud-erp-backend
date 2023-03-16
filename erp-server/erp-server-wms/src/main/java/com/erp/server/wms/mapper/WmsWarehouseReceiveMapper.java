@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
-import com.erp.server.wms.entity.WmsWarehouseReceiveEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.entity.WmsWarehouseReceiveEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

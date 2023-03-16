@@ -8,11 +8,10 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * <p>
- * 供应商拜访表
+ * 供应商升降级
  * </p>
  *
  * @author admin
@@ -21,46 +20,38 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("scm_supplier_visit")
-public class ScmSupplierVisitEntity extends BaseEntity<ScmSupplierVisitEntity> {
+@TableName("scm_supplier_grade")
+public class ScmSupplierGradeEntity extends BaseEntity<ScmSupplierGradeEntity> {
 
     /**
-     * 供应商id
+     * 供应商表id
      */
     @TableField("supplier_id")
     private String supplierId;
 
     /**
-     * 类型
+     * 操作类型
      */
     @TableField("type")
     private String type;
 
     /**
-     * 拜访时间
+     * 当前等级
      */
-    @TableField("visit_time")
-    private Date visitTime;
+    @TableField("current_grade")
+    private String currentGrade;
 
     /**
-     * 拜访人
+     * 目标等级
      */
-    @TableField("people")
-    private String people;
-
-
+    @TableField("target_grade")
+    private String targetGrade;
 
     /**
-     * 内容
+     * 审核状态 
      */
-    @TableField("content")
-    private String content;
-
-    /**
-     * 结果
-     */
-    @TableField("result")
-    private String result;
+    @TableField("approve_status")
+    private String approveStatus;
 
 
 

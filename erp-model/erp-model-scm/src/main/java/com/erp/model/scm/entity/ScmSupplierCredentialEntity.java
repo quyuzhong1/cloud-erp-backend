@@ -21,8 +21,8 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("scm_supplier_aptitudes")
-public class ScmSupplierAptitudesEntity extends BaseEntity<ScmSupplierAptitudesEntity> {
+@TableName("scm_supplier_credential")
+public class ScmSupplierCredentialEntity extends BaseEntity<ScmSupplierCredentialEntity> {
 
     /**
      * 名称
@@ -35,14 +35,14 @@ public class ScmSupplierAptitudesEntity extends BaseEntity<ScmSupplierAptitudesE
     /**
      * 有效开始时间
      */
-    @TableField("valid_start_time")
-    private LocalDate validStartTime;
+    @TableField("effective_date")
+    private LocalDate effectiveDate;
 
     /**
-     * 有效结束时间
+     * 失效日期
      */
-    @TableField("valid_end_time")
-    private LocalDate validEndTime;
+    @TableField("expire_date")
+    private LocalDate expireDate;
 
     /**
      * 供应商表id
@@ -57,15 +57,7 @@ public class ScmSupplierAptitudesEntity extends BaseEntity<ScmSupplierAptitudesE
     private String remark;
 
 
-    public static final String NAME = "name";
 
-    public static final String VALID_START_TIME = "valid_start_time";
-
-    public static final String VALID_END_TIME = "valid_end_time";
-
-    public static final String SUPPLIER_ID = "supplier_id";
-
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

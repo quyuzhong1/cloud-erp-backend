@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
-import com.erp.server.wms.entity.WmsWarehouseReceiveEntity;
 import com.common.core.serveice.SuperService;
+import com.erp.model.wms.entity.WmsWarehouseReceiveEntity;
 
 /**
  * <p>

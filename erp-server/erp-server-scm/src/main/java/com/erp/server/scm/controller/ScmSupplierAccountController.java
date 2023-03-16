@@ -16,6 +16,6 @@ import com.common.core.controller.BaseController;
  */
 @RestController
 @RequestMapping("/scm-supplier-settlement-entity")
-public class ScmSupplierSettlementController extends BaseController {
+public class ScmSupplierAccountController extends BaseController {
 
 }

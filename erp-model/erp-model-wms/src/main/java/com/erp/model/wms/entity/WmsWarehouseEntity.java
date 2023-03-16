@@ -62,8 +62,8 @@ public class WmsWarehouseEntity extends BaseEntity<WmsWarehouseEntity> {
     /**
      * 联系人电话
      */
-    @TableField("contact_number")
-    private String contactNumber;
+    @TableField("contact_tel_number")
+    private String contactTelNumber;
 
     /**
      * 状态
@@ -80,37 +80,17 @@ public class WmsWarehouseEntity extends BaseEntity<WmsWarehouseEntity> {
     /**
      * 组织id 对应 核算公司表id
      */
-    @TableField("organization_id")
-    private String organizationId;
+    @TableField("org_id")
+    private String orgId;
 
     /**
      * 组织名称
      */
-    @TableField("organization_name")
-    private String organizationName;
+    @TableField("org_name")
+    private String orgName;
 
 
-    public static final String NAME = "name";
 
-    public static final String TYPE_ID = "type_id";
-
-    public static final String TYPE_NAME = "type_name";
-
-    public static final String CHARGE_ID = "charge_id";
-
-    public static final String CHARGE_NAME = "charge_name";
-
-    public static final String CONTACTS = "contacts";
-
-    public static final String CONTACT_NUMBER = "contact_number";
-
-    public static final String STATUS = "status";
-
-    public static final String ADDRESS = "address";
-
-    public static final String ORGANIZATION_ID = "organization_id";
-
-    public static final String ORGANIZATION_NAME = "organization_name";
 
     @Override
     public Serializable pkVal() {

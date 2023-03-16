@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("scm_supplier_account")
-public class ScmSupplierSettlementEntity extends BaseEntity<ScmSupplierSettlementEntity> {
+public class ScmSupplierAccountEntity extends BaseEntity<ScmSupplierAccountEntity> {
 
     /**
      * 供应商id
@@ -56,19 +56,22 @@ public class ScmSupplierSettlementEntity extends BaseEntity<ScmSupplierSettlemen
     private String remark;
 
 
-    public static final String SUPPLIER_ID = "supplier_id";
+    /**
+     * 支行
+     */
+    @TableField("bank_subbranch")
+    private String bankSubbranch;
 
-    public static final String METHOD = "method";
 
-    public static final String CURRENCY = "currency";
+    /**
+     * 支付方式
+     */
+    @TableField("pay_method")
+    private String payMethod;
 
-    public static final String REMITTEE = "remittee";
 
-    public static final String BANK_NAME = "bank_name";
 
-    public static final String BANK_ACCOUNT = "bank_account";
 
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -33,8 +33,8 @@ public class ScmPurchasePriceEntity extends BaseEntity<ScmPurchasePriceEntity> {
     /**
      * 审核状态 
      */
-    @TableField("audit_status")
-    private String auditStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 单据编号
@@ -46,48 +46,33 @@ public class ScmPurchasePriceEntity extends BaseEntity<ScmPurchasePriceEntity> {
      * 报价日期
      */
     @TableField("quoted_date")
-    private Date quotedDate;
+    private LocalDate quotedDate;
 
     /**
      * 报价人id
      */
-    @TableField("make_price_user_id")
-    private String makePriceUserId;
+    @TableField("pricing_user_id")
+    private String pricingUserId;
 
     /**
      * 报价人
      */
-    @TableField("make_price_user_name")
-    private String makePriceUserName;
+    @TableField("pricing_user_name")
+    private String pricingUserName;
 
     /**
      * 采购组织
      */
-    @TableField("purch_org_id")
-    private String purchOrgId;
+    @TableField("purchase_org_id")
+    private String purchaseOrgId;
 
     /**
      * 采购组织名
      */
-    @TableField("purch_org_name")
-    private String purchOrgName;
+    @TableField("purchase_org_name")
+    private String purchaseOrgName;
 
 
-    public static final String SUPPLIER_ID = "supplier_id";
-
-    public static final String AUDIT_STATUS = "audit_status";
-
-    public static final String CODE = "code";
-
-    public static final String QUOTED_DATE = "quoted_date";
-
-    public static final String MAKE_PRICE_USER_ID = "make_price_user_id";
-
-    public static final String MAKE_PRICE_USER_NAME = "make_price_user_name";
-
-    public static final String PURCH_ORG_ID = "purch_org_id";
-
-    public static final String PURCH_ORG_NAME = "purch_org_name";
 
     @Override
     public Serializable pkVal() {

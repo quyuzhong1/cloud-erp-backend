@@ -1,7 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
-import com.erp.model.scm.entity.ScmSupplierRelegationEntity;
+import com.erp.model.scm.entity.ScmSupplierGradeEntity;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.erp.model.scm.entity.ScmSupplierRelegationEntity;
  * @author admin
  * @since 2023-03-15
  */
-public interface ScmSupplierRelegationService extends SuperService<ScmSupplierRelegationEntity> {
+public interface ScmSupplierGradeService extends SuperService<ScmSupplierGradeEntity> {
 
 }

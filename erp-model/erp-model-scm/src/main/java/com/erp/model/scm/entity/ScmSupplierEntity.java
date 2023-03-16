@@ -85,8 +85,8 @@ public class ScmSupplierEntity extends BaseEntity<ScmSupplierEntity> {
     /**
      * 审核状态 
      */
-    @TableField("audit_status")
-    private String auditStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 启用 状态 true 启用 false 禁用
@@ -108,19 +108,6 @@ public class ScmSupplierEntity extends BaseEntity<ScmSupplierEntity> {
     private String payCurrency;
 
 
-    public static final String NAME = "name";
-
-    public static final String CATEGORY_NAME = "category_name";
-
-    public static final String CATEGORY_ID = "category_id";
-
-    public static final String LIFE_CYCLE = "life_cycle";
-
-    public static final String COMPANY_ADDRESS = "company_address";
-
-    public static final String AUDIT_STATUS = "audit_status";
-
-    public static final String DISABLE_STATUS = "disable_status";
 
     @Override
     public Serializable pkVal() {

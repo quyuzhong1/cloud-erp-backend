@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
+ * @author Administrator
  * @Classname UpdateStateDTO
  * @Description TODO
  * @Date 2022-11-07 14:58

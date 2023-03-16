@@ -16,6 +16,6 @@ import com.common.core.controller.BaseController;
  */
 @RestController
 @RequestMapping("/scm-purchase-product-detail-entity")
-public class ScmPurchaseProductDetailController extends BaseController {
+public class ScmPurchasePriceDetailController extends BaseController {
 
 }

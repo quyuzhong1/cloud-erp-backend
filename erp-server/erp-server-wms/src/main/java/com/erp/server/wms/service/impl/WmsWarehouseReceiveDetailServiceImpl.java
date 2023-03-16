@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
-import com.erp.server.wms.entity.WmsWarehouseReceiveDetailEntity;
+import com.common.core.serveice.SuperServiceImpl;
+import com.erp.model.wms.entity.WmsWarehouseReceiveDetailEntity;
 import com.erp.server.wms.mapper.WmsWarehouseReceiveDetailMapper;
 import com.erp.server.wms.service.WmsWarehouseReceiveDetailService;
-import com.common.core.serveice.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

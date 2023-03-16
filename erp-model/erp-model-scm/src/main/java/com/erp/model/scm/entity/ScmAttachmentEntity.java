@@ -35,8 +35,20 @@ public class ScmAttachmentEntity extends BaseEntity<ScmAttachmentEntity> {
     @TableField("type")
     private String type;
 
+    /**
+     * 附件url
+     */
+    @TableField("attach_url")
+    private String attachUrl;
 
-    public static final String BUSINESS_ID = "business_id";
+    /**
+     * 附件id
+     */
+    @TableField("attach_id")
+    private String attachId;
+
+
+    static final String BUSINESS_ID = "business_id";
 
     public static final String TYPE = "type";
 
