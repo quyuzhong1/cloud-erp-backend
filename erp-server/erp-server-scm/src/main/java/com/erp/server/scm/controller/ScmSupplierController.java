@@ -1,7 +1,7 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -91,7 +91,7 @@ public class ScmSupplierController extends BaseController {
      * @return
      */
     @PostMapping("/audit")
-    public ApiResult audit(@RequestBody @Validated BaseAuditParamDTO dto) {
+    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         return success();
     }
 

@@ -1,9 +1,9 @@
 package com.erp.server.scm.service.impl;
 
-import com.erp.server.scm.entity.ScmPurchaseOrderDetailEntity;
+import com.common.core.serveice.SuperServiceImpl;
+import com.erp.model.scm.entity.ScmPurchaseOrderDetailEntity;
 import com.erp.server.scm.mapper.ScmPurchaseOrderDetailMapper;
 import com.erp.server.scm.service.ScmPurchaseOrderDetailService;
-import com.common.core.serveice.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

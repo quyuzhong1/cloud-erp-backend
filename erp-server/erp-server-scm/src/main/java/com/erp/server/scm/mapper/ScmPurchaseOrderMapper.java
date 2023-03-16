@@ -1,7 +1,7 @@
 package com.erp.server.scm.mapper;
 
-import com.erp.server.scm.entity.ScmPurchaseOrderEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.scm.entity.ScmPurchaseOrderEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
