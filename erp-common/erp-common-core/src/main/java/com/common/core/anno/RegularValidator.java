@@ -1,9 +1,11 @@
 package com.common.core.anno;
 
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -28,6 +30,9 @@ public class RegularValidator implements ConstraintValidator<RegularValid, Objec
 
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext constraintValidatorContext) {
+        if (Objects.isNull(value) || StringUtils.isBlank(value.toString())) {
+            return true;
+        }
         switch (formatPattern) {
             //手机号
             case FieldFormatPatternTypeEnum.MOBILE:

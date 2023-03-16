@@ -36,15 +36,32 @@ public class SupplierPagingViemDTO implements Serializable {
 
 
     /**
-     * 生命周期
+     * 阶段
      */
-    private String lifeCycle;
+    private String phase;
 
+
+    /**
+     * 分类id
+     */
+    private String categoryId;
 
     /**
      * 分类名
      */
     private String categoryName;
+
+
+    /**
+     * 等级id
+     */
+    private String gradeId;
+
+
+    /**
+     * 等级名
+     */
+    private String gradeName;
 
     /**
      * 启用 状态 true 启用 false 禁用

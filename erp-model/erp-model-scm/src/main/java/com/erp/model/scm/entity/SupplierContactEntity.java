@@ -72,21 +72,7 @@ public class SupplierContactEntity extends BaseEntity<SupplierContactEntity> {
     private String remark;
 
 
-    public static final String SUPPLIER_ID = "supplier_id";
 
-    public static final String NAME = "name";
-
-    public static final String POSITION = "position";
-
-    public static final String PHONE = "phone";
-
-    public static final String EMAIL = "email";
-
-    public static final String IS_DEFAULT = "is_default";
-
-    public static final String OPEN_STATUS = "open_status";
-
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -2,7 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
-import com.erp.server.scm.mapper.ScmSupplierCredentialMapper;
+import com.erp.server.scm.mapper.SupplierCredentialMapper;
 import com.erp.server.scm.service.ScmSupplierCredentialService;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-03-15
  */
 @Service
-public class ScmSupplierCredentialServiceImpl extends SuperServiceImpl<ScmSupplierCredentialMapper, SupplierCredentialEntity> implements ScmSupplierCredentialService {
+public class ScmSupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCredentialMapper, SupplierCredentialEntity> implements ScmSupplierCredentialService {
 
 }

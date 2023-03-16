@@ -39,7 +39,7 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
      * 当前阶段
      */
     @TableField("current_phase")
-    private String currentGrade;
+    private String currentPhase;
 
     /**
      * 目标阶段
@@ -53,6 +53,12 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
     @TableField("approve_status")
     private String approveStatus;
 
+
+    /**
+     * 说明
+     */
+    @TableField("description")
+    private String description;
 
 
 

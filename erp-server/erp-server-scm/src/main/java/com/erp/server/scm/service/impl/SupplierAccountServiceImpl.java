@@ -2,7 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.server.scm.mapper.ScmSupplierAccountMapper;
+import com.erp.server.scm.mapper.SupplierAccountMapper;
 import com.erp.server.scm.service.SupplierAccountService;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-03-15
  */
 @Service
-public class SupplierAccountServiceImpl extends SuperServiceImpl<ScmSupplierAccountMapper, SupplierAccountEntity> implements SupplierAccountService {
+public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccountMapper, SupplierAccountEntity> implements SupplierAccountService {
 
 }

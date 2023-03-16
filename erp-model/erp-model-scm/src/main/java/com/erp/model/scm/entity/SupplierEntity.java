@@ -49,6 +49,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     private String categoryId;
 
     /**
+     * 等级id
+     */
+    @TableField("grade_id")
+    private String gradeId;
+
+    /**
      * 采购员id
      */
     @TableField("purchase_user_id")
@@ -63,10 +69,10 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
 
 
     /**
-     * 生命周期
+     * 阶段
      */
-    @TableField("life_cycle")
-    private String lifeCycle;
+    @TableField("phase")
+    private String phase;
 
     /**
      * 公司地址
@@ -83,7 +89,7 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
 
 
     /**
-     * 审核状态 
+     * 审核状态
      */
     @TableField("approve_status")
     private String approveStatus;
@@ -106,7 +112,6 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("pay_currency")
     private String payCurrency;
-
 
 
     @Override
