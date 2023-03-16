@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("wms_warehouse_receive_detail")
-public class WmsWarehouseReceiveDetailEntity extends BaseEntity<WmsWarehouseReceiveDetailEntity> {
+public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDetailEntity> {
 
     /**
      * 签收状态（0待签收，1签收中，2已完成）

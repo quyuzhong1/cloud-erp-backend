@@ -22,7 +22,7 @@ import java.util.Date;
 @Setter
 @Accessors(chain = true)
 @TableName("wms_warehouse_receive")
-public class WmsWarehouseReceiveEntity extends BaseEntity<WmsWarehouseReceiveEntity> {
+public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
 
     /**
      * 签收状态（0待签收，1签收中，2已完成

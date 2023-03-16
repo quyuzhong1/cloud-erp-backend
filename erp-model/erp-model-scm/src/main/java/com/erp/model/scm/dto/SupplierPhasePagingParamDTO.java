@@ -1,13 +1,14 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
- * 供应商分页 入参
+ * 供应商阶段分页 入参
  * @author Lambda
  * @Classname SupplierPagingParamDTO
  * @Description TODO
@@ -16,8 +17,11 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class SupplierPagingParamDTO  extends SortDTO {
+public class SupplierPhasePagingParamDTO extends SortDTO {
 
+
+    @StateEnumValue(strValues = {"all","waitAudit"}, message = "搜索类型有误")
+    private String searchType;
 
     /**
      * 供应商名
@@ -32,7 +36,7 @@ public class SupplierPagingParamDTO  extends SortDTO {
 
 
     /**
-     * 阶段
+     * 阶段列表
      */
     private List<String> phaseList;
 

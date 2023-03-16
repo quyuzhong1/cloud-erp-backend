@@ -7,9 +7,9 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.SupplierPagingParamDTO;
-import com.erp.model.scm.dto.SupplierPagingViemDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
+import com.erp.model.scm.dto.SupplierPhasePagingParamDTO;
+import com.erp.model.scm.dto.SupplierPhasePagingViewDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,7 +35,7 @@ public class SupplierPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SupplierPagingViemDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPagingParamDTO> dto) {
+    public ApiResult<PagingVO<SupplierPhasePagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPhasePagingParamDTO> dto) {
         return success();
     }
 

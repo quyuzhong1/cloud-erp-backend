@@ -16,6 +16,6 @@ import com.common.core.controller.BaseController;
  */
 @RestController
 @RequestMapping("/wms-warehouse-receive-detail-entity")
-public class WmsWarehouseReceiveDetailController extends BaseController {
+public class WarehouseReceiveDetailController extends BaseController {
 
 }

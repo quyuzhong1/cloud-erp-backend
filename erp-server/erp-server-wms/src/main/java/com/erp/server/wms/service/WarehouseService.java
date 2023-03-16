@@ -2,7 +2,7 @@ package com.erp.server.wms.service;
 
 
 import com.common.core.serveice.SuperService;
-import com.erp.model.wms.entity.WmsWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 
 /**
  * <p>
@@ -12,6 +12,6 @@ import com.erp.model.wms.entity.WmsWarehouseEntity;
  * @author will
  * @since 2023-03-15
  */
-public interface WmsWarehouseService extends SuperService<WmsWarehouseEntity> {
+public interface WarehouseService extends SuperService<WarehouseEntity> {
 
 }

@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.WmsWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-03-15
  */
 @Mapper
-public interface WmsWarehouseMapper extends BaseMapper<WmsWarehouseEntity> {
+public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
 
 }

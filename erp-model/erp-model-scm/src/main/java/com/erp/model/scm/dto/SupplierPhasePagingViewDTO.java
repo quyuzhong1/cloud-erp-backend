@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 供应商阶段分页展示数据
@@ -27,4 +28,58 @@ public class SupplierPhasePagingViewDTO implements Serializable {
      * 供应商表id
      */
     private String SupplierId;
+
+
+    /**
+     * 分类id
+     */
+    private String categoryId;
+
+    /**
+     * 分类名
+     */
+    private String categoryName;
+
+    /**
+     * 操作类型
+     */
+    private String type;
+
+    /**
+     * 当前阶段
+     */
+    private String currentPhase;
+
+
+    /**
+     * 目标阶段
+     */
+    private String targetPhase;
+
+    /**
+     * 说明
+     */
+    private String description;
+
+    /**
+     * 审核状态
+     */
+    private String approveStatus;
+
+    /**
+     * 创建人id
+     */
+    private String createUserName;
+
+    /**
+     * 审核人
+     */
+    private String approvedBy;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+
 }

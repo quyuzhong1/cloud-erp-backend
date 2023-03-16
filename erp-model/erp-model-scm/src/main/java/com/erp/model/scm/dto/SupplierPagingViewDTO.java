@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class SupplierPagingViemDTO implements Serializable {
+public class SupplierPagingViewDTO implements Serializable {
 
     /**
      * 供应商表id

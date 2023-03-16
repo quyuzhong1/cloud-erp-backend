@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("wms_warehouse")
-public class WmsWarehouseEntity extends BaseEntity<WmsWarehouseEntity> {
+public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
 
     /**
      * 名称
