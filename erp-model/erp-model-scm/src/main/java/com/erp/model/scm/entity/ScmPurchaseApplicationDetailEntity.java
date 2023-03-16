@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -23,6 +24,12 @@ import java.util.Date;
 @Accessors(chain = true)
 @TableName("scm_purchase_application_detail")
 public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseApplicationDetailEntity> {
+
+    /**
+     * 采购申请id
+     */
+    @TableField("purchase_application_id")
+    private String purchaseApplicationId;
 
     /**
      * skuId
@@ -58,7 +65,7 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
      * 计划交期
      */
     @TableField("plan_delivery_date")
-    private Date planDeliveryDate;
+    private LocalDate planDeliveryDate;
 
     /**
      * 申请数量
@@ -121,10 +128,10 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
     private Integer stockInQty;
 
     /**
-     * 是否生成采购订单（false否，true是）
+     * 采购订单生成状态（0未生成，1部分生成，2已生成
      */
-    @TableField("is_create_po")
-    private Boolean isCreatePo;
+    @TableField("create_po_type")
+    private Boolean createPoType;
 
     /**
      * 备注
@@ -132,6 +139,7 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
     @TableField("remark")
     private String remark;
 
+    public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
     public static final String SKU_ID = "sku_id";
 

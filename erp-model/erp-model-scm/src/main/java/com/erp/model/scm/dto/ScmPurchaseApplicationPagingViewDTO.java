@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -55,7 +57,7 @@ public class ScmPurchaseApplicationPagingViewDTO implements Serializable {
     /**
      * 计划交期
      */
-    private Date planDeliveryDate;
+    private LocalDate planDeliveryDate;
 
     /**
      * 申请数量
@@ -81,5 +83,25 @@ public class ScmPurchaseApplicationPagingViewDTO implements Serializable {
      * 目的仓库名称
      */
     private String destWarehouseName;
+
+    /**
+     * 备注
+     */
+    private String remark;
+
+    /**
+     * 审核人
+     */
+    private String approveUserName;
+
+    /**
+     * 创建人
+     */
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 
 }

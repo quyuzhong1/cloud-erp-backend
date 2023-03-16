@@ -4,25 +4,32 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2023/3/15 17:36
+ * @date 2023/3/16 10:34
  */
 @Data
 @NoArgsConstructor
-public class ScmSalesDemandDetailDTO implements Serializable {
+public class ScmPurchaseApplicationDetailDTO  implements Serializable {
 
     /**
      * 主键id
      */
     private String id;
+
+    /**
+     * 采购申请id
+     */
+    private String purchaseApplicationId;
 
     /**
      * skuId
@@ -57,12 +64,12 @@ public class ScmSalesDemandDetailDTO implements Serializable {
     private LocalDate planDeliveryDate;
 
     /**
-     * 计划备货数量
+     * 申请数量
      */
-    @NotEmpty(message = "计划备货数量不能为空")
-    @Min(value = 1,message = "计划备货数量最小值为1")
-    @Max(value = 99999999,message = "计划备货数量最大值为99999999")
-    private Integer planStockQty;
+    @NotEmpty(message = "申请数量不能为空")
+    @Min(value = 1,message = "申请数量最小值为1")
+    @Max(value = 99999999,message = "申请数量最大值为99999999")
+    private Integer applyQty;
 
     /**
      * 目的仓库id
@@ -77,8 +84,33 @@ public class ScmSalesDemandDetailDTO implements Serializable {
     private String destWarehouseName;
 
     /**
+     * 采购组织id
+     */
+    @NotBlank(message = "采购组织不能为空")
+    private String purchaseOrgId;
+
+    /**
+     * 采购组织名称
+     */
+    @NotBlank(message = "采购组织不能为空")
+    private String purchaseOrgName;
+
+    /**
+     * 收料组织id
+     */
+    @NotBlank(message = "收料组织不能为空")
+    private String receiveOrgId;
+
+    /**
+     * 收料组织名称
+     */
+    @NotBlank(message = "收料组织不能为空")
+    private String receiveOrgName;
+
+    /**
      * 备注
      */
-    @Size(max = 255,message = "备注不能大于255字符")
     private String remark;
+
+
 }
