@@ -47,7 +47,7 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
      * 采购交期
      */
     @TableField("delivery_date")
-    private Date deliveryDate;
+    private Integer deliveryDate;
 
     /**
      * sku 名
@@ -97,30 +97,16 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     @TableField("tax_rate")
     private BigDecimal taxRate;
 
+    /**
+     * 详采购家门详情表
+     */
+    @TableField("purchase_price_detail_id")
+    private BigDecimal purchasePriceDetailId;
 
-    public static final String SKU_ID = "sku_id";
 
-    public static final String PURCHASE_PRICE_CHANGE_ID = "purchase_price_change_id";
 
-    public static final String SKU_NO = "sku_no";
 
-    public static final String DELIVERY_DATE = "delivery_date";
 
-    public static final String PRODUCT_NAME = "product_name";
-
-    public static final String MIN_QTY = "min_qty";
-
-    public static final String MAX_QTY = "max_qty";
-
-    public static final String CURRENCY = "currency";
-
-    public static final String TAX_PRICE = "tax_price";
-
-    public static final String EFFECTIVE_DATE = "effective_date";
-
-    public static final String EXPIRE_DATE = "expire_date";
-
-    public static final String TAX_RATE = "tax_rate";
 
     @Override
     public Serializable pkVal() {

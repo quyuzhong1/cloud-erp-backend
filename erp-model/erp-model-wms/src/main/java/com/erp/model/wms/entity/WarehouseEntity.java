@@ -69,7 +69,7 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
      * 状态
      */
     @TableField("status")
-    private String status;
+    private Boolean status;
 
     /**
      * 地址 
