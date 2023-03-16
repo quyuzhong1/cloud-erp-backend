@@ -8,6 +8,7 @@ import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandPagingViewDTO;
 import com.erp.model.scm.dto.SalesDemandPagingParamDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -117,4 +118,6 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return Boolean
      */
     Boolean commit(String id);
+
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

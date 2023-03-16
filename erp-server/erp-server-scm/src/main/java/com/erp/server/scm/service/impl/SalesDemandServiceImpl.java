@@ -11,6 +11,7 @@ import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.server.scm.mapper.SalesDemandMapper;
 import com.erp.server.scm.service.SalesDemandService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -83,6 +84,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean commit(String id) {
+        return null;
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         return null;
     }
 }
