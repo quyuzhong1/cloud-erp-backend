@@ -1,11 +1,11 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ScmPurchaseApplicationDTO;
-import com.erp.model.scm.dto.ScmPurchaseApplicationSearchDTO;
-import com.erp.model.scm.dto.ScmPurchaseApplicationViewDTO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationPagingParamDTO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationPagingViewDTO;
 import com.erp.model.scm.entity.ScmPurchaseApplicationEntity;
 import com.common.core.serveice.SuperService;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,7 +29,7 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      * @param dto
      * @return PagingVO<List<ScmPurchaseApplicationViewDTO>>
      */
-    PagingVO<List<ScmPurchaseApplicationViewDTO>> paging(PagingDTO<ScmPurchaseApplicationSearchDTO> dto);
+    PagingVO<List<ScmPurchaseApplicationPagingViewDTO>> paging(PagingDTO<ScmPurchaseApplicationPagingParamDTO> dto);
     /**
      * @description: 新增或者修改
      * @author Will
@@ -42,10 +42,10 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      * @description: 审核
      * @author Will
      * @date: 2023/3/15 18:20
-     * @param baseAuditParamDTO
+     * @param baseApproveParamDTO
 
      */
-    void audit(BaseAuditParamDTO baseAuditParamDTO);
+    void audit(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 批量反审核
      * @author Will
@@ -75,11 +75,11 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:24
-     * @param scmPurchaseApplicationSearchDTO
+     * @param scmPurchaseApplicationPagingParamDTO
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(ScmPurchaseApplicationSearchDTO scmPurchaseApplicationSearchDTO, HttpServletResponse response);
+    Boolean exportExcel(ScmPurchaseApplicationPagingParamDTO scmPurchaseApplicationPagingParamDTO, HttpServletResponse response);
 
 
 }

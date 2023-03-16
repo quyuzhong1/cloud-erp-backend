@@ -1,12 +1,12 @@
 package com.erp.server.scm.service.impl;
 
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.dto.ScmSalesDemandDTO;
-import com.erp.model.scm.dto.ScmSalesDemandViewDTO;
-import com.erp.model.scm.dto.ScmSalesDemandSearchDTO;
+import com.erp.model.scm.dto.ScmSalesDemandPagingViewDTO;
+import com.erp.model.scm.dto.ScmSalesDemandPagingParamDTO;
 import com.erp.model.scm.entity.ScmSalesDemandEntity;
 import com.erp.server.scm.mapper.ScmSalesDemandMapper;
 import com.erp.server.scm.service.ScmSalesDemandService;
@@ -27,7 +27,7 @@ import java.util.List;
 public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMapper, ScmSalesDemandEntity> implements ScmSalesDemandService {
 
     @Override
-    public PagingVO<List<ScmSalesDemandViewDTO>> paging(PagingDTO<ScmSalesDemandSearchDTO> dto) {
+    public PagingVO<List<ScmSalesDemandPagingViewDTO>> paging(PagingDTO<ScmSalesDemandPagingParamDTO> dto) {
         return null;
     }
 
@@ -47,7 +47,7 @@ public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMa
     }
 
     @Override
-    public void audit(BaseAuditParamDTO baseAuditParamDTO) {
+    public void audit(BaseApproveParamDTO baseApproveParamDTO) {
 
     }
 
@@ -57,7 +57,7 @@ public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMa
     }
 
     @Override
-    public Boolean exportExcel(ScmSalesDemandSearchDTO scmSalesDemandSearchDTO, HttpServletResponse response) {
+    public Boolean exportExcel(ScmSalesDemandPagingParamDTO scmSalesDemandPagingParamDTO, HttpServletResponse response) {
         return null;
     }
 

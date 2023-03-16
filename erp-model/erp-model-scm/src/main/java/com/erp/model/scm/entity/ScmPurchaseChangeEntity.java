@@ -16,7 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -27,8 +27,8 @@ public class ScmPurchaseChangeEntity extends BaseEntity<ScmPurchaseChangeEntity>
     /**
      * 审核状态 
      */
-    @TableField("audit_status")
-    private String auditStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 单据编号
@@ -39,8 +39,8 @@ public class ScmPurchaseChangeEntity extends BaseEntity<ScmPurchaseChangeEntity>
     /**
      * 采购订单id
      */
-    @TableField("purch_order_id")
-    private String purchOrderId;
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
 
     /**
      * 变更日期
@@ -75,14 +75,14 @@ public class ScmPurchaseChangeEntity extends BaseEntity<ScmPurchaseChangeEntity>
     /**
      * 采购组织id
      */
-    @TableField("purch_org_id")
-    private String purchOrgId;
+    @TableField("purchase_org_id")
+    private String purchaseOrgId;
 
     /**
      * 采购组织名称
      */
-    @TableField("purch_org_name")
-    private String purchOrgName;
+    @TableField("purchase_org_name")
+    private String purchaseOrgName;
 
     /**
      * 新品首批（false否,true是）
@@ -90,12 +90,42 @@ public class ScmPurchaseChangeEntity extends BaseEntity<ScmPurchaseChangeEntity>
     @TableField("is_first_mass_product")
     private Boolean isFirstMassProduct;
 
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private Date approveTime;
 
-    public static final String AUDIT_STATUS = "audit_status";
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+
+    /**
+     * 供应商名称
+     */
+    @TableField("supplier_name")
+    private String supplierName;
+
+    /**
+     * 作废状态（0未作废，1已作废）
+     */
+    @TableField("invalid_status")
+    private String invalidStatus;
+
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private Date invalidTime;
+
+
+    public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";
 
-    public static final String PURCH_ORDER_ID = "purch_order_id";
+    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
     public static final String CHANGE_DATE = "change_date";
 
@@ -107,11 +137,21 @@ public class ScmPurchaseChangeEntity extends BaseEntity<ScmPurchaseChangeEntity>
 
     public static final String CHANGE_DEPT_NAME = "change_dept_name";
 
-    public static final String PURCH_ORG_ID = "purch_org_id";
+    public static final String PURCHASE_ORG_ID = "purchase_org_id";
 
-    public static final String PURCH_ORG_NAME = "purch_org_name";
+    public static final String PURCHASE_ORG_NAME = "purchase_org_name";
 
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
+
+    public static final String APPROVE_TIME = "approve_time";
+
+    public static final String SUPPLIER_ID = "supplier_id";
+
+    public static final String SUPPLIER_NAME = "supplier_name";
+
+    public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String INVALID_TIME = "invalid_time";
 
     @Override
     public Serializable pkVal() {

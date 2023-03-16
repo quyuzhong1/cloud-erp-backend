@@ -37,7 +37,7 @@ public class ScmSalesDemandDTO implements Serializable {
      * 单据状态（waitSubmit待提交，auditIng审核中，auditNoPass审核不通过，finish已完成）
      */
     @NotBlank(message = "单据状态不能为空")
-    private String auditStatus;
+    private String approveStatus;
 
     /**
      * 申请日期
@@ -69,7 +69,7 @@ public class ScmSalesDemandDTO implements Serializable {
     /**
      * 备货原因
      */
-    private String reason;
+    private String remark;
 
     /**
      * 产品信息

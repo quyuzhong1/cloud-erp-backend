@@ -16,7 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -45,8 +45,8 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
     /**
      * 单箱数量
      */
-    @TableField("qty")
-    private Integer qty;
+    @TableField("unit_qty")
+    private Integer unitQty;
 
     /**
      * 是否加急（false否，true是）
@@ -81,14 +81,14 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
     /**
      * 采购组织id
      */
-    @TableField("purch_org_id")
-    private String purchOrgId;
+    @TableField("purchase_org_id")
+    private String purchaseOrgId;
 
     /**
      * 采购组织名称
      */
-    @TableField("purch_org_name")
-    private String purchOrgName;
+    @TableField("purchase_org_name")
+    private String purchaseOrgName;
 
     /**
      * 收料组织id
@@ -105,26 +105,26 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
     /**
      * 实际采购数量
      */
-    @TableField("real_purch_qty")
-    private Integer realPurchQty;
+    @TableField("real_purchase_qty")
+    private Integer realPurchaseQty;
 
     /**
      * 签收数量
      */
-    @TableField("sign_qty")
-    private Integer signQty;
+    @TableField("receive_qty")
+    private Integer receiveQty;
 
     /**
      * 入库数量
      */
-    @TableField("in_stock_qty")
-    private Integer inStockQty;
+    @TableField("stock_in_qty")
+    private Integer stockInQty;
 
     /**
      * 是否生成采购订单（false否，true是）
      */
-    @TableField("is_create_purch_order")
-    private Boolean isCreatePurchOrder;
+    @TableField("is_create_po")
+    private Boolean isCreatePo;
 
     /**
      * 备注
@@ -139,7 +139,7 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
 
     public static final String PRODUCT_NAME = "product_name";
 
-    public static final String QTY = "qty";
+    public static final String UNIT_QTY = "unit_qty";
 
     public static final String IS_URGENT = "is_urgent";
 
@@ -151,21 +151,21 @@ public class ScmPurchaseApplicationDetailEntity extends BaseEntity<ScmPurchaseAp
 
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
-    public static final String PURCH_ORG_ID = "purch_org_id";
+    public static final String PURCHASE_ORG_ID = "purchase_org_id";
 
-    public static final String PURCH_ORG_NAME = "purch_org_name";
+    public static final String PURCHASE_ORG_NAME = "purchase_org_name";
 
     public static final String RECEIVE_ORG_ID = "receive_org_id";
 
     public static final String RECEIVE_ORG_NAME = "receive_org_name";
 
-    public static final String REAL_PURCH_QTY = "real_purch_qty";
+    public static final String REAL_PURCHASE_QTY = "real_purchase_qty";
 
-    public static final String SIGN_QTY = "sign_qty";
+    public static final String RECEIVE_QTY = "receive_qty";
 
-    public static final String IN_STOCK_QTY = "in_stock_qty";
+    public static final String STOCK_IN_QTY = "stock_in_qty";
 
-    public static final String IS_CREATE_PURCH_ORDER = "is_create_purch_order";
+    public static final String IS_CREATE_PO = "is_create_po";
 
     public static final String REMARK = "remark";
 

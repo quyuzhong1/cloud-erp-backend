@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.scm.mapper.ScmPurchaseOrderSupplierMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.ScmPurchaseOrderSupplierEntity">
+    <resultMap id="BaseResultMap" type="com.erp.server.scm.entity.ScmPurchaseOrderSupplierEntity">
         <result column="id" property="id" />
         <result column="create_user_id" property="createUserId" />
         <result column="create_user_name" property="createUserName" />
@@ -13,10 +13,10 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="purch_order_id" property="purchOrderId" />
+        <result column="purchase_order_id" property="purchaseOrderId" />
         <result column="supplier_id" property="supplierId" />
         <result column="supplier_name" property="supplierName" />
-        <result column="method" property="method" />
+        <result column="settle_method" property="settleMethod" />
         <result column="settle_currency" property="settleCurrency" />
         <result column="supplier_contact_id" property="supplierContactId" />
         <result column="contact_name" property="contactName" />

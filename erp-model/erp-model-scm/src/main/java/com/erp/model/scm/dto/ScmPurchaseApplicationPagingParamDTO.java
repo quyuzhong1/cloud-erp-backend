@@ -13,5 +13,5 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class ScmPurchaseApplicationSearchDTO implements Serializable {
+public class ScmPurchaseApplicationPagingParamDTO implements Serializable {
 }

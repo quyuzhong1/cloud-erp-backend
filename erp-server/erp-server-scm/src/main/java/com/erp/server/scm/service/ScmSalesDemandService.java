@@ -1,12 +1,12 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.ScmSalesDemandDTO;
-import com.erp.model.scm.dto.ScmSalesDemandViewDTO;
-import com.erp.model.scm.dto.ScmSalesDemandSearchDTO;
+import com.erp.model.scm.dto.ScmSalesDemandPagingViewDTO;
+import com.erp.model.scm.dto.ScmSalesDemandPagingParamDTO;
 import com.erp.model.scm.entity.ScmSalesDemandEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +28,7 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @param dto
      * @return PagingVO<List<ScmSalesDemandDTO>>
      */
-    PagingVO<List<ScmSalesDemandViewDTO>> paging(PagingDTO<ScmSalesDemandSearchDTO> dto);
+    PagingVO<List<ScmSalesDemandPagingViewDTO>> paging(PagingDTO<ScmSalesDemandPagingParamDTO> dto);
     /**
      * @description: 新增或修改
      * @author Will
@@ -57,9 +57,9 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @description: 审核
      * @author Will
      * @date: 2023/3/15 17:54
-    * @param baseAuditParamDTO
+    * @param baseApproveParamDTO
      */
-    void audit(BaseAuditParamDTO baseAuditParamDTO);
+    void audit(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 取消流程
      * @author Will
@@ -72,11 +72,11 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:01
-     * @param scmSalesDemandSearchDTO
+     * @param scmSalesDemandPagingParamDTO
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(ScmSalesDemandSearchDTO scmSalesDemandSearchDTO, HttpServletResponse response);
+    Boolean exportExcel(ScmSalesDemandPagingParamDTO scmSalesDemandPagingParamDTO, HttpServletResponse response);
     /**
      * @description: 批量反审核
      * @author Will

@@ -15,7 +15,7 @@ import java.io.Serializable;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -26,8 +26,8 @@ public class ScmPurchaseOrderSupplierEntity extends BaseEntity<ScmPurchaseOrderS
     /**
      * 采购订单id
      */
-    @TableField("purch_order_id")
-    private String purchOrderId;
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
 
     /**
      * 供应商id
@@ -44,8 +44,8 @@ public class ScmPurchaseOrderSupplierEntity extends BaseEntity<ScmPurchaseOrderS
     /**
      * 结算方式
      */
-    @TableField("method")
-    private String method;
+    @TableField("settle_method")
+    private String settleMethod;
 
     /**
      * 结算币种
@@ -78,13 +78,13 @@ public class ScmPurchaseOrderSupplierEntity extends BaseEntity<ScmPurchaseOrderS
     private String contactEmail;
 
 
-    public static final String PURCH_ORDER_ID = "purch_order_id";
+    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
     public static final String SUPPLIER_ID = "supplier_id";
 
     public static final String SUPPLIER_NAME = "supplier_name";
 
-    public static final String METHOD = "method";
+    public static final String SETTLE_METHOD = "settle_method";
 
     public static final String SETTLE_CURRENCY = "settle_currency";
 

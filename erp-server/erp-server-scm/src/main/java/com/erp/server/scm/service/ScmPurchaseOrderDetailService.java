@@ -1,7 +1,7 @@
 package com.erp.server.scm.service;
 
+import com.erp.server.scm.entity.ScmPurchaseOrderDetailEntity;
 import com.common.core.serveice.SuperService;
-import com.erp.model.scm.entity.ScmPurchaseOrderDetailEntity;
 
 /**
  * <p>
@@ -9,7 +9,7 @@ import com.erp.model.scm.entity.ScmPurchaseOrderDetailEntity;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 public interface ScmPurchaseOrderDetailService extends SuperService<ScmPurchaseOrderDetailEntity> {
 

@@ -38,7 +38,7 @@ public class ScmSalesDemandDetailDTO implements Serializable {
     /**
      * 单箱数量
      */
-    private Integer qty;
+    private Integer unitQty;
 
     /**
      * 是否加急（false否，true是）

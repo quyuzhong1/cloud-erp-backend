@@ -15,7 +15,7 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class ScmSalesDemandViewDTO implements Serializable {
+public class ScmSalesDemandPagingViewDTO implements Serializable {
 
     /**
      * 主键id

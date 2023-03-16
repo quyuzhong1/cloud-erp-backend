@@ -16,7 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -45,8 +45,8 @@ public class ScmSalesDemandDetailEntity extends BaseEntity<ScmSalesDemandDetailE
     /**
      * 单箱数量
      */
-    @TableField("qty")
-    private Integer qty;
+    @TableField("unit_qty")
+    private Integer unitQty;
 
     /**
      * 是否加急（false否，true是）
@@ -91,7 +91,7 @@ public class ScmSalesDemandDetailEntity extends BaseEntity<ScmSalesDemandDetailE
 
     public static final String PRODUCT_NAME = "product_name";
 
-    public static final String QTY = "qty";
+    public static final String UNIT_QTY = "unit_qty";
 
     public static final String IS_URGENT = "is_urgent";
 

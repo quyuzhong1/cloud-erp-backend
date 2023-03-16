@@ -16,7 +16,7 @@
         <result column="sku_id" property="skuId" />
         <result column="sku_no" property="skuNo" />
         <result column="product_name" property="productName" />
-        <result column="qty" property="qty" />
+        <result column="unit_qty" property="unitQty" />
         <result column="is_urgent" property="isUrgent" />
         <result column="plan_delivery_date" property="planDeliveryDate" />
         <result column="plan_stock_qty" property="planStockQty" />

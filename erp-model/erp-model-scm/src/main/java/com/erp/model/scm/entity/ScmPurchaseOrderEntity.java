@@ -16,7 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -27,8 +27,8 @@ public class ScmPurchaseOrderEntity extends BaseEntity<ScmPurchaseOrderEntity> {
     /**
      * 审核状态 
      */
-    @TableField("audit_status")
-    private String auditStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 单据编号
@@ -39,44 +39,44 @@ public class ScmPurchaseOrderEntity extends BaseEntity<ScmPurchaseOrderEntity> {
     /**
      * 采购日期
      */
-    @TableField("purch_date")
-    private Date purchDate;
+    @TableField("purchase_date")
+    private Date purchaseDate;
 
     /**
      * 采购员id
      */
-    @TableField("purch_user_id")
-    private String purchUserId;
+    @TableField("purchase_user_id")
+    private String purchaseUserId;
 
     /**
      * 采购员名称
      */
-    @TableField("purch_user_name")
-    private String purchUserName;
+    @TableField("purchase_user_name")
+    private String purchaseUserName;
 
     /**
      * 采购组织id
      */
-    @TableField("purch_org_id")
-    private String purchOrgId;
+    @TableField("purchase_org_id")
+    private String purchaseOrgId;
 
     /**
      * 采购组织名称
      */
-    @TableField("purch_org_name")
-    private String purchOrgName;
+    @TableField("purchase_org_name")
+    private String purchaseOrgName;
 
     /**
      * 采购部门id
      */
-    @TableField("purch_dept_id")
-    private String purchDeptId;
+    @TableField("purchase_dept_id")
+    private String purchaseDeptId;
 
     /**
      * 采购部门名称
      */
-    @TableField("purch_dept_name")
-    private String purchDeptName;
+    @TableField("purchase_dept_name")
+    private String purchaseDeptName;
 
     /**
      * 新品首批（false否,true是）
@@ -93,49 +93,41 @@ public class ScmPurchaseOrderEntity extends BaseEntity<ScmPurchaseOrderEntity> {
     /**
      * 作废时间
      */
-    @TableField("invaild_time")
+    @TableField("invalid_time")
     private Date invalidTime;
 
     /**
-     * 到货状态（0未到货，1部分到货，2已到货）
+     * 审核时间
      */
-    @TableField("arrival_status")
-    private String arrivalStatus;
-
-    /**
-     * 到货时间
-     */
-    @TableField("arrival_time")
-    private Date arrivalTime;
+    @TableField("approve_time")
+    private Date approveTime;
 
 
-    public static final String AUDIT_STATUS = "audit_status";
+    public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";
 
-    public static final String PURCH_DATE = "purch_date";
+    public static final String PURCHASE_DATE = "purchase_date";
 
-    public static final String PURCH_USER_ID = "purch_user_id";
+    public static final String PURCHASE_USER_ID = "purchase_user_id";
 
-    public static final String PURCH_USER_NAME = "purch_user_name";
+    public static final String PURCHASE_USER_NAME = "purchase_user_name";
 
-    public static final String PURCH_ORG_ID = "purch_org_id";
+    public static final String PURCHASE_ORG_ID = "purchase_org_id";
 
-    public static final String PURCH_ORG_NAME = "purch_org_name";
+    public static final String PURCHASE_ORG_NAME = "purchase_org_name";
 
-    public static final String PURCH_DEPT_ID = "purch_dept_id";
+    public static final String PURCHASE_DEPT_ID = "purchase_dept_id";
 
-    public static final String PURCH_DEPT_NAME = "purch_dept_name";
+    public static final String PURCHASE_DEPT_NAME = "purchase_dept_name";
 
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
 
     public static final String INVALID_STATUS = "invalid_status";
 
-    public static final String INVAILD_TIME = "invaild_time";
+    public static final String INVALID_TIME = "invalid_time";
 
-    public static final String ARRIVAL_STATUS = "arrival_status";
-
-    public static final String ARRIVAL_TIME = "arrival_time";
+    public static final String APPROVE_TIME = "approve_time";
 
     @Override
     public Serializable pkVal() {

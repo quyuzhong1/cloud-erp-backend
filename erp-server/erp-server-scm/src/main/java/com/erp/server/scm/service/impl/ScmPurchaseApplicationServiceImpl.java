@@ -1,11 +1,11 @@
 package com.erp.server.scm.service.impl;
 
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ScmPurchaseApplicationDTO;
-import com.erp.model.scm.dto.ScmPurchaseApplicationSearchDTO;
-import com.erp.model.scm.dto.ScmPurchaseApplicationViewDTO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationPagingParamDTO;
+import com.erp.model.scm.dto.ScmPurchaseApplicationPagingViewDTO;
 import com.erp.model.scm.entity.ScmPurchaseApplicationEntity;
 import com.erp.server.scm.mapper.ScmPurchaseApplicationMapper;
 import com.erp.server.scm.service.ScmPurchaseApplicationService;
@@ -28,7 +28,7 @@ import java.util.List;
 public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurchaseApplicationMapper, ScmPurchaseApplicationEntity> implements ScmPurchaseApplicationService {
 
     @Override
-    public PagingVO<List<ScmPurchaseApplicationViewDTO>> paging(PagingDTO<ScmPurchaseApplicationSearchDTO> dto) {
+    public PagingVO<List<ScmPurchaseApplicationPagingViewDTO>> paging(PagingDTO<ScmPurchaseApplicationPagingParamDTO> dto) {
         return null;
     }
 
@@ -38,7 +38,7 @@ public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurch
     }
 
     @Override
-    public void audit(BaseAuditParamDTO baseAuditParamDTO) {
+    public void audit(BaseApproveParamDTO baseApproveParamDTO) {
 
     }
 
@@ -58,7 +58,7 @@ public class ScmPurchaseApplicationServiceImpl extends SuperServiceImpl<ScmPurch
     }
 
     @Override
-    public Boolean exportExcel(ScmPurchaseApplicationSearchDTO scmPurchaseApplicationSearchDTO, HttpServletResponse response) {
+    public Boolean exportExcel(ScmPurchaseApplicationPagingParamDTO scmPurchaseApplicationPagingParamDTO, HttpServletResponse response) {
         return null;
     }
 

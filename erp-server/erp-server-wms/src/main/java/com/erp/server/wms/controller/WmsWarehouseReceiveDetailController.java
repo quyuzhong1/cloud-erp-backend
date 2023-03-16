@@ -12,10 +12,10 @@ import com.common.core.controller.BaseController;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @RestController
-@RequestMapping("/wms-warehouse-sign-detail-entity")
-public class WmsWarehouseSignDetailController extends BaseController {
+@RequestMapping("/wms-warehouse-receive-detail-entity")
+public class WmsWarehouseReceiveDetailController extends BaseController {
 
 }

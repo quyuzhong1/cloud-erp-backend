@@ -15,7 +15,7 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class ScmPurchaseApplicationViewDTO implements Serializable {
+public class ScmPurchaseApplicationPagingViewDTO implements Serializable {
 
     /**
      * 主键id
@@ -30,7 +30,7 @@ public class ScmPurchaseApplicationViewDTO implements Serializable {
     /**
      * 单据状态（待提交，审核中，审核不通过，已审核）
      */
-    private String auditStatusName;
+    private String approveStatusName;
 
     /**
      * 新品首批（false否,true是）
@@ -65,17 +65,21 @@ public class ScmPurchaseApplicationViewDTO implements Serializable {
     /**
      * 实际采购数量
      */
-    private Integer realPurchQty;
+    private Integer realPurchaseQty;
 
     /**
      * 签收数量
      */
-    private Integer signQty;
+    private Integer receiveQty;
 
     /**
      * 入库数量
      */
-    private Integer inStockQty;
+    private Integer stockInQty;
 
+    /**
+     * 目的仓库名称
+     */
+    private String destWarehouseName;
 
 }

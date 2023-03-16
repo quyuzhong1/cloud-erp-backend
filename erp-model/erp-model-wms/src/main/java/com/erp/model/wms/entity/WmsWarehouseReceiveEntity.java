@@ -1,14 +1,14 @@
-package com.erp.model.wms.entity;
+package com.erp.server.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  * <p>
@@ -16,19 +16,19 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("wms_warehouse_sign")
-public class WmsWarehouseSignEntity extends BaseEntity<WmsWarehouseSignEntity> {
+@TableName("wms_warehouse_receive")
+public class WmsWarehouseReceiveEntity extends BaseEntity<WmsWarehouseReceiveEntity> {
 
     /**
      * 签收状态（0待签收，1签收中，2已完成
      */
-    @TableField("sign_status")
-    private String signStatus;
+    @TableField("receive_status")
+    private String receiveStatus;
 
     /**
      * 单据编号
@@ -39,14 +39,14 @@ public class WmsWarehouseSignEntity extends BaseEntity<WmsWarehouseSignEntity> {
     /**
      * 采购订单id
      */
-    @TableField("purch_order_id")
-    private String purchOrderId;
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
 
     /**
      * 采购订单编号
      */
-    @TableField("purch_order_code")
-    private String purchOrderCode;
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
 
     /**
      * 供应商id
@@ -87,23 +87,23 @@ public class WmsWarehouseSignEntity extends BaseEntity<WmsWarehouseSignEntity> {
     /**
      * 采购员id
      */
-    @TableField("purch_user_id")
-    private String purchUserId;
+    @TableField("purchase_user_id")
+    private String purchaseUserId;
 
     /**
      * 采购员名称
      */
-    @TableField("purch_user_name")
-    private String purchUserName;
+    @TableField("purch_aseuser_name")
+    private String purchAseuserName;
 
 
-    public static final String SIGN_STATUS = "sign_status";
+    public static final String RECEIVE_STATUS = "receive_status";
 
     public static final String CODE = "code";
 
-    public static final String PURCH_ORDER_ID = "purch_order_id";
+    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
-    public static final String PURCH_ORDER_CODE = "purch_order_code";
+    public static final String PURCHASE_ORDER_CODE = "purchase_order_code";
 
     public static final String SUPPLIER_ID = "supplier_id";
 
@@ -117,9 +117,9 @@ public class WmsWarehouseSignEntity extends BaseEntity<WmsWarehouseSignEntity> {
 
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
-    public static final String PURCH_USER_ID = "purch_user_id";
+    public static final String PURCHASE_USER_ID = "purchase_user_id";
 
-    public static final String PURCH_USER_NAME = "purch_user_name";
+    public static final String PURCH_ASEUSER_NAME = "purch_aseuser_name";
 
     @Override
     public Serializable pkVal() {

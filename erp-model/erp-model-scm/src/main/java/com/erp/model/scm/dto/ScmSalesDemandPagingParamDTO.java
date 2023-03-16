@@ -18,12 +18,12 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ScmSalesDemandSearchDTO extends SortDTO {
+public class ScmSalesDemandPagingParamDTO extends SortDTO {
 
     /**
      * 审核状态
      */
-    private List<String> auditStatusList;
+    private List<String> approveStatusList;
 
     /**
      * 单据编号
@@ -81,12 +81,12 @@ public class ScmSalesDemandSearchDTO extends SortDTO {
     private LocalDate planDeliveryDateEnd;
 
     /**
-     * 审核通过时间开始
+     * 审核时间开始
      */
-    private LocalDateTime auditPassTimeBegin;
+    private LocalDateTime approvePassTimeBegin;
 
     /**
-     * 审核通过时间结束
+     * 审核时间结束
      */
-    private LocalDateTime auditPassTimeEnd;
+    private LocalDateTime approvePassTimeEnd;
 }

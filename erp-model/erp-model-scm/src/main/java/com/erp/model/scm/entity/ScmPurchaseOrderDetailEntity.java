@@ -17,7 +17,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -28,8 +28,8 @@ public class ScmPurchaseOrderDetailEntity extends BaseEntity<ScmPurchaseOrderDet
     /**
      * 采购订单id
      */
-    @TableField("purch_order_id")
-    private String purchOrderId;
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
 
     /**
      * skuId
@@ -64,14 +64,14 @@ public class ScmPurchaseOrderDetailEntity extends BaseEntity<ScmPurchaseOrderDet
     /**
      * 单箱数量
      */
-    @TableField("qty")
-    private Integer qty;
+    @TableField("unit_qty")
+    private Integer unitQty;
 
     /**
      * 含税单价
      */
-    @TableField("price")
-    private BigDecimal price;
+    @TableField("tax_price")
+    private BigDecimal taxPrice;
 
     /**
      * 币别
@@ -82,14 +82,14 @@ public class ScmPurchaseOrderDetailEntity extends BaseEntity<ScmPurchaseOrderDet
     /**
      * 采购数量
      */
-    @TableField("purch_qty")
-    private Integer purchQty;
+    @TableField("purchase_qty")
+    private Integer purchaseQty;
 
     /**
      * 采购金额
      */
-    @TableField("purch_amount")
-    private BigDecimal purchAmount;
+    @TableField("purchase_amount")
+    private BigDecimal purchaseAmount;
 
     /**
      * 预计交货日期
@@ -133,8 +133,26 @@ public class ScmPurchaseOrderDetailEntity extends BaseEntity<ScmPurchaseOrderDet
     @TableField("remark")
     private String remark;
 
+    /**
+     * 到货状态（0未到货，1部分到货，2已到货）
+     */
+    @TableField("arrival_status")
+    private String arrivalStatus;
 
-    public static final String PURCH_ORDER_ID = "purch_order_id";
+    /**
+     * 到货时间
+     */
+    @TableField("arrival_time")
+    private Date arrivalTime;
+
+    /**
+     * 税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+
+
+    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
     public static final String SKU_ID = "sku_id";
 
@@ -146,15 +164,15 @@ public class ScmPurchaseOrderDetailEntity extends BaseEntity<ScmPurchaseOrderDet
 
     public static final String DECLARE_NAME = "declare_name";
 
-    public static final String QTY = "qty";
+    public static final String UNIT_QTY = "unit_qty";
 
-    public static final String PRICE = "price";
+    public static final String TAX_PRICE = "tax_price";
 
     public static final String CURRENCY = "currency";
 
-    public static final String PURCH_QTY = "purch_qty";
+    public static final String PURCHASE_QTY = "purchase_qty";
 
-    public static final String PURCH_AMOUNT = "purch_amount";
+    public static final String PURCHASE_AMOUNT = "purchase_amount";
 
     public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
 
@@ -169,6 +187,12 @@ public class ScmPurchaseOrderDetailEntity extends BaseEntity<ScmPurchaseOrderDet
     public static final String IS_GIFT = "is_gift";
 
     public static final String REMARK = "remark";
+
+    public static final String ARRIVAL_STATUS = "arrival_status";
+
+    public static final String ARRIVAL_TIME = "arrival_time";
+
+    public static final String TAX_RATE = "tax_rate";
 
     @Override
     public Serializable pkVal() {

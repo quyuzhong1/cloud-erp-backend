@@ -16,7 +16,7 @@ import java.math.BigDecimal;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -27,14 +27,14 @@ public class ScmPurchaseChangeDetailEntity extends BaseEntity<ScmPurchaseChangeD
     /**
      * 采购变更单id
      */
-    @TableField("purch_change_id")
-    private String purchChangeId;
+    @TableField("purchase_change_id")
+    private String purchaseChangeId;
 
     /**
      * 采购订单明细id
      */
-    @TableField("purch_order_detail_id")
-    private String purchOrderDetailId;
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
 
     /**
      * skuId
@@ -75,20 +75,20 @@ public class ScmPurchaseChangeDetailEntity extends BaseEntity<ScmPurchaseChangeD
     /**
      * 新采购数量
      */
-    @TableField("new_qty")
-    private Integer newQty;
+    @TableField("qty")
+    private Integer qty;
 
     /**
      * 新含税单价
      */
-    @TableField("new_price")
-    private BigDecimal newPrice;
+    @TableField("price")
+    private BigDecimal price;
 
     /**
      * 新含税金额
      */
-    @TableField("new_amount")
-    private BigDecimal newAmount;
+    @TableField("amount")
+    private BigDecimal amount;
 
     /**
      * 变更备注
@@ -96,10 +96,22 @@ public class ScmPurchaseChangeDetailEntity extends BaseEntity<ScmPurchaseChangeD
     @TableField("remark")
     private String remark;
 
+    /**
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
 
-    public static final String PURCH_CHANGE_ID = "purch_change_id";
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
 
-    public static final String PURCH_ORDER_DETAIL_ID = "purch_order_detail_id";
+
+    public static final String PURCHASE_CHANGE_ID = "purchase_change_id";
+
+    public static final String PURCHASE_ORDER_DETAIL_ID = "purchase_order_detail_id";
 
     public static final String SKU_ID = "sku_id";
 
@@ -113,13 +125,17 @@ public class ScmPurchaseChangeDetailEntity extends BaseEntity<ScmPurchaseChangeD
 
     public static final String OLD_AMOUNT = "old_amount";
 
-    public static final String NEW_QTY = "new_qty";
+    public static final String QTY = "qty";
 
-    public static final String NEW_PRICE = "new_price";
+    public static final String PRICE = "price";
 
-    public static final String NEW_AMOUNT = "new_amount";
+    public static final String AMOUNT = "amount";
 
     public static final String REMARK = "remark";
+
+    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
+
+    public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
 
     @Override
     public Serializable pkVal() {

@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.scm.mapper.ScmPurchaseChangeDetailMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.ScmPurchaseChangeDetailEntity">
+    <resultMap id="BaseResultMap" type="com.erp.server.scm.entity.ScmPurchaseChangeDetailEntity">
         <result column="id" property="id" />
         <result column="create_user_id" property="createUserId" />
         <result column="create_user_name" property="createUserName" />
@@ -13,18 +13,20 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="purch_change_id" property="purchChangeId" />
-        <result column="purch_order_detail_id" property="purchOrderDetailId" />
+        <result column="purchase_change_id" property="purchaseChangeId" />
+        <result column="purchase_order_detail_id" property="purchaseOrderDetailId" />
         <result column="sku_id" property="skuId" />
         <result column="sku_no" property="skuNo" />
         <result column="product_name" property="productName" />
         <result column="old_qty" property="oldQty" />
         <result column="old_price" property="oldPrice" />
         <result column="old_amount" property="oldAmount" />
-        <result column="new_qty" property="newQty" />
-        <result column="new_price" property="newPrice" />
-        <result column="new_amount" property="newAmount" />
+        <result column="qty" property="qty" />
+        <result column="price" property="price" />
+        <result column="amount" property="amount" />
         <result column="remark" property="remark" />
+        <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
+        <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
     </resultMap>
 
 </mapper>

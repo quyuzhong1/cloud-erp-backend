@@ -13,7 +13,7 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="audit_status" property="auditStatus" />
+        <result column="approve_status" property="approveStatus" />
         <result column="code" property="code" />
         <result column="apply_date" property="applyDate" />
         <result column="apply_user_id" property="applyUserId" />
@@ -21,6 +21,7 @@
         <result column="apply_dept_id" property="applyDeptId" />
         <result column="apply_dept_name" property="applyDeptName" />
         <result column="is_first_mass_product" property="isFirstMassProduct" />
+        <result column="approve_time" property="approveTime" />
     </resultMap>
 
 </mapper>

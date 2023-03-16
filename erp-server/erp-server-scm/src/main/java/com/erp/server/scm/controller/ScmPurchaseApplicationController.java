@@ -1,10 +1,8 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -50,8 +48,8 @@ public class ScmPurchaseApplicationController extends BaseController {
      * @return ApiResult<PagingVO<List<ScmPurchaseApplicationViewDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<ScmPurchaseApplicationViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<ScmPurchaseApplicationSearchDTO> dto) {
-        PagingVO<List<ScmPurchaseApplicationViewDTO>> pagingVO = scmPurchaseApplicationService.paging(dto);
+    public ApiResult<PagingVO<List<ScmPurchaseApplicationPagingViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<ScmPurchaseApplicationPagingParamDTO> dto) {
+        PagingVO<List<ScmPurchaseApplicationPagingViewDTO>> pagingVO = scmPurchaseApplicationService.paging(dto);
         return success(pagingVO);
     }
 
@@ -74,12 +72,12 @@ public class ScmPurchaseApplicationController extends BaseController {
      * 审核
      * @author Will
      * @date: 2023/3/15 17:54
-     * @param baseAuditParamDTO
+     * @param baseApproveParamDTO
      * @return ApiResult
      */
     @PostMapping("/audit")
-    public ApiResult audit(@RequestBody @Validated BaseAuditParamDTO baseAuditParamDTO) {
-        scmPurchaseApplicationService.audit(baseAuditParamDTO);
+    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        scmPurchaseApplicationService.audit(baseApproveParamDTO);
         return success();
     }
 
@@ -172,13 +170,13 @@ public class ScmPurchaseApplicationController extends BaseController {
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:23
-     * @param scmPurchaseApplicationSearchDTO
+     * @param scmPurchaseApplicationPagingParamDTO
      * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ScmPurchaseApplicationSearchDTO scmPurchaseApplicationSearchDTO, HttpServletResponse response) {
-        Boolean flag = scmPurchaseApplicationService.exportExcel(scmPurchaseApplicationSearchDTO, response);
+    public ApiResult exportExcel(@RequestBody ScmPurchaseApplicationPagingParamDTO scmPurchaseApplicationPagingParamDTO, HttpServletResponse response) {
+        Boolean flag = scmPurchaseApplicationService.exportExcel(scmPurchaseApplicationPagingParamDTO, response);
         return flag == true ? success() : failure();
     }
 

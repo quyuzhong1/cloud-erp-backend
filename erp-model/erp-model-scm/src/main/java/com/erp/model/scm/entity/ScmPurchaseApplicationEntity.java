@@ -16,7 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -27,8 +27,8 @@ public class ScmPurchaseApplicationEntity extends BaseEntity<ScmPurchaseApplicat
     /**
      * 审核状态 
      */
-    @TableField("audit_status")
-    private String auditStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 单据编号
@@ -72,8 +72,14 @@ public class ScmPurchaseApplicationEntity extends BaseEntity<ScmPurchaseApplicat
     @TableField("is_first_mass_product")
     private Boolean isFirstMassProduct;
 
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private Date approveTime;
 
-    public static final String AUDIT_STATUS = "audit_status";
+
+    public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";
 
@@ -88,6 +94,8 @@ public class ScmPurchaseApplicationEntity extends BaseEntity<ScmPurchaseApplicat
     public static final String APPLY_DEPT_NAME = "apply_dept_name";
 
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
+
+    public static final String APPROVE_TIME = "approve_time";
 
     @Override
     public Serializable pkVal() {

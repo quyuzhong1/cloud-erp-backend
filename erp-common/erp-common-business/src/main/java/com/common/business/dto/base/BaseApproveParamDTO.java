@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class BaseAuditParamDTO {
+public class BaseApproveParamDTO {
 
     /**
      * 主键id集合

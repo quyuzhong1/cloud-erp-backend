@@ -1,13 +1,13 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.dto.base.BaseAuditParamDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ScmSalesDemandDTO;
-import com.erp.model.scm.dto.ScmSalesDemandViewDTO;
-import com.erp.model.scm.dto.ScmSalesDemandSearchDTO;
+import com.erp.model.scm.dto.ScmSalesDemandPagingViewDTO;
+import com.erp.model.scm.dto.ScmSalesDemandPagingParamDTO;
 import com.erp.server.scm.service.ScmSalesDemandService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
@@ -42,8 +42,8 @@ public class ScmSalesDemandController extends BaseController {
     * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
     */
    @PostMapping("/paging")
-    public ApiResult<PagingVO<List<ScmSalesDemandViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<ScmSalesDemandSearchDTO> dto) {
-        PagingVO<List<ScmSalesDemandViewDTO>> pagingVO = scmSalesDemandService.paging(dto);
+    public ApiResult<PagingVO<List<ScmSalesDemandPagingViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<ScmSalesDemandPagingParamDTO> dto) {
+        PagingVO<List<ScmSalesDemandPagingViewDTO>> pagingVO = scmSalesDemandService.paging(dto);
         return success(pagingVO);
     }
 
@@ -104,12 +104,12 @@ public class ScmSalesDemandController extends BaseController {
      * 审核
      * @author Will
      * @date: 2023/3/15 17:54
-     * @param baseAuditParamDTO
+     * @param baseApproveParamDTO
      * @return ApiResult
      */
     @PostMapping("/audit")
-    public ApiResult audit(@RequestBody @Validated BaseAuditParamDTO baseAuditParamDTO) {
-        scmSalesDemandService.audit(baseAuditParamDTO);
+    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        scmSalesDemandService.audit(baseApproveParamDTO);
         return success();
     }
 
@@ -145,13 +145,13 @@ public class ScmSalesDemandController extends BaseController {
      * 导出
      * @author Will
      * @date: 2023/3/15 18:01
-     * @param scmSalesDemandSearchDTO
+     * @param scmSalesDemandPagingParamDTO
      * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ScmSalesDemandSearchDTO scmSalesDemandSearchDTO, HttpServletResponse response) {
-        Boolean flag = scmSalesDemandService.exportExcel(scmSalesDemandSearchDTO, response);
+    public ApiResult exportExcel(@RequestBody ScmSalesDemandPagingParamDTO scmSalesDemandPagingParamDTO, HttpServletResponse response) {
+        Boolean flag = scmSalesDemandService.exportExcel(scmSalesDemandPagingParamDTO, response);
         return flag == true ? success() : failure();
     }
 

@@ -16,7 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
@@ -25,10 +25,10 @@ import java.util.Date;
 public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
 
     /**
-     * 审核状态 
+     * 审核状态 （waitSubmit待提交，auditIng审核中，auditNoPass审核不通过，finish已完成）
      */
-    @TableField("audit_status")
-    private String auditStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 单据编号
@@ -87,8 +87,8 @@ public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
     /**
      * 备货原因
      */
-    @TableField("reason")
-    private String reason;
+    @TableField("remark")
+    private String remark;
 
     /**
      * 作废状态（0未作废，1已作废）
@@ -102,8 +102,14 @@ public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
     @TableField("invalid_time")
     private Date invalidTime;
 
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private Date approveTime;
 
-    public static final String AUDIT_STATUS = "audit_status";
+
+    public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";
 
@@ -123,11 +129,13 @@ public class ScmSalesDemandEntity extends BaseEntity<ScmSalesDemandEntity> {
 
     public static final String SHOP_NAME = "shop_name";
 
-    public static final String REASON = "reason";
+    public static final String REMARK = "remark";
 
     public static final String INVALID_STATUS = "invalid_status";
 
-    public static final String INVAILD_TIME = "invaild_time";
+    public static final String INVALID_TIME = "invalid_time";
+
+    public static final String APPROVE_TIME = "approve_time";
 
     @Override
     public Serializable pkVal() {

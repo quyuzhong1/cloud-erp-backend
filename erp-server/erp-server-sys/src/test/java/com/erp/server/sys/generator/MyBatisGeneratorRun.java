@@ -35,7 +35,7 @@ public class MyBatisGeneratorRun {
     // 当前环境是否Windows
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
     // 数据库链接配置
-    static String MODEL = "scm";
+    static String MODEL = "wms";
     private static String DB_URL = StrUtil.format("jdbc:postgresql://172.16.100.12:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
     private static final String USER_NAME = "postgres";
     private static final String PASSWORD = "admin@viji";
@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"scm_purchase_application"};
+        String[] tables = new String[]{"wms_warehouse_receive","wms_warehouse_receive_detail"};
         autoGenerator(prefix, tables);
 
 

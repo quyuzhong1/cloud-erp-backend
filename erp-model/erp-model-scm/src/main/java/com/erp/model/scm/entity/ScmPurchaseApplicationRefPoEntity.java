@@ -15,13 +15,13 @@ import java.io.Serializable;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("scm_purchase_application_ref_order")
-public class ScmPurchaseApplicationRefOrderEntity extends BaseEntity<ScmPurchaseApplicationRefOrderEntity> {
+@TableName("scm_purchase_application_ref_po")
+public class ScmPurchaseApplicationRefPoEntity extends BaseEntity<ScmPurchaseApplicationRefPoEntity> {
 
     /**
      * 采购申请明细id

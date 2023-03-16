@@ -9,7 +9,7 @@ import com.common.core.serveice.SuperService;
  * </p>
  *
  * @author will
- * @since 2023-03-15
+ * @since 2023-03-16
  */
 public interface ScmSalesDemandDetailService extends SuperService<ScmSalesDemandDetailEntity> {
 
