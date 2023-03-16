@@ -64,7 +64,7 @@ public class PurchasePriceChangeController extends BaseController {
 
 
     /**
-     * 审核
+     * 采购价目变更审核
      * @param dto
      * @return
      */

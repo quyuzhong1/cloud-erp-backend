@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * BI 下拉列表
+ * 下拉列表
  *
  * @Author Cloud
  * @Date 2022/12/19 11:26
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("plm/drop/down")
-public class ScmDropDownListController extends BaseController {
+public class DropDownListController extends BaseController {
 
     /**
      * 审核状态下拉列表

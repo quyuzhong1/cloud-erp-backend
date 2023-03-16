@@ -28,7 +28,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * 销售需求主表 前端控制器
+ * 销售需求
  *
  * @author will
  * @since 2023-03-15

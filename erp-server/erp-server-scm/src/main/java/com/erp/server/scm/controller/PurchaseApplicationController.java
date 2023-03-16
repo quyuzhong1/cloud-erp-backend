@@ -26,7 +26,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * 采购申请表 前端控制器
+ * 采购申请
  *
  * @author will
  * @since 2023-03-15

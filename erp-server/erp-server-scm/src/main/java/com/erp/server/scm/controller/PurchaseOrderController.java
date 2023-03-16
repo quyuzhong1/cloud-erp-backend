@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * 采购订单表 前端控制器
+ * 采购订单
  * @author will
  * @since 2023-03-16
  */

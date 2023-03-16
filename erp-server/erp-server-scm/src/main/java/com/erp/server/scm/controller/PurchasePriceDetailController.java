@@ -8,7 +8,7 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 产品采购价格明细表 前端控制器
+ * 产品采购价格明细
  * </p>
  *
  * @author admin

@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 销售需求明细表 前端控制器
+ * 销售需求明细
  *
  * @author will
  * @since 2023-03-16
