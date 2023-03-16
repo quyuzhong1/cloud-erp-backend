@@ -59,7 +59,7 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @date: 2023/3/15 17:54
     * @param baseApproveParamDTO
      */
-    void audit(BaseApproveParamDTO baseApproveParamDTO);
+    void approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 取消流程
      * @author Will
@@ -84,5 +84,12 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @param ids
      * @return Boolean
      */
-    Boolean unAudit(List<String> ids);
+    Boolean unApprove(List<String> ids);
+    /**
+     * @description: 获取备货单号
+     * @author Will
+     * @date: 2023/3/16 10:53
+     * @return String
+     */
+    String getCode();
 }

@@ -45,7 +45,7 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      * @param baseApproveParamDTO
 
      */
-    void audit(BaseApproveParamDTO baseApproveParamDTO);
+    void approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 批量反审核
      * @author Will
@@ -53,7 +53,7 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      * @param ids
      * @return Boolean
      */
-    Boolean unAudit(List<String> ids);
+    Boolean unApprove(List<String> ids);
     /**
      * @description: 生成采购单
      * @author Will
@@ -81,5 +81,11 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      */
     Boolean exportExcel(ScmPurchaseApplicationPagingParamDTO scmPurchaseApplicationPagingParamDTO, HttpServletResponse response);
 
-
+    /**
+     * @description: 获取申请单号
+     * @author Will
+     * @date: 2023/3/16 10:52
+     * @return String
+     */
+    String getCode();
 }

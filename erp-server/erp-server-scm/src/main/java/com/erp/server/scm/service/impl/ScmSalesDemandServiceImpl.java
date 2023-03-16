@@ -47,7 +47,7 @@ public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMa
     }
 
     @Override
-    public void audit(BaseApproveParamDTO baseApproveParamDTO) {
+    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
 
     }
 
@@ -62,7 +62,12 @@ public class ScmSalesDemandServiceImpl extends SuperServiceImpl<ScmSalesDemandMa
     }
 
     @Override
-    public Boolean unAudit(List<String> ids) {
+    public Boolean unApprove(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public String getCode() {
         return null;
     }
 }

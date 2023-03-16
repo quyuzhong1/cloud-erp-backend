@@ -48,6 +48,18 @@ public class ScmSalesDemandController extends BaseController {
     }
 
     /**
+     * 获取备货单号
+     * @author Will
+     * @date: 2023/3/16 10:52
+     * @return ApiResult
+     */
+    @GetMapping("/getCode")
+    public ApiResult getCode() {
+        String code = scmSalesDemandService.getCode();
+        return success(code);
+    }
+
+    /**
      * 新增或修改
      * @author Will
      * @date: 2023/3/15 17:34
@@ -87,6 +99,7 @@ public class ScmSalesDemandController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
     /**
      * 批量作废
      * @author Will
@@ -107,9 +120,9 @@ public class ScmSalesDemandController extends BaseController {
      * @param baseApproveParamDTO
      * @return ApiResult
      */
-    @PostMapping("/audit")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        scmSalesDemandService.audit(baseApproveParamDTO);
+    @PostMapping("/approve")
+    public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        scmSalesDemandService.approve(baseApproveParamDTO);
         return success();
     }
 
@@ -120,9 +133,9 @@ public class ScmSalesDemandController extends BaseController {
      * @param ids
      * @return ApiResult
      */
-    @PostMapping("/unAudit")
+    @PostMapping("/unApprove")
     public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = scmSalesDemandService.unAudit(ids);
+        Boolean flag = scmSalesDemandService.unApprove(ids);
         return flag == true ? success() : failure();
     }
 
