@@ -16,11 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * <p>
- * 仓库表 前端控制器
- * </p>
- *
- * @author will
+ * 仓库管理
+ * @author Lambda
  * @since 2023-03-15
  */
 @RestController
@@ -30,7 +27,7 @@ public class WarehouseController extends BaseController {
 
 
     /**
-     * 保存或者修改仓库
+     * 仓库分页列表
      *
      * @param
      * @return
@@ -54,7 +51,7 @@ public class WarehouseController extends BaseController {
 
 
     /**
-     * 导入
+     * 导入仓库
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
@@ -71,7 +68,7 @@ public class WarehouseController extends BaseController {
     }
 
     /**
-     * 导出模板
+     * 导出仓库数据
      * @return
      */
     @PostMapping("/exportWarehouse")
