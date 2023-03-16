@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.scm.mapper.ScmSupplierCategoryMapper">
+<mapper namespace="com.erp.server.scm.mapper.ScmDictMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.ScmSupplierCategoryEntity">
+    <resultMap id="BaseResultMap" type="com.erp.server.scm.entity.ScmDictEntity">
         <result column="id" property="id" />
         <result column="create_user_id" property="createUserId" />
         <result column="create_user_name" property="createUserName" />
@@ -13,8 +13,12 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
+        <result column="key" property="key" />
+        <result column="value" property="value" />
+        <result column="type" property="type" />
         <result column="name" property="name" />
-        <result column="seq" property="seq" />
+        <result column="status" property="status" />
+        <result column="sort" property="sort" />
     </resultMap>
 
 </mapper>

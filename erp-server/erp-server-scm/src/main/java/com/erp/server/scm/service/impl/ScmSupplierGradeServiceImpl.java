@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * <p>
- * 供应商升降级 服务实现类
+ * 供应商分类表 服务实现类
  * </p>
  *
  * @author admin

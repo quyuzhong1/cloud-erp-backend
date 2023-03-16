@@ -30,13 +30,21 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      */
     PagingVO<List<ScmSalesDemandPagingViewDTO>> paging(PagingDTO<ScmSalesDemandPagingParamDTO> dto);
     /**
-     * @description: 新增或修改
+     * @description: 新增
      * @author Will
      * @date: 2023/3/15 17:35
      * @param scmSalesDemandDTO
      * @return Boolean
      */
-    Boolean addOrUpdateScmSalesDemand(ScmSalesDemandDTO scmSalesDemandDTO);
+    Boolean add(ScmSalesDemandDTO scmSalesDemandDTO);
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2023/3/15 17:35
+     * @param scmSalesDemandDTO
+     * @return Boolean
+     */
+    Boolean update(ScmSalesDemandDTO scmSalesDemandDTO);
     /**
      * @description: 查询详情
      * @author Will
@@ -44,7 +52,7 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @param id
      * @return ScmSalesDemandDTO
      */
-    ScmSalesDemandDTO viewScmSalesDemand(String id);
+    ScmSalesDemandDTO view(String id);
     /**
      * @description: 批量作废
      * @author Will
@@ -92,4 +100,13 @@ public interface ScmSalesDemandService extends SuperService<ScmSalesDemandEntity
      * @return String
      */
     String getCode();
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/3/16 11:21
+     * @param id
+     * @return Boolean
+     */
+    Boolean delete(String id);
 }

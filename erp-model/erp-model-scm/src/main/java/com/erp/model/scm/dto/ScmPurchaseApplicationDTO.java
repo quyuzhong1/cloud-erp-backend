@@ -70,4 +70,9 @@ public class ScmPurchaseApplicationDTO implements Serializable {
     @Valid
     private List<ScmPurchaseApplicationDetailDTO> details;
 
+    /**
+     * 操作日志（仅显示，无需传参）
+     */
+    private List<ScmModuleLogDTO> logs;
+
 }

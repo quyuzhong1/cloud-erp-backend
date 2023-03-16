@@ -31,13 +31,22 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      */
     PagingVO<List<ScmPurchaseApplicationPagingViewDTO>> paging(PagingDTO<ScmPurchaseApplicationPagingParamDTO> dto);
     /**
-     * @description: 新增或者修改
+     * @description: 新增
      * @author Will
      * @date: 2023/3/15 18:09
      * @param scmPurchaseApplicationDTO
      * @return Boolean
      */
-    Boolean addOrUpdateScmPurchaseApplication(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO);
+    Boolean add(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO);
+
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2023/3/16 11:10
+     * @param scmPurchaseApplicationDTO
+     * @return Boolean
+     */
+    Boolean update(ScmPurchaseApplicationDTO scmPurchaseApplicationDTO);
     /**
      * @description: 审核
      * @author Will
@@ -88,4 +97,13 @@ public interface ScmPurchaseApplicationService extends SuperService<ScmPurchaseA
      * @return String
      */
     String getCode();
+
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/3/16 11:20
+     * @param id
+     * @return Boolean
+     */
+    Boolean delete(String id);
 }

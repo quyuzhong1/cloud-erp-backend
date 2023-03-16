@@ -65,7 +65,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         List<KingdeeSkuEntity> insertList = new ArrayList<>();
         List<KingdeeSkuEntity> pushToMqList = new ArrayList<>();
         for (KingdeeSkuEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getFMaterialId());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getShopByMaterialId(entity.getFMaterialId());
             List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
@@ -74,7 +74,6 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
             }
             KingdeeSkuEntity mongoDatum = mongoData.get(0);
             String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;

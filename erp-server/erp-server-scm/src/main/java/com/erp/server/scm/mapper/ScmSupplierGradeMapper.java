@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- * 供应商升降级 Mapper 接口
+ * 供应商分类表 Mapper 接口
  * </p>
  *
  * @author admin

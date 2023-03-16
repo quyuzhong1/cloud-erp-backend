@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 供应商分类表 前端控制器
+ * 供应商拜访物料信息表 前端控制器
  * </p>
  *
- * @author admin
- * @since 2023-03-15
+ * @author Lambda
+ * @since 2023-03-16
  */
 @RestController
-@RequestMapping("/scm-supplier-category-entity")
-public class ScmSupplierGradeController extends BaseController {
+@RequestMapping("/scm-supplier-visit-sku-entity")
+public class ScmSupplierVisitSkuController extends BaseController {
 
 }

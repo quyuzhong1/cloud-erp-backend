@@ -5,7 +5,7 @@ import com.erp.model.scm.entity.ScmSupplierGradeEntity;
 
 /**
  * <p>
- * 供应商升降级 服务类
+ * 供应商分类表 服务类
  * </p>
  *
  * @author admin
