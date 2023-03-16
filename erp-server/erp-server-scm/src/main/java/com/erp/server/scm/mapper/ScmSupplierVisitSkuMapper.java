@@ -1,7 +1,7 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.scm.entity.ScmSupplierVisitSkuEntity;
+import com.erp.model.scm.entity.SupplierVisitSkuEntity;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.erp.model.scm.entity.ScmSupplierVisitSkuEntity;
  * @author Lambda
  * @since 2023-03-16
  */
-public interface ScmSupplierVisitSkuMapper extends BaseMapper<ScmSupplierVisitSkuEntity> {
+public interface ScmSupplierVisitSkuMapper extends BaseMapper<SupplierVisitSkuEntity> {
 
 }

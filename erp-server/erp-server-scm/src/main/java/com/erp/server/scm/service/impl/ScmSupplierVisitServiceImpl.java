@@ -1,7 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import com.common.core.serveice.SuperServiceImpl;
-import com.erp.model.scm.entity.ScmSupplierVisitEntity;
+import com.erp.model.scm.entity.SupplierVisitEntity;
 import com.erp.server.scm.mapper.ScmSupplierVisitMapper;
 import com.erp.server.scm.service.ScmSupplierVisitService;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-03-15
  */
 @Service
-public class ScmSupplierVisitServiceImpl extends SuperServiceImpl<ScmSupplierVisitMapper, ScmSupplierVisitEntity> implements ScmSupplierVisitService {
+public class ScmSupplierVisitServiceImpl extends SuperServiceImpl<ScmSupplierVisitMapper, SupplierVisitEntity> implements ScmSupplierVisitService {
 
 }

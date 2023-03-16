@@ -1,7 +1,7 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.scm.entity.ScmPurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.erp.model.scm.entity.ScmPurchasePriceChangeDetailEntity;
  * @author Lambda
  * @since 2023-03-16
  */
-public interface ScmPurchasePriceChangeDetailMapper extends BaseMapper<ScmPurchasePriceChangeDetailEntity> {
+public interface ScmPurchasePriceChangeDetailMapper extends BaseMapper<PurchasePriceChangeDetailEntity> {
 
 }

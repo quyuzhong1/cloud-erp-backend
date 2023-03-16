@@ -1,7 +1,7 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.scm.entity.ScmPurchasePriceEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-03-15
  */
 @Mapper
-public interface ScmPurchasePriceMapper extends BaseMapper<ScmPurchasePriceEntity> {
+public interface ScmPurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
 
 }

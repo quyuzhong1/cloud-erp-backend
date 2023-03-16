@@ -1,7 +1,7 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.scm.entity.ScmSupplierPhaseEntity;
+import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-03-15
  */
 @Mapper
-public interface ScmSupplierPhaseMapper extends BaseMapper<ScmSupplierPhaseEntity> {
+public interface ScmSupplierPhaseMapper extends BaseMapper<SupplierPhaseEntity> {
 
 }

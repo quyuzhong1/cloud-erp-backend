@@ -1,7 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import com.common.core.serveice.SuperServiceImpl;
-import com.erp.model.scm.entity.ScmSupplierPhaseEntity;
+import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.server.scm.mapper.ScmSupplierPhaseMapper;
 import com.erp.server.scm.service.ScmSupplierPhaseService;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-03-15
  */
 @Service
-public class ScmSupplierPhaseServiceImpl extends SuperServiceImpl<ScmSupplierPhaseMapper, ScmSupplierPhaseEntity> implements ScmSupplierPhaseService {
+public class ScmSupplierPhaseServiceImpl extends SuperServiceImpl<ScmSupplierPhaseMapper, SupplierPhaseEntity> implements ScmSupplierPhaseService {
 
 }

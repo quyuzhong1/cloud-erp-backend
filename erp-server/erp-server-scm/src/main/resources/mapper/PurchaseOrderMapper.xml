@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchaseOrderMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.PurchaseOrderEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="code" property="code" />
+        <result column="purchase_date" property="purchaseDate" />
+        <result column="purchase_user_id" property="purchaseUserId" />
+        <result column="purchase_user_name" property="purchaseUserName" />
+        <result column="purchase_org_id" property="purchaseOrgId" />
+        <result column="purchase_org_name" property="purchaseOrgName" />
+        <result column="purchase_dept_id" property="purchaseDeptId" />
+        <result column="purchase_dept_name" property="purchaseDeptName" />
+        <result column="is_first_mass_product" property="isFirstMassProduct" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_time" property="invalidTime" />
+        <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+</mapper>

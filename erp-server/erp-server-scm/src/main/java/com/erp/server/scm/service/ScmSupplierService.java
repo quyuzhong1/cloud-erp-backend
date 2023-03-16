@@ -1,7 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
-import com.erp.model.scm.entity.ScmSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.erp.model.scm.entity.ScmSupplierEntity;
  * @author admin
  * @since 2023-03-15
  */
-public interface ScmSupplierService extends SuperService<ScmSupplierEntity> {
+public interface ScmSupplierService extends SuperService<SupplierEntity> {
 
 }
