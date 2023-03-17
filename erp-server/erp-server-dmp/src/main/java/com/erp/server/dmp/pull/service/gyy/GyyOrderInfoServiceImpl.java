@@ -135,9 +135,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      **/
 
     public DmpOrderInfoEntity initOrderInfoEntity(GyyOrderEntity gyyOrderEntity){
-        if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
-            return null;
-        }
+//        if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
+//            return null;
+//        }
 //        if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
 //            if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
 //                return null;
@@ -188,6 +188,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         dmpOrderInfoEntity.setPlatformOrderStatus(gyyOrderEntity.getPlatformTradingState());
         //订单来源平台
         dmpOrderInfoEntity.setSourcePlatform(gyyOrderEntity.getFromTypeName());
+        dmpOrderInfoEntity.setOrderTypeName(gyyOrderEntity.getOrderTypeName());
         if (StringUtils.isNotBlank(gyyOrderEntity.getReceiverArea())) {
             String[] split = gyyOrderEntity.getReceiverArea().split("-");
             if (split.length >= 1) {
