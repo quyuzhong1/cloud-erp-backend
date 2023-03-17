@@ -2,6 +2,8 @@ package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
@@ -11,6 +13,8 @@ import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.SupplierAccountService;
 import com.erp.server.scm.service.SupplierContactService;
@@ -44,6 +48,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SupplierCredentialService supplierCredentialService;
 
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     /**
      * 保存供应商信息
      *
@@ -68,6 +76,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierEntity addEntity = new SupplierEntity();
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(supplierId);
+        //生成单号
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_XQ.getCode()));
         Boolean result = this.save(addEntity);
         //保存成功
         if (result) {
