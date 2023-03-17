@@ -18,39 +18,50 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class PurchaseOrderSupplierDTO implements Serializable {
 
-    /**
-     * 主键id
-     */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class addDTO {
 
-    /**
-     * 采购订单id
-     */
-    private String purchaseOrderId;
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
 
-    /**
-     * 供应商id
-     */
-    @NotBlank(message = "供应商不能为空")
-    private String supplierId;
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
 
-    /**
-     * 结算方式
-     */
-    private String settleMethod;
+        /**
+         * 结算方式
+         */
+        private String settleMethod;
 
-    /**
-     * 结算币种
-     */
-    private String settleCurrency;
+        /**
+         * 结算币种
+         */
+        private String settleCurrency;
 
-    /**
-     * 供应商联系人表id
-     */
-    private String supplierContactId;
+        /**
+         * 供应商联系人表id
+         */
+        private String supplierContactId;
 
-    /**
-     * 联系人电话
-     */
-    private String contactPhone;
+        /**
+         * 联系人电话
+         */
+        private String contactTelNumber;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class updateDTO {
+        /**
+         * 主表id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+    }
+
 }

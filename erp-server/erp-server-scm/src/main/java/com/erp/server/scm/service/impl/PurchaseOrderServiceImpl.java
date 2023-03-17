@@ -26,22 +26,22 @@ import java.util.List;
 public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapper, PurchaseOrderEntity> implements PurchaseOrderService {
 
     @Override
-    public PagingVO<List<PurchaseOrderPagingViewDTO>> paging(PagingDTO<PurchaseOrderPagingParamDTO> dto) {
+    public PagingVO<PurchaseOrderDTO.listDTO> paging(PagingDTO<PurchaseOrderDTO.searchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public Boolean add(PurchaseOrderDTO scmPurchaseOrderDTO) {
+    public Boolean add(PurchaseOrderDTO.addDTO dto) {
         return null;
     }
 
     @Override
-    public Boolean update(PurchaseOrderDTO scmPurchaseOrderDTO) {
+    public Boolean update(PurchaseOrderDTO.updateDTO dto) {
         return null;
     }
 
     @Override
-    public PurchaseOrderDTO view(String id) {
+    public PurchaseOrderDTO.viewDTO view(String id) {
         return null;
     }
 
@@ -69,12 +69,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public Boolean finishDelivery(String id) {
         return null;
     }
-
-    @Override
-    public PurchaseOrderDTO viewByCopy(String id) {
-        return null;
-    }
-
     @Override
     public Boolean purchaseChange(String id) {
         return null;
@@ -86,27 +80,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<PurchaseOrderViewDTO> viewForWarehouseReceive(String id) {
-        return null;
-    }
-
-    @Override
-    public Boolean generateWarehouseReceive(PurchaseOrderViewDTO purchaseOrderViewDTO) {
-        return null;
-    }
-
-    @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         return null;
     }
 
     @Override
-    public Boolean exportExcel(PurchaseOrderPagingParamDTO purchaseOrderPagingParamDTO, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseOrderDTO.searchParamDTO dto, HttpServletResponse response) {
         return null;
     }
 
     @Override
     public Boolean submit(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean addAndSubmit(PurchaseOrderDTO.addDTO dto) {
         return null;
     }
 }

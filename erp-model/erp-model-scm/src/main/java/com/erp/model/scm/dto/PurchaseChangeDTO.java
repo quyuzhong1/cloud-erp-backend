@@ -7,7 +7,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -21,65 +25,242 @@ import java.util.List;
 @NoArgsConstructor
 public class PurchaseChangeDTO implements Serializable {
 
-    /**
-     * 主键id
-     */
-    private String id;
 
-    /**
-     * 单据编号
-     */
-    private String code;
 
-    /**
-     * 采购订单id
-     */
-    private String purchaseOrderId;
+    @Data
+    @NoArgsConstructor
+    public static class listDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 变更单号
+         */
+        private String code;
 
-    /**
-     * 审核状态
-     */
-    private String approveStatus;
+        /**
+         * 采购订单号
+         */
+        private String purchaseOrderCode;
 
-    /**
-     * 变更日期
-     */
-    private Date changeDate;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
-    /**
-     * 变更人id
-     */
-    private String changeUserId;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
 
-    /**
-     * 变更部门id
-     */
-    private String changeDeptId;
+        /**
+         * 作废状态（0未作废，1已作废）
+         */
+        private String invalidStatusName;
 
-    /**
-     * 采购组织id
-     */
-    private String purchaseOrgId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
 
-    /**
-     * 新品首批（false否,true是）
-     */
-    private Boolean isFirstMassProduct;
+        /**
+         * 产品名称
+         */
+        private String productName;
 
-    /**
-     * 供应商id
-     */
-    private String supplierId;
+        /**
+         * 原采购数量
+         */
+        private Integer oldQty;
 
-    /**
-     * 提交类型
-     */
-    @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
-    private String submitType;
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
 
-    /**
-     * 变更明细
-     */
-    @Valid
-    private List<PurchaseChangeDetailDTO> details;
+        /**
+         * 原含税单价
+         */
+        private BigDecimal oldPrice;
+
+        /**
+         * 原含税金额
+         */
+        private BigDecimal oldAmount;
+
+        /**
+         * 新采购数量
+         */
+        private Integer qty;
+
+        /**
+         * 新含税单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 新含税金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 变更备注
+         */
+        private String remark;
+
+        /**
+         * 变更人名称
+         */
+        private String changeUserName;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class searchParamDTO {
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 供应商id
+         */
+        private List<String> supplierIdList;
+
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 作废状态
+         */
+        private String invalidStatus;
+
+        /**
+         * 交货仓库id
+         */
+        private List<String> deliveryWarehouseIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+
+        /**
+         * 审核时间开始
+         */
+        private List<LocalDate> approveTimeList;
+
+        /**
+         * 创建人id
+         */
+        private List<String> createUserIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class commonDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 变更日期
+         */
+        private Date changeDate;
+
+        /**
+         * 变更人id
+         */
+        private String changeUserId;
+
+        /**
+         * 变更部门id
+         */
+        private String changeDeptId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class addDTO extends commonDTO{
+
+        /**
+         * 变更明细
+         */
+        @Valid
+        private List<PurchaseChangeDetailDTO.addDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class updateDTO extends commonDTO {
+        /**
+         * 主表id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 变更明细
+         */
+        @Valid
+        private List<PurchaseChangeDetailDTO.updateDTO> details;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class viewDTO extends updateDTO {
+
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+    }
+
 }

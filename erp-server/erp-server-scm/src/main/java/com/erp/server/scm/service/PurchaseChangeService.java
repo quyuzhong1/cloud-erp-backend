@@ -5,8 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
-import com.erp.model.scm.dto.PurchaseChangePagingParamDTO;
-import com.erp.model.scm.dto.PurchaseChangePagingViewDTO;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -26,26 +24,26 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @author Will
      * @date: 2023/3/16 12:06
      * @param dto
-     * @return PagingVO<List<ScmPurchaseChangePagingViewDTO>>
+     * @return PagingVO<PurchaseChangeDTO.listDTO>
      */
-    PagingVO<List<PurchaseChangePagingViewDTO>> paging(PagingDTO<PurchaseChangePagingParamDTO> dto);
+    PagingVO<PurchaseChangeDTO.listDTO> paging(PagingDTO<PurchaseChangeDTO.searchParamDTO> dto);
 
     /**
      * @description: 新增
      * @author Will
      * @date: 2023/3/16 12:08
-     * @param purchaseChangeDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseChangeDTO purchaseChangeDTO);
+    Boolean add(PurchaseChangeDTO.addDTO dto);
     /**
      * @description: 修改
      * @author Will
      * @date: 2023/3/16 12:08
-     * @param purchaseChangeDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseChangeDTO purchaseChangeDTO);
+    Boolean update(PurchaseChangeDTO.updateDTO dto);
     /**
      * @description: 查看详情
      * @author Will
@@ -53,7 +51,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param id
      * @return ScmPurchaseChangeDTO
      */
-    PurchaseChangeDTO view(String id);
+    PurchaseChangeDTO.viewDTO view(String id);
     /**
      * @description: 删除
      * @author Will
@@ -77,23 +75,16 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param baseApproveParamDTO
      */
     void approve(BaseApproveParamDTO baseApproveParamDTO);
-    /**
-     * @description: 反审核
-     * @author Will
-     * @date: 2023/3/16 12:09
-     * @param ids
-     * @return Boolean
-     */
-    Boolean disApprove(List<String> ids);
+
     /**
      * @description: 导出
      * @author Will
      * @date: 2023/3/16 12:13
-     * @param purchaseChangePagingParamDTO
+     * @param dto
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseChangePagingParamDTO purchaseChangePagingParamDTO, HttpServletResponse response);
+    Boolean exportExcel(PurchaseChangeDTO.searchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 提交
      * @author Will
@@ -102,4 +93,12 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return Boolean
      */
     Boolean submit(List<String> ids);
+    /**
+     * @description: 新增并提交
+     * @author Will
+     * @date: 2023/3/17 12:43
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addAndSubmit(PurchaseChangeDTO.addDTO dto);
 }

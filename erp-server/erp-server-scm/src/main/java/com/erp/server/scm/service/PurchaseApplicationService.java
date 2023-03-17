@@ -4,8 +4,6 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.PurchaseApplicationPagingParamDTO;
-import com.erp.model.scm.dto.PurchaseApplicationPagingViewDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.common.core.serveice.SuperService;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,26 +25,26 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @author Will
      * @date: 2023/3/15 18:07
      * @param dto
-     * @return PagingVO<List<ScmPurchaseApplicationViewDTO>>
+     * @return PagingVO<PurchaseApplicationDTO.listDTO>
      */
-    PagingVO<List<PurchaseApplicationPagingViewDTO>> paging(PagingDTO<PurchaseApplicationPagingParamDTO> dto);
+    PagingVO<PurchaseApplicationDTO.listDTO> paging(PagingDTO<PurchaseApplicationDTO.searchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
      * @date: 2023/3/15 18:09
-     * @param purchaseApplicationDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseApplicationDTO purchaseApplicationDTO);
+    Boolean add(PurchaseApplicationDTO.addDTO dto);
 
     /**
      * @description: 修改
      * @author Will
      * @date: 2023/3/16 11:10
-     * @param purchaseApplicationDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseApplicationDTO purchaseApplicationDTO);
+    Boolean update(PurchaseApplicationDTO.updateDTO dto);
     /**
      * @description: 审核
      * @author Will
@@ -84,11 +82,11 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:24
-     * @param purchaseApplicationPagingParamDTO
+     * @param dto
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseApplicationPagingParamDTO purchaseApplicationPagingParamDTO, HttpServletResponse response);
+    Boolean exportExcel(PurchaseApplicationDTO.searchParamDTO dto, HttpServletResponse response);
 
 
     /**
@@ -107,4 +105,12 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean submit(List<String> ids);
+    /**
+     * @description: 新增并提交
+     * @author Will
+     * @date: 2023/3/17 12:58
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addAndSubmit(PurchaseApplicationDTO.addDTO dto);
 }

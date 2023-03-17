@@ -68,8 +68,8 @@ public class PurchaseOrderSupplierEntity extends BaseEntity<PurchaseOrderSupplie
     /**
      * 联系人电话
      */
-    @TableField("contact_phone")
-    private String contactPhone;
+    @TableField("contact_tel_number")
+    private String contactTelNumber;
 
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
@@ -86,7 +86,7 @@ public class PurchaseOrderSupplierEntity extends BaseEntity<PurchaseOrderSupplie
 
     public static final String CONTACT_NAME = "contact_name";
 
-    public static final String CONTACT_PHONE = "contact_phone";
+    public static final String CONTACT_TEL_NUMBER = "contact_tel_number";
 
     @Override
     public Serializable pkVal() {

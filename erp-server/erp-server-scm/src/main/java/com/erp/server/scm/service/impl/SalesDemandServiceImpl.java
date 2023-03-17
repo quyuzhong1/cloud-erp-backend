@@ -5,8 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.dto.SalesDemandDTO;
-import com.erp.model.scm.dto.SalesDemandPagingViewDTO;
-import com.erp.model.scm.dto.SalesDemandPagingParamDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.server.scm.mapper.SalesDemandMapper;
 import com.erp.server.scm.service.SalesDemandService;
@@ -28,22 +26,22 @@ import java.util.List;
 public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, SalesDemandEntity> implements SalesDemandService {
 
     @Override
-    public PagingVO<List<SalesDemandPagingViewDTO>> paging(PagingDTO<SalesDemandPagingParamDTO> dto) {
+    public PagingVO<List<SalesDemandDTO.listDTO>> paging(PagingDTO<SalesDemandDTO.searchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public Boolean add(SalesDemandDTO salesDemandDTO) {
+    public Boolean add(SalesDemandDTO.addDTO dto) {
         return null;
     }
 
     @Override
-    public Boolean update(SalesDemandDTO salesDemandDTO) {
+    public Boolean update(SalesDemandDTO.updateDTO dto) {
         return null;
     }
 
     @Override
-    public SalesDemandDTO view(String id) {
+    public SalesDemandDTO.viewDTO view(String id) {
         return null;
     }
 
@@ -63,7 +61,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public Boolean exportExcel(SalesDemandPagingParamDTO salesDemandPagingParamDTO, HttpServletResponse response) {
+    public Boolean exportExcel(SalesDemandDTO.searchParamDTO dto,HttpServletResponse response) {
         return null;
     }
 
@@ -84,6 +82,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public Boolean addAndSubmit(SalesDemandDTO.addDTO dto) {
         return null;
     }
 }

@@ -43,11 +43,11 @@ public class PurchaseOrderController extends BaseController {
      * @author Will
      * @date: 2023/3/15 16:47
      * @param dto
-     * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
+     * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<PurchaseOrderPagingViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderPagingParamDTO> dto) {
-        PagingVO<List<PurchaseOrderPagingViewDTO>> pagingVO = purchaseOrderService.paging(dto);
+    public ApiResult<PagingVO<PurchaseOrderDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.searchParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.listDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
     }
 
@@ -56,12 +56,12 @@ public class PurchaseOrderController extends BaseController {
      * 新增
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param scmPurchaseOrderDTO
+     * @param dto)
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseOrderDTO scmPurchaseOrderDTO) {
-        Boolean flag = purchaseOrderService.add(scmPurchaseOrderDTO);
+    public ApiResult add(@RequestBody @Validated PurchaseOrderDTO.addDTO dto) {
+        Boolean flag = purchaseOrderService.add(dto);
         return flag == true ? success() : failure();
     }
 
@@ -69,12 +69,25 @@ public class PurchaseOrderController extends BaseController {
      * 修改
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param scmPurchaseOrderDTO
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseOrderDTO scmPurchaseOrderDTO) {
-        Boolean flag = purchaseOrderService.update(scmPurchaseOrderDTO);
+    public ApiResult update(@RequestBody @Validated PurchaseOrderDTO.updateDTO dto) {
+        Boolean flag = purchaseOrderService.update(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 新增并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.addDTO dto) {
+        Boolean flag = purchaseOrderService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -83,12 +96,12 @@ public class PurchaseOrderController extends BaseController {
      * @author Will
      * @date: 2023/3/15 17:44
      * @param id
-     * @return ApiResult<scmPurchaseOrderDTO>
+     * @return ApiResult<PurchaseOrderDTO.viewDTO>
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseOrderDTO> view(@Param("id") String id) {
-        PurchaseOrderDTO scmPurchaseOrderDTO = purchaseOrderService.view(id);
-        return success(scmPurchaseOrderDTO);
+    public ApiResult<PurchaseOrderDTO.viewDTO> view(@Param("id") String id) {
+        PurchaseOrderDTO.viewDTO dto = purchaseOrderService.view(id);
+        return success(dto);
     }
 
     /**
@@ -171,19 +184,6 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 再次购买数据查询
-     * @author Will
-     * @date: 2023/3/15 17:59
-     * @param id
-     * @return ApiResult
-     */
-    @PostMapping("/viewByCopy")
-    public ApiResult<PurchaseOrderDTO> viewByCopy(@RequestParam("id") String id) {
-        PurchaseOrderDTO purchaseOrderDTO = purchaseOrderService.viewByCopy(id);
-        return success(purchaseOrderDTO);
-    }
-
-    /**
      * 采购变更
      * @author Will
      * @date: 2023/3/15 17:59
@@ -193,33 +193,6 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/purchaseChange")
     public ApiResult purchaseChange(@RequestParam("id") String id) {
         Boolean result = purchaseOrderService.purchaseChange(id);
-        return result == true ? success() : failure();
-    }
-
-
-    /**
-     * 仓库签收单弹框数据显示
-     * @author Will
-     * @date: 2023/3/15 17:44
-     * @param id
-     * @return ApiResult<scmPurchaseOrderDTO>
-     */
-    @GetMapping("/viewForWarehouseReceive")
-    public ApiResult<List<PurchaseOrderViewDTO>> viewForWarehouseReceive(@Param("id") String id) {
-        List<PurchaseOrderViewDTO> list = purchaseOrderService.viewForWarehouseReceive(id);
-        return success(list);
-    }
-
-    /**
-     * 下推签收保存
-     * @author Will
-     * @date: 2023/3/15 17:59
-     * @param purchaseOrderViewDTO
-     * @return ApiResult
-     */
-    @PostMapping("/generateWarehouseReceive")
-    public ApiResult generateWarehouseReceive(@RequestBody @Validated PurchaseOrderViewDTO purchaseOrderViewDTO) {
-        Boolean result = purchaseOrderService.generateWarehouseReceive(purchaseOrderViewDTO);
         return result == true ? success() : failure();
     }
 
@@ -285,13 +258,13 @@ public class PurchaseOrderController extends BaseController {
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:23
-     * @param purchaseOrderPagingParamDTO
+     * @param dto
      * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseOrderPagingParamDTO purchaseOrderPagingParamDTO, HttpServletResponse response) {
-        Boolean flag = purchaseOrderService.exportExcel(purchaseOrderPagingParamDTO, response);
+    public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.searchParamDTO dto, HttpServletResponse response) {
+        Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 

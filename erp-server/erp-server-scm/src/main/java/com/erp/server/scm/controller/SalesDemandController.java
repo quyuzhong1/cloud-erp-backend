@@ -8,9 +8,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
-import com.erp.model.scm.dto.SalesDemandPagingParamDTO;
-import com.erp.model.scm.dto.SalesDemandPagingViewDTO;
 import com.erp.server.scm.service.SalesDemandService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -48,8 +47,8 @@ public class SalesDemandController extends BaseController {
     * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
     */
    @PostMapping("/paging")
-    public ApiResult<PagingVO<List<SalesDemandPagingViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandPagingParamDTO> dto) {
-        PagingVO<List<SalesDemandPagingViewDTO>> pagingVO = salesDemandService.paging(dto);
+    public ApiResult<PagingVO<List<SalesDemandDTO.listDTO>>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.searchParamDTO> dto) {
+        PagingVO<List<SalesDemandDTO.listDTO>> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
     }
 
@@ -57,12 +56,12 @@ public class SalesDemandController extends BaseController {
      * 新增
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param salesDemandDTO
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated SalesDemandDTO salesDemandDTO) {
-        Boolean flag = salesDemandService.add(salesDemandDTO);
+    public ApiResult add(@RequestBody @Validated SalesDemandDTO.addDTO dto) {
+        Boolean flag = salesDemandService.add(dto);
         return flag == true ? success() : failure();
     }
 
@@ -70,12 +69,25 @@ public class SalesDemandController extends BaseController {
      * 修改
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param salesDemandDTO
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated SalesDemandDTO salesDemandDTO) {
-        Boolean flag = salesDemandService.update(salesDemandDTO);
+    public ApiResult update(@RequestBody @Validated SalesDemandDTO.updateDTO dto) {
+        Boolean flag = salesDemandService.update(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 新增并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated SalesDemandDTO.addDTO dto) {
+        Boolean flag = salesDemandService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -87,9 +99,9 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult<ScmSalesDemandDTO>
      */
     @GetMapping("/view")
-    public ApiResult<SalesDemandDTO> view(@Param("id") String id) {
-        SalesDemandDTO salesDemandDTO = salesDemandService.view(id);
-        return success(salesDemandDTO);
+    public ApiResult<SalesDemandDTO.viewDTO> view(@Param("id") String id) {
+        SalesDemandDTO.viewDTO dto = salesDemandService.view(id);
+        return success(dto);
     }
 
     /**
@@ -221,13 +233,13 @@ public class SalesDemandController extends BaseController {
      * 导出
      * @author Will
      * @date: 2023/3/15 18:01
-     * @param salesDemandPagingParamDTO
+     * @param dto
      * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody SalesDemandPagingParamDTO salesDemandPagingParamDTO, HttpServletResponse response) {
-        Boolean flag = salesDemandService.exportExcel(salesDemandPagingParamDTO, response);
+    public ApiResult exportExcel(@RequestBody SalesDemandDTO.searchParamDTO dto, HttpServletResponse response) {
+        Boolean flag = salesDemandService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 

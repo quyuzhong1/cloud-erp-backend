@@ -19,66 +19,72 @@ import java.util.Date;
 @NoArgsConstructor
 public class SalesDemandDetailDTO implements Serializable {
 
-    /**
-     * 主键id
-     */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class addDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
 
-    /**
-     * skuId
-     */
-    private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
 
-    /**
-     * sku编码
-     */
-    private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
 
-    /**
-     * 产品名称
-     */
-    private String productName;
+        /**
+         * 单箱数量
+         */
+        @Min(value = 0,message = "计划备货数量最小值为0")
+        @Max(value = 99999999,message = "计划备货数量最大值为99999999")
+        private Integer unitQty;
 
-    /**
-     * 单箱数量
-     */
-    @Min(value = 0,message = "计划备货数量最小值为0")
-    @Max(value = 99999999,message = "计划备货数量最大值为99999999")
-    private Integer unitQty;
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
 
-    /**
-     * 是否加急（false否，true是）
-     */
-    private Boolean isUrgent;
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
 
-    /**
-     * 计划交期
-     */
-    private LocalDate planDeliveryDate;
+        /**
+         * 计划备货数量
+         */
+        @NotEmpty(message = "计划备货数量不能为空")
+        @Min(value = 1,message = "计划备货数量最小值为1")
+        @Max(value = 99999999,message = "计划备货数量最大值为99999999")
+        private Integer planStockQty;
 
-    /**
-     * 计划备货数量
-     */
-    @NotEmpty(message = "计划备货数量不能为空")
-    @Min(value = 1,message = "计划备货数量最小值为1")
-    @Max(value = 99999999,message = "计划备货数量最大值为99999999")
-    private Integer planStockQty;
+        /**
+         * 目的仓库id
+         */
+        @NotBlank(message = "目的仓库不能为空")
+        private String destWarehouseId;
 
-    /**
-     * 目的仓库id
-     */
-    @NotBlank(message = "目的仓库不能为空")
-    private String destWarehouseId;
 
-    /**
-     * 目的仓库名称
-     */
-    @NotBlank(message = "目的仓库不能为空")
-    private String destWarehouseName;
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
 
-    /**
-     * 备注
-     */
-    @Size(max = 255,message = "备注不能大于255字符")
-    private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class updateDTO {
+
+        /**
+         * 主表id
+         */
+        private String id;
+    }
+
 }

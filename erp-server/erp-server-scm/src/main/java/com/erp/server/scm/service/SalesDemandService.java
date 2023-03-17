@@ -5,8 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.SalesDemandDTO;
-import com.erp.model.scm.dto.SalesDemandPagingViewDTO;
-import com.erp.model.scm.dto.SalesDemandPagingParamDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,25 +25,25 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @author Will
      * @date: 2023/3/15 16:48
      * @param dto
-     * @return PagingVO<List<ScmSalesDemandDTO>>
+     * @return PagingVO<List<SalesDemandDTO.listDTO>>
      */
-    PagingVO<List<SalesDemandPagingViewDTO>> paging(PagingDTO<SalesDemandPagingParamDTO> dto);
+    PagingVO<List<SalesDemandDTO.listDTO>> paging(PagingDTO<SalesDemandDTO.searchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
      * @date: 2023/3/15 17:35
-     * @param salesDemandDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean add(SalesDemandDTO salesDemandDTO);
+    Boolean add(SalesDemandDTO.addDTO dto);
     /**
      * @description: 修改
      * @author Will
      * @date: 2023/3/15 17:35
-     * @param salesDemandDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean update(SalesDemandDTO salesDemandDTO);
+    Boolean update(SalesDemandDTO.updateDTO dto);
     /**
      * @description: 查询详情
      * @author Will
@@ -53,7 +51,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param id
      * @return ScmSalesDemandDTO
      */
-    SalesDemandDTO view(String id);
+    SalesDemandDTO.viewDTO view(String id);
     /**
      * @description: 批量作废
      * @author Will
@@ -81,11 +79,11 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:01
-     * @param salesDemandPagingParamDTO
+     * @param dto
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(SalesDemandPagingParamDTO salesDemandPagingParamDTO, HttpServletResponse response);
+    Boolean exportExcel(SalesDemandDTO.searchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 批量反审核
      * @author Will
@@ -111,6 +109,21 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return Boolean
      */
     Boolean submit(List<String> ids);
-
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/3/17 12:18
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 新增并提交
+     * @author Will
+     * @date: 2023/3/17 13:00
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addAndSubmit(SalesDemandDTO.addDTO dto);
 }

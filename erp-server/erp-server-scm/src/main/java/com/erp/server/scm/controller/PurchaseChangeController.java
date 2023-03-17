@@ -38,8 +38,8 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<PurchaseChangePagingViewDTO>>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangePagingParamDTO> dto) {
-        PagingVO<List<PurchaseChangePagingViewDTO>> pagingVO = purchaseChangeService.paging(dto);
+    public ApiResult<PagingVO<PurchaseChangeDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.searchParamDTO> dto) {
+        PagingVO<PurchaseChangeDTO.listDTO> pagingVO = purchaseChangeService.paging(dto);
         return success(pagingVO);
     }
 
@@ -47,12 +47,12 @@ public class PurchaseChangeController extends BaseController {
      * 新增
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param purchaseChangeDTO
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseChangeDTO purchaseChangeDTO) {
-        Boolean flag = purchaseChangeService.add(purchaseChangeDTO);
+    public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.addDTO dto) {
+        Boolean flag = purchaseChangeService.add(dto);
         return flag == true ? success() : failure();
     }
 
@@ -60,12 +60,25 @@ public class PurchaseChangeController extends BaseController {
      * 修改
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param purchaseChangeDTO
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseChangeDTO purchaseChangeDTO) {
-        Boolean flag = purchaseChangeService.update(purchaseChangeDTO);
+    public ApiResult update(@RequestBody @Validated PurchaseChangeDTO.updateDTO dto) {
+        Boolean flag = purchaseChangeService.update(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 新增并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.addDTO dto) {
+        Boolean flag = purchaseChangeService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -77,9 +90,9 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<ScmPurchaseChangeDTO>
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseChangeDTO> view(@Param("id") String id) {
-        PurchaseChangeDTO purchaseChangeDTO = purchaseChangeService.view(id);
-        return success(purchaseChangeDTO);
+    public ApiResult<PurchaseChangeDTO.viewDTO> view(@Param("id") String id) {
+        PurchaseChangeDTO.viewDTO dto = purchaseChangeService.view(id);
+        return success(dto);
     }
 
     /**
@@ -137,29 +150,16 @@ public class PurchaseChangeController extends BaseController {
     }
 
     /**
-     * 批量反审核
-     * @author Will
-     * @date: 2023/3/15 17:50
-     * @param ids
-     * @return ApiResult
-     */
-    @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.disApprove(ids);
-        return flag == true ? success() : failure();
-    }
-
-    /**
      * 导出
      * @author Will
      * @date: 2023/3/15 18:01
-     * @param purchaseChangePagingParamDTO
+     * @param dto
      * @param response
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseChangePagingParamDTO purchaseChangePagingParamDTO, HttpServletResponse response) {
-        Boolean flag = purchaseChangeService.exportExcel(purchaseChangePagingParamDTO, response);
+    public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.searchParamDTO dto, HttpServletResponse response) {
+        Boolean flag = purchaseChangeService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 

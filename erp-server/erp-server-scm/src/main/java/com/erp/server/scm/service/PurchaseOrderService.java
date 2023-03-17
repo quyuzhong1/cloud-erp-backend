@@ -25,33 +25,33 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/16 11:21
      * @param dto
-     * @return PagingVO<List<ScmPurchaseOrderPagingViewDTO>>
+     * @return PagingVO<PurchaseOrderDTO.listDTO>
      */
-    PagingVO<List<PurchaseOrderPagingViewDTO>> paging(PagingDTO<PurchaseOrderPagingParamDTO> dto);
+    PagingVO<PurchaseOrderDTO.listDTO> paging(PagingDTO<PurchaseOrderDTO.searchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
      * @date: 2023/3/16 11:22
-     * @param scmPurchaseOrderDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseOrderDTO scmPurchaseOrderDTO);
+    Boolean add(PurchaseOrderDTO.addDTO dto);
     /**
      * @description: 修改
      * @author Will
      * @date: 2023/3/16 11:23
-     * @param scmPurchaseOrderDTO
+     * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseOrderDTO scmPurchaseOrderDTO);
+    Boolean update(PurchaseOrderDTO.updateDTO dto);
     /**
      * @description: 查询详情
      * @author Will
      * @date: 2023/3/16 11:23
      * @param id
-     * @return ScmSalesDemandDTO
+     * @return PurchaseOrderDTO.viewDTO
      */
-    PurchaseOrderDTO view(String id);
+    PurchaseOrderDTO.viewDTO view(String id);
     /**
      * @description: 删除
      * @author Will
@@ -91,14 +91,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean finishDelivery(String id);
-    /**
-     * @description: 再次购买
-     * @author Will
-     * @date: 2023/3/16 11:35
-     * @param id
-     * @return Boolean
-     */
-    PurchaseOrderDTO viewByCopy(String id);
+
     /**
      * @description: 采购变更
      * @author Will
@@ -116,22 +109,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     Boolean exportPurchaseContractPdf(String id);
     /**
-     * @description: 仓库签收单弹框数据显示
-     * @author Will
-     * @date: 2023/3/16 11:46
-     * @param id
-     * @return List<ScmPurchaseOrderViewDTO>
-     */
-    List<PurchaseOrderViewDTO> viewForWarehouseReceive(String id);
-    /**
-     * @description: 下推签收保存
-     * @author Will
-     * @date: 2023/3/16 11:52
-     * @param purchaseOrderViewDTO
-     * @return Boolean
-     */
-    Boolean generateWarehouseReceive(PurchaseOrderViewDTO purchaseOrderViewDTO);
-    /**
      * @description: 导入
      * @author Will
      * @date: 2023/3/16 11:58
@@ -144,11 +121,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 导出
      * @author Will
      * @date: 2023/3/16 11:58
-     * @param purchaseOrderPagingParamDTO
+     * @param dto
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseOrderPagingParamDTO purchaseOrderPagingParamDTO, HttpServletResponse response);
+    Boolean exportExcel(PurchaseOrderDTO.searchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 提交
      * @author Will
@@ -157,4 +134,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean submit(List<String> ids);
+    /**
+     * @description: 新增并提交
+     * @author Will
+     * @date: 2023/3/17 12:59
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addAndSubmit(PurchaseOrderDTO.addDTO dto);
 }

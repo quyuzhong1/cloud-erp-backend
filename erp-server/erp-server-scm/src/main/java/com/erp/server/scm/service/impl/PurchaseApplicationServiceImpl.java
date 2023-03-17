@@ -4,8 +4,6 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.PurchaseApplicationPagingParamDTO;
-import com.erp.model.scm.dto.PurchaseApplicationPagingViewDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.PurchaseApplicationService;
@@ -28,17 +26,17 @@ import java.util.List;
 public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApplicationMapper, PurchaseApplicationEntity> implements PurchaseApplicationService {
 
     @Override
-    public PagingVO<List<PurchaseApplicationPagingViewDTO>> paging(PagingDTO<PurchaseApplicationPagingParamDTO> dto) {
+    public PagingVO<PurchaseApplicationDTO.listDTO> paging(PagingDTO<PurchaseApplicationDTO.searchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public Boolean add(PurchaseApplicationDTO purchaseApplicationDTO) {
+    public Boolean add(PurchaseApplicationDTO.addDTO dto) {
         return null;
     }
 
     @Override
-    public Boolean update(PurchaseApplicationDTO purchaseApplicationDTO) {
+    public Boolean update(PurchaseApplicationDTO.updateDTO dto) {
         return null;
     }
 
@@ -63,7 +61,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public Boolean exportExcel(PurchaseApplicationPagingParamDTO purchaseApplicationPagingParamDTO, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseApplicationDTO.searchParamDTO dto, HttpServletResponse response) {
         return null;
     }
 
@@ -74,6 +72,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public Boolean submit(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean addAndSubmit(PurchaseApplicationDTO.addDTO dto) {
         return null;
     }
 

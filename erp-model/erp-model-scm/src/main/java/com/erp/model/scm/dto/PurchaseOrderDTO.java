@@ -5,7 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -19,79 +23,284 @@ import java.util.List;
 @NoArgsConstructor
 public class PurchaseOrderDTO implements Serializable {
 
-    /**
-     * 主键id
-     */
-    private String id;
 
-    /**
-     * 采购单号
-     */
-    private String code;
+    @Data
+    @NoArgsConstructor
+    public static class listDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
-    /**
-     * 审核状态
-     */
-    private String approveStatus;
+        /**
+         * 采购单号
+         */
+        private String code;
 
-    /**
-     * 采购日期
-     */
-    private Date purchaseDate;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
-    /**
-     * 采购员id
-     */
-    private String purchaseUserId;
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
 
-    /**
-     * 采购部门id
-     */
-    private String purchaseDeptId;
+        /**
+         * 作废状态（0未作废，1已作废）
+         */
+        private String invalidStatusName;
 
-    /**
-     * 采购组织id
-     */
-    private String purchaseOrgId;
+        /**
+         * 到货状态（0未到货，1部分到货，2已到货）
+         */
+        private String arrivalStatusName;
 
-    /**
-     * 新品首批（false否,true是）
-     */
-    private Boolean isFirstMassProduct;
+        /**
+         * sku编码
+         */
+        private String skuNo;
 
-    /**
-     * 提交类型
-     */
-    @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
-    private String submitType;
+        /**
+         * 产品名称
+         */
+        private String productName;
 
-    /**
-     * 供应商信息
-     */
-    @Valid
-    private PurchaseOrderSupplierDTO purchaseOrderSupplierDTO;
+        /**
+         * 预计交货日期
+         */
+        private Date planDeliveryDate;
 
-    /**
-     * 采购订单明细
-     */
-    @Valid
-    private List<PurchaseOrderDetailDTO> details;
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal purchaseAmount;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 交货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 申请人
+         */
+        private String purchaseUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class searchParamDTO {
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 供应商id
+         */
+        private List<String> supplierIdList;
+
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 作废状态（0未作废，1已作废）
+         */
+        private String invalidStatus;
+
+        /**
+         * 到货状态（0未到货，1部分到货，2已到货）
+         */
+        private List<String> arrivalStatusList;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 交货仓库id
+         */
+        private List<String> deliveryWarehouseIdList;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+        /**
+         * 审核时间
+         */
+        private List<LocalDate> approveTimeList;
+
+        /**
+         * 申请人id
+         */
+        private List<String> purchaseUserIdList;
+
+        /**
+         * 创建人id
+         */
+        private List<String> createUserIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class commonDTO {
+        /**
+         * 采购日期
+         */
+        private Date purchaseDate;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class addDTO {
+
+        /**
+         * 供应商信息
+         */
+        @Valid
+        private PurchaseOrderSupplierDTO.addDTO purchaseOrderSupplierDTO;
+
+        /**
+         * 采购订单明细
+         */
+        @Valid
+        private List<PurchaseOrderDetailDTO.addDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class updateDTO {
+
+        /**
+         * 主表id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 供应商信息
+         */
+        @Valid
+        private PurchaseOrderSupplierDTO.updateDTO purchaseOrderSupplierDTO;
+
+        /**
+         * 采购订单明细
+         */
+        @Valid
+        private List<PurchaseOrderDetailDTO.updateDTO> details;
+    }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class viewDTO extends updateDTO {
 
-    /**
-     * 操作流程（仅详情显示，无需传参）
-     */
-    private List<PurchaseOrderProcessDTO> process;
+        /**
+         * 单据编码
+         */
+        private String code;
 
-    /**
-     * 关联单据（仅详情显示，无需传参）
-     */
-    private PurchaseOrderRefOtherDTO  purchaseOrderRefOtherDTO;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
 
-    /**
-     * 操作日志（仅详情显示，无需传参）
-     */
-    private List<ModuleOperateLogDTO> logs;
+        /**
+         * 操作流程（仅详情显示，无需传参）
+         */
+        private List<PurchaseOrderProcessDTO> process;
+
+        /**
+         * 关联单据（仅详情显示，无需传参）
+         */
+        private PurchaseOrderRefOtherDTO  purchaseOrderRefOtherDTO;
+    }
+
 
 }

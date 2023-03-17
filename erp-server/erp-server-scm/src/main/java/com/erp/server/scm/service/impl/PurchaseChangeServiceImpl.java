@@ -5,8 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
-import com.erp.model.scm.dto.PurchaseChangePagingParamDTO;
-import com.erp.model.scm.dto.PurchaseChangePagingViewDTO;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.PurchaseChangeService;
@@ -27,22 +25,22 @@ import java.util.List;
 public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMapper, PurchaseChangeEntity> implements PurchaseChangeService {
 
     @Override
-    public PagingVO<List<PurchaseChangePagingViewDTO>> paging(PagingDTO<PurchaseChangePagingParamDTO> dto) {
+    public PagingVO<PurchaseChangeDTO.listDTO> paging(PagingDTO<PurchaseChangeDTO.searchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public Boolean add(PurchaseChangeDTO purchaseChangeDTO) {
+    public Boolean add(PurchaseChangeDTO.addDTO dto) {
         return null;
     }
 
     @Override
-    public Boolean update(PurchaseChangeDTO purchaseChangeDTO) {
+    public Boolean update(PurchaseChangeDTO.updateDTO dto) {
         return null;
     }
 
     @Override
-    public PurchaseChangeDTO view(String id) {
+    public PurchaseChangeDTO.viewDTO view(String id) {
         return null;
     }
 
@@ -62,17 +60,17 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public Boolean disApprove(List<String> ids) {
-        return null;
-    }
-
-    @Override
-    public Boolean exportExcel(PurchaseChangePagingParamDTO purchaseChangePagingParamDTO, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseChangeDTO.searchParamDTO dto, HttpServletResponse response) {
         return null;
     }
 
     @Override
     public Boolean submit(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public Boolean addAndSubmit(PurchaseChangeDTO.addDTO dto) {
         return null;
     }
 
