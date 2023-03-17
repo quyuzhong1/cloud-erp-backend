@@ -103,6 +103,17 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         String orderInfoId = "";
         DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber(), orderInfoEntity.getPlatformOrderId());
         if (null != dmpOrderInfoEntity) {
+            // 删除已存在取消订单
+            if(StrUtil.isNotBlank(dmpOrderInfoEntity.getPlatformOrderStatus()) && dmpOrderInfoEntity.getPlatformOrderStatus().contains("取消")){
+                removeById(dmpOrderInfoEntity.getId());
+                List<DmpOrderItemEntity> list = dmpOrderItemService.lambdaQuery()
+                        .eq(DmpOrderItemEntity::getOrderId, dmpOrderInfoEntity.getId())
+                        .list();
+                if(CollectionUtil.isNotEmpty(list)){
+                    dmpOrderItemService.removeByIds(list.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                }
+                return orderInfoId;
+            }
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
                 orderInfoEntity.setId(dmpOrderInfoEntity.getId());
@@ -110,6 +121,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             orderInfoId = dmpOrderInfoEntity.getId();
         } else {
+            // 跳过不存在取消订单
+            if(StrUtil.isNotBlank(dmpOrderInfoEntity.getPlatformOrderStatus()) && dmpOrderInfoEntity.getPlatformOrderStatus().contains("取消")){
+                return orderInfoId;
+            }
             // 修正状态同步
             orderInfoEntity.setCorrectionStatus(orderInfoEntity.getOrderStatus());
             orderInfoId = add(orderInfoEntity);
