@@ -1,18 +1,9 @@
 package com.erp.server.scm.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
-import com.erp.model.dmp.entity.CfgApiFieldMapEntity;
-import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
-import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
-import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
-import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SalesDemandDetailMapper;
@@ -23,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
