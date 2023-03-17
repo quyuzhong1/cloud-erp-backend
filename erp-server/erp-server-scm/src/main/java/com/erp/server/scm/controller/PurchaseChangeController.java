@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 销售需求明细
+ * 采购变更管理
  *
  * @author will
  * @since 2023-03-16

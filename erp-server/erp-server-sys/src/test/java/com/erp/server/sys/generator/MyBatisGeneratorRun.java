@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"scm_supplier_visit_sku"};
+        String[] tables = new String[]{"cfg_module_operate_log_field","module_operate_log"};
         autoGenerator(prefix, tables);
 
 

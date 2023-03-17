@@ -28,7 +28,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * 销售需求
+ * 备货申请管理
  *
  * @author will
  * @since 2023-03-15

@@ -16,7 +16,7 @@ import com.common.core.controller.BaseController;
 import javax.annotation.Resource;
 
 /**
- * 操作日志表
+ * 操作日志
  *
  * @author will
  * @since 2023-03-17
@@ -29,7 +29,7 @@ public class ModuleOperateLogController extends BaseController {
     private ModuleOperateLogService moduleOperateLogService;
 
    /**
-    * @description: 操作日志-列表查询
+    * 操作日志-列表查询
     * @author Will
     * @date: 2023/3/17 10:58
     * @param dto

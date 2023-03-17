@@ -26,7 +26,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * 采购申请
+ * 采购申请管理
  *
  * @author will
  * @since 2023-03-15
