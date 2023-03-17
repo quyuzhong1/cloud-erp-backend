@@ -50,6 +50,7 @@ public enum ApiError implements Serializable {
     ERROR_1016(1016, "导入文件格式错误，请使用xlsx文件"),
     ERROR_1017(1017, "参数列表不能为空"),
     ERROR_1018(1018, "导入名称不能大于200字符"),
+    ERROR_DUPLICATION_NAME(1019,"名称不能重复"),
     /**
      * 警告信息 从800 开始
      */
@@ -319,6 +320,8 @@ public enum ApiError implements Serializable {
      * 从98000 开始  以端口号
      */
     ERROR_98000(98000,"供应商等级名不能重复"),
+    ERROR_98001(98001,"供应商默认联系人不能超过两个"),
+
 
     ERROR_end(1000000, "系统错误");
 

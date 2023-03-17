@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierContactDTO;
@@ -41,5 +43,22 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
         addList.forEach(c -> c.setSupplierId(supplierId));
         this.saveBatch(addList);
 
+    }
+
+    /**
+     * 检查联系人 是否有多个默认人
+     *
+     * @param contactList
+     * @return void
+     * @author yl
+     * @date 2023-03-17 16:39
+     */
+
+    @Override
+    public void checkIsDefault(List<SupplierContactDTO.AddDTO> contactList) {
+        long count = contactList.stream().filter(c -> c.getIsDefault()).count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_98001);
+        }
     }
 }

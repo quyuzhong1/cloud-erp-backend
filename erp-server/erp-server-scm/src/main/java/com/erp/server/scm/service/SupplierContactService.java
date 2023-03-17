@@ -26,4 +26,13 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @return void
      */
     void saveBatchContact(String supplierId, List<SupplierContactDTO.AddDTO> contactList);
+
+    /**
+     * 检查联系人 是否有多个默认人
+     * @author yl
+     * @date 2023-03-17 16:39
+     * @param contactList
+     * @return void
+     */
+    void checkIsDefault(List<SupplierContactDTO.AddDTO> contactList);
 }

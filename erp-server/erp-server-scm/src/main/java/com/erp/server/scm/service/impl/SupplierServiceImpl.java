@@ -1,6 +1,9 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierAccountDTO;
@@ -13,6 +16,7 @@ import com.erp.server.scm.service.SupplierAccountService;
 import com.erp.server.scm.service.SupplierContactService;
 import com.erp.server.scm.service.SupplierCredentialService;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,23 +55,57 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addSupplier(SupplierDTO.AddDTO dto) {
+
+        checkName(null, dto.getName());
+
+        //供应商联系信息
+        List<SupplierContactDTO.AddDTO> contactList = dto.getContactList();
+        //检查联系人默认是否多个
+        supplierContactService.checkIsDefault(contactList);
+
         //供应商id
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = new SupplierEntity();
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(supplierId);
-        //供应商账号信息
-        List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
-        supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
+        Boolean result = this.save(addEntity);
+        //保存成功
+        if (result) {
+            //供应商账号信息
+            List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
+            supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
 
-        //供应商联系信息
-        List<SupplierContactDTO.AddDTO> contactList = dto.getContactList();
-        supplierContactService.saveBatchContact(supplierId, contactList);
 
-        //供应商资质信息
-        List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
-        supplierCredentialService.saveBatchCredential(supplierId, credentialList);
+            supplierContactService.saveBatchContact(supplierId, contactList);
 
-        return true;
+            //供应商资质信息
+            List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
+            supplierCredentialService.saveBatchCredential(supplierId, credentialList);
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 检查名称不能重复
+     *
+     * @param id
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2023-03-17 16:48
+     */
+    private void checkName(String id, String name) {
+        LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(SupplierEntity::getId, id);
+        }
+        queryWrapper.eq(SupplierEntity::getName, name);
+        queryWrapper.last("LIMIT 1");
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+        }
     }
 }
