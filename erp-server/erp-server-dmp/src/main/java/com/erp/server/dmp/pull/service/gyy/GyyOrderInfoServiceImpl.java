@@ -138,11 +138,11 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
             return null;
         }
-        if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
-            if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
-                return null;
-            }
-        }
+//        if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
+//            if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
+//                return null;
+//            }
+//        }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getCode());
