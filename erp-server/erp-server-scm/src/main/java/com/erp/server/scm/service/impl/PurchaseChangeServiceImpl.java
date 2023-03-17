@@ -32,11 +32,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public String getCode() {
-        return null;
-    }
-
-    @Override
     public Boolean add(PurchaseChangeDTO purchaseChangeDTO) {
         return null;
     }
@@ -52,7 +47,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public Boolean delete(String id) {
+    public Boolean delete(List<String> ids) {
         return null;
     }
 
@@ -67,7 +62,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public Boolean unApprove(List<String> ids) {
+    public Boolean disApprove(List<String> ids) {
         return null;
     }
 
@@ -77,7 +72,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public Boolean commit(String id) {
+    public Boolean submit(List<String> ids) {
         return null;
     }
 

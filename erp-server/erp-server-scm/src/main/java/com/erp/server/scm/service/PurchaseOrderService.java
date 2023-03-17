@@ -29,13 +29,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     PagingVO<List<PurchaseOrderPagingViewDTO>> paging(PagingDTO<PurchaseOrderPagingParamDTO> dto);
     /**
-     * @description: 获取编号
-     * @author Will
-     * @date: 2023/3/16 11:22
-     * @return String
-     */
-    String getCode();
-    /**
      * @description: 新增
      * @author Will
      * @date: 2023/3/16 11:22
@@ -63,10 +56,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 删除
      * @author Will
      * @date: 2023/3/16 11:23
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean delete(String id);
+    Boolean delete(List<String> ids);
     /**
      * @description: 批量审核
      * @author Will
@@ -81,7 +74,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param ids
      * @return Boolean
      */
-    Boolean unApprove(List<String> ids);
+    Boolean disApprove(List<String> ids);
     /**
      * @description: 取消流程
      * @author Will
@@ -105,7 +98,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param id
      * @return Boolean
      */
-    Boolean copy(String id);
+    PurchaseOrderDTO viewByCopy(String id);
     /**
      * @description: 采购变更
      * @author Will
@@ -160,8 +153,8 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:11
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean commit(String id);
+    Boolean submit(List<String> ids);
 }

@@ -93,31 +93,24 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean unApprove(List<String> ids);
-    /**
-     * @description: 获取备货单号
-     * @author Will
-     * @date: 2023/3/16 10:53
-     * @return String
-     */
-    String getCode();
+    Boolean disApprove(List<String> ids);
 
     /**
      * @description: 删除
      * @author Will
      * @date: 2023/3/16 11:21
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean delete(String id);
+    Boolean delete(List<String> ids);
     /**
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:10
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean commit(String id);
+    Boolean submit(List<String> ids);
 
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

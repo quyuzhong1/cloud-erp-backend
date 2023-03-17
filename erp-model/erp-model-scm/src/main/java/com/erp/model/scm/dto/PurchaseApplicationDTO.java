@@ -78,6 +78,6 @@ public class PurchaseApplicationDTO implements Serializable {
     /**
      * 操作日志（仅显示，无需传参）
      */
-    private List<ModuleLogDTO> logs;
+    private List<ModuleOperateLogDTO> logs;
 
 }

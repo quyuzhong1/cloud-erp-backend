@@ -29,13 +29,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return PagingVO<List<ScmPurchaseChangePagingViewDTO>>
      */
     PagingVO<List<PurchaseChangePagingViewDTO>> paging(PagingDTO<PurchaseChangePagingParamDTO> dto);
-    /**
-     * @description: 获取变更单号
-     * @author Will
-     * @date: 2023/3/16 12:08
-     * @return String
-     */
-    String getCode();
+
     /**
      * @description: 新增
      * @author Will
@@ -64,10 +58,10 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @description: 删除
      * @author Will
      * @date: 2023/3/16 12:09
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean delete(String id);
+    Boolean delete(List<String> ids);
     /**
      * @description: 作废
      * @author Will
@@ -90,7 +84,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param ids
      * @return Boolean
      */
-    Boolean unApprove(List<String> ids);
+    Boolean disApprove(List<String> ids);
     /**
      * @description: 导出
      * @author Will
@@ -104,8 +98,8 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:10
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean commit(String id);
+    Boolean submit(List<String> ids);
 }

@@ -62,7 +62,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param ids
      * @return Boolean
      */
-    Boolean unApprove(List<String> ids);
+    Boolean disApprove(List<String> ids);
     /**
      * @description: 生成采购单
      * @author Will
@@ -90,28 +90,21 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      */
     Boolean exportExcel(PurchaseApplicationPagingParamDTO purchaseApplicationPagingParamDTO, HttpServletResponse response);
 
-    /**
-     * @description: 获取申请单号
-     * @author Will
-     * @date: 2023/3/16 10:52
-     * @return String
-     */
-    String getCode();
 
     /**
      * @description: 删除
      * @author Will
      * @date: 2023/3/16 11:20
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean delete(String id);
+    Boolean delete(List<String> ids);
     /**
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:09
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean commit(String id);
+    Boolean submit(List<String> ids);
 }

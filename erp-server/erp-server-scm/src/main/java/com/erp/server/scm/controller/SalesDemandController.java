@@ -54,18 +54,6 @@ public class SalesDemandController extends BaseController {
     }
 
     /**
-     * 获取备货单号
-     * @author Will
-     * @date: 2023/3/16 10:52
-     * @return ApiResult
-     */
-    @GetMapping("/getCode")
-    public ApiResult getCode() {
-        String code = salesDemandService.getCode();
-        return success(code);
-    }
-
-    /**
      * 新增
      * @author Will
      * @date: 2023/3/15 17:34
@@ -105,15 +93,15 @@ public class SalesDemandController extends BaseController {
     }
 
     /**
-     * 删除
+     * 批量删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("id") String id) {
-        Boolean flag = salesDemandService.delete(id);
+    public ApiResult delete(@RequestParam("ids") List<String> ids) {
+        Boolean flag = salesDemandService.delete(ids);
         return flag == true ? success() : failure();
     }
 
@@ -132,15 +120,15 @@ public class SalesDemandController extends BaseController {
     }
 
     /**
-     * 提交
+     * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
-    @PostMapping("/commit")
-    public ApiResult commit(@RequestParam("id") String id) {
-        Boolean flag = salesDemandService.commit(id);
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestParam("ids") List<String> ids) {
+        Boolean flag = salesDemandService.submit(ids);
         return flag == true ? success() : failure();
     }
 
@@ -164,9 +152,9 @@ public class SalesDemandController extends BaseController {
      * @param ids
      * @return ApiResult
      */
-    @PostMapping("/unApprove")
+    @PostMapping("/disApprove")
     public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = salesDemandService.unApprove(ids);
+        Boolean flag = salesDemandService.disApprove(ids);
         return flag == true ? success() : failure();
     }
 

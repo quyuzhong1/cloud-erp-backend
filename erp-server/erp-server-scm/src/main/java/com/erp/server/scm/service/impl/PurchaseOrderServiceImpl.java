@@ -31,11 +31,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public String getCode() {
-        return null;
-    }
-
-    @Override
     public Boolean add(PurchaseOrderDTO scmPurchaseOrderDTO) {
         return null;
     }
@@ -51,7 +46,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean delete(String id) {
+    public Boolean delete(List<String> ids) {
         return null;
     }
 
@@ -61,7 +56,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean unApprove(List<String> ids) {
+    public Boolean disApprove(List<String> ids) {
         return null;
     }
 
@@ -76,7 +71,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean copy(String id) {
+    public PurchaseOrderDTO viewByCopy(String id) {
         return null;
     }
 
@@ -111,7 +106,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean commit(String id) {
+    public Boolean submit(List<String> ids) {
         return null;
     }
 }

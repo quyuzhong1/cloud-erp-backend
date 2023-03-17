@@ -51,17 +51,6 @@ public class PurchaseOrderController extends BaseController {
         return success(pagingVO);
     }
 
-    /**
-     * 获取采购单号
-     * @author Will
-     * @date: 2023/3/16 10:52
-     * @return ApiResult
-     */
-    @GetMapping("/getCode")
-    public ApiResult getCode() {
-        String code = purchaseOrderService.getCode();
-        return success(code);
-    }
 
     /**
      * 新增
@@ -106,12 +95,12 @@ public class PurchaseOrderController extends BaseController {
      * 删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("id") String id) {
-        Boolean flag = purchaseOrderService.delete(id);
+    public ApiResult delete(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseOrderService.delete(ids);
         return flag == true ? success() : failure();
     }
 
@@ -119,12 +108,12 @@ public class PurchaseOrderController extends BaseController {
      * 提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
-    @PostMapping("/commit")
-    public ApiResult commit(@RequestParam("id") String id) {
-        Boolean flag = purchaseOrderService.commit(id);
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseOrderService.submit(ids);
         return flag == true ? success() : failure();
     }
 
@@ -148,9 +137,9 @@ public class PurchaseOrderController extends BaseController {
      * @param ids
      * @return ApiResult
      */
-    @PostMapping("/unApprove")
-    public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseOrderService.unApprove(ids);
+    @PostMapping("/disApprove")
+    public ApiResult disApprove(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseOrderService.disApprove(ids);
         return flag == true ? success() : failure();
     }
 
@@ -182,16 +171,16 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 再次购买
+     * 再次购买数据查询
      * @author Will
      * @date: 2023/3/15 17:59
      * @param id
      * @return ApiResult
      */
-    @PostMapping("/copy")
-    public ApiResult copy(@RequestParam("id") String id) {
-        Boolean result = purchaseOrderService.copy(id);
-        return result == true ? success() : failure();
+    @PostMapping("/viewByCopy")
+    public ApiResult<PurchaseOrderDTO> viewByCopy(@RequestParam("id") String id) {
+        PurchaseOrderDTO purchaseOrderDTO = purchaseOrderService.viewByCopy(id);
+        return success(purchaseOrderDTO);
     }
 
     /**

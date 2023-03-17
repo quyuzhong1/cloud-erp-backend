@@ -44,18 +44,6 @@ public class PurchaseChangeController extends BaseController {
     }
 
     /**
-     * 获取变更单号
-     * @author Will
-     * @date: 2023/3/16 10:52
-     * @return ApiResult
-     */
-    @GetMapping("/getCode")
-    public ApiResult getCode() {
-        String code = purchaseChangeService.getCode();
-        return success(code);
-    }
-
-    /**
      * 新增
      * @author Will
      * @date: 2023/3/15 17:34
@@ -95,15 +83,15 @@ public class PurchaseChangeController extends BaseController {
     }
 
     /**
-     * 删除
+     * 批量删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("id") String id) {
-        Boolean flag = purchaseChangeService.delete(id);
+    public ApiResult delete(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseChangeService.delete(ids);
         return flag == true ? success() : failure();
     }
 
@@ -123,15 +111,15 @@ public class PurchaseChangeController extends BaseController {
 
 
     /**
-     * 提交
+     * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
-    @PostMapping("/commit")
-    public ApiResult commit(@RequestParam("id") String id) {
-        Boolean flag = purchaseChangeService.commit(id);
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseChangeService.submit(ids);
         return flag == true ? success() : failure();
     }
 
@@ -155,9 +143,9 @@ public class PurchaseChangeController extends BaseController {
      * @param ids
      * @return ApiResult
      */
-    @PostMapping("/unApprove")
-    public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.unApprove(ids);
+    @PostMapping("/disApprove")
+    public ApiResult disApprove(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseChangeService.disApprove(ids);
         return flag == true ? success() : failure();
     }
 

@@ -68,22 +68,17 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public Boolean unApprove(List<String> ids) {
+    public Boolean disApprove(List<String> ids) {
         return null;
     }
 
     @Override
-    public String getCode() {
+    public Boolean delete(List<String> ids) {
         return null;
     }
 
     @Override
-    public Boolean delete(String id) {
-        return null;
-    }
-
-    @Override
-    public Boolean commit(String id) {
+    public Boolean submit(List<String> ids) {
         return null;
     }
 

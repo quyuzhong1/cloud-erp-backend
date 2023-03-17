@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -93,6 +92,6 @@ public class PurchaseOrderDTO implements Serializable {
     /**
      * 操作日志（仅详情显示，无需传参）
      */
-    private List<ModuleLogDTO> logs;
+    private List<ModuleOperateLogDTO> logs;
 
 }

@@ -80,28 +80,15 @@ public class PurchaseApplicationController extends BaseController {
 
 
     /**
-     * 获取申请单号
-     * @author Will
-     * @date: 2023/3/16 10:52
-     * @return ApiResult
-     */
-    @GetMapping("/getCode")
-    public ApiResult getCode() {
-        String code = purchaseApplicationService.getCode();
-        return success(code);
-    }
-
-
-    /**
-     * 提交
+     * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
-    @PostMapping("/commit")
-    public ApiResult commit(@RequestParam("id") String id) {
-        Boolean flag = purchaseApplicationService.commit(id);
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseApplicationService.submit(ids);
         return flag == true ? success() : failure();
     }
 
@@ -125,23 +112,23 @@ public class PurchaseApplicationController extends BaseController {
      * @param ids
      * @return ApiResult
      */
-    @PostMapping("/unApprove")
-    public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseApplicationService.unApprove(ids);
+    @PostMapping("/disApprove")
+    public ApiResult disApprove(@RequestParam("ids") List<String> ids) {
+        Boolean flag = purchaseApplicationService.disApprove(ids);
         return flag == true ? success() : failure();
     }
 
 
     /**
-     * 删除
+     * 批量删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param id
+     * @param ids
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("id") String id) {
-        Boolean flag = purchaseApplicationService.delete(id);
+    public ApiResult delete(@RequestParam("id") List<String> ids) {
+        Boolean flag = purchaseApplicationService.delete(ids);
         return flag == true ? success() : failure();
     }
 
