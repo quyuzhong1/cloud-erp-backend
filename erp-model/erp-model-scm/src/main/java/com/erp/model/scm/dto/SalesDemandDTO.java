@@ -1,7 +1,6 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +10,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -28,7 +26,7 @@ public class SalesDemandDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class listDTO {
+    public static class ListDTO {
         /**
          * 主键id
          */
@@ -75,11 +73,6 @@ public class SalesDemandDTO implements Serializable {
         private Integer planStockQty;
 
         /**
-         * 目的仓库id
-         */
-        private String destWarehouseId;
-
-        /**
          * 目的仓库名称
          */
         private String destWarehouseName;
@@ -88,11 +81,36 @@ public class SalesDemandDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 备货原因
+         */
+        private String stockReason;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态（0未作废，1已作废）
+         */
+        private String invalidStatusName;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
     }
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO {
         /**
          * 审核状态
          */
@@ -143,18 +161,16 @@ public class SalesDemandDTO implements Serializable {
          */
         private List<LocalDate> planDeliveryDateList;
 
-
         /**
          * 审核时间开始
          */
         private List<LocalDate> approvePassTimeList;
 
-
     }
 
     @Data
     @NoArgsConstructor
-    public static class commonDTO {
+    public static class CommonDTO {
         /**
          * 申请日期
          */
@@ -193,18 +209,19 @@ public class SalesDemandDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO extends commonDTO {
+    public static class AddDTO extends CommonDTO {
 
         /**
          * 变更明细
          */
         @Valid
-        private List<SalesDemandDetailDTO.addDTO> details;
+        @NotEmpty(message = "备货申请明细不能为空")
+        private List<SalesDemandDetailDTO.AddDTO> details;
     }
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO extends commonDTO {
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主表id
@@ -216,13 +233,14 @@ public class SalesDemandDTO implements Serializable {
          * 变更明细
          */
         @Valid
-        private List<SalesDemandDetailDTO.updateDTO> details;
+        @NotEmpty(message = "备货申请明细不能为空")
+        private List<SalesDemandDetailDTO.UpdateDTO> details;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class viewDTO extends updateDTO {
+    public static class ViewDTO extends UpdateDTO {
 
         /**
          * 单据编码

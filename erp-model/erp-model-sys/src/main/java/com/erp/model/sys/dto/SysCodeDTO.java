@@ -35,4 +35,9 @@ public class SysCodeDTO implements Serializable {
      */
     private Integer type;
 
+    public SysCodeDTO (String category,Integer type) {
+        this.category = category;
+        this.type = type;
+    }
+
 }

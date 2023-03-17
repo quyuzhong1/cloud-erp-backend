@@ -27,7 +27,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return PagingVO<PurchaseApplicationDTO.listDTO>
      */
-    PagingVO<PurchaseApplicationDTO.listDTO> paging(PagingDTO<PurchaseApplicationDTO.searchParamDTO> dto);
+    PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
@@ -35,7 +35,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseApplicationDTO.addDTO dto);
+    Boolean add(PurchaseApplicationDTO.AddDTO dto);
 
     /**
      * @description: 修改
@@ -44,7 +44,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseApplicationDTO.updateDTO dto);
+    Boolean update(PurchaseApplicationDTO.UpdateDTO dto);
     /**
      * @description: 审核
      * @author Will
@@ -86,7 +86,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseApplicationDTO.searchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response);
 
 
     /**
@@ -112,5 +112,5 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseApplicationDTO.addDTO dto);
+    Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto);
 }

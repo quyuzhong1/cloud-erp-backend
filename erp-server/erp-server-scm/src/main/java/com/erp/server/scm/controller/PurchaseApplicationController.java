@@ -46,8 +46,8 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult<PagingVO<List<ScmPurchaseApplicationViewDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchaseApplicationDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseApplicationDTO.searchParamDTO> dto) {
-        PagingVO<PurchaseApplicationDTO.listDTO> pagingVO = purchaseApplicationService.paging(dto);
+    public ApiResult<PagingVO<PurchaseApplicationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
+        PagingVO<PurchaseApplicationDTO.ListDTO> pagingVO = purchaseApplicationService.paging(dto);
         return success(pagingVO);
     }
 
@@ -60,7 +60,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseApplicationDTO.addDTO dto) {
+    public ApiResult add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
         Boolean flag = purchaseApplicationService.add(dto);
         return flag == true ? success() : failure();
     }
@@ -73,7 +73,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseApplicationDTO.updateDTO dto) {
+    public ApiResult update(@RequestBody @Validated PurchaseApplicationDTO.UpdateDTO dto) {
         Boolean flag = purchaseApplicationService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -86,7 +86,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.addDTO dto) {
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
         Boolean flag = purchaseApplicationService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -213,7 +213,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.searchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseApplicationService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

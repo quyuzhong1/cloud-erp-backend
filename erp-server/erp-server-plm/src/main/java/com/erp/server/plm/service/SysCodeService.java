@@ -1,6 +1,6 @@
 package com.erp.server.plm.service;
 
-import com.erp.model.plm.enums.BusinessNoTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 
 /**
  * @author Will

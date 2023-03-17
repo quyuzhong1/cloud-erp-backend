@@ -26,7 +26,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return PagingVO<PurchaseChangeDTO.listDTO>
      */
-    PagingVO<PurchaseChangeDTO.listDTO> paging(PagingDTO<PurchaseChangeDTO.searchParamDTO> dto);
+    PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
 
     /**
      * @description: 新增
@@ -35,7 +35,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseChangeDTO.addDTO dto);
+    Boolean add(PurchaseChangeDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -43,7 +43,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseChangeDTO.updateDTO dto);
+    Boolean update(PurchaseChangeDTO.UpdateDTO dto);
     /**
      * @description: 查看详情
      * @author Will
@@ -51,7 +51,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param id
      * @return ScmPurchaseChangeDTO
      */
-    PurchaseChangeDTO.viewDTO view(String id);
+    PurchaseChangeDTO.ViewDTO view(String id);
     /**
      * @description: 删除
      * @author Will
@@ -84,7 +84,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseChangeDTO.searchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 提交
      * @author Will
@@ -100,5 +100,5 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseChangeDTO.addDTO dto);
+    Boolean addAndSubmit(PurchaseChangeDTO.AddDTO dto);
 }

@@ -108,6 +108,18 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
     @TableField("approve_time")
     private Date approveTime;
 
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

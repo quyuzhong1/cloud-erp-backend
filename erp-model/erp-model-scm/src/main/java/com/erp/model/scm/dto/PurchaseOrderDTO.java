@@ -1,7 +1,6 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -27,7 +26,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class listDTO {
+    public static class ListDTO {
         /**
          * 主键id
          */
@@ -141,7 +140,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO {
         /**
          * sku编码
          */
@@ -210,7 +209,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class commonDTO {
+    public static class CommonDTO {
         /**
          * 采购日期
          */
@@ -239,24 +238,24 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
 
         /**
          * 供应商信息
          */
         @Valid
-        private PurchaseOrderSupplierDTO.addDTO purchaseOrderSupplierDTO;
+        private PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO;
 
         /**
          * 采购订单明细
          */
         @Valid
-        private List<PurchaseOrderDetailDTO.addDTO> details;
+        private List<PurchaseOrderDetailDTO.AddDTO> details;
     }
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO {
+    public static class UpdateDTO {
 
         /**
          * 主表id
@@ -268,19 +267,19 @@ public class PurchaseOrderDTO implements Serializable {
          * 供应商信息
          */
         @Valid
-        private PurchaseOrderSupplierDTO.updateDTO purchaseOrderSupplierDTO;
+        private PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO;
 
         /**
          * 采购订单明细
          */
         @Valid
-        private List<PurchaseOrderDetailDTO.updateDTO> details;
+        private List<PurchaseOrderDetailDTO.UpdateDTO> details;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class viewDTO extends updateDTO {
+    public static class ViewDTO extends UpdateDTO {
 
         /**
          * 单据编码

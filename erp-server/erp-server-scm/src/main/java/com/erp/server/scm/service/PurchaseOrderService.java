@@ -27,7 +27,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return PagingVO<PurchaseOrderDTO.listDTO>
      */
-    PagingVO<PurchaseOrderDTO.listDTO> paging(PagingDTO<PurchaseOrderDTO.searchParamDTO> dto);
+    PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
@@ -35,7 +35,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseOrderDTO.addDTO dto);
+    Boolean add(PurchaseOrderDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -43,7 +43,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseOrderDTO.updateDTO dto);
+    Boolean update(PurchaseOrderDTO.UpdateDTO dto);
     /**
      * @description: 查询详情
      * @author Will
@@ -51,7 +51,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param id
      * @return PurchaseOrderDTO.viewDTO
      */
-    PurchaseOrderDTO.viewDTO view(String id);
+    PurchaseOrderDTO.ViewDTO view(String id);
     /**
      * @description: 删除
      * @author Will
@@ -125,7 +125,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseOrderDTO.searchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 提交
      * @author Will
@@ -141,5 +141,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseOrderDTO.addDTO dto);
+    Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto);
 }

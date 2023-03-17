@@ -59,4 +59,12 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
     DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) ;
 
     void checkShopByKingDee(DmpShopInfoEntity dmpShopInfoEntity);
+    /**
+     * @description: 根据id查询店铺信息
+     * @author Will
+     * @date: 2023/3/17 15:36
+     * @param shopId
+     * @return DmpShopInfoDTO
+     */
+    DmpShopInfoDTO getShopById(String shopId);
 }

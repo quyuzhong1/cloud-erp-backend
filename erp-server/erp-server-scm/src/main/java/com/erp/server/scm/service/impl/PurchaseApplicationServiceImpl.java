@@ -26,17 +26,17 @@ import java.util.List;
 public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApplicationMapper, PurchaseApplicationEntity> implements PurchaseApplicationService {
 
     @Override
-    public PagingVO<PurchaseApplicationDTO.listDTO> paging(PagingDTO<PurchaseApplicationDTO.searchParamDTO> dto) {
+    public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public Boolean add(PurchaseApplicationDTO.addDTO dto) {
+    public Boolean add(PurchaseApplicationDTO.AddDTO dto) {
         return null;
     }
 
     @Override
-    public Boolean update(PurchaseApplicationDTO.updateDTO dto) {
+    public Boolean update(PurchaseApplicationDTO.UpdateDTO dto) {
         return null;
     }
 
@@ -61,7 +61,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public Boolean exportExcel(PurchaseApplicationDTO.searchParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         return null;
     }
 
@@ -76,7 +76,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public Boolean addAndSubmit(PurchaseApplicationDTO.addDTO dto) {
+    public Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto) {
         return null;
     }
 

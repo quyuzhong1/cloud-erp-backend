@@ -1,13 +1,11 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * @author Will
@@ -21,7 +19,7 @@ public class SalesDemandDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
 
         /**
          * 主表id
@@ -85,7 +83,7 @@ public class SalesDemandDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO extends addDTO{
+    public static class UpdateDTO extends AddDTO {
 
         /**
          * 主表id

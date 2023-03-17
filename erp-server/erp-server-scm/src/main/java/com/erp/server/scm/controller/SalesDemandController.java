@@ -8,7 +8,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.server.scm.service.SalesDemandService;
 import org.apache.ibatis.annotations.Param;
@@ -47,8 +46,8 @@ public class SalesDemandController extends BaseController {
     * @return ApiResult<PagingVO<SalesDemandDTO.listDTO>>
     */
    @PostMapping("/paging")
-    public ApiResult<PagingVO<SalesDemandDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.searchParamDTO> dto) {
-        PagingVO<SalesDemandDTO.listDTO> pagingVO = salesDemandService.paging(dto);
+    public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
+        PagingVO<SalesDemandDTO.ListDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
     }
 
@@ -60,7 +59,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated SalesDemandDTO.addDTO dto) {
+    public ApiResult add(@RequestBody @Validated SalesDemandDTO.AddDTO dto) {
         Boolean flag = salesDemandService.add(dto);
         return flag == true ? success() : failure();
     }
@@ -73,7 +72,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated SalesDemandDTO.updateDTO dto) {
+    public ApiResult update(@RequestBody @Validated SalesDemandDTO.UpdateDTO dto) {
         Boolean flag = salesDemandService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -86,7 +85,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated SalesDemandDTO.addDTO dto) {
+    public ApiResult addAndSubmit(@RequestBody @Validated SalesDemandDTO.AddDTO dto) {
         Boolean flag = salesDemandService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -99,8 +98,8 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult<ScmSalesDemandDTO>
      */
     @GetMapping("/view")
-    public ApiResult<SalesDemandDTO.viewDTO> view(@Param("id") String id) {
-        SalesDemandDTO.viewDTO dto = salesDemandService.view(id);
+    public ApiResult<SalesDemandDTO.ViewDTO> view(@Param("id") String id) {
+        SalesDemandDTO.ViewDTO dto = salesDemandService.view(id);
         return success(dto);
     }
 
@@ -126,8 +125,8 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/invalid")
-    public ApiResult invalid(@RequestParam("ids") List<String> ids) {
-        Boolean flag = salesDemandService.invalid(ids);
+    public ApiResult invalid(@RequestParam("ids") List<String> ids,String reason) {
+        Boolean flag = salesDemandService.invalid(ids,reason);
         return flag == true ? success() : failure();
     }
 
@@ -238,7 +237,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody SalesDemandDTO.searchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = salesDemandService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

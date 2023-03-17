@@ -1,7 +1,10 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,29 @@ import com.erp.model.scm.entity.SalesDemandDetailEntity;
  * @since 2023-03-16
  */
 public interface SalesDemandDetailService extends SuperService<SalesDemandDetailEntity> {
+    /**
+     * @description: 新增明细
+     * @author Will
+     * @date: 2023/3/17 15:45
+     * @param details
+     * @param salesDemandId
 
+     */
+    void add(List<SalesDemandDetailDTO.AddDTO> details, String salesDemandId);
+    /**
+     * @description: 修改明细
+     * @author Will
+     * @date: 2023/3/17 16:20
+     * @param details
+
+     */
+    void update(List<SalesDemandDetailDTO.UpdateDTO> details,String salesDemandId);
+    /**
+     * @description: 根据主表id查询明细数据
+     * @author Will
+     * @date: 2023/3/17 16:43
+     * @param id
+     * @return List<SalesDemandDetailEntity>
+     */
+    List<SalesDemandDetailEntity> listBySalesDemandId(String id);
 }

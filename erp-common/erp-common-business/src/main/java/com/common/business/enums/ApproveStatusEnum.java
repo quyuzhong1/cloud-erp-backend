@@ -11,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum ApproveStatusEnum {
 
     WAIT_SUBMIT("waitSubmit", "待提交"),
-    AUDIT_ING("auditIng", "审核中"),
-    AUDIT_NO_PASS("auditNoPass", "审核不通过"),
+    AUDIT_ING("approveIng", "审核中"),
+    AUDIT_NO_PASS("reject", "审核不通过"),
     FINISH("finish", "已完成");
 
     private String status;

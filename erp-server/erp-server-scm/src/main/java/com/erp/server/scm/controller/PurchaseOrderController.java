@@ -46,8 +46,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchaseOrderDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.searchParamDTO> dto) {
-        PagingVO<PurchaseOrderDTO.listDTO> pagingVO = purchaseOrderService.paging(dto);
+    public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
     }
 
@@ -60,7 +60,7 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseOrderDTO.addDTO dto) {
+    public ApiResult add(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
         Boolean flag = purchaseOrderService.add(dto);
         return flag == true ? success() : failure();
     }
@@ -73,7 +73,7 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseOrderDTO.updateDTO dto) {
+    public ApiResult update(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseOrderService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -86,7 +86,7 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.addDTO dto) {
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
         Boolean flag = purchaseOrderService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -99,8 +99,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PurchaseOrderDTO.viewDTO>
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseOrderDTO.viewDTO> view(@Param("id") String id) {
-        PurchaseOrderDTO.viewDTO dto = purchaseOrderService.view(id);
+    public ApiResult<PurchaseOrderDTO.ViewDTO> view(@Param("id") String id) {
+        PurchaseOrderDTO.ViewDTO dto = purchaseOrderService.view(id);
         return success(dto);
     }
 
@@ -263,7 +263,7 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.searchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

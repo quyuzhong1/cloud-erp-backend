@@ -322,7 +322,8 @@ public enum ApiError implements Serializable {
     ERROR_98000(98000,"供应商等级名不能重复"),
     ERROR_98001(98001,"供应商默认联系人不能超过两个"),
 
-
+    ERROR_98001(98001,"未找到备货申请单"),
+    ERROR_98002(98002,"未找到备货申请单明细"),
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

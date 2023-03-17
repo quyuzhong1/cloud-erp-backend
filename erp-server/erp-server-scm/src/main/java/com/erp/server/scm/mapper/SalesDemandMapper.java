@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -25,5 +26,5 @@ public interface SalesDemandMapper extends BaseMapper<SalesDemandEntity> {
      * @param params
      * @return IPage<listDTO>
      */
-    IPage<SalesDemandDTO.listDTO> paging(Page query, SalesDemandDTO.searchParamDTO params);
+    IPage<SalesDemandDTO.ListDTO> paging(Page query,@Param("params") SalesDemandDTO.SearchParamDTO params);
 }

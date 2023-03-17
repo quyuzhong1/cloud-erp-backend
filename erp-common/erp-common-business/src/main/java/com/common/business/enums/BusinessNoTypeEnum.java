@@ -1,4 +1,4 @@
-package com.erp.model.plm.enums;
+package com.common.business.enums;
 
 /**
  * @author Will
@@ -10,7 +10,8 @@ public enum BusinessNoTypeEnum {
 
     SKU_NO(1, "sku_no"),
     SPU_NO(2, "spu_no"),
-    Bom_NO(3, "bom_no");
+    Bom_NO(3, "bom_no"),
+    CODE_XQ(4, "xq");
 
     private Integer code;
     private String name;

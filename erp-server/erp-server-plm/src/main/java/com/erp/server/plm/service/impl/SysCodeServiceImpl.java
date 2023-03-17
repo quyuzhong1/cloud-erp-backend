@@ -6,7 +6,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.enums.BusinessNoTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;

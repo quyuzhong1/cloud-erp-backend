@@ -1,10 +1,8 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -22,7 +20,7 @@ public class PurchaseChangeDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
         /**
          * 采购变更单id
          */
@@ -89,7 +87,7 @@ public class PurchaseChangeDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO extends addDTO {
+    public static class UpdateDTO extends AddDTO {
         /**
          * 主键id
          */

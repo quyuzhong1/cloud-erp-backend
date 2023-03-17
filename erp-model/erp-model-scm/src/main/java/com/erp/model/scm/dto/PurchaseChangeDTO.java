@@ -1,8 +1,6 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -29,7 +27,7 @@ public class PurchaseChangeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class listDTO {
+    public static class ListDTO {
         /**
          * 主键id
          */
@@ -132,7 +130,7 @@ public class PurchaseChangeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO {
         /**
          * sku编码
          */
@@ -182,7 +180,7 @@ public class PurchaseChangeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class commonDTO {
+    public static class CommonDTO {
         /**
          * 采购订单id
          */
@@ -221,18 +219,18 @@ public class PurchaseChangeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO extends commonDTO{
+    public static class AddDTO extends CommonDTO {
 
         /**
          * 变更明细
          */
         @Valid
-        private List<PurchaseChangeDetailDTO.addDTO> details;
+        private List<PurchaseChangeDetailDTO.AddDTO> details;
     }
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO extends commonDTO {
+    public static class UpdateDTO extends CommonDTO {
         /**
          * 主表id
          */
@@ -243,13 +241,13 @@ public class PurchaseChangeDTO implements Serializable {
          * 变更明细
          */
         @Valid
-        private List<PurchaseChangeDetailDTO.updateDTO> details;
+        private List<PurchaseChangeDetailDTO.UpdateDTO> details;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class viewDTO extends updateDTO {
+    public static class ViewDTO extends UpdateDTO {
 
         /**
          * 单据编码

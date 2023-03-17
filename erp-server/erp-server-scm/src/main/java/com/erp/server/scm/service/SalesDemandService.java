@@ -27,7 +27,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param dto
      * @return PagingVO<List<SalesDemandDTO.listDTO>>
      */
-    PagingVO<SalesDemandDTO.listDTO> paging(PagingDTO<SalesDemandDTO.searchParamDTO> dto);
+    PagingVO<SalesDemandDTO.ListDTO> paging(PagingDTO<SalesDemandDTO.SearchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will
@@ -35,7 +35,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean add(SalesDemandDTO.addDTO dto);
+    Boolean add(SalesDemandDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -43,7 +43,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean update(SalesDemandDTO.updateDTO dto);
+    Boolean update(SalesDemandDTO.UpdateDTO dto);
     /**
      * @description: 查询详情
      * @author Will
@@ -51,7 +51,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param id
      * @return ScmSalesDemandDTO
      */
-    SalesDemandDTO.viewDTO view(String id);
+    SalesDemandDTO.ViewDTO view(String id);
     /**
      * @description: 批量作废
      * @author Will
@@ -59,7 +59,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean invalid(List<String> ids);
+    Boolean invalid(List<String> ids,String reason);
     /**
      * @description: 审核
      * @author Will
@@ -83,7 +83,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(SalesDemandDTO.searchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 批量反审核
      * @author Will
@@ -125,5 +125,5 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(SalesDemandDTO.addDTO dto);
+    Boolean addAndSubmit(SalesDemandDTO.AddDTO dto);
 }

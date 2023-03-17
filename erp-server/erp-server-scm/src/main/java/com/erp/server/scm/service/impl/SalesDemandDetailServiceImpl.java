@@ -1,10 +1,31 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
+import com.erp.model.dmp.entity.CfgApiFieldMapEntity;
+import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
+import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
+import com.erp.model.scm.entity.SupplierGradeEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SalesDemandDetailMapper;
 import com.erp.server.scm.service.SalesDemandDetailService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -16,5 +37,64 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDetailMapper, SalesDemandDetailEntity> implements SalesDemandDetailService {
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+    @Override
+    public void add(List<SalesDemandDetailDTO.AddDTO> details, String salesDemandId) {
+        if (CollectionUtils.isEmpty(details)) {
+            return;
+        }
+        List<SalesDemandDetailEntity> list = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
+        //仓库信息
+        List<String> destWarehouseIdList = list.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+
+        for (SalesDemandDetailEntity dto : list) {
+            dto.setSalesDemandId(salesDemandId);
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(dto.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
+                dto.setDestWarehouseName(warehouseName);
+            }
+        }
+        this.saveBatch(list);
+    }
+
+    @Override
+    public void update(List<SalesDemandDetailDTO.UpdateDTO> details,String salesDemandId) {
+        if (details == null) {
+            details = new ArrayList<>();
+        }
+        //原明细数据
+        List<SalesDemandDetailEntity> oldList = this.listBySalesDemandId(salesDemandId);
+        List<String> deleteIds = getDeleteIds(details, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        if (CollectionUtils.isEmpty(deleteIds)) {
+            return;
+        }
+        List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
+        this.saveOrUpdateBatch(newList);
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<SalesDemandDetailDTO.UpdateDTO> newList, List<SalesDemandDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SalesDemandDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SalesDemandDetailEntity::getId).collect(Collectors.toList());
+        return newIds.stream().filter(s -> !oldIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * 根据主表id查询
+     */
+    @Override
+    public List<SalesDemandDetailEntity> listBySalesDemandId(String salesDemandId) {
+      return  lambdaQuery().eq(SalesDemandDetailEntity::getSalesDemandId,salesDemandId).list();
+    }
 
 }

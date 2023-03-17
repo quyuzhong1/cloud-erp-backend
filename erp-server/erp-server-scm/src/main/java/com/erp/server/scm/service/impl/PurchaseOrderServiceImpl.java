@@ -26,22 +26,22 @@ import java.util.List;
 public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapper, PurchaseOrderEntity> implements PurchaseOrderService {
 
     @Override
-    public PagingVO<PurchaseOrderDTO.listDTO> paging(PagingDTO<PurchaseOrderDTO.searchParamDTO> dto) {
+    public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         return null;
     }
 
     @Override
-    public Boolean add(PurchaseOrderDTO.addDTO dto) {
+    public Boolean add(PurchaseOrderDTO.AddDTO dto) {
         return null;
     }
 
     @Override
-    public Boolean update(PurchaseOrderDTO.updateDTO dto) {
+    public Boolean update(PurchaseOrderDTO.UpdateDTO dto) {
         return null;
     }
 
     @Override
-    public PurchaseOrderDTO.viewDTO view(String id) {
+    public PurchaseOrderDTO.ViewDTO view(String id) {
         return null;
     }
 
@@ -85,7 +85,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean exportExcel(PurchaseOrderDTO.searchParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
         return null;
     }
 
@@ -95,7 +95,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean addAndSubmit(PurchaseOrderDTO.addDTO dto) {
+    public Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto) {
         return null;
     }
 }

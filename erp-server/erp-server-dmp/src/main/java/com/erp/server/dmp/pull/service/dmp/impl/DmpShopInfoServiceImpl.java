@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -145,6 +147,17 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             entity.setCountry(dmpShopInfoEntity.getCountry());
             updateById(entity);
         });
+    }
+
+    @Override
+    public DmpShopInfoDTO getShopById(String shopId) {
+        DmpShopInfoEntity entity = this.getById(shopId);
+        DmpShopInfoDTO dto = new DmpShopInfoDTO();
+        if (ObjectUtils.isEmpty(entity)) {
+            return dto;
+        }
+        BeanMapperUtils.copy(dto,entity);
+        return dto;
     }
 }
 

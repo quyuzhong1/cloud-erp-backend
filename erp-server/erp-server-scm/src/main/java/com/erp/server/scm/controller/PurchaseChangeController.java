@@ -38,8 +38,8 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchaseChangeDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.searchParamDTO> dto) {
-        PagingVO<PurchaseChangeDTO.listDTO> pagingVO = purchaseChangeService.paging(dto);
+    public ApiResult<PagingVO<PurchaseChangeDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
+        PagingVO<PurchaseChangeDTO.ListDTO> pagingVO = purchaseChangeService.paging(dto);
         return success(pagingVO);
     }
 
@@ -51,7 +51,7 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.addDTO dto) {
+    public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         Boolean flag = purchaseChangeService.add(dto);
         return flag == true ? success() : failure();
     }
@@ -64,7 +64,7 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseChangeDTO.updateDTO dto) {
+    public ApiResult update(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
         Boolean flag = purchaseChangeService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -77,7 +77,7 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.addDTO dto) {
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         Boolean flag = purchaseChangeService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -90,8 +90,8 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<ScmPurchaseChangeDTO>
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseChangeDTO.viewDTO> view(@Param("id") String id) {
-        PurchaseChangeDTO.viewDTO dto = purchaseChangeService.view(id);
+    public ApiResult<PurchaseChangeDTO.ViewDTO> view(@Param("id") String id) {
+        PurchaseChangeDTO.ViewDTO dto = purchaseChangeService.view(id);
         return success(dto);
     }
 
@@ -158,7 +158,7 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.searchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseChangeService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }

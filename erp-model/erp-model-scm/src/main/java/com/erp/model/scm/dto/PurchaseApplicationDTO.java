@@ -25,7 +25,7 @@ public class PurchaseApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class listDTO {
+    public static class ListDTO {
         /**
          * 主键id
          */
@@ -114,7 +114,7 @@ public class PurchaseApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO {
         /**
          * 审核状态
          */
@@ -178,7 +178,7 @@ public class PurchaseApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class commonDTO {
+    public static class CommonDTO {
         /**
          * 申请日期
          */
@@ -205,17 +205,17 @@ public class PurchaseApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO extends commonDTO{
+    public static class AddDTO extends CommonDTO {
         /**
          * 采购申请明细
          */
         @Valid
-        private List<PurchaseApplicationDetailDTO.addDTO> details;
+        private List<PurchaseApplicationDetailDTO.AddDTO> details;
     }
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO extends commonDTO{
+    public static class UpdateDTO extends CommonDTO {
         /**
          * 主表id
          */
@@ -226,13 +226,13 @@ public class PurchaseApplicationDTO implements Serializable {
          * 采购申请明细
          */
         @Valid
-        private List<PurchaseApplicationDetailDTO.updateDTO> details;
+        private List<PurchaseApplicationDetailDTO.UpdateDTO> details;
 
     }
 
     @Data
     @NoArgsConstructor
-    public static class viewDTO extends updateDTO{
+    public static class ViewDTO extends UpdateDTO {
 
         /**
          * 单据编码

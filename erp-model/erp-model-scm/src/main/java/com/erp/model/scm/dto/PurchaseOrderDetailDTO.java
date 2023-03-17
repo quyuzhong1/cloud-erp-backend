@@ -21,7 +21,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
 
         /**
          * 采购订单id
@@ -113,7 +113,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO {
+    public static class UpdateDTO {
 
         /**
          * 主表id
