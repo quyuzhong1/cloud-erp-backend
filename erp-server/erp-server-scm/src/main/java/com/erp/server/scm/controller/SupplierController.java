@@ -11,10 +11,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPagingParamDTO;
 import com.erp.model.scm.dto.SupplierPagingViewDTO;
+import com.erp.server.scm.service.SupplierService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +29,10 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/supplier")
 public class SupplierController extends BaseController {
+
+
+    @Resource
+    private SupplierService supplierService;
 
 
     /**
@@ -47,10 +53,10 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult saveOrUpdate(@RequestBody @Validated SupplierDTO dto) {
-        return success();
+    public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
+        Boolean result=supplierService.addSupplier(dto);
+        return result==true?success():failure();
     }
-
 
 
     /**
@@ -80,6 +86,7 @@ public class SupplierController extends BaseController {
 
     /**
      * 删除供应商
+     *
      * @param dto
      * @return
      */
@@ -91,6 +98,7 @@ public class SupplierController extends BaseController {
 
     /**
      * 启用供应商
+     *
      * @param dto
      * @return
      */
@@ -101,6 +109,7 @@ public class SupplierController extends BaseController {
 
     /**
      * 审核
+     *
      * @param dto
      * @return
      */
@@ -115,22 +124,18 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-          return success();
+        return success();
     }
 
     /**
      * 供应商导出模板
+     *
      * @return
      */
     @PostMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         return success();
     }
-
-
-
-
-
 
 
 }

@@ -1,10 +1,17 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.core.serveice.SuperServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.server.scm.mapper.DictBasicMapper;
 import com.erp.server.scm.service.DictBasicService;
-import com.common.core.serveice.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +24,45 @@ import org.springframework.stereotype.Service;
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
+
+    /**
+     * 保存或者修改字典信息
+     *
+     * @param list
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-17 12:21
+     */
+    @Override
+    public Boolean saveOrUpdateDict(List<DictBasicDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
+        List<DictBasicEntity> addList = new ArrayList<>(list.size());
+        addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        return this.saveOrUpdateBatch(addList);
+    }
+
+
+    /**
+     * 根据key 获取字典数据
+     *
+     * @param key
+     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @author yl
+     * @date 2023-03-17 14:16
+     */
+    @Override
+    public List<DictBasicDTO> getByKey(String key) {
+        List<DictBasicEntity> list = listByKey(key);
+        List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
+        return resultList;
+    }
+
+
+    private List<DictBasicEntity> listByKey(String key) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getKey, key);
+        return this.list(queryWrapper);
+    }
 }

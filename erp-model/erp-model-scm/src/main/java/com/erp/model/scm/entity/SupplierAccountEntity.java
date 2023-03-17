@@ -66,8 +66,8 @@ public class SupplierAccountEntity extends BaseEntity<SupplierAccountEntity> {
     /**
      * 支付方式
      */
-    @TableField("pay_method")
-    private String payMethod;
+    @TableField("pay_method_id")
+    private String payMethodId;
 
 
 

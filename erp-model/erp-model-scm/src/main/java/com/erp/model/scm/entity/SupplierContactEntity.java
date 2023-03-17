@@ -44,8 +44,8 @@ public class SupplierContactEntity extends BaseEntity<SupplierContactEntity> {
     /**
      * 电话
      */
-    @TableField("phone")
-    private String phone;
+    @TableField("tel_number")
+    private String telNumber;
 
     /**
      * 邮箱

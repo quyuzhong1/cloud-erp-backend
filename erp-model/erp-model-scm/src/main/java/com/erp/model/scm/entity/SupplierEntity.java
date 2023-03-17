@@ -104,8 +104,8 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     /**
      * 付款方式
      */
-    @TableField("pay_method")
-    private String payMethod;
+    @TableField("pay_method_id")
+    private String payMethodId;
 
     /**
      * 付款币种

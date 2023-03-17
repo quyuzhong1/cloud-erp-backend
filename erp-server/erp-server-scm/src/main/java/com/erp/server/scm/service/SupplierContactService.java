@@ -1,7 +1,10 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.SupplierContactEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,14 @@ import com.erp.model.scm.entity.SupplierContactEntity;
  */
 public interface SupplierContactService extends SuperService<SupplierContactEntity> {
 
+    
+    /**
+     * 保存供应商联系信息
+     * @author yl
+     * @date 2023-03-17 16:07
+     * @param supplierId
+     * @param contactList
+     * @return void
+     */
+    void saveBatchContact(String supplierId, List<SupplierContactDTO.AddDTO> contactList);
 }

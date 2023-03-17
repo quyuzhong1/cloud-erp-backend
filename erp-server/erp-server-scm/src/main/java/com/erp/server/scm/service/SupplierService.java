@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 
 /**
@@ -13,4 +14,12 @@ import com.erp.model.scm.entity.SupplierEntity;
  */
 public interface SupplierService extends SuperService<SupplierEntity> {
 
+    /**
+     * 保存供应商信息
+     * @author yl
+     * @date 2023-03-17 15:12
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean addSupplier(SupplierDTO.AddDTO dto);
 }
