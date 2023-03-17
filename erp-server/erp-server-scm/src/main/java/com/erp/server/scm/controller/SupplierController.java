@@ -41,13 +41,26 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 保存或者修改供应商
+     * 添加供应商
      *
      * @param dto
      * @return
      */
-    @PostMapping("/saveOrUpdate")
+    @PostMapping("/add")
     public ApiResult saveOrUpdate(@RequestBody @Validated SupplierDTO dto) {
+        return success();
+    }
+
+
+
+    /**
+     * 修改供应商
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated SupplierDTO dto) {
         return success();
     }
 

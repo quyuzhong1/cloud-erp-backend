@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.erp.server.scm.service.CommonService;
+import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
@@ -13,6 +14,7 @@ import java.util.Objects;
  * @Date 2023-03-15 11:50
  * @Created by yl
  */
+@Service
 public class CommonServiceImpl  implements CommonService {
     @Override
     public LoginUser getUserInfo() {

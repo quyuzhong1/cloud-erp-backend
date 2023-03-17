@@ -3,7 +3,7 @@ package com.erp.server.scm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.SupplierGradeDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,13 +20,12 @@ import java.util.List;
 public class SupplierGradeController extends BaseController {
 
     /**
-     * 保存或者修改供应商等级
-     *
-     * @param dto
+     * 批量保存供应商等级
+     * @param gradeList
      * @return
      */
     @PostMapping("/saveOrUpdate")
-    public ApiResult saveOrUpdate(@RequestBody @Validated SupplierGradeDTO dto) {
+    public ApiResult saveOrUpdate(@RequestBody @Validated List<SupplierDTO.SupplierGradeDTO> gradeList) {
         return success();
     }
 
@@ -36,7 +35,7 @@ public class SupplierGradeController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<SupplierGradeDTO>> saveOrUpdate() {
+    public ApiResult<List<SupplierDTO.SupplierGradeDTO>> saveOrUpdate() {
         return success();
     }
 
