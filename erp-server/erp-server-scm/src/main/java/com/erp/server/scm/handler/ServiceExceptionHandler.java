@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * 统一异常处理类
  *
+ * @author Administrator
  * @Classname ServiceExceptionHandler
  * @Description TODO
  * @Date 2022-07-06 14:17

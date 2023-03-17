@@ -311,6 +311,15 @@ public enum ApiError implements Serializable {
     ERROR_97026(97026,"模块名称最大30字符"),
     ERROR_97027(97027,"模块说明最大200字符"),
 
+
+
+
+    /**
+     * SCM 错误
+     * 从98000 开始  以端口号
+     */
+    ERROR_98000(98000,"供应商等级名不能重复"),
+
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

@@ -3,14 +3,15 @@ package com.erp.server.scm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.serveice.ValidList;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.server.scm.service.SupplierGradeService;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -34,7 +35,7 @@ public class SupplierGradeController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdate")
-    public ApiResult saveOrUpdate(@RequestBody @Validated List<SupplierDTO.SupplierGradeDTO> gradeList) {
+    public ApiResult saveOrUpdate(@RequestBody @Valid ValidList<SupplierDTO.SupplierGradeDTO> gradeList) {
         Boolean result = supplierGradeService.saveOrUpdateBatchGrade(gradeList);
         return result == true ? success() : failure();
     }
@@ -49,7 +50,7 @@ public class SupplierGradeController extends BaseController {
     public ApiResult<List<SupplierDTO.SupplierGradeDTO>> saveOrUpdate() {
         List<SupplierGradeEntity> list = supplierGradeService.list();
         List<SupplierDTO.SupplierGradeDTO> result = BeanMapper.copyList(list, SupplierDTO.SupplierGradeDTO.class);
-        return success();
+        return success(result);
     }
 
 }
