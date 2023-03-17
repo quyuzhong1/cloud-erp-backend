@@ -25,6 +25,12 @@ import java.util.Date;
 public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity> {
 
     /**
+     * 主表id
+     */
+    @TableField("sales_demand_id")
+    private String salesDemandId;
+
+    /**
      * skuId
      */
     @TableField("sku_id")

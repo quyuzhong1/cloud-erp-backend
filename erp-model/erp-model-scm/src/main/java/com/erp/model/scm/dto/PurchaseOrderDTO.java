@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -140,7 +141,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO {
+    public static class searchParamDTO extends SortDTO {
         /**
          * sku编码
          */

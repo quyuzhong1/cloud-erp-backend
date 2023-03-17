@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,7 +45,7 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/invalidStatus/list")
     public ApiResult<List<BaseDropDownDTO>> listInvalidStatusDropDown() {
-        List<BaseDropDownDTO> result = Arrays.stream(ApproveStatusEnum.values())
+        List<BaseDropDownDTO> result = Arrays.stream(InvalidStatusEnum.values())
                 .map(x -> new BaseDropDownDTO(x.getStatus(),x.getName(),""))
                 .collect(Collectors.toList());
         return success(result);

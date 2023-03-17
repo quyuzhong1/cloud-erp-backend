@@ -27,7 +27,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param dto
      * @return PagingVO<List<SalesDemandDTO.listDTO>>
      */
-    PagingVO<List<SalesDemandDTO.listDTO>> paging(PagingDTO<SalesDemandDTO.searchParamDTO> dto);
+    PagingVO<SalesDemandDTO.listDTO> paging(PagingDTO<SalesDemandDTO.searchParamDTO> dto);
     /**
      * @description: 新增
      * @author Will

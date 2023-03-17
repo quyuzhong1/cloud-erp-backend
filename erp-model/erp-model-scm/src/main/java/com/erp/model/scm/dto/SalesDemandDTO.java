@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -91,7 +92,7 @@ public class SalesDemandDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO {
+    public static class searchParamDTO extends SortDTO {
         /**
          * 审核状态
          */
@@ -136,8 +137,6 @@ public class SalesDemandDTO implements Serializable {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
-
-
 
         /**
          * 计划交期开始

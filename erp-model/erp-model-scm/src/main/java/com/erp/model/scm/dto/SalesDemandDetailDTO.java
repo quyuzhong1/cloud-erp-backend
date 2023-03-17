@@ -22,6 +22,12 @@ public class SalesDemandDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class addDTO {
+
+        /**
+         * 主表id
+         */
+        private String salesDemandId;
+
         /**
          * skuId
          */
@@ -79,7 +85,7 @@ public class SalesDemandDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class updateDTO {
+    public static class updateDTO extends addDTO{
 
         /**
          * 主表id

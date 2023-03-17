@@ -205,7 +205,7 @@ public class PurchaseApplicationController extends BaseController {
     }
 
     /**
-     * @description: 导出
+     * 导出
      * @author Will
      * @date: 2023/3/15 18:23
      * @param dto

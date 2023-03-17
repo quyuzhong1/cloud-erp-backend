@@ -132,7 +132,7 @@ public class PurchaseChangeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchParamDTO {
+    public static class searchParamDTO extends SortDTO {
         /**
          * sku编码
          */

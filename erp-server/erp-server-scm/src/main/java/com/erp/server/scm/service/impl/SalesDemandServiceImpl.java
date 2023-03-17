@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -26,8 +28,11 @@ import java.util.List;
 public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, SalesDemandEntity> implements SalesDemandService {
 
     @Override
-    public PagingVO<List<SalesDemandDTO.listDTO>> paging(PagingDTO<SalesDemandDTO.searchParamDTO> dto) {
-        return null;
+    public PagingVO<SalesDemandDTO.listDTO> paging(PagingDTO<SalesDemandDTO.searchParamDTO> pagingDTO) {
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<SalesDemandDTO.listDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
     }
 
     @Override

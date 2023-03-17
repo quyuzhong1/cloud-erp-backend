@@ -29,4 +29,15 @@
         <result column="approve_time" property="approveTime" />
     </resultMap>
 
+    <select id="paging" resultType="com.erp.model.scm.dto.SalesDemandDTO$listDTO">
+        select
+            sd.id,
+            sd.code,
+            sd.shopName as shopName,
+        from sales_demand sd
+        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id
+    </select>
+
+
+
 </mapper>

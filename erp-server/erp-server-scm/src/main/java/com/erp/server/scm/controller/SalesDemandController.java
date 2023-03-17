@@ -44,11 +44,11 @@ public class SalesDemandController extends BaseController {
     * @author Will
     * @date: 2023/3/15 16:47
     * @param dto
-    * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
+    * @return ApiResult<PagingVO<SalesDemandDTO.listDTO>>
     */
    @PostMapping("/paging")
-    public ApiResult<PagingVO<List<SalesDemandDTO.listDTO>>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.searchParamDTO> dto) {
-        PagingVO<List<SalesDemandDTO.listDTO>> pagingVO = salesDemandService.paging(dto);
+    public ApiResult<PagingVO<SalesDemandDTO.listDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.searchParamDTO> dto) {
+        PagingVO<SalesDemandDTO.listDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
     }
 
