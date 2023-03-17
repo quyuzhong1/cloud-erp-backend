@@ -1,7 +1,10 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierGradeEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,13 @@ import com.erp.model.scm.entity.SupplierGradeEntity;
  */
 public interface SupplierGradeService extends SuperService<SupplierGradeEntity> {
 
+    
+    /**
+     * 保存或者修改 供应商等级信息
+     * @author yl
+     * @date 2023-03-17 10:20
+     * @param gradeList
+     * @return java.lang.Boolean
+     */
+    Boolean saveOrUpdateBatchGrade(List<SupplierDTO.SupplierGradeDTO> gradeList);
 }

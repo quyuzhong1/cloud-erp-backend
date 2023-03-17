@@ -5,6 +5,7 @@ import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -250,6 +251,7 @@ public class SupplierDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @Valid
     public  static class SupplierGradeDTO{
         /**
          * 表id
@@ -260,6 +262,8 @@ public class SupplierDTO implements Serializable {
         /**
          * 名称
          */
+        @NotBlank(message = "等级名称不能为空")
+        @Size(max = 50,message = "名称最大50字符")
         private String name;
     }
 
