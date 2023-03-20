@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -39,6 +40,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,6 +96,20 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private ProjectTemplateService projectTemplateService;
 
+    @Autowired
+    private ProjectTemplateService templateService;
+
+    @Autowired
+    private TemplateRoleRefMembersService templateRoleRefMembersService;
+
+    @Autowired
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
+
+    @Autowired
+    private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private TemplateDocsPermissionService templateDocsPermissionService;
 
     /**
      * 产品保存模板 保存任务
@@ -316,13 +332,13 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      * @date 2022-10-28 14:22
      */
     @Override
-    public List<CopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList) {
+    public List<CopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList, List<String> taskIdList) {
         // 查询模板
         ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getById(templateId);
         if (ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
             return new ArrayList<>();
         }
-        List<TemplateTaskEntity> list = this.getByTemplateId(templateId);
+        List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
         LoginUser loginUser = commonService.getUserInfo();
         //来源信息
         List<CopySourceDTO> sourceList = new ArrayList<>();
@@ -538,11 +554,13 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      * @author yl
      * @date 2022-10-29 16:29
      */
-    public List<TemplateTaskEntity> getByTemplateId(String templateId) {
-        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+    public List<TemplateTaskEntity> getByTemplateId(String templateId, List<String> taskIdList) {
+        List<TemplateTaskEntity> byTemplateId = baseMapper.getByTemplateId(templateId, taskIdList);
+
+ /*       LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
-        queryWrapper.orderByAsc(TemplateTaskEntity::getCreateTime);
-        return this.list(queryWrapper);
+        queryWrapper.orderByAsc(TemplateTaskEntity::getCreateTime);*/
+        return byTemplateId;
     }
 
     /**
@@ -688,4 +706,67 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
 
     }
+
+    /**
+     * 查询模板里的任务列表
+     * @Author Luo_WG
+     * @Date 2023/3/20 11:06
+     * @param dto dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.TemplateTaskShowDTO>
+     **/
+    @Override
+    public PagingVO<TemplateTaskShowDTO> templateTaskList(PagingDTO<TemplateTaskSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        TemplateTaskSearchDTO params = dto.getParams();
+        IPage<TemplateTaskShowDTO> paging = baseMapper.templateTaskList(query, params);
+        return new PagingVO(paging);
+    }
+
+    /**
+     * 模板引入任务
+     * @Author Luo_WG
+     * @Date 2023/3/20 14:15
+     * @param dto dto
+     * @return void
+     **/
+    @Override
+    public Boolean templateCiteTask(TemplateCiteTaskDTO dto) {
+        String templateId = dto.getTemplateId();
+        String productId = dto.getProductId();
+        ProjectTemplateEntity template = templateService.getById(templateId);
+        if (Objects.isNull(template)) {
+            throw new ServiceException(ApiError.ERROR_95051);
+        }
+        //复制模板团队成员
+        try {
+            List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");
+            //复制模板角色
+            List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(templateId, productId, "");
+            //复制角色关系表
+            templateRoleRefMembersService.copyTemplateRoleRefMembers(templateId, productId, "", copyRoleSourceList, copyMembersSourceList);
+            //复制 项目任务阶段
+            List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(templateId, productId, "");
+
+            //复制任务文档名 可能数据库已有数据
+            List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(templateId, productId, "");
+
+            //这个是任务的
+            List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(templateId, productId, "", phaseSourceList, dto.getTaskIdList());
+            //这个是复制前置任务关系
+            templatePreTaskService.copyTemplatePreTask(templateId, productId, taskSourceList);
+
+            //这个是交付文档
+            List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, docsNameSourceList);
+            //这个是文档权限
+            templateDocsPermissionService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, deliveryDocsSourceList);
+
+            //复制模板sku 与任务关系
+            templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(templateId, productId, taskSourceList);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }

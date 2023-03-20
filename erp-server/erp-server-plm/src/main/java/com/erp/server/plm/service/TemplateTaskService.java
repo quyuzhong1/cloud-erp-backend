@@ -29,7 +29,7 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
 
     List<TemplateTaskEntity> getTaskByTemplateId(String flagTemplateId);
 
-    List<CopySourceDTO> copyTemplateTask(String flagId, String productId, String projectId, List<CopySourceDTO> phaseSourceList);
+    List<CopySourceDTO> copyTemplateTask(String flagId, String productId, String projectId, List<CopySourceDTO> phaseSourceList, List<String> taskIdList);
 
     /**
      * @param dto
@@ -109,4 +109,22 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      * @return void
      */
     void updatePhase(List<TemplateTaskEntity> updateTaskList);
+
+    /**
+     * 查询模板里的任务列表
+     * @Author Luo_WG
+     * @Date 2023/3/20 11:06
+     * @param dto dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.TemplateTaskShowDTO>
+     **/
+    PagingVO<TemplateTaskShowDTO> templateTaskList(PagingDTO<TemplateTaskSearchDTO> dto);
+
+    /**
+     * 模板引入任务
+     * @Author Luo_WG
+     * @Date 2023/3/20 14:15
+     * @param dto dto
+     * @return void
+     **/
+    Boolean templateCiteTask(TemplateCiteTaskDTO dto);
 }
