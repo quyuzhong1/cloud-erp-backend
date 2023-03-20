@@ -1,10 +1,15 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
@@ -13,21 +18,23 @@ import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierGradeEntity;
+import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.mapper.SupplierMapper;
-import com.erp.server.scm.service.SupplierAccountService;
-import com.erp.server.scm.service.SupplierContactService;
-import com.erp.server.scm.service.SupplierCredentialService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -50,9 +57,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SupplierCredentialService supplierCredentialService;
 
-
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private SupplierGradeService supplierGradeService;
 
     /**
      * 保存供应商信息
@@ -184,8 +196,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierAccountService.updateAccount(bankAccountList, supplierId);
             //资质信息
             List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
-            supplierCredentialService.updateCredential(credentialList,supplierId);
-
+            supplierCredentialService.updateCredential(credentialList, supplierId);
         }
 
         return result;
@@ -193,16 +204,173 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
 
     /**
-     * 启动流程
+     * 分页获取供应商信息
      *
-     * @param
-     * @return void
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierDTO.PagingViewDTO>
      * @author yl
-     * @date 2023-03-20 9:39
+     * @date 2023-03-20 14:11
      */
-    private void startProcess() {
+    @Override
+    public PagingVO<SupplierDTO.PagingViewDTO> paging(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        SupplierDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<SupplierDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        List<String> keyList = new ArrayList<>(3);
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        for (SupplierDTO.PagingViewDTO item : list) {
+            //等级id
+            String gradeId = item.getGradeId();
+            String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setGradeName(gradeName);
+            //分类id
+            String categoryId = item.getCategoryId();
+            String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCategoryName(categoryName);
+            //结算方式
+            String payMethodId = item.getPayMethodId();
+            String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setPayMethodName(payMethodName);
+            ApproveStatusEnum statusEnum = item.getApproveStatus();
+            item.setApproveStatusName(statusEnum.getName());
+            SupplierPhaseEnum phaseEnum = item.getPhase();
+            item.setPhaseName(phaseEnum.getName());
+
+        }
+
+        return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 根据表id集合删除 数据
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-20 18:38
+     */
+    @Override
+    public Boolean deleteByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return true;
+        }
+        //删除供应商
+        Boolean result = this.removeByIds(ids);
+        //根据 供应商id 删除联系人信息
+        supplierContactService.removeBySupplierIds(ids);
+
+        //根据 供应商id 删除账户信息
+        supplierAccountService.removeBySupplierIds(ids);
+
+        //根据 供应商id 删除资质信息
+        supplierCredentialService.removeBySupplierIds(ids);
+
+        return result;
+    }
+
+
+    /**
+     * 批量提交审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-20 19:07
+     */
+    @Override
+    public Boolean submit(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<SupplierEntity> list = this.getByIds(ids);
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        //审核中
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        return result;
+    }
+
+
+    /**
+     * 审核 供应商
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-20 19:41
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> supplierIds = dto.getIds();
+        List<SupplierEntity> list = this.getByIds(supplierIds);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_APPROVE_ING_TO_APPROVE);
+        }
+
+
+        Boolean result = true;
+        if(dto.getType().equals(ScmConstant.PASS)){
+            //审核通过
+            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+        }else{
+            //审核不通过
+            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+        }
+        return result;
+    }
+
+    /**
+     * 更改状态
+     */
+    private Boolean updateApproveStatus(List<SupplierEntity> list, ApproveStatusEnum statusEnum) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(s -> s.setApproveStatus(statusEnum));
+            return this.updateBatchById(list);
+        }
+        return true;
 
     }
+
+
+    private List<SupplierEntity> getByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierEntity::getId, ids);
+        return this.list(queryWrapper);
+
+    }
+
 
     /**
      * 更改 供应商审核状态
@@ -212,7 +380,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     private Boolean updateSubmitApproveStatus(SupplierEntity supplier, String approveStatus) {
         if (supplier != null) {
-            supplier.setApproveStatus(approveStatus);
+            supplier.setApproveStatus(ApproveStatusEnum.getByStatus(approveStatus));
             return this.updateById(supplier);
         }
         return true;

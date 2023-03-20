@@ -1,7 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.common.core.anno.RegularValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -39,7 +37,7 @@ public class SupplierAccountDTO  implements Serializable {
          * 银行账号
          */
         @Size(max = 20,message = "卡号最大20字符")
-        @RegularValid(formatPattern= FieldFormatPatternTypeEnum.BANK_CARD_NO,message = "银行卡号有误")
+       // @RegularValid(formatPattern= FieldFormatPatternTypeEnum.BANK_CARD_NO,message = "银行卡号有误")
         private String bankAccount;
 
 

@@ -1,5 +1,7 @@
 package com.erp.model.scm.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+
 /**
  * 供应商阶段
  *
@@ -17,6 +19,7 @@ public enum SupplierPhaseEnum {
     ELIMINATE("eliminate", "淘汰",3);
 
 
+    @EnumValue
     private String phase;
     private String name;
     private Integer seq;

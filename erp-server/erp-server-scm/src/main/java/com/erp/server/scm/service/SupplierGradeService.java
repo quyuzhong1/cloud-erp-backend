@@ -25,4 +25,6 @@ public interface SupplierGradeService extends SuperService<SupplierGradeEntity> 
      * @return java.lang.Boolean
      */
     Boolean saveOrUpdateBatchGrade(List<SupplierDTO.SupplierGradeDTO> gradeList);
+
+
 }

@@ -9,8 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.dto.SupplierPagingParamDTO;
-import com.erp.model.scm.dto.SupplierPagingViewDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.SupplierService;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 供应商管理
@@ -42,8 +41,9 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SupplierPagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPagingParamDTO> dto) {
-        return success();
+    public ApiResult<PagingVO<SupplierDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierDTO.PagingViewDTO> pagingVO = supplierService.paging(dto);
+        return success(pagingVO);
     }
 
 
@@ -82,7 +82,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         Boolean result = supplierService.updateSupplier(dto);
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
 
 
@@ -102,14 +102,27 @@ public class SupplierController extends BaseController {
     /**
      * 删除供应商
      *
-     * @param dto
+     * @param ids
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
-        return success();
+    public ApiResult delete(@RequestBody @Validated List<String> ids) {
+        Boolean result = supplierService.deleteByIds(ids);
+        return result == true ? success() : failure();
     }
 
+
+    /**
+     * 供应商提交审核
+     *
+     * @param ids
+     * @return
+     */
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestBody @Validated List<String> ids) {
+        Boolean result = supplierService.submit(ids);
+        return result == true ? success() : failure();
+    }
 
     /**
      * 启用供应商
@@ -130,7 +143,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = supplierService.approve(dto);
+        return result == true ? success() : failure();
     }
 
 

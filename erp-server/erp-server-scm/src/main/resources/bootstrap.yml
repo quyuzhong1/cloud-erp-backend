@@ -9,6 +9,9 @@ server:
 logging:
   config: classpath:logback-spring.xml
 
+mybatis-plus:
+  type-enums-package: com.common.business.enums;com.erp.model.scm.enums
+
 # 禁用hystrix 避免steata事务失效
 feign:
   hystrix:

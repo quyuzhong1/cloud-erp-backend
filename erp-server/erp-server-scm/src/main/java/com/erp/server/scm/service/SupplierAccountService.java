@@ -45,4 +45,13 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @return void
      */
     void updateAccount(List<SupplierAccountDTO.UpdateDTO> bankAccountList, String supplierId);
+
+    /**
+     * 根据供应商id 集合删除 账户信息
+     * @author yl
+     * @date 2023-03-20 18:51
+     * @param ids
+     * @return void
+     */
+    void removeBySupplierIds(List<String> ids);
 }

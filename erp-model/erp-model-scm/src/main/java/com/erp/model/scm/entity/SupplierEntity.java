@@ -2,7 +2,9 @@ package com.erp.model.scm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.scm.enums.SupplierPhaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -72,7 +74,7 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      * 阶段
      */
     @TableField("phase")
-    private String phase;
+    private SupplierPhaseEnum phase;
 
     /**
      * 公司地址
@@ -92,7 +94,7 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      * 审核状态
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
     /**
      * 启用 状态 true 启用 false 禁用
@@ -118,5 +120,6 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     public Serializable pkVal() {
         return null;
     }
+
 
 }

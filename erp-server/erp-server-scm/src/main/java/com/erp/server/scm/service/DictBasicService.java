@@ -35,4 +35,14 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
      */
     List<DictBasicDTO> getByKey(String key);
+
+    
+    /**
+     * 根据key list 获取对应数据
+     * @author yl
+     * @date 2023-03-20 14:24
+     * @param keyList
+     * @return java.util.List<com.erp.model.scm.entity.DictBasicEntity>
+     */
+    List<DictBasicEntity> getByKeyList(List<String> keyList);
 }

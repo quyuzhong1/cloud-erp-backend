@@ -44,4 +44,13 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
      * @return void
      */
     void updateCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList, String supplierId);
+
+    /**
+     * 根据供应商id 集合删除资质信息
+     * @author yl
+     * @date 2023-03-20 18:56
+     * @param ids
+     * @return void
+     */
+    void removeBySupplierIds(List<String> ids);
 }

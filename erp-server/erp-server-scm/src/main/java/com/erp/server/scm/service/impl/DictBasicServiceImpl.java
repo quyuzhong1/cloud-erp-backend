@@ -60,6 +60,25 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     }
 
 
+    /**
+     * 根据key list 获取对应数据
+     *
+     * @param keyList
+     * @return java.util.List<com.erp.model.scm.entity.DictBasicEntity>
+     * @author yl
+     * @date 2023-03-20 14:24
+     */
+    @Override
+    public List<DictBasicEntity> getByKeyList(List<String> keyList) {
+        if (CollectionUtils.isEmpty(keyList)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DictBasicEntity::getKey, keyList);
+        return this.list(queryWrapper);
+    }
+
+
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getKey, key);

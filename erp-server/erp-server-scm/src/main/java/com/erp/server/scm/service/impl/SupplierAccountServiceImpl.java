@@ -91,6 +91,26 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
 
 
     /**
+     * 根据供应商id 集合删除 账户信息
+     *
+     * @param ids
+     * @return void
+     * @author yl
+     * @date 2023-03-20 18:51
+     */
+    @Override
+    public void removeBySupplierIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        LambdaQueryWrapper<SupplierAccountEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierAccountEntity::getSupplierId, ids);
+        this.remove(queryWrapper);
+
+    }
+
+
+    /**
      * 获取要删除的id 集合
      *
      * @param bankAccountList

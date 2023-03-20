@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -123,19 +124,62 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
         }
-        List<SupplierCredentialEntity> addList = new ArrayList<>(credentialList.size());
+        List<SupplierCredentialEntity> saveOrUpdateList = new ArrayList<>(credentialList.size());
         Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
         //获取到表名
         String type = tableName.value();
         List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
-
         List<SupplierCredentialEntity> dbList = this.getList(supplierId);
         //获取到业务表id 集合
         List<String> businessIdList = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
         attachmentService.deleteByBusinessIds(businessIdList);
 
+        for (SupplierCredentialDTO.UpdateDTO item : credentialList) {
+            SupplierCredentialEntity entity = new SupplierCredentialEntity();
+            BeanMapper.copy(item, entity);
+            entity.setSupplierId(supplierId);
+            saveOrUpdateList.add(entity);
+            //附件集合
+            List<AttachmentDTO.UpdateDTO> attachmentList = item.getCredentialAttachmentList();
+            if (CollectionUtils.isNotEmpty(attachmentList)) {
+                for (AttachmentDTO.UpdateDTO attachment : attachmentList) {
+                    AttachmentEntity addAttachment = new AttachmentEntity();
+                    addAttachment.setAttachId("");
+                    addAttachment.setAttachUrl(attachment.getAttachUrl());
+                    addAttachment.setBusinessId(entity.getId());
+                    addAttachment.setType(type);
+                    batchAttachmentList.add(addAttachment);
+                }
 
+            }
+        }
+
+        this.saveOrUpdateBatch(saveOrUpdateList);
+        attachmentService.saveBatch(batchAttachmentList);
+
+    }
+
+
+    /**
+     * 根据供应商id 集合删除资质信息
+     *
+     * @param supplierIds
+     * @return void
+     * @author yl
+     * @date 2023-03-20 18:56
+     */
+    @Override
+    public void removeBySupplierIds(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)) {
+            return;
+        }
+        List<SupplierCredentialEntity> allList = this.getList(supplierIds);
+        List<String> idList = allList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
+        LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
+        this.remove(queryWrapper);
+        attachmentService.deleteByBusinessIds(idList);
     }
 
 
@@ -144,4 +188,16 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         queryWrapper.eq(SupplierCredentialEntity::getSupplierId, supplierId);
         return list(queryWrapper);
     }
+
+
+    private List<SupplierCredentialEntity> getList(List<String> supplierIdS) {
+        if (CollectionUtils.isEmpty(supplierIdS)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierCredentialEntity::getSupplierId, supplierIdS);
+        return list(queryWrapper);
+    }
+
+
 }

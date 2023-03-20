@@ -1,6 +1,9 @@
 package com.common.business.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 /**
  * @author Will
@@ -15,6 +18,7 @@ public enum ApproveStatusEnum {
     REJECT("reject", "审核不通过"),
     APPROVE("approve", "已审核");
 
+    @EnumValue
     private String status;
     private String name;
 
@@ -40,5 +44,11 @@ public enum ApproveStatusEnum {
             }
         }
         return "";
+    }
+
+
+    public static ApproveStatusEnum getByStatus(String status){
+        return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
+                .findFirst().orElse(null);
     }
 }

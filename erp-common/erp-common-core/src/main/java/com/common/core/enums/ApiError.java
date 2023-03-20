@@ -333,6 +333,8 @@ public enum ApiError implements Serializable {
     ERROR_98010(98010,"只有待提交并且未作废数据支持提交"),
     ERROR_SUPPLIER_ABSENCE(98011,"供应商不存在"),
     ERROR_98012(98012,"已作废数据不不支持作废"),
+    ERROR_WAIT_SUBMIT_TO_APPROVE_ING(98013,"只有待提交才能提交审核"),
+    ERROR_APPROVE_ING_TO_APPROVE(98014,"只有审核中支持审核"),
 
     ERROR_end(1000000, "系统错误");
 

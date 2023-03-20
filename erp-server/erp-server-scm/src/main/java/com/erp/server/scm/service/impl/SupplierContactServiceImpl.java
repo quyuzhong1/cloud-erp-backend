@@ -120,6 +120,24 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
     }
 
     /**
+     * 根据供应商id集合删除供应商联系 人
+     *
+     * @param supplierIds
+     * @return void
+     * @author yl
+     * @date 2023-03-20 18:44
+     */
+    @Override
+    public void removeBySupplierIds(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)) {
+            return;
+        }
+        LambdaQueryWrapper<SupplierContactEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierContactEntity::getSupplierId, supplierIds);
+        this.remove(queryWrapper);
+    }
+
+    /**
      * 获取到要删除的集合
      *
      * @param

@@ -55,4 +55,13 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @return void
      */
     void updateSupplierContact(List<SupplierContactDTO.UpdateDTO> contactList,String supplierId);
+
+    /**
+     * 根据供应商id集合删除供应商联系 人
+     * @author yl
+     * @date 2023-03-20 18:44
+     * @param supplierIds
+     * @return void
+     */
+    void removeBySupplierIds(List<String> supplierIds);
 }
