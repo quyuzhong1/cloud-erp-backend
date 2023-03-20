@@ -27,7 +27,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.TaskConstant;

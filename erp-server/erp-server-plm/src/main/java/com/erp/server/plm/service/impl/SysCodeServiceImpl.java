@@ -10,7 +10,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.SysCodeService;

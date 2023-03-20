@@ -30,7 +30,7 @@ import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.*;

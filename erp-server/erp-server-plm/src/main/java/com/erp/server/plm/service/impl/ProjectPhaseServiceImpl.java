@@ -11,7 +11,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;

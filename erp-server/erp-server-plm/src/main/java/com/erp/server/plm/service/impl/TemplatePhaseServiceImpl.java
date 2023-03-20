@@ -16,7 +16,7 @@ import com.erp.model.plm.dto.TemplatePhaseDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TemplatePhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;

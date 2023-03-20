@@ -13,7 +13,7 @@ import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.SysTaskPhaseMapper;
 import com.erp.server.plm.service.ProjectTaskSysService;

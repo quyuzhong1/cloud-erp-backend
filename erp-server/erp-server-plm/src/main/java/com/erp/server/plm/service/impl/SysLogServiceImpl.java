@@ -20,7 +20,7 @@ import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.entity.SysLogFieldEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.SysLogMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.CommonService;
@@ -89,14 +89,16 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
             Integer type = sysLogFieldEntity.getType();
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
-            if (type == 1) {//是或否
+            if (type == 1) {
+                //是或否
                 oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
                 newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
                 //值不变则不用新增操作日志
                 if (oldValue.equals(newValue)) {
                     continue;
                 }
-            } else if (type == 2) {//枚举
+            } else if (type == 2) {
+                //枚举
                 if (StringUtils.isBlank(sysLogFieldEntity.getEnumClass())) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
@@ -127,7 +129,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
                     }
                 }
 
-            } else if (type == 3) {//字典
+            } else if (type == 3) {
+                //字典
                 List<BasicDictEntity> oldList = basicDictService.listByIds(Arrays.asList(oldValue.split(",")));
                 if (CollectionUtils.isNotEmpty(oldList)) {
                     oldValue = oldList.stream().map(BasicDictEntity::getValue).distinct().collect(Collectors.joining(","));
@@ -136,7 +139,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
                 if (CollectionUtils.isNotEmpty(newList)) {
                     newValue = newList.stream().map(BasicDictEntity::getValue).distinct().collect(Collectors.joining(","));
                 }
-            } else if (type == 4) {//人员
+            } else if (type == 4) {
+                //人员
                 List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(oldValue.split(",")));
                 if (CollectionUtils.isNotEmpty(oldList)) {
                     oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));

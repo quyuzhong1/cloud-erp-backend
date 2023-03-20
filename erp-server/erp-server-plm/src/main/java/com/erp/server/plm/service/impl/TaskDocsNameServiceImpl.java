@@ -9,7 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsNameDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.TaskDocsNameMapper;
 import com.erp.server.plm.service.SysDocsService;
 import com.erp.server.plm.service.TaskDeliveryService;

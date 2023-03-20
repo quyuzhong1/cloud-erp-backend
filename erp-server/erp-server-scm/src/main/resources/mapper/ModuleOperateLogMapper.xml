@@ -13,7 +13,7 @@
         <result column="update_user_id" property="updateUserId" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="class_path" property="classPath" />
+        <result column="type" property="type" />
         <result column="field_name" property="fieldName" />
         <result column="business_id" property="businessId" />
         <result column="old_value" property="oldValue" />
@@ -22,5 +22,32 @@
         <result column="operation" property="operation" />
         <result column="pid" property="pid" />
     </resultMap>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.ModuleOperateLogDTO$listDTO">
+        select
+        sol.type,
+        sol.business_id,
+        to_char(sol.create_time,'yyyy-MM-dd hh24:mi:ss') as create_time,
+        max(sol.create_user_name) as create_user_name,
+        array_to_string(array_agg(DISTINCT sol.operation),',') as operation,
+        array_to_string(array_agg(DISTINCT sol.content),',') as content
+        from module_operate_log sol
+        <where>
+            <if test="params.classPaths !=null and params.classPaths.size()>0">
+                AND sol.class_path in
+                <foreach collection="params.classPaths" item="classPath" open="(" separator="," close=")">
+                    #{classPath}
+                </foreach>
+            </if>
+            <if test="params.businessId !=null and params.businessId!=''">
+                AND sol.business_id = #{params.businessId}
+            </if>
+            <if test="params.pid !=null and params.pid!=''">
+                AND sol.pid = #{params.pid}
+            </if>
+        </where>
+        group by sol.type,sol.business_id,sol.create_time
+        order by sol.create_time desc
+    </select>
 
 </mapper>

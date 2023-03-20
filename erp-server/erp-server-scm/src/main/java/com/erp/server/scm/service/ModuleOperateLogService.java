@@ -23,4 +23,17 @@ public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEn
      * @return PagingVO<listDTO>
      */
     PagingVO<ModuleOperateLogDTO.listDTO> paging(PagingDTO<ModuleOperateLogDTO.searchDTO> dto);
+    /**
+     * @description: 生成
+     * @author Will
+     * @date: 2023/3/20 18:41
+     * @param oldObj
+     * @param newObj
+     * @param moduleType
+     * @param businessId
+     * @param pid
+     * @param msg
+     * @return Boolean
+     */
+    Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg);
 }

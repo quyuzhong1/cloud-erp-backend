@@ -17,7 +17,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
