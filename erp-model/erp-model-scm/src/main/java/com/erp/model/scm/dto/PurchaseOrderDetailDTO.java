@@ -113,7 +113,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO extends AddDTO{
 
         /**
          * 主表id

@@ -238,7 +238,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends CommonDTO{
 
         /**
          * 供应商信息
@@ -255,7 +255,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO extends CommonDTO{
 
         /**
          * 主表id

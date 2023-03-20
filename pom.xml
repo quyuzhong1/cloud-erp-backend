@@ -25,7 +25,6 @@
         <module>erp-server</module>
         <module>erp-sdk</module>
         <module>erp-chrome</module>
-        <module>erp-rpc-wms</module>
     </modules>
 
     <properties>
