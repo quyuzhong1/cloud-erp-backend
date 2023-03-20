@@ -12,6 +12,7 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPagingParamDTO;
 import com.erp.model.scm.dto.SupplierPagingViewDTO;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,8 +55,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        Boolean result=supplierService.addSupplier(dto);
-        return result==true?success():failure();
+        String supplierId = supplierService.addSupplier(dto);
+        return StringUtils.isNotBlank(supplierId) ? success() : failure();
     }
 
 

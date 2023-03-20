@@ -11,4 +11,6 @@ public interface BusinessNoConstant {
     String BOM = "BOM";
 
     String XQ = "XQ";
+
+    String GYS = "GYS";
 }

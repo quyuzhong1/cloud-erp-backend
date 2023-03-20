@@ -21,5 +21,5 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean addSupplier(SupplierDTO.AddDTO dto);
+    String addSupplier(SupplierDTO.AddDTO dto);
 }

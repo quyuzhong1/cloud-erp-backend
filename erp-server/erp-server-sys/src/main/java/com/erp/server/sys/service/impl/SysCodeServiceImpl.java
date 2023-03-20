@@ -112,10 +112,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //生成单号
             getOrSaveSysCode(dto);
             StringBuffer sysCode = new StringBuffer();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
             sysCode.append(dto.getCategory())
                     .append(LocalDateTime.now().format(formatter))
-                    .append(String.format("%04d",dto.getNum()));
+                    .append(String.format("%05d",dto.getNum()));
             if (StringUtils.isBlank(sysCode)) {
                 throw new ServiceException(ApiError.ERROR_9027);
             }
