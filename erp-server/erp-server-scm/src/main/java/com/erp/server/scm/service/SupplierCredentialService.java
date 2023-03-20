@@ -25,4 +25,23 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
      * @return void
      */
     void saveBatchCredential(String supplierId, List<SupplierCredentialDTO.AddDTO> credentialList);
+
+    /**
+     * 根据供应商ｉｄ　获取资质信息
+     * @author yl
+     * @date 2023-03-20 10:19
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.SupplierCredentialDTO.UpdateDTO>
+     */
+    List<SupplierCredentialDTO.UpdateDTO> getBySupplierId(String supplierId);
+
+    /**
+     * 修改供应商资质信息
+     * @author yl
+     * @date 2023-03-20 11:37
+     * @param credentialList
+     * @param supplierId
+     * @return void
+     */
+    void updateCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList, String supplierId);
 }

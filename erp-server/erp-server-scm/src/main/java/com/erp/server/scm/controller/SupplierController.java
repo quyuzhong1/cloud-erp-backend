@@ -11,8 +11,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierPagingParamDTO;
 import com.erp.model.scm.dto.SupplierPagingViewDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.SupplierService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,8 +55,21 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        String supplierId = supplierService.addSupplier(dto);
-        return StringUtils.isNotBlank(supplierId) ? success() : failure();
+        SupplierEntity supplier = supplierService.addSupplier(dto);
+        return supplier != null ? success() : failure();
+    }
+
+
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
+        Boolean result = supplierService.addAndSubmit(dto);
+        return result == true ? success() : failure();
     }
 
 
@@ -67,7 +80,8 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated SupplierDTO dto) {
+    public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
+        Boolean result = supplierService.updateSupplier(dto);
         return success();
     }
 
@@ -79,9 +93,9 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult view(@RequestBody @Validated BaseIdDTO dto) {
-        SupplierDTO supplier = new SupplierDTO();
-        return success(supplier);
+    public ApiResult<SupplierDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        SupplierDTO.UpdateDTO view = supplierService.view(dto.getId());
+        return success(view);
     }
 
 

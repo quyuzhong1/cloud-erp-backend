@@ -35,4 +35,24 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @return void
      */
     void checkIsDefault(List<SupplierContactDTO.AddDTO> contactList);
+
+    /**
+     * 根据供应商id 获取到联系人信息
+     * @author yl
+     * @date 2023-03-20 10:07
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.SupplierContactDTO.UpdateDTO>
+     */
+    List<SupplierContactDTO.UpdateDTO> getBySupplierId(String supplierId);
+
+    
+    /**
+     * 修改供应商联系人信息
+     * @author yl
+     * @date 2023-03-20 11:11
+     * @param contactList
+     * @param supplierId 供应商id
+     * @return void
+     */
+    void updateSupplierContact(List<SupplierContactDTO.UpdateDTO> contactList,String supplierId);
 }

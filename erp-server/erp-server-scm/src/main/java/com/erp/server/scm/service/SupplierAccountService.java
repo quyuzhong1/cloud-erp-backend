@@ -25,4 +25,24 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @return void
      */
     void saveBatchBankAccount(String supplierId, List<SupplierAccountDTO.AddDTO> bankAccountList);
+
+    
+    /**
+     * 根据供应商id 获取到账户信息
+     * @author yl
+     * @date 2023-03-20 10:12
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.SupplierAccountDTO.UpdateDTO>
+     */
+    List<SupplierAccountDTO.UpdateDTO> getBySupplierId(String supplierId);
+
+    /**
+     * 更改供应商账户信息
+     * @author yl
+     * @date 2023-03-20 11:28
+     * @param bankAccountList
+     * @param supplierId
+     * @return void
+     */
+    void updateAccount(List<SupplierAccountDTO.UpdateDTO> bankAccountList, String supplierId);
 }

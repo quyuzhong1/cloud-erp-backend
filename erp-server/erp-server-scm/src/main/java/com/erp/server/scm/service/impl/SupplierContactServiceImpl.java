@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
@@ -9,9 +10,12 @@ import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.server.scm.mapper.SupplierContactMapper;
 import com.erp.server.scm.service.SupplierContactService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -60,5 +64,89 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }
+    }
+
+
+    /**
+     * 根据供应商id 获取到联系人信息
+     *
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.SupplierContactDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-20 10:07
+     */
+    @Override
+    public List<SupplierContactDTO.UpdateDTO> getBySupplierId(String supplierId) {
+        List<SupplierContactEntity> list = this.getList(supplierId);
+        return BeanMapper.copyList(list, SupplierContactDTO.UpdateDTO.class);
+
+    }
+
+
+    /**
+     * 修改供应商联系人信息
+     *
+     * @param contactList
+     * @param supplierId  供应商id
+     * @return void
+     * @author yl
+     * @date 2023-03-20 11:11
+     */
+    @Override
+    public void updateSupplierContact(List<SupplierContactDTO.UpdateDTO> contactList, String supplierId) {
+        if (CollectionUtils.isEmpty(contactList)) {
+            return;
+        }
+        List<SupplierContactEntity> saveOrUpdateList = new ArrayList<>(contactList.size());
+        //这是修改的
+        List<SupplierContactDTO.UpdateDTO> updateList = contactList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        //这是要添加的
+        List<SupplierContactDTO.UpdateDTO> addList = contactList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+        //这个是要修改的实体
+        List<SupplierContactEntity> updateEntityList = BeanMapper.copyList(updateList, SupplierContactEntity.class);
+        //这个是要添加的
+        List<SupplierContactEntity> addEntityList = BeanMapper.copyList(addList, SupplierContactEntity.class);
+        saveOrUpdateList.addAll(updateEntityList);
+        saveOrUpdateList.addAll(addEntityList);
+        List<SupplierContactEntity> dbList = this.getList(supplierId);
+        List<String> deleteIdList = getDeleteIds(updateList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        this.saveOrUpdateBatch(saveOrUpdateList);
+
+
+    }
+
+    /**
+     * 获取到要删除的集合
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-20 11:21
+     */
+    private List<String> getDeleteIds(List<SupplierContactDTO.UpdateDTO> contactList, List<SupplierContactEntity> dbList) {
+
+        List<String> ids = contactList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SupplierContactDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(SupplierContactEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
+    }
+
+
+    /**
+     * 根据供应商id 获取到对应数据
+     *
+     * @param
+     * @return java.util.List<com.erp.model.scm.entity.SupplierContactEntity>
+     * @author yl
+     * @date 2023-03-20 10:08
+     */
+    private List<SupplierContactEntity> getList(String supplierId) {
+        LambdaQueryWrapper<SupplierContactEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SupplierContactEntity::getSupplierId, supplierId);
+        return this.list(queryWrapper);
     }
 }

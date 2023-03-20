@@ -52,7 +52,6 @@ public enum ApiError implements Serializable {
     ERROR_1017(1017, "参数列表不能为空"),
     ERROR_1018(1018, "导入名称不能大于200字符"),
     ERROR_1019(1019, "数据新增失败"),
-
     /**
      * 警告信息 从800 开始
      */
@@ -332,6 +331,7 @@ public enum ApiError implements Serializable {
     ERROR_98008(98008,"只有审核中和已审核数据允许取消流程"),
     ERROR_98009(98009,"只有待审核数据允许删除"),
     ERROR_98010(98010,"只有待提交数据允许提交"),
+    ERROR_SUPPLIER_ABSENCE(98011,"供应商不存在"),
 
     ERROR_end(1000000, "系统错误");
 

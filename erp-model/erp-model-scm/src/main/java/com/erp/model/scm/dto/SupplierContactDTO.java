@@ -65,4 +65,14 @@ public class SupplierContactDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends AddDTO{
+        /**
+         * 主表id
+         */
+        private String id;
+    }
+
+
 }

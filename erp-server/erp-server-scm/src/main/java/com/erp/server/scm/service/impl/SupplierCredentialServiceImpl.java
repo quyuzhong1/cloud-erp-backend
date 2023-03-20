@@ -1,9 +1,11 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -78,5 +81,56 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         this.saveBatch(addList);
         attachmentService.saveBatch(batchAttachmentList);
+    }
+
+
+    /**
+     * 根据供应商ｉｄ　获取资质信息
+     *
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.SupplierCredentialDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-20 10:19
+     */
+    @Override
+    public List<SupplierCredentialDTO.UpdateDTO> getBySupplierId(String supplierId) {
+        List<SupplierCredentialEntity> list = this.getList(supplierId);
+        List<SupplierCredentialDTO.UpdateDTO> resultList = BeanMapper.copyList(list, SupplierCredentialDTO.UpdateDTO.class);
+        //获取到业务表id
+        List<String> businessIds = resultList.stream().map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(businessIds);
+        for(SupplierCredentialDTO.UpdateDTO item:resultList){
+            List<AttachmentDTO.UpdateDTO> attachments=attachmentList.stream().
+                    filter(a->a.getBusinessId().equals(item.getId())).collect(Collectors.toList());
+            item.setCredentialAttachmentList(attachments);
+        }
+        return resultList;
+    }
+
+
+
+    /**
+     * 修改供应商资质信息
+     * @author yl
+     * @date 2023-03-20 11:37
+     * @param credentialList
+     * @param supplierId
+     * @return void
+     */
+    @Override
+    public void updateCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList, String supplierId) {
+        if(CollectionUtils.isEmpty(credentialList)){
+              return;
+        }
+
+
+
+    }
+
+
+    private List<SupplierCredentialEntity> getList(String supplierId) {
+        LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SupplierCredentialEntity::getSupplierId, supplierId);
+        return list(queryWrapper);
     }
 }

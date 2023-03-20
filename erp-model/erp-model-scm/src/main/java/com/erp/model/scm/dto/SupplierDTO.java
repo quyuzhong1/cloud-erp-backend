@@ -33,14 +33,11 @@ public class SupplierDTO implements Serializable {
     @Valid
     public static class AddDTO extends SupplierBaseDTO{
 
-
-
         /**
          * 供应商联系信息
          */
         @Valid
         private List<SupplierContactDTO.AddDTO>  contactList;
-
 
         /**
          * 供应商银行账户信息
@@ -48,14 +45,40 @@ public class SupplierDTO implements Serializable {
         @Valid
         private List<SupplierAccountDTO.AddDTO>  bankAccountList;
 
-
         /**
          * 供应商资质信息
          */
         @Valid
         private List<SupplierCredentialDTO.AddDTO> credentialList;
 
+    }
 
+
+    /**
+     * 供应商修改信息
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class UpdateDTO extends SupplierBaseDTO{
+
+        /**
+         * 供应商联系信息
+         */
+        @Valid
+        private List<SupplierContactDTO.UpdateDTO>  contactList;
+
+        /**
+         * 供应商银行账户信息
+         */
+        @Valid
+        private List<SupplierAccountDTO.UpdateDTO>  bankAccountList;
+
+        /**
+         * 供应商资质信息
+         */
+        @Valid
+        private List<SupplierCredentialDTO.UpdateDTO> credentialList;
 
     }
 

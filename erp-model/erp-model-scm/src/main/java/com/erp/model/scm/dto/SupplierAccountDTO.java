@@ -61,4 +61,14 @@ public class SupplierAccountDTO  implements Serializable {
         private String remark;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends SupplierAccountDTO.AddDTO {
+        /**
+         * 主表id
+         */
+        private String id;
+    }
 }

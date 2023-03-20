@@ -24,6 +24,47 @@ public class SupplierCredentialDTO  implements Serializable {
     @NoArgsConstructor
     public  static class AddDTO {
 
+        /**
+         * 名称
+         */
+        @NotBlank(message = "资质名称不能为空")
+        @Size(max = 50,message = "最大50字符")
+        private String name;
+
+
+        /**
+         * 有效时间
+         */
+        private LocalDate effectiveDate;
+
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "最大255字符")
+        private String remark;
+
+
+        /**
+         * 资质附件url
+         */
+        private List<String> credentialAttachmentList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public  static class UpdateDTO {
+
+        /**
+         * 主表id
+         */
+        private String id;
 
 
         /**
@@ -55,7 +96,9 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 资质附件url
          */
-        private List<String> credentialAttachmentList;
+        private List<AttachmentDTO.UpdateDTO> credentialAttachmentList;
+
+
 
     }
 }
