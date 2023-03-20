@@ -57,21 +57,21 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 含税单价
          */
-        @NotEmpty(message = "含税单价不能为空")
+        @NotNull(message = "含税单价不能为空")
         @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal taxPrice;
 
         /**
          * 税率
          */
-        @NotEmpty(message = "税率不能为空")
+        @NotNull(message = "税率不能为空")
         @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
         private BigDecimal taxRate;
 
         /**
          * 采购数量
          */
-        @NotEmpty(message = "采购数量不能为空")
+        @NotNull(message = "采购数量不能为空")
         @Min(value = 0,message = "采购数量最小值为0")
         @Max(value = 99999999,message = "采购数量最大值为99999999")
         private Integer purchaseQty;
@@ -101,7 +101,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 是否是赠品（false否，true是）
          */
-        @NotEmpty(message = "是否是赠品不能为空")
+        @NotNull(message = "是否是赠品不能为空")
         private Boolean isGift;
 
         /**

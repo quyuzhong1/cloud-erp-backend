@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -180,7 +181,7 @@ public class SalesDemandDTO implements Serializable {
         /**
          * 申请日期
          */
-        @NotEmpty(message = "申请日期不能为空")
+        @NotNull(message = "申请日期不能为空")
         private LocalDate applyDate;
 
         /**
@@ -196,7 +197,7 @@ public class SalesDemandDTO implements Serializable {
         /**
          * 新品首批（false否,true是）
          */
-        @NotEmpty(message = "新品首批不能为空")
+        @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
 
         /**

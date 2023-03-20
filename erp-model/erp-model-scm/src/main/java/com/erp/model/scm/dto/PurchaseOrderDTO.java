@@ -213,7 +213,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 采购日期
          */
-        private Date purchaseDate;
+        private LocalDate purchaseDate;
 
         /**
          * 采购员id

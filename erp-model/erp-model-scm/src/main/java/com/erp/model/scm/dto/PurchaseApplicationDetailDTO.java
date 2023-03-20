@@ -61,7 +61,7 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         /**
          * 申请数量
          */
-        @NotEmpty(message = "申请数量不能为空")
+        @NotNull(message = "申请数量不能为空")
         @Min(value = 1,message = "申请数量最小值为1")
         @Max(value = 99999999,message = "申请数量最大值为99999999")
         private Integer applyQty;

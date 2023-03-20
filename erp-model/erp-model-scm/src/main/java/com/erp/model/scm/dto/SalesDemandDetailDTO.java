@@ -61,7 +61,7 @@ public class SalesDemandDetailDTO implements Serializable {
         /**
          * 计划备货数量
          */
-        @NotEmpty(message = "计划备货数量不能为空")
+        @NotNull(message = "计划备货数量不能为空")
         @Min(value = 1,message = "计划备货数量最小值为1")
         @Max(value = 99999999,message = "计划备货数量最大值为99999999")
         private Integer planStockQty;
