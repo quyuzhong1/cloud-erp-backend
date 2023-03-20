@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -30,26 +34,33 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 年目标销售量
      */
+    @DecimalMax(value = "99999999",message ="年目标销售量最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Long yearSaleQty;
 
     /**
      * 年目标销售额
      */
+    @Digits(integer = 16,fraction = 4,message = "年目标销售额最大16字符，小数位不能大于4位")
     private BigDecimal yearSaleAmount;
 
     /**
      * 月目标销售量
      */
+    @DecimalMax(value = "99999999",message ="月目标销售量最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Long monthSaleQty;
 
     /**
      * 月目标销售额
      */
+    @Digits(integer = 16,fraction = 4,message = "月目标销售额最大16字符，小数位不能大于4位")
     private BigDecimal monthSaleAmount;
 
     /**
      * 销售国家
      */
+    @Size(max = 255,message = "国家最大不能超过255字符")
     private String saleCountry;
 
     /**

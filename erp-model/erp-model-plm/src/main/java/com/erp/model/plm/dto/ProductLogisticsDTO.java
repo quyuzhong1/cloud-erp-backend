@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
@@ -55,11 +56,13 @@ public class ProductLogisticsDTO implements Serializable {
     /**
      * 报关申报价格
      */
+    @Digits(integer = 16,fraction = 4,message = "报关申报价格最大16字符，小数位不能大于4位")
     private BigDecimal declarePrice;
 
     /**
      * 海关编码
      */
+    @Size(max = 50,message = "海关编码不能大于50字符")
     private String customsCode;
 
     /**
