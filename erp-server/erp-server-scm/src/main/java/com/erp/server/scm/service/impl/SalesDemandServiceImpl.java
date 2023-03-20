@@ -14,12 +14,15 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -39,9 +42,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -234,7 +239,19 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
-        return null;
+        List<SalesDemandExportExcelDTO> exportExcelList = baseMapper.listExportExcel(dto);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/salesDemandExport.xlsx";
+        String name = "备货申请单";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(exportExcelList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -256,6 +273,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);

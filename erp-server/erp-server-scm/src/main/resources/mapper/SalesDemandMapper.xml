@@ -52,7 +52,8 @@
                                    when '1' then '已作废'
             end as invalidStatusName,
             sd.approve_user_name as approveUserName,
-            sd.create_user_name as createUserName
+            sd.create_user_name as createUserName,
+            sd.create_time as createTime
         from sales_demand sd
         left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
         <where>
@@ -112,6 +113,94 @@
         sd.create_time desc
     </select>
 
+    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO">
+        select
+        sd.id,
+        sd.code,
+        sd.shop_name as shopName,
+        sdd.sku_no as skuNo,
+        sdd.product_name as productName,
+        sdd.is_urgent as isUrgent,
+        case sd.is_first_mass_product
+            when true then '是'
+            when false then '否'
+        end as isFirstMassProduct,
+        sdd.plan_delivery_date as planDeliveryDate,
+        sdd.plan_stock_qty as planStockQty,
+        sdd.dest_warehouse_name as destWarehouseName,
+        sdd.remark as remark,
+        sd.remark as stockReason,
+        case sd.approve_status
+            when 'waitSubmit' then '待提交'
+            when 'approveIng' then '审核中'
+            when 'reject' then '审核不通过'
+            when 'finish' then '已完成'
+        end as approveStatusName,
+        case sd.invalid_status
+            when '0' then '未作废'
+            when '1' then '已作废'
+        end as invalidStatusName,
+        sd.approve_user_name as approveUserName,
+        sd.create_user_name as createUserName,
+        sd.create_time as createTime
+        from sales_demand sd
+        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        <where>
+            sd.is_deleted = false
+            <if test="params.code != null and params.code != ''">
+                and sd.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.productName != null and params.productName != ''">
+                and sdd.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.isUrgent != null ">
+                and sd.is_urgent = #{params.isUrgent}
+            </if>
+            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                and sd.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sd.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and sdd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
+                and sdd.dest_warehouse_id in
+                <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and sd.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and sd.create_time between #{params.createTimeList.[0]} and #{params.createTimeList.[1]}
+            </if>
+            <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
+                and sdd.plan_delivery_date between #{params.planDeliveryDateList.[0]} and #{params.planDeliveryDateList.[1]}
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and sd.approve_time between #{params.approvePassTimeList.[0]} and #{params.approvePassTimeList.[1]}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sd.create_time desc
+    </select>
 
 
 </mapper>

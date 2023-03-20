@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.SalesDemandDTO;
+import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -27,4 +30,12 @@ public interface SalesDemandMapper extends BaseMapper<SalesDemandEntity> {
      * @return IPage<listDTO>
      */
     IPage<SalesDemandDTO.ListDTO> paging(Page query,@Param("params") SalesDemandDTO.SearchParamDTO params);
+    /**
+     * @description: 导出数据查询
+     * @author Will
+     * @date: 2023/3/20 11:21
+     * @param dto
+     * @return List<SalesDemandExportExcelDTO>
+     */
+    List<SalesDemandExportExcelDTO> listExportExcel(SalesDemandDTO.SearchParamDTO dto);
 }

@@ -10,6 +10,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -65,7 +66,7 @@ public class SalesDemandDTO implements Serializable {
         /**
          * 计划交期
          */
-        private Date planDeliveryDate;
+        private LocalDate planDeliveryDate;
 
         /**
          * 计划备货数量
@@ -106,6 +107,11 @@ public class SalesDemandDTO implements Serializable {
          * 创建人
          */
         private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
