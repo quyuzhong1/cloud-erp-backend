@@ -62,7 +62,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addSupplier(SupplierDTO.AddDTO dto) {
+    public String addSupplier(SupplierDTO.AddDTO dto) {
 
         checkName(null, dto.getName());
 
@@ -78,6 +78,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         addEntity.setId(supplierId);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_XQ.getCode()));
+        addEntity.setCode(code);
         Boolean result = this.save(addEntity);
         //保存成功
         if (result) {
@@ -88,9 +89,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //供应商资质信息
             List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
             supplierCredentialService.saveBatchCredential(supplierId, credentialList);
+
+            return supplierId;
         }
 
-        return result;
+        return "";
     }
 
 
