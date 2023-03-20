@@ -353,6 +353,9 @@ public class DmpOrderInfoEntity implements Serializable {
     private String chargeId;
 
     @TableField(exist = false)
+    private String orderTypeName;
+
+    @TableField(exist = false)
     private List<DmpOrderItemEntity> itemList;
 
     @TableField(exist = false)
