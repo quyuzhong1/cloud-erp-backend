@@ -99,30 +99,41 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         //获取到业务表id
         List<String> businessIds = resultList.stream().map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(businessIds);
-        for(SupplierCredentialDTO.UpdateDTO item:resultList){
-            List<AttachmentDTO.UpdateDTO> attachments=attachmentList.stream().
-                    filter(a->a.getBusinessId().equals(item.getId())).collect(Collectors.toList());
+        for (SupplierCredentialDTO.UpdateDTO item : resultList) {
+            List<AttachmentDTO.UpdateDTO> attachments = attachmentList.stream().
+                    filter(a -> a.getBusinessId().equals(item.getId())).collect(Collectors.toList());
             item.setCredentialAttachmentList(attachments);
         }
         return resultList;
     }
 
 
-
     /**
      * 修改供应商资质信息
-     * @author yl
-     * @date 2023-03-20 11:37
+     *
      * @param credentialList
      * @param supplierId
      * @return void
+     * @author yl
+     * @date 2023-03-20 11:37
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList, String supplierId) {
-        if(CollectionUtils.isEmpty(credentialList)){
-              return;
+        if (CollectionUtils.isEmpty(credentialList)) {
+            return;
         }
+        List<SupplierCredentialEntity> addList = new ArrayList<>(credentialList.size());
+        Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
 
+        List<SupplierCredentialEntity> dbList = this.getList(supplierId);
+        //获取到业务表id 集合
+        List<String> businessIdList = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
+        attachmentService.deleteByBusinessIds(businessIdList);
 
 
     }

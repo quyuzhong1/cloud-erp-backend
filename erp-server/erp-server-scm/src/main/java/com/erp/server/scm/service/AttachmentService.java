@@ -25,4 +25,14 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @return java.util.List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO>
      */
     List<AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds);
+
+    
+    /**
+     * 根据业务表id 集合删除
+     * @author yl
+     * @date 2023-03-20 11:52
+     * @param businessIdList
+     * @return void
+     */
+    void deleteByBusinessIds(List<String> businessIdList);
 }

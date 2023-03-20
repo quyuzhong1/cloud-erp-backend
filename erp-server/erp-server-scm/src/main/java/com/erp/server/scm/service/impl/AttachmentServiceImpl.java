@@ -36,7 +36,25 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     @Override
     public List<AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds) {
         List<AttachmentEntity> list = this.list(businessIds);
-        return BeanMapper.copyList(list,AttachmentDTO.UpdateDTO.class);
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+
+    /**
+     * 根据业务表id 集合删除
+     *
+     * @param businessIdList
+     * @return void
+     * @author yl
+     * @date 2023-03-20 11:52
+     */
+    @Override
+    public void deleteByBusinessIds(List<String> businessIdList) {
+        if (CollectionUtils.isNotEmpty(businessIdList)) {
+            LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(AttachmentEntity::getBusinessId, businessIdList);
+            this.remove(queryWrapper);
+        }
     }
 
 

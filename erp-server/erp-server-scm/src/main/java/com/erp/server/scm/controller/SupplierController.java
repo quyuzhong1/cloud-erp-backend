@@ -82,7 +82,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         Boolean result = supplierService.updateSupplier(dto);
-        return success();
+        return result==true?success():failure();
     }
 
 
