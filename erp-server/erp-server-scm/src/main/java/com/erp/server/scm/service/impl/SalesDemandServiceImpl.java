@@ -8,6 +8,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -19,6 +20,7 @@ import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.entity.SalesDemandEntity;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -34,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -143,14 +146,48 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean invalid(List<String> ids,String reason) {
-
-
-
-        return null;
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<SalesDemandEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98001);
+        }
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        //更新
+        lambdaUpdate().in(SalesDemandEntity::getId,ids)
+                .set(SalesDemandEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(SalesDemandEntity::getInvalidTime, LocalDateTime.now())
+                .set(SalesDemandEntity::getRemark,reason)
+                .update();
+        return Boolean.TRUE;
     }
 
     @Override
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+
+        if (CollectionUtils.isEmpty(baseApproveParamDTO.getIds())) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<SalesDemandEntity> list = this.listByIds(baseApproveParamDTO.getIds());
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98001);
+        }
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String type = baseApproveParamDTO.getType();
+        //审核通过
+
+
+
+        //审核不通过
 
     }
 
