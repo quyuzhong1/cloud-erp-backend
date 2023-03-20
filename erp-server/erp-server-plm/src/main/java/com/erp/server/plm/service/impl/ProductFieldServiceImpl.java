@@ -19,7 +19,7 @@ import com.erp.model.plm.dto.ProductFieldDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldDTO;
 import com.erp.model.plm.entity.ProductFieldEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.ProductFieldMapper;
 import com.erp.server.plm.service.ProductFieldService;
 import org.apache.commons.collections4.CollectionUtils;

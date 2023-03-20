@@ -1,4 +1,4 @@
-package com.erp.server.plm.constant;
+package com.common.business.constant;
 
 /**
  * @Classname IsSysConstant

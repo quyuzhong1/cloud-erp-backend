@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
+@Accessors(chain = true)
 public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 主键

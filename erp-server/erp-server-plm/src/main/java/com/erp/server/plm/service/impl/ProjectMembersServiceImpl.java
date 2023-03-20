@@ -21,7 +21,7 @@ import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 

@@ -49,7 +49,7 @@ public class ModuleOperateLogDTO implements Serializable {
         /**
          * 模块类型
          */
-        private String type;
+        private String moduleType;
 
         /**
          * 字段名称
@@ -94,7 +94,7 @@ public class ModuleOperateLogDTO implements Serializable {
          * 模块类型 (枚举ModuleOperateLogTypeEnum,0备货申请单,1采购申请单,采购订单)
          */
         @NotNull(message = "模块不能为空")
-        private List<String> type;
+        private List<String> moduleType;
 
         /**
          * 业务id(对应模块id)

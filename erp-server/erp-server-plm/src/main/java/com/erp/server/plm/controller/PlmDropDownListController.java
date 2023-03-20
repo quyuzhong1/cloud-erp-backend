@@ -8,7 +8,7 @@ import com.erp.model.plm.dto.SelectShowDTO;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
 import com.erp.model.plm.vo.RelationshipVO;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

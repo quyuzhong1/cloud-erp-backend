@@ -3,6 +3,7 @@ package com.erp.model.scm.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -14,20 +15,19 @@ import java.io.Serializable;
  * 日志表
  * </p>
  *
- * @author Lambda
+ * @author will
  * @since 2023-03-17
  */
-@Getter
-@Setter
+@Data
 @Accessors(chain = true)
 @TableName("module_operate_log")
 public class ModuleOperateLogEntity extends BaseEntity<ModuleOperateLogEntity> {
 
     /**
-     * 类路径
+     * 类型
      */
-    @TableField("type")
-    private String type;
+    @TableField("module_type")
+    private String moduleType;
 
     /**
      * 字段名称

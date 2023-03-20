@@ -5,7 +5,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProductMilepostEnum;
 import com.erp.model.plm.enums.ProjectStateEnum;

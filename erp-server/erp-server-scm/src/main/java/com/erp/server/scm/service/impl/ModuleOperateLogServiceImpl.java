@@ -1,13 +1,40 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.IsConstant;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.utils.OperationLogUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.EnumsUtil;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
+import com.erp.model.scm.entity.CfgModuleOperateLogFieldEntity;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.ModuleOperateLogMapper;
+import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
+import com.erp.server.scm.service.CommonService;
+import com.erp.server.scm.service.DictBasicService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.common.core.serveice.SuperServiceImpl;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -20,8 +47,142 @@ import org.springframework.stereotype.Service;
 @Service
 public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateLogMapper, ModuleOperateLogEntity> implements ModuleOperateLogService {
 
+    @Resource
+    private CfgModuleOperateLogFieldService cfgModuleOperateLogFieldService;
+
+    @Resource
+    private CommonService commonService;
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @Override
     public PagingVO<ModuleOperateLogDTO.listDTO> paging(PagingDTO<ModuleOperateLogDTO.searchDTO> dto) {
-        return null;
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        ModuleOperateLogDTO.searchDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query, params);
+        return new PagingVO(pageData);
+    }
+
+
+    @Override
+    public Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg) {
+
+        Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
+        //判断是否为空
+        if (operationLogMap.size() == 0) {
+            return true;
+        }
+        List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
+        List<CfgModuleOperateLogFieldEntity> fieldList = cfgModuleOperateLogFieldService.listByClassPaths(classPaths);
+        if (CollectionUtils.isEmpty(fieldList)) {
+            return true;
+        }
+        LoginUser loginUser = commonService.getUserInfo();
+        String userName = loginUser.getUserName();
+        String userId = loginUser.getUid();
+        List<ModuleOperateLogEntity> list = new LinkedList<>();
+        for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
+            //Pair<字段名称, 类路径>
+            Pair<String, String> keyPair = entry.getKey();
+            String field = keyPair.getKey();
+            String fieldClass = keyPair.getValue();
+            //Pair<旧值, 新值>
+            Pair<String, String> valuePair = entry.getValue();
+            CfgModuleOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
+            if (ObjectUtils.isEmpty(fieldEntity)) {
+                continue;
+            }
+            String fieldName = fieldEntity.getFieldName();
+            Integer type = fieldEntity.getType();
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
+            if (type == 1) {
+                //是或否
+                oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
+                newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
+                //值不变则不用新增操作日志
+                if (oldValue.equals(newValue)) {
+                    continue;
+                }
+            } else if (type == 2) {
+                //枚举
+                if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
+                    throw new ServiceException(ApiError.ERROR_9028);
+                }
+                Class<?> aClass = null;
+                try {
+                    aClass = Class.forName(fieldEntity.getEnumClass());
+                } catch (ClassNotFoundException e) {
+                    throw new ServiceException(ApiError.ERROR_9028);
+                }
+                boolean anEnum = aClass.isEnum();
+                if (!anEnum) {
+                    throw new ServiceException(ApiError.ERROR_9028);
+                }
+                if (StringUtils.isNotBlank(oldValue)) {
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass);
+                    if (ObjectUtils.isNotEmpty(enumObject)) {
+                        oldValue = enumObject.getName();
+                    } else {
+                        oldValue = "";
+                    }
+                }
+                if (StringUtils.isNotBlank(newValue)) {
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass);
+                    if (ObjectUtils.isNotEmpty(enumObject)) {
+                        newValue = enumObject.getName();
+                    } else {
+                        newValue = "";
+                    }
+                }
+
+            } else if (type == 3) {
+                //字典
+                List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(oldValue.split(",")));
+                if (CollectionUtils.isNotEmpty(oldList)) {
+                    oldValue = oldList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
+                }
+                List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(newValue.split(",")));
+                if (CollectionUtils.isNotEmpty(newList)) {
+                    newValue = newList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
+                }
+            } else if (type == 4) {
+                //人员
+                List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(oldValue.split(",")));
+                if (CollectionUtils.isNotEmpty(oldList)) {
+                    oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+                }
+                List<FindUserDTO> newList = sysUserFeign.getUserListByUserIds(Arrays.asList(newValue.split(",")));
+                if (CollectionUtils.isNotEmpty(newList)) {
+                    newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+                }
+
+            }
+            if (oldValue.equals(newValue)) {
+                continue;
+            }
+            String content = "";
+            if (StringUtils.isBlank(valuePair.getKey())) {
+                content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
+            } else {
+                content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+            }
+            ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+            entity.setModuleType(moduleType)
+                    .setBusinessId(businessId)
+                    .setPid(pid)
+                    .setOldValue(oldValue)
+                    .setNewValue(newValue)
+                    .setFieldName(fieldName)
+                    .setContent(content)
+                    .setOperation("编辑信息")
+                    .setCreateUserId(userId)
+                    .setCreateUserName(userName);
+            list.add(entity);
+        }
+        return this.saveBatch(list);
     }
 }
