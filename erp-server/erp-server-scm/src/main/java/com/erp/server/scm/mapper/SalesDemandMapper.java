@@ -34,8 +34,8 @@ public interface SalesDemandMapper extends BaseMapper<SalesDemandEntity> {
      * @description: 导出数据查询
      * @author Will
      * @date: 2023/3/20 11:21
-     * @param dto
+     * @param params
      * @return List<SalesDemandExportExcelDTO>
      */
-    List<SalesDemandExportExcelDTO> listExportExcel(SalesDemandDTO.SearchParamDTO dto);
+    List<SalesDemandExportExcelDTO> listExportExcel(@Param("params")SalesDemandDTO.SearchParamDTO params);
 }

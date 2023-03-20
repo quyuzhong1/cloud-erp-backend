@@ -125,7 +125,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/invalid")
-    public ApiResult invalid(@RequestParam("ids") List<String> ids,String reason) {
+    public ApiResult invalid(@RequestParam("ids") List<String> ids,@RequestParam("reason") String reason) {
         Boolean flag = salesDemandService.invalid(ids,reason);
         return flag == true ? success() : failure();
     }

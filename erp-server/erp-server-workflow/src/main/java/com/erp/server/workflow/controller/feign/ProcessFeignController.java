@@ -104,9 +104,9 @@ public class ProcessFeignController extends BaseController {
         workflowService.terminateProcess(dto.getProcessInstanceId());
     }
 
-    //终止流程
+    //取消流程
     @PostMapping("/cancelProcess")
-    public void cancelProcess(@RequestBody String id) {
+    public void cancelProcess(String id) {
         workflowService.cancelProcess(id);
     }
 

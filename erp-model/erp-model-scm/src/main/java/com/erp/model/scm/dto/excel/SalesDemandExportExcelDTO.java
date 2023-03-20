@@ -64,7 +64,7 @@ public class SalesDemandExportExcelDTO implements Serializable {
      * 新品首批
      */
     @ExcelProperty(value = "新品首批", index = 7)
-    private String isFirstMassProductStr;
+    private String isFirstMassProduct;
 
     /**
      * 备注
@@ -76,36 +76,36 @@ public class SalesDemandExportExcelDTO implements Serializable {
     /**
      * 备货原因
      */
-    @ExcelProperty(value = "备货原因", index = 8)
+    @ExcelProperty(value = "备货原因", index = 9)
     private String stockReason;
 
     /**
      * 审核人
      */
-    @ExcelProperty(value = "审核人", index = 9)
+    @ExcelProperty(value = "审核人", index = 10)
     private String approveUserName;
 
     /**
      * 单据状态
      */
-    @ExcelProperty(value = "单据状态", index = 10)
+    @ExcelProperty(value = "单据状态", index = 11)
     private String  approveStatusName;
 
     /**
      * 作废状态
      */
-    @ExcelProperty(value = "作废状态", index = 11)
+    @ExcelProperty(value = "作废状态", index = 12)
     private String  invalidStatusName;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 12)
+    @ExcelProperty(value = "创建人", index = 13)
     private String  createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 13)
+    @ExcelProperty(value = "创建时间", index = 14)
     private String  createTime;
 }

@@ -41,11 +41,11 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<String> destWarehouseIdList = list.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
 
-        for (SalesDemandDetailEntity dto : list) {
-            dto.setSalesDemandId(salesDemandId);
+        for (SalesDemandDetailEntity entity : list) {
+            entity.setSalesDemandId(salesDemandId);
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(dto.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
-                dto.setDestWarehouseName(warehouseName);
+                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
+                entity.setDestWarehouseName(warehouseName);
             }
         }
         this.saveBatch(list);
@@ -62,10 +62,17 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
-        if (CollectionUtils.isEmpty(deleteIds)) {
-            return;
-        }
         List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
+        //仓库信息
+        List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+        for (SalesDemandDetailEntity entity : newList) {
+            entity.setSalesDemandId(salesDemandId);
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
+                entity.setDestWarehouseName(warehouseName);
+            }
+        }
         this.saveOrUpdateBatch(newList);
     }
 

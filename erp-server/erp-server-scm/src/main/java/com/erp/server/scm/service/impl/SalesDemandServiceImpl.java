@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -124,6 +125,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(SalesDemandDTO.UpdateDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -165,6 +167,10 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
         }
         //更新
         lambdaUpdate().in(SalesDemandEntity::getId,ids)
@@ -223,7 +229,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (ObjectUtils.isEmpty(salesDemandEntity)) {
             throw new ServiceException(ApiError.ERROR_98001);
         }
-        if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(salesDemandEntity.getApproveStatus())) {
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(salesDemandEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //撤销现有流程
@@ -292,8 +298,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public Boolean submit(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
-        //待提交允许提交
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        //待提交并且未作废允许提交
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
@@ -301,7 +307,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
         //更新审核状态
         lambdaUpdate().in(SalesDemandEntity::getId,ids)
-                .set(SalesDemandEntity::getApproveStatus,ApproveStatusEnum.APPROVE_ING)
+                .set(SalesDemandEntity::getApproveStatus,ApproveStatusEnum.APPROVE_ING.getStatus())
                 .update();
         return Boolean.TRUE;
     }
