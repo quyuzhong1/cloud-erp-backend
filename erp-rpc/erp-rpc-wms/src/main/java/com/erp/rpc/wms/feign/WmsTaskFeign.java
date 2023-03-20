@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.erp.model.wms.dto.WarehouseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
@@ -19,6 +20,6 @@ public interface WmsTaskFeign {
     /**
      * 根据userIds查询用户集合
      */
-    @GetMapping("wms/feign/listWarehouseByIds")
+    @PostMapping("wms/feign/warehouse/listWarehouseByIds")
     List<WarehouseDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);
 }

@@ -21,7 +21,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("wms_warehouse_receive")
+@TableName("warehouse_receive")
 public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
 
     /**

@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -64,7 +65,7 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
      * 计划交期
      */
     @TableField("plan_delivery_date")
-    private Date planDeliveryDate;
+    private LocalDate planDeliveryDate;
 
     /**
      * 计划备货数量

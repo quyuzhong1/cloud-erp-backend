@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("wms_warehouse")
+@TableName("warehouse")
 public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
 
     /**

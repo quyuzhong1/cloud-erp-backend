@@ -156,7 +156,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (ObjectUtils.isEmpty(entity)) {
             return dto;
         }
-        BeanMapperUtils.copy(dto,entity);
+        BeanMapperUtils.copy(entity,dto);
         return dto;
     }
 }
