@@ -90,5 +90,99 @@
         from project_task_sys tts where tts.distribution_type = 0 and string_to_array(tts.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
     </select>
 
+    <select id="templateTaskList" resultType="com.erp.model.plm.dto.TemplateTaskShowDTO">
+        select
+        tt.id,
+        tt.name,
+        tt.pid,
+        tt.type,
+        case when tt.distribution_type = 0 then tt.role_name
+        when tt.distribution_type = 1 then tt.charge_name
+        else '' end as charge_name,
+        tt.priority,
+        tt.is_fixed,
+        tt.create_user_name,
+        tt.create_user_id,
+        tt.create_time as createTime,
+        tt.work_period,
+        tp.name as phaseName,
+        tpt.id as preTaskId,
+        tpt.name as preTaskName,
+        tdd.docsNames
+        from
+        template_task tt
+        left join (
+        select a.task_id,a.template_id,string_agg(b.id, ',') as id,string_agg(b.name, ',') as name from template_pre_task a
+        inner join template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id
+        group by a.task_id,a.template_id
+        ) tpt on tt.id = tpt.task_id and tt.template_id = tpt.template_id
+        left join (
+        select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs group by template_id, task_id
+        ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
+
+        left join template_phase tp  on tp.id=tt.phase_id
+
+        <where>
+            <if test="params.phaseNameList != null and params.phaseNameList.size > 0">
+                tp.name IN
+                <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                    #{phaseName}
+                </foreach>
+            </if>
+
+            <if test="params.templateId != '' and params.templateId != null">
+                and tt.template_id like concat('%', #{params.templateId} ,'%')
+            </if>
+        </where>
+        order by tt.create_time asc
+    </select>
+
+    <select id="getByTemplateId" resultType="com.erp.model.plm.entity.TemplateTaskEntity">
+        SELECT
+            id,
+            name,
+            type,
+            charge_id,
+            charge_name,
+            pid,
+            plan_start_time,
+            plan_end_time,
+            priority,
+            phase_id,
+            is_fixed,
+            description,
+            create_time,
+            update_time,
+            source_task_id,
+            template_id,
+            property,
+            phase_name,
+            business_process_id,
+            create_user_name,
+            create_user_id,
+            update_user_name,
+            update_user_id,
+            is_milepost,
+            role_id,
+            role_name,
+            distribution_type,
+            related_sku_type,
+            work_period,
+            version,
+            is_deleted
+        FROM template_task
+        <where>
+            <if test="tastIdList != null and tastIdList.size > 0">
+                 id IN
+                <foreach collection="tastIdList" item="taskId" open="(" separator="," close=")">
+                    #{taskId}
+                </foreach>
+            </if>
+            <if test="templateId != null and templateId != ''">
+                and template_id = #{templateId}
+            </if>
+        </where>
+        ORDER BY create_time ASC
+    </select>
 
 </mapper>
