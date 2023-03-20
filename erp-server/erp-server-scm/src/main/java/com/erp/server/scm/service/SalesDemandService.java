@@ -35,7 +35,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean add(SalesDemandDTO.AddDTO dto);
+    String add(SalesDemandDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will

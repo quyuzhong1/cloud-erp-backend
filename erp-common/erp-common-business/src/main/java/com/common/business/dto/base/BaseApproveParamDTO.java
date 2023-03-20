@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -27,6 +28,7 @@ public class BaseApproveParamDTO {
      * 类型（pass、审核通过，reject、审核不通过）
      */
     @NotBlank(message = "审核类型不能为空")
+    @StateEnumValue(strValues = {"pass", "reject"}, message = "审核类型有误")
     private String type;
 
     /**

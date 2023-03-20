@@ -52,4 +52,12 @@ public interface WorkflowService {
      * @return java.lang.Boolean
      */
     Boolean withDrawProcessByBusinessTable(WithDrawProcessBusinessDTO dto);
+    /**
+     * @description: 取消流程
+     * @author Will
+     * @date: 2023/3/20 10:00
+     * @param id
+
+     */
+    void cancelProcess(String id);
 }

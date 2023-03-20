@@ -67,7 +67,9 @@ public interface WorkflowFeign {
     @PostMapping("workflow/feign/process/terminate")
     void terminate(@RequestBody ApproveProcessDTO dto);
 
-
+    //取消流程
+    @PostMapping("workflow/feign/process/terminate")
+    void cancelProcess(String id);
 
     //根据审核任务id获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDoByTaskId")

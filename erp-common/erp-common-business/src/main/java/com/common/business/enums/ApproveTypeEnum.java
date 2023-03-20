@@ -6,19 +6,17 @@ import org.apache.commons.lang3.StringUtils;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2023/3/15 17:28
+ * @date 2023/3/20 9:30
  */
-public enum ApproveStatusEnum {
+public enum ApproveTypeEnum {
 
-    WAIT_SUBMIT("waitSubmit", "待提交"),
-    APPROVE_ING("approveIng", "审核中"),
-    REJECT("reject", "审核不通过"),
-    APPROVE("approve", "已审核");
+    PASS("pass", "审核通过"),
+    REJECT("reject", "审核不通过");
 
     private String status;
     private String name;
 
-    ApproveStatusEnum(String status, String name) {
+    ApproveTypeEnum(String status, String name) {
         this.status = status;
         this.name = name;
     }
@@ -33,7 +31,7 @@ public enum ApproveStatusEnum {
 
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {
-            for (ApproveStatusEnum item : ApproveStatusEnum.values()) {
+            for (ApproveTypeEnum item : ApproveTypeEnum.values()) {
                 if (state.equals(item.getStatus())) {
                     return item.getName();
                 }

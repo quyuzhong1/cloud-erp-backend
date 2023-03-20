@@ -60,8 +60,8 @@ public class SalesDemandController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SalesDemandDTO.AddDTO dto) {
-        Boolean flag = salesDemandService.add(dto);
-        return flag == true ? success() : failure();
+        salesDemandService.add(dto);
+        return success();
     }
 
     /**

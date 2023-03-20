@@ -6,6 +6,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
 import com.erp.server.workflow.service.ActHistoryActivityService;
@@ -425,6 +426,20 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     }
 
+
+    @Override
+    public void cancelProcess(String id) {
+        WorkflowBusinessProcessEntity entity = workflowBusinessProcessService.getByBusinessTableId(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            return;
+        }
+        //中止现有流程
+        terminateProcess(entity.getProcessId());
+        //删除流程id
+        workflowBusinessProcessService.removeById(entity.getId());
+    }
+
+
     @Override
     public List<ApproveNodeRecordVO> queryApproveRecordById(String id) {
         if (StringUtils.isBlank(id)) {
@@ -487,6 +502,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
         return false;
     }
+
 
     public String matching(String activityType) {
         String value = "";

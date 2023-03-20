@@ -36,8 +36,16 @@ public interface SalesDemandDetailService extends SuperService<SalesDemandDetail
      * @description: 根据主表id查询明细数据
      * @author Will
      * @date: 2023/3/17 16:43
-     * @param id
+     * @param salesDemandId
      * @return List<SalesDemandDetailEntity>
      */
-    List<SalesDemandDetailEntity> listBySalesDemandId(String id);
+    List<SalesDemandDetailEntity> listBySalesDemandId(String salesDemandId);
+    /**
+     * @description: 根据主表ids删除明细
+     * @author Will
+     * @date: 2023/3/20 10:27
+     * @param ids
+
+     */
+    void removeBySalesDemandIds(List<String> ids);
 }

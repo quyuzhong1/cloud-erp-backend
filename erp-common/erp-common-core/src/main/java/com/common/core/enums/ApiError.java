@@ -31,6 +31,7 @@ public enum ApiError implements Serializable {
      * 通用错误
      */
     ERROR_500(500, "系统异常"),
+    ERROR_DUPLICATION_NAME(501,"名称不能重复"),
     ERROR_1000(1000, "参数不全或类型错误！"),
     ERROR_1001(1001, "两次密码不一致"),
     ERROR_1002(1002, "保存失败"),
@@ -50,7 +51,8 @@ public enum ApiError implements Serializable {
     ERROR_1016(1016, "导入文件格式错误，请使用xlsx文件"),
     ERROR_1017(1017, "参数列表不能为空"),
     ERROR_1018(1018, "导入名称不能大于200字符"),
-    ERROR_DUPLICATION_NAME(1019,"名称不能重复"),
+    ERROR_1019(1019, "数据新增失败"),
+
     /**
      * 警告信息 从800 开始
      */
@@ -326,7 +328,10 @@ public enum ApiError implements Serializable {
     ERROR_98004(98004,"选择数据不能为空"),
     ERROR_98005(98005,"只有待提交和审核不通过数据允许作废"),
     ERROR_98006(98006,"只有审核中数据允许审核"),
-
+    ERROR_98007(98007,"只有审核中数据允许取消流程"),
+    ERROR_98008(98008,"只有审核中和已审核数据允许取消流程"),
+    ERROR_98009(98009,"只有待审核数据允许删除"),
+    ERROR_98010(98010,"只有待提交数据允许提交"),
 
     ERROR_end(1000000, "系统错误");
 
