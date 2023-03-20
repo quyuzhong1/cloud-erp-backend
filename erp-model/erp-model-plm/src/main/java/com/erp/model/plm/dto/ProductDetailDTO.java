@@ -34,7 +34,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 产品sku名称
      */
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 50,message = "产品名称最大50字符")
     private String name;
 
     /**
