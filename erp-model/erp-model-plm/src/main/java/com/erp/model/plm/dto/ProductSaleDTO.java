@@ -100,11 +100,13 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 首季度目标销量
      */
+    @Digits(integer = 16,fraction = 2,message = "首季度目标销量最大16字符")
     private BigDecimal targetSalesQty;
 
     /**
      * 销售平台(SalesPlatformEnum枚举)
      */
+    @Size(max = 200,message = "销售平台最大不能超过200字符")
     private String salesPlatform;
 
     /**
