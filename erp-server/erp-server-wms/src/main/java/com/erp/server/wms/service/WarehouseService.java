@@ -24,4 +24,11 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return List<WarehouseDTO>
      */
     List<WarehouseDTO> listWarehouseByIds(List<String> ids);
+    /**
+     * @description: 查询所有审核通过并启用的仓库
+     * @author Will
+     * @date: 2023/3/21 14:27
+     * @return List<WarehouseDTO>
+     */
+    List<WarehouseDTO> listApproveWarehouse();
 }

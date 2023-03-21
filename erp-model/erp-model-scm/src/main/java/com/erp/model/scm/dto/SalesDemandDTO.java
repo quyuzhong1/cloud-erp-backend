@@ -95,7 +95,7 @@ public class SalesDemandDTO implements Serializable {
         private String stockReason;
 
         /**
-         * 审核状态
+         * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private String approveStatusName;
 
@@ -124,7 +124,7 @@ public class SalesDemandDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
         /**
-         * 审核状态
+         * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private List<String> approveStatusList;
 

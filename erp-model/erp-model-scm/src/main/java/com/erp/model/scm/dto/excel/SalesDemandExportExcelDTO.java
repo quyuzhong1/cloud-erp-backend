@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 备货申请单导出DTO
  * @date 2023/3/20 11:07
  */
 @Data

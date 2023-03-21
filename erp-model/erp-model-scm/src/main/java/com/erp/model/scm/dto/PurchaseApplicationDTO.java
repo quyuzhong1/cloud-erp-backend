@@ -38,7 +38,7 @@ public class PurchaseApplicationDTO implements Serializable {
         private String code;
 
         /**
-         * 单据状态（待提交，审核中，审核不通过，已审核）
+         * 单据状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private String approveStatusName;
 
@@ -117,7 +117,7 @@ public class PurchaseApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
         /**
-         * 审核状态
+         * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private List<String> approveStatusList;
 

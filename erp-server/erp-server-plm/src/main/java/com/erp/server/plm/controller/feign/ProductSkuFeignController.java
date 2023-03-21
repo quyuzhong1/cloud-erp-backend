@@ -122,4 +122,16 @@ public class ProductSkuFeignController {
         List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
         return skuList;
     }
+    /**
+     * @description: 获取已审核sku
+     * @author Will
+     * @date: 2023/3/21 14:13
+     * @return List<SkuVO>
+     */
+    @GetMapping("/getSkuInfoByIds")
+    public List<SkuVO> listApproveSku() {
+        List<SkuVO> skuList = productDetailService.searchSku(null);
+        return skuList;
+    }
+
 }

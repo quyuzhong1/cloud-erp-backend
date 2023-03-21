@@ -27,7 +27,7 @@ import java.util.Date;
 public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
 
     /**
-     * 审核状态 （waitSubmit待提交，auditIng审核中，auditNoPass审核不通过，finish已完成）
+     * 审核状态 （waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
      */
     @TableField("approve_status")
     private String approveStatus;

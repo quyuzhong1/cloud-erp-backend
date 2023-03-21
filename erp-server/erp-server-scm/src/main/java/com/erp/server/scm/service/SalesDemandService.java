@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.SalesDemandDTO;
+import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -115,9 +116,9 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @date: 2023/3/17 12:18
      * @param excelFile
      * @param response
-     * @return Boolean
+     * @return  List<SalesDemandDetailDTO.ExcelDTO>
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    List<SalesDemandDetailDTO.ExcelDTO> importFile(MultipartFile excelFile, HttpServletResponse response);
     /**
      * @description: 新增并提交
      * @author Will
