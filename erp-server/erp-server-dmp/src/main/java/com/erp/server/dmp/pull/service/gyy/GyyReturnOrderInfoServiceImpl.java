@@ -96,7 +96,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         List<GyyReturnOrderEntity> insertList = new ArrayList<>();
         List<GyyReturnOrderEntity> pushToMqList = new ArrayList<>();
         for (GyyReturnOrderEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getPlatformCode(), entity.getCode());
+            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getOrderCode(), entity.getCode());
             List<GyyReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
@@ -158,7 +158,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         //平台订单编号
         dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getCode());
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnOrderId(gyyReturnOrderEntity.getPlatformRefundId());
+        dmpReturnOrderInfoEntity.setReturnOrderId(gyyReturnOrderEntity.getOrderCode());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
         //店铺名称
@@ -203,9 +203,9 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         //平台名称
         dmpReturnOrderInfoEntity.setPlatformName("");
         //国家英文名称
-        dmpReturnOrderInfoEntity.setCountryNameEn(CountrySiteEnum.CHINA.getCurrencyName());
+        dmpReturnOrderInfoEntity.setCountryNameEn(CountrySiteEnum.CHINA.getCurrencyCode());
         //国家英文名称
-        dmpReturnOrderInfoEntity.setCountryNameCn(CountrySiteEnum.CHINA.getCurrencyCode());
+        dmpReturnOrderInfoEntity.setCountryNameCn(CountrySiteEnum.CHINA.getCurrencyName());
         //买家账号
         dmpReturnOrderInfoEntity.setBuyerUserId(gyyReturnOrderEntity.getVipCode());
         //买家姓名
