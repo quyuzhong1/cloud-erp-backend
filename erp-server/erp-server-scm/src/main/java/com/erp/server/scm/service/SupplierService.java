@@ -116,5 +116,5 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      *@author yl
      * @return
      */
-    List<Map<String,Object>> getSupplierList();
+    List<Map<String,Object>> listApproveSupplier();
 }

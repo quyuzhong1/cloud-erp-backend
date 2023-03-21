@@ -378,7 +378,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @author yl
      */
     @Override
-    public List<Map<String, Object>> getSupplierList() {
+    public List<Map<String, Object>> listApproveSupplier() {
         LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName);
         queryWrapper.eq(SupplierEntity::getOpenStatus, true);

@@ -61,19 +61,6 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 获取供应商
-     * 获取 审核通过且开启的供应商
-     *
-     * @return
-     */
-    @GetMapping("/list")
-    public ApiResult<List<Map<String, Object>>> list() {
-        List<Map<String, Object>> list = supplierService.getSupplierList();
-        return success(list);
-    }
-
-
-    /**
      * 提交并审核
      *
      * @param dto
