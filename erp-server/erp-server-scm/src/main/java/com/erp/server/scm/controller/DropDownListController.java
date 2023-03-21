@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  **/
 
 @RestController
-@RequestMapping("drop/down")
+@RequestMapping("/drop/down")
 public class DropDownListController extends BaseController {
 
     @Resource
