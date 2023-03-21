@@ -3,5 +3,16 @@
 <mapper namespace="com.erp.server.scm.mapper.SupplierVisitMapper">
 
 
+    <select id="paging" resultType="com.erp.model.scm.dto.SupplierVisitDTO$PagingViewDTO">
+        SELECT
+            id,
+            visit_time,
+            people,
+            content,
+            result,
+            type,
+            supplier_id
+        FROM supplier_visit  WHERE supplier_id=#{supplierId} AND is_deleted=false
 
+    </select>
 </mapper>

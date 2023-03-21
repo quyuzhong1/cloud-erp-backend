@@ -3,12 +3,14 @@ package com.erp.model.scm.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.scm.enums.SupplierVisitEnum;
+import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -34,13 +36,13 @@ public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
      * 类型
      */
     @TableField("type")
-    private String type;
+    private SupplierVisitEnum type;
 
     /**
      * 拜访时间
      */
     @TableField("visit_time")
-    private Date visitTime;
+    private LocalDate visitTime;
 
     /**
      * 拜访人
@@ -60,7 +62,7 @@ public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
      * 结果
      */
     @TableField("result")
-    private String result;
+    private SupplierVisitResultEnum result;
 
 
 

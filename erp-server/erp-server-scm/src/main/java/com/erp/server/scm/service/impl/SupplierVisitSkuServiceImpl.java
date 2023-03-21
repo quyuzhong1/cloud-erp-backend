@@ -1,10 +1,15 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.entity.SupplierVisitSkuEntity;
 import com.erp.server.scm.mapper.SupplierVisitSkuMapper;
 import com.erp.server.scm.service.SupplierVisitSkuService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +22,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class SupplierVisitSkuServiceImpl extends SuperServiceImpl<SupplierVisitSkuMapper, SupplierVisitSkuEntity> implements SupplierVisitSkuService {
 
+
+    /**
+     * 获取到skuId集合
+     *
+     * @param visitIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-21 11:51
+     */
+    @Override
+    public List<String> getByVisitIds(List<String> visitIds) {
+        if (CollectionUtils.isEmpty(visitIds)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SupplierVisitSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SupplierVisitSkuEntity::getSkuId);
+        queryWrapper.in(SupplierVisitSkuEntity::getSupplierVisitId, visitIds);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
 }

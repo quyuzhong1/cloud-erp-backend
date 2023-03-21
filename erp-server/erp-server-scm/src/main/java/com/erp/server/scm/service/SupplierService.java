@@ -2,12 +2,14 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -97,4 +99,22 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.lang.Boolean
      */
     Boolean approve(BaseApproveParamDTO dto);
+
+    
+    /**
+     * 更改供应商更改状态
+     * @author yl
+     * @date 2023-03-21 8:56
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
+
+    /**
+     * 获取供应商
+     * 获取 审核通过且开启的供应商
+     *@author yl
+     * @return
+     */
+    List<Map<String,Object>> getSupplierList();
 }

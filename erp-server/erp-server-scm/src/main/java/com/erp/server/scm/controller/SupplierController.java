@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 供应商管理
@@ -57,6 +57,19 @@ public class SupplierController extends BaseController {
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         SupplierEntity supplier = supplierService.addSupplier(dto);
         return supplier != null ? success() : failure();
+    }
+
+
+    /**
+     * 获取供应商
+     * 获取 审核通过且开启的供应商
+     *
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult<List<Map<String, Object>>> list() {
+        List<Map<String, Object>> list = supplierService.getSupplierList();
+        return success(list);
     }
 
 
@@ -131,8 +144,9 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/updateStatus")
-    public ApiResult start(@RequestBody @Validated UpdateStateDTO dto) {
-        return success();
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = supplierService.updateStatus(dto);
+        return result == true ? success() : failure();
     }
 
     /**
@@ -153,16 +167,6 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return success();
-    }
-
-    /**
-     * 供应商导出模板
-     *
-     * @return
-     */
-    @PostMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         return success();
     }
 

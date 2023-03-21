@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
@@ -336,16 +337,55 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
 
         Boolean result = true;
-        if(dto.getType().equals(ScmConstant.PASS)){
+        if (dto.getType().equals(ScmConstant.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
-        }else{
+        } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
         }
         return result;
+    }
+
+
+    /**
+     * 更改供应商更改状态
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-21 8:56
+     */
+    @Override
+    public Boolean updateStatus(UpdateStateDTO dto) {
+        String supplierId = dto.getId();
+        SupplierEntity supplier = this.getById(supplierId);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        supplier.setOpenStatus(dto.getState());
+        return this.updateById(supplier);
+    }
+
+
+    /**
+     * 获取供应商
+     * 获取 审核通过且开启的供应商
+     *
+     * @return
+     * @author yl
+     */
+    @Override
+    public List<Map<String, Object>> getSupplierList() {
+        LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName);
+        queryWrapper.eq(SupplierEntity::getOpenStatus, true);
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
+        return this.listMaps(queryWrapper);
     }
 
     /**

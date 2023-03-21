@@ -35,11 +35,7 @@ public class SupplierVisitSkuEntity extends BaseEntity<SupplierVisitSkuEntity> {
     @TableField("sku_id")
     private String skuId;
 
-    /**
-     * 产品名称
-     */
-    @TableField("product_name")
-    private String productName;
+
 
     /**
      * 供应商拜访表id
