@@ -95,9 +95,19 @@ public class SalesDemandDTO implements Serializable {
         private String stockReason;
 
         /**
+         * 审核状态编码
+         */
+        private String approveStatus;
+
+        /**
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private String approveStatusName;
+
+        /**
+         * 作废状态编码
+         */
+        private String invalidStatus;
 
         /**
          * 作废状态（0未作废，1已作废）
