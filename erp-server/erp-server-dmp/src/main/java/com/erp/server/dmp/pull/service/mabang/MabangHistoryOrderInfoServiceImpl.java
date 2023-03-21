@@ -77,6 +77,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
                 continue;
             }
             pushToMqList.add(entity);
+            entity.set_id(null);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(id);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
