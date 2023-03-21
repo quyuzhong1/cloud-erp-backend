@@ -128,7 +128,7 @@ public class ProductSkuFeignController {
      * @date: 2023/3/21 14:13
      * @return List<SkuVO>
      */
-    @GetMapping("/getSkuInfoByIds")
+    @GetMapping("/listApproveSku")
     public List<SkuVO> listApproveSku() {
         List<SkuVO> skuList = productDetailService.searchSku(null);
         return skuList;

@@ -48,6 +48,7 @@ public class SalesDemandImportExcelDTO implements Serializable {
      * 目的仓库
      */
     @ExcelProperty(value = "*目的仓库", index = 4)
+    @FieldValid(fieldName = "目的仓库", isNotBlank = true)
     private String  destWarehouseName;
 
     /**
