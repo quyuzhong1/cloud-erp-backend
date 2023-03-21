@@ -190,6 +190,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
                 }
+                item.setTaskStatusName(TaskStateEnum.getName(entity.getStatus()));
             }
         }
         return list;

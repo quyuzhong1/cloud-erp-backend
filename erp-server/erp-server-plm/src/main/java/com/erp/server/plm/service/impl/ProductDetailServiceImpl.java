@@ -1837,27 +1837,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<TaskRefSkuConfigEntity> configList = taskRefSkuConfigService.getByTaskIds(taskIdList);
             
             if (CollectionUtils.isNotEmpty(configList)) {
-                List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+                long jsonCount = configList.stream().filter(obj -> StringUtils.isNotBlank(obj.getFieldJson())).count();
+                if (jsonCount > 0) {
 
-                //验证自动关联任务是否已全部完成
-                long relatedCount = taskAllList.stream().filter(obj -> RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
-                if (relatedCount > 0) {
-                    throw new ServiceException(ApiError.ERROR_95083);
-                }
-    
-                //验证选择关联任务是否已全部完成
-                List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
-                if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-                    //sku完成任务未完成
-                    List<String> taskIds = projectTaskRefSkuList.stream().distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(taskIds)) {
-                        List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                        if (CollectionUtils.isNotEmpty(taskList)) {
-                            long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
-                            if (count > 0) {
-                                throw new ServiceException(ApiError.ERROR_95083);
-                            }
-                        }
+                    List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+
+                    //验证关联任务是否已全部完成
+                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
+                    if (relatedCount > 0) {
+                        throw new ServiceException(ApiError.ERROR_95083);
                     }
                 }
             }

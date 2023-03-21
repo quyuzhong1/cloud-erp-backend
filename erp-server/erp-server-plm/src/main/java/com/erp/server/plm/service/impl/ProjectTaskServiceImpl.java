@@ -879,7 +879,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(detailsDTO.getProductId())) {
             List<DeliveryDocsDTO> productDocsList = taskDeliveryService.listProductDocs(detailsDTO.getProductId());
             if (CollectionUtils.isNotEmpty(productDocsList)) {
-                productDocsList.forEach(obj -> obj.setTaskStatusName(TaskStateEnum.getName(detailsDTO.getTaskState())));
                 detailsDTO.setProductDocsList(productDocsList);
             }
         }

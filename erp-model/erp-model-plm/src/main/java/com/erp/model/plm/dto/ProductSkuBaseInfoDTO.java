@@ -4,6 +4,7 @@ import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -71,6 +72,7 @@ public class ProductSkuBaseInfoDTO {
     /**
      * 品名
      */
+    @Size(max = 50,message = "产品名称最大50字符")
     private String name;
 
     /**

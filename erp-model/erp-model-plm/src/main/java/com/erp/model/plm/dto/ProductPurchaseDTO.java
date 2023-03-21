@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -34,11 +36,14 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * EAN码
      */
+    @Size(max = 200,message = "EAN码不能大于200字符")
     private String ean;
 
     /**
      * 计划首批下单量
      */
+    @DecimalMax(value = "99999999",message ="计划首批下单量最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Long planOrderQty;
 
     /**
@@ -54,12 +59,14 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * MOQ(最小起订量)
      */
+    @DecimalMax(value = "99999999",message ="MOQ最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Integer moq;
 
     /**
      * 交货周期(天)
      */
-    @Digits(integer = 20,fraction = 4,message = "交货周期(天)最大20字符")
+    @Digits(integer = 16,fraction = 4,message = "报关申报价格最大16字符，小数位不能大于4位")
     private BigDecimal deliveryCycle;
 
     /**
@@ -102,16 +109,22 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 实际首批到货量
      */
+    @DecimalMax(value = "99999999",message ="实际首批到货量最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Long actualArrivalQty;
 
     /**
      * 试产数量
      */
+    @DecimalMax(value = "99999999",message ="试产数量最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Long trialProductionQty;
 
     /**
      * 首批量产数量
      */
+    @DecimalMax(value = "99999999",message ="首批量产数量最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Long firstMassQty;
 
     @TableField(exist = false)
