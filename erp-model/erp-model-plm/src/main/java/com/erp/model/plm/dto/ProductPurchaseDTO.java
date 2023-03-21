@@ -62,12 +62,14 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * MOQ(最小起订量)
      */
+    @DecimalMax(value = "99999999",message ="MOQ最大值为99999999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Integer moq;
 
     /**
      * 交货周期(天)
      */
-    @Digits(integer = 20,fraction = 4,message = "交货周期(天)最大20字符")
+    @Digits(integer = 16,fraction = 4,message = "报关申报价格最大16字符，小数位不能大于4位")
     private BigDecimal deliveryCycle;
 
     /**
