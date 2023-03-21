@@ -22,4 +22,10 @@ public interface WmsTaskFeign {
      */
     @PostMapping("wms/feign/warehouse/listWarehouseByIds")
     List<WarehouseDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);
+
+    /**
+     * 查询所有审核通过并启用的仓库
+     */
+    @GetMapping("wms/feign/warehouse/listApproveWarehouse")
+    List<WarehouseDTO> listApproveWarehouse();
 }

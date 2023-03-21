@@ -91,4 +91,14 @@ public class SalesDemandDetailDTO implements Serializable {
         private String id;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExcelDTO extends AddDTO {
+
+        /**
+         * 仓库名称
+         */
+        private String destWarehouseName;
+    }
+
 }

@@ -1,5 +1,13 @@
 package com.erp.server.scm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.scm.listener.SalesDemandExcelListener;
 import org.apache.commons.math3.util.Pair;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -81,6 +89,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
     @Override
     public PagingVO<SalesDemandDTO.ListDTO> paging(PagingDTO<SalesDemandDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -341,8 +356,45 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+    public  List<SalesDemandDetailDTO.ExcelDTO> importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //查询所有审核通过的sku
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //查询所有审核通过并启用的仓库
+        List<WarehouseDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+
+        SalesDemandExcelListener excelListenerUtil = new SalesDemandExcelListener(skuList,warehouseList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SalesDemandImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！",e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！",e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<SalesDemandImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<SalesDemandDetailDTO.ExcelDTO> dataList = excelListenerUtil.getDataList();
+        //导出错误数据
+        List<SalesDemandImportExcelDTO> list = excelListenerUtil.getErrorList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/salesDemand.xlsx";
+            String name = "salesDemand";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+        }
+        return dataList;
     }
 
     @Override

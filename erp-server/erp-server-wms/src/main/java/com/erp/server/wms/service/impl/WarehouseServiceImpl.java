@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -26,6 +27,15 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public List<WarehouseDTO> listWarehouseByIds(List<String> ids) {
         List<WarehouseEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return  new ArrayList<>();
+        }
+        return BeanMapperUtils.copyList(WarehouseDTO.class,list);
+    }
+
+    @Override
+    public List<WarehouseDTO> listApproveWarehouse() {
+        List<WarehouseEntity> list = lambdaQuery().eq(WarehouseEntity::getStatus, ApproveStatusEnum.APPROVE).list();
         if (CollectionUtils.isEmpty(list)) {
             return  new ArrayList<>();
         }

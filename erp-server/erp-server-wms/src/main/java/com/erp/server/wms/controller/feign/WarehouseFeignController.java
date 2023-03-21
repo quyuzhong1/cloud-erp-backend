@@ -3,10 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.WarehouseService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -28,4 +25,16 @@ public class WarehouseFeignController {
     public List<WarehouseDTO> listWarehouseByIds(@RequestBody List<String> ids) {
         return warehouseService.listWarehouseByIds(ids);
     }
+
+    /**
+     * 查询所有审核通过并启用的仓库
+     * @author Will
+     * @date: 2023/3/21 14:26
+     * @return List<WarehouseDTO>
+     */
+    @GetMapping("/listApproveWarehouse")
+    public List<WarehouseDTO> listApproveWarehouse() {
+        return warehouseService.listApproveWarehouse();
+    }
+
 }

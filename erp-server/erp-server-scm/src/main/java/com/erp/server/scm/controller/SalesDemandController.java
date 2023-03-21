@@ -9,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.SalesDemandDTO;
+import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.server.scm.service.SalesDemandService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -192,9 +193,9 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = salesDemandService.importFile(excelFile,response);
-        return flag == true ? success() : failure();
+    public ApiResult<List<SalesDemandDetailDTO.ExcelDTO>> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        List<SalesDemandDetailDTO.ExcelDTO> list = salesDemandService.importFile(excelFile,response);
+        return success(list);
     }
 
     /**
@@ -206,7 +207,7 @@ public class SalesDemandController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/salesDemand.xlsx";
+        String path = "classpath:excel/salesDemandTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

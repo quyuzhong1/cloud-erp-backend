@@ -476,9 +476,11 @@
         pi.name AS spuName,
         pd.sku_no,
         pd.images_url AS skuImagesUrl,
-        pd.name AS skuName
+        pd.name AS skuName,
+        pp.box_qty as unitQty
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
+        left join product_pack pp on pd.id = pp.sku_id
         WHERE pi.delete_state = 0 AND pd.status=#{state}
         <if test="searchKeyword != null and searchKeyword!=''">
             AND

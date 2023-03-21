@@ -72,5 +72,12 @@ public interface PlmTaskFeign {
     @GetMapping("plm/feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
 
-
+    /**
+     * @description: 获取已审核sku
+     * @author Will
+     * @date: 2023/3/21 14:12
+     * @return List<SkuVO>
+     */
+    @GetMapping("plm/feign/product/listApproveSku")
+    List<SkuVO> listApproveSku();
 }
