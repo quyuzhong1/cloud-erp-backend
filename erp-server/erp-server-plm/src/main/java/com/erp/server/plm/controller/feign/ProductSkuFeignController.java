@@ -117,7 +117,7 @@ public class ProductSkuFeignController {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    @GetMapping("/getSkuInfoByIds")
+    @PostMapping("/getSkuInfoByIds")
     public List<SkuVO> getSkuInfoBySkuIds(@RequestBody List<String> skuIds) {
         List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
         return skuList;

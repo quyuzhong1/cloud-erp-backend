@@ -6,8 +6,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.dto.SupplierPhasePagingViewDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.server.scm.service.SupplierVisitService;
 import org.springframework.validation.annotation.Validated;

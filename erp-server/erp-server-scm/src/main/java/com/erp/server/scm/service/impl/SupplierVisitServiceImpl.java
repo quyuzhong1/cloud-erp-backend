@@ -194,14 +194,16 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
             item.setVisitAttachmentList(attachmentUrlList);
 
-            //List<String> skuIds=
-
-
-
+            List<String> skuIdList=visitSkuList.stream().filter(s->s.getSupplierVisitId().
+                    equals(item.getId())).map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());
+            //获取到sku 信息
+            List<SkuVO>  skuInfoList= skuList.stream().filter(sku->skuIdList.contains(sku.getSkuId())).
+                    collect(Collectors.toList());
+            String skuInfo=skuInfoList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
+            item.setSkuInfo(skuInfo);
 
         }
 
-
-        return null;
+        return new PagingVO<>(pageData);
     }
 }

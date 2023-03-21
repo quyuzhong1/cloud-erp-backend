@@ -93,7 +93,7 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     /**
      * 审核状态
      */
-    @TableField("approve_status")
+    @TableField(value="approve_status")
     private ApproveStatusEnum approveStatus;
 
     /**

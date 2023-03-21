@@ -22,7 +22,7 @@ import java.util.Map;
  * @Date 2022-10-21 9:06
  * @Created by yl
  */
-@FeignClient("erp-plm")
+@FeignClient(name="erp-plm")
 public interface PlmTaskFeign {
 
     /**
@@ -69,7 +69,7 @@ public interface PlmTaskFeign {
      * @author yl
      * @date 2023-03-21 12:19
      */
-    @GetMapping("plm/feign/product/getSkuInfoByIds")
+    @PostMapping("plm/feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
 
     /**
