@@ -61,6 +61,6 @@ public class SalesDemandImportExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 5)
+    @ExcelProperty(value = "错误数据", index = 6)
     private String  errorMsg;
 }

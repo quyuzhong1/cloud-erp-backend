@@ -35,7 +35,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO> listApproveWarehouse() {
-        List<WarehouseEntity> list = lambdaQuery().eq(WarehouseEntity::getStatus, ApproveStatusEnum.APPROVE).list();
+        List<WarehouseEntity> list = lambdaQuery().eq(WarehouseEntity::getStatus, Boolean.FALSE).list();
         if (CollectionUtils.isEmpty(list)) {
             return  new ArrayList<>();
         }

@@ -383,7 +383,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         List<SalesDemandImportExcelDTO> list = excelListenerUtil.getErrorList();
         if (list.size() > 0) {
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/salesDemand.xlsx";
+            String excelPath = "excel/salesDemandError.xlsx";
             String name = "salesDemand";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);
