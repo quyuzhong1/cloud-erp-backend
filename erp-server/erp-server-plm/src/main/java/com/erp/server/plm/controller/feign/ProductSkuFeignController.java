@@ -12,10 +12,7 @@ import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProductSaleService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -120,8 +117,8 @@ public class ProductSkuFeignController {
      * @author yl
      * @date 2023-03-21 12:06
      */
-    @PostMapping("/getSkuInfoByIds")
-    public List<SkuVO> getSkuInfoBySkuIds(List<String> skuIds) {
+    @GetMapping("/getSkuInfoByIds")
+    public List<SkuVO> getSkuInfoBySkuIds(@RequestBody List<String> skuIds) {
         List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
         return skuList;
     }

@@ -32,13 +32,12 @@ public class SupplierVisitSkuServiceImpl extends SuperServiceImpl<SupplierVisitS
      * @date 2023-03-21 11:51
      */
     @Override
-    public List<String> getByVisitIds(List<String> visitIds) {
+    public List<SupplierVisitSkuEntity> getByVisitIds(List<String> visitIds) {
         if (CollectionUtils.isEmpty(visitIds)) {
             return Collections.emptyList();
         }
         LambdaQueryWrapper<SupplierVisitSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SupplierVisitSkuEntity::getSkuId);
         queryWrapper.in(SupplierVisitSkuEntity::getSupplierVisitId, visitIds);
-        return this.listObjs(queryWrapper,Object::toString);
+        return this.list(queryWrapper);
     }
 }

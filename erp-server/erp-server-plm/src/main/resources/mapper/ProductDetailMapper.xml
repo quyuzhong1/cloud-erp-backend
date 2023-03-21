@@ -568,11 +568,10 @@
         LEFT JOIN product_info pi ON pi.id = pd.product_id
         WHERE pi.delete_state = 0
         <if test="skuIds!=null and skuIds.size>0">
-          <foreach collection="">
-              
+           AND pd.id IN
+          <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+               #{skuId}
           </foreach>
-
-
         </if>
 
 

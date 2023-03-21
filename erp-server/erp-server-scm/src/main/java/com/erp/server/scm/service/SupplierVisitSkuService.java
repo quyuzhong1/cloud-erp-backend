@@ -23,5 +23,5 @@ public interface SupplierVisitSkuService extends SuperService<SupplierVisitSkuEn
      * @param ids
      * @return java.util.List<java.lang.String>
      */
-    List<String> getByVisitIds(List<String> ids);
+    List<SupplierVisitSkuEntity> getByVisitIds(List<String> ids);
 }

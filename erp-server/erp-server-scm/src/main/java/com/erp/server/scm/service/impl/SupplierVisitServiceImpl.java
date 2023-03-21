@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
@@ -18,6 +20,8 @@ import com.erp.model.scm.entity.SupplierVisitEntity;
 import com.erp.model.scm.entity.SupplierVisitSkuEntity;
 import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierVisitMapper;
 import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.SupplierService;
@@ -28,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -53,6 +58,13 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Resource
     private SupplierVisitSkuService supplierVisitSkuService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 添加供应商拜访记录
@@ -143,18 +155,48 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             return new PagingVO(pageData);
         }
         List<String> ids = list.stream().map(SupplierVisitDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<String> peopleIdList = new ArrayList<>(5);
+
+        List<String> peopleList = list.stream().map(SupplierVisitDTO.PagingViewDTO::getPeople).collect(Collectors.toList());
+        for (String people : peopleList) {
+            String peopleStr[] = people.split(",");
+            for (String str : peopleStr) {
+                peopleIdList.add(str);
+            }
+        }
+        //获取用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(peopleIdList);
 
         //获取到附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
         //sku id
-        List<String> skuIds=supplierVisitSkuService.getByVisitIds(ids);
-
+        List<SupplierVisitSkuEntity> visitSkuList = supplierVisitSkuService.getByVisitIds(ids);
+        List<String> skuIds = visitSkuList.stream().map(SupplierVisitSkuEntity::getSkuId).distinct().collect(Collectors.toList());
+        //sku信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         for (SupplierVisitDTO.PagingViewDTO item : list) {
             //拜访类型
             SupplierVisitEnum visitEnum = item.getType();
             item.setTypeName(visitEnum.getName());
             SupplierVisitResultEnum visitResultEnum = item.getResult();
             item.setResultName(visitResultEnum.getName());
+            String people = item.getPeople();
+            List<String> userIdList = Arrays.asList(people.split(","));
+            String userName = userList.stream().filter(u -> userIdList.contains(u.getUserId())).
+                    map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+
+            item.setPeopleName(userName);
+
+
+            //附件地址
+            List<String> attachmentUrlList= attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                    collect(Collectors.toList());
+
+            item.setVisitAttachmentList(attachmentUrlList);
+
+            //List<String> skuIds=
+
+
 
 
         }
