@@ -47,7 +47,7 @@ public class ModuleOperateLogDTO implements Serializable {
     @NoArgsConstructor
     public static class addDTO {
         /**
-         * 模块类型
+         * 模块类型(0备货申请单,1采购申请单,2采购订单)
          */
         private String moduleType;
 

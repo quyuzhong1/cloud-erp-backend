@@ -50,6 +50,11 @@ public class SalesDemandDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 流程id
+         */
+        private String processId;
+
+        /**
          * 产品名称
          */
         private String productName;

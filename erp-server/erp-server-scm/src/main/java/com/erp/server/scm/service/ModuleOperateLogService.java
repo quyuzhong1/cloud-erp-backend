@@ -1,10 +1,13 @@
 package com.erp.server.scm.service;
 
+import org.apache.commons.math3.util.Pair;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
 import com.common.core.serveice.SuperService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -36,4 +39,27 @@ public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEn
      * @return Boolean
      */
     Boolean addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String businessId, String pid, String msg);
+
+    /**
+     * @description: 新增日志
+     * @author Will
+     * @date: 2023/3/21 10:14
+     * @param content
+     * @param moduleType
+     * @param businessId
+     * @param operation
+     * @return Boolean
+     */
+     Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation);
+     /**
+      * @description: 批量新增日志
+      * @author Will
+      * @date: 2023/3/21 10:32
+      * @param content
+      * @param moduleType
+      * @param pairList
+      * @param operation
+      * @return Boolean
+      */
+     Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation);
 }

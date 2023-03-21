@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import org.apache.commons.math3.util.Pair;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -26,14 +27,10 @@ import com.erp.server.scm.service.DictBasicService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.common.core.serveice.SuperServiceImpl;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -181,6 +178,34 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                     .setOperation("编辑信息")
                     .setCreateUserId(userId)
                     .setCreateUserName(userName);
+            list.add(entity);
+        }
+        return this.saveBatch(list);
+    }
+
+    @Override
+    public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation) {
+        ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+        entity.setModuleType(moduleType)
+                .setBusinessId(businessId)
+                .setContent(content)
+                .setOperation(operation);
+        return this.save(entity);
+    }
+
+
+    @Override
+    public Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation) {
+        if (CollectionUtils.isEmpty(pairList)) {
+            return Boolean.TRUE;
+        }
+        List<ModuleOperateLogEntity> list = new ArrayList<>();
+        for (Pair<String, String> pair : pairList) {
+            ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+            entity.setModuleType(moduleType)
+                    .setBusinessId(pair.getKey())
+                    .setContent(content.concat("【").concat(pair.getValue()).concat("】"))
+                    .setOperation(operation);
             list.add(entity);
         }
         return this.saveBatch(list);

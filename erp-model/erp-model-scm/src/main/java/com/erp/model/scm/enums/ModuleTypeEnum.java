@@ -6,7 +6,7 @@ package com.erp.model.scm.enums;
  * @description: TODO
  * @date 2023/3/17 11:07
  */
-public enum ModuleOperateLogTypeEnum {
+public enum ModuleTypeEnum {
 
     SALES_DEMAND("0", "备货申请单"),
     PURCHASE_APPLICATION("1", "采购申请单"),
@@ -16,7 +16,7 @@ public enum ModuleOperateLogTypeEnum {
     private String code;
     private String name;
 
-    ModuleOperateLogTypeEnum(String code, String name) {
+    ModuleTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
