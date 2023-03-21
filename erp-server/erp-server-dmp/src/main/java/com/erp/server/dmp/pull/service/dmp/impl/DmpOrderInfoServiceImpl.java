@@ -103,12 +103,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         String orderInfoId = "";
         DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber(), orderInfoEntity.getPlatformOrderId());
         // 是否为销售订单 避免订单类型修改
-        Boolean skipOrderType =  StringUtils.isEmpty(orderInfoEntity.getOrderTypeName()) || !"销售订单".equals(orderInfoEntity.getOrderTypeName());
+        Boolean skipOrderType = StringUtils.isEmpty(orderInfoEntity.getOrderTypeName()) || !"销售订单".equals(orderInfoEntity.getOrderTypeName());
         // 跳过取消订单 避免状态变更为取消
         Boolean skipCancel =  StrUtil.isNotBlank(orderInfoEntity.getPlatformOrderStatus()) && orderInfoEntity.getPlatformOrderStatus().contains("取消");
+        boolean isGyyPlatform = PlatformEnum.GYY.getDesc().equals(orderInfoEntity.getPlatformSign());
         if (null != dmpOrderInfoEntity) {
             // 删除已存在取消订单  和非销售订单
-            if(skipOrderType || skipCancel){
+            if(isGyyPlatform && (skipOrderType || skipCancel)){
                 removeById(dmpOrderInfoEntity.getId());
                 List<DmpOrderItemEntity> list = dmpOrderItemService.lambdaQuery()
                         .eq(DmpOrderItemEntity::getOrderId, dmpOrderInfoEntity.getId())
@@ -126,7 +127,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             orderInfoId = dmpOrderInfoEntity.getId();
         } else {
             // 跳过不存在取消订单 和非销售订单
-            if(skipOrderType || skipCancel){
+            if(isGyyPlatform && (skipOrderType || skipCancel)){
                 return orderInfoId;
             }
             // 修正状态同步

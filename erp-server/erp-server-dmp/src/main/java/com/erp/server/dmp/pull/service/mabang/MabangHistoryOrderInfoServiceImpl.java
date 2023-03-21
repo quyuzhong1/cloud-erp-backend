@@ -67,20 +67,20 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
-                continue;
+//                continue;
             }
-            OrderEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
-            // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
-                continue;
-            }
-            pushToMqList.add(entity);
-            entity.set_id(null);
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(id);
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+//            OrderEntity mongoDatum = mongoData.get(0);
+//            String id = mongoDatum.get_id();
+//            mongoDatum.set_id(null);
+//            // 比较数据是否相同
+//            if (mongoDatum.toString().equals(entity.toString())) {
+//                continue;
+//            }
+//            pushToMqList.add(entity);
+//            entity.set_id(null);
+//            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+//            OrderMongoDTO updateDto = new OrderMongoDTO(id);
+//            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
