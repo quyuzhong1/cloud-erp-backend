@@ -112,6 +112,10 @@ public class DmpDeliveryDetailItemEntity implements Serializable {
     @TableField(value = "amount")
     private BigDecimal amount;
 
+
+    @TableField(value = "sale_order_no")
+    private String saleOrderNo;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -133,6 +137,7 @@ public class DmpDeliveryDetailItemEntity implements Serializable {
                 ", stockName='" + stockName + '\'' +
                 ", warehouseLocation='" + warehouseLocation + '\'' +
                 ", amount=" + amount +
+                ", saleOrderNo=" + saleOrderNo +
                 '}';
     }
 }
