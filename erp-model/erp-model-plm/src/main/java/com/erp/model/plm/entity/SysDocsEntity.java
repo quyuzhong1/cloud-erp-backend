@@ -41,12 +41,6 @@ public class SysDocsEntity extends BaseEntity implements Serializable {
     private Integer startState;
 
     /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
      * 创建人
      */
     @TableField("create_user")
@@ -58,12 +52,6 @@ public class SysDocsEntity extends BaseEntity implements Serializable {
      */
     @TableField("update_user")
     private String updateUser;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
 
 
 }

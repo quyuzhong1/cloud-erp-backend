@@ -21,13 +21,6 @@ public class ProjectPlanEntity extends BaseEntity {
     private static final long serialVersionUID = 240838215899434939L;
 
     /**
-     * 逻辑删除字段
-     */
-    @TableField(value = "is_deleted")
-    @TableLogic
-    private Boolean isDeleted;
-
-    /**
      * 产品id
      */
     private String productId;

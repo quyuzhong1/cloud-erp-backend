@@ -31,8 +31,6 @@ import java.util.Map;
 public class ProjectPlanTaskEntity extends BaseEntity {
     private static final long serialVersionUID = 184565397899617521L;
 
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
     /**
      * 产品id
      */
@@ -83,7 +81,7 @@ public class ProjectPlanTaskEntity extends BaseEntity {
     private Integer workPeriod;
 
     public ProjectPlanTaskEntity(PlanTaskNameDTO planTaskNameDTO, LocalDate startDate, List<LocalDate> dateList) {
-        this.id = planTaskNameDTO.getPlanId();
+        super(planTaskNameDTO.getPlanId());
         Integer planWorkPeriod = planTaskNameDTO.getWorkPeriod();
         LocalDate endDate = startDate;
         while (planWorkPeriod > 1){
@@ -97,7 +95,7 @@ public class ProjectPlanTaskEntity extends BaseEntity {
     }
 
     public ProjectPlanTaskEntity(String taskId, LocalDate startDate, Integer workPeriod, List<LocalDate> dateList, Integer type) {
-        this.id = taskId;
+        super(taskId);
         LocalDate endDate = startDate;
         while (workPeriod > 0){
             if(!dateList.contains(startDate.plusDays(1))){
@@ -116,7 +114,7 @@ public class ProjectPlanTaskEntity extends BaseEntity {
     }
 
     public ProjectPlanTaskEntity(PlanTaskNameDTO task, LocalDate startDate, LocalDate endDate, ProjectChildTaskDTO projectChildTaskDTO, List<LocalDate> dateList) {
-        this.id = task.getPlanId();
+        super(task.getPlanId());
         TaskRelationshipEnum relationship = projectChildTaskDTO.getRelationship();
         Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
         Integer planWorkPeriod = task.getWorkPeriod();

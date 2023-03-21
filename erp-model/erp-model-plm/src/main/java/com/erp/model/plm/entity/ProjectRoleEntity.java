@@ -21,12 +21,6 @@ import java.util.Date;
 public class ProjectRoleEntity extends BaseEntity implements Serializable {
 
     /**
-     *角色id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
-    /**
      * 角色名
      */
     private String name;
