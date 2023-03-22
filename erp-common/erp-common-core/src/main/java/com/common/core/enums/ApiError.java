@@ -335,6 +335,7 @@ public enum ApiError implements Serializable {
     ERROR_98012(98012,"已作废数据不不支持作废"),
     ERROR_WAIT_SUBMIT_TO_APPROVE_ING(98013,"只有待提交才能提交审核"),
     ERROR_APPROVE_ING_TO_APPROVE(98014,"只有审核中支持审核"),
+    ERROR_98015(98015,"只有审核中和已审核数据支持反审核"),
 
 
 

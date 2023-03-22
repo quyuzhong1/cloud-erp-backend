@@ -2,6 +2,8 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -109,12 +111,12 @@ public class PurchaseApplicationController extends BaseController {
      * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseApplicationService.submit(ids);
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseApplicationService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -135,12 +137,12 @@ public class PurchaseApplicationController extends BaseController {
      * 批量反审核
      * @author Will
      * @date: 2023/3/15 17:50
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseApplicationService.disApprove(ids);
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseApplicationService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -149,12 +151,12 @@ public class PurchaseApplicationController extends BaseController {
      * 批量删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("id") List<String> ids) {
-        Boolean flag = purchaseApplicationService.delete(ids);
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseApplicationService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -175,12 +177,12 @@ public class PurchaseApplicationController extends BaseController {
      * 取消流程
      * @author Will
      * @date: 2023/3/15 17:59
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
-    public ApiResult cancelProcess(@RequestParam("id") String id) {
-        Boolean result = purchaseApplicationService.cancelProcess(id);
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = purchaseApplicationService.cancelProcess(dto.getId());
         return result == true ? success() : failure();
     }
 
@@ -194,8 +196,8 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = purchaseApplicationService.importFile(excelFile,response);
+    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
+        Boolean flag = purchaseApplicationService.importFile(excelFile,skuIds,response);
         return flag == true ? success() : failure();
     }
 

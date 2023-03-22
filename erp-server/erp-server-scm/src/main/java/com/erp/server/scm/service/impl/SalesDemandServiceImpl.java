@@ -305,7 +305,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //审核中和已审核允许反审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
+            throw new ServiceException(ApiError.ERROR_98015);
         }
         log.info("备货申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -359,13 +359,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public  List<SalesDemandDetailDTO.ExcelDTO> importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public  List<SalesDemandDetailDTO.ExcelDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         //查询所有审核通过并启用的仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
 
-        SalesDemandExcelListener excelListenerUtil = new SalesDemandExcelListener(skuList,warehouseList);
+        SalesDemandExcelListener excelListenerUtil = new SalesDemandExcelListener(skuList,warehouseList,skuIds);
         try {
             EasyExcel.read(excelFile.getInputStream(), SalesDemandImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
