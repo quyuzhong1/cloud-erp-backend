@@ -40,4 +40,9 @@ public class TemplateTaskSearchDTO {
      * 是否是固定任务 1 是  0 不是
      */
     private Integer isFixed;
+
+    /**
+     * 是否是固定任务 1 是  0 不是
+     */
+    private String taskName;
 }

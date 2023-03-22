@@ -147,6 +147,10 @@
                 AND tt.is_fixed = #{params.isFixed}
             </if>
 
+            <if test="params.taskName != '' and params.taskName != null">
+                and tt.name like concat('%', #{params.taskName} ,'%')
+            </if>
+
             <if test="params.templateId != '' and params.templateId != null">
                 and tt.template_id like concat('%', #{params.templateId} ,'%')
             </if>

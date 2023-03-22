@@ -78,7 +78,7 @@
         LEFT join product_sale ps on pd.id = ps.sku_id
         WHERE pi.delete_state = 0
         <if test="params.no != null  and params.no != ''">
-            AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
+            AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%') OR pd.name LIKE concat('%', #{params.no},'%'))
         </if>
         <if test="params.productId != null and params.productId != ''  ">
             AND pd.product_id = #{params.productId}

@@ -104,7 +104,7 @@ public class ProductSaleEntity extends BaseEntity implements Serializable {
     /**
      * 是否可销售(0否，1是)
      */
-    @TableField(value = "is_marketable",update = "0")
+    @TableField(value = "is_marketable")
     private Integer isMarketable;
 
     /**
