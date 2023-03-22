@@ -12,6 +12,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @Description 产品采购信息表请求参数
@@ -49,11 +50,12 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 首批下单时间
      */
-    private LocalDate placeOrderTime;
+    private LocalDateTime placeOrderTime;
 
     /**
      * 预计首批到货时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate planArrivalTime;
 
     /**

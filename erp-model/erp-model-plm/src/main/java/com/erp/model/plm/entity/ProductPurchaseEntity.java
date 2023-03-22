@@ -40,7 +40,7 @@ public class ProductPurchaseEntity extends BaseEntity implements Serializable {
      * 首批下单时间
      */
     @TableField(value = "place_order_time")
-    private LocalDate placeOrderTime;
+    private LocalDateTime placeOrderTime;
 
     /**
      * 预计首批到货时间
