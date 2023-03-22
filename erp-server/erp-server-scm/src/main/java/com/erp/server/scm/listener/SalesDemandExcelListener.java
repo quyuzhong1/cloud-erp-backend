@@ -70,7 +70,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
     @Override
     public void invoke(SalesDemandImportExcelDTO salesDemandImportExcelDTO, AnalysisContext analysisContext) {
 
-        SalesDemandDetailDTO.ExcelDTO excelDTO = new SalesDemandDetailDTO.ExcelDTO();
+        SalesDemandDetailDTO.AddDTO excelDTO = new SalesDemandDetailDTO.AddDTO();
         //添加数据用于判断是否为空
         allList.add(salesDemandImportExcelDTO);
 
