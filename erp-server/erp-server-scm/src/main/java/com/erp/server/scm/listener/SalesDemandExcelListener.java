@@ -39,6 +39,16 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
     private List<SalesDemandDetailDTO.ExcelDTO> dataList = new ArrayList<>();
 
     /**
+     * 明细中已存在的skuId集合
+     */
+    private List<String> skuIds;
+
+    /**
+     * 导入成功的skuId集合
+     */
+    private List<String> importSkuIds;
+
+    /**
      * sku数据
      */
     private List<SkuVO> skuList;
@@ -51,9 +61,10 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList) {
+    public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds) {
         this.skuList = skuList;
         this.warehouseList = warehouseList;
+        this.skuIds = skuIds;
     }
 
     @Override
@@ -75,10 +86,18 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
             if (ObjectUtils.isEmpty(skuEntity)) {
                 errorMsgList.add("请录入已审核SKU");
             } else {
-                excelDTO.setSkuId(skuEntity.getSkuId());
-                excelDTO.setSkuNo(skuEntity.getSkuNo());
-                excelDTO.setProductName(skuEntity.getSkuName());
-                excelDTO.setUnitQty(skuEntity.getUnitQty());
+                if (CollectionUtils.isNotEmpty(skuIds)) {
+                    if (skuIds.contains(skuEntity.getSkuId())) {
+                        errorMsgList.add("明细列表已存在该SKU");
+                    } else if (importSkuIds.contains(skuEntity.getSkuId())) {
+                        errorMsgList.add("导入数据中已存在该SKU");
+                    } else {
+                        excelDTO.setSkuId(skuEntity.getSkuId());
+                        excelDTO.setSkuNo(skuEntity.getSkuNo());
+                        excelDTO.setProductName(skuEntity.getSkuName());
+                        excelDTO.setUnitQty(skuEntity.getUnitQty());
+                    }
+                }
             }
         }
         //仓库验证
@@ -101,6 +120,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
         excelDTO.setPlanStockQty(Integer.valueOf(salesDemandImportExcelDTO.getPlanStockQtyStr()));
         excelDTO.setPlanDeliveryDate(LocalDate.parse(salesDemandImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
         excelDTO.setRemark(salesDemandImportExcelDTO.getRemark());
+        importSkuIds.add(excelDTO.getSkuId());
         dataList.add(excelDTO);
     }
 

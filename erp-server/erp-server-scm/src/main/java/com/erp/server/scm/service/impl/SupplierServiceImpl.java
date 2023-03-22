@@ -333,7 +333,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_APPROVE_ING_TO_APPROVE);
+            throw new ServiceException(ApiError.ERROR_98006);
         }
 
 

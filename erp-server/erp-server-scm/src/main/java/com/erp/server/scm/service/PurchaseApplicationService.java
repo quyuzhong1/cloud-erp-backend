@@ -77,7 +77,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param response
      * @return Boolean
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will

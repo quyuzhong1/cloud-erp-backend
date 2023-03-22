@@ -224,7 +224,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         return null;
     }
 

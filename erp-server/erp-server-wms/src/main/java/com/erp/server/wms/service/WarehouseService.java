@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -43,4 +45,63 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return com.erp.model.wms.entity.WarehouseEntity
      */
     WarehouseEntity add(WarehouseDTO.AddDTO dto);
+
+    
+    /**
+     * 修改仓库
+     * @author yl
+     * @date 2023-03-22 11:08
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateWarehouse(WarehouseDTO.UpdateDTO dto);
+
+    
+    /**
+     * 提交并审核
+     * @author yl
+     * @date 2023-03-22 11:16
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean addAndSubmit(WarehouseDTO.AddDTO dto);
+
+    
+    /**
+     * 仓库提交审核
+     * @author yl
+     * @date 2023-03-22 11:31
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean submit(List<String> ids);
+
+    
+    /**
+     * 更改仓库状态
+     * @author yl
+     * @date 2023-03-22 11:43
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
+
+    /**
+     * 审核仓库
+     * @author yl
+     * @date 2023-03-22 11:45
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
+
+    
+    /**
+     * 反审核
+     * @author yl
+     * @date 2023-03-22 11:59
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean disApprove(List<String> ids);
 }
