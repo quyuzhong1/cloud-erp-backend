@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -226,7 +227,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
                 if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
-                    DmpSkuInfoEntity skuBySkuNo = dmpSkuInfoService.getSkuBySkuNo(dmpOrderItemEntity.getSkuNo());
+                    DmpSkuInfoEntity skuBySkuNo = dmpSkuInfoService.getSkuBySkuNo(dmpOrderItemEntity.getSkuNo(), ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
                     boolean updateStatus = false;
                     if (skuBySkuNo != null) {
                         if(!Objects.equals(skuBySkuNo.getParentCategoryName(),dmpOrderItemEntity.getCategoryName())){
