@@ -2,6 +2,8 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -108,12 +110,12 @@ public class SalesDemandController extends BaseController {
      * 批量删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("ids") List<String> ids) {
-        Boolean flag = salesDemandService.delete(ids);
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = salesDemandService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -122,12 +124,12 @@ public class SalesDemandController extends BaseController {
      * 批量作废
      * @author Will
      * @date: 2023/3/15 17:50
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/invalid")
-    public ApiResult invalid(@RequestParam("ids") List<String> ids,@RequestParam("reason") String reason) {
-        Boolean flag = salesDemandService.invalid(ids,reason);
+    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = salesDemandService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -135,12 +137,12 @@ public class SalesDemandController extends BaseController {
      * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = salesDemandService.submit(ids);
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = salesDemandService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -161,12 +163,12 @@ public class SalesDemandController extends BaseController {
      * 批量反审核
      * @author Will
      * @date: 2023/3/15 17:50
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/disApprove")
-    public ApiResult unAudit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = salesDemandService.disApprove(ids);
+    public ApiResult unAudit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = salesDemandService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -175,12 +177,12 @@ public class SalesDemandController extends BaseController {
      * 取消流程
      * @author Will
      * @date: 2023/3/15 17:59
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
-    public ApiResult cancelProcess(@RequestParam("id") String id) {
-        Boolean result = salesDemandService.cancelProcess(id);
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = salesDemandService.cancelProcess(dto.getId());
         return result == true ? success() : failure();
     }
 
