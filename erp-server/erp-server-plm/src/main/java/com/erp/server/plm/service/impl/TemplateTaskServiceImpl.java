@@ -718,7 +718,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public PagingVO<TemplateTaskShowDTO> templateTaskList(PagingDTO<TemplateTaskSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         TemplateTaskSearchDTO params = dto.getParams();
-        IPage<TemplateTaskShowDTO> paging = baseMapper.templateTaskList(query, params);
+        String chargeNameStr = StringUtils.strip(dto.getParams().getChargeNames().toString(), "[]");
+        String docsNameStr = StringUtils.strip(dto.getParams().getDocsNames().toString(), "[]");
+        IPage<TemplateTaskShowDTO> paging = baseMapper.templateTaskList(query, params, chargeNameStr, docsNameStr);
         return new PagingVO(paging);
     }
 

@@ -117,30 +117,36 @@
         group by a.task_id,a.template_id
         ) tpt on tt.id = tpt.task_id and tt.template_id = tpt.template_id
         left join (
-        select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs group by template_id, task_id
+        select task_id,template_id,string_agg(docs_name, ',') as docsNames,string_agg(id, ',') as docsIds from template_delivery_docs group by id,template_id, task_id
         ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
-
         left join template_phase tp  on tp.id=tt.phase_id
-
-        <where>
+        WHERE 1=1
             <if test="params.phaseNames != null and params.phaseNames.size > 0">
-                tp.name IN
+                AND tp.id IN
                 <foreach collection="params.phaseNames" item="phaseName" open="(" separator="," close=")">
                     #{phaseName}
                 </foreach>
             </if>
-            <if test="params.chargeName != null and params.chargeName != ''">
-                AND case when tt.distribution_type = 0 then tt.role_name
-                when tt.distribution_type = 1 then tt.charge_name
-                else '' end like concat('%', #{params.chargeName}, '%')
+            <if test="params.chargeNames != null and params.chargeNames.size() > 0">
+                <![CDATA[
+                    AND string_to_array(case when tt.distribution_type = 0 then tt.role_id
+                    when tt.distribution_type = 1 then tt.charge_id
+                    else '' end,',') && string_to_array(
+                ]]>
+                replace(#{chargeNameStr},' ','')
+                ,',')
             </if>
 
             <if test="params.TaskType != null and params.TaskType != ''">
                 AND tt.type = #{params.taskType}
             </if>
 
-            <if test="params.docsName != null and params.docsName != ''">
-                AND tdd.docsNames like concat('%', #{params.docsName}, '%')
+            <if test="params.docsNames != null and params.docsNames.size() > 0">
+                <![CDATA[
+                    AND  string_to_array(tdd.docsIds,',') && string_to_array(
+                ]]>
+                replace(#{docsNameStr},' ','')
+                ,',')
             </if>
 
             <if test="params.isFixed != null and params.isFixed != ''">
@@ -154,7 +160,6 @@
             <if test="params.templateId != '' and params.templateId != null">
                 and tt.template_id like concat('%', #{params.templateId} ,'%')
             </if>
-        </where>
         order by tt.create_time asc
     </select>
 

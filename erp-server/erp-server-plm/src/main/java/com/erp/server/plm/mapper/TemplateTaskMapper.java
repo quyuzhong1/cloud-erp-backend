@@ -32,7 +32,7 @@ public interface TemplateTaskMapper  extends BaseMapper<TemplateTaskEntity> {
 
     List<TemplateTaskEntity> listByRoleId( @Param("roleId")String roleId);
 
-    IPage<TemplateTaskShowDTO> templateTaskList(Page query, @Param("params") TemplateTaskSearchDTO params);
+    IPage<TemplateTaskShowDTO> templateTaskList(Page query, @Param("params") TemplateTaskSearchDTO params, @Param("chargeNameStr")String chargeNameStr, @Param("docsNameStr")String docsNameStr);
 
     List<TemplateTaskEntity> getByTemplateId(@Param("templateId") String templateId, @Param("tastIdList") List<String> tastIdList);
 }

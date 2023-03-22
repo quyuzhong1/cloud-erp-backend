@@ -24,7 +24,7 @@ public class TemplateTaskSearchDTO {
     /**
      * 任务负责人
      */
-    private String chargeName;
+    private List<String> chargeNames;
 
     /**
      * 任务类型 0 一般任务 1：审核任务
@@ -34,7 +34,7 @@ public class TemplateTaskSearchDTO {
     /**
      * 目标交付文档
      */
-    private String docsName;
+    private  List<String> docsNames;
 
     /**
      * 是否是固定任务 1 是  0 不是
