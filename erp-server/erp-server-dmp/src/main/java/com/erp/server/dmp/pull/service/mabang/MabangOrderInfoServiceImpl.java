@@ -198,7 +198,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         //企业名称
 //        dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         //发货时间
-        dmpOrderInfoEntity.setDeliveryTime(orderEntity.getTransportTime());
+        dmpOrderInfoEntity.setDeliveryTime(orderEntity.getExpressTime());
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
         dmpOrderInfoEntity.setItemList(initOrderItem(orderEntity));
         return dmpOrderInfoEntity;

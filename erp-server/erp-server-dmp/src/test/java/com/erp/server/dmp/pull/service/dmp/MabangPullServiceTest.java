@@ -4,11 +4,13 @@ import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
+import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangOrderInfoServiceImpl;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,7 +37,7 @@ public class MabangPullServiceTest {
 
 
     @Test
-    public void pullDeliveryTest(){
+    public void pullHistoryOrderTest(){
         MabangOrderInfoServiceImpl orderService = new MabangOrderInfoServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode("get-history-order-list");
@@ -55,6 +57,11 @@ public class MabangPullServiceTest {
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void pullDeliveryTest(){
+        List<OrderEntity> entityList = MabangApiUtils.querySalesList("order-get-order-list-new", null, null);
     }
 
 
