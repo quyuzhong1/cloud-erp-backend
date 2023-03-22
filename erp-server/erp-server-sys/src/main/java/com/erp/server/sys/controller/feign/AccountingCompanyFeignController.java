@@ -2,7 +2,7 @@ package com.erp.server.sys.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
-import com.erp.server.sys.service.DictBankService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,22 +13,21 @@ import java.util.List;
 
 /**
  * @author Lambda
- * @Classname BankFeignController
+ * @Classname AccountingCompanyFeignController
  * @Description TODO
- * @Date 2023-03-21 18:18
+ * @Date 2023-03-22 15:28
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/feign/bank")
-public class BankFeignController extends BaseController {
-
+@RequestMapping("sys/feign/accountingCompany")
+public class AccountingCompanyFeignController extends BaseController {
 
     @Resource
-    private DictBankService bankService;
+    private SysAccountingCompanyService sysAccountingCompanyService;
 
     @PostMapping("/getByIds")
     public List<BaseIdDTO> getByIds(@RequestBody List<String> ids) {
-        List<BaseIdDTO> list = bankService.getByIds(ids);
+        List<BaseIdDTO> list = sysAccountingCompanyService.getByIds(ids);
         return list;
     }
 }

@@ -2,11 +2,14 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -104,4 +107,42 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return java.lang.Boolean
      */
     Boolean disApprove(List<String> ids);
+
+    /**
+     * 批量删除
+     * @author yl
+     * @date 2023-03-22 12:12
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 获取仓库详情
+     * @author yl
+     * @date 2023-03-22 14:30
+     * @param id
+     * @return com.erp.model.wms.dto.WarehouseDTO.UpdateDTO
+     */
+    WarehouseDTO.UpdateDTO view(String id);
+
+    
+    /**
+     * 分页获取仓库数据
+     * @author yl
+     * @date 2023-03-22 14:51
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseDTO.PagingViewDTO>
+     */
+    PagingVO<WarehouseDTO.PagingViewDTO> paging(PagingDTO<WarehouseDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出仓库数据
+     * @author yl
+     * @date 2023-03-22 16:08
+     * @param dto
+     * @param response
+     * @return void
+     */
+    void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response);
 }

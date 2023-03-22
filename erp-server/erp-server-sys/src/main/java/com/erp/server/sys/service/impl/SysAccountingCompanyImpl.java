@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchStateDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -20,9 +21,7 @@ import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Administrator
@@ -81,7 +80,6 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
-        entity.setDisabled(!dto.getState());
         return this.updateById(entity);
     }
 
@@ -143,7 +141,32 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> getList() {
         List<SysAccountingCompanyEntity> list = this.list();
-        return BeanMapper.copyList(list,SysAccountingCompanyDTO.ListDTO.class);
+        return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
+    }
+
+
+    /**
+     * 根据ids 获取组织列表
+     *
+     * @param ids
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-03-22 15:29
+     */
+    @Override
+    public List<BaseIdDTO> getByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<SysAccountingCompanyEntity> list = this.listByIds(ids);
+        List<BaseIdDTO> resultList = new ArrayList<>(list.size());
+        for (SysAccountingCompanyEntity item : list) {
+            BaseIdDTO dto = new BaseIdDTO();
+            dto.setId(item.getId());
+            dto.setName(item.getCompanyName());
+            resultList.add(dto);
+        }
+        return resultList;
     }
 
 

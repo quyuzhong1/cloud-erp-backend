@@ -177,12 +177,23 @@ public interface SysUserFeign {
 
 
     /**
-     * 查询日历列表
+     * 查询银行卡列表
      * @param ids
      * @return
      */
     @PostMapping("sys/feign/bank/getByIds")
     List<BaseIdDTO> getBankList(@RequestBody List<String> ids);
+
+
+     /**
+      * 查询组织列表
+      * @author yl
+      * @date 2023-03-22 15:34
+      * @param ids
+      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+      */
+    @PostMapping("sys/feign/accountingCompany/getByIds")
+    List<BaseIdDTO> getAccountingCompanyList(@RequestBody List<String> ids);
 
 
 

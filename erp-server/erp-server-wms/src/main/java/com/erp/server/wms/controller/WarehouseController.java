@@ -1,16 +1,11 @@
 package com.erp.server.wms.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehousePagingParamDTO;
-import com.erp.model.wms.dto.WarehousePagingViewDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.WarehouseService;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +16,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.List;
 
 /**
  * 仓库管理
@@ -44,8 +38,9 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<WarehousePagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehousePagingParamDTO> dto) {
-        return success();
+    public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
@@ -57,7 +52,7 @@ public class WarehouseController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
         WarehouseEntity warehouse = warehouseService.add(dto);
-        return warehouse!=null? success():failure();
+        return warehouse != null ? success() : failure();
     }
 
     /**
@@ -106,8 +101,20 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
-        Boolean result= warehouseService.updateWarehouse(dto);
-        return result==true? success():failure();
+        Boolean result = warehouseService.updateWarehouse(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 仓库详情
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/view")
+    public ApiResult<WarehouseDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        WarehouseDTO.UpdateDTO view = warehouseService.view(dto.getId());
+        return success(view);
     }
 
     /**
@@ -122,19 +129,43 @@ public class WarehouseController extends BaseController {
         return result == true ? success() : failure();
     }
 
-     /**
-      * 反审核
-      * @author yl
-      * @date 2023-03-22 11:56
-      * @param dto
-      * @return com.common.core.controller.vo.ApiResult
-      */
+    /**
+     * 反审核
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-22 11:56
+     */
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = warehouseService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 删除供应商
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = warehouseService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 导出
+     * 仓库数据
+     */
+    @PostMapping("/exportWarehouse")
+    public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
+        warehouseService.exportWarehouse(dto, response);
+        return success();
+    }
 
     /**
      * 导入仓库
@@ -154,13 +185,5 @@ public class WarehouseController extends BaseController {
         return success();
     }
 
-    /**
-     * 导出仓库数据
-     *
-     * @return
-     */
-    @PostMapping("/exportWarehouse")
-    public ApiResult exportTemplate(@RequestBody WarehousePagingParamDTO dto) {
-        return success();
-    }
+
 }

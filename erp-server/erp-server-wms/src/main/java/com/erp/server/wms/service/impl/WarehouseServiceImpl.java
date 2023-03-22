@@ -1,16 +1,27 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.WarehouseImportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
@@ -18,11 +29,15 @@ import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -37,6 +52,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private DictBasicService dictBasicService;
+
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     @Override
@@ -78,7 +97,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkKingdeeWarehouseCode("", dto.getKingdeeWarehouseCode());
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(dto, warehouse);
-        warehouse.setDisabled(!dto.getDisabled());
         Boolean result = this.save(warehouse);
         if (result) {
             return warehouse;
@@ -182,7 +200,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (Objects.isNull(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99001);
         }
-        warehouse.setDisabled(!dto.getState());
+        warehouse.setDisabled(dto.getState());
         return this.updateById(warehouse);
     }
 
@@ -221,10 +239,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     /**
      * 反审核
-     * @author yl
-     * @date 2023-03-22 11:59
+     *
      * @param warehouseIds
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:59
      */
     @Override
     public Boolean disApprove(List<String> warehouseIds) {
@@ -247,6 +266,159 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
         return result;
+    }
+
+
+    /**
+     * 批量删除
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 12:12
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteByIds(List<String> ids) {
+        List<WarehouseEntity> list = this.listByIds(ids);
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !waitSubmitStatus.equals(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        return this.removeByIds(ids);
+    }
+
+
+    /**
+     * 获取仓库详情
+     *
+     * @param warehouseId
+     * @return com.erp.model.wms.dto.WarehouseDTO.UpdateDTO
+     * @author yl
+     * @date 2023-03-22 14:30
+     */
+    @Override
+    public WarehouseDTO.UpdateDTO view(String warehouseId) {
+        WarehouseEntity warehouse = this.getById(warehouseId);
+        if (Objects.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_99001);
+        }
+        WarehouseDTO.UpdateDTO dto = new WarehouseDTO.UpdateDTO();
+        BeanMapper.copy(warehouse, dto);
+        return dto;
+    }
+
+
+    /**
+     * 分页获取仓库数据
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-03-22 14:51
+     */
+    @Override
+    public PagingVO<WarehouseDTO.PagingViewDTO> paging(PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        WarehouseDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<WarehouseDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        //获取到仓库类型
+        List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<String> userIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
+        //获取用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+        List<String> orgIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+        for (WarehouseDTO.PagingViewDTO item : list) {
+            //类型id
+            String typeId = item.getTypeId();
+            String typeName = dictBasicList.stream().filter(d -> d.getId().equals(typeId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setTypeName(typeName);
+            //审核名
+            ApproveStatusEnum statusEnum = item.getApproveStatus();
+            item.setApproveStatusName(statusEnum.getName());
+            //负责人id
+            String chargeId = item.getChargeId();
+            String userName = userList.stream().filter(u -> chargeId.equals(u.getUserId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
+            item.setChargeName(userName);
+            //组织id
+            String orgId = item.getOrgId();
+            String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setOrgName(orgName);
+        }
+        return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 导出仓库数据
+     *
+     * @param dto
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-03-22 16:08
+     */
+    @Override
+    public void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
+        //获取导出数据
+        List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
+
+        List<WarehouseImportExcelDTO> resultList = new ArrayList<>(viewList.size());
+        if (CollectionUtils.isNotEmpty(viewList)) {
+            //获取到仓库类型
+            List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            List<String> userIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
+            //获取用户信息
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+            List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+            List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+            for (WarehouseDTO.PagingViewDTO item : viewList) {
+                WarehouseImportExcelDTO excelDTO = new WarehouseImportExcelDTO();
+                BeanMapper.copy(item, excelDTO);
+                //类型id
+                String typeId = item.getTypeId();
+                String typeName = dictBasicList.stream().filter(d -> d.getId().equals(typeId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setTypeName(typeName);
+
+                //审核名
+                ApproveStatusEnum statusEnum = item.getApproveStatus();
+                excelDTO.setApproveStatusName(statusEnum.getName());
+
+                //负责人id
+                String chargeId = item.getChargeId();
+                String userName = userList.stream().filter(u -> chargeId.equals(u.getUserId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
+                excelDTO.setChargeName(userName);
+
+                //组织id
+                String orgId = item.getOrgId();
+                String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setOrgName(orgName);
+                excelDTO.setEnabled(item.getDisabled()?"启用":"未启用");
+                resultList.add(excelDTO);
+
+
+            }
+        }
+        String fileName="仓库数据";
+        ExcelUtil.export(fileName, "warehouse", resultList, WarehouseImportExcelDTO.class, response);
+
+
     }
 
 

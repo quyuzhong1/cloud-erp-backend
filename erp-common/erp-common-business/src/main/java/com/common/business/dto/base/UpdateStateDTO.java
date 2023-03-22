@@ -23,8 +23,8 @@ public class UpdateStateDTO  implements Serializable {
 
 
     /**
-     * true 打开
-     * false 关闭
+     * true 禁用
+     * false 启用
      */
     @NotNull(message = "状态值不能为空")
     private Boolean state;

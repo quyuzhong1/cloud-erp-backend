@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -7,6 +9,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -69,7 +73,7 @@ public class WarehouseDTO implements Serializable {
          * false 未启用
          */
         @NotNull(message = "仓库启用状态不能为空")
-        private Boolean disabled;
+        private Boolean enableStatus;
 
 
         /**
@@ -106,6 +110,148 @@ public class WarehouseDTO implements Serializable {
     }
 
 
+    /**
+     * 仓库分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO{
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 金蝶仓库编号
+         */
+        private String kingdeeWarehouseCode;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 仓库类型 对应dict 表id
+         */
+        private String typeId;
+
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
+
+        /**
+         * 负责人id
+         */
+        private String chargeId;
+
+        /**
+         * 负责人名
+         */
+        private String chargeName;
+
+
+        /**
+         * 是否虚拟仓
+         * true 是
+         */
+        private Boolean isVirtual;
+        /**
+         * 联系人
+         */
+        private String contacts;
+
+        /**
+         * 联系人电话
+         */
+        private String contactTelNumber;
+
+        /**
+         * 状态
+         false  开启
+         true 关闭
+         */
+        private Boolean disabled;
+
+        /**
+         * 地址
+         */
+        private String address;
+
+        /**
+         * 组织id 对应 核算公司表id
+         */
+        private String orgId;
+
+        /**
+         * 组织名称
+         */
+        private String orgName;
+
+        /**
+         * 审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+
+        /**
+         * 创建人
+         */
+        private String CreateUserName;
+    }
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+
+
+
+        /**
+         * 仓库地址
+         */
+        private String address;
+
+
+        /**
+         * 联系人
+         */
+        private String contacts;
+
+
+        /**
+         * 创建人id
+         */
+        private List<String> createUserIdList;
+
+
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 类型id 集合
+         */
+        private List<String> typeIdList;
+
+    }
 
 
 

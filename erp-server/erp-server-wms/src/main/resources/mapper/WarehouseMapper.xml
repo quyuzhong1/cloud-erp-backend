@@ -3,5 +3,92 @@
 <mapper namespace="com.erp.server.wms.mapper.WarehouseMapper">
 
 
+    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
+      SELECT
+         id,
+         create_user_name,
+         create_time,
+         name,
+         type_id,
+         charge_id,
+         contacts,
+         contact_tel_number,
+         disabled,
+         address,
+         org_id,
+         kingdee_warehouse_code,
+         is_virtual,
+         approve_status
+      FROM  warehouse  WHERE is_deleted=false
 
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.address !=null  and params.address!=''">
+           AND  address LIKE concat('%', #{params.address} ,'%')
+        </if>
+        <if test="params.contacts !=null  and params.contacts!=''">
+            AND  contacts LIKE concat('%', #{params.contacts} ,'%')
+        </if>
+        <if test="params.typeIdList !=null and params.typeIdList.size>0">
+            AND type_id IN
+            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
+                #{typeId}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
+         SELECT
+         id,
+         create_user_name,
+         create_time,
+         name,
+         type_id,
+         charge_id,
+         contacts,
+         contact_tel_number,
+         disabled,
+         address,
+         org_id,
+         kingdee_warehouse_code,
+         is_virtual,
+         approve_status
+      FROM  warehouse  WHERE is_deleted=false
+
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.address !=null  and params.address!=''">
+            AND  address LIKE concat('%', #{params.address} ,'%')
+        </if>
+        <if test="params.contacts !=null  and params.contacts!=''">
+            AND  contacts LIKE concat('%', #{params.contacts} ,'%')
+        </if>
+        <if test="params.typeIdList !=null and params.typeIdList.size>0">
+            AND type_id IN
+            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
+                #{typeId}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+
+    </select>
 </mapper>

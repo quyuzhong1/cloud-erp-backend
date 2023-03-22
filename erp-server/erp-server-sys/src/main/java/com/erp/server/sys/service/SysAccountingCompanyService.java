@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchStateDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -49,4 +50,14 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @return java.util.List<com.erp.model.sys.dto.SysAccountingCompanyDTO.ListDTO>
      */
     List<SysAccountingCompanyDTO.ListDTO> getList();
+
+    
+    /**
+     * 根据ids 获取组织列表
+     * @author yl
+     * @date 2023-03-22 15:29
+     * @param ids
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     */
+    List<BaseIdDTO> getByIds(List<String> ids);
 }
