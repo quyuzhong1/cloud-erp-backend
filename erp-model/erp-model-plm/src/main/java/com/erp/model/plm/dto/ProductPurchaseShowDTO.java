@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -57,7 +58,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 预计首批到货时间
      */
-    private LocalDateTime planArrivalTime;
+    private LocalDate planArrivalTime;
 
     /**
      * MOQ(最小起订量)
@@ -72,7 +73,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 实际首批到货时间
      */
-    private LocalDateTime actualArrivalTime;
+    private LocalDate actualArrivalTime;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货

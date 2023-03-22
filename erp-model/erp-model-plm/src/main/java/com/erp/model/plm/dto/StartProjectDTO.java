@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -44,13 +45,13 @@ public class StartProjectDTO implements Serializable {
     /**
      * 开始时间
      */
-    private LocalDateTime startTime;
+    private LocalDate startTime;
 
 
     /**
      * 结束时间
      */
-    private LocalDateTime endTime;
+    private LocalDate endTime;
 
     //
     /**

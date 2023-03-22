@@ -11,6 +11,7 @@ import javax.validation.constraints.Digits;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -67,12 +68,12 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 上市时间
      */
-    private LocalDateTime listingTime;
+    private LocalDate listingTime;
 
     /**
      * 退市时间
      */
-    private LocalDateTime delistingTime;
+    private LocalDate delistingTime;
 
     /**
      * 图片是否完成 1.是 2.否
