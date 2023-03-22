@@ -34,5 +34,10 @@ public class ProductTaskCountDTO {
      */
     private Integer postponeTaskCount;
 
+    /**
+     * 产品属性id
+     */
+    private String propertyId;
+
 
 }

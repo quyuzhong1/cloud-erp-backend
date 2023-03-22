@@ -123,11 +123,28 @@
         left join template_phase tp  on tp.id=tt.phase_id
 
         <where>
-            <if test="params.phaseNameList != null and params.phaseNameList.size > 0">
+            <if test="params.phaseNames != null and params.phaseNames.size > 0">
                 tp.name IN
-                <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                <foreach collection="params.phaseNames" item="phaseName" open="(" separator="," close=")">
                     #{phaseName}
                 </foreach>
+            </if>
+            <if test="params.chargeName != null and params.chargeName != ''">
+                AND case when tt.distribution_type = 0 then tt.role_name
+                when tt.distribution_type = 1 then tt.charge_name
+                else '' end like concat('%', #{params.chargeName}, '%')
+            </if>
+
+            <if test="params.TaskType != null and params.TaskType != ''">
+                AND tt.type = #{params.taskType}
+            </if>
+
+            <if test="params.docsName != null and params.docsName != ''">
+                AND tdd.docsNames like concat('%', #{params.docsName}, '%')
+            </if>
+
+            <if test="params.isFixed != null and params.isFixed != ''">
+                AND tt.is_fixed = #{params.isFixed}
             </if>
 
             <if test="params.templateId != '' and params.templateId != null">

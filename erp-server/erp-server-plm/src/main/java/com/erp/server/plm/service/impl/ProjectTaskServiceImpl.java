@@ -1170,6 +1170,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);
         taskCountDTO.setTotalTaskCount(totalTaskCount);
         taskCountDTO.setPostponeTaskCount(postponeTaskCount);
+
+        ProductInfoEntity productInfoEntity = productInfoService.getById(showDTO.getProductId());
+        taskCountDTO.setPropertyId(productInfoEntity.getPropertyId());
         return taskCountDTO;
     }
 

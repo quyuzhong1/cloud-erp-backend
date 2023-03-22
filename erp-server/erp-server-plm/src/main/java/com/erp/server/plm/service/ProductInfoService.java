@@ -164,6 +164,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     List<ProductInfoEntity> getRoleClassifyList(boolean isFinishedProductDev, boolean isArchive);
 
+
     
 
 }
