@@ -257,13 +257,13 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setPropertyId(productProperty.getId());
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSkuBaseInfoDTO.setPlanListingTime(LocalDateTime.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
-        productSkuBaseInfoDTO.setFirstMassProductDate(LocalDate.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSkuBaseInfoDTO.setFirstMassProductDate(LocalDateTime.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
 
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
@@ -280,7 +280,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
         productPurchaseDTO.setEan(dto.getEan());
         productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQtyStr()));
-        productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productPurchaseDTO.setPlaceOrderTime(LocalDateTime.parse(dto.getPlaceOrderTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoqStr()));
         productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycleStr()));
