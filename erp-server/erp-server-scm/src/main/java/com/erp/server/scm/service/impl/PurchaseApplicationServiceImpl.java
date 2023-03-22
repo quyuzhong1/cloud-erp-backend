@@ -181,25 +181,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过 TODO
 
-            //更新单据(后面有流程了可删)
-            this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
-                    .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())
-                    .set(PurchaseApplicationEntity::getApproveUserName,userInfo.getUserName())
-                    .set(PurchaseApplicationEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
-                    .set(PurchaseApplicationEntity::getApproveTime, LocalDateTime.now())
-                    .update();
+            //更新单据状态(后面有流程了可删)
+            updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             //中止当前审核流程
 
-            //更新单据
-            this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
-                    .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())
-                    .set(PurchaseApplicationEntity::getApproveUserName,userInfo.getUserName())
-                    .set(PurchaseApplicationEntity::getApproveStatus,ApproveStatusEnum.REJECT.getStatus())
-                    .set(PurchaseApplicationEntity::getApproveTime,LocalDateTime.now())
-                    .update();
+            //更新单据状态
+            updateApproveStatusForApprove(ids,ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -221,9 +211,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //取回流程 TODO
 
         //更新单据为待提交
-        this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
-                .set(PurchaseApplicationEntity::getApproveStatus,ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                .update();
+        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购申请单", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"反审核操作");
@@ -278,9 +266,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //启动流程 TODO
 
         //更新审核状态
-        lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
-                .set(PurchaseApplicationEntity::getApproveStatus,ApproveStatusEnum.APPROVE_ING.getStatus())
-                .update();
+        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
@@ -336,14 +322,36 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         workflowFeign.cancelProcess(id);
 
         //更新单据为待提交
-        this.lambdaUpdate().eq(PurchaseApplicationEntity::getId,id)
-                .set(PurchaseApplicationEntity::getApproveStatus,ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                .update();
+        updateApproveStatus(Arrays.asList(id),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         moduleOperateLogService.addModuleOperateLog(String.format("采购申请单【%s】取消流程",entity.getCode()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"取消流程操作");
         return Boolean.TRUE;
     }
 
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(List<String> ids,String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
+                .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    /**
+     * 审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+
+        this.lambdaUpdate().in(PurchaseApplicationEntity::getId,ids)
+                .set(PurchaseApplicationEntity::getApproveUserId,userInfo.getUid())
+                .set(PurchaseApplicationEntity::getApproveUserName,userInfo.getUserName())
+                .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)
+                .set(PurchaseApplicationEntity::getApproveTime,LocalDateTime.now())
+                .update();
+    }
 
     /**
      * 处理数据id

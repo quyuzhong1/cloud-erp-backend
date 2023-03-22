@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import org.apache.commons.math3.util.Pair;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -96,7 +97,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             Integer type = fieldEntity.getType();
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());
-            if (type == 1) {
+            if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
                 //是或否
                 oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
                 newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
@@ -104,8 +105,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                 if (oldValue.equals(newValue)) {
                     continue;
                 }
-            } else if (type == 2) {
-                //枚举
+            }
+            //枚举
+            if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
                 if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
@@ -136,8 +138,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                     }
                 }
 
-            } else if (type == 3) {
-                //字典
+            }
+            //字典
+            if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
                 List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(oldValue.split(",")));
                 if (CollectionUtils.isNotEmpty(oldList)) {
                     oldValue = oldList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
@@ -146,8 +149,10 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                 if (CollectionUtils.isNotEmpty(newList)) {
                     newValue = newList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
                 }
-            } else if (type == 4) {
-                //人员
+            }
+            //人员
+            if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
+
                 List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(oldValue.split(",")));
                 if (CollectionUtils.isNotEmpty(oldList)) {
                     oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
