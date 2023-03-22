@@ -116,9 +116,9 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @date: 2023/3/17 12:18
      * @param excelFile
      * @param response
-     * @return  List<SalesDemandDetailDTO.ExcelDTO>
+     * @return  List<SalesDemandDetailDTO.AddDTO>
      */
-    List<SalesDemandDetailDTO.ExcelDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response);
+    List<SalesDemandDetailDTO.AddDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response);
     /**
      * @description: 新增并提交
      * @author Will

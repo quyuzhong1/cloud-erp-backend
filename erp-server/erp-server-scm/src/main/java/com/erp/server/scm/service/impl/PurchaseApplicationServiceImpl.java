@@ -1,6 +1,8 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -22,12 +24,15 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
+import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
+import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
@@ -37,8 +42,13 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.listener.PurchaseApplicationExcelListener;
+import com.erp.server.scm.listener.SalesDemandExcelListener;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
@@ -73,8 +83,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Resource
     private CommonService commonService;
@@ -104,12 +121,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     obj.setCode(null);
                     obj.setApproveStatusName(null);
                     obj.setIsFirstMassProduct(null);
-                    obj.setApproveStatusName(null);
                     obj.setCreateUserName(null);
-                    obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-                    obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
                     return;
                 }
+                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+                obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
                 list.add(obj.getId());
             });
         }
@@ -224,8 +240,47 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
-        return null;
+    public List<PurchaseApplicationDetailDTO.AddDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
+        //查询所有审核通过的sku
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        //查询所有审核通过并启用的仓库
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+
+        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,warehouseList,skuIds);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PurchaseApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！",e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！",e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<PurchaseApplicationImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<PurchaseApplicationDetailDTO.AddDTO> dataList = excelListenerUtil.getDataList();
+        //导出错误数据
+        List<PurchaseApplicationImportExcelDTO> list = excelListenerUtil.getErrorList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/purchaseApplicationError.xlsx";
+            String name = "salesDemand";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            } finally {
+                return dataList;
+            }
+        }
+        return dataList;
     }
 
     @Override

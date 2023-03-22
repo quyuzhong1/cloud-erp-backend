@@ -7,7 +7,10 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 
@@ -19,24 +22,25 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: 备货申请单导入监听
- * @date 2023/3/21 11:28
+ * @description: 采购申请单导入监听
+ * @date 2023/3/22 16:09
  */
-public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandImportExcelDTO> {
+public class PurchaseApplicationExcelListener extends AnalysisEventListener<PurchaseApplicationImportExcelDTO> {
+
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private List<SalesDemandImportExcelDTO> allList = new ArrayList<>();
+    private List<PurchaseApplicationImportExcelDTO> allList = new ArrayList<>();
 
     /**
      * 导入错误数据
      */
-    private List<SalesDemandImportExcelDTO> errorList = new ArrayList<>();
+    private List<PurchaseApplicationImportExcelDTO> errorList = new ArrayList<>();
 
     /**
      * 导入正确数据
      */
-    private List<SalesDemandDetailDTO.AddDTO> dataList = new ArrayList<>();
+    private List<PurchaseApplicationDetailDTO.AddDTO> dataList = new ArrayList<>();
 
     /**
      * 明细中已存在的skuId集合
@@ -61,28 +65,28 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds) {
+    public PurchaseApplicationExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds) {
         this.skuList = skuList;
         this.warehouseList = warehouseList;
         this.skuIds = skuIds;
     }
 
     @Override
-    public void invoke(SalesDemandImportExcelDTO salesDemandImportExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(PurchaseApplicationImportExcelDTO purchaseApplicationImportExcelDTO, AnalysisContext analysisContext) {
 
-        SalesDemandDetailDTO.ExcelDTO excelDTO = new SalesDemandDetailDTO.ExcelDTO();
+        PurchaseApplicationDetailDTO.AddDTO excelDTO = new PurchaseApplicationDetailDTO.AddDTO();
         //添加数据用于判断是否为空
-        allList.add(salesDemandImportExcelDTO);
+        allList.add(purchaseApplicationImportExcelDTO);
 
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
-        List<String> msgList = FieldValidUtil.fieldValid(salesDemandImportExcelDTO);
+        List<String> msgList = FieldValidUtil.fieldValid(purchaseApplicationImportExcelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
         //sku验证
-        if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getSkuNo())) {
-            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(salesDemandImportExcelDTO.getSkuNo())).findFirst().orElse(null);
+        if (StringUtils.isNotBlank(purchaseApplicationImportExcelDTO.getSkuNo())) {
+            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(purchaseApplicationImportExcelDTO.getSkuNo())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuEntity)) {
                 errorMsgList.add("请录入已审核SKU");
             } else {
@@ -101,8 +105,8 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
             }
         }
         //仓库验证
-        if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getDestWarehouseName())) {
-            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(salesDemandImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
+        if (StringUtils.isNotBlank(purchaseApplicationImportExcelDTO.getDestWarehouseName())) {
+            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(purchaseApplicationImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(warehouseDTO)) {
                 errorMsgList.add("请录入已审核并且启用的仓库");
             } else {
@@ -111,14 +115,14 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
         }
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
-            salesDemandImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(salesDemandImportExcelDTO);
+            purchaseApplicationImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(purchaseApplicationImportExcelDTO);
             return;
         }
-        excelDTO.setIsUrgent("是".equals(salesDemandImportExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
-        excelDTO.setPlanStockQty(Integer.valueOf(salesDemandImportExcelDTO.getPlanStockQtyStr()));
-        excelDTO.setPlanDeliveryDate(LocalDate.parse(salesDemandImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
-        excelDTO.setRemark(salesDemandImportExcelDTO.getRemark());
+        excelDTO.setIsUrgent("是".equals(purchaseApplicationImportExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
+        excelDTO.setApplyQty(Integer.valueOf(purchaseApplicationImportExcelDTO.getApplyQtyStr()));
+        excelDTO.setPlanDeliveryDate(LocalDate.parse(purchaseApplicationImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
+        excelDTO.setRemark(purchaseApplicationImportExcelDTO.getRemark());
         importSkuIds.add(excelDTO.getSkuId());
         dataList.add(excelDTO);
     }
@@ -128,15 +132,15 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
 
     }
 
-    public List<SalesDemandImportExcelDTO> getAllList(){
+    public List<PurchaseApplicationImportExcelDTO> getAllList(){
         return allList;
     }
 
-    public List<SalesDemandImportExcelDTO> getErrorList(){
+    public List<PurchaseApplicationImportExcelDTO> getErrorList(){
         return errorList;
     }
 
-    public List<SalesDemandDetailDTO.AddDTO> getDataList(){
+    public List<PurchaseApplicationDetailDTO.AddDTO> getDataList(){
         return dataList;
     }
 }

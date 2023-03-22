@@ -195,8 +195,8 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<List<SalesDemandDetailDTO.ExcelDTO>> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
-        List<SalesDemandDetailDTO.ExcelDTO> list = salesDemandService.importFile(excelFile,skuIds,response);
+    public ApiResult<List<SalesDemandDetailDTO.AddDTO>> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
+        List<SalesDemandDetailDTO.AddDTO> list = salesDemandService.importFile(excelFile,skuIds,response);
         return success(list);
     }
 

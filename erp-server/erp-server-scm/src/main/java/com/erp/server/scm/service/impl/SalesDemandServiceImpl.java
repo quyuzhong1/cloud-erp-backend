@@ -120,10 +120,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                     obj.setInvalidStatusName(null);
                     obj.setIsFirstMassProduct(null);
                     obj.setStockReason(null);
-                    obj.setApproveStatusName(null);
                     obj.setCreateUserName(null);
                     return;
                 }
+                obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 list.add(obj.getId());
             });
         }
@@ -359,7 +360,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public  List<SalesDemandDetailDTO.ExcelDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
+    public  List<SalesDemandDetailDTO.AddDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         //查询所有审核通过并启用的仓库
@@ -381,7 +382,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             throw new ServiceException(ApiError.ERROR_95123);
         }
         //导入数据处理
-        List<SalesDemandDetailDTO.ExcelDTO> dataList = excelListenerUtil.getDataList();
+        List<SalesDemandDetailDTO.AddDTO> dataList = excelListenerUtil.getDataList();
         //导出错误数据
         List<SalesDemandImportExcelDTO> list = excelListenerUtil.getErrorList();
         if (list.size() > 0) {

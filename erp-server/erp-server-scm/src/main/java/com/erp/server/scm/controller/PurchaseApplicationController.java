@@ -196,9 +196,9 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
-        Boolean flag = purchaseApplicationService.importFile(excelFile,skuIds,response);
-        return flag == true ? success() : failure();
+    public ApiResult<List<PurchaseApplicationDetailDTO.AddDTO>> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
+        List<PurchaseApplicationDetailDTO.AddDTO> list = purchaseApplicationService.importFile(excelFile, skuIds, response);
+        return success(list);
     }
 
     /**
@@ -210,7 +210,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/purchaseApplication.xlsx";
+        String path = "classpath:excel/purchaseApplicationTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

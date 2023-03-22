@@ -44,15 +44,7 @@
             sdd.remark as remark,
             sd.remark as stockReason,
             sd.approve_status as approveStatus,
-            case sd.approve_status when 'waitSubmit' then '待提交'
-                                   when 'approveIng' then '审核中'
-                                   when 'reject' then '审核不通过'
-                                   when 'finish' then '已完成'
-            end as approveStatusName,
             sd.invalid_status as invalidStatus,
-            case sd.invalid_status when '0' then '未作废'
-                                   when '1' then '已作废'
-            end as invalidStatusName,
             sd.approve_user_name as approveUserName,
             sd.create_user_name as createUserName,
             sd.create_time as createTime
@@ -136,7 +128,7 @@
             when 'waitSubmit' then '待提交'
             when 'approveIng' then '审核中'
             when 'reject' then '审核不通过'
-            when 'finish' then '已完成'
+            when 'approve' then '已审核'
         end as approveStatusName,
         case sd.invalid_status
             when '0' then '未作废'

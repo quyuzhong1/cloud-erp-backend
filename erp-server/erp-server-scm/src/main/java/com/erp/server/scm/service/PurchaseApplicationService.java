@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.common.core.serveice.SuperService;
 import org.springframework.web.multipart.MultipartFile;
@@ -75,9 +76,9 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @date: 2023/3/15 18:24
      * @param excelFile
      * @param response
-     * @return Boolean
+     * @return List<PurchaseApplicationDetailDTO.AddDTO>
      */
-    Boolean importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response);
+    List<PurchaseApplicationDetailDTO.AddDTO> importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will
