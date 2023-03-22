@@ -195,6 +195,12 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/accountingCompany/getByIds")
     List<BaseIdDTO> getAccountingCompanyList(@RequestBody List<String> ids);
 
-
-
+    /**
+     * @description: 查询所有已启用组织
+     * @author Will
+     * @date: 2023/3/22 16:35
+     * @return List<BaseIdDTO>
+     */
+    @GetMapping("sys/feign/accountingCompany/list")
+    List<BaseIdDTO> listAccountingCompany();
 }

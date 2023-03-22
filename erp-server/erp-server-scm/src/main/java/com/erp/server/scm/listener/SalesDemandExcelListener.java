@@ -81,12 +81,14 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
             errorMsgList.addAll(msgList);
         }
         //sku验证
-        if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getSkuNo())) {
-            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(salesDemandImportExcelDTO.getSkuNo())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuEntity)) {
-                errorMsgList.add("请录入已审核SKU");
-            } else {
-                if (CollectionUtils.isNotEmpty(skuIds)) {
+        if (CollectionUtils.isEmpty(skuList)) {
+            errorMsgList.add("系统中未发现已审核SKU");
+        } else {
+            if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getSkuNo())) {
+                SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(salesDemandImportExcelDTO.getSkuNo())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuEntity)) {
+                    errorMsgList.add("请录入已审核SKU");
+                } else {
                     if (skuIds.contains(skuEntity.getSkuId())) {
                         errorMsgList.add("明细列表已存在该SKU");
                     } else if (importSkuIds.contains(skuEntity.getSkuId())) {
@@ -101,12 +103,16 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
             }
         }
         //仓库验证
-        if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getDestWarehouseName())) {
-            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(salesDemandImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(warehouseDTO)) {
-                errorMsgList.add("请录入已审核并且启用的仓库");
-            } else {
-                excelDTO.setDestWarehouseId(warehouseDTO.getId());
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            errorMsgList.add("系统中未发现已启用仓库");
+        } else {
+            if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getDestWarehouseName())) {
+                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(salesDemandImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(warehouseDTO)) {
+                    errorMsgList.add("请录入已审核并且启用的仓库");
+                } else {
+                    excelDTO.setDestWarehouseId(warehouseDTO.getId());
+                }
             }
         }
         //存在错误数据则直接返回

@@ -3,10 +3,7 @@ package com.erp.server.sys.controller.feign;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.erp.server.sys.service.SysAccountingCompanyService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -30,4 +27,16 @@ public class AccountingCompanyFeignController extends BaseController {
         List<BaseIdDTO> list = sysAccountingCompanyService.getByIds(ids);
         return list;
     }
+    /**
+     * @description: 查询所有已启用组织
+     * @author Will
+     * @date: 2023/3/22 16:37
+     * @return List<BaseIdDTO>
+     */
+    @GetMapping("/list")
+    public List<BaseIdDTO> listAccountingCompany() {
+        List<BaseIdDTO> list = sysAccountingCompanyService.listAccountingCompany();
+        return list;
+    }
+
 }

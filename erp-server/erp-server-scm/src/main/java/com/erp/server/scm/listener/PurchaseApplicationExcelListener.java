@@ -5,6 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
@@ -43,14 +44,14 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
     private List<PurchaseApplicationDetailDTO.AddDTO> dataList = new ArrayList<>();
 
     /**
-     * 明细中已存在的skuId集合
-     */
-    private List<String> skuIds;
-
-    /**
      * 导入成功的skuId集合
      */
     private List<String> importSkuIds = new ArrayList<>();
+
+    /**
+     * 明细中已存在的skuId集合
+     */
+    private List<String> skuIds;
 
     /**
      * sku数据
@@ -62,35 +63,43 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
      */
     private List<WarehouseDTO.UpdateDTO> warehouseList;
 
+    /**
+     * 核算公司
+     */
+    private List<BaseIdDTO> companyList;
+
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public PurchaseApplicationExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds) {
+    public PurchaseApplicationExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds,List<BaseIdDTO> companyList) {
         this.skuList = skuList;
         this.warehouseList = warehouseList;
         this.skuIds = skuIds;
+        this.companyList = companyList;
     }
 
     @Override
-    public void invoke(PurchaseApplicationImportExcelDTO purchaseApplicationImportExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(PurchaseApplicationImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
 
         PurchaseApplicationDetailDTO.AddDTO excelDTO = new PurchaseApplicationDetailDTO.AddDTO();
         //添加数据用于判断是否为空
-        allList.add(purchaseApplicationImportExcelDTO);
+        allList.add(importExcelDTO);
 
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
-        List<String> msgList = FieldValidUtil.fieldValid(purchaseApplicationImportExcelDTO);
+        List<String> msgList = FieldValidUtil.fieldValid(importExcelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
         //sku验证
-        if (StringUtils.isNotBlank(purchaseApplicationImportExcelDTO.getSkuNo())) {
-            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(purchaseApplicationImportExcelDTO.getSkuNo())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuEntity)) {
-                errorMsgList.add("请录入已审核SKU");
-            } else {
-                if (CollectionUtils.isNotEmpty(skuIds)) {
+        if (CollectionUtils.isEmpty(skuList)) {
+            errorMsgList.add("系统中未发现已审核SKU");
+        } else {
+            if (StringUtils.isNotBlank(importExcelDTO.getSkuNo())) {
+                SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuEntity)) {
+                    errorMsgList.add("请录入已审核SKU");
+                } else {
                     if (skuIds.contains(skuEntity.getSkuId())) {
                         errorMsgList.add("明细列表已存在该SKU");
                     } else if (importSkuIds.contains(skuEntity.getSkuId())) {
@@ -105,24 +114,52 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
             }
         }
         //仓库验证
-        if (StringUtils.isNotBlank(purchaseApplicationImportExcelDTO.getDestWarehouseName())) {
-            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(purchaseApplicationImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(warehouseDTO)) {
-                errorMsgList.add("请录入已审核并且启用的仓库");
-            } else {
-                excelDTO.setDestWarehouseId(warehouseDTO.getId());
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            errorMsgList.add("系统中未发现已启用仓库");
+        } else {
+            if (StringUtils.isNotBlank(importExcelDTO.getDestWarehouseName())) {
+                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(warehouseDTO)) {
+                    errorMsgList.add("请录入已审核并且启用的仓库");
+                } else {
+                    excelDTO.setDestWarehouseId(warehouseDTO.getId());
+                }
             }
         }
+
+        if (CollectionUtils.isEmpty(companyList)) {
+            errorMsgList.add("系统中未发现已启用的采购组织和收料组织");
+        } else {
+            //采购组织验证
+            if (StringUtils.isNotBlank(importExcelDTO.getPurchaseOrgName())) {
+                BaseIdDTO baseIdDTO = companyList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getPurchaseOrgName())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(baseIdDTO)) {
+                    errorMsgList.add("请录入启用采购组织");
+                } else {
+                    excelDTO.setPurchaseOrgId(baseIdDTO.getId());
+                }
+            }
+            //收料组织验证
+            if (StringUtils.isNotBlank(importExcelDTO.getReceiveOrgName())) {
+                BaseIdDTO baseIdDTO = companyList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getReceiveOrgName())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(baseIdDTO)) {
+                    errorMsgList.add("请录入启用收料组织");
+                } else {
+                    excelDTO.setReceiveOrgId(baseIdDTO.getId());
+                }
+            }
+        }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
-            purchaseApplicationImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(purchaseApplicationImportExcelDTO);
+            importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(importExcelDTO);
             return;
         }
-        excelDTO.setIsUrgent("是".equals(purchaseApplicationImportExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
-        excelDTO.setApplyQty(Integer.valueOf(purchaseApplicationImportExcelDTO.getApplyQtyStr()));
-        excelDTO.setPlanDeliveryDate(LocalDate.parse(purchaseApplicationImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
-        excelDTO.setRemark(purchaseApplicationImportExcelDTO.getRemark());
+        excelDTO.setIsUrgent("是".equals(importExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
+        excelDTO.setApplyQty(Integer.valueOf(importExcelDTO.getApplyQtyStr()));
+        excelDTO.setPlanDeliveryDate(LocalDate.parse(importExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
+        excelDTO.setRemark(importExcelDTO.getRemark());
         importSkuIds.add(excelDTO.getSkuId());
         dataList.add(excelDTO);
     }

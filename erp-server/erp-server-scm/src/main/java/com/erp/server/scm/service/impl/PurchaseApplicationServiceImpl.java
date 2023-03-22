@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -245,8 +246,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         //查询所有审核通过并启用的仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+        //查询所有启用核算公司
+        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
+        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,warehouseList,skuIds,companyList);
 
-        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,warehouseList,skuIds);
         try {
             EasyExcel.read(excelFile.getInputStream(), PurchaseApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

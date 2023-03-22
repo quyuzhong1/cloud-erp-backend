@@ -60,4 +60,11 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
      */
     List<BaseIdDTO> getByIds(List<String> ids);
+    /**
+     * @description: 查询已启用组织
+     * @author Will
+     * @date: 2023/3/22 16:37
+     * @return List<BaseIdDTO>
+     */
+    List<BaseIdDTO> listAccountingCompany();
 }

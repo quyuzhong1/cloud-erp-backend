@@ -169,5 +169,21 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return resultList;
     }
 
+    @Override
+    public List<BaseIdDTO> listAccountingCompany() {
+        List<SysAccountingCompanyEntity> list = lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled, Boolean.FALSE).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<BaseIdDTO> resultList = new ArrayList<>(list.size());
+        for (SysAccountingCompanyEntity item : list) {
+            BaseIdDTO dto = new BaseIdDTO();
+            dto.setId(item.getId());
+            dto.setName(item.getCompanyName());
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
 
 }
