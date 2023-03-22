@@ -101,6 +101,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //供应商账号信息
             List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
+            //供应商联系人信息
             supplierContactService.saveBatchContact(supplierId, contactList);
             //供应商资质信息
             List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();

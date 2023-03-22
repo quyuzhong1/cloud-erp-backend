@@ -44,6 +44,12 @@ public class SupplierAccountEntity extends BaseEntity<SupplierAccountEntity> {
     private String bankName;
 
     /**
+     * 银行名 id
+     */
+    @TableField("bank_id")
+    private String bankId;
+
+    /**
      * 银行账号
      */
     @TableField("bank_account")

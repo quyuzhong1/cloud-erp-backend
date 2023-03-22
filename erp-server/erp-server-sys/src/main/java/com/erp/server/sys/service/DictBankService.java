@@ -37,4 +37,6 @@ public interface DictBankService extends SuperService<DictBankEntity> {
      * @return java.util.List<java.util.Map<java.lang.String,java.lang.Object>>
      */
     List<BaseIdDTO> getList();
+
+    List<BaseIdDTO> getByIds(List<String> ids);
 }

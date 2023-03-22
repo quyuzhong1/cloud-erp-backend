@@ -12,6 +12,7 @@ import com.erp.server.sys.service.DictBankService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -57,6 +58,15 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
         LambdaQueryWrapper<DictBankEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DictBankEntity::getId, DictBankEntity::getName);
         List<DictBankEntity> list = this.list(queryWrapper);
+        return BeanMapper.copyList(list, BaseIdDTO.class);
+    }
+
+    @Override
+    public List<BaseIdDTO> getByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<DictBankEntity> list = this.listByIds(ids);
         return BeanMapper.copyList(list,BaseIdDTO.class);
     }
 }

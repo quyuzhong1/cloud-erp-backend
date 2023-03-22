@@ -27,11 +27,11 @@ public class SupplierAccountDTO  implements Serializable {
          */
         private String payee;
 
-        /**
-         * 银行名称
-         */
-        @Size(max = 50,message = "最大50字符")
-        private String bankName;
+
+
+        @NotBlank(message = "银行不能为空")
+        private String bankId;
+
 
         /**
          * 银行账号

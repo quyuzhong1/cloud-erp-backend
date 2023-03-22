@@ -1,10 +1,12 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierAccountMapper;
 import com.erp.server.scm.service.SupplierAccountService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -12,7 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +30,9 @@ import java.util.stream.Collectors;
 @Service
 public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccountMapper, SupplierAccountEntity> implements SupplierAccountService {
 
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 批量保存供应商账户信息
@@ -43,7 +50,14 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
             return;
         }
         List<SupplierAccountEntity> addList = BeanMapper.copyList(bankAccountList, SupplierAccountEntity.class);
-        addList.forEach(a -> a.setSupplierId(supplierId));
+        List<String> bankIdList = addList.stream().map(SupplierAccountEntity::getBankId).collect(Collectors.toList());
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIdList);
+        for (SupplierAccountEntity item : addList) {
+            String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setSupplierId(supplierId);
+            item.setBankName(bankName);
+        }
         this.saveBatch(addList);
 
     }
