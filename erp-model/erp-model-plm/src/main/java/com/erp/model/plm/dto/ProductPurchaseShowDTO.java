@@ -57,7 +57,6 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 预计首批到货时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private LocalDateTime planArrivalTime;
 
     /**
@@ -73,7 +72,6 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 实际首批到货时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private LocalDateTime actualArrivalTime;
 
     /**

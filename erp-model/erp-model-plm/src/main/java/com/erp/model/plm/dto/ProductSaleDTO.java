@@ -67,13 +67,11 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 上市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private LocalDateTime listingTime;
 
     /**
      * 退市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private LocalDateTime delistingTime;
 
     /**

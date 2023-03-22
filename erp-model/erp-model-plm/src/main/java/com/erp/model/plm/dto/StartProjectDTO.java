@@ -44,14 +44,12 @@ public class StartProjectDTO implements Serializable {
     /**
      * 开始时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private LocalDateTime startTime;
 
 
     /**
      * 结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private LocalDateTime endTime;
 
     //
