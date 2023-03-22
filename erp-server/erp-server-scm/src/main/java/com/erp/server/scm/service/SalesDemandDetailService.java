@@ -45,7 +45,15 @@ public interface SalesDemandDetailService extends SuperService<SalesDemandDetail
      * @author Will
      * @date: 2023/3/20 10:27
      * @param ids
-
      */
     void removeBySalesDemandIds(List<String> ids);
+    /**
+     * @description: 根据主表id和sku编码查询
+     * @author Will
+     * @date: 2023/3/22 9:51
+     * @param salesDemandId
+     * @param skuNo
+     * @return SalesDemandDetailEntity
+     */
+    SalesDemandDetailEntity getBySalesDemandIdAndSkuId(String salesDemandId, String skuNo);
 }

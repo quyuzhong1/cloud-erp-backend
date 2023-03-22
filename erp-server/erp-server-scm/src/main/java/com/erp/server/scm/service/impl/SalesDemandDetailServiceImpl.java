@@ -100,4 +100,9 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         lambdaUpdate().set(SalesDemandDetailEntity::getId,salesDemandIds).remove();
     }
 
+    @Override
+    public SalesDemandDetailEntity getBySalesDemandIdAndSkuId(String salesDemandId, String skuId) {
+        return lambdaQuery().eq(SalesDemandDetailEntity::getSalesDemandId,salesDemandId).eq(SalesDemandDetailEntity::getSkuId,skuId).one();
+    }
+
 }

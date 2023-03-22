@@ -1,13 +1,17 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.listener.SalesDemandExcelListener;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -55,10 +59,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +71,7 @@ import java.util.stream.Collectors;
  * @since 2023-03-15
  */
 @Service
+@Slf4j
 public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, SalesDemandEntity> implements SalesDemandService {
 
     @Resource
@@ -133,11 +135,14 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public String add(SalesDemandDTO.AddDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto,entity);
-        //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XQ, BusinessNoTypeEnum.CODE_XQ.getCode()));
-        entity.setCode(code);
+        //校验明细是否有重复sku
+        checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),dto.getShopId(),entity);
+        log.info("备货申请单新增");
+        //生成单号
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.BH, BusinessNoTypeEnum.CODE_BH.getCode()));
+        entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
@@ -154,9 +159,12 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public Boolean update(SalesDemandDTO.UpdateDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto,entity);
+        //校验明细是否有重复sku
+        checkUpdateDetailsRepeatSku(dto.getDetails(),dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),dto.getShopId(),entity);
 
+        log.info("备货申请单修改，id=【{}】", dto.getId());
         SalesDemandDTO.UpdateDTO old = new SalesDemandDTO.UpdateDTO();
         SalesDemandDTO.ViewDTO view = this.view(dto.getId());
         BeanMapperUtils.copy(view,old);
@@ -191,6 +199,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids,String reason) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
@@ -203,6 +212,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
+        log.info("备货申请单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+
         //更新
         lambdaUpdate().in(SalesDemandEntity::getId,ids)
                 .set(SalesDemandEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
@@ -216,6 +227,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -228,6 +240,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         String type = baseApproveParamDTO.getType();
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
+
+        log.info("备货申请单【{}】，ids=【{}】",ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -260,6 +274,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(String id) {
         SalesDemandEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -268,6 +283,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        log.info("备货申请单撤销流程，id=【{}】", id);
+
         //撤销现有流程
         workflowFeign.cancelProcess(id);
 
@@ -298,6 +315,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
@@ -306,6 +324,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        log.info("备货申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+
         //取回流程 TODO
 
         //更新单据为待提交
@@ -328,6 +348,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         salesDemandDetailService.removeBySalesDemandIds(ids);
         //删除主表数据
@@ -335,6 +356,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
@@ -343,6 +365,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        log.info("备货申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+
         //启动流程 TODO
 
         //更新审核状态
@@ -452,4 +476,35 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         }
         return list;
     }
+
+    /**
+     * 新增验证sku是否重复
+     */
+    private void checkAddDetailsRepeatSku(List<SalesDemandDetailDTO.AddDTO> list) {
+        Map<String, List<SalesDemandDetailDTO.AddDTO>> map = list.stream().collect(Collectors.groupingBy(SalesDemandDetailDTO.AddDTO::getSkuId));
+        for (Map.Entry<String, List<SalesDemandDetailDTO.AddDTO>> entry: map.entrySet()) {
+            List<SalesDemandDetailDTO.AddDTO> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+            }
+        }
+    }
+
+    /**
+     * 编辑验证sku是否重复
+     */
+    private void checkUpdateDetailsRepeatSku(List<SalesDemandDetailDTO.UpdateDTO> list,String salesDemandId) {
+        Map<String, List<SalesDemandDetailDTO.UpdateDTO>> map = list.stream().collect(Collectors.groupingBy(SalesDemandDetailDTO.UpdateDTO::getSkuId));
+        for (Map.Entry<String, List<SalesDemandDetailDTO.UpdateDTO>> entry: map.entrySet()) {
+            List<SalesDemandDetailDTO.UpdateDTO> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1,"录入sku编码【".concat(value.get(0).getSkuNo()).concat("】存在重复")));
+            }
+            SalesDemandDetailEntity entity = salesDemandDetailService.getBySalesDemandIdAndSkuId(salesDemandId, entry.getKey());
+            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
+                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
+            }
+        }
+    }
+
 }

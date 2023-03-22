@@ -38,6 +38,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String code;
 
         /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
          * 单据状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private String approveStatusName;
@@ -48,9 +53,14 @@ public class PurchaseApplicationDTO implements Serializable {
         private Boolean isFirstMassProduct;
 
         /**
-         * 采购单关联状态（未生成，部分生成，已生成）
+         * 采购单关联状态
          */
-        private String purchaseRelatedType;
+        private String createPoType;
+
+        /**
+         * 采购单关联状态（0未生成，1部分生成，2已生成)
+         */
+        private String createPoTypeName;
 
         /**
          * sku编码

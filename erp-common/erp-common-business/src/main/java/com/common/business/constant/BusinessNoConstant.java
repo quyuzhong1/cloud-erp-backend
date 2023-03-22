@@ -10,7 +10,9 @@ public interface BusinessNoConstant {
 
     String BOM = "BOM";
 
-    String XQ = "XQ";
+    String BH = "BH";
+
+    String PL = "PL";
 
     String GYS = "GYS";
 }

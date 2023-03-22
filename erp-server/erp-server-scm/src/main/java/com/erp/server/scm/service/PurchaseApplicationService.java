@@ -33,9 +33,9 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @author Will
      * @date: 2023/3/15 18:09
      * @param dto
-     * @return Boolean
+     * @return String
      */
-    Boolean add(PurchaseApplicationDTO.AddDTO dto);
+    String add(PurchaseApplicationDTO.AddDTO dto);
 
     /**
      * @description: 修改
@@ -113,4 +113,20 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto);
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2023/3/21 18:11
+     * @param id
+     * @return ViewDTO
+     */
+    PurchaseApplicationDTO.ViewDTO view(String id);
+    /**
+     * @description: 撤销流程
+     * @author Will
+     * @date: 2023/3/22 10:18
+     * @param id
+     * @return Boolean
+     */
+    Boolean cancelProcess(String id);
 }

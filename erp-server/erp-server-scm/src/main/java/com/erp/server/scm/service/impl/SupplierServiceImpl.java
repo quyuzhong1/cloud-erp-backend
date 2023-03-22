@@ -92,7 +92,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(supplierId);
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_XQ.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
         addEntity.setCode(code);
         Boolean result = this.save(addEntity);
         //保存成功

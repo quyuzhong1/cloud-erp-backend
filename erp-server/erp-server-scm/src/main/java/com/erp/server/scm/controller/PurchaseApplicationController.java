@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
 import com.erp.server.scm.service.PurchaseApplicationService;
+import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -61,8 +62,8 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
-        Boolean flag = purchaseApplicationService.add(dto);
-        return flag == true ? success() : failure();
+         purchaseApplicationService.add(dto);
+        return success();
     }
 
     /**
@@ -91,7 +92,18 @@ public class PurchaseApplicationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
+    /**
+     * 查询详情
+     * @author Will
+     * @date: 2023/3/15 17:44
+     * @param id
+     * @return ApiResult<PurchaseApplicationDTO.ViewDTO>
+     */
+    @GetMapping("/view")
+    public ApiResult<PurchaseApplicationDTO.ViewDTO> view(@Param("id") String id) {
+        PurchaseApplicationDTO.ViewDTO dto = purchaseApplicationService.view(id);
+        return success(dto);
+    }
 
     /**
      * 批量提交
@@ -157,6 +169,19 @@ public class PurchaseApplicationController extends BaseController {
     public ApiResult generatePurchaseOrder(@RequestParam("id") String id) {
         Boolean flag = purchaseApplicationService.generatePurchaseOrder(id);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 取消流程
+     * @author Will
+     * @date: 2023/3/15 17:59
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestParam("id") String id) {
+        Boolean result = purchaseApplicationService.cancelProcess(id);
+        return result == true ? success() : failure();
     }
 
 

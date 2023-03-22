@@ -130,7 +130,7 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
      * 采购订单生成状态（0未生成，1部分生成，2已生成
      */
     @TableField("create_po_type")
-    private Boolean createPoType;
+    private String createPoType;
 
     /**
      * 备注

@@ -11,8 +11,11 @@ public enum BusinessNoTypeEnum {
     SKU_NO(1, "sku_no","sku编号"),
     SPU_NO(2, "spu_no","spu编号"),
     Bom_NO(3, "bom_no","bom编号"),
-    CODE_XQ(4, "xq",""),
-    CODE_GYS(5, "gys","供应商编号");
+    CODE_BH(4, "bh","备货申请单编号"),
+    CODE_GYS(5, "gys","供应商编号"),
+    CODE_PL(6, "pl","采购申请单编号");
+
+
 
     private Integer code;
     private String name;
