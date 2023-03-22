@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -9,6 +11,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseService;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -80,6 +84,205 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             return warehouse;
         }
         return null;
+    }
+
+
+    /**
+     * 修改仓库
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:08
+     */
+    @Override
+    public Boolean updateWarehouse(WarehouseDTO.UpdateDTO dto) {
+        //仓库id
+        String warehouseId = dto.getId();
+        WarehouseEntity warehouse = this.getById(warehouseId);
+        if (Objects.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_99001);
+        }
+        String code = dto.getKingdeeWarehouseCode();
+        String name = dto.getName();
+        checkName(warehouseId, name);
+        checkKingdeeWarehouseCode(code, name);
+        BeanMapper.copy(warehouse, dto);
+        Boolean result = this.updateById(warehouse);
+        return result;
+    }
+
+
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:16
+     */
+    @Override
+    public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
+        WarehouseEntity warehouse = this.add(dto);
+        if (warehouse != null) {
+            return updateSubmitApproveStatus(warehouse, ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+        return false;
+    }
+
+
+    /**
+     * 仓库提交审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:31
+     */
+    @Override
+    public Boolean submit(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<WarehouseEntity> list = this.listByIds(ids);
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+
+        //审核中
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        return result;
+    }
+
+
+    /**
+     * 更改仓库状态
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:43
+     */
+    @Override
+    public Boolean updateStatus(UpdateStateDTO dto) {
+        //仓库id
+        String warehouseId = dto.getId();
+        WarehouseEntity warehouse = this.getById(warehouseId);
+        if (Objects.isNull(warehouse)) {
+            throw new ServiceException(ApiError.ERROR_99001);
+        }
+        warehouse.setDisabled(!dto.getState());
+        return this.updateById(warehouse);
+    }
+
+    /**
+     * 审核仓库
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:45
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> warehouseIds = dto.getIds();
+        List<WarehouseEntity> list = this.listByIds(warehouseIds);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        if (dto.getType().equals(WmsConstant.PASS)) {
+            //审核通过
+            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            return result;
+        } else {
+            //审核不通过
+            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+            Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            return result;
+        }
+
+
+    }
+
+
+    /**
+     * 反审核
+     * @author yl
+     * @date 2023-03-22 11:59
+     * @param warehouseIds
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean disApprove(List<String> warehouseIds) {
+        List<WarehouseEntity> list = this.listByIds(warehouseIds);
+        //审核中
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(approveIngStatus);
+        statusList.add(approveStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        return result;
+    }
+
+
+    /**
+     * 更改状态
+     *
+     * @param list
+     * @param statusEnum
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:41
+     */
+    private Boolean updateApproveStatus(List<WarehouseEntity> list, ApproveStatusEnum statusEnum) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(s -> s.setApproveStatus(statusEnum));
+            return this.updateBatchById(list);
+        }
+        return true;
+    }
+
+
+    /**
+     * 更改仓库的状态
+     *
+     * @param warehouse
+     * @param status
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 11:18
+     */
+    private Boolean updateSubmitApproveStatus(WarehouseEntity warehouse, String status) {
+        if (warehouse != null) {
+            warehouse.setApproveStatus(ApproveStatusEnum.getByStatus(status));
+            return this.updateById(warehouse);
+        }
+        return true;
     }
 
 

@@ -305,7 +305,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //审核中和已审核允许反审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98015);
+            throw new ServiceException(ApiError.ERROR_98014);
         }
         log.info("备货申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
