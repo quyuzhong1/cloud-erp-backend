@@ -21,11 +21,11 @@ public interface WmsTaskFeign {
      * 根据userIds查询用户集合
      */
     @PostMapping("wms/feign/warehouse/listWarehouseByIds")
-    List<WarehouseDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);
+    List<WarehouseDTO.UpdateDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);
 
     /**
      * 查询所有审核通过并启用的仓库
      */
     @GetMapping("wms/feign/warehouse/listApproveWarehouse")
-    List<WarehouseDTO> listApproveWarehouse();
+    List<WarehouseDTO.UpdateDTO> listApproveWarehouse();
 }

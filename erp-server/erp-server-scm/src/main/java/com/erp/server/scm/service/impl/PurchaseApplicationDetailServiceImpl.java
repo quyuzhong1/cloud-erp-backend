@@ -3,11 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
-import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
-import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.SalesDemandDetailEntity;
-import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseApplicationDetailMapper;
@@ -92,13 +88,13 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     private void doOpHandleDataId (List<PurchaseApplicationDetailEntity> newList,String purchaseApplicationId) {
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
         for (PurchaseApplicationDetailEntity entity : newList) {
             entity.setPurchaseApplicationId(purchaseApplicationId);
             if (CollectionUtils.isEmpty(warehouseList)) {
                continue;
             }
-            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
+            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDestWarehouseName(warehouseName);
         }
     }

@@ -71,7 +71,7 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/warehouse/list")
     public ApiResult<List<BaseDropDownDTO>> listWarehouseDropDown() {
-        List<WarehouseDTO> list = wmsTaskFeign.listApproveWarehouse();
+        List<WarehouseDTO.UpdateDTO> list = wmsTaskFeign.listApproveWarehouse();
         if (CollectionUtils.isEmpty(list)) {
             return success(new ArrayList<>());
         }

@@ -2,6 +2,7 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,11 +36,7 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("type_id")
     private String typeId;
 
-    /**
-     * 类型名称
-     */
-    @TableField("type_name")
-    private String typeName;
+
 
     /**
      * 负责人id
@@ -47,11 +44,7 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("charge_id")
     private String chargeId;
 
-    /**
-     * 负责人名
-     */
-    @TableField("charge_name")
-    private String chargeName;
+
 
     /**
      * 联系人
@@ -67,9 +60,11 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
 
     /**
      * 状态
+     * 是否禁用
+     * true 禁用
      */
-    @TableField("status")
-    private Boolean status;
+    @TableField("disabled")
+    private Boolean disabled;
 
     /**
      * 地址 
@@ -83,11 +78,28 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     @TableField("org_id")
     private String orgId;
 
+
+
     /**
-     * 组织名称
+     * 金蝶仓库编号
      */
-    @TableField("org_name")
-    private String orgName;
+    @TableField("kingdee_warehouse_code")
+    private String kingdeeWarehouseCode;
+
+    /**
+     * 是否虚拟仓
+     * true 是
+     */
+    @TableField("is_virtual")
+    private Boolean isVirtual;
+
+
+    /**
+     *
+     * 仓库审核状态
+     */
+    @TableField(value = "approve_status")
+    private ApproveStatusEnum approveStatus;
 
 
 

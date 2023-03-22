@@ -1,6 +1,5 @@
 package com.erp.server.wms.controller.feign;
 
-import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.WarehouseService;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,7 @@ public class WarehouseFeignController {
     private WarehouseService  warehouseService;
 
     @PostMapping("/listWarehouseByIds")
-    public List<WarehouseDTO> listWarehouseByIds(@RequestBody List<String> ids) {
+    public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(@RequestBody List<String> ids) {
         return warehouseService.listWarehouseByIds(ids);
     }
 
@@ -33,7 +32,7 @@ public class WarehouseFeignController {
      * @return List<WarehouseDTO>
      */
     @GetMapping("/listApproveWarehouse")
-    public List<WarehouseDTO> listApproveWarehouse() {
+    public List<WarehouseDTO.UpdateDTO> listApproveWarehouse() {
         return warehouseService.listApproveWarehouse();
     }
 

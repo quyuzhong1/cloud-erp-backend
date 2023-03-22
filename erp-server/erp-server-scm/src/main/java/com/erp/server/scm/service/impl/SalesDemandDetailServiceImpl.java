@@ -39,12 +39,12 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<SalesDemandDetailEntity> list = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
         //仓库信息
         List<String> destWarehouseIdList = list.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
 
         for (SalesDemandDetailEntity entity : list) {
             entity.setSalesDemandId(salesDemandId);
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
+                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
                 entity.setDestWarehouseName(warehouseName);
             }
         }
@@ -65,11 +65,11 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
         for (SalesDemandDetailEntity entity : newList) {
             entity.setSalesDemandId(salesDemandId);
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO::getName).findFirst().orElse(null);
+                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
                 entity.setDestWarehouseName(warehouseName);
             }
         }

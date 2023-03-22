@@ -6,16 +6,10 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
-import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
 import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
-import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -52,12 +46,12 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
     /**
      * 仓库数据
      */
-    private List<WarehouseDTO> warehouseList;
+    private List<WarehouseDTO.UpdateDTO> warehouseList;
 
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO> warehouseList) {
+    public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList) {
         this.skuList = skuList;
         this.warehouseList = warehouseList;
     }
@@ -89,7 +83,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
         }
         //仓库验证
         if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getDestWarehouseName())) {
-            WarehouseDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(salesDemandImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
+            WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(salesDemandImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(warehouseDTO)) {
                 errorMsgList.add("请录入已审核并且启用的仓库");
             } else {

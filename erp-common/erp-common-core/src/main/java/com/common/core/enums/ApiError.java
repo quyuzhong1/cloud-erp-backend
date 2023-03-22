@@ -336,6 +336,14 @@ public enum ApiError implements Serializable {
     ERROR_WAIT_SUBMIT_TO_APPROVE_ING(98013,"只有待提交才能提交审核"),
     ERROR_APPROVE_ING_TO_APPROVE(98014,"只有审核中支持审核"),
 
+
+
+    /**
+     * WMS 错误
+     * 从99000 开始  以端口号
+     */
+    ERROR_99000(99000,"金蝶仓库编号不能重复"),
+
     ERROR_end(1000000, "系统错误");
 
     public Integer code;
