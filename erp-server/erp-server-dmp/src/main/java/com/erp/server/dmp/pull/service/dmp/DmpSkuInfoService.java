@@ -18,12 +18,14 @@ public interface DmpSkuInfoService extends IService<DmpSkuInfoEntity> {
 
     /**
      * 根据sku查询商品信息
+     *
+     * @param skuNo     商品sku
+     * @param companyId
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
-     * @param skuNo 商品sku
-     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
-    DmpSkuInfoEntity getSkuBySkuNo(String skuNo);
+    DmpSkuInfoEntity getSkuBySkuNo(String skuNo, String companyId);
 
     /**
      * 根据平台订单id修改订单信息
