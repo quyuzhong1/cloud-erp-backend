@@ -395,6 +395,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
             } catch (IOException e) {
                 throw new ServiceException(ApiError.ERROR_95125);
+            } finally {
+                return dataList;
             }
         }
         return dataList;
