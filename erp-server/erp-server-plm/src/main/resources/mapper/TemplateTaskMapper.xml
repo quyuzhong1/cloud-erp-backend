@@ -127,7 +127,7 @@
                     #{phaseName}
                 </foreach>
             </if>
-            <if test="params.chargeNames != null and params.chargeNames.size() > 0">
+            <if test="params.chargeName != null and params.chargeName != ''">
                 <![CDATA[
                     AND string_to_array(case when tt.distribution_type = 0 then tt.role_id
                     when tt.distribution_type = 1 then tt.charge_id
@@ -141,7 +141,7 @@
                 AND tt.type = #{params.taskType}
             </if>
 
-            <if test="params.docsNames != null and params.docsNames.size() > 0">
+            <if test="params.docsName != null and params.docsName != ''">
                 <![CDATA[
                     AND  string_to_array(tdd.docsIds,',') && string_to_array(
                 ]]>
