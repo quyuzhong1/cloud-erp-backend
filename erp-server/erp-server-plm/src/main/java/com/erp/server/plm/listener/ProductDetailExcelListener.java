@@ -257,13 +257,13 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setPropertyId(productProperty.getId());
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        productSkuBaseInfoDTO.setPlanListingTime(LocalDateTime.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
-        productSkuBaseInfoDTO.setFirstMassProductDate(LocalDateTime.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSkuBaseInfoDTO.setFirstMassProductDate(LocalDate.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
 
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
@@ -300,8 +300,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmountStr()));
         productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQtyStr()));
         productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmountStr()));
-        productSaleDTO.setDelistingTime(LocalDateTime.parse(dto.getDelistingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        productSaleDTO.setListingTime(LocalDateTime.parse(dto.getListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         if (StringUtils.isNotBlank(saleCountryStr)) {
             productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
         }

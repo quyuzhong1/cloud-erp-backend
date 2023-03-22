@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -181,9 +182,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         project.setChargeName(chargeName);
 
         //开始时间
-        project.setStartTime(dto.getStartTime());
+        project.setStartTime(LocalDateTimeUtil.of(dto.getStartTime()));
         //结束时间
-        project.setEndTime(dto.getEndTime());
+        project.setEndTime(LocalDateTimeUtil.of(dto.getEndTime()));
         project.setDescribe(dto.getDescribe());
         project.setProjectStatus(ProjectStateEnum.YES_START.getState());
         boolean flag = updateById(project);
