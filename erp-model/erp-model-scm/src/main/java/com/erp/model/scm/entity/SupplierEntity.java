@@ -97,10 +97,11 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     private ApproveStatusEnum approveStatus;
 
     /**
-     * 启用 状态 true 启用 false 禁用
+     * 禁用状态  true  禁用
+     *  false 启用
      */
-    @TableField("open_status")
-    private Boolean openStatus;
+    @TableField("disabled")
+    private Boolean disabled;
 
 
     /**

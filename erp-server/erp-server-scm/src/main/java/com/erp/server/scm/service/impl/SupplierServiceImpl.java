@@ -67,6 +67,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SupplierGradeService supplierGradeService;
 
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
+
     /**
      * 保存供应商信息
      *
@@ -271,6 +274,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollectionUtils.isEmpty(ids)) {
             return true;
         }
+        List<SupplierEntity> supplierList = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = supplierList.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+
         //删除供应商
         Boolean result = this.removeByIds(ids);
         //根据 供应商id 删除联系人信息
@@ -366,7 +376,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
-        supplier.setOpenStatus(dto.getState());
+        supplier.setDisabled(dto.getState());
         return this.updateById(supplier);
     }
 
@@ -381,12 +391,42 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<Map<String, Object>> listApproveSupplier() {
         LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName);
-        queryWrapper.eq(SupplierEntity::getOpenStatus, true);
+        queryWrapper.select(SupplierEntity::getId, SupplierEntity::getName, SupplierEntity::getDisabled);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         queryWrapper.eq(SupplierEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus));
         return this.listMaps(queryWrapper);
+    }
+
+
+    /**
+     * 反审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 10:26
+     */
+    @Override
+    public Boolean disApprove(List<String> ids) {
+        List<SupplierEntity> list = this.listByIds(ids);
+        //审核中
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(approveIngStatus);
+        statusList.add(approveStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+
+        return result;
     }
 
     /**
@@ -447,5 +487,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
         }
+    }
+
+
+    /**
+     * 添加日志
+     */
+    private void addModuleOperateLog(String content,String code,String businessId,String operation){
+        moduleOperateLogService.addModuleOperateLog(content,code,businessId,operation);
     }
 }

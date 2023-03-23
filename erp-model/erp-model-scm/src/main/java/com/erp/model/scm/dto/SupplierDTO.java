@@ -158,10 +158,11 @@ public class SupplierDTO implements Serializable {
 
 
         /**
-         * true 启用   false 禁用
+         * true 禁用
+         * false 启用
          */
         @NotNull(message = "启用状态不能为空")
-        private Boolean openStatus;
+        private Boolean disabled;
 
     }
 
@@ -215,6 +216,12 @@ public class SupplierDTO implements Serializable {
 
 
         /**
+         * 等级
+         */
+        private List<String> gradeIdList;
+
+
+        /**
          * 采购员id
          */
         private List<String> purchaseUserIdList;
@@ -237,9 +244,10 @@ public class SupplierDTO implements Serializable {
         private List<String> payMethodIdList;
 
         /**
-         * 启用状态
+         * 禁用状态
+         * true 禁用
          */
-        private Boolean openStatus;
+        private Boolean disabled;
 
         /**
          * 创建人id集合

@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 /**
  * 供应商管理
@@ -141,6 +142,20 @@ public class SupplierController extends BaseController {
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = supplierService.approve(dto);
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 反审核
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-22 11:56
+     */
+    @PostMapping("/disApprove")
+    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = supplierService.disApprove(dto.getIds());
+        return flag == true ? success() : failure();
     }
 
 

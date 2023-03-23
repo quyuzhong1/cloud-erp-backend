@@ -30,7 +30,7 @@ public enum SupplierPhaseEnum {
         this.seq = seq;
     }
 
-    public String getCode() {
+    public String getPhase() {
         return phase;
     }
 

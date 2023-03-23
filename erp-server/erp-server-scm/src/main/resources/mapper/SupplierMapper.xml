@@ -15,7 +15,7 @@
         phase,
         grade_id AS gradeId,
         category_id AS categoryId ,
-        open_status AS openStatus,
+        disabled AS disabled,
         pay_method_id AS payMethodId,
         purchase_user_id AS purchaseUserId,
         purchase_user_name AS purchaseUserName
@@ -51,13 +51,19 @@
                 #{payMethodId}
             </foreach>
         </if>
-        <if test="params.openStatus!=null">
-            AND open_status=#{params.openStatus}
+        <if test="params.disabled!=null">
+            AND disabled=#{params.disabled}
         </if>
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
             AND create_user_id IN
             <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
                 #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+            AND grade_id IN
+            <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                #{gradeId}
             </foreach>
         </if>
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
