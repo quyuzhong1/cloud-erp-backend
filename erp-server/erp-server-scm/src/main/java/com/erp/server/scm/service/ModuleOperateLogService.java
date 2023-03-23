@@ -1,11 +1,11 @@
 package com.erp.server.scm.service;
 
-import org.apache.commons.math3.util.Pair;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
-import com.common.core.serveice.SuperService;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEn
      * @param dto
      * @return PagingVO<listDTO>
      */
-    PagingVO<ModuleOperateLogDTO.listDTO> paging(PagingDTO<ModuleOperateLogDTO.searchDTO> dto);
+    PagingVO<ModuleOperateLogDTO.ListDTO> paging(PagingDTO<ModuleOperateLogDTO.SearchDTO> dto);
     /**
      * @description: 生成
      * @author Will

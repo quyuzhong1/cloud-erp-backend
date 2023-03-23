@@ -57,9 +57,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     private SysUserFeign sysUserFeign;
 
     @Override
-    public PagingVO<ModuleOperateLogDTO.listDTO> paging(PagingDTO<ModuleOperateLogDTO.searchDTO> dto) {
+    public PagingVO<ModuleOperateLogDTO.ListDTO> paging(PagingDTO<ModuleOperateLogDTO.SearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ModuleOperateLogDTO.searchDTO params = dto.getParams();
+        ModuleOperateLogDTO.SearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }

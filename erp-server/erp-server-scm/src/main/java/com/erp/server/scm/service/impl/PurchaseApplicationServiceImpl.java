@@ -268,8 +268,19 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98016);
         }
-        //明细数据
+
         List<String> detailIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId).distinct().collect(Collectors.toList());
+        //查询关联信息
+        List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.listByPurchaseApplicationDetailIds(detailIds);
+
+        //验证剩余采购数量
+        Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> checkMap = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId));
+        for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> checkEntry :  checkMap.entrySet()) {
+            List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> value = checkEntry.getValue();
+
+        }
+
+        //明细数据
         List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(detailIds);
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98017);

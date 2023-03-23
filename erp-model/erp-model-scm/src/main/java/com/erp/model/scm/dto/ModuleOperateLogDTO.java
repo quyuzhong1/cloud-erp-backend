@@ -1,13 +1,11 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * @author Will
@@ -21,7 +19,7 @@ public class ModuleOperateLogDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class listDTO {
+    public static class ListDTO {
         /**
          * 操作
          */
@@ -45,7 +43,7 @@ public class ModuleOperateLogDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
         /**
          * 模块类型(0备货申请单,1采购申请单,2采购订单)
          */
@@ -89,16 +87,12 @@ public class ModuleOperateLogDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class searchDTO {
-        /**
-         * 模块类型 (枚举ModuleOperateLogTypeEnum,0备货申请单,1采购申请单,采购订单)
-         */
-        @NotNull(message = "模块不能为空")
-        private List<String> moduleType;
+    public static class SearchDTO {
 
         /**
          * 业务id(对应模块id)
          */
+        @NotBlank(message = "业务id不能为空")
         private String businessId;
 
         /**

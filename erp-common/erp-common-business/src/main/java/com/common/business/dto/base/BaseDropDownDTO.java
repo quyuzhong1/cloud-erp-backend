@@ -13,20 +13,38 @@ import java.io.Serializable;
  * @date 2023/3/16 16:14
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class BaseDropDownDTO implements Serializable {
 
-    /**
-     * 编码
-     */
-    private String code;
-    /**
-     * 值
-     */
-    private String value;
-    /**
-     * 描述
-     */
-    private String desc;
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommonDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DisabledDTO extends CommonDTO{
+
+        /**
+         * 启用/禁用
+         */
+        private Boolean disabled;
+
+        public DisabledDTO(String code, String value, Boolean disabled) {
+            this.setCode(code);
+            this.setValue(value);
+            this.disabled = disabled;
+        }
+    }
+
 }

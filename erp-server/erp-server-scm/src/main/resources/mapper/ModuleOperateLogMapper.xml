@@ -13,7 +13,7 @@
         <result column="update_user_id" property="updateUserId" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="type" property="type" />
+        <result column="moduleType" property="moduleType" />
         <result column="field_name" property="fieldName" />
         <result column="business_id" property="businessId" />
         <result column="old_value" property="oldValue" />
@@ -23,7 +23,7 @@
         <result column="pid" property="pid" />
     </resultMap>
 
-    <select id="paging" resultType="com.erp.model.scm.dto.ModuleOperateLogDTO$listDTO">
+    <select id="paging" resultType="com.erp.model.scm.dto.ModuleOperateLogDTO$ListDTO">
         select
         sol.type,
         sol.business_id,

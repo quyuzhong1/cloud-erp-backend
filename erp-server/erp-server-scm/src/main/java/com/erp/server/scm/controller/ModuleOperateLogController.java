@@ -3,15 +3,15 @@ package com.erp.server.scm.controller;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.server.scm.service.ModuleOperateLogService;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 
@@ -36,8 +36,8 @@ public class ModuleOperateLogController extends BaseController {
     * @return ApiResult<PagingVO<listDTO>>
     */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<ModuleOperateLogDTO.listDTO>> paging(@RequestBody @Validated PagingDTO<ModuleOperateLogDTO.searchDTO> dto){
-        PagingVO<ModuleOperateLogDTO.listDTO> pagingVO = moduleOperateLogService.paging(dto);
+    public ApiResult<PagingVO<ModuleOperateLogDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ModuleOperateLogDTO.SearchDTO> dto){
+        PagingVO<ModuleOperateLogDTO.ListDTO> pagingVO = moduleOperateLogService.paging(dto);
         return success(pagingVO);
     }
 }

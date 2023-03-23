@@ -8,7 +8,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -46,9 +45,9 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/approveStatus/list")
-    public ApiResult<List<BaseDropDownDTO>> listApproveStatusDropDown() {
-        List<BaseDropDownDTO> result = Arrays.stream(ApproveStatusEnum.values())
-                .map(x -> new BaseDropDownDTO(x.getStatus(), x.getName(), ""))
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listApproveStatusDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(ApproveStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
@@ -59,30 +58,12 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/invalidStatus/list")
-    public ApiResult<List<BaseDropDownDTO>> listInvalidStatusDropDown() {
-        List<BaseDropDownDTO> result = Arrays.stream(InvalidStatusEnum.values())
-                .map(x -> new BaseDropDownDTO(x.getStatus(), x.getName(), ""))
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listInvalidStatusDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(InvalidStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
-
-    /**
-     * 已审核启用仓库下拉列表
-     *
-     * @return
-     */
-    @GetMapping("/warehouse/list")
-    public ApiResult<List<BaseDropDownDTO>> listWarehouseDropDown() {
-        List<WarehouseDTO.UpdateDTO> list = wmsTaskFeign.listApproveWarehouse();
-        if (CollectionUtils.isEmpty(list)) {
-            return success(new ArrayList<>());
-        }
-        List<BaseDropDownDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO(x.getId(), x.getName(), ""))
-                .collect(Collectors.toList());
-        return success(result);
-    }
-
 
     /**
      * 已审核供应商下拉列表
@@ -90,13 +71,13 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/supplier/list")
-    public ApiResult<List<BaseDropDownDTO>> listSupplierDropDown() {
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listSupplierDropDown() {
         List<Map<String, Object>> mapList = supplierService.listApproveSupplier();
         if (CollectionUtils.isEmpty(mapList)) {
             return success(new ArrayList<>());
         }
-        List<BaseDropDownDTO> result = mapList.stream()
-                .map(x -> new BaseDropDownDTO(x.get("id").toString(), x.get("name").toString(), ""))
+        List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled")))
                 .collect(Collectors.toList());
         return success(result);
     }
@@ -107,11 +88,11 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/supplier/phase/list")
-    public ApiResult<List<BaseDropDownDTO>> listSupplierPhase() {
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSupplierPhase() {
         SupplierPhaseEnum[] phaseList = SupplierPhaseEnum.values();
         List<SupplierPhaseEnum> list = Arrays.asList(phaseList);
-        List<BaseDropDownDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO(x.getPhase(), x.getName(), ""))
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
@@ -122,10 +103,10 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/createPoType/list")
-    public ApiResult<List<BaseDropDownDTO>> listCreatePoType() {
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listCreatePoType() {
         List<CreatePoTypeEnum> list = Arrays.asList(CreatePoTypeEnum.values());
-        List<BaseDropDownDTO> result = list.stream()
-                .map(x -> new BaseDropDownDTO(x.getStatus(), x.getName(), ""))
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
