@@ -47,34 +47,34 @@ public class PurchaseApplicationImportExcelDTO implements Serializable {
     /**
      * 采购组织
      */
-    @ExcelProperty(value = "*采购组织", index = 3)
+    @ExcelProperty(value = "*采购组织", index = 4)
     @FieldValid(fieldName = "采购组织",isNotBlank = true)
     private String  purchaseOrgName;
 
     /**
      * 收料组织
      */
-    @ExcelProperty(value = "*收料组织", index = 3)
+    @ExcelProperty(value = "*收料组织", index = 5)
     @FieldValid(fieldName = "收料组织",isNotBlank = true)
     private String  receiveOrgName;
 
     /**
      * 目的仓库
      */
-    @ExcelProperty(value = "*目的仓库", index = 4)
+    @ExcelProperty(value = "*目的仓库", index = 6)
     @FieldValid(fieldName = "目的仓库", isNotBlank = true)
     private String  destWarehouseName;
 
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 5)
+    @ExcelProperty(value = "备注", index = 7)
     @FieldValid(fieldName = "备注",maxLength = 255)
     private String  remark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 6)
+    @ExcelProperty(value = "错误数据", index = 8)
     private String  errorMsg;
 }

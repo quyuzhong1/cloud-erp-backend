@@ -48,7 +48,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
     /**
      * 明细中已存在的skuId集合
      */
-    private List<String> skuIds;
+    private List<String> skuIds ;
 
     /**
      * sku数据
@@ -71,7 +71,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
     public PurchaseApplicationExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds,List<BaseIdDTO> companyList) {
         this.skuList = skuList;
         this.warehouseList = warehouseList;
-        this.skuIds = skuIds;
+        this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
         this.companyList = companyList;
     }
 

@@ -93,7 +93,18 @@ public class SupplierPhaseDTO implements Serializable {
         /**
          * 供应商表id
          */
-        private String SupplierId;
+        private String supplierId;
+
+
+        /**
+         * 供应商表id
+         */
+        private String supplierName;
+
+        /**
+         * 供应商编号
+         */
+        private String supplierCode;
 
 
         /**
@@ -112,15 +123,30 @@ public class SupplierPhaseDTO implements Serializable {
         private String type;
 
         /**
+         * 操作类型
+         */
+        private String typeName;
+
+        /**
          * 当前阶段
          */
         private String currentPhase;
+
+        /**
+         * 当前阶段名
+         */
+        private String currentPhaseName;
 
 
         /**
          * 目标阶段
          */
         private String targetPhase;
+
+        /**
+         * 目标阶段名
+         */
+        private String targetPhaseName;
 
         /**
          * 说明

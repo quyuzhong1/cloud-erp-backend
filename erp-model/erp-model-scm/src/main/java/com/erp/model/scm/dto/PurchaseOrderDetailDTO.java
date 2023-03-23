@@ -108,6 +108,16 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
+
+        /**
+         * 采购申请明细id(无需传值，后端使用)
+         */
+        private String purchaseApplicationDetailId;
+
+        /**
+         * 采购申请id(无需传值，后端使用)
+         */
+        private String purchaseApplicationId;
     }
 
     @Data

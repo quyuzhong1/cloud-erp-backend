@@ -2,8 +2,10 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -310,6 +312,15 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+
+        String searchType = params.getSearchType();
+        List<String> supplierPhaseIdList = new ArrayList<>();
+
+        //待我审核
+        if (searchType.equals(SearchType.WAIT_APPROVE)) {
+
+        }
+        IPage pageData = baseMapper.paging(query, params, supplierPhaseIdList);
 
 
         return null;
