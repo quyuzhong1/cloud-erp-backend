@@ -1,6 +1,8 @@
 package com.erp.model.bi.vo;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 店铺下拉列表
@@ -10,11 +12,33 @@ import lombok.*;
  **/
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-@ToString
 public class ShopDropDownVO {
-    private String name;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopDropDownNameVO {
+        /**
+         * 店铺名称
+         */
+        private String name;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopDropDownIdVO extends ShopDropDownNameVO{
+
+        /**
+         * 店铺id
+         */
+        private String id;
+
+        public ShopDropDownIdVO(String id, String name) {
+            this.id = id ;
+            this.setName(name);
+        }
+    }
 
 }

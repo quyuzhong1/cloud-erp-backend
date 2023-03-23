@@ -4,6 +4,7 @@ import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseApplicationDetailMapper;
@@ -69,7 +70,18 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Override
     public PurchaseApplicationDetailEntity getByPurchaseApplicationIdAndSkuId(String purchaseApplicationId, String skuId) {
-        return lambdaQuery().eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId).eq(PurchaseApplicationDetailEntity::getSkuId,skuId).one();
+        return lambdaQuery()
+                .eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId)
+                .eq(PurchaseApplicationDetailEntity::getSkuId,skuId)
+                .one();
+    }
+
+    @Override
+    public List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(String purchaseApplicationId) {
+        return  lambdaQuery()
+                .eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId)
+                .ne(PurchaseApplicationDetailEntity::getCreatePoType, CreatePoTypeEnum.ALL_GENERATED.getStatus())
+                .list();
     }
 
     /**

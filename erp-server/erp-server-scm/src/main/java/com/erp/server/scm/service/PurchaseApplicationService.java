@@ -63,6 +63,15 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      */
     Boolean disApprove(List<String> ids);
     /**
+     * @description: 生成采购订单查询
+     * @author Will
+     * @date: 2023/3/22 19:00
+     * @param id
+     * @return List<ViewGeneratePurchaseOrderDTO>
+     */
+    List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id);
+
+    /**
      * @description: 生成采购单
      * @author Will
      * @date: 2023/3/15 18:26
@@ -130,12 +139,5 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean cancelProcess(List<String> ids);
-    /**
-     * @description: 生成采购订单查询
-     * @author Will
-     * @date: 2023/3/22 19:00
-     * @param id
-     * @return List<ViewGeneratePurchaseOrderDTO>
-     */
-    List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id);
+
 }
