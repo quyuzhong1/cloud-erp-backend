@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -111,6 +112,20 @@ public class DropDownListController extends BaseController {
         List<SupplierPhaseEnum> list = Arrays.asList(phaseList);
         List<BaseDropDownDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO(x.getPhase(), x.getName(), ""))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 订单生成状态列表
+     *
+     * @return
+     */
+    @GetMapping("/createPoType/list")
+    public ApiResult<List<BaseDropDownDTO>> listCreatePoType() {
+        List<CreatePoTypeEnum> list = Arrays.asList(CreatePoTypeEnum.values());
+        List<BaseDropDownDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO(x.getStatus(), x.getName(), ""))
                 .collect(Collectors.toList());
         return success(result);
     }

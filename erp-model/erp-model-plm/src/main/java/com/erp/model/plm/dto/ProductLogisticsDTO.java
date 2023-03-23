@@ -40,6 +40,7 @@ public class ProductLogisticsDTO implements Serializable {
     /**
      * 报关型号
      */
+    @Size(max = 50,message = "报关型号最大100字符")
     private String declareModel;
 
     /**
