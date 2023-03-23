@@ -159,7 +159,7 @@ public class GyyApiUtils {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("start_modify_date", sdf.format(startDate));
             params.put("end_modify_date", sdf.format(endDate));
-            params.put("cancel", 0);
+//            params.put("cancel", 0);
             Map<String, Object> paramMap = getParamMap(method,pageSize, pageIndex, params);
 
             //设置请求头

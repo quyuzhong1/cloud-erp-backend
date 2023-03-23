@@ -179,9 +179,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
         //平台订单编号
-        dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getFOrderNo());
+        dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getFBillNo());
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getFBillNo());
+        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getFOrderNo());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo("B2B");
         //店铺名称
