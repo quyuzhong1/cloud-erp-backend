@@ -58,9 +58,9 @@ public class GyyRefundEntity {
     private String _id;
 
     @SerializedName("create_date")
-    private LocalDateTime createDate;
+    private String createDate;
     @SerializedName("modify_date")
-    private LocalDateTime modifyDate;
+    private String modifyDate;
     @SerializedName("code")
     private String code;
     @SerializedName("approve")

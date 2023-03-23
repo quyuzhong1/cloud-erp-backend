@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -88,9 +87,9 @@ public class GyyReturnOrderEntity {
     @SerializedName("note")
     private String note;
     @SerializedName("create_date")
-    private LocalDateTime createDate;
+    private String createDate;
     @SerializedName("approve_date")
-    private LocalDateTime approveDate;
+    private String approveDate;
     @SerializedName("approve")
     private Integer approve;
     @SerializedName("receive_date")

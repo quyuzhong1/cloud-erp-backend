@@ -25,7 +25,7 @@ public class RefundOrderEntity {
     private String content;
     private Integer type;
     private Integer flag;
-    private LocalDateTime createTime;
+    private String createTime;
     private String errorDescr;
     private Integer orderStatus;
     private String shopId;
@@ -33,7 +33,7 @@ public class RefundOrderEntity {
     private String platformName;
     private String platformOrderId;
     private String refundplatformOrderId;
-    private LocalDateTime refundTime;
+    private String refundTime;
     private BigDecimal currencyRate;
     private String expressType;
     private String logisticsChannelName;
@@ -47,11 +47,11 @@ public class RefundOrderEntity {
     private BigDecimal itemTotalOrigin;
     private BigDecimal shippingTotalOrigin;
     private String paypalId;
-    private LocalDateTime orderTime;
-    private LocalDateTime expressTime;
+    private String orderTime;
+    private String expressTime;
     private Integer source;
     private String pictureUrl;
-    private LocalDateTime updateTime;
+    private String updateTime;
     private String refundText;
     private String complaintId;
     private String trackNumber;
