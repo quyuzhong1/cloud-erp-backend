@@ -96,7 +96,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = new SupplierEntity();
         BeanMapper.copy(dto, addEntity);
+
+
+        List<String> keyList = new ArrayList<>(1);
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        String categoryId = dto.getCategoryId();
+        String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setId(supplierId);
+        addEntity.setCategoryName(categoryName);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
         addEntity.setCode(code);
@@ -202,6 +212,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.ERROR_98003);
         }
         BeanMapper.copy(supplier, dto);
+
+        List<String> keyList = new ArrayList<>(1);
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        String categoryId = dto.getCategoryId();
+        String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        supplier.setCategoryName(categoryName);
         supplier.setCode(code);
         Boolean result = this.updateById(supplier);
         //修改成功

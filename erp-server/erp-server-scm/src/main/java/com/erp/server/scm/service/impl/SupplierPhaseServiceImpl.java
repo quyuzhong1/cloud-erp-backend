@@ -321,9 +321,26 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
         }
         IPage pageData = baseMapper.paging(query, params, supplierPhaseIdList);
+        List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        for (SupplierPhaseDTO.PagingViewDTO item : list) {
+            String type = item.getType();
+            item.setTypeName(type.equals(ScmConstant.DEGRADE) ? "降级" : "升级");
+            //当前阶段
+            String currentPhase = item.getCurrentPhase();
+            String currentPhaseName = SupplierPhaseEnum.getPhaseName(currentPhase);
+            item.setCurrentPhase(currentPhaseName);
 
-
-        return null;
+            //目标阶段
+            String targetPhase = item.getTargetPhase();
+            String targetPhaseName = SupplierPhaseEnum.getPhaseName(targetPhase);
+            item.setTargetPhaseName(targetPhaseName);
+            String approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(ApproveStatusEnum.getName(approveStatus));
+        }
+        return new PagingVO(pageData);
     }
 
 

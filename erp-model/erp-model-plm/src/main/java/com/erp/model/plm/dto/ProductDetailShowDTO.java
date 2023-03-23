@@ -202,7 +202,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 年度销量
      * product_sale
      */
-    private Integer yearSaleQty;
+    private Long yearSaleQty;
 
     /**
      * 年度销售额
