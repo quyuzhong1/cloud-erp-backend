@@ -256,7 +256,7 @@ public class BiDropDownListController extends BaseController {
      * 店铺下拉框(status,1启用，2禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/list")
-    public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam("status") Integer status) {
+    public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status",required = false) Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();
@@ -274,7 +274,7 @@ public class BiDropDownListController extends BaseController {
      * 所有店铺下拉框(status,1启用，2禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/listAll")
-    public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status") Integer status) {
+    public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status",required = false) Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();

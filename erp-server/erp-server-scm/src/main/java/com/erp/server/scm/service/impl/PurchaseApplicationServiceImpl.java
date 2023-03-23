@@ -98,6 +98,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Resource
     private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
 
+    @Resource
+    private PurchaseOrderService purchaseOrderService;
+
+
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -289,9 +293,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseDeptId(entity.getApplyDeptId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
+
+            List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
             //明细数据按skuId、仓库、收料组织、交期分组
             Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId().concat("|").concat(obj.getReceiveOrgId()).concat(obj.getDestWarehouseId()).concat("|").concat(String.valueOf(obj.getPlanDeliveryDate()))));
             for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailEntry : detailMap.entrySet()) {
+
                 List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> detailValue = detailEntry.getValue();
                 //采购订单明细数据
                 PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
@@ -320,12 +327,17 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     addDetailDTO.setIsGift(Boolean.TRUE);
                 }
 
-
+                //采购报价单取税率 TODO
+                addDetailDTO.setTaxRate(BigDecimal.ZERO);
+                details.add(addDetailDTO);
             }
-
+            addDTO.setDetails(details);
+            resultList.add(addDTO);
         }
-
-        return null;
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            resultList.forEach(obj -> purchaseOrderService.add(obj));
+        }
+        return Boolean.TRUE;
     }
 
     @Override
