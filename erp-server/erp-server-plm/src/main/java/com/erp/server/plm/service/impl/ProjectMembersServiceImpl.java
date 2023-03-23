@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -529,7 +530,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
             TaskConductDTO dto = new TaskConductDTO();
             dto.setMembersId(item.getUserId());
             dto.setMembersName(item.getUserName());

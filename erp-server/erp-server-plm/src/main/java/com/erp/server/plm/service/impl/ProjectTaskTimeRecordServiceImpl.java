@@ -82,12 +82,12 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             List<ProjectTaskEntity> taskEntityList = projectTaskService.getByTaskIds(Arrays.asList(record.getTaskIds().split(",")));
             // 计算计划工时
             Integer planWorkDay = taskEntityList.stream().mapToInt(task -> {
-                LocalDateTime planEndTime = task.getPlanEndTime();
-                LocalDateTime planStartTime = task.getPlanStartTime();
+                LocalDate planEndTime = task.getPlanEndTime();
+                LocalDate planStartTime = task.getPlanStartTime();
                 if (null == planStartTime || null == planEndTime) {
                     return 0;
                 }
-                return LocalDateUtil.countDaysForLocalDate(planStartTime.toLocalDate(), planEndTime.toLocalDate(), holidays);
+                return LocalDateUtil.countDaysForLocalDate(planStartTime, planEndTime, holidays);
             }).sum();
             // 赋值
             record.setPlanTaskTime(planWorkDay);

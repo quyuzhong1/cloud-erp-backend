@@ -74,13 +74,13 @@ public class ProjectTaskEntity extends BaseEntity implements Serializable {
      * 计划开始时间
      */
     @TableField(value = "plan_start_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
-    private LocalDateTime planStartTime;
+    private LocalDate planStartTime;
 
     /**
      * j计划结束时间
      */
     @TableField(value = "plan_end_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
-    private LocalDateTime planEndTime;
+    private LocalDate planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
@@ -233,8 +233,8 @@ public class ProjectTaskEntity extends BaseEntity implements Serializable {
                 planWorkPeriod --;
             }
         }
-        this.planStartTime =  LocalDateTimeUtil.of(startDate);
-        this.planEndTime =  LocalDateTimeUtil.of(endDate);
+        this.planStartTime =  startDate;
+        this.planEndTime =  endDate;
     }
     public ProjectTaskEntity(PlanTaskNameDTO task, LocalDate startDate, LocalDate endDate, ProjectChildTaskDTO projectChildTaskDTO, List<LocalDate> dateList) {
         super(task.getId());
@@ -242,7 +242,7 @@ public class ProjectTaskEntity extends BaseEntity implements Serializable {
         Integer intervalWorkPeriod = projectChildTaskDTO.getIntervalWorkPeriod();
         Integer planWorkPeriod = task.getWorkPeriod();
         Map<String, LocalDate> resultMap = LocalDateUtil.relationshipLocalDate(relationship.getCode(), startDate, endDate, intervalWorkPeriod, planWorkPeriod, dateList);
-        this.planStartTime = LocalDateTimeUtil.of(resultMap.get("startDate"));
-        this.planEndTime = LocalDateTimeUtil.of(resultMap.get("endDate"));
+        this.planStartTime = resultMap.get("startDate");
+        this.planEndTime = resultMap.get("endDate");
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.plm.listener;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -135,8 +136,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());
-        changeVO.setOriginStartTime(task.getPlanStartTime());
-        changeVO.setOriginEndTime(task.getPlanEndTime());
+        changeVO.setOriginStartTime(LocalDateTimeUtil.of(task.getPlanStartTime()));
+        changeVO.setOriginEndTime(LocalDateTimeUtil.of(task.getPlanEndTime()));
         String taskChargeId = task.getChargeId();
         String taskChargeName = task.getChargeName();
         List<String> chargeIdList = new ArrayList<>();

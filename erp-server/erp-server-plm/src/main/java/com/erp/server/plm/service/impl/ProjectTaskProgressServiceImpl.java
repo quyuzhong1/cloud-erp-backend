@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -352,7 +353,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
      */
     private ProductMilepostDateDTO getTaskMilepostDate(String taskId, ProductMilepostDateDTO dateDTO) {
         ProjectTaskEntity projectTaskEntity = projectTaskService.getById(taskId);
-        dateDTO.setPlanEndTime(projectTaskEntity.getPlanEndTime());
+        dateDTO.setPlanEndTime(LocalDateTimeUtil.of(projectTaskEntity.getPlanEndTime()));
         dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
         return dateDTO;
     }

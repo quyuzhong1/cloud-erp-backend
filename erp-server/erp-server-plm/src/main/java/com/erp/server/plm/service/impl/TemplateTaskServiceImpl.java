@@ -746,6 +746,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (Objects.isNull(template)) {
             throw new ServiceException(ApiError.ERROR_95051);
         }
+        if (dto.getTaskIdList().size() <= 0 || dto.getTaskIdList() == null) {
+            return true;
+        }
         //复制模板团队成员
         try {
             List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");

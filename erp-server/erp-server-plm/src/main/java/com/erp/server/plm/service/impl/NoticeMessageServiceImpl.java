@@ -331,7 +331,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -567,7 +567,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -646,7 +646,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -742,7 +742,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -815,7 +815,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -892,7 +892,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setNoticeMessageId(null);
                     recordEntity.setNoticeNode(null);
                     recordEntity.setNoticeUserId(userId);
-                    recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                    recordEntity.setPlanEndTime(task.getPlanEndTime());
                     recordEntity.setProductId(productId);
                     recordEntity.setProductName(productInfoEntity.getName());
                     recordEntity.setTaskId(task.getId());
@@ -1388,7 +1388,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -1466,7 +1466,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -1554,7 +1554,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(product.getProductId());
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
@@ -1632,7 +1632,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setNoticeMessageId(noticeMessageId);
                     recordEntity.setNoticeNode(flag);
                     recordEntity.setNoticeUserId(userId);
-                    recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                    recordEntity.setPlanEndTime(task.getPlanEndTime());
                     recordEntity.setProductId(product.getProductId());
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId(task.getId());
@@ -1709,7 +1709,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setNoticeMessageId(noticeMessageId);
                     recordEntity.setNoticeNode(flag);
                     recordEntity.setNoticeUserId(userId);
-                    recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                    recordEntity.setPlanEndTime(task.getPlanEndTime());
                     recordEntity.setProductId(product.getProductId());
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId(task.getId());
@@ -2294,7 +2294,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                Date planEndTime = Date.from(task.getPlanEndTime().atZone( ZoneId.systemDefault()).toInstant());;
+                Date planEndTime = Date.from(task.getPlanEndTime().atStartOfDay().atZone( ZoneId.systemDefault()).toInstant());;
                 //获取计划时间的开始时间
                 Date planEndStartTime = DateUtil.getStartTime(planEndTime);
                 //比较差值
@@ -2322,7 +2322,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setNoticeMessageId(noticeMessageId);
                         recordEntity.setNoticeNode(flag);
                         recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime().toLocalDate());
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
                         recordEntity.setProductId(task.getProductId());
                         recordEntity.setProductName("");
                         recordEntity.setTaskId(task.getId());

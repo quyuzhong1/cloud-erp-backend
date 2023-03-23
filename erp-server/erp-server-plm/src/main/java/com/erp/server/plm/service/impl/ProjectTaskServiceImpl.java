@@ -716,7 +716,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             int totalTaskCount = taskList.size();
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
             dto.setTotalTaskCount(totalTaskCount);
             dto.setFinishTaskCount(finishTaskCount);
             dto.setIngTaskCount(ingTaskCount);
@@ -750,7 +750,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = list.size();
         //延期的任务数
-        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
         dto.setTotalTaskCount(totalTaskCount);
         dto.setFinishTaskCount(finishTaskCount);
         dto.setIngTaskCount(ingTaskCount);
@@ -1164,7 +1164,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = taskList.size();
         //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
         ProductTaskCountDTO taskCountDTO = new ProductTaskCountDTO();
         taskCountDTO.setFinishTaskCount(finishTaskCount);
         taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);
@@ -1207,12 +1207,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (updateMap.containsKey("planStartTime")) {
             String planStartTime = dto.getPlanStartTime();
-            taskEntity.setPlanStartTime(LocalDateTime.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planStartTime)));
+            taskEntity.setPlanStartTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planStartTime)));
         }
         if (updateMap.containsKey("planEndTime")) {
             //结束时间
             String planEndTime = dto.getPlanEndTime();
-            taskEntity.setPlanEndTime(LocalDateTime.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planEndTime)));
+            taskEntity.setPlanEndTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planEndTime)));
         }
         List<String> chargeIdList = dto.getChargeIdList();
         if (StringUtils.isNotBlank(name)) {
@@ -2372,8 +2372,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         item.setChargeName(String.join(",", names));
                     }
 
-                    item.setPlanStartTime(LocalDateTimeUtil.of(planTask.getChangeStartTime()));
-                    item.setPlanEndTime(LocalDateTimeUtil.of(planTask.getChangeEndTime()));
+                    item.setPlanStartTime(planTask.getChangeStartTime());
+                    item.setPlanEndTime(planTask.getChangeEndTime());
                     item.setScheduleStatus(status);
                     //如果是重启
                     if (planTask.getIsRestart()) {

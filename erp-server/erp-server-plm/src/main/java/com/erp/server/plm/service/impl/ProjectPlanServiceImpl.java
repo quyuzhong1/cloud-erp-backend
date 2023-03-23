@@ -1006,9 +1006,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
            if(1 == type){
                ProjectTaskEntity updateTaskEntity = new ProjectTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
                projectTaskService.updateById(updateTaskEntity);
-               endDate = updateTaskEntity.getPlanEndTime().toLocalDate();
-               startDate = updateTaskEntity.getPlanStartTime().toLocalDate();
-               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime().toLocalDate(), updateTaskEntity.getPlanEndTime().toLocalDate()));
+               endDate = updateTaskEntity.getPlanEndTime();
+               startDate = updateTaskEntity.getPlanStartTime();
+               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime(), updateTaskEntity.getPlanEndTime()));
            }else {
                ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
                projectPlanTaskService.updateById(updateTaskEntity);
@@ -1062,9 +1062,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             if(1 == type){
                 ProjectTaskEntity taskEntity = new ProjectTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
                 projectTaskService.updateById(taskEntity);
-                planEndTime = taskEntity.getPlanEndTime().toLocalDate();
-                planStartTime = taskEntity.getPlanStartTime().toLocalDate();
-                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(taskEntity.getId(), taskEntity.getPlanStartTime().toLocalDate(), taskEntity.getPlanEndTime().toLocalDate()));
+                planEndTime = taskEntity.getPlanEndTime();
+                planStartTime = taskEntity.getPlanStartTime();
+                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(taskEntity.getId(), taskEntity.getPlanStartTime(), taskEntity.getPlanEndTime()));
             }else {
                 ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
                 projectPlanTaskService.updateById(updateTaskEntity);
