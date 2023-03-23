@@ -114,6 +114,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private ProjectTaskService projectTaskService;
 
+    @Autowired
+    private ProjectMembersService projectMembersService;
+
+    @Autowired
+    private ProductInfoService productInfoService;
+
     /**
      * 产品保存模板 保存任务
      *
@@ -354,6 +360,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 ProjectTaskEntity projectTaskEntity = byProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
                 if (!Objects.isNull(projectTaskEntity)) {
                     continue;
+                }
+                if (item.getName().equals("大师法规")) {
+                    int a = 1+1;
+                    System.out.println("11111111111111111111");
                 }
                 CopySourceDTO source = new CopySourceDTO();
                 String taskId = IdWorker.getIdStr();
@@ -784,6 +794,20 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
             //复制模板sku 与任务关系
             templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(templateId, productId, taskSourceList);
+
+
+            ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+            List<String> chargeIds = Arrays.asList(productInfoEntity.getChargeId().split(","));
+            //新增或修改产品经理角色和对应成员
+            projectMembersService.saveByRoleAndMembers(productId, null, "产品经理", chargeIds);
+
+            /**
+             * 当项目经理不为空的时候保经理
+             */
+            if(StringUtils.isNotBlank(productInfoEntity.getProjectChargeId())){
+                //新增或修改项目经理角色和对应成员
+                projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(productInfoEntity.getProjectChargeId()));
+            }
             return true;
         } catch (Exception e) {
             e.printStackTrace();
