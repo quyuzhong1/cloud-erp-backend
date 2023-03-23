@@ -25,12 +25,13 @@
           pi.end_time,
           pph.name as projectPhase
         FROM product_info p
-        LEFT JOIN project_info pi ON p.id = pi.product_id
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -135,12 +136,13 @@
 
     <select id="listNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
         SELECT p.id, p.name FROM product_info p LEFT JOIN project_info pi
-        ON p.id = pi.product_id
+        ON p.id = pi.product_id AND pi.is_deleted = FALSE
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
+        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -245,7 +247,7 @@
         pj.charge_name AS projectChargeName,to_char(pj.start_time,'yyyy-MM-dd') AS planStartTime,
         to_char(pj.end_time,'yyyy-MM-dd') AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
-        LEFT JOIN project_info pj ON pi.id=pj.product_id
+        LEFT JOIN project_info pj ON pi.id=pj.product_id AND pj.is_deleted = FALSE
         WHERE pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE AND pi.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
@@ -254,7 +256,7 @@
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT relevance_product_id AS flagId, COUNT(*)  AS count FROM product_info
-        WHERE relevance_product_id !='' AND delete_state=0 AND is_finished_product_dev = 1 GROUP BY relevance_product_id
+        WHERE relevance_product_id !='' AND delete_state=0 AND is_finished_product_dev = 1 AND is_deleted = FALSE  GROUP BY relevance_product_id
     </select>
 
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -267,12 +269,13 @@
         p.property,
         p.category
         FROM product_info p LEFT JOIN project_info pi
-        ON p.id = pi.product_id
+        ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -365,10 +368,11 @@
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
+        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -459,7 +463,7 @@
     <select id="getProductAndProjectList" resultType="com.erp.model.plm.dto.ProductProjectDTO">
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
         FROM product_info pi Left JOIN project_info pj
-        ON pi.id=pj.product_id
+        ON pi.id=pj.product_id AND pj.is_deleted = FALSE
         WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         AND (pj.project_status IS NULL OR pj.project_status!=#{projectStatus})
         <if test="archiveProductIdList!=null and  archiveProductIdList.size>0">
@@ -477,7 +481,7 @@
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
-        ON p.id=pi.product_id
+        ON p.id=pi.product_id AND pi.is_deleted = FALSE
         WHERE P.id=#{productId} AND p.is_deleted = FALSE
     </select>
 
@@ -489,7 +493,7 @@
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
-        ON p.id=pi.product_id
+        ON p.id=pi.product_id AND pi.is_deleted = FALSE
         WHERE  p.delete_state=0 AND p.is_deleted = FALSE and  P.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}

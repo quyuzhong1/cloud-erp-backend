@@ -12,8 +12,8 @@
          pa.quantity,
          pa.accessories_sku_id
          FROM product_detail pd
-         LEFT JOIN product_accessories pa
-         ON pa.parent_sku_id=pd.id AND pa.is_deleted=false
+         LEFT JOIN product_accessories pa AND pa.is_deleted = FALSE
+         ON pa.parent_sku_id=pd.id AND pd.is_deleted=false
          WHERE pd.product_id=#{productId} AND pd.is_deleted = FALSE
     </select>
 </mapper>

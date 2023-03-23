@@ -12,7 +12,7 @@
          bd.value AS productPropertyValue
         FROM  template_ref_property trp
         INNER JOIN basic_dict bd
-        ON bd.id=trp.product_property_id
+        ON bd.id=trp.product_property_id AND bd.is_deleted = FALSE
         WHERE trp.is_deleted=false
         <if test="templateIdList !=null and templateIdList.size>0">
            AND trp.template_id IN

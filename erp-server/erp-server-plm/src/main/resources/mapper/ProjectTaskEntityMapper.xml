@@ -26,7 +26,7 @@
             pt.related_sku_type as relatedSkuType,
             pp.seq
         FROM project_task pt
-        left join project_phase pp on pt.phase_id = pp.id
+        left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
         WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
             AND pt.phase_id = #{params.phaseId}
@@ -91,7 +91,7 @@
 
     <select id="pagingCount" resultType="java.lang.Integer">
         SELECT count(0) FROM project_task
-        WHERE product_id = #{productId}
+        WHERE product_id = #{productId} AND is_deleted = FALSE
         <if test="userId !=null and userId!=''">
             AND strpos (charge_id,#{userId})>0
         </if>
@@ -127,8 +127,8 @@
             pt.related_sku_type as relatedSkuType,
             pp.seq
         FROM project_task pt
-        left join project_phase pp on pt.phase_id = pp.id
-        WHERE pt.product_id = #{params.productId}
+        left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
+        WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
             AND pt.phase_id = #{params.phaseId}
         </if>
@@ -191,7 +191,7 @@
 
     <select id="allPagingCount" resultType="java.lang.Integer">
         SELECT count(0) FROM project_task
-        WHERE product_id = #{productId}
+        WHERE product_id = #{productId}  AND is_deleted = FALSE
         <if test="param != null and param != ''">
             ${param}
         </if>
@@ -207,8 +207,8 @@
         date_part('day',t.reality_end_time - t.reality_start_time) + 1 AS realityDay,
         p.name AS productName
         FROM project_task t INNER JOIN product_info p
-        on p.id=t.product_id
-        WHERE t.product_id IN
+        on p.id=t.product_id AND p.is_deleted = FALSE
+        WHERE t.is_deleted = FALSE AND t.product_id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
@@ -225,10 +225,10 @@
         pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName,
         (CASE WHEN pttr.task_time is null THEN 0 else pttr.task_time end)/8 as realTaskTime
         FROM   project_task t
-        LEFT JOIN product_info pi ON pi.id=t.product_id
-        LEFT JOIN project_info pj ON pj.product_id=pi.id
-        LEFT JOIN project_task_time_record pttr on t.id = pttr.project_task_id
-        WHERE t.id=#{taskId}
+        LEFT JOIN product_info pi ON pi.id=t.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN project_info pj ON pj.product_id=pi.id AND pj.is_deleted = FALSE
+        LEFT JOIN project_task_time_record pttr on t.id = pttr.project_task_id AND pttr.is_deleted = FALSE
+        WHERE t.id=#{taskId} AND t.is_deleted = FALSE
     </select>
 
 
@@ -241,8 +241,9 @@
             work_period AS workPeriod
         FROM project_task
         <where>
+            is_deleted = FALSE
             <if test="taskIds !=null and taskIds.size()>0">
-                id IN
+                AND id IN
                 <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
                     #{taskId}
                 </foreach>
@@ -253,7 +254,7 @@
     <select id="allChildrenList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
           SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
             charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
-            WHERE product_id=#{productId} AND pid !='0'
+            WHERE product_id=#{productId} AND pid !='0' AND is_deleted = FALSE
     </select>
 
 
@@ -281,8 +282,8 @@
             pt.work_period as workPeriod,
             pp.seq
         FROM project_task pt
-        left join project_phase pp on pt.phase_id = pp.id
-        WHERE pt.product_id = #{params.productId} <!--AND pid='0'--> AND pt.process_id IN
+        left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
+        WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE <!--AND pid='0'--> AND pt.process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
             #{processId}
         </foreach>
@@ -346,7 +347,7 @@
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">
         SELECT count(0) FROM project_task
-        WHERE product_id = #{productId} <!--AND pid='0'--> AND process_id IN
+        WHERE product_id = #{productId} AND is_deleted = FALSE <!--AND pid='0'--> AND process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
             #{processId}
         </foreach>
@@ -360,7 +361,7 @@
 
     <select id="findUndone" resultType="int">
         SELECT COUNT(*) FROM project_task WHERE
-        status!=#{finishState} AND status !=#{approvalPassState}
+        status!=#{finishState} AND status !=#{approvalPassState} AND is_deleted = FALSE
         <if test="taskIds!=null and taskIds.size>0">
             AND id IN
             <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
@@ -373,12 +374,12 @@
     <select id="toMeTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
-        left join product_info pdi on t.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
+        left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution WHERE is_deleted = FALSE group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         <where>
             (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-            pji.project_status != 4)
+            pji.project_status != 4) AND t.is_deleted = FALSE
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -404,11 +405,11 @@
     <select id="toMeTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
-        left join product_info pdi on t.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
+        left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
         left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-        pji.project_status != 4) and t.plan_end_time IS NOT NULL
+        pji.project_status != 4) and t.plan_end_time IS NOT NULL AND t.is_deleted = FALSE
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -432,11 +433,11 @@
     <select id="myCreateTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
-        left join product_info pdi on t.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
+        left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
         <where>
             (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-            pji.project_status != 4)
+            pji.project_status != 4) AND t.is_deleted = FALSE
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -463,10 +464,10 @@
     <select id="myCreateTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
-        left join product_info pdi on t.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
+        left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
         WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-        pji.project_status != 4) and t.plan_end_time IS NOT NULL
+        pji.project_status != 4) and t.plan_end_time IS NOT NULL AND t.is_deleted = FALSE
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -491,12 +492,12 @@
     <select id="allTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
-        left join product_info pdi on t.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
+        left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution WHERE is_deleted = FALSE group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         <where>
             (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-            pji.project_status != 4)
+            pji.project_status != 4) AND t.is_deleted = FALSE
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -521,11 +522,11 @@
     <select id="taskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
-        left join product_info pdi on t.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
+        left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution WHERE is_deleted = FALSE group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-        pji.project_status != 4) and t.plan_end_time IS NOT NULL
+        pji.project_status != 4) and t.plan_end_time IS NOT NULL AND t.is_deleted = FALSE
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -569,11 +570,11 @@
                pt.related_sku_type as relatedSkuType,
                pt.work_period AS workPeriod
         FROM project_task pt
-        left join product_info pdi on pt.product_id = pdi.id
-        left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join product_info pdi on pt.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution WHERE is_deleted = FALSE group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
         where  (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-            pji.project_status != 4)
+            pji.project_status != 4) AND t.is_deleted = FALSE
             <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
                 <if test="params.groupFlag != null  and params.groupFlag != ''">
                     AND pt.product_id = #{params.groupFlag}
@@ -669,12 +670,12 @@
     <select id="getExpireWarnTaskList" resultType="com.erp.model.plm.entity.ProjectTaskEntity">
            SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
            charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-           WHERE  status!=#{state}
+           WHERE  status!=#{state} AND is_deleted = FALSE
            AND plan_end_time &gt;= #{startTime}  AND plan_end_time &lt;= #{endTime}
            UNION ALL
            SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
            charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-           WHERE   status!=#{state} AND plan_end_time &lt; #{startTime}
+           WHERE   status!=#{state} AND plan_end_time &lt; #{startTime} AND is_deleted = FALSE
     </select>
 
 
@@ -703,11 +704,12 @@
         then 1
         else 0 end isDelay
         from product_info pi
-        inner join project_task pt on pi.id = pt.product_id
-        left join project_info pi2 on pi.id = pi2.product_id
+        inner join project_task pt on pi.id = pt.product_id AND pt.is_deleted = FALSE
+        left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
         where pi.is_finished_product_dev = 1
         ) t
         <where>
+            pi.is_deleted = FALSE
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0 ">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
@@ -770,11 +772,12 @@
         then 1
         else 0 end isDelay
         from product_info pi
-        inner join project_task pt on pi.id = pt.product_id
-        left join project_info pi2 on pi.id = pi2.product_id
+        inner join project_task pt on pi.id = pt.product_id AND pt.is_deleted = FALSE
+        left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
         where pi.is_finished_product_dev = 1
         ) t
         <where>
+            pi.is_deleted = FALSE
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
@@ -839,10 +842,10 @@
         else 0 end isDelay,
         pp.create_time
         from product_info pi
-        inner join project_task pt on pi.id = pt.product_id
-        left join project_info pi2 on pi.id = pi2.product_id
-        left join project_phase pp on pt.phase_id = pp.id
-        where pi.is_finished_product_dev = 1
+        inner join project_task pt on pi.id = pt.product_id AND pt.is_deleted = FALSE
+        left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
+        left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
+        where pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
@@ -902,9 +905,9 @@
         case when COALESCE(pi2.project_status,-1) = -1 then 0
         else 1 end as isProjectStatus
         from product_info pi
-        inner join product_detail pd on pi.id = pd.product_id
-        left join project_info pi2 on pi.id = pi2.product_id
-        where pi.is_finished_product_dev = 1
+        inner join product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
+        left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
+        where pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
@@ -968,7 +971,7 @@
         business_process_id,
         is_milepost,
         is_sku_change
-        FROM project_task WHERE product_id = #{showDTO.productId}
+        FROM project_task WHERE product_id = #{showDTO.productId} AND is_deleted = FALSE
         <if test="showDTO.param != null and showDTO.param != ''">
             ${showDTO.param}
         </if>
@@ -1004,9 +1007,9 @@
         pt.status,
         pt.work_period as workPeriod,
         COALESCE((SELECT seq  FROM  project_phase  WHERE id=pt.phase_id  LIMIT 1),0) AS phaseSeq
-        FROM project_task pt  LEFT JOIN  product_info pi
-        ON pt.product_id=pi.id
-        WHERE pt.product_id=#{dto.productId}
+        FROM project_task pt
+        LEFT JOIN  product_info pi ON pt.product_id=pi.id AND pi.is_deleted = FALSE
+        WHERE pt.product_id=#{dto.productId} AND pt.is_deleted = FALSE
         <if test="dto.phase!=null and dto.phase!=''  ">
             <if test="dto.phase=='projectApproval'">
                 AND pt.phase_name='立项阶段'
@@ -1052,7 +1055,7 @@
     <select id="getProductMapByProductId" resultType="java.util.Map">
          SELECT COUNT(*) AS "taskCount",
          (SELECT name AS "productName"  FROM product_info WHERE id=#{productId})
-         FROM project_task WHERE product_id=#{productId}
+         FROM project_task WHERE product_id=#{productId} AND is_deleted = FALSE
     </select>
 
     <select id="getScheduleTaskByTaskIds" resultType="com.erp.model.plm.vo.ScheduleTaskVO">
@@ -1067,7 +1070,7 @@
         pid,
         schedule_type
         FROM project_task
-        WHERE  product_id=#{productId}
+        WHERE  product_id=#{productId} AND is_deleted = FALSE
         <if test="taskIdList!=null and taskIdList.size>0">
             AND id IN
             <foreach collection="taskIdList" item="taskId" open="(" separator="," close=")">
@@ -1087,8 +1090,8 @@
             pt.charge_name,
             pt.schedule_status
         FROM project_task pt LEFT JOIN product_info pi
-        ON pt.product_id=pi.id
-        WHERE  product_id=#{dto.productId}
+        ON pt.product_id=pi.id AND pi.is_deleted = FALSE
+        WHERE  product_id=#{dto.productId} AND pt.is_deleted = FALSE
         <if test="dto.taskIdList !=null and dto.taskIdList.size>0">
             AND pt.id IN
             <foreach collection="dto.taskIdList" item="taskId" open="(" separator="," close=")">
@@ -1108,9 +1111,9 @@
             pt.charge_name,
             pt.schedule_status
         FROM project_task pt INNER JOIN product_info pi
-        ON pt.product_id=pi.id
+        ON pt.product_id=pi.id AND pi.is_deleted = FALSE
         WHERE  product_id=#{productId}
-        AND pt.id=#{taskId}
+        AND pt.id=#{taskId} AND pt.is_deleted = FALSE
     </select>
 
 
@@ -1123,7 +1126,7 @@
         pt.charge_name,
         pt.status
         FROM project_task pt
-        WHERE  pt.product_id=#{dto.productId}
+        WHERE  pt.product_id=#{dto.productId} AND pt.is_deleted = FALSE
         <if test="dto.taskIdList !=null and dto.taskIdList.size>0">
             AND pt.id IN
             <foreach collection="dto.taskIdList" item="taskId" open="(" separator="," close=")">
