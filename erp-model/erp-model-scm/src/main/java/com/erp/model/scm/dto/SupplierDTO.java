@@ -335,9 +335,11 @@ public class SupplierDTO implements Serializable {
         private String gradeName;
 
         /**
-         * 启用 状态 true 启用 false 禁用
+         * 禁用 状态
+         * true  禁用
+         * false 启用
          */
-        private Boolean openStatus;
+        private Boolean disabled;
 
 
         /**
