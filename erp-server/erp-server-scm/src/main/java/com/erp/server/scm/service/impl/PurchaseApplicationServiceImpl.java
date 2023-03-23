@@ -417,8 +417,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         List<PurchaseApplicationExportExcelDTO> exportExcelList = baseMapper.listExportExcel(dto);
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/salesDemandExport.xlsx";
-        String name = "备货申请单";
+        String excelPath = "excel/purchaseApplicationExport.xlsx";
+        String name = "采购申请单";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
