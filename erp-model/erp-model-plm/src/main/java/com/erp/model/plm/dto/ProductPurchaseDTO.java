@@ -12,7 +12,6 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * @Description 产品采购信息表请求参数
@@ -44,7 +43,7 @@ public class ProductPurchaseDTO implements Serializable {
      * 计划首批下单量
      */
     @DecimalMax(value = "99999999",message ="计划首批下单量最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long planOrderQty;
 
     /**
@@ -63,7 +62,7 @@ public class ProductPurchaseDTO implements Serializable {
      * MOQ(最小起订量)
      */
     @DecimalMax(value = "99999999",message ="MOQ最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Integer moq;
 
     /**
@@ -113,21 +112,21 @@ public class ProductPurchaseDTO implements Serializable {
      * 实际首批到货量
      */
     @DecimalMax(value = "99999999",message ="实际首批到货量最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long actualArrivalQty;
 
     /**
      * 试产数量
      */
     @DecimalMax(value = "99999999",message ="试产数量最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long trialProductionQty;
 
     /**
      * 首批量产数量
      */
     @DecimalMax(value = "99999999",message ="首批量产数量最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long firstMassQty;
 
     @TableField(exist = false)
