@@ -120,6 +120,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private ProductInfoService productInfoService;
 
+    @Autowired
+    private ProjectInfoService projectInfoService;
+
     /**
      * 产品保存模板 保存任务
      *
@@ -359,7 +362,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             for (TemplateTaskEntity item : list) {
                 ProjectTaskEntity projectTaskEntity = byProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
                 if (!Objects.isNull(projectTaskEntity)) {
-                    continue;
+                    throw new ServiceException(ApiError.ERROR_95013);
                 }
 
                 CopySourceDTO source = new CopySourceDTO();
@@ -805,6 +808,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 //新增或修改项目经理角色和对应成员
                 projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(productInfoEntity.getProjectChargeId()));
             }
+
+            //更新项目列表的项目经理
+            projectInfoService.updateChargeByProductId(productId,productInfoEntity.getProjectChargeId());
             return true;
         } catch (Exception e) {
             e.printStackTrace();
