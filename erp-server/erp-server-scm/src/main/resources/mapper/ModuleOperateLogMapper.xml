@@ -27,7 +27,7 @@
         select
         sol.module_type,
         sol.business_id,
-        to_char(sol.create_time,'yyyy-MM-dd hh24:mi:ss') as create_time,
+        sol.create_time,
         max(sol.create_user_name) as create_user_name,
         array_to_string(array_agg(DISTINCT sol.operation),',') as operation,
         array_to_string(array_agg(DISTINCT sol.content),',') as content
