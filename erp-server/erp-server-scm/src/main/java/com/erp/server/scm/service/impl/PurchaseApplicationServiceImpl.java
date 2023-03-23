@@ -231,8 +231,29 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
+    public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id) {
+        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> resultList = new ArrayList<>();
+        List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(id);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98015);
+        }
+        for (PurchaseApplicationDetailEntity entity :list) {
+            PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();
+            BeanMapperUtils.copy(entity,dto);
+            dto.setId(entity.getPurchaseApplicationId());
+            dto.setPurchaseApplicationDetailId(entity.getId());
+            resultList.add(dto);
+        }
+        return resultList;
+    }
 
+    @Override
+    public Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
+        List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> list = dto.getList();
+        List<String> detailIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(detailIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+        }
 
         return null;
     }
@@ -275,7 +296,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importDTO.setSucceedList(successList);
+        importDTO.setSuccessList(successList);
         importDTO.setErrorUrl(url);
         return importDTO;
     }
@@ -393,22 +414,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         return Boolean.TRUE;
     }
 
-    @Override
-    public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id) {
-        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> resultList = new ArrayList<>();
-        List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(id);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98015);
-        }
-        for (PurchaseApplicationDetailEntity entity :list) {
-            PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();
-            dto.setId(entity.getPurchaseApplicationId());
 
-        }
-
-
-        return null;
-    }
 
     /**
      * 更新审核状态

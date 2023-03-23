@@ -50,6 +50,13 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         private Integer unitQty;
 
         /**
+         * 最小起订量
+         */
+        @Min(value = 0,message = "最小起订量最小值为0")
+        @Max(value = 99999999,message = "最小起订量最大值为99999999")
+        private Integer moq;
+
+        /**
          * 是否加急（false否，true是）
          */
         private Boolean isUrgent;
@@ -108,7 +115,7 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<PurchaseApplicationDetailDTO.AddDTO> succeedList;
+        private List<PurchaseApplicationDetailDTO.AddDTO> successList;
 
         /**
          * 错误url

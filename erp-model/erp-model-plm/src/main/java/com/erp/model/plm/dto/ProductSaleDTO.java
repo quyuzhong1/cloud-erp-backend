@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,8 +11,6 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Description 产品销售信息表请求参数
@@ -37,7 +34,7 @@ public class ProductSaleDTO implements Serializable {
      * 年目标销售量
      */
     @DecimalMax(value = "99999999",message ="年目标销售量最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long yearSaleQty;
 
     /**
@@ -50,7 +47,7 @@ public class ProductSaleDTO implements Serializable {
      * 月目标销售量
      */
     @DecimalMax(value = "99999999",message ="月目标销售量最大值为99999999" )
-    @DecimalMin(value = "1",message ="最小值为1" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long monthSaleQty;
 
     /**
