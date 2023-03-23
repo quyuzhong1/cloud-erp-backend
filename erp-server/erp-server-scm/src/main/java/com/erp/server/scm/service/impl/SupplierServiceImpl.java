@@ -23,6 +23,7 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -31,11 +32,13 @@ import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -109,7 +112,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //供应商资质信息
             List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
             supplierCredentialService.saveBatchCredential(supplierId, credentialList);
-
+            //添加日志
+            String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+            addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");
             return addEntity;
         }
 
@@ -127,11 +132,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public Boolean addAndSubmit(SupplierDTO.AddDTO dto) {
         SupplierEntity supplier = this.addSupplier(dto);
+        boolean result = false;
         if (supplier != null) {
             //这里还要启动流程
-            return updateSubmitApproveStatus(supplier, ApproveStatusEnum.APPROVE_ING.getStatus());
+            result = updateSubmitApproveStatus(supplier, ApproveStatusEnum.APPROVE_ING.getStatus());
+            if (result) {
+                //添加日志
+                String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "状态变更");
+            }
         }
-        return false;
+        return result;
     }
 
 
@@ -283,14 +294,22 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         //删除供应商
         Boolean result = this.removeByIds(ids);
-        //根据 供应商id 删除联系人信息
-        supplierContactService.removeBySupplierIds(ids);
+        if (result) {
+            //根据 供应商id 删除联系人信息
+            supplierContactService.removeBySupplierIds(ids);
 
-        //根据 供应商id 删除账户信息
-        supplierAccountService.removeBySupplierIds(ids);
+            //根据 供应商id 删除账户信息
+            supplierAccountService.removeBySupplierIds(ids);
 
-        //根据 供应商id 删除资质信息
-        supplierCredentialService.removeBySupplierIds(ids);
+            //根据 供应商id 删除资质信息
+            supplierCredentialService.removeBySupplierIds(ids);
+            //添加日志
+            String content = "删除供应商[%s]";
+            List<Pair<String, String>> pairList = supplierList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "删除");
+        }
+
 
         return result;
     }
@@ -324,6 +343,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        if (result) {
+            //添加日志
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
+
+            //审核不通过
+            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+        }
         return result;
     }
 
@@ -345,17 +377,26 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
+        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
 
         Boolean result = true;
+        String content = "";
         if (dto.getType().equals(ScmConstant.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            content = String.format("状态由[%s]变更为[%s]", ingStatusName, ApproveStatusEnum.APPROVE.getName());
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            content = String.format("状态由[%s]变更为[%s]", ingStatusName, ApproveStatusEnum.REJECT.getName());
+        }
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
         }
         return result;
     }
@@ -425,7 +466,20 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.ERROR_98014);
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        //反审核
+        if (result) {
+            //添加日志
+            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
 
+            //审核通过
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+        }
         return result;
     }
 
@@ -493,7 +547,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     /**
      * 添加日志
      */
-    private void addModuleOperateLog(String content,String code,String businessId,String operation){
-        moduleOperateLogService.addModuleOperateLog(content,code,businessId,operation);
+    private void addModuleOperateLog(String content, String code, String businessId, String operation) {
+        moduleOperateLogService.addModuleOperateLog(content, code, businessId, operation);
     }
+
+    /**
+     * 批量添加日志
+     */
+
+    private void batchAddModuleOperateLog(String content, String code, List<Pair<String, String>> pairList, String operation) {
+        moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
+    }
+
+
 }

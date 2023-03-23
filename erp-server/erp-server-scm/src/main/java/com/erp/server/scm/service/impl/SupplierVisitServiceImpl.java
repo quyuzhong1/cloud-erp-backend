@@ -18,15 +18,13 @@ import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierVisitEntity;
 import com.erp.model.scm.entity.SupplierVisitSkuEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierVisitEnum;
 import com.erp.model.scm.enums.SupplierVisitResultEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierVisitMapper;
-import com.erp.server.scm.service.AttachmentService;
-import com.erp.server.scm.service.SupplierService;
-import com.erp.server.scm.service.SupplierVisitService;
-import com.erp.server.scm.service.SupplierVisitSkuService;
+import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -65,6 +63,9 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     /**
      * 添加供应商拜访记录
@@ -131,7 +132,12 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 }
                 supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
+
+            //添加日志
+            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条拜访记录"), ModuleTypeEnum.SUPPLIER.getCode(),id,"新增拜访");
+
         }
+
         return result;
     }
 
