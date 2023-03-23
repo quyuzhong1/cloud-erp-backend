@@ -68,7 +68,7 @@ public class SupplierPhaseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO  extends AddDTO{
+    public static class UpdateDTO extends AddDTO {
 
         @NotBlank(message = "id不能为空")
         private String id;
@@ -83,7 +83,7 @@ public class SupplierPhaseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO{
+    public static class PagingViewDTO {
         /**
          * 供应商 阶段表 id
          */
@@ -158,6 +158,12 @@ public class SupplierPhaseDTO implements Serializable {
          */
         private String approveStatus;
 
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
         /**
          * 创建人id
          */
@@ -183,7 +189,7 @@ public class SupplierPhaseDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
-        @StateEnumValue(strValues = {"all","waitApprove"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
         private String searchType;
 
         /**
@@ -204,7 +210,6 @@ public class SupplierPhaseDTO implements Serializable {
         private List<String> phaseList;
 
 
-
         /**
          * 联系人名
          */
@@ -215,6 +220,11 @@ public class SupplierPhaseDTO implements Serializable {
          * 联系人
          */
         private String contactTelNumber;
+
+        /**
+         * 状态
+         */
+        private List<String> approveStatusList;
 
     }
 
