@@ -72,10 +72,10 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @description: 取消流程
      * @author Will
      * @date: 2023/3/15 17:59
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(String id);
+    Boolean cancelProcess(List<String> ids);
     /**
      * @description: 导出
      * @author Will

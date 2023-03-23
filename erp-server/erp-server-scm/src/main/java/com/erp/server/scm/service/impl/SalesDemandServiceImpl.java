@@ -3,16 +3,6 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.MathUtil;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.server.scm.listener.SalesDemandExcelListener;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.math3.util.Pair;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -26,31 +16,41 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
+import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.listener.SalesDemandExcelListener;
 import com.erp.server.scm.mapper.SalesDemandMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesDemandDetailService;
 import com.erp.server.scm.service.SalesDemandService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -223,7 +223,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 .update();
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("作废了一个备货申请单", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"作废操作");
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"作废操作");
         return Boolean.TRUE;
     }
 
@@ -256,28 +256,29 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         }
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核了一个备货申请单【%s】",ApproveTypeEnum.getName(type)), ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个备货申请单",ApproveTypeEnum.getName(type)).concat("【%s】"), ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"审核操作");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(String id) {
-        SalesDemandEntity entity = this.getById(id);
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98001);
-        }
-        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+    public Boolean cancelProcess(List<String> ids) {
+        //根据ids查询
+        List<SalesDemandEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        log.info("备货申请单撤销流程，id=【{}】", id);
+        log.info("备货申请单撤销流程，id=【{}】", ids);
 
         //撤销现有流程
-        workflowFeign.cancelProcess(id);
+        workflowFeign.cancelProcess(ids);
 
         //更新单据为待提交
-        updateApproveStatus(Arrays.asList(id),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("备货申请单【%s】取消流程",entity.getCode()), ModuleTypeEnum.SALES_DEMAND.getCode(),entity.getId(),"取消流程操作");
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("备货申请单【%s】取消流程", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"取消流程操作");
         return Boolean.TRUE;
     }
 
@@ -316,7 +317,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个备货申请单", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"反审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"反审核操作");
         return Boolean.TRUE;
     }
 
@@ -355,7 +356,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个备货申请单", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"提交操作");
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"提交操作");
         return Boolean.TRUE;
     }
 

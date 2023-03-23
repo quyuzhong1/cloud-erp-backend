@@ -2,7 +2,6 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -181,8 +180,8 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = salesDemandService.cancelProcess(dto.getId());
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = salesDemandService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
 

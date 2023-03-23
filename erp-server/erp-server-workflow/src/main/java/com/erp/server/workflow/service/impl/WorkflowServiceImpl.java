@@ -6,7 +6,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.workflow.dto.*;
-import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
 import com.erp.server.workflow.service.ActHistoryActivityService;
@@ -428,15 +427,17 @@ public class WorkflowServiceImpl implements WorkflowService {
 
 
     @Override
-    public void cancelProcess(String id) {
-        WorkflowBusinessProcessEntity entity = workflowBusinessProcessService.getByBusinessTableId(id);
-        if (ObjectUtils.isEmpty(entity)) {
+    public void cancelProcess(List<String> ids) {
+        List<WorkflowBusinessProcessDTO> list = workflowBusinessProcessService.getProcessByTables(ids);
+        if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //中止现有流程
-        terminateProcess(entity.getProcessId());
+        for (WorkflowBusinessProcessDTO dto : list) {
+            //中止现有流程
+            terminateProcess(dto.getProcessId());
+        }
         //删除流程id
-        workflowBusinessProcessService.removeById(entity.getId());
+        workflowBusinessProcessService.removeByIds(ids);
     }
 
 

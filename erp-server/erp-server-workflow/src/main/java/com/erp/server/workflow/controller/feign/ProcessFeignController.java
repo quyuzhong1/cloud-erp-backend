@@ -106,8 +106,8 @@ public class ProcessFeignController extends BaseController {
 
     //取消流程
     @PostMapping("/cancelProcess")
-    public void cancelProcess(String id) {
-        workflowService.cancelProcess(id);
+    public void cancelProcess(@RequestBody List<String> ids) {
+        workflowService.cancelProcess(ids);
     }
 
     //驳回到源点

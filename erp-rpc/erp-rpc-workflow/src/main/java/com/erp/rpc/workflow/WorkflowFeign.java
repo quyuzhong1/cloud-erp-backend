@@ -69,7 +69,7 @@ public interface WorkflowFeign {
 
     //取消流程
     @PostMapping("workflow/feign/process/cancelProcess")
-    void cancelProcess(@RequestParam(value="id") String id);
+    void cancelProcess(@RequestBody List<String> ids);
 
     //根据审核任务id获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDoByTaskId")

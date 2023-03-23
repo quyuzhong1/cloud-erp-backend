@@ -56,8 +56,8 @@ public interface WorkflowService {
      * @description: 取消流程
      * @author Will
      * @date: 2023/3/20 10:00
-     * @param id
+     * @param ids
 
      */
-    void cancelProcess(String id);
+    void cancelProcess(List<String> ids);
 }

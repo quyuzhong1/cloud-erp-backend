@@ -3,10 +3,10 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.common.core.serveice.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -66,10 +66,10 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 生成采购单
      * @author Will
      * @date: 2023/3/15 18:26
-     * @param id
+     * @param dto
      * @return Boolean
      */
-    Boolean generatePurchaseOrder(String id);
+    Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto);
     /**
      * @description: 导入
      * @author Will
@@ -126,8 +126,16 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 撤销流程
      * @author Will
      * @date: 2023/3/22 10:18
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(String id);
+    Boolean cancelProcess(List<String> ids);
+    /**
+     * @description: 生成采购订单查询
+     * @author Will
+     * @date: 2023/3/22 19:00
+     * @param id
+     * @return List<ViewGeneratePurchaseOrderDTO>
+     */
+    List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id);
 }

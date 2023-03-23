@@ -5,10 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -257,4 +256,120 @@ public class PurchaseApplicationDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseOrderDTO {
+
+        /**
+         * 采购申请id
+         */
+        private String id;
+
+        /**
+         * 采购申请明细id
+         */
+        private String purchaseApplicationDetailId;
+
+        /**
+         * 申请单号
+         */
+        private String code;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 收料组织
+         */
+        private String receiveOrgName;
+
+        /**
+         * 仓库
+         */
+        private String destWarehouseName;
+
+        /**
+         * 最小起订量
+         */
+        private Integer moq;
+
+        /**
+         * 采购交期（天）
+         */
+        private String planDeliveryDate;
+
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
+
+        /**
+         * 已申请数量
+         */
+        private Integer purchasedQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GeneratePurchaseOrderDTO {
+
+        /**
+         * 采购申请单id
+         */
+        @NotBlank(message = "采购申请单id不能为空")
+        private String id;
+
+        /**
+         * 采购申请单明细id
+         */
+        @NotBlank(message = "采购申请单明细id不能为空")
+        private String purchaseApplicationDetailId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * 采购数量
+         */
+        @NotNull(message = "采购数量不能为空")
+        @DecimalMin(value = "1",message = "采购数量最小值为1")
+        private Integer purchaseQty;
+
+        /**
+         * 含税单价
+         */
+        @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
+        private BigDecimal taxPrice;
+
+        /**
+         * 是否赠品
+         */
+        @NotNull(message = "是否赠品不能为空")
+        private Boolean isGift;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListGeneratePurchaseOrderDTO {
+
+        @NotEmpty(message = "采购订单明细不能为空")
+        @Valid
+        List<GeneratePurchaseOrderDTO> list;
+    }
 }

@@ -21,25 +21,19 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
-import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
-import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
-import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.SalesDemandDetailEntity;
-import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -49,13 +43,11 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseApplicationExcelListener;
-import com.erp.server.scm.listener.SalesDemandExcelListener;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import com.erp.server.scm.service.PurchaseApplicationService;
-import com.common.core.serveice.SuperServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -210,7 +202,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("审核了一个采购申请单", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog("审核了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"审核操作");
     }
 
     @Override
@@ -231,12 +223,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购申请单", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"反审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"反审核操作");
         return Boolean.TRUE;
     }
 
     @Override
-    public Boolean generatePurchaseOrder(String id) {
+    public Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
+
+
         return null;
     }
 
@@ -271,7 +265,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (list.size() > 0) {
             StringBuffer sb = new StringBuffer();
             String excelPath = "excel/purchaseApplicationError.xlsx";
-            String name = "salesDemand";
+            String name = "purchaseApplication";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);
             sb.append(name);
@@ -339,7 +333,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
         return Boolean.TRUE;
     }
 
@@ -378,24 +372,31 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(String id) {
-        PurchaseApplicationEntity entity = this.getById(id);
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_98001);
-        }
-        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+    public Boolean cancelProcess(List<String> ids) {
+        //根据ids查询
+        List<PurchaseApplicationEntity> list = getList(ids);
+
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        log.info("采购申请单撤销流程，id=【{}】", id);
+        log.info("采购申请单撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
-        workflowFeign.cancelProcess(id);
+        workflowFeign.cancelProcess(ids);
 
         //更新单据为待提交
-        updateApproveStatus(Arrays.asList(id),ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("采购申请单【%s】取消流程",entity.getCode()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"取消流程操作");
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("采购申请单【%s】取消流程", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"取消流程操作");
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id) {
+
+        return null;
     }
 
     /**

@@ -1,7 +1,5 @@
 package com.erp.server.scm.service.impl;
 
-import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
-import org.apache.commons.math3.util.Pair;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -9,12 +7,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.EnumsUtil;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.model.scm.entity.CfgModuleOperateLogFieldEntity;
@@ -26,8 +26,8 @@ import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.DictBasicService;
 import com.erp.server.scm.service.ModuleOperateLogService;
-import com.common.core.serveice.SuperServiceImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -209,7 +209,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
             entity.setModuleType(moduleType)
                     .setBusinessId(pair.getKey())
-                    .setContent(content.concat("【").concat(pair.getValue()).concat("】"))
+                    .setContent(String.format(content,pair.getValue()))
                     .setOperation(operation);
             list.add(entity);
         }

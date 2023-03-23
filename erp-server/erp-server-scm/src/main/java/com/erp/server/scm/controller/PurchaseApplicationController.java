@@ -2,14 +2,15 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.server.scm.service.PurchaseApplicationService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -17,8 +18,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -161,15 +160,28 @@ public class PurchaseApplicationController extends BaseController {
     }
 
     /**
-     * 生成采购单
+     * 生成采购单弹窗显示
      * @author Will
      * @date: 2023/3/15 18:26
      * @param id
      * @return ApiResult
      */
+    @GetMapping("/viewGeneratePurchaseOrder")
+    public ApiResult<List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@Param("id") String id) {
+        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> list = purchaseApplicationService.viewGeneratePurchaseOrder(id);
+        return success(list);
+    }
+
+    /**
+     * 生成采购单
+     * @author Will
+     * @date: 2023/3/15 18:26
+     * @param dto
+     * @return ApiResult
+     */
     @PostMapping("/generatePurchaseOrder")
-    public ApiResult generatePurchaseOrder(@RequestParam("id") String id) {
-        Boolean flag = purchaseApplicationService.generatePurchaseOrder(id);
+    public ApiResult generatePurchaseOrder(@RequestBody @Validated PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
+        Boolean flag = purchaseApplicationService.generatePurchaseOrder(dto);
         return flag == true ? success() : failure();
     }
 
@@ -181,8 +193,8 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = purchaseApplicationService.cancelProcess(dto.getId());
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchaseApplicationService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
 

@@ -202,10 +202,4 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         return vo;
 
     }
-
-    @Override
-    public WorkflowBusinessProcessEntity getByBusinessTableId(String businessTableId) {
-        WorkflowBusinessProcessEntity entity = lambdaQuery().eq(WorkflowBusinessProcessEntity::getBusinessTableId, businessTableId).one();
-        return entity;
-    }
 }
