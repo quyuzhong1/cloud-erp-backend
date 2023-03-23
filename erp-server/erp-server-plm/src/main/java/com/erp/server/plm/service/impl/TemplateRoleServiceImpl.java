@@ -20,6 +20,7 @@ import com.erp.model.plm.dto.TemplateRoleDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
 import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
+import com.erp.model.plm.entity.TemplateMembersEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.mapper.TemplateRoleMapper;
 import com.erp.server.plm.service.ProjectRoleService;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -90,10 +92,18 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     @Override
     public List<CopySourceDTO> copyTemplateRole(String templateId, String productId, String projectId) {
         List<TemplateRoleEntity> list = getByTemplateId(templateId);
+
+        List<ProjectRoleEntity> projectRoleByProductId = projectRoleService.getProjectRoleByProductId(productId);
+        List<TemplateRoleEntity> collect = list.stream()
+                .filter(templateTask ->
+                        projectRoleByProductId.stream()
+                                .anyMatch(projectTask -> !templateTask.getName().equals(projectTask.getName())
+                                )).collect(Collectors.toList());
+
         List<CopySourceDTO> sourceList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(list)) {
+        if (CollectionUtils.isNotEmpty(collect)) {
             List<ProjectRoleEntity> copyList = new ArrayList<>();
-            for (TemplateRoleEntity item : list) {
+            for (TemplateRoleEntity item : collect) {
                 CopySourceDTO sourceDTO = new CopySourceDTO();
                 ProjectRoleEntity entity = new ProjectRoleEntity();
                 BeanMapper.copy(item, entity);

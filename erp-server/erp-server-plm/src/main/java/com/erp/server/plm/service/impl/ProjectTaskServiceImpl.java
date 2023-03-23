@@ -2693,15 +2693,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<Map<String, Object>> operateMoreList(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
         TaskRefSkuConfigEntity skuConfigEntity = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
         //产品下sku
         List<ProductDetailEntity> list = productDetailService.getSkuListByProductId(taskEntity.getProductId());
         Boolean taskRefSkuFlag = (CollectionUtils.isNotEmpty(taskRefSkuList) && taskRefSkuList.size() > 0) || (RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(taskEntity.getRelatedSkuType()) && CollectionUtils.isNotEmpty(list));
         List<Map<String, Object>> resultList = new ArrayList<>();
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
-        }
+
         Integer taskState = taskEntity.getStatus();
         Integer finishCode = TaskStateEnum.FINISH.getCode();
 

@@ -113,9 +113,17 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     public List<CopySourceDTO> copyTemplateMembers(String templateId, String productId, String projectId) {
         List<TemplateMembersEntity> templateMembers = getByTemplateId(templateId);
         List<CopySourceDTO> sourceList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(templateMembers)) {
+
+        List<ProjectMembersEntity> listByProductId = projectMembersService.getListByProductId(productId);
+        List<TemplateMembersEntity> collect = templateMembers.stream()
+                .filter(templateTask ->
+                        listByProductId.stream()
+                                .anyMatch(projectTask -> !templateTask.getMemberName().equals(projectTask.getMemberName())
+                                )).collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(collect)) {
             List<ProjectMembersEntity> copyList = new ArrayList<>();
-            for (TemplateMembersEntity item : templateMembers) {
+            for (TemplateMembersEntity item : collect) {
                 ProjectMembersEntity entity = new ProjectMembersEntity();
                 CopySourceDTO sourceDTO = new CopySourceDTO();
                 BeanMapper.copy(item, entity);

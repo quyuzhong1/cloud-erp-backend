@@ -76,6 +76,9 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
     @Override
     public void copyTemplateRoleRefMembers(String templateId, String productId, String projectId,List<CopySourceDTO> copyRoleSourceList,List<CopySourceDTO> copyMembersSourceList) {
         List<TemplateRoleRefMembersEntity> list = getByTemplateId(templateId);
+
+
+
         if (CollectionUtils.isNotEmpty(list)) {
             List<RoleRefMemberEntity> copyList = new ArrayList<>();
             for (TemplateRoleRefMembersEntity item : list) {
@@ -88,9 +91,13 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
                 entity.setProductId(productId);
                 if(!Objects.isNull(roleSource)){
                     entity.setRoleId(roleSource.getNewCreateId());
+                } else {
+                    continue;
                 }
                 if(!Objects.isNull(membersSource)){
                     entity.setMembersId(membersSource.getNewCreateId());
+                } else {
+                    continue;
                 }
                 entity.setId(IdWorker.getIdStr());
                 copyList.add(entity);

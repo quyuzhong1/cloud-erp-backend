@@ -111,6 +111,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
 
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
     /**
      * 产品保存模板 保存任务
      *
@@ -339,12 +342,20 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
+
+        List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
+        List<TemplateTaskEntity> collect = list.stream()
+                .filter(templateTask ->
+                        byProductId.stream()
+                                .anyMatch(projectTask -> !templateTask.getName().equals(projectTask.getName())
+                                )).collect(Collectors.toList());
+
         LoginUser loginUser = commonService.getUserInfo();
         //来源信息
         List<CopySourceDTO> sourceList = new ArrayList<>();
         List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (TemplateTaskEntity item : list) {
+        if (CollectionUtils.isNotEmpty(collect)) {
+            for (TemplateTaskEntity item : collect) {
                 CopySourceDTO source = new CopySourceDTO();
                 String taskId = IdWorker.getIdStr();
                 ProjectTaskEntity taskEntity = new ProjectTaskEntity();
