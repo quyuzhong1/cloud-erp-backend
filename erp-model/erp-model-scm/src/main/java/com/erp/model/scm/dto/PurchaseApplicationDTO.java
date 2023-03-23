@@ -276,6 +276,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String code;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * SKU
          */
         private String skuNo;
@@ -286,14 +291,29 @@ public class PurchaseApplicationDTO implements Serializable {
         private String productName;
 
         /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
          * 采购组织
          */
         private String purchaseOrgName;
 
         /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
          * 收料组织
          */
         private String receiveOrgName;
+
+        /**
+         * 仓库id
+         */
+        private String destWarehouseId;
 
         /**
          * 仓库
@@ -306,9 +326,9 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer moq;
 
         /**
-         * 采购交期（天）
+         * 采购交期
          */
-        private String planDeliveryDate;
+        private LocalDate planDeliveryDate;
 
         /**
          * 申请数量
@@ -361,6 +381,35 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotNull(message = "是否赠品不能为空")
         private Boolean isGift;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * 收料组织id
+         */
+        @NotBlank(message = "收料组织id不能为空")
+        private String receiveOrgId;
+
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织id不能为空")
+        private String purchaseOrgId;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String destWarehouseId;
+
+        /**
+         * 采购交期
+         */
+        private LocalDate planDeliveryDate;
 
     }
 

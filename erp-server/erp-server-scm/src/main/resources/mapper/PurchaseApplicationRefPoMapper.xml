@@ -13,10 +13,31 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="purch_application_detail_id" property="purchApplicationDetailId" />
-        <result column="purch_application_id" property="purchApplicationId" />
-        <result column="purch_order_detail_id" property="purchOrderDetailId" />
-        <result column="purch_order_id" property="purchOrderId" />
+        <result column="purchase_application_detail_id" property="purchaseApplicationDetailId" />
+        <result column="purchase_application_id" property="purchaseApplicationId" />
+        <result column="purchase_order_detail_id" property="purchaseOrderDetailId" />
+        <result column="purchase_order_id" property="purchaseOrderId" />
     </resultMap>
+    <select id="listByPurchaseApplicationDetailIds"
+            resultType="com.erp.model.scm.dto.PurchaseApplicationRefPoDTO$ListDTO">
+        select
+            parp.purchase_application_detail_id,
+            parp.purchase_application_id,
+            parp.purchase_order_detail_id,
+            parp.purchase_order_id,
+            pod.purchase_qty
+        from purchase_application_ref_po parp
+        left join purchase_order_detail pod on parp.purchase_order_id = pod.id and parp.id_deleted = false
+        <where>
+            pod.is_deleted = false
+            <if test="purchaseApplicationDetailIds != null and purchaseApplicationDetailIds.size > 0">
+                and parp.purchase_application_detail_id in
+                <foreach collection="purchaseApplicationDetailIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
 
 </mapper>

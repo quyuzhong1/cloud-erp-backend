@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -70,7 +70,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 预计交货日期
          */
-        private Date planDeliveryDate;
+        private LocalDate planDeliveryDate;
 
         /**
          * 交货仓库名称
@@ -250,6 +250,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购订单明细
          */
         @Valid
+        @NotEmpty(message = "采购订单明细数据不能为空")
         private List<PurchaseOrderDetailDTO.AddDTO> details;
     }
 

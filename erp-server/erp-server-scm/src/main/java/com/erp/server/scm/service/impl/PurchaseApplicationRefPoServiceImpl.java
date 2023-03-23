@@ -1,10 +1,13 @@
 package com.erp.server.scm.service.impl;
 
 import com.common.core.serveice.SuperServiceImpl;
+import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.server.scm.mapper.PurchaseApplicationRefPoMapper;
 import com.erp.server.scm.service.PurchaseApplicationRefPoService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<PurchaseApplicationRefPoMapper, PurchaseApplicationRefPoEntity> implements PurchaseApplicationRefPoService {
 
+    @Override
+    public List<PurchaseApplicationRefPoDTO.ListDTO> listByPurchaseApplicationDetailIds(List<String> detailIds) {
+        return  baseMapper.listByPurchaseApplicationDetailIds(detailIds);
+    }
 }

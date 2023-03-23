@@ -1,16 +1,12 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * @Description 产品物流信息表
@@ -40,6 +36,11 @@ public class ProductLogisticsDTO implements Serializable {
      * 产品属性id
      */
     private String productPropertyId;
+
+    /**
+     * 报关型号
+     */
+    private String declareModel;
 
     /**
      * 报关中文名

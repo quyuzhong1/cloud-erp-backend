@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Description 产品物流信息表
@@ -35,6 +35,12 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
      */
     @TableField(value = "product_property_id")
     private String productPropertyId;
+
+    /**
+     * 报关型号
+     */
+    @TableField(value = "declare_model")
+    private String declareModel;
 
     /**
      * 报关中文名

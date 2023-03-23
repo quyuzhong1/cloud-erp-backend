@@ -593,11 +593,14 @@
         pi.name AS spuName,
         pd.sku_no,
         pd.images_url AS skuImagesUrl,
-        pd.name AS skuName
+        pd.name AS skuName,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel
         FROM  product_detail pd
-        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         WHERE pi.delete_state = 0 AND pd.is_deleted = FALSE
-        <if test="skuIds!=null and skuIds.size>0">
+        <if test="skuIds != null and skuIds.size>0">
            AND pd.id IN
           <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
                #{skuId}

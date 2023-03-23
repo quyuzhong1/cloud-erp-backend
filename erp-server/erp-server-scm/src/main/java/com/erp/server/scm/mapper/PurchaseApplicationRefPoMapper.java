@@ -1,8 +1,12 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +18,12 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface PurchaseApplicationRefPoMapper extends BaseMapper<PurchaseApplicationRefPoEntity> {
-
+    /**
+     * @description: 根据采购申请明细ids查询
+     * @author Will
+     * @date: 2023/3/23 14:37
+     * @param purchaseApplicationDetailIds
+     * @return List<ListDTO>
+     */
+    List<PurchaseApplicationRefPoDTO.ListDTO> listByPurchaseApplicationDetailIds(@Param("purchaseApplicationDetailIds") List<String> purchaseApplicationDetailIds);
 }

@@ -1,7 +1,10 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,8 @@ import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
  * @since 2023-03-16
  */
 public interface PurchaseApplicationRefPoService extends SuperService<PurchaseApplicationRefPoEntity> {
-
+    /**
+     * 根据采购申请明细ids查询
+     */
+    List<PurchaseApplicationRefPoDTO.ListDTO> listByPurchaseApplicationDetailIds(List<String> detailIds);
 }

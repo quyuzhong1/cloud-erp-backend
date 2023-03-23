@@ -35,8 +35,14 @@ public class ShopDropDownVO {
          */
         private String id;
 
-        public ShopDropDownIdVO(String id, String name) {
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
+        public ShopDropDownIdVO(String id, String name,Boolean disabled) {
             this.id = id ;
+            this.disabled = disabled;
             this.setName(name);
         }
     }

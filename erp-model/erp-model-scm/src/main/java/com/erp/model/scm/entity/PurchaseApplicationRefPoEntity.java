@@ -26,35 +26,35 @@ public class PurchaseApplicationRefPoEntity extends BaseEntity<PurchaseApplicati
     /**
      * 采购申请明细id
      */
-    @TableField("purch_application_detail_id")
-    private String purchApplicationDetailId;
+    @TableField("purchase_application_detail_id")
+    private String purchaseApplicationDetailId;
 
     /**
      * 采购申请id
      */
-    @TableField("purch_application_id")
-    private String purchApplicationId;
+    @TableField("purchase_application_id")
+    private String purchaseApplicationId;
 
     /**
      * 采购订单明细id
      */
-    @TableField("purch_order_detail_id")
-    private String purchOrderDetailId;
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
 
     /**
      * 采购订单id
      */
-    @TableField("purch_order_id")
-    private String purchOrderId;
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
 
 
-    public static final String PURCH_APPLICATION_DETAIL_ID = "purch_application_detail_id";
+    public static final String PURCHASE_APPLICATION_DETAIL_ID = "purchase_application_detail_id";
 
-    public static final String PURCH_APPLICATION_ID = "purch_application_id";
+    public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
-    public static final String PURCH_ORDER_DETAIL_ID = "purch_order_detail_id";
+    public static final String PURCHASE_ORDER_DETAIL_ID = "purchase_order_detail_id";
 
-    public static final String PURCH_ORDER_ID = "purch_order_id";
+    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
     @Override
     public Serializable pkVal() {

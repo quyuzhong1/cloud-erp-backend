@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
 import com.erp.model.bi.vo.SelectShowVO;
@@ -252,7 +253,7 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 店铺下拉框(status,1启用，0禁用，默认空返回全部数据)
+     * 店铺下拉框(status,1启用，2禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam("status") Integer status) {
@@ -270,7 +271,7 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 所有店铺下拉框(status,1启用，0禁用，默认空返回全部数据)
+     * 所有店铺下拉框(status,1启用，2禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/listAll")
     public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status") Integer status) {
@@ -281,7 +282,7 @@ public class BiDropDownListController extends BaseController {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownIdVO> result = list.stream()
-                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(),x.getName()))
+                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(),x.getName(), MathUtil.ONE.equals(x.getStatus()) ? true : false ))
                 .distinct()
                 .collect(Collectors.toList());
         return success(result);

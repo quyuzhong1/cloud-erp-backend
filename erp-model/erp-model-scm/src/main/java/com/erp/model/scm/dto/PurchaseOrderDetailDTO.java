@@ -1,13 +1,12 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @author Will
@@ -84,7 +83,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 预计交货日期
          */
-        private Date planDeliveryDate;
+        private LocalDate planDeliveryDate;
 
         /**
          * 收料组织id

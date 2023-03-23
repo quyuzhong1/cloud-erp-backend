@@ -48,4 +48,14 @@ public class SkuVO implements Serializable {
      * spu 名称
      */
     private String spuName = "";
+
+    /**
+     * 报关型号
+     */
+    private String declareModel;
+
+    /**
+     * 报关名称
+     */
+    private String declareName;
 }
