@@ -193,17 +193,26 @@
             </foreach>
         </if>
 
-        <if test="params.skuList !=null and params.skuList.size>0">
+        <if test="params.skuList != null and params.skuList.size>0">
             AND pd.sku_no IN
             <foreach collection="params.skuList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
 
-        <if test="params.supplierName != null  and params.supplierName != ''">
-            AND (pp.main_supplier LIKE concat('%',#{params.supplierName},'%') OR pp.second_supplier LIKE concat('%',#{params.params.supplierName},'%'))
+        <if test="params.spuList != null and params.spuList.size>0">
+            AND pi.spu_no IN
+            <foreach collection="params.spuList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </if>
 
+        <if test="params.supplierNameList != null and params.supplierNameList.size>0">
+            AND pp.main_supplier IN
+            <foreach collection="params.supplierNameList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
 
         <if test="params.ean !=null and params.ean!=''">
             AND pp.ean LIKE concat('%',#{params.ean},'%')

@@ -23,6 +23,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -57,6 +59,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -110,8 +113,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             records.forEach(obj -> {
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
-                    obj.setId(null);
                     obj.setCode(null);
+                    obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setIsFirstMassProduct(null);
                     obj.setCreateUserName(null);
@@ -202,7 +205,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("审核了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购申请单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"审核操作");
     }
 
     @Override
@@ -235,7 +238,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public List<PurchaseApplicationDetailDTO.AddDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
+    public PurchaseApplicationDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         //查询所有审核通过并启用的仓库
@@ -258,26 +261,23 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
+        PurchaseApplicationDetailDTO.ImportDTO importDTO = new PurchaseApplicationDetailDTO.ImportDTO();
         //导入数据处理
-        List<PurchaseApplicationDetailDTO.AddDTO> dataList = excelListenerUtil.getDataList();
+        List<PurchaseApplicationDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
-        List<PurchaseApplicationImportExcelDTO> list = excelListenerUtil.getErrorList();
-        if (list.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/purchaseApplicationError.xlsx";
-            String name = "purchaseApplication";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            } finally {
-                return dataList;
+        List<PurchaseApplicationImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "采购申请错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchaseApplicationImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        return dataList;
+        importDTO.setSucceedList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 
     @Override
@@ -401,6 +401,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             throw new ServiceException(ApiError.ERROR_98015);
         }
         for (PurchaseApplicationDetailEntity entity :list) {
+            PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();
+            dto.setId(entity.getPurchaseApplicationId());
 
         }
 

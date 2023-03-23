@@ -85,9 +85,9 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @date: 2023/3/15 18:24
      * @param excelFile
      * @param response
-     * @return List<PurchaseApplicationDetailDTO.AddDTO>
+     * @return PurchaseApplicationDetailDTO.ImportDTO
      */
-    List<PurchaseApplicationDetailDTO.AddDTO> importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
+    PurchaseApplicationDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will

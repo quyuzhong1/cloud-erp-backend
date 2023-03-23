@@ -9,6 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.server.scm.service.PurchaseApplicationService;
@@ -18,7 +19,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -203,14 +203,14 @@ public class PurchaseApplicationController extends BaseController {
      * 导入
      * @author Will
      * @date: 2023/3/15 18:22
-     * @param excelFile
+     * @param excelImportDTO
      * @param response
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<List<PurchaseApplicationDetailDTO.AddDTO>> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
-        List<PurchaseApplicationDetailDTO.AddDTO> list = purchaseApplicationService.importFile(excelFile, skuIds, response);
-        return success(list);
+    public ApiResult<PurchaseApplicationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        PurchaseApplicationDetailDTO.ImportDTO dto = purchaseApplicationService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(), response);
+        return success(dto);
     }
 
     /**
