@@ -265,6 +265,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             item.setApproveStatusName(statusEnum.getName());
             SupplierPhaseEnum phaseEnum = item.getPhase();
             item.setPhaseName(phaseEnum.getName());
+            item.setApproveStatusCode(statusEnum.getStatus());
 
         }
 

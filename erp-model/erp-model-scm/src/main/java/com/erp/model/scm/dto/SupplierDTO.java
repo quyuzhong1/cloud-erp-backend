@@ -300,9 +300,15 @@ public class SupplierDTO implements Serializable {
         private String phaseName;
 
         /**
-         * 审核状态
+         * 审核状态枚举
          */
         private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 审核状态
+         */
+        private String approveStatusCode;
 
 
         /**

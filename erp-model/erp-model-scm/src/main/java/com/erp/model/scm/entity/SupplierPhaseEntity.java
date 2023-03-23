@@ -2,7 +2,9 @@ package com.erp.model.scm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.scm.enums.SupplierPhaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -39,19 +41,19 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
      * 当前阶段
      */
     @TableField("current_phase")
-    private String currentPhase;
+    private SupplierPhaseEnum currentPhase;
 
     /**
      * 目标阶段
      */
     @TableField("target_phase")
-    private String targetPhase;
+    private SupplierPhaseEnum targetPhase;
 
     /**
      * 审核状态 
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
 
     /**

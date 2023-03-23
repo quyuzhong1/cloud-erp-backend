@@ -53,9 +53,11 @@ public class SupplierContactDTO implements Serializable {
         private Boolean isDefault;
 
         /**
-         * 开启状态 true 开启
+         * 是否禁用
+         * true 禁用
+         * false 启用
          */
-        private Boolean openStatus;
+        private Boolean disabled;
 
         /**
          * 备注信息

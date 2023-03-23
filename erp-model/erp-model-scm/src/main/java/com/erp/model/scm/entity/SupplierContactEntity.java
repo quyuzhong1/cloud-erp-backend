@@ -60,10 +60,12 @@ public class SupplierContactEntity extends BaseEntity<SupplierContactEntity> {
     private Boolean isDefault;
 
     /**
-     * 开启状态 true 开启
+     * 禁用状态
+     * true 禁用
+     * false 启用
      */
-    @TableField("open_status")
-    private Boolean openStatus;
+    @TableField("disabled")
+    private Boolean disabled;
 
     /**
      * 备注信息

@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.core.serveice.SuperService;
+import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 
 /**
@@ -13,4 +14,14 @@ import com.erp.model.scm.entity.SupplierPhaseEntity;
  */
 public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> {
 
+    
+    
+    /**
+     * 添加供应商阶段
+     * @author yl
+     * @date 2023-03-23 12:20
+     * @param dto
+     * @return com.erp.model.scm.entity.SupplierPhaseEntity
+     */
+    SupplierPhaseEntity add(SupplierPhaseDTO.AddDTO dto);
 }
