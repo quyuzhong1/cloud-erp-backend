@@ -19,5 +19,10 @@ public interface SearchType {
     /**
      * 待我审核
      */
+    String WAIT_FOR_ME_APPROVE = "waitForMeApprove";
+
+    /**
+     * 待审核
+     */
     String WAIT_APPROVE = "waitApprove";
 }
