@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
 * @Description 产品明细查询列表返回值（VO）
@@ -265,8 +264,10 @@ public class ProductDetailShowDTO implements Serializable {
     private LocalDateTime delistingTime;
 
 
-
-
+    /**
+     * 箱单数量
+     */
+    private Integer boxQty;
 
 
 }

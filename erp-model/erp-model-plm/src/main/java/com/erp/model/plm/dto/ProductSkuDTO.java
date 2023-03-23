@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +20,11 @@ public class ProductSkuDTO extends PermissionsDTO {
      * sku/spu/编号
      */
     private String no;
+
+    /**
+     * sku名称
+     */
+    private String name;
 
     /**
      * 0所有产品，1待审核产品，2已审核产品
@@ -143,7 +147,15 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private List<Integer> saleStateList;
 
+    /**
+     * sku集合
+     */
+    private List<String> skuList;
 
+    /**
+     * 供应商名称
+     */
+    private String supplierName;
 }
 
 
