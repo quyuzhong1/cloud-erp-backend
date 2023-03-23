@@ -361,10 +361,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 if (!Objects.isNull(projectTaskEntity)) {
                     continue;
                 }
-                if (item.getName().equals("大师法规")) {
-                    int a = 1+1;
-                    System.out.println("11111111111111111111");
-                }
+
                 CopySourceDTO source = new CopySourceDTO();
                 String taskId = IdWorker.getIdStr();
                 ProjectTaskEntity taskEntity = new ProjectTaskEntity();

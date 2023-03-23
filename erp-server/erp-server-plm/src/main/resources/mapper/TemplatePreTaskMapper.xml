@@ -16,7 +16,7 @@
             tpt.relationship
         FROM
             template_pre_task tpt
-                LEFT JOIN template_task tt ON tpt.pre_task_id = tt."id"
+                LEFT JOIN template_task tt ON tpt.pre_task_id = tt."id" AND tt.is_deleted = FALSE
         WHERE
             tpt.task_id = #{taskId}
             AND tpt.is_deleted = FALSE

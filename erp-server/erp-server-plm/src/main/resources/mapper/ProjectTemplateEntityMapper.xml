@@ -60,11 +60,10 @@
            pt.id,pt.name
          FROM project_template pt
          LEFT JOIN template_ref_property trp
-         ON pt.id=trp.template_id
-         WHERE trp.is_deleted=false
+         ON pt.id=trp.template_id AND trp.is_deleted = FALSE
+         WHERE pt.is_deleted=false
          AND trp.product_property_id=#{propertyId}
          AND pt.status=1
-         AND pt.is_deleted = FALSE
     </select>
 
 </mapper>

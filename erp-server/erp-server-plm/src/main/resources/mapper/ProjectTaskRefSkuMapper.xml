@@ -15,8 +15,8 @@
                b.is_finish_task as isFinishTask,
                a.status
         from project_task a
-        inner join project_task_ref_sku b on a.id = b.task_id
-        inner join product_detail c on b.sku_id = c.id
+        inner join project_task_ref_sku b on a.id = b.task_id AND b.is_deleted = FALSE
+        inner join product_detail c on b.sku_id = c.id AND c.is_deleted = FALSE
         WHERE a.is_deleted = FALSE
             <if test="productId != '' and productId != null">
                 and a.product_id = #{productId}

@@ -28,11 +28,12 @@
         template_task tt
         left join (
             select a.task_id,a.template_id,string_agg(b.id, ',') as id,string_agg(b.name, ',') as name from template_pre_task a
-                inner join template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id
+                inner join template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id AND b.is_deleted = FALSE
+            WHERE a.is_deleted = FALSE
             group by a.task_id,a.template_id
             ) tpt on tt.id = tpt.task_id and tt.template_id = tpt.template_id
         left join (
-            select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs group by template_id, task_id
+            select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs where is_deleted = FALSE group by template_id, task_id
             ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
 
         left join template_phase tp  on tp.id=tt.phase_id

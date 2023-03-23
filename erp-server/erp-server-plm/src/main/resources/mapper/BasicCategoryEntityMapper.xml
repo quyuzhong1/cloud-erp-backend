@@ -21,7 +21,7 @@
              pi.category_id,
              pd.id AS sku_id
           FROM product_info pi
-          INNER JOIN product_detail pd ON pi.id = pd.product_id
+          INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
           WHERE pi.delete_state=0 AND pi.is_deleted = FALSE
           <if test="categoryIds!=null and categoryIds.size>0">
              AND pi.category_id  IN

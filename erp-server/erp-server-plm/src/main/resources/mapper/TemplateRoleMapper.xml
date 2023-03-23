@@ -17,10 +17,10 @@
             tr.template_id,
             trrm.id as roleRefMembersId
         from  template_role tr
-        inner join template_role_ref_members trrm on tr.id = trrm.role_id and tr.template_id = trrm.template_id
-        inner join template_members tm on trrm.members_id = tm.id and tm.template_id = trrm.template_id
+        inner join template_role_ref_members trrm on tr.id = trrm.role_id and tr.template_id = trrm.template_id AND trrm.is_deleted = FALSE
+        inner join template_members tm on trrm.members_id = tm.id and tm.template_id = trrm.template_id AND tm.is_deleted = FALSE
         <where>
-            AND tr.is_deleted = FALSE
+            tr.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                and  tr.name like concat('%', #{params.searchKeyword} ,'%')
             </if>

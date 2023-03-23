@@ -18,7 +18,7 @@
             tm.update_user_id,
             tm.update_user_name
         from  template_members tm
-        inner join template_role_ref_members trrm  on trrm.members_id = tm.id and trrm.template_id = tm.template_id
+        inner join template_role_ref_members trrm  on trrm.members_id = tm.id and trrm.template_id = tm.template_id AND trrm.is_deleted = FALSE
         <where>
             tm.is_deleted = FALSE
             AND trrm.role_id = #{roleId} and trrm.template_id = #{templateId}
@@ -39,8 +39,8 @@
             tm.update_user_id,
             tm.update_user_name
         from template_members tm
-        left join template_role_ref_members trrm on trrm.members_id = tm.id and trrm.template_id = tm.template_id
-        left join template_role tr on tr.id = trrm.role_id and trrm.template_id = tr.template_id
+        left join template_role_ref_members trrm on trrm.members_id = tm.id and trrm.template_id = tm.template_id AND trrm.is_deleted = FALSE
+        left join template_role tr on tr.id = trrm.role_id and trrm.template_id = tr.template_id AND tr.is_deleted = FALSE
         where tr.template_id = #{templateId} AND tm.is_deleted = FALSE and tr.name in
         <foreach collection="roleNames" item="item" separator="," open="(" close=")">
             #{item}
