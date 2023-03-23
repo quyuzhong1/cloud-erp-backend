@@ -153,9 +153,14 @@ public class ProductSkuDTO extends PermissionsDTO {
     private List<String> skuList;
 
     /**
+     * spu集合
+     */
+    private List<String> spuList;
+
+    /**
      * 供应商名称
      */
-    private String supplierName;
+    private List<String> supplierNameList;
 }
 
 

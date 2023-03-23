@@ -16,9 +16,13 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ExcelImportDTO implements Serializable {
-
+    /**
+     * 导入文件
+     */
     private MultipartFile excelFile;
-
+    /**
+     * skuIds
+     */
     private List<String> skuIds;
 
 }
