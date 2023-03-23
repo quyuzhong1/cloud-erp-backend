@@ -155,11 +155,18 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
     @Override
     public List<BaseIdDTO> getByIds(List<String> ids) {
+        List<BaseIdDTO> resultList = new ArrayList<>(20);
         if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyList();
+            List<SysAccountingCompanyEntity> allList = this.list();
+            for (SysAccountingCompanyEntity item : allList) {
+                BaseIdDTO dto = new BaseIdDTO();
+                dto.setId(item.getId());
+                dto.setName(item.getCompanyName());
+                resultList.add(dto);
+            }
+            return resultList;
         }
         List<SysAccountingCompanyEntity> list = this.listByIds(ids);
-        List<BaseIdDTO> resultList = new ArrayList<>(list.size());
         for (SysAccountingCompanyEntity item : list) {
             BaseIdDTO dto = new BaseIdDTO();
             dto.setId(item.getId());

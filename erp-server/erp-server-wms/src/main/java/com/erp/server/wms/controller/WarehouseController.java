@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 仓库管理
@@ -170,19 +170,31 @@ public class WarehouseController extends BaseController {
     /**
      * 导入仓库
      */
-    @PostMapping("/import")
+    @PostMapping("/importFile")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return success();
+        Boolean result = warehouseService.importFile(excelFile, response);
+        return result == true ? success() : failure();
     }
 
     /**
-     * 导出模板
+     * 下载模板
      *
      * @return
      */
-    @PostMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    @PostMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        warehouseService.downloadTemplate(response);
         return success();
+    }
+
+
+    /**
+     * 仓库列表
+     */
+    @GetMapping("/list")
+    public ApiResult<List<WarehouseDTO.ListDTO>> list() {
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+        return success(list);
     }
 
 

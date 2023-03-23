@@ -32,7 +32,7 @@ public class WarehouseFeignController {
      * @return List<WarehouseDTO>
      */
     @GetMapping("/listApproveWarehouse")
-    public List<WarehouseDTO.UpdateDTO> listApproveWarehouse() {
+    public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
         return warehouseService.listApproveWarehouse();
     }
 

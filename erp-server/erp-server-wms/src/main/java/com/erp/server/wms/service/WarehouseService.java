@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -37,7 +38,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @date: 2023/3/21 14:27
      * @return List<WarehouseDTO>
      */
-    List<WarehouseDTO.UpdateDTO> listApproveWarehouse();
+    List<WarehouseDTO.ListDTO> listApproveWarehouse();
 
     
     /**
@@ -145,4 +146,24 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return void
      */
     void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 下载仓库模板
+     * @author yl
+     * @date 2023-03-22 17:06
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    
+    /**
+     * 导入仓库数据
+     * @author yl
+     * @date 2023-03-22 17:17
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

@@ -109,6 +109,37 @@ public class WarehouseDTO implements Serializable {
         private String id;
     }
 
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+
+        /**
+         * 组织id
+         */
+        private String orgId;
+
+
+        /**
+         * disabled
+         * true 禁用
+         */
+        private String disabled;
+    }
+
 
     /**
      * 仓库分页信息

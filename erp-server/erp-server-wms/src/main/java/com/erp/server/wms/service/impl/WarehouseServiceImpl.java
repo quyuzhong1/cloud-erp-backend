@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,21 +19,30 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseImportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +58,7 @@ import java.util.stream.Collectors;
  * @since 2023-03-15
  */
 @Service
+@Slf4j
 public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, WarehouseEntity> implements WarehouseService {
 
     @Resource
@@ -68,16 +79,15 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.UpdateDTO> listApproveWarehouse() {
+    public  List<WarehouseDTO.ListDTO>  listApproveWarehouse() {
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         List<WarehouseEntity> list = lambdaQuery().
                 eq(WarehouseEntity::getApproveStatus, approveStatus).
-                eq(WarehouseEntity::getDisabled, false).
                 list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        return BeanMapperUtils.copyList(WarehouseDTO.UpdateDTO.class, list);
+        return BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
     }
 
 
@@ -374,7 +384,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
         //获取导出数据
         List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
-
         List<WarehouseImportExcelDTO> resultList = new ArrayList<>(viewList.size());
         if (CollectionUtils.isNotEmpty(viewList)) {
             //获取到仓库类型
@@ -409,16 +418,81 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 excelDTO.setOrgName(orgName);
-                excelDTO.setEnabled(item.getDisabled()?"启用":"未启用");
+                excelDTO.setEnabled(item.getDisabled() ? "启用" : "未启用");
+                excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
                 resultList.add(excelDTO);
 
 
             }
         }
-        String fileName="仓库数据";
+        String fileName = "仓库数据";
         ExcelUtil.export(fileName, "warehouse", resultList, WarehouseImportExcelDTO.class, response);
 
 
+    }
+
+
+    /**
+     * 下载仓库模板
+     *
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-03-22 17:06
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/warehouse.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+
+    /**
+     * 导入仓库数据
+     *
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-22 17:17
+     */
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        //获取到仓库类型
+        List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(null);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("仓库导入错误！", e);
+        }
+        List<WarehouseExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName="仓库错误信息";
+            ExcelUtil.export(fileName, "warehouseError", errorList, WarehouseExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+
+        return Boolean.TRUE;
     }
 
 

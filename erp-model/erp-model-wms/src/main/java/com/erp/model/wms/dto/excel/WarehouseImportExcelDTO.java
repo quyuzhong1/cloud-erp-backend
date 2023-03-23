@@ -2,6 +2,7 @@ package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.service.LocalDateStringConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -55,14 +56,14 @@ public class WarehouseImportExcelDTO implements Serializable {
      * 是否虚拟仓
      * true 是
      */
-    @ColumnWidth(5)
-    @ExcelProperty(value = "仓库组织", index = 4)
+    @ColumnWidth(30)
+    @ExcelProperty(value = "是否虚拟仓", index = 4)
     private String isVirtual;
 
     /**
      * 负责人名
      */
-    @ColumnWidth(10)
+    @ColumnWidth(30)
     @ExcelProperty(value = "仓库负责人", index = 5)
     private String chargeName;
 
@@ -70,7 +71,7 @@ public class WarehouseImportExcelDTO implements Serializable {
     /**
      * 联系人
      */
-    @ColumnWidth(10)
+    @ColumnWidth(20)
     @ExcelProperty(value = "联系人", index = 6)
     private String contacts;
 
@@ -91,7 +92,7 @@ public class WarehouseImportExcelDTO implements Serializable {
     /**
      * 状态
      */
-    @ColumnWidth(5)
+    @ColumnWidth(10)
     @ExcelProperty(value = "启用状态", index = 9)
     private String enabled;
 
@@ -106,8 +107,8 @@ public class WarehouseImportExcelDTO implements Serializable {
     /**
      * 创建时间
      */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "创建时间", index = 12)
+    @ColumnWidth(20)
+    @ExcelProperty(value = "创建时间", index = 12,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 
