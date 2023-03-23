@@ -120,7 +120,7 @@
         group by a.task_id,a.template_id
         ) tpt on tt.id = tpt.task_id and tt.template_id = tpt.template_id
         left join (
-        select task_id,template_id,string_agg(docs_name, ',') as docsNames,string_agg(id, ',') as docsIds from template_delivery_docs WHERE is_deleted = FALSE group by id,template_id, task_id
+        select task_id,template_id,string_agg(docs_name, ',') as docsNames,string_agg(id, ',') as docsIds from template_delivery_docs WHERE is_deleted = FALSE group by template_id, task_id
         ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
         left join template_phase tp  on tp.id=tt.phase_id AND tp.is_deleted = FALSE
         WHERE 1=1 AND tt.is_deleted = FALSE
