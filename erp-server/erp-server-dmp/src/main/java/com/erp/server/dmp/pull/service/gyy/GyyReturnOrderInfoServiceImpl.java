@@ -1,10 +1,12 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
@@ -33,9 +35,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.swing.text.DateFormatter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -217,9 +222,14 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         //备注
         dmpReturnOrderInfoEntity.setRemark(gyyReturnOrderEntity.getNote());
         //退货信息创建时间
-        dmpReturnOrderInfoEntity.setReturnCreateTime(gyyReturnOrderEntity.getCreateDate());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        if (!"null".equalsIgnoreCase(gyyReturnOrderEntity.getCreateDate()) && StrUtil.isNotBlank(gyyReturnOrderEntity.getCreateDate())) {
+            dmpReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(gyyReturnOrderEntity.getCreateDate(), sdf));
+        }
         //退款时间
-        dmpReturnOrderInfoEntity.setRefundTime(gyyReturnOrderEntity.getApproveDate());
+        if (!"null".equalsIgnoreCase(gyyReturnOrderEntity.getApproveDate()) && StrUtil.isNotBlank(gyyReturnOrderEntity.getApproveDate())) {
+            dmpReturnOrderInfoEntity.setRefundTime(LocalDateTime.parse(gyyReturnOrderEntity.getApproveDate(), sdf));
+        }
         //币种
         dmpReturnOrderInfoEntity.setCurrencyCode("CNY");
         //汇率

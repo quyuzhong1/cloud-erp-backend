@@ -4,10 +4,8 @@ import com.erp.model.dmp.gyy.bean.*;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -136,13 +134,13 @@ public class GyyOrderEntity {
     @SerializedName("platform_code")
     private String platformCode;
     @SerializedName("createtime")
-    private LocalDateTime createtime;
+    private String createtime;
     @SerializedName("modifytime")
-    private LocalDateTime modifytime;
+    private String modifytime;
     @SerializedName("dealtime")
-    private LocalDateTime dealtime;
+    private String dealtime;
     @SerializedName("paytime")
-    private LocalDateTime paytime;
+    private String paytime;
     @SerializedName("shop_name")
     private String shopName;
     @SerializedName("shop_code")
@@ -276,9 +274,9 @@ public class GyyOrderEntity {
     @SerializedName("messages")
     private List<Object> messages;
 
-    private LocalDateTime createTime;
+    private String createTime;
 
-    private LocalDateTime updateTime;
+    private String updateTime;
 
     @Override
     public String toString() {

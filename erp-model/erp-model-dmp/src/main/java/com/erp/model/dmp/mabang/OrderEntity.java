@@ -28,17 +28,17 @@ public class OrderEntity {
     private String companyId;
     private String countryCode;
     private BigDecimal orderCost;
-    private LocalDateTime transportTime;
-    private LocalDateTime quickPickTime;
+    private String transportTime;
+    private String quickPickTime;
     private Integer canSend;
-    private LocalDateTime createDate;
+    private String createDate;
     private Integer isReturned;
     private Integer isRefund;
-    private LocalDateTime paidTime;
+    private String paidTime;
 
     private BigDecimal orderFee;
     private String platformId;
-    private LocalDateTime expressTime;
+    private String expressTime;
     private Integer isUnion;
     private Integer isSplit;
     private Integer isResend;
@@ -51,7 +51,7 @@ public class OrderEntity {
     private String isSyncPlatformDescr;
     private String district;
     private String paypalEmail;
-    private LocalDateTime closeDate;
+    private String closeDate;
     private String street1;
     private String street2;
     private String isVirtual;
@@ -64,10 +64,10 @@ public class OrderEntity {
     private String isNewOrder;
     private String doorcode;
     private Integer fbaFlag;
-    private LocalDateTime fbaStartDateTime;
-    private LocalDateTime fbaEndDateTime;
+    private String fbaStartDateTime;
+    private String fbaEndDateTime;
     private String CarrierCode;
-    private LocalDateTime operTime;
+    private String operTime;
     private String shippingService;
     private String packageWeight;
     private String platformOrderStatus;

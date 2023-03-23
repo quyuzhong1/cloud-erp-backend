@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -168,12 +170,17 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         dmpRefundInfoEntity.setRefundRemark(refundOrderEntity.getNote());
         //退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
         dmpRefundInfoEntity.setRefundStatus(refundOrderEntity.getFlag());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //申请时间
-        dmpRefundInfoEntity.setRefundCreateTime(refundOrderEntity.getCreateTime());
+        if (!"null".equalsIgnoreCase(refundOrderEntity.getCreateTime()) && StrUtil.isNotBlank(refundOrderEntity.getCreateTime())) {
+            dmpRefundInfoEntity.setRefundCreateTime(LocalDateTime.parse(refundOrderEntity.getCreateTime(), sdf));
+        }
         //店铺编号
         dmpRefundInfoEntity.setShopNo(refundOrderEntity.getShopId());
         //平台最后修改时间
-        dmpRefundInfoEntity.setPlatformUpdateTime(refundOrderEntity.getUpdateTime());
+        if (!"null".equalsIgnoreCase(refundOrderEntity.getUpdateTime()) && StrUtil.isNotBlank(refundOrderEntity.getUpdateTime())) {
+            dmpRefundInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(refundOrderEntity.getUpdateTime(), sdf));
+        }
         //平台标识
         dmpRefundInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());

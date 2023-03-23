@@ -5,9 +5,7 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
-import com.erp.server.dmp.pull.service.gyy.GyyHistoryOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.gyy.*;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +69,55 @@ public class GyyPullServiceTest {
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
         jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 9, 8, 0));
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            gyyOrderInfoService.pullDataSave(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void pullRefundSalesTest(){
+        GyyRefundServiceImpl gyyOrderInfoService = new GyyRefundServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
+        jobTaskDTO.setApiId(7);
+        jobTaskDTO.setApiName("管易云查询订单列表");
+        jobTaskDTO.setId(32L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
+        jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 8, 10, 0));
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            gyyOrderInfoService.pullDataSave(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Test
+    public void pullReturnSalesTest(){
+        GyyReturnOrderInfoServiceImpl gyyOrderInfoService = new GyyReturnOrderInfoServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_RETURN_GET;
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
+        jobTaskDTO.setApiId(7);
+        jobTaskDTO.setApiName("管易云查询订单列表");
+        jobTaskDTO.setId(32L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.of(2022, 4, 8, 8, 0));
+        jobTaskDTO.setNextTime(LocalDateTime.of(2022, 4, 8, 10, 0));
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
