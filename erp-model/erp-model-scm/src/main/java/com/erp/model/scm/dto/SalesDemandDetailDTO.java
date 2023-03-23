@@ -98,7 +98,7 @@ public class SalesDemandDetailDTO implements Serializable {
        /**
         * 成功返回数据
         */
-       private List<AddDTO> succeedList;
+       private List<AddDTO> successList;
 
        /**
         * 错误url

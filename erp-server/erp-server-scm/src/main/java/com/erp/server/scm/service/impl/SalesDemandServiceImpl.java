@@ -399,7 +399,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importDTO.setSucceedList(successList);
+        importDTO.setSuccessList(successList);
         importDTO.setErrorUrl(url);
         return importDTO;
     }

@@ -249,7 +249,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
-
+        List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> list = dto.getList();
+        List<String> detailIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(detailIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+        }
 
         return null;
     }
@@ -292,7 +296,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        importDTO.setSucceedList(successList);
+        importDTO.setSuccessList(successList);
         importDTO.setErrorUrl(url);
         return importDTO;
     }

@@ -115,7 +115,7 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<PurchaseApplicationDetailDTO.AddDTO> succeedList;
+        private List<PurchaseApplicationDetailDTO.AddDTO> successList;
 
         /**
          * 错误url
