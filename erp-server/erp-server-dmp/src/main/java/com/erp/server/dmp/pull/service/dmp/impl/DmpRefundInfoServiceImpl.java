@@ -94,7 +94,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         String refundInfoId = "";
         DmpRefundInfoEntity dmpReturnOrderInfoEntity = this.getRefundByPlatformOrderId(returnOrderInfoEntity);
         if (dmpReturnOrderInfoEntity != null) {
-            if(PlatformEnum.GYY.getDesc().equals(returnOrderInfoEntity.getPlatformSign()) && returnOrderInfoEntity.getCancel()){
+            if(PlatformEnum.GYY.getDesc().equals(returnOrderInfoEntity.getPlatformSign()) && null != returnOrderInfoEntity.getCancel() && returnOrderInfoEntity.getCancel()){
                 removeById(dmpReturnOrderInfoEntity.getId());
                 dmpRefundItemService.deleteRefundItemByRefundId(dmpReturnOrderInfoEntity.getId());
                 return refundInfoId;
@@ -106,7 +106,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             }
             refundInfoId = dmpReturnOrderInfoEntity.getId();
         } else {
-            if(PlatformEnum.GYY.getDesc().equals(returnOrderInfoEntity.getPlatformSign()) && returnOrderInfoEntity.getCancel()){
+            if(PlatformEnum.GYY.getDesc().equals(returnOrderInfoEntity.getPlatformSign()) && null != returnOrderInfoEntity.getCancel() && returnOrderInfoEntity.getCancel()){
                 return refundInfoId;
             }
             refundInfoId = add(returnOrderInfoEntity);

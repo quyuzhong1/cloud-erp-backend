@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -178,10 +180,15 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         dmpOrderInfoEntity.setIsRefund((refundState.equals(1) || refundState.equals(2))? 1 : 2);
         //是否退货 1.退货 2.非退货
         dmpOrderInfoEntity.setIsReturned(2);
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //订单付款时间
-        dmpOrderInfoEntity.setPaidTime(gyyOrderEntity.getPaytime());
+        if (!"null".equalsIgnoreCase(gyyOrderEntity.getPaytime()) && StrUtil.isNotBlank(gyyOrderEntity.getPaytime())) {
+            dmpOrderInfoEntity.setPaidTime(LocalDateTime.parse(gyyOrderEntity.getPaytime(), sdf));
+        }
         //平台订单时间
-        dmpOrderInfoEntity.setPlatformCreateTime(gyyOrderEntity.getDealtime());
+        if (!"null".equalsIgnoreCase(gyyOrderEntity.getDealtime()) && StrUtil.isNotBlank(gyyOrderEntity.getDealtime())) {
+            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(gyyOrderEntity.getDealtime(), sdf));
+        }
         //平台交易号
         dmpOrderInfoEntity.setSalesRecordNumber(gyyOrderEntity.getPlatformCode());
         //平台的订单状态

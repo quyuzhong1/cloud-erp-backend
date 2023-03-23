@@ -574,7 +574,7 @@
         left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
         left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution WHERE is_deleted = FALSE group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
         where  (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
-            pji.project_status != 4) AND t.is_deleted = FALSE
+            pji.project_status != 4) AND pt.is_deleted = FALSE
             <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
                 <if test="params.groupFlag != null  and params.groupFlag != ''">
                     AND pt.product_id = #{params.groupFlag}
@@ -706,10 +706,9 @@
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id AND pt.is_deleted = FALSE
         left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
-        where pi.is_finished_product_dev = 1
+        where pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         ) t
         <where>
-            pi.is_deleted = FALSE
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0 ">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
@@ -774,10 +773,9 @@
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id AND pt.is_deleted = FALSE
         left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
-        where pi.is_finished_product_dev = 1
+        where pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         ) t
         <where>
-            pi.is_deleted = FALSE
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">

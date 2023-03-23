@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -155,8 +157,11 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
         BeanUtil.copyProperties(returnOrderEntity, dmpReturnOrderInfoEntity);
         //币种
         dmpReturnOrderInfoEntity.setCurrencyCode(returnOrderEntity.getCurrencyId());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //退货信息创建时间
-        dmpReturnOrderInfoEntity.setReturnCreateTime(returnOrderEntity.getCreateDate());
+        if (!"null".equalsIgnoreCase(returnOrderEntity.getCreateDate()) && StrUtil.isNotBlank(returnOrderEntity.getCreateDate())) {
+            dmpReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(returnOrderEntity.getCreateDate(), sdf));
+        }
         //国家英文名称
         dmpReturnOrderInfoEntity.setCountryNameEn(returnOrderEntity.getCountryNameEN());
         //国家中文名称

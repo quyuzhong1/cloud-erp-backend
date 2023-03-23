@@ -3,10 +3,8 @@ package com.erp.model.dmp.kingdee;
 import cn.hutool.core.annotation.Alias;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
