@@ -17,7 +17,6 @@ import com.erp.server.bi.service.BiDictService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import com.erp.server.bi.service.DmpSkuInfoService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -253,10 +252,10 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 店铺下拉框
+     * 店铺下拉框(status,1启用，0禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/list")
-    public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@Param("status") Integer status) {
+    public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam("status") Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();
@@ -271,10 +270,10 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 所有店铺下拉框
+     * 所有店铺下拉框(status,1启用，0禁用，默认空返回全部数据)
      */
     @GetMapping("/shop/listAll")
-    public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@Param("status") Integer status) {
+    public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status") Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();

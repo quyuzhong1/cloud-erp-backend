@@ -113,10 +113,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             records.forEach(obj -> {
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
-                    obj.setId(null);
                     obj.setCode(null);
                     obj.setShopName(null);
+                    obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
+                    obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
                     obj.setIsFirstMassProduct(null);
                     obj.setStockReason(null);
