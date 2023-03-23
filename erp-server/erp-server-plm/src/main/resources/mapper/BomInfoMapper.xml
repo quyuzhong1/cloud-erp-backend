@@ -21,7 +21,7 @@
         ON bs.bom_id = b.id AND b.is_deleted = FALSE
         WHERE bs.is_deleted = FALSE
         <if test="bomIdList !=null and bomIdList.size>0">
-            b.id IN
+            AND b.id IN
             <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
@@ -60,7 +60,7 @@
         FROM  product_bom_info
         WHERE is_deleted = FALSE
           <if test="bomIdList !=null and bomIdList.size>0">
-                id IN
+                AND id IN
                 <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
                     #{id}
                 </foreach>
@@ -95,7 +95,7 @@
         ON bs.bom_id = b.id AND b.is_deleted = FALSE
         WHERE is_deleted = FALSE
             <if test="bomIdList !=null and bomIdList.size>0">
-                b.id IN
+                AND b.id IN
                 <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
                     #{id}
                 </foreach>

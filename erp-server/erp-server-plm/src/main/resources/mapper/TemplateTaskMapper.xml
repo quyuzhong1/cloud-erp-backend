@@ -202,7 +202,7 @@
         <where>
             is_deleted = FALSE
             <if test="tastIdList != null and tastIdList.size > 0">
-                 id IN
+                 AND id IN
                 <foreach collection="tastIdList" item="taskId" open="(" separator="," close=")">
                     #{taskId}
                 </foreach>

@@ -12,7 +12,7 @@
         ON nm.node_id=nd.id AND nd.is_deleted = FALSE
         WHERE nm.is_deleted = FALSE
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-                nd.node_name LIKE concat('%',#{params.searchKeyword},'%')
+                AND nd.node_name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
         ORDER BY nm.create_time ASC
     </select>

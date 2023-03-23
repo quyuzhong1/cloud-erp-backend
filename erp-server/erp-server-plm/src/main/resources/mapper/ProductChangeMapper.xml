@@ -12,7 +12,7 @@
         approval_finish_time,
         remark
         FROM product_change
-        WHERE is_deleted = FALSE
+        WHERE is_deleted = FALSE AND
             <if test="searchList!=null and searchList.size>0">
                 source_id  IN
                <foreach collection="searchList" item="sourceId" open="(" separator="," close=")">

@@ -7,7 +7,7 @@
         <where>
             is_deleted = FALSE
             <if test="nameList !=null and nameList.size()>0">
-                name NOT IN
+                AND name NOT IN
                 <foreach collection="nameList" item="name" open="(" separator="," close=")">
                     #{name}
                 </foreach>
@@ -20,7 +20,7 @@
           <where>
               is_deleted = FALSE
               <if test="params.searchKeyword !=null and params.searchKeyword!='' " >
-                   name LIKE concat('%',#{params.searchKeyword},'%')
+                   AND name LIKE concat('%',#{params.searchKeyword},'%')
               </if>
           </where>
 

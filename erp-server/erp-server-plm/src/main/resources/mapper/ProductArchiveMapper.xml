@@ -12,7 +12,7 @@
         ON pa.product_id=p.id AND pa.is_deleted = FALSE
         WHERE p.is_deleted = FALSE
             <if test="params.categoryId!=null and params.categoryId!=''  ">
-                P.category_id=#{params.categoryId}
+                AND P.category_id=#{params.categoryId}
             </if>
             <if test="params.searchKeyword!=null and  params.searchKeyword!=''  ">
                 AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
