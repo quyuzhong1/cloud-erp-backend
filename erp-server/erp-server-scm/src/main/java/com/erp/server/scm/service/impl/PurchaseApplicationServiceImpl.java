@@ -273,18 +273,31 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //查询关联信息
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.listByPurchaseApplicationDetailIds(detailIds);
 
-        //验证剩余采购数量
-        Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> checkMap = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId));
-        for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> checkEntry :  checkMap.entrySet()) {
-            List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> value = checkEntry.getValue();
-
-        }
-
         //明细数据
         List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(detailIds);
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98017);
         }
+        for (PurchaseApplicationDetailEntity detail : detailList) {
+            //已采购数量
+            Integer purchaseQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(refList)) {
+                 purchaseQty = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //本次采购数量
+            Integer thisPurchaseQty = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            
+            //申请数量
+            Integer applyQty = detail.getApplyQty();
+            if (thisPurchaseQty > (applyQty - purchaseQty)) {
+                throw new ServiceException(new ApiResult(1,String.format("【%s】采购数量不能大于%s",detail.getSkuNo(),applyQty - purchaseQty)));
+            } else if (thisPurchaseQty == (applyQty - purchaseQty)) {
+                detail.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
+            } else {
+                detail.setCreatePoType(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus());
+            }
+        }
+
         //sku信息
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -326,6 +339,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setReceiveOrgId(detailValue.get(0).getReceiveOrgId());
                 addDetailDTO.setDeliveryWarehouseId(detailValue.get(0).getDestWarehouseId());
                 addDetailDTO.setPlanDeliveryDate(detailValue.get(0).getPlanDeliveryDate());
+                addDetailDTO.setTaxPrice(detailValue.get(0).getTaxPrice());
                 //采购数量
                 Integer purchaseQty = detailValue.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(0, Integer::sum);
                 addDetailDTO.setPurchaseQty(purchaseQty);
@@ -337,17 +351,22 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 if (count > 0) {
                     addDetailDTO.setIsGift(Boolean.TRUE);
                 }
-
                 //采购报价单取税率 TODO
                 addDetailDTO.setTaxRate(BigDecimal.ZERO);
+
+                addDetailDTO.setPurchaseApplicationId(detailValue.get(0).getId());
+                addDetailDTO.setPurchaseApplicationDetailId(detailValue.get(0).getPurchaseApplicationDetailId());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);
             resultList.add(addDTO);
         }
+        //新增采购订单
         if (CollectionUtils.isNotEmpty(resultList)) {
             resultList.forEach(obj -> purchaseOrderService.add(obj));
         }
+        //更新申请明细生成状态
+        purchaseApplicationDetailService.saveOrUpdateBatch(detailList);
         return Boolean.TRUE;
     }
 
