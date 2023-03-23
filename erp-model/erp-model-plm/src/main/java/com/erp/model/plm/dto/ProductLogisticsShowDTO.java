@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -47,6 +46,11 @@ public class ProductLogisticsShowDTO implements Serializable {
      * 产品属性id
      */
     private String productPropertyId;
+
+    /**
+     * 报关型号
+     */
+    private String declareModel;
 
     /**
      * 报关中文名

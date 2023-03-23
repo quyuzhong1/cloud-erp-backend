@@ -56,6 +56,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -311,8 +312,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 Integer purchaseQty = detailValue.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(0, Integer::sum);
                 addDetailDTO.setPurchaseQty(purchaseQty);
                 //采购金额
-                //detailValue.stream().map(obj -> obj.getPurchaseQty())
-
+                BigDecimal purchaseAmount = detailValue.stream().map(obj -> MathUtil.multiply(obj.getTaxPrice(), obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+                addDetailDTO.setPurchaseAmount(purchaseAmount);
                 //是否加急，明细存在加急则设置加急
                 long count = detailValue.stream().filter(obj -> obj.getIsGift()).count();
                 if (count > 0) {
