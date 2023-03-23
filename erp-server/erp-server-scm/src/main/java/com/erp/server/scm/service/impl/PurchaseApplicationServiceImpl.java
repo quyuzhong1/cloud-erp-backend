@@ -475,7 +475,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isNotBlank(id)) {
+        if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
