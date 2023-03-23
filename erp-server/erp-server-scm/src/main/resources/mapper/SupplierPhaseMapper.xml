@@ -3,5 +3,25 @@
 <mapper namespace="com.erp.server.scm.mapper.SupplierPhaseMapper">
 
 
+    <select id="paging" resultType="com.erp.model.scm.dto.SupplierPhaseDTO$PagingViewDTO">
+         SELECT
+           sp.id,
+           sp.create_user_name,
+           sp.create_time,
+           sp.supplier_id,
+           sp.type,
+           sp.current_phase,
+           sp.target_phase,
+           sp.approve_status,
+           sp.description
+         FROM supplier_phase sp
+         INNER JOIN supplier su
+         ON su.id=sp.supplier_id
 
+
+
+
+
+
+    </select>
 </mapper>
