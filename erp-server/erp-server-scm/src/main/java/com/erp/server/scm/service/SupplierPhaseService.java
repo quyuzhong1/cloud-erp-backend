@@ -1,5 +1,8 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
@@ -63,4 +66,42 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @return com.erp.model.scm.entity.SupplierPhaseEntity
      */
     Boolean updateSupplierPhase(SupplierPhaseDTO.UpdateDTO dto);
+
+    
+    /**
+     * 审核供应商阶段
+     * @author yl
+     * @date 2023-03-23 17:43
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
+
+    
+    /**
+     * 删除供应商阶段
+     * @author yl
+     * @date 2023-03-23 17:54
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 取消流程
+     * @author yl
+     * @date 2023-03-23 17:58
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 分页查询
+     * @author yl
+     * @date 2023-03-23 18:15
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierPhaseDTO.PagingViewDTO>
+     */
+    PagingVO<SupplierPhaseDTO.PagingViewDTO> paging(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
 }

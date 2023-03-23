@@ -3,7 +3,12 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
@@ -67,7 +72,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         //供应商的现阶段
         String phase = supplier.getPhase().getPhase();
         if (!phase.equals(dto.getCurrentPhase())) {
-            throw new ServiceException(ApiError.ERROR_98016);
+            throw new ServiceException(ApiError.ERROR_98020);
         }
         //检查阶段能否变更
         checkPhase(phase, dto.getTargetPhase(), dto.getType());
@@ -212,8 +217,120 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             String attachmentType = tableName.value();
             attachmentService.batchSave(Arrays.asList(id), attachmentType, id);
         }
-
         return result;
+    }
+
+    /**
+     * 审核供应商阶段
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 17:43
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<SupplierPhaseEntity> list = this.listByIds(ids);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        /**
+         * TODO
+         * 还需要检查是否是自己能否审核
+         */
+        //审核通过
+        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
+            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            Boolean result = this.updateApproveStatus(list, approveStatus);
+            return result;
+        } else {
+            //审核不通过
+            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+            Boolean result = this.updateApproveStatus(list, rejectStatus);
+            return result;
+        }
+    }
+
+
+    /**
+     * 删除供应商阶段
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 17:54
+     */
+    @Override
+    public Boolean deleteByIds(List<String> ids) {
+        List<SupplierPhaseEntity> list = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        return this.removeByIds(ids);
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 17:58
+     */
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        List<SupplierPhaseEntity> list = this.listByIds(ids);
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approveIngStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 这里要调用工作流服务取消流程
+
+        return true;
+    }
+
+
+    /**
+     * 分页查询
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierPhaseDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-03-23 18:15
+     */
+    @Override
+    public PagingVO<SupplierPhaseDTO.PagingViewDTO> paging(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+
+
+        return null;
+    }
+
+
+    /**
+     * 更改状态
+     *
+     * @param list
+     * @param approveStatus
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 17:50
+     */
+    private Boolean updateApproveStatus(List<SupplierPhaseEntity> list, String approveStatus) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(s -> s.setApproveStatus(approveStatus));
+            return this.updateBatchById(list);
+        }
+        return true;
     }
 
 

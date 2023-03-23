@@ -9,8 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
-import com.erp.model.scm.dto.SupplierPhasePagingParamDTO;
-import com.erp.model.scm.dto.SupplierPhasePagingViewDTO;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import com.erp.server.scm.service.SupplierPhaseService;
 import org.springframework.validation.annotation.Validated;
@@ -43,8 +41,9 @@ public class SupplierPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<SupplierPhasePagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPhasePagingParamDTO> dto) {
-        return success();
+    public ApiResult<PagingVO<SupplierPhaseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
+        PagingVO<SupplierPhaseDTO.PagingViewDTO> pagingVO = supplierPhaseService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
@@ -55,8 +54,8 @@ public class SupplierPhaseController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
-        SupplierPhaseEntity entity=supplierPhaseService.add(dto);
-        return entity!=null?success():failure();
+        SupplierPhaseEntity entity = supplierPhaseService.add(dto);
+        return entity != null ? success() : failure();
     }
 
     /**
@@ -67,8 +66,8 @@ public class SupplierPhaseController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierPhaseDTO.UpdateDTO dto) {
-        Boolean result=supplierPhaseService.updateSupplierPhase(dto);
-        return result==true?success():failure();
+        Boolean result = supplierPhaseService.updateSupplierPhase(dto);
+        return result == true ? success() : failure();
     }
 
     /**
@@ -116,7 +115,23 @@ public class SupplierPhaseController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult view(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = supplierPhaseService.approve(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-23 17:57
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = supplierPhaseService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
     }
 
 
@@ -127,8 +142,9 @@ public class SupplierPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
-        return success();
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = supplierPhaseService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
     }
 
 }
