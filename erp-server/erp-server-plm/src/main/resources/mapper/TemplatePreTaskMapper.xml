@@ -19,5 +19,6 @@
                 LEFT JOIN template_task tt ON tpt.pre_task_id = tt."id"
         WHERE
             tpt.task_id = #{taskId}
+            AND tpt.is_deleted = FALSE
     </select>
 </mapper>

@@ -5,6 +5,7 @@
     <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT task_id  AS flagId ,count(*) AS count FROM task_delivery_docs
         <where>
+            is_deleted = FALSE
             <if test="taskIds !=null and taskIds.size>0">
                 AND task_id IN
                 <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
@@ -23,7 +24,7 @@
        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
-       where d.product_id = #{params.flagId}
+       where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
             AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
        </if>
@@ -44,7 +45,7 @@
         f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
         FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
-        where d.product_id = #{params.flagId}
+        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
         <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
             AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -66,7 +67,7 @@
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName,
         f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name
         FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
-        where d.task_id=#{taskId}
+        where d.task_id=#{taskId} AND d.is_deleted = FALSE
     </select>
 
 

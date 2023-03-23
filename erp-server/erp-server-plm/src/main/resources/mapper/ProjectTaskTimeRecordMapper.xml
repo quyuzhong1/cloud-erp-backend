@@ -40,6 +40,7 @@
         LEFT JOIN product_info  pi on pt.product_id = pi.id
         LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id
         <where>
+            pt.is_deleted = FALSE
             <if test="null != params and null != params.searchKeyword and '' != params.searchKeyword">
                and (pi."name" like concat('%',#{params.searchKeyword} ,'%') or pi.spu_no like concat('%',#{params.searchKeyword} ,'%'))
             </if>

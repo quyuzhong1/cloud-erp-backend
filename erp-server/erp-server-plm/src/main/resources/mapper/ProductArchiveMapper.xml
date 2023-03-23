@@ -10,7 +10,7 @@
         ON p.id=pi.product_id
         INNER JOIN product_archive pa
         ON pa.product_id=p.id
-        <where>
+        WHERE p.is_deleted = FALSE
             <if test="params.categoryId!=null and params.categoryId!=''  ">
                 P.category_id=#{params.categoryId}
             </if>
@@ -28,7 +28,6 @@
             <if test="params.param!=null and params.param!=''  ">
                 AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             </if>
-        </where>
         ORDER BY pa.archive_time DESC
 
     </select>

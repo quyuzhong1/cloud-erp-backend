@@ -9,7 +9,7 @@
          create_time,update_time,message_content,notice_node,
          notice_message_id,notice_user_id,plan_end_time,is_task,
          charge_id,charge_name FROM notice_message_log
-         WHERE notice_user_id=#{params.flagId}
+         WHERE notice_user_id=#{params.flagId} AND is_deleted = FALSE
          <if test="params.searchKeyword!=null and   params.searchKeyword !='' ">
           AND product_name LIKE concat('%',#{params.searchKeyword},'%'))
          </if>

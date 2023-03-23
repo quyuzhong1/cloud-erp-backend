@@ -4,13 +4,13 @@
 
 
     <select id="getTaskPhaseByProductId" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
-        SELECT ID,NAME FROM  project_phase WHERE product_id = #{productId}
+        SELECT ID,NAME FROM  project_phase WHERE product_id = #{productId} AND is_deleted = FALSE
         ORDER BY seq asc ,update_time asc ,id asc
     </select>
 
     <select id="listTaskPhaseByProductIds" resultType="com.erp.model.plm.entity.ProjectPhaseEntity">
         SELECT ID,NAME,product_id FROM  project_phase
-        WHERE product_id in
+        WHERE is_deleted = FALSE AND product_id in
         <foreach collection="productIds" item="productId" open="(" close=")" separator=",">
             #{productId}
         </foreach>
@@ -19,7 +19,7 @@
 
     <select id="listByPhaseNames" resultType="com.erp.model.plm.entity.ProjectPhaseEntity">
         SELECT ID,NAME,product_id FROM  project_phase
-        WHERE product_id = #{productId} and name in
+        WHERE product_id = #{productId} AND is_deleted = FALSE and name in
         <foreach collection="phaseNames" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>

@@ -10,6 +10,6 @@
           rr.role_id
         FROM role_ref_members rr
         INNER JOIN project_members pm ON rr.members_id = pm.ID
-        WHERE rr.product_id=#{productId} AND pm.member_id=#{userId}
+        WHERE rr.product_id=#{productId} AND pm.member_id=#{userId} AND rr.is_deleted = FALSE
     </select>
 </mapper>

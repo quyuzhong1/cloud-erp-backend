@@ -24,7 +24,7 @@
                pts.work_period
         FROM project_task_sys pts
         left join sys_project_phase spp on pts.phase_id = spp.id
-        WHERE template_id=#{params.templateId}
+        WHERE template_id=#{params.templateId} AND pts.is_deleted = FALSE
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
                 AND pts.name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
@@ -42,7 +42,7 @@
        SELECT sd.name,ps.id FROM sys_docs_name sd
        JOIN task_delivery_docs td ON sd.id=td.docs_name_id
        JOIN project_task_sys ps ON  ps.id=td.task_id
-
+       WHERE sd.is_deleted = FALSE
     </select>
 
 </mapper>

@@ -12,7 +12,7 @@
           pa.dict_id
           FROM  product_detail pd
           LEFT JOIN product_attestation pa
-          ON pd.id=pa.sku_id AND pa.is_deleted=false
+          ON pd.id=pa.sku_id AND pd.is_deleted=false
           WHERE pd.product_id=#{productId}
     </select>
 </mapper>

@@ -6,7 +6,7 @@
 
 
     <select id="getTemplatePhaseByTemplateId" resultType="com.erp.model.plm.dto.TemplatePhaseDTO">
-        SELECT ID,NAME FROM  template_phase WHERE template_id = #{templateId}
+        SELECT ID,NAME FROM  template_phase WHERE template_id = #{templateId} AND is_deleted = FALSE
           ORDER BY seq asc ,update_time asc ,id asc
     </select>
 

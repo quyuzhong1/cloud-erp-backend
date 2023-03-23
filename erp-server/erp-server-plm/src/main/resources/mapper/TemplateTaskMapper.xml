@@ -37,6 +37,7 @@
 
         left join template_phase tp  on tp.id=tt.phase_id
         <where>
+            tt.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                 and tt.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
@@ -73,7 +74,7 @@
            tt.create_user_name,
            tt.create_user_id,
            tt.create_time
-           from template_task tt where tt.distribution_type = 0 and string_to_array(tt.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
+           from template_task tt where tt.distribution_type = 0 AND tt.is_deleted = FALSE and string_to_array(tt.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
            union
         select
             tts.id,
@@ -87,7 +88,7 @@
             tts.create_user_name,
             tts.create_user_id,
             tts.create_time
-        from project_task_sys tts where tts.distribution_type = 0 and string_to_array(tts.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
+        from project_task_sys tts where tts.distribution_type = 0 AND tts.is_deleted = FALSE and string_to_array(tts.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
     </select>
 
     <select id="templateTaskList" resultType="com.erp.model.plm.dto.TemplateTaskShowDTO">
@@ -120,7 +121,7 @@
         select task_id,template_id,string_agg(docs_name, ',') as docsNames,string_agg(id, ',') as docsIds from template_delivery_docs group by id,template_id, task_id
         ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
         left join template_phase tp  on tp.id=tt.phase_id
-        WHERE 1=1
+        WHERE 1=1 AND tt.is_deleted = FALSE
             <if test="params.phaseNames != null and params.phaseNames.size > 0">
                 AND tp.id IN
                 <foreach collection="params.phaseNames" item="phaseName" open="(" separator="," close=")">
@@ -198,6 +199,7 @@
             is_deleted
         FROM template_task
         <where>
+            is_deleted = FALSE
             <if test="tastIdList != null and tastIdList.size > 0">
                  id IN
                 <foreach collection="tastIdList" item="taskId" open="(" separator="," close=")">

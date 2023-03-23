@@ -18,6 +18,7 @@
            ttd.update_user_name
         from template_task_docs_name ttd
         <where>
+            ttd.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                and ttd.name like concat('%', #{params.searchKeyword} ,'%')
             </if>

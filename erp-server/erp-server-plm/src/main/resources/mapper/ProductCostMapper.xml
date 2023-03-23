@@ -23,7 +23,7 @@
         <include refid="Base_Column_List"/>
         FROM product_detail pd
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
-        WHERE pd.product_id = #{productId}
+        WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
 </mapper>

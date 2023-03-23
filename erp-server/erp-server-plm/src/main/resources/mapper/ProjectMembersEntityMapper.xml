@@ -6,7 +6,7 @@
         SELECT pm.is_charge,pm.id, pm.member_id,pm.member_name,
         pm.create_time,pm.create_user_id,pm.create_user_name
         FROM project_members pm
-        WHERE pm.product_id =#{productId}
+        WHERE pm.product_id =#{productId} AND pm.is_deleted = FALSE
         ORDER BY pm.create_time DESC
     </select>
 
@@ -16,7 +16,7 @@
         FROM project_members pm
         INNER JOIN role_ref_members ref  on ref.members_id=pm.id
         INNER JOIN project_role pr on ref.role_id=pr.id
-        WHERE pm.product_id =#{productId} AND ref.product_id=#{productId}
+        WHERE pm.product_id =#{productId} AND ref.product_id=#{productId} AND pm.is_deleted = FALSE
         <if test="roleIds !=null and roleIds.size>0">
             AND pr.id IN
             <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">

@@ -17,49 +17,48 @@
                bs.sku_no,
                bs.quantity,
                bs.parent_sku_no
-            FROM product_bom_sku bs LEFT JOIN product_bom_info b
-            ON bs.bom_id = b.id
-            <where>
-                <if test="bomIdList !=null and bomIdList.size>0">
-                    b.id IN
-                    <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
-                         #{id}
-                    </foreach>
-                </if>
+        FROM product_bom_sku bs LEFT JOIN product_bom_info b
+        ON bs.bom_id = b.id
+        WHERE bs.is_deleted = FALSE
+        <if test="bomIdList !=null and bomIdList.size>0">
+            b.id IN
+            <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
 
-                <if test="skuIdList !=null and skuIdList.size>0">
-                    AND
-                    (
-                        bs.sku_id IN
-                        <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-                            #{skuId}
-                        </foreach>
+        <if test="skuIdList !=null and skuIdList.size>0">
+            AND
+            (
+            bs.sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
 
-                        OR
-                        bs.parent_sku_id IN
-                        <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-                            #{skuId}
-                        </foreach>
-                    )
-                </if>
-                <if test="stateList !=null and stateList.size>0">
-                    AND
-                    b.state IN
-                    <foreach collection="stateList" item="state" open="(" separator="," close=")">
-                        #{state}
-                    </foreach>
-                </if>
-                <if test="params.param  !=null  and  params.param!='' ">
-                       ${params.param}
-                </if>
-            </where>
-            ORDER BY b.create_time DESC
+            OR
+            bs.parent_sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+            )
+        </if>
+        <if test="stateList !=null and stateList.size>0">
+            AND
+            b.state IN
+            <foreach collection="stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="params.param  !=null  and  params.param!='' ">
+            ${params.param}
+        </if>
+        ORDER BY b.create_time DESC
 
     </select>
     <select id="getByIds" resultType="com.erp.model.plm.vo.BomVO">
         SELECT serial_number,id AS bomId
         FROM  product_bom_info
-        <where>
+        WHERE is_deleted = FALSE
           <if test="bomIdList !=null and bomIdList.size>0">
                 id IN
                 <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
@@ -67,12 +66,12 @@
                 </foreach>
           </if>
 
-        </where>
+
     </select>
 
     <select id="getBomInfo" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
         SELECT id AS sourceId,serial_number AS  name FROM product_bom_info
-        WHERE state=#{state}
+        WHERE state=#{state} AND is_deleted = FALSE
         <if test="searchKeyword!=null and searchKeyword !=''">
             AND serial_number LIKE concat('%',#{searchKeyword},'%')
         </if>
@@ -94,7 +93,7 @@
         bs.quantity
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id
-        <where>
+        WHERE is_deleted = FALSE
             <if test="bomIdList !=null and bomIdList.size>0">
                 b.id IN
                 <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
@@ -122,7 +121,6 @@
                     #{state}
                 </foreach>
             </if>
-        </where>
         ORDER BY b.create_time DESC
     </select>
 </mapper>

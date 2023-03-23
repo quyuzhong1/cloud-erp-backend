@@ -31,7 +31,7 @@
         LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -141,7 +141,7 @@
         left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -246,7 +246,7 @@
         to_char(pj.end_time,'yyyy-MM-dd') AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
         LEFT JOIN project_info pj ON pi.id=pj.product_id
-        WHERE pi.is_finished_product_dev = 1 AND pi.id IN
+        WHERE pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE AND pi.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
@@ -273,7 +273,7 @@
         LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -369,7 +369,7 @@
         left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -460,7 +460,7 @@
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id
-        WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1
+        WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         AND (pj.project_status IS NULL OR pj.project_status!=#{projectStatus})
         <if test="archiveProductIdList!=null and  archiveProductIdList.size>0">
             AND pi.id NOT IN
@@ -478,7 +478,7 @@
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE P.id=#{productId}
+        WHERE P.id=#{productId} AND p.is_deleted = FALSE
     </select>
 
 
@@ -490,7 +490,7 @@
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE  p.delete_state=0 and  P.id IN
+        WHERE  p.delete_state=0 AND p.is_deleted = FALSE and  P.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
 

@@ -27,7 +27,7 @@
             pp.seq
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id
-        WHERE pt.product_id = #{params.productId}
+        WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
             AND pt.phase_id = #{params.phaseId}
         </if>

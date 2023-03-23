@@ -11,7 +11,7 @@
           update_time,update_user_id,
           type,content
         FROM product_bom_operate_log
-          WHERE bom_id=#{bomId}
+          WHERE bom_id=#{bomId} AND is_deleted = FALSE
           ORDER BY create_time DESC
 
     </select>
