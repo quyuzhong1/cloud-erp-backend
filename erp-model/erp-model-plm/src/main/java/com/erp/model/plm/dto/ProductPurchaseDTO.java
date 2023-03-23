@@ -50,7 +50,8 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 首批下单时间
      */
-    private LocalDateTime placeOrderTime;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate placeOrderTime;
 
     /**
      * 预计首批到货时间
