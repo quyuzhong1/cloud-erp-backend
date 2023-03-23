@@ -269,5 +269,8 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private Integer boxQty;
 
-
+    /**
+     * 最小起订量
+     */
+    private Integer moq;
 }

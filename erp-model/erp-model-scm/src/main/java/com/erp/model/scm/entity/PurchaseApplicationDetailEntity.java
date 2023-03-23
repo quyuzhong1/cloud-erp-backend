@@ -55,6 +55,12 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     private Integer unitQty;
 
     /**
+     * 最小起订量
+     */
+    @TableField("moq")
+    private Integer moq;
+
+    /**
      * 是否加急（false否，true是）
      */
     @TableField("is_urgent")

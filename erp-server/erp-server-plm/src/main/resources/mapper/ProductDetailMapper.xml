@@ -71,7 +71,8 @@
         pi.category,
         pi.sale_method,
         ps.sale_state,
-        ppk.box_qty
+        ppk.box_qty,
+        pp.moq
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
