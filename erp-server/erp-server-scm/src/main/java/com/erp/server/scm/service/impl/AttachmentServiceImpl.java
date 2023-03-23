@@ -9,6 +9,7 @@ import com.erp.server.scm.mapper.AttachmentMapper;
 import com.erp.server.scm.service.AttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,33 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             queryWrapper.in(AttachmentEntity::getBusinessId, businessIdList);
             this.remove(queryWrapper);
         }
+    }
+
+    /**
+     * 批量添加附件
+     *
+     * @param attachmentUrlList
+     * @param type
+     * @param businessId
+     * @return void
+     * @author yl
+     * @date 2023-03-23 16:09
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSave(List<String> attachmentUrlList, String type, String businessId) {
+        if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
+            List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
+            for (String url : attachmentUrlList) {
+                AttachmentEntity entity = new AttachmentEntity();
+                entity.setAttachUrl(url);
+                entity.setType(type);
+                entity.setBusinessId(businessId);
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
+
     }
 
 

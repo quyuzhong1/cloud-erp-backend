@@ -35,4 +35,16 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @return void
      */
     void deleteByBusinessIds(List<String> businessIdList);
+
+    
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-03-23 16:09
+     * @param attachmentUrlList
+     * @param type
+     * @param businessId
+     * @return void
+     */
+    void batchSave(List<String> attachmentUrlList, String type, String businessId);
 }

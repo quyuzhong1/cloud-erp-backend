@@ -18,4 +18,14 @@ public interface ScmConstant {
      * 通过类型
      */
     String PASS = "pass";
+
+    /**
+     * 阶段降级
+     */
+    String DEGRADE = "degrade";
+
+    /**
+     * 阶段升级
+     */
+    String UPGRADE = "upgrade";
 }

@@ -24,4 +24,13 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @return com.erp.model.scm.entity.SupplierPhaseEntity
      */
     SupplierPhaseEntity add(SupplierPhaseDTO.AddDTO dto);
+
+    /**
+     * 提交并审核
+     * @author yl
+     * @date 2023-03-23 16:34
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean addAndSubmit(SupplierPhaseDTO.AddDTO dto);
 }

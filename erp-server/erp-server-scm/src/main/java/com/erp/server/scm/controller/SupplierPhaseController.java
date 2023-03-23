@@ -11,6 +11,7 @@ import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.dto.SupplierPhasePagingParamDTO;
 import com.erp.model.scm.dto.SupplierPhasePagingViewDTO;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.scm.service.SupplierPhaseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +56,18 @@ public class SupplierPhaseController extends BaseController {
     public ApiResult add(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
         SupplierPhaseEntity entity=supplierPhaseService.add(dto);
         return entity!=null?success():failure();
+    }
+
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated SupplierPhaseDTO.AddDTO dto) {
+        Boolean result = supplierPhaseService.addAndSubmit(dto);
+        return result == true ? success() : failure();
     }
 
 

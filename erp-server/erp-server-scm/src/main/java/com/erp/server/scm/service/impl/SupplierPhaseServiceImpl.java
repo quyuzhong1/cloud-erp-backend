@@ -1,17 +1,26 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
+import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.mapper.SupplierPhaseMapper;
+import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.SupplierPhaseService;
 import com.erp.server.scm.service.SupplierService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -29,6 +38,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private AttachmentService attachmentService;
+
     /**
      * 添加供应商阶段
      *
@@ -38,6 +50,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 12:20
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public SupplierPhaseEntity add(SupplierPhaseDTO.AddDTO dto) {
         SupplierPhaseEntity entity = new SupplierPhaseEntity();
         String supplierId = dto.getSupplierId();
@@ -51,21 +64,158 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             throw new ServiceException(ApiError.ERROR_98016);
         }
         //检查阶段能否变更
-        checkPhase(phase,dto.getTargetPhase(),dto.getType());
+        checkPhase(phase, dto.getTargetPhase(), dto.getType());
+        BeanUtil.copyProperties(dto, entity, dto.getCurrentPhase(), dto.getTargetPhase());
+        String id = IdWorker.getIdStr();
+        entity.setId(id);
+        Boolean result = this.save(entity);
+        if (result) {
+            Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            //保存附件信息
+            attachmentService.batchSave(dto.getAttachmentUrlList(), type, id);
+            return entity;
+        }
         return null;
     }
 
-    
+
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 16:34
+     */
+    @Override
+    public Boolean addAndSubmit(SupplierPhaseDTO.AddDTO dto) {
+        SupplierPhaseEntity phase = this.add(dto);
+        if (phase != null) {
+            //这里要启动一个流程
+            Boolean startProcessResult = startProcess();
+            //启动成功
+            if (startProcessResult) {
+                return updateSubmitApproveStatus(phase, ApproveStatusEnum.APPROVE_ING.getStatus());
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 方法说明
+     *
+     * @param phase
+     * @param status
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 16:44
+     */
+
+    private Boolean updateSubmitApproveStatus(SupplierPhaseEntity phase, String status) {
+        if (phase != null) {
+            phase.setApproveStatus(status);
+            return this.updateById(phase);
+        }
+        return true;
+    }
+
+
+    /**
+     * 启动一个流程
+     *
+     * @param
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 16:39
+     * TODO
+     */
+    private Boolean startProcess() {
+        return true;
+    }
+
+
+    public Boolean submit() {
+        return true;
+    }
+
+
     /**
      * 检查阶段能否变更
-     * @author yl
-     * @date 2023-03-23 14:04
+     *
      * @param currentPhase 当前阶段
      * @param targetPhase  目标阶段
      * @return void
+     * @author yl
+     * @date 2023-03-23 14:04
      */
-    private void checkPhase(String currentPhase, String targetPhase,String type) {
+    private void checkPhase(String currentPhase, String targetPhase, String type) {
+        //潜在
+        String potential = SupplierPhaseEnum.POTENTIAL.getPhase();
+        //准入
+        String access = SupplierPhaseEnum.ACCESS.getPhase();
+        //合格
+        String conform = SupplierPhaseEnum.CONFORM.getPhase();
+        //淘汰
+        String eliminate = SupplierPhaseEnum.ELIMINATE.getPhase();
 
+        //当 当前阶段为潜在
+        if (currentPhase.equals(potential)) {
+            //阶段降级
+            if (type.equals(ScmConstant.DEGRADE)) {
+                if (!targetPhase.equals(eliminate)) {
+                    throw new ServiceException(98018, "【潜在】只能降级为【淘汰】");
+                }
+            } else {
+                //升级
+                if (!Arrays.asList(access, conform).contains(targetPhase)) {
+                    throw new ServiceException(98018, "【潜在】只能升级为【准入】【合格】");
+                }
+            }
+        }
+
+        //当 当前阶段为准入
+        if (currentPhase.equals(access)) {
+            //阶段降级
+            if (type.equals(ScmConstant.DEGRADE)) {
+                if (!Arrays.asList(eliminate, potential).contains(targetPhase)) {
+                    throw new ServiceException(98018, "【准入】只能降级【潜在】【淘汰】");
+                }
+            } else {
+                //升级 为合格
+                if (!targetPhase.equals(conform)) {
+                    throw new ServiceException(98018, "升级只能选择【合格】");
+                }
+            }
+        }
+
+        //当 当前阶段为 合格的时候
+        if (currentPhase.equals(conform)) {
+            //阶段降级
+            if (type.equals(ScmConstant.DEGRADE)) {
+                if (!Arrays.asList(access, potential).contains(targetPhase)) {
+                    throw new ServiceException(98018, "【合格】只能降级【准入】【潜在】");
+                }
+            } else {
+                throw new ServiceException(98018, "当前阶段不能升级");
+            }
+        }
+
+        //当 当前阶段为 淘汰的时候
+        if (currentPhase.equals(eliminate)) {
+            //阶段降级
+            if (type.equals(ScmConstant.DEGRADE)) {
+                throw new ServiceException(98018, "当前阶段不能降级");
+            } else {
+                //升级
+                if (!Arrays.asList(access, conform).contains(targetPhase)) {
+                    throw new ServiceException(98018, "【淘汰】升级只能选择【准入】【合格】");
+                }
+            }
+        }
 
     }
 }
