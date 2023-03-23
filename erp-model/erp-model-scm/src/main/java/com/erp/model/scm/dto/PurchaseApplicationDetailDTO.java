@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Will
@@ -101,4 +102,17 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         private String id;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<PurchaseApplicationDetailDTO.AddDTO> succeedList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
 }

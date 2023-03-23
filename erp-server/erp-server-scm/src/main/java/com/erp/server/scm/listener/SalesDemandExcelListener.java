@@ -36,7 +36,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
     /**
      * 导入正确数据
      */
-    private List<SalesDemandDetailDTO.AddDTO> dataList = new ArrayList<>();
+    private List<SalesDemandDetailDTO.AddDTO> successList = new ArrayList<>();
 
     /**
      * 明细中已存在的skuId集合
@@ -126,7 +126,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
         excelDTO.setPlanDeliveryDate(LocalDate.parse(salesDemandImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
         excelDTO.setRemark(salesDemandImportExcelDTO.getRemark());
         importSkuIds.add(excelDTO.getSkuId());
-        dataList.add(excelDTO);
+        successList.add(excelDTO);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
         return errorList;
     }
 
-    public List<SalesDemandDetailDTO.AddDTO> getDataList(){
-        return dataList;
+    public List<SalesDemandDetailDTO.AddDTO> getSuccessList(){
+        return successList;
     }
 }

@@ -9,6 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.server.scm.service.SalesDemandService;
@@ -18,14 +19,12 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * 备货申请管理
@@ -189,13 +188,12 @@ public class SalesDemandController extends BaseController {
      * 导入
      * @author Will
      * @date: 2023/3/15 18:22
-     * @param excelFile
-     * @param response
+     * @param excelImportDTO
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<List<SalesDemandDetailDTO.AddDTO>> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "skuIds") List<String> skuIds, HttpServletResponse response) {
-        List<SalesDemandDetailDTO.AddDTO> list = salesDemandService.importFile(excelFile,skuIds,response);
+    public ApiResult<SalesDemandDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        SalesDemandDetailDTO.ImportDTO list = salesDemandService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),response);
         return success(list);
     }
 

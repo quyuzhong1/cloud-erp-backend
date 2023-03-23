@@ -8,11 +8,8 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
-import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
-import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 
 import java.time.LocalDate;
@@ -41,7 +38,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
     /**
      * 导入正确数据
      */
-    private List<PurchaseApplicationDetailDTO.AddDTO> dataList = new ArrayList<>();
+    private List<PurchaseApplicationDetailDTO.AddDTO> successList = new ArrayList<>();
 
     /**
      * 导入成功的skuId集合
@@ -161,7 +158,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
         excelDTO.setPlanDeliveryDate(LocalDate.parse(importExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
         excelDTO.setRemark(importExcelDTO.getRemark());
         importSkuIds.add(excelDTO.getSkuId());
-        dataList.add(excelDTO);
+        successList.add(excelDTO);
     }
 
     @Override
@@ -177,7 +174,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
         return errorList;
     }
 
-    public List<PurchaseApplicationDetailDTO.AddDTO> getDataList(){
-        return dataList;
+    public List<PurchaseApplicationDetailDTO.AddDTO> getSuccessList(){
+        return successList;
     }
 }

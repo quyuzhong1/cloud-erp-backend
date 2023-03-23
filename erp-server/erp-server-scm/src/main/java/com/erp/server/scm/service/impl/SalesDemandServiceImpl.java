@@ -22,6 +22,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
@@ -57,6 +59,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -362,7 +365,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public  List<SalesDemandDetailDTO.AddDTO> importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
+    public  SalesDemandDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         //查询所有审核通过并启用的仓库
@@ -383,26 +386,22 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }
+        SalesDemandDetailDTO.ImportDTO importDTO = new SalesDemandDetailDTO.ImportDTO();
         //导入数据处理
-        List<SalesDemandDetailDTO.AddDTO> dataList = excelListenerUtil.getDataList();
+        List<SalesDemandDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
-        List<SalesDemandImportExcelDTO> list = excelListenerUtil.getErrorList();
-        if (list.size() > 0) {
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/salesDemandError.xlsx";
-            String name = "salesDemand";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
-            } finally {
-                return dataList;
+        List<SalesDemandImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "备货申请错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SalesDemandImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-        return dataList;
+        importDTO.setSucceedList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 
     @Override
