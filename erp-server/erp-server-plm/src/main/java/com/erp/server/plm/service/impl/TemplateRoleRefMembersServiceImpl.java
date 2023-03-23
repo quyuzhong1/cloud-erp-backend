@@ -77,8 +77,6 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
     public void copyTemplateRoleRefMembers(String templateId, String productId, String projectId,List<CopySourceDTO> copyRoleSourceList,List<CopySourceDTO> copyMembersSourceList) {
         List<TemplateRoleRefMembersEntity> list = getByTemplateId(templateId);
 
-
-
         if (CollectionUtils.isNotEmpty(list)) {
             List<RoleRefMemberEntity> copyList = new ArrayList<>();
             for (TemplateRoleRefMembersEntity item : list) {
