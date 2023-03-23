@@ -33,12 +33,6 @@
         array_to_string(array_agg(DISTINCT sol.content),',') as content
         from module_operate_log sol
         <where>
-            <if test="params.classPaths !=null and params.classPaths.size()>0">
-                AND sol.class_path in
-                <foreach collection="params.classPaths" item="classPath" open="(" separator="," close=")">
-                    #{classPath}
-                </foreach>
-            </if>
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sol.business_id = #{params.businessId}
             </if>
