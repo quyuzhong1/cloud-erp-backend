@@ -1,10 +1,7 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -17,8 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 供应商管理
@@ -102,12 +97,12 @@ public class SupplierController extends BaseController {
     /**
      * 删除供应商
      *
-     * @param ids
+     * @param dto
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated List<String> ids) {
-        Boolean result = supplierService.deleteByIds(ids);
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = supplierService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
     }
 
@@ -115,12 +110,12 @@ public class SupplierController extends BaseController {
     /**
      * 供应商提交审核
      *
-     * @param ids
+     * @param dto
      * @return
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestBody @Validated List<String> ids) {
-        Boolean result = supplierService.submit(ids);
+    public ApiResult submit(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        Boolean result = supplierService.submit(dto.getIds());
         return result == true ? success() : failure();
     }
 

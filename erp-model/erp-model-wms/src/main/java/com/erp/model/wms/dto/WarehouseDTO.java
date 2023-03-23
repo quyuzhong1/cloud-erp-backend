@@ -137,7 +137,7 @@ public class WarehouseDTO implements Serializable {
          * disabled
          * true 禁用
          */
-        private String disabled;
+        private Boolean disabled;
     }
 
 
