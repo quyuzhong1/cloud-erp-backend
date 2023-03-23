@@ -7,6 +7,8 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.serveice.SuperServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
@@ -16,12 +18,16 @@ import com.erp.server.scm.mapper.SupplierPhaseMapper;
 import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.SupplierPhaseService;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -106,7 +112,113 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
 
     /**
-     * 方法说明
+     * 供应商阶段 提交审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-23 16:50
+     */
+    @Override
+    public Boolean submit(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<SupplierPhaseEntity> list = this.listByIds(ids);
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+
+
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+        //启动流程 todo
+
+        return true;
+    }
+
+
+    /**
+     * 供应商详情阶段
+     *
+     * @param supplierPhaseId
+     * @return com.erp.model.scm.dto.SupplierPhaseDTO.UpdateDTO
+     * @author yl
+     * @date 2023-03-23 17:12
+     */
+    @Override
+    public SupplierPhaseDTO.UpdateDTO view(String supplierPhaseId) {
+        SupplierPhaseEntity phase = this.getById(supplierPhaseId);
+        if (Objects.isNull(phase)) {
+            throw new ServiceException(ApiError.ERROR_98018);
+        }
+        SupplierPhaseDTO.UpdateDTO dto = new SupplierPhaseDTO.UpdateDTO();
+        BeanMapper.copy(phase, dto);
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(supplierPhaseId));
+        List<String> urlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        dto.setAttachmentUrl(urlList);
+        return dto;
+    }
+
+
+    /**
+     * 更改供应商阶段
+     *
+     * @param dto
+     * @return com.erp.model.scm.entity.SupplierPhaseEntity
+     * @author yl
+     * @date 2023-03-23 17:23
+     */
+    @Override
+    public Boolean updateSupplierPhase(SupplierPhaseDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        SupplierPhaseEntity phase = this.getById(id);
+        if (Objects.isNull(phase)) {
+            throw new ServiceException(ApiError.ERROR_98018);
+        }
+
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        //只有待提交 和审核不通过 才能编辑
+        if (!statusList.contains(phase.getApproveStatus())) {
+            new ServiceException(ApiError.ERROR_98021);
+        }
+
+        //当前阶段
+        String currentPhase = dto.getCurrentPhase();
+        //目标阶段
+        String targetPhase = dto.getTargetPhase();
+        String type = dto.getType();
+        checkPhase(currentPhase, targetPhase, type);
+
+        BeanMapper.copy(phase, dto);
+        Boolean result = this.updateById(phase);
+        if (result) {
+            attachmentService.deleteByBusinessIds(Arrays.asList(id));
+            Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String attachmentType = tableName.value();
+            attachmentService.batchSave(Arrays.asList(id), attachmentType, id);
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 更改状态
      *
      * @param phase
      * @param status
@@ -134,11 +246,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * TODO
      */
     private Boolean startProcess() {
-        return true;
-    }
-
-
-    public Boolean submit() {
         return true;
     }
 

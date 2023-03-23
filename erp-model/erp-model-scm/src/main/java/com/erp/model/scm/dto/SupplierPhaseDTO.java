@@ -25,7 +25,7 @@ public class SupplierPhaseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO{
+    public static class AddDTO {
         /**
          * 供应商表id
          */
@@ -36,7 +36,7 @@ public class SupplierPhaseDTO implements Serializable {
          * 操作类型
          */
         @NotBlank(message = "操作类型不能为空")
-        @StateEnumValue(strValues = {"upgrade","degrade"},message = "操作类型有误")
+        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
         private String type;
 
         /**
@@ -60,20 +60,20 @@ public class SupplierPhaseDTO implements Serializable {
         /**
          * 附件地址
          */
-        private List<String>  attachmentUrlList;
+        private List<String> attachmentUrlList;
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO  extends AddDTO{
 
+        @NotBlank(message = "id不能为空")
+        private String id;
 
+        private List<String> attachmentUrl;
 
-
-
-
-
-
-
-
+    }
 
 
 }
