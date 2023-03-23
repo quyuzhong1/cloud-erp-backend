@@ -54,6 +54,19 @@ public class MQConsumerService {
         }
     }
 
+    @Service
+    @RocketMQMessageListener(topic = "%DLQ%${spring.profiles.active}-sales_order_consumer",
+            selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag",
+            consumerGroup = "${spring.profiles.active}-dlq_sales_order_consumer")
+    public class DLQConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
+        @Override
+        public void onMessage(DmpOrderInfoEntity ext) {
+            log.info("监听到死信队列销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
+            // 调用订单写入与更新
+            dmpOrderInfoService.checkOrder(ext);
+        }
+    }
+
     /**
      * rocketmq 监听发货订单相关数据
      */

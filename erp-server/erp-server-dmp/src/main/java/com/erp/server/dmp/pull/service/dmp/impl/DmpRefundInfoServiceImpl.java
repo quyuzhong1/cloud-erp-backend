@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.pull.mapper.DmpRefundInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
@@ -59,7 +61,6 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     @Override
     public DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity) {
         LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
-        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getSalesRecordNumber, returnOrderInfoEntity.getSalesRecordNumber());
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getRefundId, returnOrderInfoEntity.getRefundId());
         return this.getOne(lambdaQueryWrapper);
@@ -93,6 +94,11 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         String refundInfoId = "";
         DmpRefundInfoEntity dmpReturnOrderInfoEntity = this.getRefundByPlatformOrderId(returnOrderInfoEntity);
         if (dmpReturnOrderInfoEntity != null) {
+            if(PlatformEnum.GYY.getDesc().equals(returnOrderInfoEntity.getPlatformSign()) && returnOrderInfoEntity.getCancel()){
+                removeById(dmpReturnOrderInfoEntity.getId());
+                dmpRefundItemService.deleteRefundItemByRefundId(dmpReturnOrderInfoEntity.getId());
+                return refundInfoId;
+            }
             //如果数据有变动需要更新数据库订单信息
             if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {
                 returnOrderInfoEntity.setId(dmpReturnOrderInfoEntity.getId());
@@ -100,6 +106,9 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             }
             refundInfoId = dmpReturnOrderInfoEntity.getId();
         } else {
+            if(PlatformEnum.GYY.getDesc().equals(returnOrderInfoEntity.getPlatformSign()) && returnOrderInfoEntity.getCancel()){
+                return refundInfoId;
+            }
             refundInfoId = add(returnOrderInfoEntity);
         }
         if(StrUtil.isBlank(refundInfoId)){
