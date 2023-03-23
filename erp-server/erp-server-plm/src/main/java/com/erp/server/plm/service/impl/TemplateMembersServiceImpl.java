@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -115,28 +116,27 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         List<CopySourceDTO> sourceList = new ArrayList<>();
 
         List<ProjectMembersEntity> listByProductId = projectMembersService.getListByProductId(productId);
-        List<TemplateMembersEntity> collect = templateMembers.stream()
-                .filter(templateTask ->
-                        listByProductId.stream()
-                                .anyMatch(projectTask -> !templateTask.getMemberName().equals(projectTask.getMemberName())
-                                )).collect(Collectors.toList());
 
-        if (CollectionUtils.isNotEmpty(collect)) {
+        if (CollectionUtils.isNotEmpty(templateMembers)) {
             List<ProjectMembersEntity> copyList = new ArrayList<>();
-            for (TemplateMembersEntity item : collect) {
-                ProjectMembersEntity entity = new ProjectMembersEntity();
-                CopySourceDTO sourceDTO = new CopySourceDTO();
-                BeanMapper.copy(item, entity);
-                entity.setProductId(productId);
-                entity.setProjectId(projectId);
-                entity.setId(IdWorker.getIdStr());
-                sourceDTO.setNewCreateId(entity.getId());
-                sourceDTO.setDataId(item.getId());
-                sourceList.add(sourceDTO);
-                copyList.add(entity);
+            for (TemplateMembersEntity item : templateMembers) {
+                ProjectMembersEntity projectMembersEntity = listByProductId.stream().filter(projectMembers -> projectMembers.getMemberName().equals(item.getMemberName())).findFirst().orElse(null);
+                if (Objects.isNull(projectMembersEntity)) {
+                    ProjectMembersEntity entity = new ProjectMembersEntity();
+                    CopySourceDTO sourceDTO = new CopySourceDTO();
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    entity.setProjectId(projectId);
+                    entity.setId(IdWorker.getIdStr());
+                    sourceDTO.setNewCreateId(entity.getId());
+                    sourceDTO.setDataId(item.getId());
+                    sourceList.add(sourceDTO);
+                    copyList.add(entity);
+                }
             }
-            projectMembersService.saveBatch(copyList);
-
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                projectMembersService.saveBatch(copyList);
+            }
         }
         return sourceList;
     }
