@@ -32,7 +32,7 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 年目标销售量
      */
-    @DecimalMax(value = "99999999",message ="年目标销售量最大值为99999999" )
+    @DecimalMax(value = "999999999",message ="年目标销售量超出最大值" )
     @DecimalMin(value = "0",message ="最小值为0" )
     private Long yearSaleQty;
 
@@ -45,7 +45,7 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 月目标销售量
      */
-    @DecimalMax(value = "99999999",message ="月目标销售量最大值为99999999" )
+    @DecimalMax(value = "999999999",message ="月目标销售量超出最大值" )
     @DecimalMin(value = "0",message ="最小值为0" )
     private Long monthSaleQty;
 

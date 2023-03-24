@@ -332,7 +332,7 @@ public enum ApiError implements Serializable {
     ERROR_98007(98007,"只有审核中数据支持取消流程"),
     ERROR_98008(98008,"只有审核中和已审核数据支持取消流程"),
     ERROR_98009(98009,"只有待提交数据支持删除"),
-    ERROR_98010(98010,"只有待提交并且未作废数据支持提交"),
+    ERROR_98010(98010,"只有待提交或审核不通过并且未作废数据支持提交"),
     ERROR_SUPPLIER_ABSENCE(98011,"供应商不存在"),
     ERROR_98012(98012,"已作废数据不不支持作废"),
     ERROR_WAIT_SUBMIT_TO_APPROVE_ING(98013,"只有待提交和审核不通过才能提交审核"),
