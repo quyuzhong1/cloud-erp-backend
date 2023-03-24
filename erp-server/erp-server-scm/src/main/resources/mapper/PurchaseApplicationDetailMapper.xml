@@ -26,7 +26,6 @@
         <result column="purchase_org_name" property="purchaseOrgName" />
         <result column="receive_org_id" property="receiveOrgId" />
         <result column="receive_org_name" property="receiveOrgName" />
-        <result column="real_purchase_qty" property="realPurchaseQty" />
         <result column="receive_qty" property="receiveQty" />
         <result column="stock_in_qty" property="stockInQty" />
         <result column="create_po_type" property="createPoType" />

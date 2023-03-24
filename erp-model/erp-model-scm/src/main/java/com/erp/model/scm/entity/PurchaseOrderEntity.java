@@ -8,8 +8,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -41,7 +41,7 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      * 采购日期
      */
     @TableField("purchase_date")
-    private Date purchaseDate;
+    private LocalDate purchaseDate;
 
     /**
      * 采购员id
@@ -95,7 +95,7 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      * 作废时间
      */
     @TableField("invalid_time")
-    private Date invalidTime;
+    private LocalDateTime invalidTime;
 
     /**
      * 审核时间

@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -75,7 +74,6 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 图片是否完成 1.是 2.否
      */
-    @StateEnumValue(intValues = {1, 2}, message = "图片是否完成0或者1")
     private Integer isFinishedImg;
 
     /**
@@ -108,7 +106,6 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 是否可销售(0否，1是)
      */
-    @StateEnumValue(intValues = {0, 1}, message = "是否可销售值错误")
     private Integer isMarketable;
 
 

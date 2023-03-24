@@ -47,7 +47,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //批量新增
         boolean flag = this.saveBatch(list);
         if (flag) {
-            //新增
+            //新增关联关系
+            for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
+
+            }
+
+
         }
     }
 

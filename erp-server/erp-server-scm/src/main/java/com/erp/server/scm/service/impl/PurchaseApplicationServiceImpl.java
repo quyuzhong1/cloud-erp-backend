@@ -299,7 +299,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                  purchaseQty = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             //本次采购数量
-            Integer thisPurchaseQty = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer thisPurchaseQty = list.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(detail.getId())).map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             
             //申请数量
             Integer applyQty = detail.getApplyQty();

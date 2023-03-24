@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -89,7 +90,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      * 预计交货日期
      */
     @TableField("plan_delivery_date")
-    private Date planDeliveryDate;
+    private LocalDate planDeliveryDate;
 
     /**
      * 收料组织id
