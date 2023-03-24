@@ -4,10 +4,11 @@ package com.erp.server.scm.controller;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -15,8 +16,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -61,8 +60,8 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
-        Boolean flag = purchaseOrderService.add(dto);
-        return flag == true ? success() : failure();
+        purchaseOrderService.add(dto);
+        return  success();
     }
 
     /**

@@ -37,6 +37,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String code;
 
         /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
+
+        /**
          * 单据状态
          */
         private String approveStatus;

@@ -28,6 +28,7 @@
         select
             pa.id,
             pa.code,
+            pad.is_urgent as isUrgent,
             pa.approve_status as approveStatus,
             pa.is_first_mass_product as isFirstMassProduct,
             pad.create_po_type as createPoType,

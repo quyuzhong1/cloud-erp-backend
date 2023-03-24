@@ -243,7 +243,7 @@ ProductDetailController extends BaseController {
      **/
     @PostMapping("/InsertManySpecSku")
     //@RequestPermissions("plm:product:detail:InsertManySpecAuto")
-    public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
+    public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody @Validated VariantAutoAddDTO variantAutoAddDTO) {
         List<ProductDetailEntity> list = productDetailService.insertManySpecAuto(variantAutoAddDTO);
         return this.success(list);
     }

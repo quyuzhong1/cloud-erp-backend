@@ -4,7 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.serveice.SuperService;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,9 +33,9 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/16 11:22
      * @param dto
-     * @return Boolean
+     * @return String
      */
-    Boolean add(PurchaseOrderDTO.AddDTO dto);
+    String add(PurchaseOrderDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
