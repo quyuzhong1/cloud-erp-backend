@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -100,7 +101,7 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
 
     public static final String APPROVE_STATUS = "approve_status";

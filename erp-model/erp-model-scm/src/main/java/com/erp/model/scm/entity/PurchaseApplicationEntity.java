@@ -8,7 +8,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -40,7 +41,7 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
      * 申请日期
      */
     @TableField("apply_date")
-    private Date applyDate;
+    private LocalDate applyDate;
 
     /**
      * 申请人id
@@ -76,7 +77,7 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
     /**
      * 审核人id
