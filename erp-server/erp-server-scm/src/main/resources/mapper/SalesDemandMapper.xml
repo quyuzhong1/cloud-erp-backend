@@ -59,7 +59,7 @@
                 and sdd.product_name like concat('%',#{params.productName},'%')
             </if>
             <if test="params.isUrgent != null ">
-                and sd.is_urgent = #{params.isUrgent}
+                and sdd.is_urgent = #{params.isUrgent}
             </if>
             <if test="params.invalidStatus != null and params.invalidStatus != ''">
                 and sd.invalid_status = #{params.invalidStatus}
@@ -89,13 +89,13 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.create_time between #{params.createTimeList.[0]} and #{params.createTimeList.[1]}
+                and sd.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
             </if>
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and sdd.plan_delivery_date between #{params.planDeliveryDateList.[0]} and #{params.planDeliveryDateList.[1]}
+                and sdd.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.approve_time between #{params.approvePassTimeList.[0]} and #{params.approvePassTimeList.[1]}
+                and sd.approve_time between #{params.approvePassTimeList[0]} and #{params.approvePassTimeList[1]}
             </if>
         </where>
         ORDER BY
@@ -178,13 +178,13 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.create_time between #{params.createTimeList.[0]} and #{params.createTimeList.[1]}
+                and sd.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
             </if>
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and sdd.plan_delivery_date between #{params.planDeliveryDateList.[0]} and #{params.planDeliveryDateList.[1]}
+                and sdd.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.approve_time between #{params.approvePassTimeList.[0]} and #{params.approvePassTimeList.[1]}
+                and sd.approve_time between #{params.approvePassTimeList[0]} and #{params.approvePassTimeList[1]}
             </if>
         </where>
         ORDER BY
