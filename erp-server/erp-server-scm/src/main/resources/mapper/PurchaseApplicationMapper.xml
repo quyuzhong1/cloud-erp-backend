@@ -47,7 +47,7 @@
         from purchase_application pa
         left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         left join (
-            select parp.purchase_application_detail_id,sum(pod.purchase_qty) as real_purchase_qty from purchase_application_ref_po parp
+            select parp.purchase_application_detail_id,sum(pod.purchase_qty) as realPurchaseQty from purchase_application_ref_po parp
             left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false
             where parp.is_deleted = false
             group by parp.purchase_application_detail_id
