@@ -11,17 +11,20 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceExportResultDTO;
 import com.erp.model.scm.dto.PurchasePricePagingParamDTO;
 import com.erp.model.scm.dto.PurchasePricePagingViewDTO;
+import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
  * 采购价目管理
+ *
  * @author Lambda
  * @since 2023-03-15
  */
@@ -29,7 +32,8 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/purchase/price")
 public class PurchasePriceController extends BaseController {
 
-
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
 
     /**
@@ -49,22 +53,24 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceDTO dto) {
+    public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
         return success();
     }
 
 
     /**
      * 采购价目 导出数据
+     *
      * @return
      */
     @PostMapping("/exportPurchasePrice")
-    public ApiResult exportPurchasePrice(HttpServletRequest request, HttpServletResponse response,PurchasePricePagingParamDTO dto) {
+    public ApiResult exportPurchasePrice(HttpServletRequest request, HttpServletResponse response, PurchasePricePagingParamDTO dto) {
         return success();
     }
 
     /**
      * 采购价目 产品价格明细导出模板
+     *
      * @return
      */
     @PostMapping("/exportTemplate")
@@ -75,6 +81,7 @@ public class PurchasePriceController extends BaseController {
 
     /**
      * 采购价目 产品价格明细导入
+     *
      * @return
      */
     @PostMapping("/import")
@@ -96,6 +103,7 @@ public class PurchasePriceController extends BaseController {
 
     /**
      * 采购价目审核
+     *
      * @param dto
      * @return
      */

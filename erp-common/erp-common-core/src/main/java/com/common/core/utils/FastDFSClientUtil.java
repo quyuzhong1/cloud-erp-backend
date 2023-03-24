@@ -202,7 +202,6 @@ public class FastDFSClientUtil {
 	 */
 	public static int deleteFile(String fileId) {
 		try {
-
 			return getStorageClient().delete_file1(fileId);
 		} catch (Exception e) {
 			throw new RuntimeException(e);

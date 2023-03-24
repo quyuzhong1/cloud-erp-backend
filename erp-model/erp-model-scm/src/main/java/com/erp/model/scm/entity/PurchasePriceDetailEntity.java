@@ -9,7 +9,6 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -81,11 +80,6 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     private BigDecimal taxPrice;
 
 
-    /**
-     * 生效时间
-     */
-    @TableField("effective_date")
-    private LocalDate effectiveDate;
 
     /**
      * 失效时间

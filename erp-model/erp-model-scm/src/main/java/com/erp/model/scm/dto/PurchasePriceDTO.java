@@ -3,6 +3,7 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -49,12 +50,13 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 采购组织id
          */
-        private String orgId;
+        private String purchaseOrgId;
 
         /**
          * 报价明细
          */
-        private List<PurchasePriceDetailDTO> purchasePriceDetailList;
+        @Valid
+        private List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList;
 
     }
 
