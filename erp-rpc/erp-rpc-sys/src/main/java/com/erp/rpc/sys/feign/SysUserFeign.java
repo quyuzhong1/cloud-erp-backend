@@ -86,7 +86,7 @@ public interface SysUserFeign {
     /**
      *   根据userId查询用户
      */
-    @GetMapping("sys/feign/user/getUserByUserId")
+    @PostMapping("sys/feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
     /**
