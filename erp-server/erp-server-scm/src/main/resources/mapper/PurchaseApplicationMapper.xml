@@ -36,7 +36,7 @@
             pad.product_name as productName,
             pad.plan_delivery_date as planDeliveryDate,
             pad.apply_qty as applyQty,
-            pad.real_purchase_qty as realPurchaseQty,
+            parp.realPurchaseQty,
             pad.receive_qty as receiveQty,
             pad.stock_in_qty as stockInQty,
             pad.dest_warehouse_name as destWarehouseName,
@@ -45,7 +45,13 @@
             pa.create_user_name as createUserName,
             pa.create_time as createTime
         from purchase_application pa
-                 left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        left join (
+            select parp.purchase_application_detail_id,sum(pod.purchase_qty) as real_purchase_qty from purchase_application_ref_po parp
+            left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false
+            where parp.is_deleted = false
+            group by parp.purchase_application_detail_id
+        ) parp on pad.id = parp.purchase_application_detail_id
         <where>
             pa.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
@@ -125,7 +131,7 @@
         pad.product_name as productName,
         pad.plan_delivery_date as planDeliveryDate,
         pad.apply_qty as applyQty,
-        pad.real_purchase_qty as realPurchaseQty,
+        parp.realPurchaseQty,
         pad.receive_qty as receiveQty,
         pad.stock_in_qty as stockInQty,
         pad.dest_warehouse_name as destWarehouseName,
@@ -135,6 +141,12 @@
         pa.create_time as createTime
         from purchase_application pa
         left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        left join (
+        select parp.purchase_application_detail_id,sum(pod.purchase_qty) as realPurchaseQty from purchase_application_ref_po parp
+        left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false
+        where parp.is_deleted = false
+        group by parp.purchase_application_detail_id
+        ) parp on pad.id = parp.purchase_application_detail_id
         <where>
             pa.is_deleted = false
             <if test="params.productName != null and params.productName != ''">

@@ -115,12 +115,6 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     private String receiveOrgName;
 
     /**
-     * 实际采购数量
-     */
-    @TableField("real_purchase_qty")
-    private Integer realPurchaseQty;
-
-    /**
      * 签收数量
      */
     @TableField("receive_qty")
