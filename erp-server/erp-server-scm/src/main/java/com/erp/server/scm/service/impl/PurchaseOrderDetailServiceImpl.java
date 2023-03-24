@@ -4,6 +4,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -41,6 +43,17 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDataId (List<PurchaseOrderDetailEntity> newList, String purchaseApplicationId) {
+    private void doOpHandleDataId (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
+        //仓库信息
+        List<String> deliveryWarehouseIds = newList.stream().map(PurchaseOrderDetailEntity::getDeliveryWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(deliveryWarehouseIds);
+        for (PurchaseOrderDetailEntity entity : newList) {
+            entity.setPurchaseOrderId(purchaseOrderId);
+            if (CollectionUtils.isEmpty(warehouseList)) {
+                continue;
+            }
+            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
+            entity.setDeliveryWarehouseName(warehouseName);
+        }
     }
 }

@@ -97,7 +97,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
 
     @Override
     public void removeBySalesDemandIds(List<String> salesDemandIds) {
-        lambdaUpdate().in(SalesDemandDetailEntity::getId,salesDemandIds).remove();
+        lambdaUpdate().in(SalesDemandDetailEntity::getSalesDemandId,salesDemandIds).remove();
     }
 
     @Override

@@ -65,7 +65,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Override
     public void removeByPurchaseApplicationIds(List<String> purchaseApplicationIds) {
-        lambdaUpdate().in(PurchaseApplicationDetailEntity::getId,purchaseApplicationIds).remove();
+        lambdaUpdate().in(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationIds).remove();
     }
 
     @Override
