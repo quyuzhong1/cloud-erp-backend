@@ -167,5 +167,15 @@ public class SupplierController extends BaseController {
         return success();
     }
 
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @PostMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        supplierService.downloadTemplate(response);
+        return success();
+    }
 
 }
