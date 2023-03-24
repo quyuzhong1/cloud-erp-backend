@@ -1,13 +1,11 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.erp.model.plm.entity.SysLogFieldEntity;
-import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.entity.CfgModuleOperateLogFieldEntity;
 import com.erp.server.scm.mapper.CfgModuleOperateLogFieldMapper;
 import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;

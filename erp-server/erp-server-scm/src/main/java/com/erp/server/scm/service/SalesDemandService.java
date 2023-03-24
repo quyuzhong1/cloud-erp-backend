@@ -3,7 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.serveice.SuperService;
+import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;

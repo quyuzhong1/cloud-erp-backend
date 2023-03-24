@@ -1,6 +1,6 @@
 package com.erp.server.sys.service.impl;
 
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.server.sys.mapper.DictGlobalAreaMapper;
 import com.erp.server.sys.service.DictGlobalAreaService;

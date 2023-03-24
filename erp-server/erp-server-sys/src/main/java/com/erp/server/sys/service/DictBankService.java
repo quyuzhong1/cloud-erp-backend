@@ -1,8 +1,8 @@
 package com.erp.server.sys.service;
 
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.core.serveice.SuperService;
-import com.common.core.serveice.ValidList;
+import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.erp.model.sys.dto.BankDTO;
 import com.erp.model.sys.entity.DictBankEntity;
 

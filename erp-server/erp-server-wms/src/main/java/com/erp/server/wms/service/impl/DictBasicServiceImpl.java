@@ -1,7 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.DictBasicEntity;

@@ -1,7 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.common.core.serveice.SuperService;
+import com.common.business.service.SuperService;
 
 /**
  * <p>

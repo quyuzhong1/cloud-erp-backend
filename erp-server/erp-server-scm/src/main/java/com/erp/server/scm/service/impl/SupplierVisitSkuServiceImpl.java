@@ -1,7 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.scm.entity.SupplierVisitSkuEntity;
 import com.erp.server.scm.mapper.SupplierVisitSkuMapper;
 import com.erp.server.scm.service.SupplierVisitSkuService;

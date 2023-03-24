@@ -3,7 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

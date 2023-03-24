@@ -83,9 +83,9 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     public static final String VERSION = "version";
 
     public static final String IS_DELETED = "is_deleted";
-    public static final String DELETED_USER_ID = "deleted_user_id";
+    public static final String UPDATE_USER_ID = "update_user_id";
 
-    public static final String DELETED_TIME = "deleted_time";
+    public static final String UPDATE_USER_NAME = "update_user_name";
 
 
     @Override

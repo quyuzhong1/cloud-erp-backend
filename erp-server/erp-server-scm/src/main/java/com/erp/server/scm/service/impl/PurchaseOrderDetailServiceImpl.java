@@ -1,6 +1,6 @@
 package com.erp.server.scm.service.impl;
 
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.PurchaseOrderDetailService;

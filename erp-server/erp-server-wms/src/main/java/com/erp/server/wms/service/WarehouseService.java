@@ -5,7 +5,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.serveice.SuperService;
+import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;

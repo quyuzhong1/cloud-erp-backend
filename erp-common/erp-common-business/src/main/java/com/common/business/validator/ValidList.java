@@ -1,4 +1,4 @@
-package com.common.core.serveice;
+package com.common.business.validator;
 
 import lombok.Data;
 

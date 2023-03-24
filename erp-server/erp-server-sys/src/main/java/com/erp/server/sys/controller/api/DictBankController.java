@@ -1,9 +1,9 @@
 package com.erp.server.sys.controller.api;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.serveice.ValidList;
 import com.erp.model.sys.dto.BankDTO;
 import com.erp.server.sys.service.DictBankService;
 import org.springframework.validation.annotation.Validated;

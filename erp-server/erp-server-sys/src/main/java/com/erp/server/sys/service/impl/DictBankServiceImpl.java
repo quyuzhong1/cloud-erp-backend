@@ -2,8 +2,8 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.core.serveice.SuperServiceImpl;
-import com.common.core.serveice.ValidList;
+import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.BankDTO;
 import com.erp.model.sys.entity.DictBankEntity;

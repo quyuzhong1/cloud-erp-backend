@@ -1,15 +1,16 @@
-package com.common.core.serveice;
+package com.common.business.service;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.entity.BaseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -57,14 +58,38 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
         return removeById(id, null);
     }
 
+    
+    /**
+     * 批量删除
+     * @author yl
+     * @date 2023-03-24 10:45
+     * @param ids
+     * @return boolean
+     */
+    @Override
+    public boolean removeByIds(Collection<? extends Serializable> ids) {
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        return update().set(T.IS_DELETED, true)
+                .set(T.UPDATE_TIME, LocalDateTime.now())
+                .set(T.UPDATE_USER_ID, loginUser != null ? loginUser.getUid() : "")
+                .set(T.UPDATE_USER_NAME, loginUser != null ? loginUser.getUserName() : "")
+                .in(T.ID, ids)
+                .update();
+
+    }
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean removeById(Serializable id, Long version) {
-       return update().set(T.IS_DELETED, true)
-            .set(T.DELETED_TIME, LocalDateTime.now(ZoneOffset.of("+8")))
-            .setSql(version!= null, StrUtil.format("{}={}+1", T.VERSION, T.VERSION))
-            .eq(T.ID, id)
-            .eq(version!= null, T.VERSION, version)
-            .update();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        return update().set(T.IS_DELETED, true)
+                .set(T.UPDATE_TIME, LocalDateTime.now())
+                .set(T.UPDATE_USER_ID, loginUser != null ? loginUser.getUid() : "")
+                .set(T.UPDATE_USER_NAME, loginUser != null ? loginUser.getUserName() : "")
+                .setSql(version != null, StrUtil.format("{}={}+1", T.VERSION, T.VERSION))
+                .eq(T.ID, id)
+                .eq(version != null, T.VERSION, version)
+                .update();
     }
 }

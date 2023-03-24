@@ -1,6 +1,6 @@
 package com.erp.server.wms.service.impl;
 
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;

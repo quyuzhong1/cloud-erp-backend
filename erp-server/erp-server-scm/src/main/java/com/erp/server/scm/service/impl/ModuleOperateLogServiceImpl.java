@@ -14,7 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.EnumsUtil;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.model.scm.entity.CfgModuleOperateLogFieldEntity;

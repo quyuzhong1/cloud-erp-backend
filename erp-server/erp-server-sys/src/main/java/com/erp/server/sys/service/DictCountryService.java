@@ -1,6 +1,6 @@
 package com.erp.server.sys.service;
 
-import com.common.core.serveice.SuperService;
+import com.common.business.service.SuperService;
 import com.erp.model.sys.entity.DictCountryEntity;
 
 /**

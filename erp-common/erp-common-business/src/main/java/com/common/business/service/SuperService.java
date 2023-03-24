@@ -1,4 +1,4 @@
-package com.common.core.serveice;
+package com.common.business.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -20,6 +20,17 @@ public interface SuperService<T> extends IService<T> {
 
     @Override
     boolean removeById(Serializable id);
+
+    /**
+     * 批量删除
+     * @author yl
+     * @date 2023-03-24 10:44
+     * @param ids
+     * @return boolean
+     */
+    @Override
+    boolean removeByIds(Collection<? extends Serializable> ids);
+
 
     boolean removeById(Serializable id, Long version);
 

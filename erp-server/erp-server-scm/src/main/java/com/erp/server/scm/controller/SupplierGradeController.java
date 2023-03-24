@@ -3,7 +3,7 @@ package com.erp.server.scm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.serveice.ValidList;
+import com.common.business.validator.ValidList;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierGradeEntity;

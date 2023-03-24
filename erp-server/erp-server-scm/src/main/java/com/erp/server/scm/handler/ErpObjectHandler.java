@@ -22,7 +22,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Resource
     private CommonService commonService;
 
-    //插入时的填充数据
+    /**
+     *   插入时的填充数据
+     */
     @Override
     public void insertFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
@@ -38,9 +40,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     }
 
 
-
-
-    //更新时的 填充数据
+    /**
+     * 更新时的 填充数据
+     */
     @Override
     public void updateFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
@@ -48,6 +50,5 @@ public class ErpObjectHandler implements MetaObjectHandler {
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
         this.setFieldValByName("updateUserName", userName, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
-
     }
 }

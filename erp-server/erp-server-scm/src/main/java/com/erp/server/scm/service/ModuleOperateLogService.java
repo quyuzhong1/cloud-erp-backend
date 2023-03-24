@@ -2,7 +2,7 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.serveice.SuperService;
+import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
 import org.apache.commons.math3.util.Pair;
