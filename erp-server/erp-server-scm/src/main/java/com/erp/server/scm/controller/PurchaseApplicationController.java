@@ -162,12 +162,12 @@ public class PurchaseApplicationController extends BaseController {
      * 生成采购单弹窗显示
      * @author Will
      * @date: 2023/3/15 18:26
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
-    @GetMapping("/viewGeneratePurchaseOrder")
-    public ApiResult<List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@RequestParam("ids") List<String> ids) {
-        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> list = purchaseApplicationService.viewGeneratePurchaseOrder(ids);
+    @PostMapping("/viewGeneratePurchaseOrder")
+    public ApiResult<List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> list = purchaseApplicationService.viewGeneratePurchaseOrder(dto.getIds());
         return success(list);
     }
 

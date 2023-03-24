@@ -82,7 +82,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购单【%s】",code), ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"新增操作");
             //新增明细
-            //purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
+            purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
         }
         return entity.getId();
     }
