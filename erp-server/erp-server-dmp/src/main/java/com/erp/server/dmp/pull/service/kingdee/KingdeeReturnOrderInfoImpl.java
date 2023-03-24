@@ -174,9 +174,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         ){
             return null;
         }
-        if (StrUtil.isBlank(returnOrderEntity.getFOrderNo())){
-            return null;
-        }
+//        if (StrUtil.isBlank(returnOrderEntity.getFOrderNo())){
+//            return null;
+//        }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
         //平台订单编号
         dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getFBillNo());
