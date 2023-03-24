@@ -59,7 +59,7 @@ public class SupplierPhaseController extends BaseController {
     }
 
     /**
-     * 添加供应商阶段
+     * 修改供应商阶段
      *
      * @param dto
      * @return

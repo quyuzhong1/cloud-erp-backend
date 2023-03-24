@@ -77,7 +77,19 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
-        Boolean result = supplierService.updateSupplier(dto);
+        SupplierEntity result = supplierService.updateSupplier(dto);
+        return result!=null? success() : failure();
+    }
+
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
+        Boolean result = supplierService.updateAndSubmit(dto);
         return result == true ? success() : failure();
     }
 

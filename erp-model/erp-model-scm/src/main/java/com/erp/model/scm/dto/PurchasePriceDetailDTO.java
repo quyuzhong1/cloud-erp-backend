@@ -3,9 +3,11 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @author Lambda
@@ -20,21 +22,13 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO{
+    public static class AddDTO {
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
-        /**
-         * sku no
-         */
-        private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
 
         /**
          * 采购交期
@@ -56,33 +50,28 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         private String currency;
 
+
         /**
-         * 币种符号
+         * 生效时间
          */
-        private String currencyCode;
+        private LocalDate effectiveDate;
+
 
         /**
          * 含税单价
          */
+        @NotNull(message = "含税单价不能为空")
         private BigDecimal taxPrice;
 
-
-
-
-        /**
-         * 失效时间
-         */
-        private Date expireDate;
 
         /**
          * 税率
          */
+        @NotNull(message = "税率不能为空")
         private BigDecimal taxRate;
 
 
     }
-
-
 
 
 }

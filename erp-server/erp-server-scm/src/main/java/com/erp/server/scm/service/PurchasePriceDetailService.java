@@ -25,4 +25,15 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return void
      */
     void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
+
+    
+    /**
+     * 添加明细
+     * @author yl
+     * @date 2023-03-24 15:02
+     * @param id
+     * @param purchasePriceDetailList
+     * @return void
+     */
+    void addPriceDetail(String id, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
 }

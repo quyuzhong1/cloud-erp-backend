@@ -3,13 +3,20 @@ package com.erp.server.scm.service.impl;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +33,9 @@ import java.util.stream.Collectors;
 @Service
 public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePriceDetailMapper, PurchasePriceDetailEntity> implements PurchasePriceDetailService {
 
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 检查sku 区间报价
@@ -62,17 +72,53 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     //判断是否是按顺序的
                     boolean isSortedResult = isSorted(intervalList);
                     //当不是的时候
-                    if(!isSortedResult){
+                    if (!isSortedResult) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
-
-
+                    long distCount = intervalList.stream().distinct().count();
+                    if (distCount != intervalList.size()) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
+                    }
                 }
-
-
             }
         }
+    }
 
+    /**
+     * 添加明细
+     *
+     * @param purchasePriceId
+     * @param purchasePriceDetailList
+     * @return void
+     * @author yl
+     * @date 2023-03-24 15:02
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addPriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList) {
+        if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
+            return;
+        }
+        List<PurchasePriceDetailEntity> addList = BeanMapper.copyList(purchasePriceDetailList, PurchasePriceDetailEntity.class);
+        List<String> skuIds = addList.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        LocalDate localDate = LocalDate.now();
+        for (PurchasePriceDetailEntity item : addList) {
+            String skuId = item.getSkuId();
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (skuVO != null) {
+                item.setSkuNo(skuVO.getSkuNo());
+                item.setProductName(skuVO.getSpuName());
+            }
+            item.setPurchasePriceId(purchasePriceId);
+            //失效时间
+            item.setExpireDate(localDate.plusYears(100));
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal rate = taxRate.divide(new BigDecimal("100"),4,BigDecimal.ROUND_HALF_UP);
+            item.setTaxRate(rate);
+        }
+        this.saveBatch(addList);
     }
 
     /**
@@ -91,6 +137,5 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         return true;
     }
-
 
 }

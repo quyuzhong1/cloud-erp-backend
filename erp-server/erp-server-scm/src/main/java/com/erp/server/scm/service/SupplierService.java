@@ -59,7 +59,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateSupplier(SupplierDTO.UpdateDTO dto);
+    SupplierEntity updateSupplier(SupplierDTO.UpdateDTO dto);
 
     
     /**
@@ -137,4 +137,13 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      */
     void downloadTemplate(HttpServletResponse response);
 
+    
+    /**
+     * 修改并审核
+     * @author yl
+     * @date 2023-03-24 18:23
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto);
 }
