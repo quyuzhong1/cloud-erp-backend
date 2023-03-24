@@ -15,13 +15,13 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
@@ -237,10 +237,17 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(List<String> ids) {
         List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> resultList = new ArrayList<>();
+        //主表数据
+        List<PurchaseApplicationEntity> purchaseApplicationList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseApplicationList)) {
+            throw new ServiceException(ApiError.ERROR_98016);
+        }
+        //可以生成采购订单的明细
         List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98015);
         }
+
         List<String> detailIds = list.stream().map(PurchaseApplicationDetailEntity::getId).collect(Collectors.toList());
         //查询关联信息
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.listByPurchaseApplicationDetailIds(detailIds);
@@ -250,6 +257,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             BeanMapperUtils.copy(entity,dto);
             dto.setId(entity.getPurchaseApplicationId());
             dto.setPurchaseApplicationDetailId(entity.getId());
+            //查询主表数据
+            PurchaseApplicationEntity purchaseApplicationEntity = purchaseApplicationList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseApplicationId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseApplicationEntity)) {
+                throw new ServiceException(ApiError.ERROR_98016);
+            }
+            dto.setCode(purchaseApplicationEntity.getCode());
             //查询已采购数量
             if (CollectionUtils.isNotEmpty(refList)) {
                 Integer purchaseQty = refList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
