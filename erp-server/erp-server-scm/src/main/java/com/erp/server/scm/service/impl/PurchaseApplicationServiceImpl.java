@@ -263,11 +263,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 throw new ServiceException(ApiError.ERROR_98016);
             }
             dto.setCode(purchaseApplicationEntity.getCode());
+            Integer purchaseQty = MathUtil.ZERO;
             //查询已采购数量
             if (CollectionUtils.isNotEmpty(refList)) {
-                Integer purchaseQty = refList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
-                dto.setPurchasedQty(purchaseQty);
+                purchaseQty = refList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
             }
+            dto.setPurchasedQty(purchaseQty);
             resultList.add(dto);
         }
         return resultList;

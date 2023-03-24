@@ -1,11 +1,15 @@
 package com.erp.server.scm.service.impl;
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseApplicationDetailMapper;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
@@ -31,6 +35,9 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public void add(List<PurchaseApplicationDetailDTO.AddDTO> details, String purchaseApplicationId) {
@@ -102,14 +109,42 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(PurchaseApplicationDetailEntity::getDestWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+
+
+        //采购组织Ids
+        List<String> purchaseOrgIds = newList.stream().map(PurchaseApplicationDetailEntity::getPurchaseOrgId).collect(Collectors.toList());
+
+        //收料组织Ids
+        List<String> receiveOrgIds = newList.stream().map(PurchaseApplicationDetailEntity::getReceiveOrgId).collect(Collectors.toList());
+
+        purchaseOrgIds.addAll(receiveOrgIds);
+
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIds);
+
         for (PurchaseApplicationDetailEntity entity : newList) {
             entity.setPurchaseApplicationId(purchaseApplicationId);
+            //仓库名称
             if (CollectionUtils.isEmpty(warehouseList)) {
-               continue;
+                throw new ServiceException(ApiError.ERROR_99002);
             }
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDestWarehouseName(warehouseName);
+
+            //核算公司
+            if (CollectionUtils.isEmpty(accountingCompanyList)) {
+                throw new ServiceException(ApiError.ERROR_9040);
+            }
+
+            //采购组织名称
+            String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+            entity.setPurchaseOrgName(purchaseOrgName);
+
+            //收料组织名称
+            String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+            entity.setReceiveOrgName(receiveOrgName);
         }
+
+
     }
 
 }

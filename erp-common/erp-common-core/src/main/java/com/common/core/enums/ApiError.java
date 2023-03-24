@@ -91,6 +91,8 @@ public enum ApiError implements Serializable {
     ERROR_9037(9037, "日历修改异常请重试"),
     ERROR_9038(9038, "用户名称已存在"),
     ERROR_9039(9039, "未找到产品经理部门负责人"),
+    ERROR_9040(9040, "未找到对应核算公司"),
+
 
     /**
      * 工作流错误
@@ -355,6 +357,8 @@ public enum ApiError implements Serializable {
      */
     ERROR_99000(99000,"金蝶仓库编号不能重复"),
     ERROR_99001(99001,"仓库不能为空"),
+    ERROR_99002(99002,"未找到仓库"),
+
 
     ERROR_end(1000000, "系统错误");
 
