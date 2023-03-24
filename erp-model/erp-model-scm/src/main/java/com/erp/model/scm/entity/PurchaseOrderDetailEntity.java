@@ -177,6 +177,16 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("is_urgent")
     private Boolean isUrgent;
 
+      /** 采购申请明细id(无需传值，后端使用)
+       *
+       */
+    private String purchaseApplicationDetailId;
+
+    /**
+     * 采购申请id(无需传值，后端使用)
+     */
+    private String purchaseApplicationId;
+
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 

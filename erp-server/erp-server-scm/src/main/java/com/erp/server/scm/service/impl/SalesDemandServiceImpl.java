@@ -416,6 +416,14 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         return this.submit(Arrays.asList(id));
     }
 
+    @Override
+    public Boolean updateAndSubmit(SalesDemandDTO.UpdateDTO dto) {
+        //修改
+        this.update(dto);
+        //提交
+        return this.submit(Arrays.asList(dto.getId()));
+    }
+
     /**
      * 处理数据id
      */

@@ -540,6 +540,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean updateAndSubmit(PurchaseApplicationDTO.UpdateDTO dto) {
+        //修改
+        this.update(dto);
+        //提交
+        return this.submit(Arrays.asList(dto.getId()));
+    }
 
 
     /**

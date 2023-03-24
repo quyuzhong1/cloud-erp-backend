@@ -2,8 +2,8 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
@@ -139,5 +139,12 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean cancelProcess(List<String> ids);
-
+    /**
+     * @description: 修改并提交
+     * @author Will
+     * @date: 2023/3/24 18:15
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateAndSubmit(PurchaseApplicationDTO.UpdateDTO dto);
 }

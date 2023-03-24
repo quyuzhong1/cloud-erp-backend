@@ -92,6 +92,19 @@ public class SalesDemandController extends BaseController {
     }
 
     /**
+     * 修改并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated SalesDemandDTO.UpdateDTO dto) {
+        Boolean flag = salesDemandService.updateAndSubmit(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 查询详情
      * @author Will
      * @date: 2023/3/15 17:44

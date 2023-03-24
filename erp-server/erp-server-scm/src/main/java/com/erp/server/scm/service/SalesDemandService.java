@@ -2,8 +2,8 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
@@ -127,4 +127,12 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return Boolean
      */
     Boolean addAndSubmit(SalesDemandDTO.AddDTO dto);
+    /**
+     * @description: 修改并提交
+     * @author Will
+     * @date: 2023/3/24 18:11
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateAndSubmit(SalesDemandDTO.UpdateDTO dto);
 }

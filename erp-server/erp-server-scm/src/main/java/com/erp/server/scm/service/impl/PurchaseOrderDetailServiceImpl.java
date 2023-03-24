@@ -6,16 +6,19 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
+import com.erp.server.scm.service.PurchaseApplicationRefPoService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
+
     @Override
     public void add(List<PurchaseOrderDetailDTO.AddDTO> details, String purchaseOrderId) {
         if (CollectionUtils.isEmpty(details)) {
@@ -48,11 +54,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         boolean flag = this.saveBatch(list);
         if (flag) {
             //新增关联关系
-            for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
-
+            List<PurchaseApplicationRefPoEntity> refList = new ArrayList<>();
+            for (PurchaseOrderDetailEntity entity : list) {
+                PurchaseApplicationRefPoEntity refPoEntity = new PurchaseApplicationRefPoEntity();
+                refPoEntity.setPurchaseOrderId(purchaseOrderId);
+                refPoEntity.setPurchaseOrderDetailId(entity.getId());
+                refPoEntity.setPurchaseApplicationId(entity.getPurchaseApplicationId());
+                refPoEntity.setPurchaseApplicationDetailId(entity.getPurchaseApplicationDetailId());
+                refList.add(refPoEntity);
             }
-
-
+            purchaseApplicationRefPoService.saveBatch(refList);
         }
     }
 
