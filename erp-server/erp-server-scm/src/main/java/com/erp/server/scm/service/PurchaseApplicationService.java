@@ -66,10 +66,10 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 生成采购订单查询
      * @author Will
      * @date: 2023/3/22 19:00
-     * @param id
+     * @param ids
      * @return List<ViewGeneratePurchaseOrderDTO>
      */
-    List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id);
+    List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(List<String> ids);
 
     /**
      * @description: 生成采购单

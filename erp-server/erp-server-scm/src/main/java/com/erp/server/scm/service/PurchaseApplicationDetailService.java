@@ -59,8 +59,8 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      * @description: 查询可生成采购订单的明细
      * @author Will
      * @date: 2023/3/23 10:21
-     * @param purchaseApplicationId
+     * @param purchaseApplicationIds
      * @return List<PurchaseApplicationDetailEntity> 
      */
-    List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(String purchaseApplicationId);
+    List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(List<String> purchaseApplicationIds);
 }

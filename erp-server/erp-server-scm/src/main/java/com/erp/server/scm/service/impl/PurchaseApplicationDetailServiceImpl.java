@@ -77,10 +77,11 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
-    public List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(String purchaseApplicationId) {
+    public List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(List<String> purchaseApplicationIds) {
         return  lambdaQuery()
-                .eq(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationId)
+                .in(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationIds)
                 .ne(PurchaseApplicationDetailEntity::getCreatePoType, CreatePoTypeEnum.ALL_GENERATED.getStatus())
+                .orderByAsc(PurchaseApplicationDetailEntity::getPurchaseApplicationId)
                 .list();
     }
 

@@ -13,7 +13,6 @@ import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.server.scm.service.PurchaseApplicationService;
-import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -101,7 +100,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult<PurchaseApplicationDTO.ViewDTO>
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseApplicationDTO.ViewDTO> view(@Param("id") String id) {
+    public ApiResult<PurchaseApplicationDTO.ViewDTO> view(@RequestParam("id") String id) {
         PurchaseApplicationDTO.ViewDTO dto = purchaseApplicationService.view(id);
         return success(dto);
     }
@@ -163,12 +162,12 @@ public class PurchaseApplicationController extends BaseController {
      * 生成采购单弹窗显示
      * @author Will
      * @date: 2023/3/15 18:26
-     * @param id
+     * @param ids
      * @return ApiResult
      */
     @GetMapping("/viewGeneratePurchaseOrder")
-    public ApiResult<List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@Param("id") String id) {
-        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> list = purchaseApplicationService.viewGeneratePurchaseOrder(id);
+    public ApiResult<List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@RequestParam("ids") List<String> ids) {
+        List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> list = purchaseApplicationService.viewGeneratePurchaseOrder(ids);
         return success(list);
     }
 

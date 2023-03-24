@@ -235,9 +235,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(String id) {
+    public List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> viewGeneratePurchaseOrder(List<String> ids) {
         List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> resultList = new ArrayList<>();
-        List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(id);
+        List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98015);
         }
