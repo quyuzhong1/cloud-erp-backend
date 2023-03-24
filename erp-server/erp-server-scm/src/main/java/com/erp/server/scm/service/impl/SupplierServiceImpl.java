@@ -150,7 +150,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         SupplierEntity supplier = this.addSupplier(dto);
         boolean result = false;
         if (supplier != null) {
-            //这里还要启动流程
             result = updateSubmitApproveStatus(supplier, ApproveStatusEnum.APPROVE_ING.getStatus());
             if (result) {
                 //添加日志
@@ -201,7 +200,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-20 10:56
      */
     @Override
-    public Boolean updateSupplier(SupplierDTO.UpdateDTO dto) {
+    public SupplierEntity updateSupplier(SupplierDTO.UpdateDTO dto) {
         //供应商id
         String supplierId = dto.getId();
         SupplierEntity supplier = this.getById(supplierId);
@@ -238,9 +237,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //资质信息
             List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
             supplierCredentialService.updateCredential(credentialList, supplierId);
+            return supplier;
         }
 
-        return result;
+        return null;
     }
 
 
@@ -510,13 +510,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
 
-
     /**
      * 下载模板
-     * @author yl
-     * @date 2023-03-24 10:58
+     *
      * @param response
      * @return void
+     * @author yl
+     * @date 2023-03-24 10:58
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
@@ -539,6 +539,31 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.Default);
         }
 
+    }
+
+
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-24 18:23
+     */
+    @Override
+    public Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto) {
+        SupplierEntity supplier = this.updateSupplier(dto);
+
+        if (supplier != null) {
+            boolean result = updateSubmitApproveStatus(supplier, ApproveStatusEnum.APPROVE_ING.getStatus());
+            if (result) {
+                //添加日志
+                String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "状态变更");
+            }
+            return result;
+        }
+        return false;
     }
 
     /**

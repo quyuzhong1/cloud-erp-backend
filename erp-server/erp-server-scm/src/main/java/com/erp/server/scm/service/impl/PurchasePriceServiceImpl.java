@@ -1,7 +1,10 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -17,9 +20,13 @@ import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -55,6 +62,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-24 12:22
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PurchasePriceEntity add(PurchasePriceDTO.AddDTO dto) {
         //供应商id
         String supplierId = dto.getSupplierId();
@@ -71,10 +79,32 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_CGJM.getCode()));
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
-
+        String pricingUserId = dto.getPricingUserId();
+        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+        purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        String orgId = dto.getPurchaseOrgId();
+        //获取组织
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        if (CollectionUtils.isNotEmpty(orgList)) {
+            purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
+        }
         Boolean addResult = this.save(purchasePrice);
         //保存成功
         if (addResult) {
+            Class<PurchasePriceEntity> credentialClass = PurchasePriceEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+
+            //保存附件
+            attachmentService.batchSave(dto.getAttachmentUrlList(), type, id);
+
+            /**
+             * 添加明细
+             */
+            priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList());
+
+            return purchasePrice;
 
         }
 

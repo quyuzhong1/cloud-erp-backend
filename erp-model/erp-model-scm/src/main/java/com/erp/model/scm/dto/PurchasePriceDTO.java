@@ -53,6 +53,10 @@ public class PurchasePriceDTO implements Serializable {
         private String purchaseOrgId;
 
         /**
+         * 附件地址
+         */
+        private List<String>  attachmentUrlList;
+        /**
          * 报价明细
          */
         @Valid
