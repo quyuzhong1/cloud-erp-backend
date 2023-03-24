@@ -43,12 +43,12 @@ public class PurchasePriceController extends BaseController {
     }
 
     /**
-     * 保存或者修改采购价目
+     * 添加采购价目表
      *
      * @param dto
      * @return
      */
-    @PostMapping("/saveOrUpdate")
+    @PostMapping("/add")
     public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceDTO dto) {
         return success();
     }

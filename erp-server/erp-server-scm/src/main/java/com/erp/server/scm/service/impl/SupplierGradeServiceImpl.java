@@ -76,7 +76,6 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
      */
     private void checkName(List<SupplierDTO.SupplierGradeDTO> gradeList, List<SupplierGradeEntity> dbList) {
 
-
         //这个是参数传来的名称
         List<String> nameList = gradeList.stream().map(SupplierDTO.SupplierGradeDTO::getName).
                 collect(Collectors.toList());

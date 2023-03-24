@@ -181,7 +181,7 @@ public class WarehouseController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/downloadTemplate")
+    @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         warehouseService.downloadTemplate(response);
         return success();

@@ -172,7 +172,7 @@ public class SupplierController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/downloadTemplate")
+    @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
         supplierService.downloadTemplate(response);
         return success();

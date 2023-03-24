@@ -1,10 +1,10 @@
 package com.erp.model.scm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -22,50 +22,55 @@ public class PurchasePriceDTO implements Serializable {
 
 
     /**
-     * 表id
+     * 添加
      */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 报价日期
+         */
+        @NotNull(message = "报价日期不能为空")
+        private LocalDate quotedDate;
 
 
-    /**
-     * 供应商表id
-     */
-    @NotBlank(message = "供应商不能为空")
-    private String supplierId;
-
-    /**
-     * 报价日期
-     */
-    private LocalDate quotedDate;
-
-    /**
-     * 报价人id
-     */
-    private String pricingUserId;
-
-    /**
-     * 报价人
-     */
-    private String pricingUserName;
-
-    /**
-     * 采购组织
-     */
-    private String purchaseOrgId;
-
-    /**
-     * 采购组织名
-     */
-    private String purchaseOrgName;
+        /**
+         * 报价人id
+         */
+        private String makePriceUserId;
 
 
-    /**
-     * 提交类型
-     */
-    @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
-    private String submitType;
-    /**
-     * 报价明细
-     */
-    private List<PurchasePriceDetailDTO> purchasePriceDetailList;
+        /**
+         * 采购组织id
+         */
+        private String orgId;
+
+        /**
+         * 报价明细
+         */
+        private List<PurchasePriceDetailDTO> purchasePriceDetailList;
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
