@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -19,66 +18,71 @@ import java.util.Date;
 @NoArgsConstructor
 public class PurchasePriceDetailDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+        /**
+         * sku id
+         */
+        private String skuId;
 
-    /**
-     * sku id
-     */
-    private String skuId;
+        /**
+         * sku no
+         */
+        private String skuNo;
 
-    /**
-     * sku no
-     */
-    private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
 
-    /**
-     * 产品名称
-     */
-    private String productName;
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDate;
 
-    /**
-     * 采购交期
-     */
-    private Integer deliveryDate;
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
 
-    /**
-     * 最小数量
-     */
-    private Integer minQty;
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
 
-    /**
-     * 最大数量
-     */
-    private Integer maxQty;
+        /**
+         * 币种
+         */
+        private String currency;
 
-    /**
-     * 币种
-     */
-    private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencyCode;
 
-    /**
-     * 币种符号
-     */
-    private String currencyCode;
-
-    /**
-     * 含税单价
-     */
-    private BigDecimal taxPrice;
-
-    /**
-     * 生效时间
-     */
-    private LocalDate effectiveDate;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
 
 
-    /**
-     * 失效时间
-     */
-    private Date expireDate;
 
-    /**
-     * 税率
-     */
-    private BigDecimal taxRate;
+
+        /**
+         * 失效时间
+         */
+        private Date expireDate;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+
+    }
+
+
+
 
 }
