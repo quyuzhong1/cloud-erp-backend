@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -126,4 +127,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.lang.Boolean
      */
     Boolean disApprove(List<String> ids);
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-03-24 10:58
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
+
 }

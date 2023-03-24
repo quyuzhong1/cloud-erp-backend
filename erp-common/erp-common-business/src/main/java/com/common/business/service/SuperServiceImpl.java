@@ -9,6 +9,7 @@ import com.common.core.entity.BaseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -92,4 +93,6 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
                 .eq(version != null, T.VERSION, version)
                 .update();
     }
+
+
 }
