@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 
 /**
@@ -13,4 +14,13 @@ import com.erp.model.scm.entity.PurchasePriceEntity;
  */
 public interface PurchasePriceService extends SuperService<PurchasePriceEntity> {
 
+    
+    /**
+     * 添加采购价目表
+     * @author yl
+     * @date 2023-03-24 12:22
+     * @param dto
+     * @return com.erp.model.scm.entity.PurchasePriceEntity
+     */
+    PurchasePriceEntity add(PurchasePriceDTO.AddDTO dto);
 }

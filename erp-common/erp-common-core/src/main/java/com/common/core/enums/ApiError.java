@@ -344,6 +344,9 @@ public enum ApiError implements Serializable {
     ERROR_98019(98019,"只有审核不通过和待提交才能编辑"),
     ERROR_98020(98020,"供应商当前阶段有误"),
     ERROR_98021(98021,"只有审核不通过和待提交才能编辑"),
+    ERROR_REPEAT_SKU(98022,"存在重复的SKU,不可提交"),
+    ERROR_INTERVAL_OVERLAP(98023,"区间存在重叠，不可提交"),
+
 
 
 

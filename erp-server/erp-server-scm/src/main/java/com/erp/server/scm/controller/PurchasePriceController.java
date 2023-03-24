@@ -11,6 +11,7 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceExportResultDTO;
 import com.erp.model.scm.dto.PurchasePricePagingParamDTO;
 import com.erp.model.scm.dto.PurchasePricePagingViewDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,8 +54,9 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        return success();
+    public ApiResult add(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
+        PurchasePriceEntity purchasePrice = purchasePriceService.add(dto);
+        return purchasePrice != null ? success() : failure();
     }
 
 

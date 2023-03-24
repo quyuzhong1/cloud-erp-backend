@@ -44,7 +44,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 报价人id
          */
-        private String makePriceUserId;
+        private String pricingUserId;
 
 
         /**

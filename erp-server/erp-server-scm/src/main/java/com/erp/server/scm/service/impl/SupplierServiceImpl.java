@@ -399,7 +399,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<String> supplierIds = dto.getIds();
         List<SupplierEntity> list = this.getByIds(supplierIds);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
