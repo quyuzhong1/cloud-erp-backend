@@ -673,8 +673,7 @@ public class ProjectTaskController extends BaseController {
      * @return ApiResult
      **/
     @PostMapping(value = "/templateCiteTask")
-    public ApiResult<PagingVO<TemplateTaskShowDTO>> templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
-        Boolean result = templateTaskService.templateCiteTask(dto);
-        return  result == true ? success() : failure();
+    public ApiResult templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
+        return success(templateTaskService.templateCiteTask(dto));
     }
 }

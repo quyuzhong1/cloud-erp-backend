@@ -217,7 +217,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveTemplateDeliveryDocsList(String taskId, String templateId, List<DocsDTO> deliveryDocsList) {
-        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+        if (deliveryDocsList != null) {
             //删除交付文档
             removeTemplateDeliveryDocs(taskId, templateId);
             //获取登录人信息

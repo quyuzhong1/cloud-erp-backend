@@ -63,5 +63,5 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     List<ItemMemberVO> getByProductIds(List<String> productIds);
 
-    List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String productId, String roleName);
+    List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String templateId, String roleName);
 }

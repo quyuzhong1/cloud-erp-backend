@@ -1209,6 +1209,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String planStartTime = dto.getPlanStartTime();
             if (StringUtils.isNotBlank(planStartTime)) {
                 taskEntity.setPlanStartTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planStartTime)));
+            } else {
+                taskEntity.setPlanStartTime(null);
             }
 
         }
@@ -1217,6 +1219,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String planEndTime = dto.getPlanEndTime();
             if (StringUtils.isNotBlank(planEndTime)) {
                 taskEntity.setPlanEndTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planEndTime)));
+            } else {
+                taskEntity.setPlanEndTime(null);
             }
         }
         List<String> chargeIdList = dto.getChargeIdList();

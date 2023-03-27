@@ -774,32 +774,31 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return true;
         }
         //复制模板团队成员
-        try {
-            List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");
-            //复制模板角色
-            List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(templateId, productId, "");
-            //复制角色关系表
-            templateRoleRefMembersService.copyTemplateRoleRefMembers(templateId, productId, "", copyRoleSourceList, copyMembersSourceList);
-            //复制 项目任务阶段
-            List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(templateId, productId, "");
+        List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");
+        //复制模板角色
+        List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(templateId, productId, "");
+        //复制角色关系表
+        templateRoleRefMembersService.copyTemplateRoleRefMembers(templateId, productId, "", copyRoleSourceList, copyMembersSourceList);
+        //复制 项目任务阶段
+        List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(templateId, productId, "");
 
-            //复制任务文档名 可能数据库已有数据
-            List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(templateId, productId, "");
+        //复制任务文档名 可能数据库已有数据
+        List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(templateId, productId, "");
 
-            //这个是任务的
-            List<CopySourceDTO> taskSourceList = taskCopyTemplate(templateId, productId, "", phaseSourceList, dto.getTaskIdList());
-            //这个是复制前置任务关系
-            templatePreTaskService.copyTemplatePreTask(templateId, productId, taskSourceList);
+        //这个是任务的
+        List<CopySourceDTO> taskSourceList = taskCopyTemplate(templateId, productId, "", phaseSourceList, dto.getTaskIdList());
+        //这个是复制前置任务关系
+        templatePreTaskService.copyTemplatePreTask(templateId, productId, taskSourceList);
 
-            //这个是交付文档
-            List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, docsNameSourceList);
-            //这个是文档权限
-            templateDocsPermissionService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, deliveryDocsSourceList);
+        //这个是交付文档
+        List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, docsNameSourceList);
+        //这个是文档权限
+        templateDocsPermissionService.copyTemplateDeliveryDocs(templateId, productId, taskSourceList, deliveryDocsSourceList);
 
-            //复制模板sku 与任务关系
-            templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(templateId, productId, taskSourceList);
+        //复制模板sku 与任务关系
+        templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(templateId, productId, taskSourceList);
 
-            ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
 /*            String roleName = "产品经理";
             List<MemberPagingShowDTO> memberList = projectMembersService.listByRoleNames(null, productId, roleName);
             List<String> chargeIds = new ArrayList<>();
@@ -812,13 +811,13 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             //新增或修改产品经理角色和对应成员
             projectMembersService.saveByRoleAndMembers(productId, null, "产品经理", chargeIds);*/
 
-            List<String> chargeIds = Arrays.asList(productInfoEntity.getChargeId().split(","));
-            projectMembersService.saveByRoleAndMembers(productId, null, "产品经理", chargeIds);
+        List<String> chargeIds = Arrays.asList(productInfoEntity.getChargeId().split(","));
+        projectMembersService.saveByRoleAndMembers(productId, null, "产品经理", chargeIds);
 
-            /**
-             * 当项目经理不为空的时候保经理
-             */
-            if(StringUtils.isNotBlank(productInfoEntity.getProjectChargeId())){
+        /**
+         * 当项目经理不为空的时候保经理
+         */
+        if (StringUtils.isNotBlank(productInfoEntity.getProjectChargeId())) {
 /*                roleName = "项目经理";
                 memberList = projectMembersService.listByRoleNames(null, productId, roleName);
                 List<String> projectChargeIds = new ArrayList<>();
@@ -829,16 +828,13 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 }
                 //新增或修改项目经理角色和对应成员
                 projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", projectChargeIds);*/
-                projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(productInfoEntity.getProjectChargeId()));
-            }
-
-            //更新项目列表的项目经理
-            projectInfoService.updateChargeByProductId(productId,productInfoEntity.getProjectChargeId());
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(productInfoEntity.getProjectChargeId()));
         }
+
+        //更新项目列表的项目经理
+        projectInfoService.updateChargeByProductId(productId, productInfoEntity.getProjectChargeId());
+        return true;
+
     }
 
     public List<CopySourceDTO> taskCopyTemplate(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList, List<String> taskIdList) {
@@ -889,7 +885,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
                         List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
 
-                        List<MemberPagingShowDTO> memberPagingShowDTOS = projectMembersService.listByRoleNames(roleIds, productId, null);
+                        List<MemberPagingShowDTO> memberPagingShowDTOS = projectMembersService.listByRoleNames(roleIds, templateId, null);
 //                        List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(roleIds, projectTemplateEntity.getId());
                         if (CollectionUtils.isNotEmpty(memberPagingShowDTOS)) {
                             List<String> memberIds = memberPagingShowDTOS.stream().map(MemberPagingShowDTO::getMemberId).distinct().collect(Collectors.toList());

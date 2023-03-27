@@ -690,10 +690,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
      * @Author Luo_WG
      * @Date 2023/3/27 12:01
      * @param roles roles
-     * @param productId productId
+     * @param templateId templateId
      * @return java.util.List<com.erp.model.plm.entity.ProjectMembersEntity>
      **/
-    public List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String productId, String roleName) {
-        return baseMapper.listByRoleNames(roles, productId, roleName);
+    public List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String templateId, String roleName) {
+        return baseMapper.listByRoleNames(roles, templateId, roleName);
     }
 }
