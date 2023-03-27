@@ -32,8 +32,8 @@ public class SupplierPhaseEntity extends BaseEntity<SupplierPhaseEntity> {
     /**
      * 操作类型
      */
-    @TableField("type")
-    private String type;
+    @TableField("operate_type")
+    private String operateType;
 
     /**
      * 当前阶段

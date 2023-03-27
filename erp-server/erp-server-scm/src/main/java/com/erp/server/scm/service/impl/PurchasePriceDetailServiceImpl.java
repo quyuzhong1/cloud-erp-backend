@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -119,6 +120,34 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setTaxRate(rate);
         }
         this.saveBatch(addList);
+    }
+
+
+    /**
+     * 根据价目表id 获取产品明细信息
+     *
+     * @param purchasePriceId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-27 9:48
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.UpdateDTO> getByPurchasePriceId(String purchasePriceId) {
+        List<PurchasePriceDetailEntity> list = this.getListByPurchasePriceId(purchasePriceId);
+        return BeanMapper.copyList(list, PurchasePriceDetailDTO.UpdateDTO.class);
+    }
+
+
+    private List<PurchasePriceDetailEntity> getListByPurchasePriceId(String purchasePriceId) {
+        LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
+        return this.list(queryWrapper);
+
+    }
+
+    @Override
+    public PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        return  baseMapper.getTaxPrice(dto);
     }
 
     /**

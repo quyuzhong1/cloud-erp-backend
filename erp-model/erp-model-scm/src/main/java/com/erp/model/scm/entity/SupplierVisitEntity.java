@@ -35,8 +35,8 @@ public class SupplierVisitEntity extends BaseEntity<SupplierVisitEntity> {
     /**
      * 类型
      */
-    @TableField("type")
-    private SupplierVisitEnum type;
+    @TableField("visit_type")
+    private SupplierVisitEnum visitType;
 
     /**
      * 拜访时间

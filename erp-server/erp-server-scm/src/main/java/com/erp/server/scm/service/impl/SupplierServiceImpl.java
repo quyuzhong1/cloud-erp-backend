@@ -216,7 +216,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }
-        BeanMapper.copy(supplier, dto);
+        BeanMapper.copy(dto,supplier);
 
         List<String> keyList = new ArrayList<>(1);
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());

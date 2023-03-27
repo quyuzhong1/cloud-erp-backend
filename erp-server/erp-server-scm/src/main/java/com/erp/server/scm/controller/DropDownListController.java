@@ -8,7 +8,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,9 +31,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/drop/down")
 public class DropDownListController extends BaseController {
-
-    @Resource
-    private WmsTaskFeign wmsTaskFeign;
 
     @Resource
     private SupplierService supplierService;

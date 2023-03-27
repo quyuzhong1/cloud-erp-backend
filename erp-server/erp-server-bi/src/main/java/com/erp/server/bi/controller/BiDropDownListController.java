@@ -282,7 +282,7 @@ public class BiDropDownListController extends BaseController {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownIdVO> result = list.stream()
-                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(),x.getName(), MathUtil.ONE.equals(x.getStatus()) ? true : false ))
+                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(),x.getName(), MathUtil.ONE.equals(x.getStatus()) ? false : true ))
                 .distinct()
                 .collect(Collectors.toList());
         return success(result);
