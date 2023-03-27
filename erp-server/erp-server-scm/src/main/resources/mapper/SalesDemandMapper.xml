@@ -89,13 +89,13 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+                and sd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.create_time
             </if>
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and sdd.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
+                and sdd.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdd.plan_delivery_date
             </if>
             <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
-                and sd.approve_time between #{params.approvePassTimeList[0]} and #{params.approvePassTimeList[1]}
+                and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
             </if>
         </where>
         ORDER BY
@@ -178,13 +178,13 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+                and sd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.create_time
             </if>
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and sdd.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
+                and sdd.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdd.plan_delivery_date
             </if>
             <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
-                and sd.approve_time between #{params.approvePassTimeList[0]} and #{params.approvePassTimeList[1]}
+                and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
             </if>
         </where>
         ORDER BY
