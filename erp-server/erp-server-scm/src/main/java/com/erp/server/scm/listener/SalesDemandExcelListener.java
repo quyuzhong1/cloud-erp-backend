@@ -64,7 +64,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
     public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds) {
         this.skuList = skuList;
         this.warehouseList = warehouseList;
-        this.skuIds = skuIds;
+        this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
     }
 
     @Override
@@ -123,7 +123,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
         }
         excelDTO.setIsUrgent("是".equals(salesDemandImportExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
         excelDTO.setPlanStockQty(Integer.valueOf(salesDemandImportExcelDTO.getPlanStockQtyStr()));
-        excelDTO.setPlanDeliveryDate(LocalDate.parse(salesDemandImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
+        excelDTO.setPlanDeliveryDate(StringUtils.isBlank(salesDemandImportExcelDTO.getPlanDeliveryDateStr()) ? null : LocalDate.parse(salesDemandImportExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
         excelDTO.setRemark(salesDemandImportExcelDTO.getRemark());
         importSkuIds.add(excelDTO.getSkuId());
         successList.add(excelDTO);

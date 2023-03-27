@@ -155,7 +155,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
         }
         excelDTO.setIsUrgent("是".equals(importExcelDTO.getIsUrgentStr()) ? Boolean.TRUE : Boolean.FALSE);
         excelDTO.setApplyQty(Integer.valueOf(importExcelDTO.getApplyQtyStr()));
-        excelDTO.setPlanDeliveryDate(LocalDate.parse(importExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
+        excelDTO.setPlanDeliveryDate(StringUtils.isBlank(importExcelDTO.getPlanDeliveryDateStr()) ? null : LocalDate.parse(importExcelDTO.getPlanDeliveryDateStr(), dateTimeFormatter));
         excelDTO.setRemark(importExcelDTO.getRemark());
         importSkuIds.add(excelDTO.getSkuId());
         successList.add(excelDTO);

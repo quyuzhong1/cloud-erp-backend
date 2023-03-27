@@ -27,5 +27,6 @@
         <result column="invalid_time" property="invalidTime" />
         <result column="approve_time" property="approveTime" />
     </resultMap>
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO"></select>
 
 </mapper>

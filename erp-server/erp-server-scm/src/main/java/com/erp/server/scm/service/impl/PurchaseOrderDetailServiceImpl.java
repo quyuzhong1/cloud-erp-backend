@@ -15,6 +15,7 @@ import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.PurchaseApplicationRefPoService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -56,6 +57,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //新增关联关系
             List<PurchaseApplicationRefPoEntity> refList = new ArrayList<>();
             for (PurchaseOrderDetailEntity entity : list) {
+                if (StringUtils.isBlank(entity.getPurchaseApplicationDetailId())) {
+                    continue;
+                }
                 PurchaseApplicationRefPoEntity refPoEntity = new PurchaseApplicationRefPoEntity();
                 refPoEntity.setPurchaseOrderId(purchaseOrderId);
                 refPoEntity.setPurchaseOrderDetailId(entity.getId());
