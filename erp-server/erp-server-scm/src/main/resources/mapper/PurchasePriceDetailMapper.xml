@@ -6,11 +6,13 @@
     <select id="getTaxPrice" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$PurchaseTaxPriceViewDTO">
         select
             pp.supplier_id,
+            s.name as supplierName,
             ppd.currency,
             ppd.tax_price as taxPrice,
             ppd.tax_rate as taxRate
         from purchase_price pp
         left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        left join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
             pp.is_deleted = false and pp.approve_status = 'approve' and now() >= ppd.effective_date
             <if test="params.skuId != null and params.skuId != ''">

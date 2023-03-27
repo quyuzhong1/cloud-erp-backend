@@ -109,6 +109,11 @@ public class PurchasePriceDetailDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 供应商表名称
+         */
+        private String supplierName;
+
+        /**
          * 最小数量
          */
         private Integer minQty;
