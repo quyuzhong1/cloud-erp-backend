@@ -585,7 +585,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         return  purchasePriceDetailService.getTaxPrice(dto);
     }
 

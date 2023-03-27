@@ -37,13 +37,13 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      */
     void addPriceDetail(String id, List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
     /**
-     * @description: 根据供应商id和skuId查询是否存在符合条件的单价和税率
+     * @description: 根据skuId查询是否存在符合条件的单价和税率
      * @author Will
      * @date: 2023/3/27 9:37
      * @param dto
-     * @return PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO
+     * @return List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>
      */
-    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
 
     /**
      * 根据价目表id 获取产品明细信息

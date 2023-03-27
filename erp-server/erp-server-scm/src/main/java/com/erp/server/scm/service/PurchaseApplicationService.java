@@ -161,7 +161,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @author Will
      * @date: 2023/3/27 9:24
      * @param dto
-     * @return PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO
+     * @return List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>
      */
-    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
 }

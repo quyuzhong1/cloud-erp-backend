@@ -208,7 +208,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         return baseMapper.getTaxPrice(dto);
     }
 

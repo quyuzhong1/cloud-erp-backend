@@ -83,12 +83,6 @@ public class PurchasePriceDetailDTO implements Serializable {
         private Integer purchaseQty;
 
         /**
-         * 供应商表id
-         */
-        @NotBlank(message = "供应商id不能为空")
-        private String supplierId;
-
-        /**
          * sku id
          */
         @NotBlank(message = "skuId不能为空")
@@ -108,6 +102,21 @@ public class PurchasePriceDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PurchaseTaxPriceViewDTO {
+
+        /**
+         * 供应商表id
+         */
+        private String supplierId;
+
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
 
         /**
          * 币别

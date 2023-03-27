@@ -6,6 +6,8 @@ import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 产品采购价格明细表 Mapper 接口
@@ -23,5 +25,5 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      * @param dto
      * @return PurchaseTaxPriceViewDTO
      */
-    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
 }

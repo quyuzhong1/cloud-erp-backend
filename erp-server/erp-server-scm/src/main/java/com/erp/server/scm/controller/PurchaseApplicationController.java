@@ -228,9 +228,9 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/getTaxPrice")
-    public ApiResult<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
-        PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO result = purchaseApplicationService.getTaxPrice(dto);
-        return success(result);
+    public ApiResult< List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = purchaseApplicationService.getTaxPrice(dto);
+        return success(list);
     }
 
 
