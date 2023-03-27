@@ -236,4 +236,10 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
     @TableField(value = "template_id")
     private String templateId;
 
+    /**
+     * 产品版本号
+     */
+    @TableField(value = "product_version")
+    private Integer productVersion;
+
 }

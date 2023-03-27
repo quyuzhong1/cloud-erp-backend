@@ -80,9 +80,9 @@ public class SysCodeServiceImpl implements SysCodeService {
             dto.setCustomized("");
         }
         //产品的版本 1-9，A-Z
-        int version = entity.getVersion().intValue();
+        int version = entity.getProductVersion().intValue();
         if (9 >= version ) {
-            dto.setVersion(entity.getVersion().toString());
+            dto.setVersion(entity.getProductVersion().toString());
         } else {
             //version为10以上时转换成大写英文字母
             //大写字母A到Z的ascii码是从65到90

@@ -245,12 +245,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setUpdateUserName(loginUser.getUserName());
         }
         if (entity.getType().intValue() == 1) {
-            entity.setVersion(1);
+            entity.setProductVersion(1);
         } else {
             //查询关联产品版本
             ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-                entity.setVersion(productInfoEntity.getVersion().intValue() + 1);
+                entity.setProductVersion(productInfoEntity.getProductVersion().intValue() + 1);
                 dto.setRelevanceProductName(productInfoEntity.getName());
             }
         }
@@ -323,7 +323,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         /**
          * 当项目经理不为空的时候保经理
          */
-        if(StringUtils.isNotBlank(projectChargeId)){
+        if (StringUtils.isNotBlank(projectChargeId)) {
             //新增或修改项目经理角色和对应成员
             projectMembersService.saveByRoleAndMembers(entity.getId(), null, "项目经理", Arrays.asList(projectChargeId));
         }
@@ -334,7 +334,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //关联产品规划
         productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(), entity);
         //更新项目列表的项目经理
-        projectInfoService.updateChargeByProductId(productId,dto.getProjectChargeId());
+        projectInfoService.updateChargeByProductId(productId, dto.getProjectChargeId());
 
         return entity.getId();
     }
@@ -944,7 +944,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (yesApproval && updateFlag) {
                 //异步通知 产品立项
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
-                projectInfoService.addProject(dto.getProductId(), newProduct.getName(),product.getProjectChargeId());
+                projectInfoService.addProject(dto.getProductId(), newProduct.getName(), product.getProjectChargeId());
             }
             //如果状态为已中止则更新产品开发列表开发状态为中止开发
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(approvalStatus)) {
@@ -964,7 +964,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             /**
              * 当项目经理不为空的时候保经理
              */
-            if(StringUtils.isNotBlank(projectChargeId)){
+            if (StringUtils.isNotBlank(projectChargeId)) {
                 //新增或修改项目经理角色和对应成员
                 projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(projectChargeId));
 
@@ -1344,8 +1344,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.list(queryWrapper);
 
     }
-
-
 
 
     /**
