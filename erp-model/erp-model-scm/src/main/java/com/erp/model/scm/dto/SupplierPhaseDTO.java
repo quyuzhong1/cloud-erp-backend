@@ -39,7 +39,7 @@ public class SupplierPhaseDTO implements Serializable {
          */
         @NotBlank(message = "操作类型不能为空")
         @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
-        private String type;
+        private String operateType;
 
         /**
          * 当前阶段

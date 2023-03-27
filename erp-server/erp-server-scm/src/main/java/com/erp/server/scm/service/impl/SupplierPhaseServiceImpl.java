@@ -77,7 +77,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             throw new ServiceException(ApiError.ERROR_98020);
         }
         //检查阶段能否变更
-        checkPhase(phase, dto.getTargetPhase(), dto.getType());
+        checkPhase(phase, dto.getTargetPhase(), dto.getOperateType());
         BeanUtil.copyProperties(dto, entity, dto.getCurrentPhase(), dto.getTargetPhase());
         String id = IdWorker.getIdStr();
         entity.setId(id);
@@ -208,7 +208,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         String currentPhase = dto.getCurrentPhase();
         //目标阶段
         String targetPhase = dto.getTargetPhase();
-        String type = dto.getType();
+        String type = dto.getOperateType();
         checkPhase(currentPhase, targetPhase, type);
 
         BeanMapper.copy(phase, dto);

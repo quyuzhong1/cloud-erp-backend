@@ -46,7 +46,7 @@ public class SupplierVisitDTO implements Serializable {
          */
         @NotBlank(message = "供应商拜访类型不能为空")
         @StateEnumValue(strValues = {"newProduct", "access", "other"}, message = "拜访类型有误")
-        private String type;
+        private String visitType;
 
         /**
          * 拜访时间
@@ -77,7 +77,12 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 附件url
          */
-        private List<String> visitAttachmentList;
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
 
 
         /**

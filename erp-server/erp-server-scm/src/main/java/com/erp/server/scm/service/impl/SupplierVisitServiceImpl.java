@@ -7,14 +7,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.service.SuperServiceImpl;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
-import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierVisitEntity;
 import com.erp.model.scm.entity.SupplierVisitSkuEntity;
@@ -93,9 +92,9 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         visit.setSupplierId(supplierId);
         visit.setVisitTime(dto.getVisitTime());
         //拜访类型
-        String visitType = dto.getType();
+        String visitType = dto.getVisitType();
         SupplierVisitEnum visitTypeEnum = SupplierVisitEnum.getByStatus(visitType);
-        visit.setType(visitTypeEnum);
+        visit.setVisitType(visitTypeEnum);
         String visitResult = dto.getResult();
         SupplierVisitResultEnum visitResultEnum = SupplierVisitResultEnum.getByStatus(visitResult);
         visit.setResult(visitResultEnum);
@@ -105,19 +104,10 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         visit.setPeople(String.join(",", peopleList));
         Boolean result = this.save(visit);
         if (result) {
-            List<AttachmentEntity> batchAttachmentList = new ArrayList<>(5);
-            List<String> visitAttachmentList = dto.getVisitAttachmentList();
-            if (CollectionUtils.isNotEmpty(visitAttachmentList)) {
-                //这是附件的
-                for (String url : visitAttachmentList) {
-                    AttachmentEntity attachment = new AttachmentEntity();
-                    attachment.setAttachUrl(url);
-                    attachment.setBusinessId(id);
-                    attachment.setType(type);
-                    batchAttachmentList.add(attachment);
-                }
-                attachmentService.saveBatch(batchAttachmentList);
-            }
+            List<String> urlList = dto.getAttachmentUrlList();
+            List<String> nameList = dto.getAttachmentNameList();
+            //附件
+            attachmentService.batchSave(urlList,nameList,type,id);
             List<String> skuIdList = dto.getSkuIdList();
             if (CollectionUtils.isNotEmpty(skuIdList)) {
                 List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>(skuIdList.size());
@@ -131,10 +121,8 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 }
                 supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
-
             //添加日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一条拜访记录"), ModuleTypeEnum.SUPPLIER.getCode(),id,"新增拜访");
-
         }
 
         return result;
