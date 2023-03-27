@@ -92,7 +92,7 @@ public enum ApiError implements Serializable {
     ERROR_9038(9038, "用户名称已存在"),
     ERROR_9039(9039, "未找到产品经理部门负责人"),
     ERROR_9040(9040, "未找到对应核算公司"),
-
+    ERROR_9041(9041, "未发现币种对应符号"),
 
     /**
      * 工作流错误

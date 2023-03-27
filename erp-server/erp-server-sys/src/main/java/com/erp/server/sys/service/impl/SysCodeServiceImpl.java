@@ -1,16 +1,16 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.RedisLock;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 /**
  * @author Will
@@ -111,6 +112,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         try {
             //生成单号
             getOrSaveSysCode(dto);
+            //判断最后修改日期是否是当天，不是则重置num
+            if (dto.getUpdateTime().before(DateUtil.beginOfDay(new Date()))) {
+                dto.setNum(MathUtil.ONE);
+            }
             StringBuffer sysCode = new StringBuffer();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
             sysCode.append(dto.getCategory())
@@ -144,18 +149,15 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         if (ObjectUtils.isNotEmpty(sysCodeEntity)) {
             dto.setNum(sysCodeEntity.getNum());
             dto.setId(sysCodeEntity.getId());
+            dto.setUpdateTime(sysCodeEntity.getUpdateTime());
             return;
         }
         SysCodeEntity entity = new SysCodeEntity();
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            entity.setCreateUserId(loginUser.getUid());
-            entity.setCreateUserName(loginUser.getUserName());
-        }
         BeanMapperUtils.copy(dto,entity);
         boolean flag = this.save(entity);
-        dto.setNum(1);
+        dto.setNum(MathUtil.ONE);
         dto.setId(entity.getId());
+        dto.setUpdateTime(entity.getUpdateTime());
         if (!flag) {
             throw new ServiceException(ApiError.Default);
         }
@@ -172,6 +174,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(SysCodeEntity::getId,id);
         updateWrapper.set(SysCodeEntity::getNum,num + 1);
+        updateWrapper.set(SysCodeEntity::getUpdateTime,new Date());
         this.update(updateWrapper);
     }
 

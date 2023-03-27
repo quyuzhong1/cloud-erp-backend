@@ -23,4 +23,12 @@ public interface DictCurrencyService extends SuperService<DictCurrencyEntity> {
      * @return java.util.List<com.erp.model.sys.dto.CurrencyDTO.ViewDTO>
      */
     List<CurrencyDTO.ViewDTO> getList();
+    /**
+     * @description: 根据币种查询
+     * @author Will
+     * @date: 2023/3/27 18:03
+     * @param currencyList
+     * @return List<CurrencyDTO.ViewDTO>
+     */
+    List<CurrencyDTO.ViewDTO> listByCurrency(List<String> currencyList);
 }

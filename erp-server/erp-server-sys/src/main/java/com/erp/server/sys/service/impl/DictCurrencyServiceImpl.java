@@ -7,8 +7,10 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.sys.mapper.DictCurrencyMapper;
 import com.erp.server.sys.service.DictCurrencyService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,6 +37,15 @@ public class DictCurrencyServiceImpl extends SuperServiceImpl<DictCurrencyMapper
         LambdaQueryWrapper<DictCurrencyEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByAsc(DictCurrencyEntity::getIndex);
         List<DictCurrencyEntity> list = this.list(queryWrapper);
+        return BeanMapper.copyList(list, CurrencyDTO.ViewDTO.class);
+    }
+
+    @Override
+    public List<CurrencyDTO.ViewDTO> listByCurrency(List<String> currencyList) {
+        List<DictCurrencyEntity> list = lambdaQuery().in(DictCurrencyEntity::getId,currencyList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
         return BeanMapper.copyList(list, CurrencyDTO.ViewDTO.class);
     }
 }

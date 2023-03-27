@@ -203,4 +203,10 @@ public interface SysUserFeign {
      */
     @GetMapping("sys/feign/accountingCompany/list")
     List<BaseIdDTO> listAccountingCompany();
+
+    /**
+     * 根据币种查询
+     */
+    @PostMapping("sys/feign/currency/listByCurrency")
+    List<CurrencyDTO.ViewDTO> listByCurrency(@RequestBody List<String> currencyList);
 }

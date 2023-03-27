@@ -8,7 +8,9 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,6 +46,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 检查sku 区间报价
@@ -248,7 +253,20 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
-        return baseMapper.getTaxPrice(dto);
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> currencyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> viewList =  sysUserFeign.listByCurrency(currencyList);
+        if (CollectionUtils.isEmpty(viewList)) {
+            throw new ServiceException(ApiError.ERROR_9041);
+        }
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : list) {
+            CurrencyDTO.ViewDTO currencyDTO = viewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(null);
+            viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
+        }
+        return list;
     }
 
     /**

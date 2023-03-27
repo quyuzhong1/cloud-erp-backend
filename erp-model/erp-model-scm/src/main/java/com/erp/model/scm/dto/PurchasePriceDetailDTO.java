@@ -124,6 +124,11 @@ public class PurchasePriceDetailDTO implements Serializable {
         private Integer maxQty;
 
         /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 币别
          */
         private String currency;
