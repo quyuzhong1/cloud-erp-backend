@@ -66,11 +66,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             addEntity.setId(id);
             addList.add(addEntity);
             //附件集合
-            List<String> attachmentList = item.getCredentialAttachmentList();
-            if (CollectionUtils.isNotEmpty(attachmentList)) {
-                for (String url : attachmentList) {
+            List<String> attachmentUrlList = item.getAttachmentUrlList();
+            //附件名
+            List<String> attachmentNameList = item.getAttachmentNameList();
+            if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
                     AttachmentEntity attachment = new AttachmentEntity();
-                    attachment.setAttachUrl(url);
+                    attachment.setAttachUrl(attachmentUrlList.get(i));
+                    attachment.setAttachName(attachmentUrlList.get(i));
                     attachment.setBusinessId(id);
                     attachment.setType(type);
                     batchAttachmentList.add(attachment);

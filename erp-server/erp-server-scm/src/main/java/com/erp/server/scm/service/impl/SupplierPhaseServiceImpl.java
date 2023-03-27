@@ -88,7 +88,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             //获取到表名
             String type = tableName.value();
             //保存附件信息
-            attachmentService.batchSave(dto.getAttachmentUrlList(), type, id);
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             return entity;
         }
         return null;
@@ -169,7 +169,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         BeanMapper.copy(phase, dto);
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(Arrays.asList(supplierPhaseId));
         List<String> urlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-        dto.setAttachmentUrl(urlList);
+        List<String> nameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        dto.setAttachmentUrlList(urlList);
+        dto.setAttachmentNameList(nameList);
         return dto;
     }
 
@@ -217,7 +219,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String attachmentType = tableName.value();
-            attachmentService.batchSave(Arrays.asList(id), attachmentType, id);
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), attachmentType, id);
         }
         return result;
     }

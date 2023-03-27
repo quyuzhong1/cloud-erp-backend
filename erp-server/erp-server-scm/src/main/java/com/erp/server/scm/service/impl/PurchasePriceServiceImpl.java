@@ -10,7 +10,9 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -28,6 +30,7 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -97,7 +100,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String type = tableName.value();
 
             //保存附件
-            attachmentService.batchSave(dto.getAttachmentUrlList(), type, id);
+            attachmentService.batchSave(dto.getAttachmentUrlList(),dto.getAttachmentNameList(), type, id);
 
             /**
              * 添加明细
@@ -125,8 +128,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_98023);
         }
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
-        BeanMapper.copy(purchasePrice,viewDTO);
-
-        return null;
+        BeanMapper.copy(purchasePrice, viewDTO);
+        //附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
+        List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        viewDTO.setAttachmentNameList(attachmentNameList);
+        viewDTO.setAttachmentUrlList(attachmentUrlList);
+        //获取明细信息
+        List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList=priceDetailService.getByPurchasePriceId(id);
+        viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
+        return viewDTO;
     }
 }

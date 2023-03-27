@@ -63,6 +63,11 @@ public class SupplierPhaseDTO implements Serializable {
          * 附件地址
          */
         private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
     }
 
 
@@ -73,7 +78,9 @@ public class SupplierPhaseDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
-        private List<String> attachmentUrl;
+        private List<String> attachmentUrlList;
+
+        private List<String> attachmentNameList;
 
     }
 

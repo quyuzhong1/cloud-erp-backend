@@ -29,6 +29,11 @@ public class AttachmentDTO implements Serializable {
          */
         private String attachUrl;
 
+        /**
+         * 资质附件名称
+         */
+        private String attachName;
+
 
         /**
          * 业务表id

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,12 +71,13 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSave(List<String> attachmentUrlList, String type, String businessId) {
-        if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
+    public void batchSave(List<String> attachmentUrlList,List<String> attachmentNameList, String type, String businessId) {
+        if (CollectionUtils.isNotEmpty(attachmentUrlList)&&attachmentUrlList.size()==attachmentNameList.size()) {
             List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
-            for (String url : attachmentUrlList) {
+            for (int i=0;i<attachmentUrlList.size();i++) {
                 AttachmentEntity entity = new AttachmentEntity();
-                entity.setAttachUrl(url);
+                entity.setAttachUrl(attachmentUrlList.get(i));
+                entity.setAttachName(attachmentNameList.get(i));
                 entity.setType(type);
                 entity.setBusinessId(businessId);
                 addList.add(entity);
@@ -83,6 +85,26 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             this.saveBatch(addList);
         }
 
+    }
+
+
+    /**
+     * 根据业务表id 获取附件信息
+     *
+     * @param businessId
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @author yl
+     * @date 2023-03-27 9:37
+     */
+    @Override
+    public List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId) {
+        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
+        List<AttachmentEntity> list = this.list(queryWrapper);
+        if(CollectionUtils.isEmpty(list)){
+         return Collections.EMPTY_LIST;
+        }
+        return BeanMapper.copyList(list,AttachmentDTO.UpdateDTO.class);
     }
 
 

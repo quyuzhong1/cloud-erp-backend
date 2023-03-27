@@ -56,6 +56,11 @@ public class PurchasePriceDTO implements Serializable {
          * 附件地址
          */
         private List<String>  attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String>  attachmentNameList;
         /**
          * 报价明细
          */

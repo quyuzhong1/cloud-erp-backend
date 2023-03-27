@@ -46,5 +46,15 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @param businessId
      * @return void
      */
-    void batchSave(List<String> attachmentUrlList, String type, String businessId);
+    void batchSave(List<String> attachmentUrlList,List<String> attachmentNameList, String type, String businessId);
+
+    
+    /**
+     * 根据业务表id 获取附件信息
+     * @author yl
+     * @date 2023-03-27 9:37
+     * @param businessId
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     */
+    List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
 }

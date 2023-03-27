@@ -44,4 +44,13 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO
      */
     PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+
+    /**
+     * 根据价目表id 获取产品明细信息
+     * @author yl
+     * @date 2023-03-27 9:48
+     * @param id
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
+     */
+    List<PurchasePriceDetailDTO.UpdateDTO> getByPurchasePriceId(String id);
 }
