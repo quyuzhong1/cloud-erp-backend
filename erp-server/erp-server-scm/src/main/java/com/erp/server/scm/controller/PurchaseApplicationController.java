@@ -9,10 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.server.scm.service.PurchaseApplicationService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -53,6 +50,18 @@ public class PurchaseApplicationController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 查询数量
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/listCount")
+    public ApiResult<List<ListStatusCountDTO.PurchaseApplicationCountDTO>> listCount(@RequestBody @Validated PurchaseApplicationDTO.SearchParamDTO dto) {
+        List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = purchaseApplicationService.listCount(dto);
+        return success(list);
+    }
 
     /**
      * 新增
@@ -213,7 +222,7 @@ public class PurchaseApplicationController extends BaseController {
 
 
     /**
-     * 根据供应商id查询含税单价
+     * 查询含税单价
      * @author Will
      * @date: 2023/3/27 9:22
      * @param dto

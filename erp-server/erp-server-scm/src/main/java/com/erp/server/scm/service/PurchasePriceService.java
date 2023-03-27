@@ -33,4 +33,13 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return com.erp.model.scm.dto.PurchasePriceDTO.ViewDTO
      */
     PurchasePriceDTO.ViewDTO view(String id);
+
+    /**
+     * 修改采购价目
+     * @author yl
+     * @date 2023-03-27 10:52
+     * @param dto
+     * @return com.erp.model.scm.entity.PurchasePriceEntity
+     */
+    PurchasePriceEntity updatePurchasePrice(PurchasePriceDTO.ViewDTO dto);
 }

@@ -10,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.server.scm.service.SalesDemandService;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 /**
  * 备货申请管理
@@ -50,6 +52,18 @@ public class SalesDemandController extends BaseController {
     public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
         PagingVO<SalesDemandDTO.ListDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 查询数量
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/listCount")
+    public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount() {
+        List<ListStatusCountDTO.SalesDemandCountDTO> list = salesDemandService.listCount();
+        return success(list);
     }
 
     /**

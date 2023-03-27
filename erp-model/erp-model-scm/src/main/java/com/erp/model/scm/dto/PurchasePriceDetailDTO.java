@@ -79,6 +79,7 @@ public class PurchasePriceDetailDTO implements Serializable {
         /**
          * 采购数量
          */
+        @NotNull(message = "采购数量不能为空")
         private Integer purchaseQty;
 
         /**
@@ -97,7 +98,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO  extends AddDTO{
 
         @NotBlank(message = "id 不能为空")
         private String id;

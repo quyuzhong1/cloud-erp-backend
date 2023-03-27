@@ -295,6 +295,12 @@ public class SupplierDTO implements Serializable {
 
 
         /**
+         * 阶段code
+         */
+        private String phaseCode;
+
+
+        /**
          * 阶段名
          */
         private String phaseName;

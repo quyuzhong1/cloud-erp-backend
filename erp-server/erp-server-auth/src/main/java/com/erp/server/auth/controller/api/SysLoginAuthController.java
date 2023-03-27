@@ -2,17 +2,17 @@ package com.erp.server.auth.controller.api;
 
 
 import com.common.business.constant.TokenConstants;
-import com.common.core.utils.IpUtils;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.IpUtils;
 import com.erp.model.sys.dto.AccountLoginDTO;
 import com.erp.model.sys.dto.SysLoginIpDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
-import com.common.business.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
 import org.apache.commons.lang3.StringUtils;
@@ -73,6 +73,7 @@ public class SysLoginAuthController extends BaseController {
             sysLoginUserVO.setHeadIcon(info.getHeadIcon());
             sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
             sysLoginUserVO.setBindingState(info.getBindingState());
+            sysLoginUserVO.setUserId(info.getUid());
             return success(sysLoginUserVO);
         }
 
