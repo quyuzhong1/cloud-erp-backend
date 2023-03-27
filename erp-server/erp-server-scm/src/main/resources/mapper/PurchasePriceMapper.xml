@@ -3,5 +3,21 @@
 <mapper namespace="com.erp.server.scm.mapper.PurchasePriceMapper">
 
 
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
+        SELECT
+        pp.id,
+        pp.code,
+        pp.create_user_id AS createUserId,
+        pp.create_user_name AS createUserName,
+        pp.supplierId,
+        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
+        FROM  purchase_price_detail ppd
+        LEFT JOIN  purchase_price pp
+        ON ppd.purchase_price_id=pp.id
+        WHERE pp.is_deleted=false AND ppd.is_deleted= false
+        <if>
+            
+        </if>
 
+    </select>
 </mapper>
