@@ -417,13 +417,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         return result;
     }
 
-    
+
     /**
      * 采购价目表明细
-     * @author yl
-     * @date 2023-03-27 14:43
+     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.PurchasePriceDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-03-27 14:43
      */
     @Override
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
@@ -431,6 +432,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         params.setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
+        List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (PurchasePriceDTO.PagingViewDTO item : list) {
+                ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+                item.setApproveStatusCode(approveStatusEnum.getStatus());
+                item.setApproveStatusName(approveStatusEnum.getName());
+            }
+        }
         return new PagingVO<>(pageData);
     }
 

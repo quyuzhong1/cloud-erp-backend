@@ -73,7 +73,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                 for (int i = 0; i < attachmentUrlList.size(); i++) {
                     AttachmentEntity attachment = new AttachmentEntity();
                     attachment.setAttachUrl(attachmentUrlList.get(i));
-                    attachment.setAttachName(attachmentUrlList.get(i));
+                    attachment.setAttachName(attachmentNameList.get(i));
                     attachment.setBusinessId(id);
                     attachment.setType(type);
                     batchAttachmentList.add(attachment);
@@ -111,6 +111,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                     filter(a -> a.getBusinessId().equals(item.getId())).
                     map(AttachmentDTO.UpdateDTO::getAttachName).
                     collect(Collectors.toList());
+            item.setAttachmentUrlList(attachmentUrlList);
             item.setAttachmentNameList(attachmentNameList);
         }
         return resultList;

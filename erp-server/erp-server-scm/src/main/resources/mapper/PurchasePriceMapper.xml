@@ -9,8 +9,18 @@
         pp.code,
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
-        pp.supplierId,
+        pp.create_time,
+        pp.supplier_id,
         (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
+        ppd.sku_id,
+        ppd.sku_no,
+        ppd.product_name,ppd.min_qty,ppd.max_qty,
+        pp.approve_status,
+        ppd.tax_price,
+        ppd.tax_rate*100 AS taxRate ,
+        ppd.effective_date,
+        pp.purchase_org_id,
+        pp.purchase_org_name
         FROM  purchase_price_detail ppd
         LEFT JOIN  purchase_price pp
         ON ppd.purchase_price_id=pp.id
