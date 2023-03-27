@@ -225,11 +225,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         lambdaUpdate().in(SalesDemandEntity::getId,ids)
                 .set(SalesDemandEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(SalesDemandEntity::getInvalidTime, LocalDateTime.now())
-                .set(SalesDemandEntity::getRemark,reason)
+                .set(SalesDemandEntity::getInvalidRemark,reason)
                 .update();
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("作废了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"作废操作");
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个备货申请单【%s】，作废原因：".concat(reason), ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"作废操作");
         return Boolean.TRUE;
     }
 

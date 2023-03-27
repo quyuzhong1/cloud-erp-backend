@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -103,6 +102,12 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
      */
     @TableField("invalid_time")
     private LocalDateTime invalidTime;
+
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
 
     /**
      * 审核时间

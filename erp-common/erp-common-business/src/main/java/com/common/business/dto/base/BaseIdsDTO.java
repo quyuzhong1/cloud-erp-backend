@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -32,7 +33,8 @@ public class BaseIdsDTO implements Serializable {
     @NoArgsConstructor
     public static class RemarkDTO extends IdsDTO{
 
-        @NotBlank(message = "备注不能为空")
+        @NotBlank(message = "填写信息不能为空")
+        @Size(max = 255,message = "填写信息不能超过255字符")
         private String remark;
 
     }
