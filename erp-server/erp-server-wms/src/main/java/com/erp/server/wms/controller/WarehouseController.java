@@ -81,7 +81,7 @@ public class WarehouseController extends BaseController {
 
 
     /**
-     * 启用供应商
+     * 启用仓库
      *
      * @param dto
      * @return
@@ -145,7 +145,7 @@ public class WarehouseController extends BaseController {
 
 
     /**
-     * 删除供应商
+     * 删除仓库
      *
      * @param dto
      * @return

@@ -85,7 +85,7 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * 生效时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "生效时间", index = 7,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "生效时间", index = 7)
     private LocalDate effectiveDate;
 
     /**

@@ -63,6 +63,9 @@ public class WarehouseDTO implements Serializable {
         private ApproveStatusEnum approveStatusEnum;
 
 
+        /**
+         * 单据状态
+         */
         private String approveStatusCode;
 
 
@@ -232,9 +235,14 @@ public class WarehouseDTO implements Serializable {
         private ApproveStatusEnum approveStatus;
 
         /**
-         * 审核状态
+         * 审核状态name
          */
         private String approveStatusName;
+
+        /**
+         * 审核状态code
+         */
+        private String approveStatusCode;
 
         /**
          * 创建时间

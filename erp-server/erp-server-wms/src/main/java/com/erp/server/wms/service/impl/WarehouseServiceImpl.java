@@ -359,6 +359,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             //审核名
             ApproveStatusEnum statusEnum = item.getApproveStatus();
             item.setApproveStatusName(statusEnum.getName());
+            item.setApproveStatusCode(statusEnum.getStatus());
             //负责人id
             String chargeId = item.getChargeId();
             String userName = userList.stream().filter(u -> chargeId.equals(u.getUserId())).findFirst().
