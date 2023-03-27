@@ -100,7 +100,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String type = tableName.value();
 
             //保存附件
-            attachmentService.batchSave(dto.getAttachmentUrlList(),dto.getAttachmentNameList(), type, id);
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
 
             /**
              * 添加明细
@@ -136,8 +136,30 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setAttachmentNameList(attachmentNameList);
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
-        List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList=priceDetailService.getByPurchasePriceId(id);
+        List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList = priceDetailService.getByPurchasePriceId(id);
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
         return viewDTO;
+    }
+
+
+    /**
+     * 修改采购价目
+     *
+     * @param dto
+     * @return com.erp.model.scm.entity.PurchasePriceEntity
+     * @author yl
+     * @date 2023-03-27 10:52
+     */
+    @Override
+    public PurchasePriceEntity updatePurchasePrice(PurchasePriceDTO.ViewDTO dto) {
+        PurchasePriceEntity purchasePrice = this.getById(dto.getId());
+        if (Objects.isNull(purchasePrice)) {
+            throw new ServiceException(ApiError.ERROR_98023);
+        }
+        //编号
+        String code = purchasePrice.getCode();
+
+
+        return null;
     }
 }

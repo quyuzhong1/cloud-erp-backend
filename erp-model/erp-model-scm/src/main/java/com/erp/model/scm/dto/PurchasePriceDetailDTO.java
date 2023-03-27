@@ -97,7 +97,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO  extends AddDTO{
 
         @NotBlank(message = "id 不能为空")
         private String id;

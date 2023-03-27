@@ -70,6 +70,17 @@ public class PurchasePriceController extends BaseController {
         return  success(view);
     }
 
+    /**
+     * 修改采购价目
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
+        PurchasePriceEntity view = purchasePriceService.updatePurchasePrice(dto);
+        return  view==null?success():failure();
+    }
+
 
     /**
      * 采购价目 导出数据
