@@ -12,6 +12,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,7 +117,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal rate = taxRate.divide(new BigDecimal("100"),4,BigDecimal.ROUND_HALF_UP);
+            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
             item.setTaxRate(rate);
         }
         this.saveBatch(addList);
@@ -138,6 +139,48 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
 
+    /**
+     * 修改产品明细
+     *
+     * @param purchasePriceId
+     * @param purchasePriceDetailList
+     * @return void
+     * @author yl
+     * @date 2023-03-27 11:18
+     */
+    @Override
+    public void updatePriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList) {
+        List<PurchasePriceDetailEntity> dbList = this.getListByPurchasePriceId(purchasePriceId);
+        //获取到删除id集合
+        List<String> deleteIdList = getDeleteIds(purchasePriceDetailList, dbList);
+        this.removeByIds(deleteIdList);
+        List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for(PurchasePriceDetailDTO.UpdateDTO item:purchasePriceDetailList){
+
+        }
+
+
+    }
+
+
+    /**
+     * 获取到删除的集合
+     *
+     * @param purchasePriceDetailList
+     * @param dbList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-27 11:27
+     */
+    private List<String> getDeleteIds(List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList, List<PurchasePriceDetailEntity> dbList) {
+        List<String> ids = purchasePriceDetailList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PurchasePriceDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
+    }
+
+
     private List<PurchasePriceDetailEntity> getListByPurchasePriceId(String purchasePriceId) {
         LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
@@ -147,7 +190,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
-        return  baseMapper.getTaxPrice(dto);
+        return baseMapper.getTaxPrice(dto);
     }
 
     /**

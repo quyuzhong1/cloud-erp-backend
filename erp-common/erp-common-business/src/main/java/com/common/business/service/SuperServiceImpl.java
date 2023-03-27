@@ -6,10 +6,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.core.entity.BaseEntity;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -59,24 +58,27 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
         return removeById(id, null);
     }
 
-    
+
     /**
      * 批量删除
-     * @author yl
-     * @date 2023-03-24 10:45
+     *
      * @param ids
      * @return boolean
+     * @author yl
+     * @date 2023-03-24 10:45
      */
     @Override
     public boolean removeByIds(Collection<? extends Serializable> ids) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        return update().set(T.IS_DELETED, true)
-                .set(T.UPDATE_TIME, LocalDateTime.now())
-                .set(T.UPDATE_USER_ID, loginUser != null ? loginUser.getUid() : "")
-                .set(T.UPDATE_USER_NAME, loginUser != null ? loginUser.getUserName() : "")
-                .in(T.ID, ids)
-                .update();
-
+        if (CollectionUtils.isNotEmpty(ids)) {
+            LoginUser loginUser = CommonInterceptor.threadLocal.get();
+            return update().set(T.IS_DELETED, true)
+                    .set(T.UPDATE_TIME, LocalDateTime.now())
+                    .set(T.UPDATE_USER_ID, loginUser != null ? loginUser.getUid() : "")
+                    .set(T.UPDATE_USER_NAME, loginUser != null ? loginUser.getUserName() : "")
+                    .in(T.ID, ids)
+                    .update();
+        }
+        return true;
     }
 
 
