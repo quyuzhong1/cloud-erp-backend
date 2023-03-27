@@ -287,7 +287,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<String> detailIds = list.stream().map(PurchaseApplicationDetailEntity::getId).collect(Collectors.toList());
         //查询关联信息
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.listByPurchaseApplicationDetailIds(detailIds);
-
+        List<String> strList = new ArrayList<>();
         for (PurchaseApplicationDetailEntity entity :list) {
             PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();
             BeanMapperUtils.copy(entity,dto);
@@ -305,12 +305,21 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 purchaseQty = refList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
             }
             dto.setPurchasedQty(purchaseQty);
+
+            //清空第一条明细后其他明细中的单号
+            boolean contains = strList.contains(entity.getPurchaseApplicationId());
+            if (contains) {
+                dto.setCode(null);
+            } else {
+                strList.add(entity.getPurchaseApplicationId());
+            }
             resultList.add(dto);
         }
         return resultList;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
         List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> list = dto.getList();
         //主表数据
@@ -485,7 +494,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<PurchaseApplicationEntity> list = getList(ids);
-        //待审核允许删除
+        //待提交允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);

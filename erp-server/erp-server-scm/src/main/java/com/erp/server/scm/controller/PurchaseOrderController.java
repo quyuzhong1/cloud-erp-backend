@@ -2,6 +2,7 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -23,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * 采购订单管理
@@ -91,6 +91,19 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 修改并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
+        Boolean flag = purchaseOrderService.updateAndSubmit(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 查询详情
      * @author Will
      * @date: 2023/3/15 17:44
@@ -107,12 +120,12 @@ public class PurchaseOrderController extends BaseController {
      * 删除
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseOrderService.delete(ids);
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseOrderService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -120,12 +133,12 @@ public class PurchaseOrderController extends BaseController {
      * 提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseOrderService.submit(ids);
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseOrderService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -146,12 +159,12 @@ public class PurchaseOrderController extends BaseController {
      * 批量反审核
      * @author Will
      * @date: 2023/3/15 17:50
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseOrderService.disApprove(ids);
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseOrderService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -160,12 +173,12 @@ public class PurchaseOrderController extends BaseController {
      * 取消流程
      * @author Will
      * @date: 2023/3/15 17:59
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
-    public ApiResult cancelProcess(@RequestParam("id") String id) {
-        Boolean result = purchaseOrderService.cancelProcess(id);
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchaseOrderService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
 

@@ -100,6 +100,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         return  lambdaQuery().eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId).list();
     }
 
+    @Override
+    public void removeByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
+    }
+
     /**
      * 查询需要删除的数据
      */

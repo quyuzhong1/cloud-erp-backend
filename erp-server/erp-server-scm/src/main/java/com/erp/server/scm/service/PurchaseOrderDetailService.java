@@ -49,4 +49,12 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<PurchaseOrderDetailEntity>
      */
     List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId);
+    /**
+     * @description: 根据订单ids删除明细
+     * @author Will
+     * @date: 2023/3/27 15:29
+     * @param purchaseOrderIds
+
+     */
+    void removeByPurchaseOrderIds(List<String> purchaseOrderIds);
 }

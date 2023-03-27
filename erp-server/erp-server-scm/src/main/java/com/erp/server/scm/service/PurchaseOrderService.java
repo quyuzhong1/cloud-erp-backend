@@ -2,9 +2,9 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
-import com.erp.model.scm.dto.*;
+import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,10 +79,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 取消流程
      * @author Will
      * @date: 2023/3/16 11:27
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(String id);
+    Boolean cancelProcess(List<String> ids);
     /**
      * @description: 结束交货
      * @author Will
@@ -142,4 +142,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto);
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2023/3/27 15:51
+     * @param dto
+     * @return Boolean 
+     */
+    Boolean updateAndSubmit(PurchaseOrderDTO.UpdateDTO dto);
 }

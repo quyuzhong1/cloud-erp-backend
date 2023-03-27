@@ -126,5 +126,9 @@
         </if>
         pd.create_time desc
     </select>
+    
+    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO">
+
+    </select>
 
 </mapper>

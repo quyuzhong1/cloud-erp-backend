@@ -332,7 +332,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<SalesDemandEntity> list = getList(ids);
-        //待审核允许删除
+        //待提交允许删除
         long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
