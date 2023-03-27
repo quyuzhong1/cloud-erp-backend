@@ -13,10 +13,16 @@ import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -180,6 +186,39 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             saveOrUpdateList.add(entity);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
+    }
+
+
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-03-27 16:08
+     * @param response
+     * @return void
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/purchasePriceDetail.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+
     }
 
 

@@ -151,7 +151,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             saveOrUpdateList.add(entity);
             //附件集合
             List<String> attachmentUrlList = item.getAttachmentUrlList();
-            List<String> attachmentNameList = item.getAttachmentUrlList();
+            List<String> attachmentNameList = item.getAttachmentNameList();
             if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
 
                 for (int i = 0; i < attachmentUrlList.size(); i++) {

@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -64,4 +65,14 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return void
      */
     void updatePriceDetail(String id, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList);
+
+    
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-03-27 16:08
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

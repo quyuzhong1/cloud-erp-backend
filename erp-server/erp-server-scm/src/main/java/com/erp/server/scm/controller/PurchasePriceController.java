@@ -9,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.PurchasePriceExportResultDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.validation.annotation.Validated;
@@ -19,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 采购价目管理
@@ -158,29 +155,5 @@ public class PurchasePriceController extends BaseController {
         return result == true ? success() : failure();
     }
 
-
-
-
-
-    /**
-     * 采购价目 产品价格明细导出模板
-     *
-     * @return
-     */
-    @PostMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        return success();
-    }
-
-
-    /**
-     * 采购价目 产品价格明细导入
-     *
-     * @return
-     */
-    @PostMapping("/import")
-    public ApiResult<PurchasePriceExportResultDTO> importExcel(HttpServletRequest request, HttpServletResponse response) {
-        return success();
-    }
 
 }
