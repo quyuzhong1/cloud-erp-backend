@@ -107,7 +107,25 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return purchasePrice;
 
         }
+        return null;
+    }
 
+    /**
+     * 获取采购价目详情
+     *
+     * @param id
+     * @return com.erp.model.scm.dto.PurchasePriceDTO.ViewDTO
+     * @author yl
+     * @date 2023-03-27 9:11
+     */
+    @Override
+    public PurchasePriceDTO.ViewDTO view(String id) {
+        PurchasePriceEntity purchasePrice = this.getById(id);
+        if (Objects.isNull(purchasePrice)) {
+            throw new ServiceException(ApiError.ERROR_98023);
+        }
+        PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
+        BeanMapper.copy(purchasePrice,viewDTO);
 
         return null;
     }

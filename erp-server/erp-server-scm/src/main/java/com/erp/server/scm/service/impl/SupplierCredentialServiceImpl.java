@@ -70,7 +70,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             if (CollectionUtils.isNotEmpty(attachmentList)) {
                 for (String url : attachmentList) {
                     AttachmentEntity attachment = new AttachmentEntity();
-                    attachment.setAttachId("");
                     attachment.setAttachUrl(url);
                     attachment.setBusinessId(id);
                     attachment.setType(type);
@@ -145,7 +144,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             if (CollectionUtils.isNotEmpty(attachmentList)) {
                 for (AttachmentDTO.UpdateDTO attachment : attachmentList) {
                     AttachmentEntity addAttachment = new AttachmentEntity();
-                    addAttachment.setAttachId("");
                     addAttachment.setAttachUrl(attachment.getAttachUrl());
                     addAttachment.setBusinessId(entity.getId());
                     addAttachment.setType(type);

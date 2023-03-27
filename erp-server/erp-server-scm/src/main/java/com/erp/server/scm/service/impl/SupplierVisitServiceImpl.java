@@ -111,7 +111,6 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 //这是附件的
                 for (String url : visitAttachmentList) {
                     AttachmentEntity attachment = new AttachmentEntity();
-                    attachment.setAttachId("");
                     attachment.setAttachUrl(url);
                     attachment.setBusinessId(id);
                     attachment.setType(type);

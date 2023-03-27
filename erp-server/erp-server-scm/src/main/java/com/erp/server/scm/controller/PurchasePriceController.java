@@ -59,6 +59,17 @@ public class PurchasePriceController extends BaseController {
         return purchasePrice != null ? success() : failure();
     }
 
+    /**
+     * 采购价目详情
+     * @param dto
+     * @return
+     */
+    @PostMapping("/view")
+    public ApiResult view(@RequestBody @Validated BaseIdDTO dto) {
+        PurchasePriceDTO.ViewDTO view = purchasePriceService.view(dto.getId());
+        return  success(view);
+    }
+
 
     /**
      * 采购价目 导出数据
@@ -92,16 +103,7 @@ public class PurchasePriceController extends BaseController {
     }
 
 
-    /**
-     * 采购价目详情
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/view")
-    public ApiResult<PurchasePriceDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success();
-    }
+
 
     /**
      * 采购价目审核

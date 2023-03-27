@@ -42,10 +42,10 @@ public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
     private String attachUrl;
 
     /**
-     * 附件id
+     * 附件名称
      */
-    @TableField("attach_id")
-    private String attachId;
+    @TableField("attach_name")
+    private String attachName;
 
 
     static final String BUSINESS_ID = "business_id";
