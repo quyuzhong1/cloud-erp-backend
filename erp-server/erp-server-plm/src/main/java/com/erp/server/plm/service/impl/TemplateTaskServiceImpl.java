@@ -736,8 +736,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      **/
     @Override
     public PagingVO<TemplateTaskShowDTO> templateTaskList(PagingDTO<TemplateTaskSearchDTO> dto) {
+
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         TemplateTaskSearchDTO params = dto.getParams();
+        if (StringUtils.isBlank(params.getTemplateId())) {
+            throw new ServiceException(ApiError.ERROR_95157);
+        }
         String chargeNameStr = "";
         String docsNameStr = "";
         if (dto.getParams().getChargeName() != null && dto.getParams().getChargeName().size() > 0) {

@@ -101,8 +101,8 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectRoleEntity> copyList = new ArrayList<>();
             for (TemplateRoleEntity item : list) {
-               /* ProjectRoleEntity projectRoleEntity = projectRoleByProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
-                if (Objects.isNull(projectRoleEntity)) {*/
+                ProjectRoleEntity projectRoleEntity = projectRoleByProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
+                if (Objects.isNull(projectRoleEntity)) {
                     CopySourceDTO sourceDTO = new CopySourceDTO();
                     ProjectRoleEntity entity = new ProjectRoleEntity();
                     BeanMapper.copy(item, entity);
@@ -114,7 +114,18 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
                     sourceDTO.setDataId(item.getId());
                     copyList.add(entity);
                     sourceList.add(sourceDTO);
-             /*   }*/
+                } else {
+                    CopySourceDTO sourceDTO = new CopySourceDTO();
+                    ProjectRoleEntity entity = new ProjectRoleEntity();
+                    BeanMapper.copy(item, entity);
+                    entity.setProjectId(projectId);
+                    entity.setProductId(productId);
+                    String id = IdWorker.getIdStr();
+                    entity.setId(id);
+                    sourceDTO.setNewCreateId(id);
+                    sourceDTO.setDataId(item.getId());
+                    sourceList.add(sourceDTO);
+                }
             }
 
             if (CollectionUtils.isNotEmpty(copyList)) {

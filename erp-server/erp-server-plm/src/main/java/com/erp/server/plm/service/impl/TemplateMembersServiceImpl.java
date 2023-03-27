@@ -132,6 +132,16 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
                     sourceDTO.setDataId(item.getId());
                     sourceList.add(sourceDTO);
                     copyList.add(entity);
+                } else {
+                    ProjectMembersEntity entity = new ProjectMembersEntity();
+                    CopySourceDTO sourceDTO = new CopySourceDTO();
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    entity.setProjectId(projectId);
+                    entity.setId(IdWorker.getIdStr());
+                    sourceDTO.setNewCreateId(entity.getId());
+                    sourceDTO.setDataId(item.getId());
+                    sourceList.add(sourceDTO);
                 }
             }
             if (CollectionUtils.isNotEmpty(copyList)) {

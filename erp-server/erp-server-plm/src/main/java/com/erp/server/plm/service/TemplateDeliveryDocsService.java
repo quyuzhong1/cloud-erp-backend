@@ -113,4 +113,6 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @return java.util.List<com.erp.model.plm.entity.TemplateDeliveryDocsEntity>
      */
     List<TemplateDeliveryDocsEntity> getByTemplateIds(List<String> templateIds);
+
+    List<DocsDTO> getDocsNames(String templateId);
 }

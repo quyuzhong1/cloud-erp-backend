@@ -1207,12 +1207,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (updateMap.containsKey("planStartTime")) {
             String planStartTime = dto.getPlanStartTime();
-            taskEntity.setPlanStartTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planStartTime)));
+            if (StringUtils.isNotBlank(planStartTime)) {
+                taskEntity.setPlanStartTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planStartTime)));
+            }
+
         }
         if (updateMap.containsKey("planEndTime")) {
             //结束时间
             String planEndTime = dto.getPlanEndTime();
-            taskEntity.setPlanEndTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planEndTime)));
+            if (StringUtils.isNotBlank(planEndTime)) {
+                taskEntity.setPlanEndTime(LocalDate.from(DateTimeFormatter.ofPattern(DateUtil.fmt_day).parse(planEndTime)));
+            }
         }
         List<String> chargeIdList = dto.getChargeIdList();
         if (StringUtils.isNotBlank(name)) {
