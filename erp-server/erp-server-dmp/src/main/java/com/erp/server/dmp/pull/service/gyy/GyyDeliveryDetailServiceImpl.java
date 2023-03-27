@@ -66,7 +66,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         List<GyyDeliveryDetailEntity> insertList = new ArrayList<>();
         List<GyyDeliveryDetailEntity> pushToMqList = new ArrayList<>();
         for (GyyDeliveryDetailEntity entity : gyyDeliveryDetailEntityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getCode());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(entity.getCode());
             List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
