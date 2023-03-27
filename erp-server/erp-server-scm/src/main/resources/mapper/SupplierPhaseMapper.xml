@@ -9,7 +9,7 @@
            sp.create_user_name,
            sp.create_time,
            sp.supplier_id,
-           sp.type,
+           sp.operate_type,
            sp.current_phase,
            sp.target_phase,
            sp.approve_status,

@@ -109,7 +109,7 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 表id
          */
-        private SupplierVisitEnum type;
+        private SupplierVisitEnum visitType;
 
 
         /**
@@ -157,7 +157,12 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 附件地址
          */
-        private List<String> visitAttachmentList;
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
     }
 
 

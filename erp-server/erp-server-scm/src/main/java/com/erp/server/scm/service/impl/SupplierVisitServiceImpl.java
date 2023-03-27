@@ -169,7 +169,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         for (SupplierVisitDTO.PagingViewDTO item : list) {
             //拜访类型
-            SupplierVisitEnum visitEnum = item.getType();
+            SupplierVisitEnum visitEnum = item.getVisitType();
             item.setTypeName(visitEnum.getName());
             SupplierVisitResultEnum visitResultEnum = item.getResult();
             item.setResultName(visitResultEnum.getName());
@@ -185,8 +185,11 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             List<String> attachmentUrlList= attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
 
-            item.setVisitAttachmentList(attachmentUrlList);
-
+            //附件地址
+            List<String> attachmentNameList= attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
+                    collect(Collectors.toList());
+            item.setAttachmentUrlList(attachmentUrlList);
+            item.setAttachmentNameList(attachmentNameList);
             List<String> skuIdList=visitSkuList.stream().filter(s->s.getSupplierVisitId().
                     equals(item.getId())).map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());
             //获取到sku 信息

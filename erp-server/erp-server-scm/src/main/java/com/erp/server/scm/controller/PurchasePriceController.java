@@ -11,7 +11,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceExportResultDTO;
 import com.erp.model.scm.dto.PurchasePricePagingParamDTO;
-import com.erp.model.scm.dto.PurchasePricePagingViewDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.validation.annotation.Validated;
@@ -44,7 +43,7 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchasePricePagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePricePagingParamDTO> dto) {
+    public ApiResult<PagingVO<PurchasePriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePricePagingParamDTO> dto) {
         return success();
     }
 

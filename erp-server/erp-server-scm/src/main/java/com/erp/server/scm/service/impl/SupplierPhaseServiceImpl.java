@@ -332,7 +332,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             return new PagingVO(pageData);
         }
         for (SupplierPhaseDTO.PagingViewDTO item : list) {
-            String type = item.getType();
+            String type = item.getOperateType();
             item.setTypeName(type.equals(ScmConstant.DEGRADE) ? "降级" : "升级");
             //当前阶段
             String currentPhase = item.getCurrentPhase();

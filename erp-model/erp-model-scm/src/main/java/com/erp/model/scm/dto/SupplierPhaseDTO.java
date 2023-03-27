@@ -127,7 +127,7 @@ public class SupplierPhaseDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String type;
+        private String operateType;
 
         /**
          * 操作类型

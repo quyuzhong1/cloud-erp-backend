@@ -10,7 +10,7 @@
             people,
             content,
             result,
-            type,
+            visit_type,
             supplier_id
         FROM supplier_visit  WHERE supplier_id=#{supplierId} AND is_deleted=false
 
