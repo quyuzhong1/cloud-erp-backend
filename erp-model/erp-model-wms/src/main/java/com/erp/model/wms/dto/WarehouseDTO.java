@@ -38,7 +38,7 @@ public class WarehouseDTO implements Serializable {
          * 名称
          */
         @NotBlank(message = "仓库名称不能为空")
-        @Size(max =200, message = "仓库名称最大200字符")
+        @Size(max = 200, message = "仓库名称最大200字符")
         private String name;
 
         /**
@@ -58,6 +58,12 @@ public class WarehouseDTO implements Serializable {
          */
         @NotBlank(message = "联系人不能为空")
         private String contacts;
+
+
+        private ApproveStatusEnum approveStatusEnum;
+
+
+        private String approveStatusCode;
 
 
         /**
@@ -95,7 +101,6 @@ public class WarehouseDTO implements Serializable {
         @NotNull(message = "是否是虚拟仓不能为空")
         private String isVirtual;
     }
-
 
 
     /**
@@ -146,7 +151,7 @@ public class WarehouseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO{
+    public static class PagingViewDTO {
         /**
          * 表id
          */
@@ -201,8 +206,8 @@ public class WarehouseDTO implements Serializable {
 
         /**
          * 状态
-         false  开启
-         true 关闭
+         * false  开启
+         * true 关闭
          */
         private Boolean disabled;
 
@@ -251,7 +256,10 @@ public class WarehouseDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
-
+        /**
+         * 仓库名
+         */
+        private String name;
 
 
         /**
@@ -283,9 +291,6 @@ public class WarehouseDTO implements Serializable {
         private List<String> typeIdList;
 
     }
-
-
-
 
 
 }

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class WarehouseImportExcelDTO implements Serializable {
+public class WarehouseExportExcelDTO implements Serializable {
 
 
     /**

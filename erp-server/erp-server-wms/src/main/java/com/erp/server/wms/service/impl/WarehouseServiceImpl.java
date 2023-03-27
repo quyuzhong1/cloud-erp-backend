@@ -20,7 +20,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
-import com.erp.model.wms.dto.excel.WarehouseImportExcelDTO;
+import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -79,7 +79,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public  List<WarehouseDTO.ListDTO>  listApproveWarehouse() {
+    public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         List<WarehouseEntity> list = lambdaQuery().
                 eq(WarehouseEntity::getApproveStatus, approveStatus).
@@ -318,6 +318,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         WarehouseDTO.UpdateDTO dto = new WarehouseDTO.UpdateDTO();
         BeanMapper.copy(warehouse, dto);
+        ApproveStatusEnum approveStatusEnum = warehouse.getApproveStatus();
+        dto.setApproveStatusCode(approveStatusEnum.getStatus());
         return dto;
     }
 
@@ -385,7 +387,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
         //获取导出数据
         List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
-        List<WarehouseImportExcelDTO> resultList = new ArrayList<>(viewList.size());
+        List<WarehouseExportExcelDTO> resultList = new ArrayList<>(viewList.size());
         if (CollectionUtils.isNotEmpty(viewList)) {
             //获取到仓库类型
             List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
@@ -396,7 +398,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
             for (WarehouseDTO.PagingViewDTO item : viewList) {
-                WarehouseImportExcelDTO excelDTO = new WarehouseImportExcelDTO();
+                WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
                 //类型id
                 String typeId = item.getTypeId();
@@ -427,7 +429,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
         }
         String fileName = "仓库数据";
-        ExcelUtil.export(fileName, "warehouse", resultList, WarehouseImportExcelDTO.class, response);
+        ExcelUtil.export(fileName, "warehouse", resultList, WarehouseExportExcelDTO.class, response);
 
 
     }
@@ -488,7 +490,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         List<WarehouseExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
-            String fileName="仓库错误信息";
+            String fileName = "仓库错误信息";
             ExcelUtil.export(fileName, "warehouseError", errorList, WarehouseExcelDTO.class, response);
             return Boolean.FALSE;
         }

@@ -204,6 +204,18 @@ public class PurchasePriceDTO implements Serializable {
          */
         private Integer maxQty;
 
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 币种 符号
+         */
+        private String currencySymbol;
+
         /**
          * 含税单价
          */
@@ -296,6 +308,9 @@ public class PurchasePriceDTO implements Serializable {
 
 
     }
+
+
+
 
 
 }

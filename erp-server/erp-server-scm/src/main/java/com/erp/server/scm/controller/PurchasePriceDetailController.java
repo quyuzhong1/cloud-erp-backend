@@ -3,10 +3,10 @@ package com.erp.server.scm.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceDetailService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +34,18 @@ public class PurchasePriceDetailController extends BaseController {
     public ApiResult downloadTemplate(HttpServletResponse response) {
         purchasePriceDetailService.downloadTemplate(response);
         return success();
+    }
+
+
+    /**
+     * 导入数据
+     *
+     * @return
+     */
+    @PostMapping("/importFile")
+    public ApiResult<PurchasePriceDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        PurchasePriceDetailDTO.ImportDTO result = purchasePriceDetailService.importFile(excelFile);
+        return success(result);
     }
 
 

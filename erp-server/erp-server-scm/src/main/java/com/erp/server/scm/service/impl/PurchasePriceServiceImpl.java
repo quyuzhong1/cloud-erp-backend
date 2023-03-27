@@ -16,12 +16,15 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -33,10 +36,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -434,13 +436,64 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         IPage pageData = baseMapper.paging(query, params);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
+            List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
+            //币种信息
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceDTO.PagingViewDTO item : list) {
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
+                //币种
+                String currency = item.getCurrency();
+                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+                item.setCurrencySymbol(currencySymbol);
             }
         }
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 采购价目表导出
+     *
+     * @param dto
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-03-27 17:55
+     */
+    @Override
+    public void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response) {
+        //获取导出数据
+        List<PurchasePriceDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
+        List<PurchasePriceExportExcelDTO> resultList = new ArrayList<>(viewList.size());
+
+        if (CollectionUtils.isNotEmpty(viewList)) {
+            List<String> currencyIdList = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
+            //币种信息
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+            for (PurchasePriceDTO.PagingViewDTO item : viewList) {
+                PurchasePriceExportExcelDTO excelDTO = new PurchasePriceExportExcelDTO();
+                BeanMapper.copy(item, excelDTO);
+                Integer minQty = item.getMinQty();
+                Integer maxQty = item.getMaxQty();
+                excelDTO.setQtySection(minQty + "-" + maxQty);
+                ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+                excelDTO.setApproveStatusName(approveStatusEnum.getName());
+                //含税单价
+                BigDecimal taxPrice = item.getTaxPrice();
+                //币种
+                String currency = item.getCurrency();
+                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+                excelDTO.setTaxPrice(currencySymbol + taxPrice.toString());
+                resultList.add(excelDTO);
+            }
+
+        }
+        String fileName = "采购价目数据";
+        ExcelUtil.export(fileName, "purchasePrice", resultList, PurchasePriceExportExcelDTO.class, response);
     }
 
 

@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -72,6 +73,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
 
     }
+
     @Data
     @NoArgsConstructor
     public static class PurchaseTaxPriceSearchDTO {
@@ -92,7 +94,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO  extends AddDTO{
+    public static class UpdateDTO extends AddDTO {
 
         @NotBlank(message = "id 不能为空")
         private String id;
@@ -143,6 +145,24 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+
+
+        /**
+         * 成功返回数据
+         */
+        private List<PurchasePriceDetailDTO.AddDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+
     }
 
 }

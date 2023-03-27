@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -112,4 +113,15 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.PurchasePriceDTO.PagingViewDTO>
      */
     PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
+
+    
+    /**
+     * 采购价目表导出
+     * @author yl
+     * @date 2023-03-27 17:55
+     * @param dto
+     * @param response
+     * @return void
+     */
+    void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response);
 }

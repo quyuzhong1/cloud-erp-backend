@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 /**
  * 采购价目管理
@@ -154,6 +156,18 @@ public class PurchasePriceController extends BaseController {
         Boolean result = purchasePriceService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
+
+
+    /**
+     *
+     * 采购价目数据导出
+     */
+    @PostMapping("/exportPurchasePrice")
+    public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response) {
+        purchasePriceService.exportPurchasePrice(dto, response);
+        return success();
+    }
+
 
 
 }

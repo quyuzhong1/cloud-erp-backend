@@ -1,16 +1,21 @@
 package com.erp.server.scm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -20,9 +25,11 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -224,6 +231,44 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_95131);
         }
 
+    }
+
+    /**
+     * 导入产品信息
+     *
+     * @param excelFile
+     * @return com.erp.model.scm.dto.PurchasePriceDetailDTO.ImportDTO
+     * @author yl
+     * @date 2023-03-27 16:51
+     */
+    @Override
+    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile) {
+        //查询所有审核通过的sku
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        PurchasePriceDetailExcelListener excelListenerUtil = new PurchasePriceDetailExcelListener(skuList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PurchasePriceDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        PurchasePriceDetailDTO.ImportDTO result = new PurchasePriceDetailDTO.ImportDTO();
+        //导入数据处理
+        List<PurchasePriceDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
+
+        //导出错误数据
+        List<PurchasePriceDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        result.setSuccessList(successList);
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "采购价目详情错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchasePriceDetailImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
 

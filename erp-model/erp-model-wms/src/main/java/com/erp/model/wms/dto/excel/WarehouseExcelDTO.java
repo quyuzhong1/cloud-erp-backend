@@ -48,7 +48,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "是否虚拟仓", index = 3)
-    @FieldValid(fieldName = "是否虚拟仓",isNotBlank = true)
+    @FieldValid(fieldName = "是否虚拟仓",fieldValues = "是,否")
     private String isVirtual;
 
 
