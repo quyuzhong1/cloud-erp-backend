@@ -98,15 +98,12 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
-
             //保存附件
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
-
             /**
              * 添加明细
              */
             priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList());
-
             return purchasePrice;
 
         }
@@ -151,15 +148,30 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 10:52
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PurchasePriceEntity updatePurchasePrice(PurchasePriceDTO.ViewDTO dto) {
-        PurchasePriceEntity purchasePrice = this.getById(dto.getId());
+        String id = dto.getId();
+        PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98023);
         }
         //编号
         String code = purchasePrice.getCode();
-
-
+        BeanMapper.copy(dto, purchasePrice);
+        purchasePrice.setCode(code);
+        //修改成功
+        Boolean result = this.updateById(purchasePrice);
+        if (result) {
+            Class<PurchasePriceEntity> credentialClass = PurchasePriceEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            attachmentService.deleteByBusinessIds(Arrays.asList(dto.getId()));
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentUrlList(), type, id);
+            //修改明细
+            priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList());
+            return purchasePrice;
+        }
         return null;
     }
 }

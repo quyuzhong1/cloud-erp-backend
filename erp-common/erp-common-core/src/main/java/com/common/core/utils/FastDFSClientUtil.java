@@ -1,6 +1,8 @@
 package com.common.core.utils;
 
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -19,6 +21,7 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +34,8 @@ public class FastDFSClientUtil {
 	private static String configFile;
 
 	private static StorageClient1 storageClient1 = null;
+
+
 
 	@Value("${fdfs.configFile}")
 	public void setConfigFile(String configFile){
@@ -206,6 +211,21 @@ public class FastDFSClientUtil {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+
+	public static void deleteBatchFile(List<String> urlList) {
+		try {
+			if(CollectionUtils.isNotEmpty(urlList)){
+				for(String url:urlList){
+					deleteFile(url);
+				}
+
+			}
+		}catch (Exception e){
+          log.error("批量删除fastDFS 出错  result ={}", JSONUtil.toJsonStr(urlList));
+		}
+
 	}
 
 	/**

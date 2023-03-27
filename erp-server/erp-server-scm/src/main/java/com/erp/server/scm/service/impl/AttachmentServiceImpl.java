@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.server.scm.mapper.AttachmentMapper;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -55,7 +57,11 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         if (CollectionUtils.isNotEmpty(businessIdList)) {
             LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(AttachmentEntity::getBusinessId, businessIdList);
-            this.remove(queryWrapper);
+            List<AttachmentEntity> list = this.list(queryWrapper);
+            List<String> urlList = list.stream().map(AttachmentEntity::getAttachUrl).collect(Collectors.toList());
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+            this.removeByIds(list.stream().map(AttachmentEntity::getId).collect(Collectors.toList()));
         }
     }
 
@@ -71,10 +77,10 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSave(List<String> attachmentUrlList,List<String> attachmentNameList, String type, String businessId) {
-        if (CollectionUtils.isNotEmpty(attachmentUrlList)&&attachmentUrlList.size()==attachmentNameList.size()) {
+    public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
+        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
-            for (int i=0;i<attachmentUrlList.size();i++) {
+            for (int i = 0; i < attachmentUrlList.size(); i++) {
                 AttachmentEntity entity = new AttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
                 entity.setAttachName(attachmentNameList.get(i));
@@ -101,10 +107,10 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
         List<AttachmentEntity> list = this.list(queryWrapper);
-        if(CollectionUtils.isEmpty(list)){
-         return Collections.EMPTY_LIST;
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
         }
-        return BeanMapper.copyList(list,AttachmentDTO.UpdateDTO.class);
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }
 
 

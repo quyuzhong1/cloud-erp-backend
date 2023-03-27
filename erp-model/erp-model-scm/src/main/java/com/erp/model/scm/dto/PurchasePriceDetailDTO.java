@@ -79,6 +79,7 @@ public class PurchasePriceDetailDTO implements Serializable {
         /**
          * 采购数量
          */
+        @NotNull(message = "采购数量不能为空")
         private Integer purchaseQty;
 
         /**

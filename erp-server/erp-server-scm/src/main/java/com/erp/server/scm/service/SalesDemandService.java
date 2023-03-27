@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandEntity;
@@ -135,4 +136,11 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return Boolean
      */
     Boolean updateAndSubmit(SalesDemandDTO.UpdateDTO dto);
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2023/3/27 11:12
+     * @return List<SalesDemandCountDTO>
+     */
+    List<ListStatusCountDTO.SalesDemandCountDTO> listCount();
 }

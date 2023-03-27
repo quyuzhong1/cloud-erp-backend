@@ -5,9 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -92,6 +90,36 @@ public class DropDownListController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
+
+    /**
+     * 供应商拜访类型下拉
+     *
+     * @return
+     */
+    @GetMapping("/supplier/visitType/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listVisitType() {
+        List<SupplierVisitEnum> list = Arrays.asList(SupplierVisitEnum.values());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
+    /**
+     * 供应商拜访结果下拉
+     *
+     * @return
+     */
+    @GetMapping("/supplier/visitResult/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listVisitResult() {
+        List<SupplierVisitResultEnum> list = Arrays.asList(SupplierVisitResultEnum.values());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
 
     /**
      * 订单生成状态列表
