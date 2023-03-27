@@ -47,13 +47,13 @@
             pod.stock_in_qty as stockInQty,
             pod.delivery_qty as deliveryQty,
             pod.return_qty as returnQty,
-            po.remark,
+            pod.remark,
             po.approve_user_name as approveUserName,
             po.purchase_user_name as purchaseUserName,
             po.create_user_name as createUserName,
             po.create_time as createTime
         from purchase_order po
-        left join purchase_order_detail pod on po.id = po.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         <where>
             po.is_deleted = false

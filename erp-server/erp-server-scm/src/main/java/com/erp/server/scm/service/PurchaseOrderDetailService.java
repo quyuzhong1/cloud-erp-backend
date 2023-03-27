@@ -23,4 +23,30 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param purchaseOrderId
      */
     void add(List<PurchaseOrderDetailDTO.AddDTO> details, String purchaseOrderId);
+    /**
+     * @description: 根据采购订单id和skuid查询
+     * @author Will
+     * @date: 2023/3/27 15:02
+     * @param purchaseOrderId 
+     * @param skuId 
+     * @return PurchaseOrderDetailEntity 
+     */
+    PurchaseOrderDetailEntity getByPurchaseOrderIdAndSkuId(String purchaseOrderId, String skuId);
+    /**
+     * @description: 修改采购订单明细
+     * @author Will
+     * @date: 2023/3/27 15:07
+     * @param details
+     * @param purchaseOrderId
+
+     */
+    void update(List<PurchaseOrderDetailDTO.UpdateDTO> details, String purchaseOrderId);
+    /**
+     * @description: 根据采购订单id查询
+     * @author Will
+     * @date: 2023/3/27 15:09
+     * @param purchaseOrderId
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId);
 }

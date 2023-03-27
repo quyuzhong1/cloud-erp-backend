@@ -103,6 +103,18 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     @TableField("approve_time")
     private LocalDateTime approveTime;
 
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -129,6 +141,11 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     public static final String INVALID_TIME = "invalid_time";
 
     public static final String APPROVE_TIME = "approve_time";
+
+    public static final String APPROVE_USER_ID = "approve_user_id";
+
+    public static final String APPROVE_USER_NAME = "approve_user_name";
+
 
     @Override
     public Serializable pkVal() {

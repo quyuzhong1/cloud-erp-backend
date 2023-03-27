@@ -52,6 +52,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 流程id
+         */
+        private String processId;
+
+        /**
          * 新品首批（false否,true是）
          */
         private Boolean isFirstMassProduct;

@@ -71,6 +71,45 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
     }
 
+    @Override
+    public PurchaseOrderDetailEntity getByPurchaseOrderIdAndSkuId(String purchaseOrderId, String skuId) {
+        return lambdaQuery()
+                .eq(PurchaseOrderDetailEntity::getPurchaseApplicationId,purchaseOrderId)
+                .eq(PurchaseOrderDetailEntity::getSkuId,skuId)
+                .one();
+    }
+
+    @Override
+    public void update(List<PurchaseOrderDetailDTO.UpdateDTO> details, String purchaseOrderId) {
+        if (details == null) {
+            details = new ArrayList<>();
+        }
+        //原明细数据
+        List<PurchaseOrderDetailEntity> oldList = this.listByPurchaseOrderId(purchaseOrderId);
+        List<String> deleteIds = getDeleteIds(details, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        List<PurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
+        doOpHandleDataId(newList,purchaseOrderId);
+        this.saveOrUpdateBatch(newList);
+    }
+
+    @Override
+    public List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId) {
+        return  lambdaQuery().eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId).list();
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<PurchaseOrderDetailDTO.UpdateDTO> newList, List<PurchaseOrderDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PurchaseOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        return newIds.stream().filter(s -> !oldIds.contains(s)).collect(Collectors.toList());
+    }
+
     /**
      * 处理明细中的数据id
      */

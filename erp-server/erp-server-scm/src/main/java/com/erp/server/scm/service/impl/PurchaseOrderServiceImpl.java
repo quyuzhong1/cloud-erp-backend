@@ -18,6 +18,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -120,7 +121,24 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public Boolean update(PurchaseOrderDTO.UpdateDTO dto) {
-        return null;
+        PurchaseOrderEntity entity = new PurchaseOrderEntity();
+        BeanMapperUtils.copy(dto,entity);
+        //校验明细是否有重复sku
+        checkUpdateDetailsRepeatSku(dto.getDetails(),dto.getId());
+        //处理数据id
+        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),entity);
+
+        log.info("采购订单修改，id=【{}】", dto.getId());
+        PurchaseOrderDTO.UpdateDTO old = new PurchaseOrderDTO.UpdateDTO();
+        PurchaseOrderDTO.ViewDTO view = this.view(dto.getId());
+        BeanMapperUtils.copy(view,old);
+        //操作日志
+        moduleOperateLogService.addModuleOperateLogByObj(old,dto,ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"","");
+        //更新主表数据
+        this.updateById(entity);
+        //更新明细数据
+        purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
+        return Boolean.TRUE;
     }
 
     @Override
@@ -238,4 +256,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
         }
     }
+    /**
+     * 编辑验证sku是否重复
+     */
+    private void checkUpdateDetailsRepeatSku(List<PurchaseOrderDetailDTO.UpdateDTO> list, String purchaseOrderId) {
+        Map<String, List<PurchaseOrderDetailDTO.UpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailDTO.UpdateDTO::getSkuId));
+        for (Map.Entry<String, List<PurchaseOrderDetailDTO.UpdateDTO>> entry: map.entrySet()) {
+            List<PurchaseOrderDetailDTO.UpdateDTO> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1,"录入sku编码【".concat(value.get(0).getSkuNo()).concat("】存在重复")));
+            }
+            PurchaseOrderDetailEntity entity = purchaseOrderDetailService.getByPurchaseOrderIdAndSkuId(purchaseOrderId, entry.getKey());
+            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
+                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
+            }
+        }
+    }
+
 }

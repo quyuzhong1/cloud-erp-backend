@@ -30,6 +30,7 @@ public class SalesDemandDetailDTO implements Serializable {
         /**
          * skuId
          */
+        @NotBlank(message = "SKU不能为空")
         private String skuId;
 
         /**

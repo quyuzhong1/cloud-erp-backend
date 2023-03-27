@@ -50,10 +50,17 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态名称（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
         private String approveStatusName;
+
+        /**
+         * 流程id
+         */
+        private String processId;
+
         /**
          * 作废状态
          */
         private String invalidStatus;
+
         /**
          * 作废状态（0未作废，1已作废）
          */
@@ -63,6 +70,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 到货状态
          */
         private String arrivalStatus;
+
         /**
          * 到货状态（0未到货，1部分到货，2已到货）
          */
