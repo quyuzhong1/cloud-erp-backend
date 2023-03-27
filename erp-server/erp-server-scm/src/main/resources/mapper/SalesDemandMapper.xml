@@ -196,5 +196,21 @@
         sd.create_time desc
     </select>
 
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+            count(distinct sd.id)
+        from sales_demand sd
+        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        <where>
+            sd.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sd.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

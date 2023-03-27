@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -30,6 +31,14 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return PagingVO<PurchaseApplicationDTO.listDTO>
      */
     PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
+    /**
+     * @description: 查询数量
+     * @author Will
+     * @date: 2023/3/27 10:47
+     * @param dto
+     * @return List<PurchaseApplicationCountDTO>
+     */
+    List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PurchaseApplicationDTO.SearchParamDTO dto);
     /**
      * @description: 新增
      * @author Will

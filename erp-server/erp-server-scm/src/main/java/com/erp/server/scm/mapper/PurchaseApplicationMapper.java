@@ -38,4 +38,12 @@ public interface PurchaseApplicationMapper extends BaseMapper<PurchaseApplicatio
      * @return List<PurchaseApplicationExportExcelDTO>
      */
     List<PurchaseApplicationExportExcelDTO> listExportExcel(@Param("params") PurchaseApplicationDTO.SearchParamDTO params);
+    /**
+     * @description: 列表数量
+     * @author Will
+     * @date: 2023/3/27 10:15
+     * @param dto
+     * @return Integer
+     */
+    Integer listCount(@Param("params") PurchaseApplicationDTO.SearchParamDTO dto);
 }

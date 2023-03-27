@@ -258,6 +258,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/shop/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listShopDropDown(@RequestParam(value = "status",required = false) Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getIsVijim,Boolean.TRUE)
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();
         if(CollectionUtil.isEmpty(list)){
@@ -276,6 +277,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/shop/listAll")
     public ApiResult<List<ShopDropDownVO.ShopDropDownIdVO>> listAllShopDropDown(@RequestParam(value = "status",required = false) Integer status) {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getIsVijim,Boolean.TRUE)
                 .eq(null != status, DmpShopInfoEntity::getStatus, status)
                 .list();
         if(CollectionUtil.isEmpty(list)){
