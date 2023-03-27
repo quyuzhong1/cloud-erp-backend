@@ -12,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchaseApplicationService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -208,6 +209,20 @@ public class PurchaseApplicationController extends BaseController {
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseApplicationService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 根据供应商id查询含税单价
+     * @author Will
+     * @date: 2023/3/27 9:22
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/getTaxPrice")
+    public ApiResult<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO result = purchaseApplicationService.getTaxPrice(dto);
+        return success(result);
     }
 
 

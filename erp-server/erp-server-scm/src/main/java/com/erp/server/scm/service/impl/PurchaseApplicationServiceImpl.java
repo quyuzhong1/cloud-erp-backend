@@ -101,6 +101,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Resource
     private PurchaseOrderService purchaseOrderService;
 
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -546,6 +548,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         this.update(dto);
         //提交
         return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        return  purchasePriceDetailService.getTaxPrice(dto);
     }
 
 

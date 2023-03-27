@@ -121,6 +121,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         this.saveBatch(addList);
     }
 
+    @Override
+    public PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        return  baseMapper.getTaxPrice(dto);
+    }
+
     /**
      * 判断是否按顺序排序
      *

@@ -72,6 +72,27 @@ public class PurchasePriceDetailDTO implements Serializable {
 
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseTaxPriceSearchDTO {
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
+
+        /**
+         * sku id
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+    }
 
 
     @Data
@@ -83,5 +104,25 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseTaxPriceViewDTO {
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+    }
 
 }
