@@ -73,6 +73,10 @@ public class SalesDemandDetailDTO implements Serializable {
         @NotBlank(message = "目的仓库不能为空")
         private String destWarehouseId;
 
+        /**
+         * 目的仓库名称
+         */
+        private String destWarehouseName;
 
         /**
          * 备注
