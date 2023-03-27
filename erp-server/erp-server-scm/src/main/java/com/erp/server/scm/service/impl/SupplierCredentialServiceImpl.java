@@ -78,10 +78,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                     attachment.setType(type);
                     batchAttachmentList.add(attachment);
                 }
-
             }
         }
-
         this.saveBatch(addList);
         attachmentService.saveBatch(batchAttachmentList);
     }
