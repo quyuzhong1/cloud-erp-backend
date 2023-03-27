@@ -15,6 +15,7 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -175,7 +176,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate(), sdf));
         }
         //订单来源平台
-        dmpOrderInfoEntity.setSourcePlatform(orderEntity.getPlatformId());
+        MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
+        dmpOrderInfoEntity.setSourcePlatform(null != sourcePlatformEnum ? sourcePlatformEnum.getDesc() : orderEntity.getPlatformId());
         //买家地址1
         dmpOrderInfoEntity.setManStreet(orderEntity.getStreet1());
         //买家地址2
