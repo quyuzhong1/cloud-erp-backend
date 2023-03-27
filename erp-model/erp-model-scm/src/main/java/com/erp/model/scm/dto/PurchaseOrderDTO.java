@@ -60,6 +60,10 @@ public class PurchaseOrderDTO implements Serializable {
         private String invalidStatusName;
 
         /**
+         * 到货状态
+         */
+        private String arrivalStatus;
+        /**
          * 到货状态（0未到货，1部分到货，2已到货）
          */
         private String arrivalStatusName;

@@ -136,7 +136,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PurchaseApplicationDTO.SearchParamDTO dto) {
+    public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount() {
+        PurchaseApplicationDTO.SearchParamDTO dto = new PurchaseApplicationDTO.SearchParamDTO();
         PurchaseApplicationListTypeEnum[] values = PurchaseApplicationListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = new ArrayList<>();
         for (PurchaseApplicationListTypeEnum item: values) {

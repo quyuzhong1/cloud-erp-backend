@@ -35,10 +35,9 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @description: 查询数量
      * @author Will
      * @date: 2023/3/27 10:47
-     * @param dto
      * @return List<PurchaseApplicationCountDTO>
      */
-    List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PurchaseApplicationDTO.SearchParamDTO dto);
+    List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount();
     /**
      * @description: 新增
      * @author Will

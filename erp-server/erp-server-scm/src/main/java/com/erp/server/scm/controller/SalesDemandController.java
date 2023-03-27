@@ -60,7 +60,7 @@ public class SalesDemandController extends BaseController {
      * @date: 2023/3/15 17:34
      * @return ApiResult
      */
-    @PostMapping("/listCount")
+    @GetMapping("/listCount")
     public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount() {
         List<ListStatusCountDTO.SalesDemandCountDTO> list = salesDemandService.listCount();
         return success(list);

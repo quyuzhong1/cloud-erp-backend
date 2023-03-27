@@ -54,12 +54,11 @@ public class PurchaseApplicationController extends BaseController {
      * 查询数量
      * @author Will
      * @date: 2023/3/15 17:34
-     * @param dto
      * @return ApiResult
      */
-    @PostMapping("/listCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseApplicationCountDTO>> listCount(@RequestBody @Validated PurchaseApplicationDTO.SearchParamDTO dto) {
-        List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = purchaseApplicationService.listCount(dto);
+    @GetMapping("/listCount")
+    public ApiResult<List<ListStatusCountDTO.PurchaseApplicationCountDTO>> listCount() {
+        List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = purchaseApplicationService.listCount();
         return success(list);
     }
 
