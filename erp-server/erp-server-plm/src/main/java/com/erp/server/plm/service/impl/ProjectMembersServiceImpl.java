@@ -27,6 +27,7 @@ import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -682,5 +683,17 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProjectMembersEntity::getProductId, productIds);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 根据角色名称和模板id查询人员
+     * @Author Luo_WG
+     * @Date 2023/3/27 12:01
+     * @param roles roles
+     * @param productId productId
+     * @return java.util.List<com.erp.model.plm.entity.ProjectMembersEntity>
+     **/
+    public List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String productId, String roleName) {
+        return baseMapper.listByRoleNames(roles, productId, roleName);
     }
 }

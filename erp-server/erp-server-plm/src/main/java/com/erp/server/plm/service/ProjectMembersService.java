@@ -62,4 +62,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
    Boolean saveByRoleAndMembers(String productId,String projectId,String roleName,List<String> memberList);
 
     List<ItemMemberVO> getByProductIds(List<String> productIds);
+
+    List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String productId, String roleName);
 }
