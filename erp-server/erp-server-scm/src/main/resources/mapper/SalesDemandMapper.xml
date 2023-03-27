@@ -94,7 +94,7 @@
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
                 and sdd.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
             </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
                 and sd.approve_time between #{params.approvePassTimeList[0]} and #{params.approvePassTimeList[1]}
             </if>
         </where>
@@ -183,7 +183,7 @@
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
                 and sdd.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
             </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
                 and sd.approve_time between #{params.approvePassTimeList[0]} and #{params.approvePassTimeList[1]}
             </if>
         </where>
