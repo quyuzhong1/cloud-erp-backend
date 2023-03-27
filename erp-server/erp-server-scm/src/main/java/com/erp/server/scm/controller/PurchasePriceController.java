@@ -3,6 +3,7 @@ package com.erp.server.scm.controller;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -59,6 +60,19 @@ public class PurchasePriceController extends BaseController {
         return purchasePrice != null ? success() : failure();
     }
 
+
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
+        Boolean result = purchasePriceService.addAndSubmit(dto);
+        return result == true ? success() : failure();
+    }
+
     /**
      * 采购价目详情
      * @param dto
@@ -80,6 +94,71 @@ public class PurchasePriceController extends BaseController {
         PurchasePriceEntity view = purchasePriceService.updatePurchasePrice(dto);
         return  view==null?success():failure();
     }
+
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
+        Boolean result = purchasePriceService.updateAndSubmit(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 删除采购价目
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 采购价目提交审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceService.submitApprove(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     *审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/approve")
+    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
+        Boolean result = purchasePriceService.approve(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-23 17:57
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
 
 
     /**
@@ -112,20 +191,5 @@ public class PurchasePriceController extends BaseController {
     public ApiResult<PurchasePriceExportResultDTO> importExcel(HttpServletRequest request, HttpServletResponse response) {
         return success();
     }
-
-
-
-
-    /**
-     * 采购价目审核
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/approve")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
-    }
-
 
 }

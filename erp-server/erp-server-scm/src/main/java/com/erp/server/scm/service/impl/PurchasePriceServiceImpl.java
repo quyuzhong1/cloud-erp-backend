@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -15,18 +17,19 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.mapper.PurchasePriceMapper;
-import com.erp.server.scm.service.AttachmentService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.PurchasePriceService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -55,6 +58,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Resource
     private AttachmentService attachmentService;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
+
 
     /**
      * 添加采购价目表
@@ -104,10 +111,30 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
              * 添加明细
              */
             priceDetailService.addPriceDetail(id, dto.getPurchasePriceDetailList());
+            //添加日志
+            String content = String.format("新增了一个{%s}-采购价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+            addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), id, "新增操作");
             return purchasePrice;
 
         }
         return null;
+    }
+
+
+    /**
+     * 添加日志
+     *
+     * @param content
+     * @param code
+     * @param businessId
+     * @param operation
+     * @return void
+     * @author yl
+     * @date 2023-03-27 12:19
+     */
+    private void addModuleOperateLog(String content, String code, String businessId, String operation) {
+        moduleOperateLogService.addModuleOperateLog(content, code, businessId, operation);
+
     }
 
     /**
@@ -155,6 +182,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98023);
         }
+        //检查sku 区间报价
+        List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
+        priceDetailService.checkSkuInterval(purchasePriceDetailList);
+
         //编号
         String code = purchasePrice.getCode();
         BeanMapper.copy(dto, purchasePrice);
@@ -173,5 +204,265 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return purchasePrice;
         }
         return null;
+    }
+
+    /**
+     * 保存并提交审核 价目
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 11:46
+     */
+    @Override
+    public Boolean addAndSubmit(PurchasePriceDTO.AddDTO dto) {
+        PurchasePriceEntity purchasePrice = this.add(dto);
+        boolean result = true;
+        if (purchasePrice != null) {
+            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+            if (!purchasePrice.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
+                result = updateSubmitApproveStatus(purchasePrice, ApproveStatusEnum.APPROVE_ING.getStatus());
+                if (result) {
+                    //添加日志
+                    String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                    addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePrice.getId(), "状态变更");
+                }
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * 修改并审核采购价目
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 11:58
+     */
+    @Override
+    public Boolean updateAndSubmit(PurchasePriceDTO.ViewDTO dto) {
+        PurchasePriceEntity purchasePrice = this.updatePurchasePrice(dto);
+        boolean result = true;
+        if (purchasePrice != null) {
+            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+            if (!purchasePrice.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
+                result = updateSubmitApproveStatus(purchasePrice, ApproveStatusEnum.APPROVE_ING.getStatus());
+                if (result) {
+                    //添加日志
+                    String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                    addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePrice.getId(), "状态变更");
+                }
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * 批量删除采购价目信息
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 12:04
+     */
+    @Override
+    public Boolean deleteByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return true;
+        }
+        List<PurchasePriceEntity> purchasePriceList = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = purchasePriceList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //删除价目表
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除价目表[%s]";
+            List<Pair<String, String>> pairList = purchasePriceList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
+            attachmentService.deleteByBusinessIds(ids);
+        }
+        return null;
+    }
+
+
+    /**
+     * 采购价目表 提交审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 12:11
+     */
+    @Override
+    public Boolean submitApprove(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<PurchasePriceEntity> list = this.listByIds(ids);
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+
+        //审核中
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        if (result) {
+            //添加日志
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "状态变更");
+
+            //审核不通过
+            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE.getCode(), rejectPairList, "状态变更");
+        }
+
+        return result;
+    }
+
+    /**
+     * 审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 12:29
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<PurchasePriceEntity> list = this.listByIds(ids);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
+        //意见
+        String comment = dto.getComment();
+        Boolean result = true;
+        String content = "";
+        if (dto.getType().equals(ScmConstant.PASS)) {
+            //审核通过
+            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            content = String.format("状态由[%s]变更为[%s]", ingStatusName, ApproveStatusEnum.APPROVE.getName());
+        } else {
+            //审核不通过
+            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
+        }
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "状态变更");
+        }
+        return result;
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 14:04
+     */
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        List<PurchasePriceEntity> list = this.listByIds(ids);
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approveIngStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 这里要调用工作流服务取消流程
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        if (result) {
+            String content = String.format("状态由[%s]变更为[%s] ", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "取消流程");
+
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 批量保存日志
+     *
+     * @param content
+     * @param code
+     * @param pairList
+     * @param operation
+     * @return void
+     * @author yl
+     * @date 2023-03-27 12:16
+     */
+    private void batchAddModuleOperateLog(String content, String code, List<Pair<String, String>> pairList, String operation) {
+        moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
+
+    }
+
+
+    /**
+     * 修改状态
+     *
+     * @param list
+     * @param statusEnum
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-27 12:13
+     */
+    private Boolean updateApproveStatus(List<PurchasePriceEntity> list, ApproveStatusEnum statusEnum) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(s -> s.setApproveStatus(statusEnum));
+            return this.updateBatchById(list);
+        }
+        return true;
+    }
+
+
+    /**
+     * 更改状态
+     *
+     * @param purchasePrice
+     * @param status
+     * @return boolean
+     * @author yl
+     * @date 2023-03-27 11:50
+     */
+    private boolean updateSubmitApproveStatus(PurchasePriceEntity purchasePrice, String status) {
+        if (purchasePrice != null) {
+            purchasePrice.setApproveStatus(ApproveStatusEnum.getByStatus(status));
+            return this.updateById(purchasePrice);
+        }
+        return true;
     }
 }

@@ -150,17 +150,36 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public void updatePriceDetail(String purchasePriceId, List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList) {
+        if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
+            return;
+        }
         List<PurchasePriceDetailEntity> dbList = this.getListByPurchasePriceId(purchasePriceId);
         //获取到删除id集合
         List<String> deleteIdList = getDeleteIds(purchasePriceDetailList, dbList);
         this.removeByIds(deleteIdList);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        for(PurchasePriceDetailDTO.UpdateDTO item:purchasePriceDetailList){
-
+        List<PurchasePriceDetailEntity> saveOrUpdateList = new ArrayList<>(purchasePriceDetailList.size());
+        LocalDate localDate = LocalDate.now();
+        for (PurchasePriceDetailDTO.UpdateDTO item : purchasePriceDetailList) {
+            PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
+            BeanMapper.copy(item, entity);
+            String skuId = item.getSkuId();
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (skuVO != null) {
+                entity.setSkuNo(skuVO.getSkuNo());
+                entity.setProductName(skuVO.getSpuName());
+            }
+            entity.setPurchasePriceId(purchasePriceId);
+            //失效时间
+            entity.setExpireDate(localDate.plusYears(100));
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+            entity.setTaxRate(rate);
+            saveOrUpdateList.add(entity);
         }
-
-
+        this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
 

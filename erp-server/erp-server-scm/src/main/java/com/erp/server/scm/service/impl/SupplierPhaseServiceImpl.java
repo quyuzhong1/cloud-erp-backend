@@ -297,7 +297,11 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         }
         //TODO 这里要调用工作流服务取消流程
 
-        return true;
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        Boolean result = this.updateApproveStatus(list, waitSubmitStatus);
+
+        return result;
     }
 
 
