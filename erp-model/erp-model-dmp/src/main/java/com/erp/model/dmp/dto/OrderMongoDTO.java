@@ -47,6 +47,12 @@ public class  OrderMongoDTO {
         this.code = code;
     }
 
+    public static OrderMongoDTO getByCode(String code) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setCode(code);
+        return orderMongoDTO;
+    }
+
     public OrderMongoDTO(String id) {
         this.id = id;
     }
