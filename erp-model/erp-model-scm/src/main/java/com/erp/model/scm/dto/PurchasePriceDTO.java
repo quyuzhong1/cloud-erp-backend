@@ -134,7 +134,7 @@ public class PurchasePriceDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO extends SortDTO {
+    public static class PagingViewDTO {
 
         /**
          * 表id
@@ -239,6 +239,62 @@ public class PurchasePriceDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+    }
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * sku id 集合
+         */
+        private List<String> skuIdList;
+
+
+        /**
+         * 采购组织id集合
+         */
+        private List<String> purchaseOrgIdList;
+
+
+        /**
+         * 单据状态
+         */
+        private List<String> approveStatusList;
+
+        /**
+         * 生效时间
+         */
+        private List<LocalDate> effectiveDateList;
+
+        /**
+         * 生效时间
+         */
+        private List<LocalDate> expireDateList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+
+
+        /**
+         * 创建人id 集合
+         */
+        private List<String> createUserIdList;
+
+
     }
 
 

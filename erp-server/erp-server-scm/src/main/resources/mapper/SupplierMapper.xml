@@ -67,7 +67,7 @@
             </foreach>
         </if>
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and create_time between #{params.createTimeList.[0]} and #{params.createTimeList.[1]}
+            and create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
         </if>
 
         ORDER BY

@@ -101,8 +101,12 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 资质附件url
          */
-        private List<AttachmentDTO.UpdateDTO> credentialAttachmentList;
+        private List<String> attachmentUrlList;
 
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
 
 
     }

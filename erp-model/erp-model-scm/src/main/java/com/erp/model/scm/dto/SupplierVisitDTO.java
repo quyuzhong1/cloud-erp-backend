@@ -115,7 +115,7 @@ public class SupplierVisitDTO implements Serializable {
         /**
          * 类型名称
          */
-        private String typeName;
+        private String visitTypeName;
 
         /**
          * 拜访时间

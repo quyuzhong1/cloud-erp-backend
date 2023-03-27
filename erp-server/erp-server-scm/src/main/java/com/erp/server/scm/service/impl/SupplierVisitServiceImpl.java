@@ -170,7 +170,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
         for (SupplierVisitDTO.PagingViewDTO item : list) {
             //拜访类型
             SupplierVisitEnum visitEnum = item.getVisitType();
-            item.setTypeName(visitEnum.getName());
+            item.setVisitTypeName(visitEnum.getName());
             SupplierVisitResultEnum visitResultEnum = item.getResult();
             item.setResultName(visitResultEnum.getName());
             String people = item.getPeople();

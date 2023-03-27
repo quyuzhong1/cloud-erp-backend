@@ -10,7 +10,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceExportResultDTO;
-import com.erp.model.scm.dto.PurchasePricePagingParamDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.validation.annotation.Validated;
@@ -43,8 +42,9 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchasePriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePricePagingParamDTO> dto) {
-        return success();
+    public ApiResult<PagingVO<PurchasePriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
+        PagingVO<PurchasePriceDTO.PagingViewDTO> pagingVO = purchasePriceService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
@@ -160,15 +160,7 @@ public class PurchasePriceController extends BaseController {
 
 
 
-    /**
-     * 采购价目 导出数据
-     *
-     * @return
-     */
-    @PostMapping("/exportPurchasePrice")
-    public ApiResult exportPurchasePrice(HttpServletRequest request, HttpServletResponse response, PurchasePricePagingParamDTO dto) {
-        return success();
-    }
+
 
     /**
      * 采购价目 产品价格明细导出模板

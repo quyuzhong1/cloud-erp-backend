@@ -103,9 +103,15 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         List<String> businessIds = resultList.stream().map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(businessIds);
         for (SupplierCredentialDTO.UpdateDTO item : resultList) {
-            List<AttachmentDTO.UpdateDTO> attachments = attachmentList.stream().
-                    filter(a -> a.getBusinessId().equals(item.getId())).collect(Collectors.toList());
-            item.setCredentialAttachmentList(attachments);
+            List<String> attachmentUrlList = attachmentList.stream().
+                    filter(a -> a.getBusinessId().equals(item.getId())).
+                    map(AttachmentDTO.UpdateDTO::getAttachUrl).
+                    collect(Collectors.toList());
+            List<String> attachmentNameList = attachmentList.stream().
+                    filter(a -> a.getBusinessId().equals(item.getId())).
+                    map(AttachmentDTO.UpdateDTO::getAttachName).
+                    collect(Collectors.toList());
+            item.setAttachmentNameList(attachmentNameList);
         }
         return resultList;
     }
@@ -143,11 +149,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             entity.setSupplierId(supplierId);
             saveOrUpdateList.add(entity);
             //附件集合
-            List<AttachmentDTO.UpdateDTO> attachmentList = item.getCredentialAttachmentList();
-            if (CollectionUtils.isNotEmpty(attachmentList)) {
-                for (AttachmentDTO.UpdateDTO attachment : attachmentList) {
+            List<String> attachmentUrlList = item.getAttachmentUrlList();
+            List<String> attachmentNameList = item.getAttachmentUrlList();
+            if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
                     AttachmentEntity addAttachment = new AttachmentEntity();
-                    addAttachment.setAttachUrl(attachment.getAttachUrl());
+                    addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                    addAttachment.setAttachName(attachmentNameList.get(i));
                     addAttachment.setBusinessId(entity.getId());
                     addAttachment.setType(type);
                     batchAttachmentList.add(addAttachment);
