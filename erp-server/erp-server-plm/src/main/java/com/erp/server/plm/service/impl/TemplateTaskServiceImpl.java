@@ -745,9 +745,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         String chargeNameStr = StringUtils.join(params.getChargeName(), ",");;
         List<String> docsName = params.getDocsName();
         if (CollectionUtils.isEmpty(docsName)) {
+            docsName = new ArrayList<>();
             docsName.add(params.getTemplateId());
         }
-        List<TemplateTaskDocsNameEntity> docsNamesById = templateTaskDocsNameService.getDocsNamesById(params.getDocsName());
+        List<TemplateTaskDocsNameEntity> docsNamesById = templateTaskDocsNameService.getDocsNamesById(docsName);
         if (CollectionUtils.isNotEmpty(docsNamesById)) {
             List<String> collect = docsNamesById.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
             docsNameStr = StringUtils.join(collect, ",");
