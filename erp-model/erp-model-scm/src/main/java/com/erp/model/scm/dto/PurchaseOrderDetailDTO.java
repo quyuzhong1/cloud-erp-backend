@@ -68,6 +68,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
+         * 币别
+         */
+        private String currency;
+
+        /**
          * 采购数量
          */
         @NotNull(message = "采购数量不能为空")

@@ -100,13 +100,13 @@
                 </foreach>
             </if>
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and pad.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
+                and pad.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pad.plan_delivery_date
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and pa.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+                and pa.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.create_time
             </if>
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and pa.approve_time between #{params.approveTimeList[0]} and #{params.approveTimeList[1]}
+                and pa.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.approve_time
             </if>
         </where>
         ORDER BY
@@ -199,13 +199,13 @@
                 </foreach>
             </if>
             <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and pad.plan_delivery_date between #{params.planDeliveryDateList[0]} and #{params.planDeliveryDateList[1]}
+                and pad.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pad.plan_delivery_date
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and pa.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+                and pa.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.create_time
             </if>
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and pa.approve_time between #{params.approveTimeList[0]} and #{params.approveTimeList[1]}
+                and pa.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.approve_time
             </if>
         </where>
         ORDER BY
