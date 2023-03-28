@@ -48,8 +48,8 @@
             sd.approve_user_name as approveUserName,
             sd.create_user_name as createUserName,
             sd.create_time as createTime
-        from sales_demand sd
-        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        from  sales_demand_detail sdd
+        left join sales_demand sd  on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
         <where>
             sd.is_deleted = false
             <if test="params.code != null and params.code != ''">
