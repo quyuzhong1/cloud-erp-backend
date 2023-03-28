@@ -76,7 +76,7 @@ public class TemplateDeliveryDocsController extends BaseController {
      * @param templateId templateId
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.DocsDTO>>
      **/
-    @GetMapping("/getDocsNames")
+    @GetMapping("/list")
     public ApiResult<List<DocsDTO>> getDocsNames(@RequestParam(value = "templateId") String templateId) {
         List<DocsDTO> list = templateDeliveryDocsService.getDocsNames(templateId);
         return success(list);
