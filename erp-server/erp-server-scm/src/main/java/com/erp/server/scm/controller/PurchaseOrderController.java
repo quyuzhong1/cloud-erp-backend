@@ -246,7 +246,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @GetMapping("/exportExcelTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/purchaseOrder.xlsx";
+        String path = "classpath:excel/purchaseOrderTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

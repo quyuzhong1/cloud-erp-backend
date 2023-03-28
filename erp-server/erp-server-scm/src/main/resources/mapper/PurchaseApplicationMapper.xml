@@ -91,13 +91,13 @@
                 </foreach>
             </if>
             <if test="params.applyUserIdList != null and params.applyUserIdList.size > 0">
-                and pad.apply_user_id in
+                and pa.apply_user_id in
                 <foreach collection="params.applyUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and pad.create_user_id in
+                and pa.create_user_id in
                 <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -190,13 +190,13 @@
                 </foreach>
             </if>
             <if test="params.applyUserIdList != null and params.applyUserIdList.size > 0">
-                and pad.apply_user_id in
+                and pa.apply_user_id in
                 <foreach collection="params.applyUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and pad.create_user_id in
+                and pa.create_user_id in
                 <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
