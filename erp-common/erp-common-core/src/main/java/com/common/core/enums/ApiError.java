@@ -356,6 +356,7 @@ public enum ApiError implements Serializable {
     ERROR_98031(98031,"供应商信息不能为空"),
     ERROR_98032(98032,"只有待提交或审核不通过数据支持提交"),
     ERROR_98033(98033,"已审核数据才能生成采购单"),
+    ERROR_98034(98034,"供应商名称不能重复"),
 
 
 

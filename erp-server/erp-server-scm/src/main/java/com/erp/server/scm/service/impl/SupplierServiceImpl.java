@@ -627,7 +627,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+            throw new ServiceException(ApiError.ERROR_98034);
         }
     }
 
