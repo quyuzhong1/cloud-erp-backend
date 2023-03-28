@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
@@ -99,8 +98,8 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             String newValue = String.valueOf(valuePair.getValue());
             if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
                 //是或否
-                oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
-                newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
+                oldValue = Boolean.TRUE.toString().equals(oldValue) ? "是" : "否";
+                newValue = Boolean.TRUE.toString().equals(newValue) ? "是" : "否";
                 //值不变则不用新增操作日志
                 if (oldValue.equals(newValue)) {
                     continue;

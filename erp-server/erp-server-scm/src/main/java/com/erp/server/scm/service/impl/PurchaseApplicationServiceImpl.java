@@ -205,12 +205,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
 
         log.info("采购申请单修改，id=【{}】", dto.getId());
-        PurchaseApplicationDTO.UpdateDTO old = new PurchaseApplicationDTO.UpdateDTO();
-        PurchaseApplicationDTO.ViewDTO view = this.view(dto.getId());
-        BeanMapperUtils.copy(view,old);
-        dto.setApplyDeptName(entity.getApplyDeptName());
+
         //操作日志
-        moduleOperateLogService.addModuleOperateLogByObj(old,dto,ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"","");
+        PurchaseApplicationEntity old = this.getById(dto.getId());
+        moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"","");
         //更新主表数据
         this.updateById(entity);
         //更新明细数据
