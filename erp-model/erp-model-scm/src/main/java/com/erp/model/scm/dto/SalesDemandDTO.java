@@ -209,11 +209,6 @@ public class SalesDemandDTO implements Serializable {
         private String applyDeptId;
 
         /**
-         * 申请人部门名称
-         */
-        private String applyDeptName;
-
-        /**
          * 新品首批（false否,true是）
          */
         @NotNull(message = "新品首批不能为空")
@@ -223,11 +218,6 @@ public class SalesDemandDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
-
-        /**
-         * 店铺名称
-         */
-        private String shopName;
 
         /**
          * 备货原因

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -157,6 +158,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"编辑操作");
             } else {
                 PurchaseOrderDetailEntity old = this.getById(entity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98026);
+                }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
