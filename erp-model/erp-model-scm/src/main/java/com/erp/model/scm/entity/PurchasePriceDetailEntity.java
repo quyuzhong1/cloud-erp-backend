@@ -101,6 +101,15 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     private BigDecimal taxRate;
 
 
+    /**
+     * true 禁用
+     * false 启用
+     * 默认false
+     */
+    @TableField("disabled")
+    private Boolean disabled;
+
+
     @Override
     public Serializable pkVal() {
         return null;

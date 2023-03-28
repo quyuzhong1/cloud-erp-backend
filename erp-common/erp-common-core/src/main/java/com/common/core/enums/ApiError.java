@@ -350,6 +350,7 @@ public enum ApiError implements Serializable {
     ERROR_98024(98024,"采购价目表不存在"),
     ERROR_98025(98025,"未找到采购订单"),
     ERROR_98026(98026,"未找到采购订单明细"),
+    ERROR_98027(98027,"存在不一样的禁用状态"),
 
 
 

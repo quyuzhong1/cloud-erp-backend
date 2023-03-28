@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -201,13 +202,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
 
-
     /**
      * 下载模板
-     * @author yl
-     * @date 2023-03-27 16:08
+     *
      * @param response
      * @return void
+     * @author yl
+     * @date 2023-03-27 16:08
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
@@ -273,6 +274,32 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
     /**
+     * 批量更改禁用状态
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-28 10:03
+     */
+    @Override
+    public Boolean updateDisabled(UpdateStateDTO.BatchUpdateDTO dto) {
+        List<String> ids = dto.getIds();
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<PurchasePriceDetailEntity> detailList = this.listByIds(ids);
+        Boolean disabled = dto.getDisabled();
+        long count= detailList.stream().filter(d->!d.getDisabled()==disabled).count();
+        if(count!=detailList.size()){
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+        detailList.forEach(d->d.setDisabled(disabled));
+
+        return this.updateBatchById(detailList);
+    }
+
+
+    /**
      * 获取到删除的集合
      *
      * @param purchasePriceDetailList
@@ -303,7 +330,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             return list;
         }
         List<String> currencyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> viewList =  sysUserFeign.listByCurrency(currencyList);
+        List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
         if (CollectionUtils.isEmpty(viewList)) {
             throw new ServiceException(ApiError.ERROR_9041);
         }

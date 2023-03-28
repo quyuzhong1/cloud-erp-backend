@@ -72,6 +72,15 @@ public class PurchasePriceDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
 
+        /**
+         * true 禁用
+         * false 启用
+         * 默认false
+         */
+        @NotNull(message = "禁用状态不能为空")
+        private Boolean disabled;
+
+
     }
 
     @Data

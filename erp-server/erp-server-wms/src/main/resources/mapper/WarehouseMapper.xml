@@ -6,19 +6,19 @@
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
       SELECT
          id,
-         create_user_name,
-         create_time,
+         create_user_name AS createUserName,
+         create_time AS createTime,
          name,
-         type_id,
-         charge_id,
+         type_id AS typeId ,
+         charge_id AS chargeId,
          contacts,
-         contact_tel_number,
+         contact_tel_number AS contactTelNumber,
          disabled,
          address,
-         org_id,
-         kingdee_warehouse_code,
-         is_virtual,
-         approve_status
+         org_id AS orgId,
+         kingdee_warehouse_code AS kingdeeWarehouseCode,
+         is_virtual AS isVirtual,
+         approve_status AS approveStatus
       FROM  warehouse  WHERE is_deleted=false
 
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
@@ -48,6 +48,13 @@
                 #{approveStatus}
             </foreach>
         </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time desc
     </select>
 
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
