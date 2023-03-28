@@ -166,8 +166,10 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public Boolean update(SalesDemandDTO.UpdateDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto,entity);
+
+        List<SalesDemandDetailDTO.UpdateDTO> details = dto.getDetails();
         //校验明细是否有重复sku
-        checkUpdateDetailsRepeatSku(dto.getDetails(),dto.getId());
+        checkUpdateDetailsRepeatSku(details,dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),dto.getShopId(),entity);
 
@@ -180,7 +182,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //更新主表数据
         this.updateById(entity);
         //更新明细数据
-        salesDemandDetailService.update(dto.getDetails(),entity.getId());
+        salesDemandDetailService.update(details,entity.getId());
         return Boolean.TRUE;
     }
 
@@ -534,7 +536,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             }
             SalesDemandDetailEntity entity = salesDemandDetailService.getBySalesDemandIdAndSkuId(salesDemandId, entry.getKey());
             if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
-                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
+                value.forEach(obj -> obj.setId(entity.getId()));
+                //throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
             }
         }
     }
