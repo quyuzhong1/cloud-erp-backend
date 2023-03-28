@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
+@Accessors(chain = true)
 public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     /**
      * 主键
@@ -33,7 +35,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      * 创建人名称
      */
     @TableField(value = "create_user_name", fill = FieldFill.INSERT)
-    private String createUserName;
+    private String CreateUserName;
 
     /**
      * 创建时间
@@ -81,9 +83,9 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     public static final String VERSION = "version";
 
     public static final String IS_DELETED = "is_deleted";
-    public static final String DELETED_USER_ID = "deleted_user_id";
+    public static final String UPDATE_USER_ID = "update_user_id";
 
-    public static final String DELETED_TIME = "deleted_time";
+    public static final String UPDATE_USER_NAME = "update_user_name";
 
 
     @Override
@@ -91,4 +93,10 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
         return this.id;
     }
 
+    public BaseEntity(String id) {
+        super();
+        if(null != id){
+            this.id = id;
+        }
+    }
 }

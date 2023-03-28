@@ -8,6 +8,7 @@ import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
+import com.erp.server.dmp.pull.service.mabang.MabangHistoryOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangRefundServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangReturnOrderInfoServiceImpl;
@@ -46,8 +47,32 @@ public class MabangPullServiceTest {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-03-22 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-03-22 01:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-01-05 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-01-06 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(apiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            orderService.pullDataSave(requestDTO);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void pullHistoryOrderTest(){
+        MabangHistoryOrderInfoServiceImpl orderService = new MabangHistoryOrderInfoServiceImpl();
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        PlatformApiEnum apiEnum = PlatformApiEnum.GET_HISTORY_ORDER_LIST;
+        jobTaskDTO.setApiCode(apiEnum.getTaskName());
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取订单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-09-05 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-09-06 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();

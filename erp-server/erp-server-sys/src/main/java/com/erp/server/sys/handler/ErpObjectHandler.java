@@ -37,14 +37,11 @@ public class ErpObjectHandler implements MetaObjectHandler {
             this.setFieldValByName("version", MathUtil.ONE, metaObject);
             this.setFieldValByName("createTime", localDateTime, metaObject);
             this.setFieldValByName("updateTime", localDateTime, metaObject);
-            this.setFieldValByName("createUserId", userId, metaObject);
-            this.setFieldValByName("createUserName", userName, metaObject);
-            this.setFieldValByName("updateUserId", userId, metaObject);
-            this.setFieldValByName("updateUserName", userName, metaObject);
         }
-
-
-
+        this.setFieldValByName("createUserId", userId, metaObject);
+        this.setFieldValByName("createUserName", userName, metaObject);
+        this.setFieldValByName("updateUserId", userId, metaObject);
+        this.setFieldValByName("updateUserName", userName, metaObject);
     }
 
     //更新时的 填充数据
@@ -56,8 +53,8 @@ public class ErpObjectHandler implements MetaObjectHandler {
             this.setFieldValByName("updateTime", new Date(), metaObject);
         }else {
             this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
-            this.setFieldValByName("updateUserName", userName, metaObject);
-            this.setFieldValByName("updateUserId", userId, metaObject);
         }
+        this.setFieldValByName("updateUserName", userName, metaObject);
+        this.setFieldValByName("updateUserId", userId, metaObject);
     }
 }

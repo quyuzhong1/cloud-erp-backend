@@ -5,6 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -78,13 +79,13 @@ public class TaskSearchParamDTO  extends SortDTO {
     /**
      * 开始时间 (无需传值)
      */
-    private Date startTime;
+    private LocalDateTime startTime;
 
     /**
      * 结束时间(无需传值)
      * @return
      */
-    private Date endTime;
+    private LocalDateTime endTime;
 
     /**
      * 流程ids(无需传值)

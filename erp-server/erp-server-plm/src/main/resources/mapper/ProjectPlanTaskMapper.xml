@@ -14,8 +14,8 @@
             pt.origin_charge_id,
             pt.change_chrge_id
         FROM project_plan_task pt LEFT JOIN project_plan pp
-        ON pt.project_plan_id=pp.id
-        WHERE  PP.product_id=#{productId}   AND PP.status!=#{status}
+        ON pt.project_plan_id=pp.id AND pp.is_deleted = FALSE
+        WHERE  PP.product_id=#{productId}   AND PP.status!=#{status} AND pt.is_deleted = FALSE
 
     </select>
 
@@ -31,8 +31,8 @@
             pt.change_charge_id
 
         FROM project_plan_task pt LEFT JOIN project_plan pp
-        ON pt.project_plan_id=pp.id
-        WHERE  PP.product_id=#{productId}
+        ON pt.project_plan_id=pp.id AND pp.is_deleted = FALSE
+        WHERE  PP.product_id=#{productId} AND pt.is_deleted = FALSE
         <if test="taskIdList!=null and taskIdList.size>0">
             AND pt.task_id IN
            <foreach collection="taskIdList" item="taskId" open="(" separator="," close=")">
@@ -50,7 +50,7 @@
             pt.origin_end_time AS planEndTime,
             pt.origin_charge_id AS chargeId
             FROM project_plan_task pt
-            WHERE pt.product_id=#{productId}  AND pt.project_plan_id IN (
+            WHERE pt.product_id=#{productId} AND pt.is_deleted = FALSE  AND pt.project_plan_id IN (
                 SELECT id FROM  project_plan WHERE product_id=#{productId} AND type=#{projectPlanType} AND is_deleted=false
             )
 
@@ -59,7 +59,7 @@
         SELECT id AS taskId,charge_id ,charge_name,
         plan_start_time,plan_end_time,product_id,
         status,name AS taskName
-        FROM project_task WHERE product_id=#{productId}
+        FROM project_task WHERE product_id=#{productId} AND is_deleted = FALSE
         AND schedule_status=#{scheduleStatus}
         AND pid='0'
         <if test="taskName!=null and taskName!=''">
@@ -83,7 +83,7 @@
             pt.work_period
         FROM
             "project_plan_task" ppt
-            LEFT JOIN project_task pt ON ppt.task_id = pt."id"
+            LEFT JOIN project_task pt ON ppt.task_id = pt."id" AND pt.is_deleted = FALSE
         WHERE
             ppt.is_deleted = FALSE
             and pt.id in

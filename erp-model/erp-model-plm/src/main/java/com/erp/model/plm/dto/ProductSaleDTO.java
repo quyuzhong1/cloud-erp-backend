@@ -1,13 +1,15 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @Description 产品销售信息表请求参数
@@ -30,44 +32,48 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 年目标销售量
      */
+    @DecimalMax(value = "999999999",message ="年目标销售量超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long yearSaleQty;
 
     /**
      * 年目标销售额
      */
+    @Digits(integer = 16,fraction = 4,message = "年目标销售额最大16字符，小数位不能大于4位")
     private BigDecimal yearSaleAmount;
 
     /**
      * 月目标销售量
      */
+    @DecimalMax(value = "999999999",message ="月目标销售量超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long monthSaleQty;
 
     /**
      * 月目标销售额
      */
+    @Digits(integer = 16,fraction = 4,message = "月目标销售额最大16字符，小数位不能大于4位")
     private BigDecimal monthSaleAmount;
 
     /**
      * 销售国家
      */
+    @Size(max = 255,message = "国家最大不能超过255字符")
     private String saleCountry;
 
     /**
      * 上市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date listingTime;
+    private LocalDate listingTime;
 
     /**
      * 退市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date delistingTime;
+    private LocalDate delistingTime;
 
     /**
      * 图片是否完成 1.是 2.否
      */
-    @StateEnumValue(intValues = {1, 2}, message = "图片是否完成0或者1")
     private Integer isFinishedImg;
 
     /**
@@ -88,17 +94,18 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 首季度目标销量
      */
+    @Digits(integer = 16,fraction = 2,message = "首季度目标销量最大16字符")
     private BigDecimal targetSalesQty;
 
     /**
      * 销售平台(SalesPlatformEnum枚举)
      */
+    @Size(max = 200,message = "销售平台最大不能超过200字符")
     private String salesPlatform;
 
     /**
      * 是否可销售(0否，1是)
      */
-    @StateEnumValue(intValues = {0, 1}, message = "是否可销售值错误")
     private Integer isMarketable;
 
 

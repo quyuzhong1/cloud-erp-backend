@@ -24,6 +24,8 @@ public class SysLoginUserVO implements Serializable {
 
 
     private List<String> permissionList;
+
+    private String userId;
     private String userName;
     private String headIcon;
 

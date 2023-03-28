@@ -10,7 +10,7 @@ public enum BiStateEnum {
 
 
     ENABLE(1, "启用"),
-    DISABLE(0, "禁用");
+    DISABLE(2, "禁用");
 
     private Integer code;
     private String name;

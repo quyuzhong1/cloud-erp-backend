@@ -6,9 +6,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.BatchSysDepartUserDTO;
 import com.erp.model.sys.dto.DepartmentSearchDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -154,6 +154,16 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         queryWrapper.eq(SysDepartmentUserEntity::getDepartmentId,id);
         queryWrapper.eq(SysDepartmentUserEntity::getLeadState,1);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public SysDepartmentUserNumberDTO getDeptByUserId(String userId) {
+        List<SysDepartmentUserEntity> list = lambdaQuery().eq(SysDepartmentUserEntity::getUserId, userId).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return new SysDepartmentUserNumberDTO();
+        }
+        SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO( list.get(0).getDepartmentId(), list.get(0).getUserId(),"");
+        return dto;
     }
 
 

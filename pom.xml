@@ -38,6 +38,7 @@
         <joda.time.version>2.9.9</joda.time.version>
         <jasypt.version>3.0.4</jasypt.version>
         <jsqlparser.version>4.5</jsqlparser.version>
+        <seata.version>1.5.2</seata.version>
     </properties>
 
     <!--公共依赖组件-->

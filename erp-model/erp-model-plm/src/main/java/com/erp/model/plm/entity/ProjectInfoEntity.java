@@ -1,10 +1,12 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -18,23 +20,15 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_info")
-public class ProjectInfoEntity implements Serializable {
+public class ProjectInfoEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     @TableField("product_id")
     private String productId;
 
-
-
     @TableField("name")
     private String name;
-
-
-
 
     /**
      *
@@ -53,13 +47,13 @@ public class ProjectInfoEntity implements Serializable {
      * 项目计划开始时间
      */
     @TableField("start_time")
-    private Date startTime;
+    private LocalDateTime startTime;
 
     /**
      * 计划结束时间
      */
     @TableField("end_time")
-    private Date endTime;
+    private LocalDateTime endTime;
 
     /**
       *项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
@@ -72,15 +66,5 @@ public class ProjectInfoEntity implements Serializable {
      */
     @TableField("describe")
     private String describe;
-
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
 
 }

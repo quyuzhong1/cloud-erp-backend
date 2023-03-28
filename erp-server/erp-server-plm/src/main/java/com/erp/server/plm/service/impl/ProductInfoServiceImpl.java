@@ -27,7 +27,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -244,12 +245,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setUpdateUserName(loginUser.getUserName());
         }
         if (entity.getType().intValue() == 1) {
-            entity.setVersion(1);
+            entity.setProductVersion(1);
         } else {
             //查询关联产品版本
             ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-                entity.setVersion(productInfoEntity.getVersion().intValue() + 1);
+                entity.setProductVersion(productInfoEntity.getProductVersion().intValue() + 1);
                 dto.setRelevanceProductName(productInfoEntity.getName());
             }
         }
@@ -274,6 +275,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 throw new ServiceException(ApiError.ERROR_95051);
             }
             //复制模板团队成员
+
             List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, "");
             //复制模板角色
             List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(templateId, productId, "");
@@ -286,7 +288,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(templateId, productId, "");
 
             //这个是任务的
-            List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(templateId, productId, "", phaseSourceList);
+            List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(templateId, productId, "", phaseSourceList, null);
             //这个是复制前置任务关系
             templatePreTaskService.copyTemplatePreTask(templateId, productId, taskSourceList);
 
@@ -321,7 +323,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         /**
          * 当项目经理不为空的时候保经理
          */
-        if(StringUtils.isNotBlank(projectChargeId)){
+        if (StringUtils.isNotBlank(projectChargeId)) {
             //新增或修改项目经理角色和对应成员
             projectMembersService.saveByRoleAndMembers(entity.getId(), null, "项目经理", Arrays.asList(projectChargeId));
         }
@@ -332,7 +334,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //关联产品规划
         productPlanService.relatedProductPlanByProduct(dto.getProductPlanId(), entity);
         //更新项目列表的项目经理
-        projectInfoService.updateChargeByProductId(productId,dto.getProjectChargeId());
+        projectInfoService.updateChargeByProductId(productId, dto.getProjectChargeId());
 
         return entity.getId();
     }
@@ -927,7 +929,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
-                        newProduct.setApprovalTime(new Date());
+                        newProduct.setApprovalTime(LocalDateTime.now());
                     }
 
                 }
@@ -942,7 +944,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (yesApproval && updateFlag) {
                 //异步通知 产品立项
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
-                projectInfoService.addProject(dto.getProductId(), newProduct.getName(),product.getProjectChargeId());
+                projectInfoService.addProject(dto.getProductId(), newProduct.getName(), product.getProjectChargeId());
             }
             //如果状态为已中止则更新产品开发列表开发状态为中止开发
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(approvalStatus)) {
@@ -962,7 +964,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             /**
              * 当项目经理不为空的时候保经理
              */
-            if(StringUtils.isNotBlank(projectChargeId)){
+            if (StringUtils.isNotBlank(projectChargeId)) {
                 //新增或修改项目经理角色和对应成员
                 projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(projectChargeId));
 
@@ -1342,8 +1344,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.list(queryWrapper);
 
     }
-
-
 
 
     /**

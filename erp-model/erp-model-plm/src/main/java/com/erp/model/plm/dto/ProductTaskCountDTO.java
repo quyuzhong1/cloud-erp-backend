@@ -33,4 +33,11 @@ public class ProductTaskCountDTO {
      * 延期的任务数
      */
     private Integer postponeTaskCount;
+
+    /**
+     * 产品属性id
+     */
+    private String propertyId;
+
+
 }

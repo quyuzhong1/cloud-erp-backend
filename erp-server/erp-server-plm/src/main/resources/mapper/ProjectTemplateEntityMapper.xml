@@ -38,6 +38,7 @@
                 pt.status
             FROM project_template pt
             <where>
+                pt.is_deleted = FALSE
                 <if test="params.searchKeyword != '' and params.searchKeyword != null">
                    AND pt.name LIKE concat('%', #{params.searchKeyword} ,'%')
                 </if>
@@ -48,7 +49,7 @@
     <select id="getProductPropertyList" resultType="java.util.Map">
         SELECT
           id,value AS name
-          FROM  basic_dict  WHERE type=#{type}
+          FROM  basic_dict  WHERE type=#{type} AND is_deleted = FALSE
           AND id  NOT IN (
             SELECT product_property_id FROM  project_template WHERE type=1
           )
@@ -59,11 +60,10 @@
            pt.id,pt.name
          FROM project_template pt
          LEFT JOIN template_ref_property trp
-         ON pt.id=trp.template_id
-         WHERE trp.is_deleted=false
+         ON pt.id=trp.template_id AND trp.is_deleted = FALSE
+         WHERE pt.is_deleted=false
          AND trp.product_property_id=#{propertyId}
          AND pt.status=1
-
     </select>
 
 </mapper>

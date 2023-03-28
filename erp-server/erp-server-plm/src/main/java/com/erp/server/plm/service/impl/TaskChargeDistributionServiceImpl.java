@@ -60,7 +60,7 @@ public class TaskChargeDistributionServiceImpl extends ServiceImpl<TaskChargeDis
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void removeAndSave(String taskId, List<TaskChargeDistributionEntity> approvalList, Integer source) {
         //删除
         removeBySourceAndTaskId(source, taskId);
@@ -74,7 +74,7 @@ public class TaskChargeDistributionServiceImpl extends ServiceImpl<TaskChargeDis
                 obj.setId(null);
                 seq++;
             }
-            ;
+
             this.saveBatch(approvalList);
         }
     }

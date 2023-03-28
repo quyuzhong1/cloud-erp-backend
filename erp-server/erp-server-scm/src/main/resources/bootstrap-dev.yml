@@ -1,0 +1,22 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.12
+        namespace: ${NACOS_NAMESPACE:dev}
+      config:
+        server-addr: 172.16.100.12
+        namespace: dev
+        file-extension: yml
+        shared-configs: common.yml,db-scm.yml
+sfs:
+  nacos:
+    server-addr: 172.16.100.12:8848
+    namespace: seata-server
+    group: SEATA_GROUP
+
+
+
+
+
+

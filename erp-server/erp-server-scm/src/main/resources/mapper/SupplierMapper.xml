@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SupplierMapper">
+
+
+    <select id="paging" resultType="com.erp.model.scm.dto.SupplierDTO$PagingViewDTO">
+        SELECT
+        id,
+        code,
+        create_user_id AS createUserId,
+        create_user_name AS createUserName,
+        create_time AS createTime,
+        name,
+        approve_status AS approveStatus,
+        phase,
+        grade_id AS gradeId,
+        category_id AS categoryId ,
+        disabled AS disabled,
+        pay_method_id AS payMethodId,
+        purchase_user_id AS purchaseUserId,
+        purchase_user_name AS purchaseUserName
+        FROM supplier
+
+        WHERE is_deleted=FALSE
+        <if test="params.name!=null and params.name!=''">
+            AND
+            name LIKE concat('%', #{params.name} ,'%')
+        </if>
+        <if test="params.categoryIdList!=null and params.categoryIdList.size>0">
+            AND category_id IN
+            <foreach collection="params.categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
+        <if test="params.phaseList!=null and params.phaseList.size>0">
+            AND phase IN
+            <foreach collection="params.phaseList" item="phase" open="(" separator="," close=")">
+                #{phase}
+            </foreach>
+        </if>
+        <if test="params.purchaseUserIdList!=null and params.purchaseUserIdList.size>0">
+            AND purchase_user_id IN
+            <foreach collection="params.purchaseUserIdList" item="purchaseUserId" open="(" separator="," close=")">
+                #{purchaseUserId}
+            </foreach>
+        </if>
+
+        <if test="params.payMethodIdList!=null and params.payMethodIdList.size>0">
+            AND pay_method_id IN
+            <foreach collection="params.payMethodIdList" item="payMethodId" open="(" separator="," close=")">
+                #{payMethodId}
+            </foreach>
+        </if>
+        <if test="params.disabled!=null">
+            AND disabled=#{params.disabled}
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+            AND grade_id IN
+            <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                #{gradeId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            and create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+        </if>
+
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time DESC
+
+    </select>
+</mapper>

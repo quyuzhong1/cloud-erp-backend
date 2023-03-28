@@ -1,15 +1,15 @@
 package com.erp.server.sys.controller.feign;
 
 import com.common.business.constant.UserStateConstants;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,7 +178,7 @@ public class SysUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getUserByUserId")
-    public FindUserDTO getUserByUserId(@RequestBody String userId) {
+    public FindUserDTO getUserByUserId( String userId) {
         FindUserDTO dto = sysUserInfoService.getUserByUserId(userId);
         return dto;
     }

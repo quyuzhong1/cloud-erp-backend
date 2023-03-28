@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -180,9 +182,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         project.setChargeName(chargeName);
 
         //开始时间
-        project.setStartTime(dto.getStartTime());
+        project.setStartTime(LocalDateTimeUtil.of(dto.getStartTime()));
         //结束时间
-        project.setEndTime(dto.getEndTime());
+        project.setEndTime(LocalDateTimeUtil.of(dto.getEndTime()));
         project.setDescribe(dto.getDescribe());
         project.setProjectStatus(ProjectStateEnum.YES_START.getState());
         boolean flag = updateById(project);
@@ -619,7 +621,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         for (int i = days; i >= 0; i--) {
             Map<String, Object> finishTaskMap = new HashMap<>();
             Date date = LocalDateUtil.localDateTime2Date(dateTime.plusDays(-i));
-            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, t.getRealityEndTime())).count();
+            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, Date.from( t.getRealityEndTime().atZone( ZoneId.systemDefault()).toInstant()))).count();
             finishTaskMap.put("date", sdf.format(date.getTime()));
             finishTaskMap.put("quantity", count);
             finishTaskTrend.add(finishTaskMap);

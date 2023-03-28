@@ -82,12 +82,12 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             List<ProjectTaskEntity> taskEntityList = projectTaskService.getByTaskIds(Arrays.asList(record.getTaskIds().split(",")));
             // 计算计划工时
             Integer planWorkDay = taskEntityList.stream().mapToInt(task -> {
-                Date planEndTime = task.getPlanEndTime();
-                Date planStartTime = task.getPlanStartTime();
+                LocalDate planEndTime = task.getPlanEndTime();
+                LocalDate planStartTime = task.getPlanStartTime();
                 if (null == planStartTime || null == planEndTime) {
                     return 0;
                 }
-                return LocalDateUtil.countDaysForLocalDate(LocalDateUtil.date2LocalDate(planStartTime), LocalDateUtil.date2LocalDate(planEndTime), holidays);
+                return LocalDateUtil.countDaysForLocalDate(planStartTime, planEndTime, holidays);
             }).sum();
             // 赋值
             record.setPlanTaskTime(planWorkDay);
@@ -136,7 +136,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
                 insertList.add(new ProjectTaskTimeRecordEntity(entity,holidayDateList));
             } else {
                 if(null == entity.getRealityStartTime()){
-                    entity.setRealityStartTime(LocalDateUtil.localDateTime2Date(projectTaskTimeRecordEntity.getRealityStartTime()));
+                    entity.setRealityStartTime(projectTaskTimeRecordEntity.getRealityStartTime());
                 }
                 ProjectTaskTimeRecordEntity updateEntity = new ProjectTaskTimeRecordEntity(entity,holidayDateList);
 

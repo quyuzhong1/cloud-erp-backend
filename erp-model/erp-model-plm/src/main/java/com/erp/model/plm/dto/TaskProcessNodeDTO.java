@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class TaskProcessNodeDTO  implements Serializable {
     /**
      * 操作时间
      */
-    private Date operateTime;
+    private LocalDateTime operateTime;
 
     /**
      *  节点名

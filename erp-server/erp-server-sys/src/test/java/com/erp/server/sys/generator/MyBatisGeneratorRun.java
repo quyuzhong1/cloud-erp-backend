@@ -13,8 +13,8 @@ import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
 import com.baomidou.mybatisplus.generator.keywords.PostgreSqlKeyWordsHandler;
 import com.common.core.controller.BaseController;
 import com.common.core.entity.BaseEntity;
-import com.common.core.serveice.SuperService;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperService;
+import com.common.business.service.SuperServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,11 +31,11 @@ import java.util.Scanner;
 @Slf4j
 public class MyBatisGeneratorRun {
     // 项目路径
-    private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-plm","");
+    private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-sys","");
     // 当前环境是否Windows
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
     // 数据库链接配置
-    static String MODEL = "plm";
+    static String MODEL = "sys";
     private static String DB_URL = StrUtil.format("jdbc:postgresql://172.16.100.12:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
     private static final String USER_NAME = "postgres";
     private static final String PASSWORD = "admin@viji";
@@ -49,7 +49,7 @@ public class MyBatisGeneratorRun {
 
     private static final String SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
     //作者名
-    private static final String AUTHOR = "admin";
+    private static final String AUTHOR = "Lambda";
     // 输出路径(为空默认为项目路径)
     private static final String OUTPUT_DIR = "";
 
@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"template_ref_property"};
+        String[] tables = new String[]{"dict_city","dict_country","dict_country","dict_global_area"};
         autoGenerator(prefix, tables);
 
 

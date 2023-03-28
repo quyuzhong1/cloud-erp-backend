@@ -25,6 +25,7 @@ public class ProductManySpecDTO {
     /**
      * SKU信息明细
      */
+    @Valid
     private List<ProductDetailDTO> productDetailList;
 
     /**
@@ -44,37 +45,44 @@ public class ProductManySpecDTO {
      * 产品销售信息
      */
     @NotNull(message = "产品销售不能为空")
+    @Valid
     private List<ProductSaleDTO> productSaleList;
 
     /**
      * 产品物流信息
      */
+    @Valid
     private List<ProductLogisticsDTO> productLogisticsList;
 
     /**
      * 产品包装信息
      */
+    @Valid
     private List<ProductPackDTO> productPackList;
 
     /**
      * 产品证书信息
      */
+    @Valid
     private List<ProductCertificateDTO> productCertificateList;
 
     /**
      * 采购备注信息
      */
+    @Valid
     private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
 
 
     /**
      * 包装辅料
      */
+    @Valid
     private List<ProductAccessoriesDTO> productAccessoriesList;
 
 
     /**
      * 产品认证
      */
+    @Valid
     private List<ProductAttestationDTO> productAttestationList;
 }

@@ -36,7 +36,7 @@ import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -1835,29 +1835,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> taskIdList = taskAllList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             //配置表单信息
             List<TaskRefSkuConfigEntity> configList = taskRefSkuConfigService.getByTaskIds(taskIdList);
-            
-            if (CollectionUtils.isNotEmpty(configList)) {
-                List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
 
-                //验证自动关联任务是否已全部完成
-                long relatedCount = taskAllList.stream().filter(obj -> RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
-                if (relatedCount > 0) {
-                    throw new ServiceException(ApiError.ERROR_95083);
-                }
-    
-                //验证选择关联任务是否已全部完成
-                List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(id);
-                if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-                    //sku完成任务未完成
-                    List<String> taskIds = projectTaskRefSkuList.stream().distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(taskIds)) {
-                        List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
-                        if (CollectionUtils.isNotEmpty(taskList)) {
-                            long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
-                            if (count > 0) {
-                                throw new ServiceException(ApiError.ERROR_95083);
-                            }
-                        }
+            if (CollectionUtils.isNotEmpty(configList)) {
+                long jsonCount = configList.stream().filter(obj -> StringUtils.isNotBlank(obj.getFieldJson())).count();
+                if (jsonCount > 0) {
+
+                    List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+
+                    //验证关联任务是否已全部完成
+                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
+                    if (relatedCount > 0) {
+                        throw new ServiceException(ApiError.ERROR_95083);
                     }
                 }
             }
@@ -1950,17 +1938,35 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public List<SkuVO> searchParentSku(String searchKeyword,String bomId) {
-        return baseMapper.searchParentSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode(),bomId);
+    public List<SkuVO> searchParentSku(String searchKeyword, String bomId) {
+        return baseMapper.searchParentSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode(), bomId);
     }
 
     @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus) {
-           return   this.lambdaUpdate()
-                    .eq(ProductDetailEntity::getId,id)
-                    .set(ProductDetailEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                    .set(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
-                    .update();
+        return this.lambdaUpdate()
+                .eq(ProductDetailEntity::getId, id)
+                .set(ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .update();
+    }
+
+
+    /**
+     * 根据skuid 集合获取到sku 信息
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-03-21 12:06
+     */
+    @Override
+    public List<SkuVO> getSkuInfoBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.getSkuInfoBySkuIds(skuIds);
+
     }
 
 
@@ -2112,7 +2118,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
-        for(ProductAccessoriesDTO item:accessoriesList){
+        for (ProductAccessoriesDTO item : accessoriesList) {
             item.setProductId(productId);
         }
         List<String> accessoriesSkuIds = accessoriesList.stream().filter(a -> StringUtils.isNotBlank(a.getAccessoriesSkuId())).
@@ -2422,7 +2428,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> deptNames = Arrays.stream(deptName.split(",")).distinct().collect(Collectors.toList());
         List<SysUserDeptDTO> list = sysUserFeign.getByDeptNames(deptNames);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiResult.error(1,deptName.concat("，未找到直属上级")));
+            throw new ServiceException(ApiResult.error(1, deptName.concat("，未找到直属上级")));
         }
         List<String> leadIds = list.stream().map(SysUserDeptDTO::getUid).distinct().collect(Collectors.toList());
         return leadIds;

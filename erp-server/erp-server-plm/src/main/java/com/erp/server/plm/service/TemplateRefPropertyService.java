@@ -1,7 +1,7 @@
 package com.erp.server.plm.service;
 
 
-import com.common.core.serveice.SuperService;
+import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.TemplatePropertyDTO;
 import com.erp.model.plm.entity.TemplateRefPropertyEntity;
 

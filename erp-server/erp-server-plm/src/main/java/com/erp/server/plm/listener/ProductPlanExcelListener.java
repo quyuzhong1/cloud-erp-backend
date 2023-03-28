@@ -77,7 +77,6 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
     }
 
     @Override
-    @Transactional
     public void invoke(ProductPlanExcelDTO productPlanExcelDTO, AnalysisContext analysisContext) {
         //列表返回错误信息
         List<String> errorMsgList = new ArrayList<>();

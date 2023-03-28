@@ -8,6 +8,7 @@
         (SELECT COUNT (*) FROM task_delivery_docs td Where td.docs_name_id = sd.id) AS useCount
         FROM sys_docs_name sd
         <where>
+            sd.is_deleted = FALSE
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
                 AND name LIKE concat('%',#{params.searchKeyword},'%')
             </if>

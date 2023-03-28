@@ -69,4 +69,17 @@ public class TemplateDeliveryDocsController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 模板详情-输出物-交付文档名称下拉数据
+     * @Author Luo_WG
+     * @Date 2023/3/27 14:52
+     * @param templateId templateId
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.DocsDTO>>
+     **/
+    @GetMapping("/list")
+    public ApiResult<List<DocsDTO>> getDocsNames(@RequestParam(value = "templateId") String templateId) {
+        List<DocsDTO> list = templateDeliveryDocsService.getDocsNames(templateId);
+        return success(list);
+    }
+
 }

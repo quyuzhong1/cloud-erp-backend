@@ -13,6 +13,7 @@ import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     ProjectTaskDetailsDTO getTaskDetails(String taskId);
 
+    /**
+     * 修改任务
+     * @author yl
+     * @date 2023-03-13 9:55
+     * @param dto
+     * @return java.lang.Boolean
+     */
     Boolean updateTask(ProjectTaskDTO dto);
 
     ProductTaskCountDTO getProductTaskCount(ProductTaskCountShowDTO showDTO, Date date);
@@ -72,7 +80,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     List<ProjectTaskEntity> getByTaskIds(List<String> taskIds);
 
-    boolean updateTaskState(List<String> taskIds, Integer state,Date realityStart,Date realityEnd);
+    boolean updateTaskState(List<String> taskIds, Integer state, LocalDateTime realityStart, LocalDateTime realityEnd);
 
 
     int countUndoneByTaskIds(Integer code, Integer approvalPass, List<String> preTaskIds);

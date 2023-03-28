@@ -1,9 +1,11 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -12,12 +14,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="template_members")
-public class TemplateMembersEntity implements Serializable {
-    /**
-     * id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
+public class TemplateMembersEntity extends BaseEntity implements Serializable {
 
     /**
      * 成员id
@@ -30,45 +27,9 @@ public class TemplateMembersEntity implements Serializable {
     private String memberName;
 
     /**
-     * 创建时间
-     */
-    @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
      * 模板id
      */
     private String templateId;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id",fill = FieldFill.INSERT)
-    private String createUserId;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value ="create_user_name",fill = FieldFill.INSERT)
-    private String createUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField(value = "update_user_id",fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
-
-    /**
-     * 更新人
-     */
-    @TableField(value ="update_user_name",fill = FieldFill.INSERT_UPDATE)
-    private String updateUserName;
 
     /**
      * 是否是负责人 0 不是 1 是
@@ -76,6 +37,4 @@ public class TemplateMembersEntity implements Serializable {
     private Short isCharge;
 
     private static final long serialVersionUID = 1L;
-
-
 }

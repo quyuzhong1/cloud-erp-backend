@@ -17,7 +17,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
@@ -410,14 +410,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (TaskTypeEnum.GENERAL_TASK.getCode().equals(taskType)) {
             //查询任务下审核人
             List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, taskEntity.getId());
-            if (CollectionUtils.isEmpty(taskChargeDistributionList)) {
-                throw new ServiceException(ApiError.ERROR_95045);
-            }
-            for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
-                String chargeIds = taskChargeDistributionEntity.getChargeIds();
-                if (StringUtils.isNotBlank(chargeIds)) {
-                    List<String> userIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
-                    membersIds.add(userIdList);
+            if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                    String chargeIds = taskChargeDistributionEntity.getChargeIds();
+                    if (StringUtils.isNotBlank(chargeIds)) {
+                        List<String> userIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
+                        membersIds.add(userIdList);
+                    }
                 }
             }
             businessProcess = businessProcessService.getById(taskEntity.getBusinessProcessId());
@@ -433,7 +432,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
         }
         if (ObjectUtils.isEmpty(businessProcess)) {
-            throw new ServiceException(ApiError.ERROR_94001);
+            return Boolean.TRUE;
         }
 
         StartProcessDTO startProcess = new StartProcessDTO();
@@ -456,7 +455,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             taskEntity.setBusinessProcessId(businessProcess.getId());
             return projectTaskService.updateById(taskEntity);
         }
-        return false;
+        return Boolean.TRUE;
     }
 
 

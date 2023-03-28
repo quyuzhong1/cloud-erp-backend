@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchaseOrderMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.PurchaseOrderEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="code" property="code" />
+        <result column="purchase_date" property="purchaseDate" />
+        <result column="purchase_user_id" property="purchaseUserId" />
+        <result column="purchase_user_name" property="purchaseUserName" />
+        <result column="purchase_org_id" property="purchaseOrgId" />
+        <result column="purchase_org_name" property="purchaseOrgName" />
+        <result column="purchase_dept_id" property="purchaseDeptId" />
+        <result column="purchase_dept_name" property="purchaseDeptName" />
+        <result column="is_first_mass_product" property="isFirstMassProduct" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_time" property="invalidTime" />
+        <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
+        select
+            po.id,
+            po.code,
+            pos.supplier_name as supplierName,
+            po.approve_status as approveStatus,
+            po.invalid_status as invalidStatus,
+            pod.arrival_status as arrivalStatus,
+            pod.sku_no as skuNo,
+            pod.product_name as productName,
+            pod.plan_delivery_date as planDeliveryDate,
+            pod.delivery_warehouse_name as deliveryWarehouseName,
+            pod.tax_price as taxPrice,
+            pod.purchase_qty as purchaseQty,
+            pod.purchase_amount as purchaseAmount,
+            pod.receive_qty as receiveQty,
+            pod.stock_in_qty as stockInQty,
+            pod.delivery_qty as deliveryQty,
+            pod.return_qty as returnQty,
+            pod.remark,
+            po.approve_user_name as approveUserName,
+            po.purchase_user_name as purchaseUserName,
+            po.create_user_name as createUserName,
+            po.create_time as createTime
+        from purchase_order po
+        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        <where>
+            po.is_deleted = false
+            <if test="params.productName != null and params.productName != ''">
+                and pod.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.isUrgent != null ">
+                and pod.is_urgent = #{params.isUrgent}
+            </if>
+            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                and po.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.isFirstMassProduct != null ">
+                and po.is_first_mass_product = #{params.isFirstMassProduct}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pod.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pos.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and po.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.arrivalStatusList != null and params.arrivalStatusList.size > 0">
+                and pod.arrival_status in
+                <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                and pod.delivery_warehouse_id in
+                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
+                and pod.purchase_user_id in
+                <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and pod.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and po.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
+            </if>
+            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        po.create_time desc
+    </select>
+    
+    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO">
+        select
+            po.id,
+            po.code,
+            pos.supplier_name as supplierName,
+            case po.approve_status
+                when 'waitSubmit' then '待提交'
+                when 'approveIng' then '审核中'
+                when 'reject' then '审核不通过'
+                when 'approve' then '已审核'
+            end as approveStatusName,
+            case po.invalid_status
+                when '0' then '未作废'
+                when '1' then '已作废'
+            end as invalidStatusName,
+            case pod.arrival_status
+                when '0' then '未到货'
+                when '1' then '部分到货'
+                when '2' then '已到货'
+            end as arrivalStatusName,
+            pod.sku_no as skuNo,
+            pod.product_name as productName,
+            pod.plan_delivery_date as planDeliveryDate,
+            pod.delivery_warehouse_name as deliveryWarehouseName,
+            pod.tax_price as taxPrice,
+            pod.purchase_qty as purchaseQty,
+            pod.purchase_amount as purchaseAmount,
+            pod.receive_qty as receiveQty,
+            pod.stock_in_qty as stockInQty,
+            pod.delivery_qty as deliveryQty,
+            pod.return_qty as returnQty,
+            pod.remark,
+            po.approve_user_name as approveUserName,
+            po.purchase_user_name as purchaseUserName,
+            po.create_user_name as createUserName,
+            po.create_time as createTime
+        from purchase_order po
+        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        <where>
+            po.is_deleted = false
+            <if test="params.productName != null and params.productName != ''">
+                and pod.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.isUrgent != null ">
+                and pod.is_urgent = #{params.isUrgent}
+            </if>
+            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                and po.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.isFirstMassProduct != null ">
+                and po.is_first_mass_product = #{params.isFirstMassProduct}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pod.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pos.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and pa.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.arrivalStatusList != null and params.arrivalStatusList.size > 0">
+                and pod.arrival_status in
+                <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                and pod.delivery_warehouse_id in
+                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
+                and pod.purchase_user_id in
+                <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and pod.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and po.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
+            </if>
+            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        po.create_time desc
+    </select>
+
+</mapper>

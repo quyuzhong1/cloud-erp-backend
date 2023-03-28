@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.constant.EmailTemplate;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.constant.ThirdConstants;
-import com.common.business.constant.UserStateConstants;
+import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
@@ -782,6 +779,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public FindUserDTO getUserByUserId(String userId) {
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
+        queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         if(!Objects.isNull(entity)){
             FindUserDTO userDTO = new FindUserDTO();

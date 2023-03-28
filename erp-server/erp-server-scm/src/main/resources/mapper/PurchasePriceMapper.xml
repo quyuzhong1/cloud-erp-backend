@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchasePriceMapper">
+
+
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
+        SELECT
+        pp.id,
+        pp.code,
+        pp.create_user_id AS createUserId,
+        pp.create_user_name AS createUserName,
+        pp.create_time,
+        pp.supplier_id,
+        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
+        ppd.sku_id,
+        ppd.sku_no,
+        ppd.product_name,ppd.min_qty,ppd.max_qty,
+        pp.approve_status,
+        ppd.tax_price,
+        ppd.currency,
+        ppd.tax_rate*100 AS taxRate ,
+        ppd.effective_date,
+        pp.purchase_org_id,
+        pp.purchase_org_name,
+        ppd.id AS purchasePriceDetailId
+        FROM purchase_price_detail ppd
+        LEFT JOIN purchase_price pp
+        ON ppd.purchase_price_id=pp.id
+        WHERE pp.is_deleted=false AND ppd.is_deleted= false
+        <if test="params.skuIdList!=null and params.skuIdList.size>0">
+            AND ppd.sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.purchaseOrgIdList!=null and params.purchaseOrgIdList.size>0">
+            AND pp.purchase_org_id IN
+            <foreach collection="params.purchaseOrgIdList" item="purchaseOrgId" open="(" separator="," close=")">
+                #{purchaseOrgId}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList!=null and params.approveStatusList.size>0">
+            AND pp.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+
+        <if test="params.effectiveDateList!=null and params.effectiveDateList.size>0">
+            AND ppd.effective_date between #{params.effectiveDateList[0]} and #{params.effectiveDateList[1]}
+        </if>
+
+        <if test="params.expireDateList!=null and params.expireDateList.size>0">
+            AND ppd.expire_date between #{params.expireDateList[0]} and #{params.expireDateList[1]}
+        </if>
+
+        <if test="params.createTimeList!=null and params.createTimeList.size>0">
+            AND pp.expire_date between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+        </if>
+        <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
+            AND pp.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.productName !=null and params.productName !=''">
+            AND
+            ppd.name LIKE concat('%', #{params.productName} ,'%')
+        </if>
+    </select>
+
+    <select id="getExport" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
+        SELECT
+        pp.id,
+        pp.code,
+        pp.create_user_id AS createUserId,
+        pp.create_user_name AS createUserName,
+        pp.create_time,
+        pp.supplier_id,
+        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
+        ppd.sku_id,
+        ppd.sku_no,
+        ppd.product_name,ppd.min_qty,ppd.max_qty,
+        pp.approve_status,
+        ppd.tax_price,
+        ppd.tax_rate*100 AS taxRate ,
+        ppd.effective_date,
+        ppd.currency,
+        pp.purchase_org_id,
+        pp.purchase_org_name
+        FROM purchase_price_detail ppd
+        LEFT JOIN purchase_price pp
+        ON ppd.purchase_price_id=pp.id
+        WHERE pp.is_deleted=false AND ppd.is_deleted= false
+        <if test="params.skuIdList!=null and params.skuIdList.size>0">
+            AND ppd.sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.purchaseOrgIdList!=null and params.purchaseOrgIdList.size>0">
+            AND pp.purchase_org_id IN
+            <foreach collection="params.purchaseOrgIdList" item="purchaseOrgId" open="(" separator="," close=")">
+                #{purchaseOrgId}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList!=null and params.approveStatusList.size>0">
+            AND pp.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+
+        <if test="params.effectiveDateList!=null and params.effectiveDateList.size>0">
+            AND ppd.effective_date between #{params.effectiveDateList[0]} and #{params.effectiveDateList[1]}
+        </if>
+
+        <if test="params.expireDateList!=null and params.expireDateList.size>0">
+            AND ppd.expire_date between #{params.expireDateList[0]} and #{params.expireDateList[1]}
+        </if>
+
+        <if test="params.createTimeList!=null and params.createTimeList.size>0">
+            AND pp.expire_date between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+        </if>
+        <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
+            AND pp.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.productName !=null and params.productName !=''">
+            AND
+            ppd.name LIKE concat('%', #{params.productName} ,'%')
+        </if>
+    </select>
+</mapper>

@@ -13,6 +13,7 @@
 
     <properties>
         <alibaba.druid.verison>1.2.15</alibaba.druid.verison>
+        <seata.version>1.5.2</seata.version>
     </properties>
     <modules>
         <module>erp-server-auth</module>
@@ -22,6 +23,8 @@
         <module>erp-server-plm</module>
         <module>erp-server-dmp</module>
         <module>erp-server-bi</module>
+        <module>erp-server-scm</module>
+        <module>erp-server-wms</module>
     </modules>
     <dependencies>
         <dependency>
@@ -34,6 +37,27 @@
             <artifactId>spring-boot-devtools</artifactId>
             <!--      optional 表示依赖是否向下传递 true表示不向下传递  默认值是false向下传递      -->
             <optional>true</optional>
+        </dependency>
+        <!--seata-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+            <version>2021.1</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>seata-all</artifactId>
+                    <groupId>io.seata</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.seata</groupId>
+                    <artifactId>seata-spring-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-spring-boot-starter</artifactId>
+            <version>${seata.version}</version>
         </dependency>
     </dependencies>
 

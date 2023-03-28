@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author Will
@@ -34,5 +35,15 @@ public class SysCodeDTO implements Serializable {
      * 编码类型 (枚举SysNoEnum，1:sku,2:spu)
      */
     private Integer type;
+
+    /**
+     * 最后更新时间
+     */
+    private Date updateTime;
+
+    public SysCodeDTO (String category,Integer type) {
+        this.category = category;
+        this.type = type;
+    }
 
 }

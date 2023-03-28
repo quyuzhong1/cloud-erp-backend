@@ -74,5 +74,4 @@ public class TemplateTaskDocsNameController extends BaseController {
         List<DocsDTO> list = templateTaskDocsNameService.getDocsNameList(templateId);
         return success(list);
     }
-
 }

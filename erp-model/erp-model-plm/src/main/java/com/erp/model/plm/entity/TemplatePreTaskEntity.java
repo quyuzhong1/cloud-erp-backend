@@ -1,12 +1,14 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -16,12 +18,7 @@ import java.util.Date;
 @Data
 @TableName(value ="template_pre_task")
 @NoArgsConstructor
-public class TemplatePreTaskEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
+public class TemplatePreTaskEntity extends BaseEntity implements Serializable {
 
     /**
      * 任务id
@@ -32,19 +29,6 @@ public class TemplatePreTaskEntity implements Serializable {
      * 前置任务id
      */
     private String preTaskId;
-
-    /**
-     * 
-     */
-    @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-
-    private Date updateTime;
 
     /**
      * 模板id
@@ -67,7 +51,7 @@ public class TemplatePreTaskEntity implements Serializable {
 
 
     public TemplatePreTaskEntity(PreTaskUpdateDTO entity){
-        this.id = entity.getId();
+        super(entity.getId());
         this.relationship = TaskRelationshipEnum.getByCode(entity.getRelationshipCode());
         this.intervalWorkPeriod = entity.getIntervalWorkPeriod();
     }

@@ -217,7 +217,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveTemplateDeliveryDocsList(String taskId, String templateId, List<DocsDTO> deliveryDocsList) {
-        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+        if (deliveryDocsList != null) {
             //删除交付文档
             removeTemplateDeliveryDocs(taskId, templateId);
             //获取登录人信息
@@ -334,6 +334,29 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTaskId, taskId);
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
         this.remove(queryWrapper);
+    }
+
+    /**
+     * 根据模板id查询下面的所有文档名称
+     * @Author Luo_WG
+     * @Date 2023/3/27 14:54
+     * @param templateId templateId
+     * @return java.util.List<com.erp.model.plm.dto.DocsDTO>
+     **/
+    @Override
+    public List<DocsDTO> getDocsNames(String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
+        List<TemplateDeliveryDocsEntity> list = this.list(queryWrapper);
+        List<DocsDTO> resultList = new ArrayList<>();
+        for (TemplateDeliveryDocsEntity entity : list) {
+            DocsDTO dto = new DocsDTO();
+            dto.setName(entity.getDocsName());
+            dto.setId(entity.getId());
+            dto.setState(true);
+            resultList.add(dto);
+        }
+        return resultList;
     }
 
 }

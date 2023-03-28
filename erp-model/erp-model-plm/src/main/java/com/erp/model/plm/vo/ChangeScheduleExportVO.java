@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -45,14 +46,14 @@ public class ChangeScheduleExportVO implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划开始时间(原)", index = 3)
-    private Date originStartTime;
+    private LocalDateTime originStartTime;
 
     /**
      * 计划结束时间
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划结束时间（原）", index = 4)
-    private Date originEndTime;
+    private LocalDateTime originEndTime;
 
 
     /**
@@ -60,14 +61,14 @@ public class ChangeScheduleExportVO implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划开始时间", index = 5)
-    private Date changeStartTime;
+    private LocalDateTime changeStartTime;
 
     /**
      * 计划结束时间
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划结束时间", index = 6)
-    private Date changeEndTime;
+    private LocalDateTime changeEndTime;
 
 
 

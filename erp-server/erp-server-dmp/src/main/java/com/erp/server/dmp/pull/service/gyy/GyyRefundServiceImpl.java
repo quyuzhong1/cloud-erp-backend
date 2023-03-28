@@ -181,7 +181,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             Integer agreeRefuse = gyyRefundEntity.getAgreeRefuse();
             if (agreeRefuse == 1) {
                 refundStatus = 4;
-            } else if (agreeRefuse == 1) {
+            } else if (agreeRefuse == 2) {
                 refundStatus = 5;
             }
         }

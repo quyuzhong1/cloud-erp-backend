@@ -1,10 +1,13 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -16,12 +19,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("template_task")
-public class TemplateTaskEntity implements Serializable {
+public class TemplateTaskEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 任务名
@@ -54,13 +54,13 @@ public class TemplateTaskEntity implements Serializable {
      * 计划开始时间
      */
     @TableField("plan_start_time")
-    private Date planStartTime;
+    private LocalDate planStartTime;
 
     /**
      * j计划结束时间
      */
     @TableField("plan_end_time")
-    private Date planEndTime;
+    private LocalDate planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
@@ -88,42 +88,6 @@ public class TemplateTaskEntity implements Serializable {
      */
     @TableField("description")
     private String description;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 创建人
-     */
-    @TableField("create_user_name")
-    private String createUserName;
-
-    /**
-     * 创建人id
-     */
-    @TableField("create_user_id")
-    private String createUserId;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 更新人
-     */
-    @TableField("update_user_name")
-    private String updateUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField("update_user_id")
-    private String updateUserId;
 
     /**
      * 引用任务的id
@@ -176,7 +140,6 @@ public class TemplateTaskEntity implements Serializable {
      */
     @TableField("related_sku_type")
     private String relatedSkuType;
-
 
     /**
      * 工期

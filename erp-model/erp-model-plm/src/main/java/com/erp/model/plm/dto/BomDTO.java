@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class BomDTO implements Serializable {
     private List<BomSkuDTO> skuList;
 
 
-    private Date createTime;
+    private LocalDateTime createTime;
 
 
     private String createUserId;

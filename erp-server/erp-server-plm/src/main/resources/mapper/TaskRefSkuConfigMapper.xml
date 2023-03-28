@@ -12,6 +12,7 @@
         tc.product_id,
         tc.field_json FROM task_ref_sku_config tc
         WHERE product_id=#{productId}
+        AND tc.is_deleted = FALSE
         AND  task_id=(SELECT id FROM project_task WHERE id=tc.task_id
         AND status IN
         <foreach collection="statusList" item="state" open="(" separator="," close=")">

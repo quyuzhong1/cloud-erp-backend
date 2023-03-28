@@ -425,6 +425,22 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     }
 
+
+    @Override
+    public void cancelProcess(List<String> ids) {
+        List<WorkflowBusinessProcessDTO> list = workflowBusinessProcessService.getProcessByTables(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (WorkflowBusinessProcessDTO dto : list) {
+            //中止现有流程
+            terminateProcess(dto.getProcessId());
+        }
+        //删除流程id
+        workflowBusinessProcessService.removeByIds(ids);
+    }
+
+
     @Override
     public List<ApproveNodeRecordVO> queryApproveRecordById(String id) {
         if (StringUtils.isBlank(id)) {
@@ -487,6 +503,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
         return false;
     }
+
 
     public String matching(String activityType) {
         String value = "";

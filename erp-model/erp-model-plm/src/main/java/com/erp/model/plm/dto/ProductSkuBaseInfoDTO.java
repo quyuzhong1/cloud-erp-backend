@@ -4,6 +4,8 @@ import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
+import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -27,14 +29,12 @@ public class ProductSkuBaseInfoDTO {
     /**
      * 计划上市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date planListingTime;
+    private LocalDateTime planListingTime;
 
     /**
      * 首批量产入库时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date firstMassProductDate;
+    private LocalDateTime firstMassProductDate;
 
     /**
      * 单位表id
@@ -70,6 +70,7 @@ public class ProductSkuBaseInfoDTO {
     /**
      * 品名
      */
+    @Size(max = 50,message = "产品名称最大50字符")
     private String name;
 
     /**

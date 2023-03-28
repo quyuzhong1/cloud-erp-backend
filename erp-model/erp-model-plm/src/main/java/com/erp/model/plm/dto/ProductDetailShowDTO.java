@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
 * @Description 产品明细查询列表返回值（VO）
@@ -92,7 +92,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 规格类型  1：无规格  2：多规格
@@ -165,14 +165,14 @@ public class ProductDetailShowDTO implements Serializable {
      * product_detail
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date firstMassProductDate;
+    private LocalDateTime firstMassProductDate;
 
     /**
      * 预计计划上市时间
      * product_detail
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date planListingTime;
+    private LocalDateTime planListingTime;
 
     /**
      * 试产数量
@@ -202,7 +202,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 年度销量
      * product_sale
      */
-    private Integer yearSaleQty;
+    private Long yearSaleQty;
 
     /**
      * 年度销售额
@@ -254,18 +254,23 @@ public class ProductDetailShowDTO implements Serializable {
      * product_sale
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date listingTime;
+    private LocalDateTime listingTime;
 
     /**
      * 退市时间
      * product_sale
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date delistingTime;
+    private LocalDateTime delistingTime;
 
 
+    /**
+     * 箱单数量
+     */
+    private Integer boxQty;
 
-
-
-
+    /**
+     * 最小起订量
+     */
+    private Integer moq;
 }

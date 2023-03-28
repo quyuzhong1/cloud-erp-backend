@@ -4,13 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchStateDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.StateDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -19,11 +21,10 @@ import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
+ * @author Administrator
  * @Classname SysAccountingCompanyImpl
  * @Description TODO
  * @Date 2022-07-12 9:52
@@ -74,12 +75,11 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
 
     @Override
-    public boolean updateCompanyState(StateDTO dto) {
+    public boolean updateCompanyState(UpdateStateDTO dto) {
         SysAccountingCompanyEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
-        entity.setCompanyState(Integer.valueOf(dto.getState()));
         return this.updateById(entity);
     }
 
@@ -97,7 +97,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         CompanyPagingSearchDTO params = dto.getParams();
         String searchType = params.getSearchType();
-        String searchTypeStr="company_name,contact_name,contact_address,currency";
+        String searchTypeStr = "company_name,contact_name,contact_address,currency";
         List<String> searchTypeList = Arrays.asList(searchTypeStr.split(","));
         if (!searchTypeList.contains(searchType)) {
             throw new ServiceException(ApiError.ERROR_9022);
@@ -122,11 +122,74 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         List<String> ids = dto.getIds();
         if (CollectionUtils.isNotEmpty(ids)) {
             updateWrapper.in(SysAccountingCompanyEntity::getId, dto.getIds());
-            updateWrapper.set(SysAccountingCompanyEntity::getCompanyState, dto.getState());
+            updateWrapper.set(SysAccountingCompanyEntity::getDisabled, dto.getState());
             return this.update(updateWrapper);
         }
         return false;
 
+    }
+
+
+    /**
+     * 获取核算组织
+     *
+     * @param
+     * @return java.util.List<com.erp.model.sys.dto.SysAccountingCompanyDTO.ListDTO>
+     * @author yl
+     * @date 2023-03-21 17:44
+     */
+    @Override
+    public List<SysAccountingCompanyDTO.ListDTO> getList() {
+        List<SysAccountingCompanyEntity> list = this.list();
+        return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
+    }
+
+
+    /**
+     * 根据ids 获取组织列表
+     *
+     * @param ids
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-03-22 15:29
+     */
+    @Override
+    public List<BaseIdDTO> getByIds(List<String> ids) {
+        List<BaseIdDTO> resultList = new ArrayList<>(20);
+        if (CollectionUtils.isEmpty(ids)) {
+            List<SysAccountingCompanyEntity> allList = this.list();
+            for (SysAccountingCompanyEntity item : allList) {
+                BaseIdDTO dto = new BaseIdDTO();
+                dto.setId(item.getId());
+                dto.setName(item.getCompanyName());
+                resultList.add(dto);
+            }
+            return resultList;
+        }
+        List<SysAccountingCompanyEntity> list = this.listByIds(ids);
+        for (SysAccountingCompanyEntity item : list) {
+            BaseIdDTO dto = new BaseIdDTO();
+            dto.setId(item.getId());
+            dto.setName(item.getCompanyName());
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<BaseIdDTO> listAccountingCompany() {
+        List<SysAccountingCompanyEntity> list = lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled, Boolean.FALSE).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        List<BaseIdDTO> resultList = new ArrayList<>(list.size());
+        for (SysAccountingCompanyEntity item : list) {
+            BaseIdDTO dto = new BaseIdDTO();
+            dto.setId(item.getId());
+            dto.setName(item.getCompanyName());
+            resultList.add(dto);
+        }
+        return resultList;
     }
 
 

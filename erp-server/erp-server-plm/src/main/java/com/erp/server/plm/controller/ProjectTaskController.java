@@ -16,6 +16,7 @@ import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.TemplateTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,9 @@ public class ProjectTaskController extends BaseController {
 
     @Autowired
     private ProductInfoService productInfoService;
+
+    @Autowired
+    private TemplateTaskService templateTaskService;
 
     /**
      * 项目任务-分页列表
@@ -649,5 +653,27 @@ public class ProjectTaskController extends BaseController {
         return success();
     }
 
-}
+    /**
+     * 任务列表-查询模板任务
+     * @Author Luo_WG
+     * @Date 2023/3/20 10:17
+     * @param
+     * @return ApiResult
+     **/
+    @PostMapping(value = "/templateTaskList")
+    public ApiResult<PagingVO<TemplateTaskShowDTO>> templateTaskList(@RequestBody @Validated PagingDTO<TemplateTaskSearchDTO> dto) {
+        return success(templateTaskService.templateTaskList(dto));
+    }
 
+    /**
+     * 任务列表-模板引入任务
+     * @Author Luo_WG
+     * @Date 2023/3/20 10:17
+     * @param
+     * @return ApiResult
+     **/
+    @PostMapping(value = "/templateCiteTask")
+    public ApiResult templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
+        return success(templateTaskService.templateCiteTask(dto));
+    }
+}

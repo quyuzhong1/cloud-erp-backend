@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -205,5 +206,19 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95016);
         }
+    }
+
+    /**
+     * 根据产品id查询产品角色
+     * @Author Luo_WG
+     * @Date 2023/3/23 11:48
+     * @param productId 产品id
+     * @return java.util.List<com.erp.model.plm.entity.ProjectRoleEntity>
+     **/
+    @Override
+    public List<ProjectRoleEntity> getProjectRoleByProductId(String productId) {
+        LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
+        return this.list(queryWrapper);
     }
 }

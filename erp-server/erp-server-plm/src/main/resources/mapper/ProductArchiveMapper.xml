@@ -7,12 +7,12 @@
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,pi.project_status,
         pi.charge_name AS projectChargeName,p.create_time  productCreateTime,pa.archive_time
         FROM product_info p LEFT JOIN project_info pi
-        ON p.id=pi.product_id
+        ON p.id=pi.product_id AND pi.is_deleted = FALSE
         INNER JOIN product_archive pa
-        ON pa.product_id=p.id
-        <where>
+        ON pa.product_id=p.id AND pa.is_deleted = FALSE
+        WHERE p.is_deleted = FALSE
             <if test="params.categoryId!=null and params.categoryId!=''  ">
-                P.category_id=#{params.categoryId}
+                AND P.category_id=#{params.categoryId}
             </if>
             <if test="params.searchKeyword!=null and  params.searchKeyword!=''  ">
                 AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -28,7 +28,6 @@
             <if test="params.param!=null and params.param!=''  ">
                 AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             </if>
-        </where>
         ORDER BY pa.archive_time DESC
 
     </select>

@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -43,15 +45,13 @@ public class StartProjectDTO implements Serializable {
     /**
      * 开始时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date startTime;
+    private LocalDate startTime;
 
 
     /**
      * 结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date endTime;
+    private LocalDate endTime;
 
     //
     /**

@@ -9,4 +9,14 @@ package com.common.business.constant;
 public interface BusinessNoConstant {
 
     String BOM = "BOM";
+
+    String BH = "BH";
+
+    String PL = "PL";
+
+    String GYS = "GYS";
+
+    String CGJM = "CGJM";
+
+    String CGTJ = "CGTJ";
 }

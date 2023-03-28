@@ -5,8 +5,9 @@
     <select id="getSysTaskPhase" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
         SELECT ID,NAME, 1 AS isSys FROM sys_project_phase
         <where>
+            is_deleted = FALSE
             <if test="nameList !=null and nameList.size()>0">
-                name NOT IN
+                AND name NOT IN
                 <foreach collection="nameList" item="name" open="(" separator="," close=")">
                     #{name}
                 </foreach>
@@ -17,8 +18,9 @@
          SELECT id,name,create_time,update_time,is_project_approval FROM
           sys_project_phase
           <where>
+              is_deleted = FALSE
               <if test="params.searchKeyword !=null and params.searchKeyword!='' " >
-                   name LIKE concat('%',#{params.searchKeyword},'%')
+                   AND name LIKE concat('%',#{params.searchKeyword},'%')
               </if>
           </where>
 

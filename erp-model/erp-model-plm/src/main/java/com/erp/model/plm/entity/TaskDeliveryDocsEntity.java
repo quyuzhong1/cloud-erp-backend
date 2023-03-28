@@ -1,10 +1,12 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -16,20 +18,13 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("task_delivery_docs")
-public class TaskDeliveryDocsEntity implements Serializable {
-
-    /**
-     * id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class TaskDeliveryDocsEntity extends BaseEntity implements Serializable {
 
     /**
      * 产品id
      */
     @TableField("product_id")
     private String productId;
-
 
     /**
      * 文档名表id
@@ -49,23 +44,10 @@ public class TaskDeliveryDocsEntity implements Serializable {
     @TableField(value = "task_id")
     private String taskId;
 
-
     /**
      * 是否系统任务
      */
     @TableField(value = "is_sys")
     private Integer isSys;
 
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 }

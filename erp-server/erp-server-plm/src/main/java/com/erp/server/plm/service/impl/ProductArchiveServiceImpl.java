@@ -21,6 +21,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -131,12 +132,12 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
         }
         ProductArchiveEntity entity = getByProductId(productId);
         if (!Objects.isNull(entity)) {
-            entity.setArchiveTime(new Date());
+            entity.setArchiveTime(LocalDateTime.now());
             entity.setOperator(operator);
             return this.updateById(entity);
         } else {
             ProductArchiveEntity saveEntity = new ProductArchiveEntity();
-            saveEntity.setArchiveTime(new Date());
+            saveEntity.setArchiveTime(LocalDateTime.now());
             saveEntity.setProductId(productId);
             saveEntity.setOperator(operator);
             return this.save(saveEntity);
