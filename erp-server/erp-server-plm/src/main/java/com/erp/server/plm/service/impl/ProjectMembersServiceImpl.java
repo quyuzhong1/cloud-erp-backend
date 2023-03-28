@@ -696,4 +696,15 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     public List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String templateId, String roleName) {
         return baseMapper.listByRoleNames(roles, templateId, roleName);
     }
+
+    /**
+     * 根据产品id查询角色人员
+     * @Author Luo_WG
+     * @Date 2023/3/27 18:54
+     * @param productId productId
+     * @return java.util.List<com.erp.model.plm.dto.MemberPagingShowDTO>
+     **/
+    public List<MemberPagingShowDTO> listByMembers(String productId) {
+        return baseMapper.listByMembers(productId);
+    }
 }

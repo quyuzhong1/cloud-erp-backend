@@ -102,30 +102,22 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
             List<ProjectRoleEntity> copyList = new ArrayList<>();
             for (TemplateRoleEntity item : list) {
                 ProjectRoleEntity projectRoleEntity = projectRoleByProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
+                CopySourceDTO sourceDTO = new CopySourceDTO();
+                String id = IdWorker.getIdStr();
+                sourceDTO.setNewCreateId(id);
+                sourceDTO.setDataId(item.getId());
+
                 if (Objects.isNull(projectRoleEntity)) {
-                    CopySourceDTO sourceDTO = new CopySourceDTO();
                     ProjectRoleEntity entity = new ProjectRoleEntity();
                     BeanMapper.copy(item, entity);
                     entity.setProjectId(projectId);
                     entity.setProductId(productId);
-                    String id = IdWorker.getIdStr();
                     entity.setId(id);
-                    sourceDTO.setNewCreateId(id);
-                    sourceDTO.setDataId(item.getId());
                     copyList.add(entity);
-                    sourceList.add(sourceDTO);
                 } else {
-                    CopySourceDTO sourceDTO = new CopySourceDTO();
-                    ProjectRoleEntity entity = new ProjectRoleEntity();
-                    BeanMapper.copy(item, entity);
-                    entity.setProjectId(projectId);
-                    entity.setProductId(productId);
-                    String id = IdWorker.getIdStr();
-                    entity.setId(id);
-                    sourceDTO.setNewCreateId(id);
-                    sourceDTO.setDataId(item.getId());
-                    sourceList.add(sourceDTO);
+                    sourceDTO.setNewCreateId(projectRoleEntity.getId());
                 }
+                sourceList.add(sourceDTO);
             }
 
             if (CollectionUtils.isNotEmpty(copyList)) {

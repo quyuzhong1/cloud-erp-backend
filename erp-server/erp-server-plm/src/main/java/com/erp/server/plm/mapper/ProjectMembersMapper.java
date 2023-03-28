@@ -36,4 +36,6 @@ public interface ProjectMembersMapper extends BaseMapper<ProjectMembersEntity> {
      * @return java.util.List<com.erp.model.plm.dto.MemberPagingShowDTO>
      **/
     List<MemberPagingShowDTO> listByRoleNames(@Param("roles") List<String> roles, @Param("templateId") String templateId, @Param("roleName") String roleName);
+
+    List<MemberPagingShowDTO> listByMembers(@Param("productId") String productId);
 }

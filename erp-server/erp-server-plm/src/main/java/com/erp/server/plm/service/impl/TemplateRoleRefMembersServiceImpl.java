@@ -87,6 +87,7 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
                 RoleRefMemberEntity entity = new RoleRefMemberEntity();
                 BeanMapper.copy(item, entity);
                 entity.setProductId(productId);
+
                 if(!Objects.isNull(roleSource)){
                     entity.setRoleId(roleSource.getNewCreateId());
                 } else {
@@ -97,6 +98,7 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
                 } else {
                     continue;
                 }
+
                 entity.setId(IdWorker.getIdStr());
                 copyList.add(entity);
             }
