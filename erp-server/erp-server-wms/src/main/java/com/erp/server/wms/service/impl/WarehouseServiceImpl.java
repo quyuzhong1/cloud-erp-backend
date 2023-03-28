@@ -136,7 +136,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String name = dto.getName();
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(code, name);
-        BeanMapper.copy(warehouse, dto);
+        BeanMapper.copy(dto,warehouse);
         Boolean result = this.updateById(warehouse);
         if (result) {
             return warehouse;

@@ -138,8 +138,16 @@ public class PurchasePriceDTO implements Serializable {
 
         /**
          * 表id
+         * 对应
+         * purchasePriceId
          */
         private String id;
+
+
+        /**
+         * 采购价目详情id
+         */
+        private String purchasePriceDetailId;
 
 
         /**
@@ -196,7 +204,6 @@ public class PurchasePriceDTO implements Serializable {
          * 单据状态名
          */
         private String approveStatusName;
-
 
 
         /**
@@ -300,7 +307,6 @@ public class PurchasePriceDTO implements Serializable {
         private List<LocalDate> createTimeList;
 
 
-
         /**
          * 创建人id 集合
          */
@@ -308,9 +314,6 @@ public class PurchasePriceDTO implements Serializable {
 
 
     }
-
-
-
 
 
 }

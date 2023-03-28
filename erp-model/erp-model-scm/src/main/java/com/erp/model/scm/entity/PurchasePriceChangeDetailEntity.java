@@ -98,7 +98,7 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private BigDecimal taxRate;
 
     /**
-     * 详采购家门详情表
+     * 详采购价目详情表
      */
     @TableField("purchase_price_detail_id")
     private BigDecimal purchasePriceDetailId;

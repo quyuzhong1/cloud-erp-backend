@@ -4,10 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * @author Lambda
@@ -21,69 +21,56 @@ import java.util.Date;
 public class PurchasePriceChangeDetailDTO implements Serializable {
 
 
-    /**
-     * sku id
-     */
-    private String skuId;
+
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        @NotBlank(message = "采购价目详情表id 不能为空")
+        private String purchasePriceDetailId;
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDate;
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
 
 
-    @NotBlank(message = "采购价目详情表id 不能为空")
-    private String purchasePriceDetailId;
-
-    /**
-     * sku no
-     */
-    private String skuNo;
-
-    /**
-     * 产品名称
-     */
-    private String productName;
-
-    /**
-     * 采购交期
-     */
-    private Integer deliveryDate;
-
-    /**
-     * 最小数量
-     */
-    private Integer minQty;
-
-    /**
-     * 最大数量
-     */
-    private Integer maxQty;
-
-    /**
-     * 币种
-     */
-    private String currency;
-
-    /**
-     * 币种符号
-     */
-    private String currencyCode;
-
-    /**
-     * 含税单价
-     */
-    private BigDecimal taxPrice;
-
-    /**
-     * 生效时间
-     */
-    private LocalDate effectiveDate;
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
 
 
-    /**
-     * 失效时间
-     */
-    private Date expireDate;
+        /**
+         * 币种
+         */
+        private String currency;
 
-    /**
-     * 税率
-     */
-    private BigDecimal taxRate;
+        /**
+         * 含税单价
+         */
+        @NotNull(message = "含税单价不能为空")
+        private BigDecimal taxPrice;
+
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效日期不能为空")
+        private LocalDate effectiveDate;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+    }
 
 }

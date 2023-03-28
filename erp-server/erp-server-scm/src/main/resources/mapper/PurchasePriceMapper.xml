@@ -21,7 +21,8 @@
         ppd.tax_rate*100 AS taxRate ,
         ppd.effective_date,
         pp.purchase_org_id,
-        pp.purchase_org_name
+        pp.purchase_org_name,
+        ppd.id AS purchasePriceDetailId
         FROM purchase_price_detail ppd
         LEFT JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id

@@ -2,6 +2,7 @@ package com.erp.model.scm.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,25 +47,25 @@ public class PurchasePriceChangeEntity extends BaseEntity<PurchasePriceChangeEnt
      * 审核状态
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
     /**
-     * 报价日期
+     * 调价日期
      */
-    @TableField("quoted_date")
-    private LocalDate quotedDate;
+    @TableField("adjust_date")
+    private LocalDate adjustDate;
 
     /**
-     * 定价人id
+     * 调价人id
      */
-    @TableField("pricing_user_id")
-    private String pricingUserId;
+    @TableField("adjust_user_id")
+    private String adjustUserId;
 
     /**
      * 定价人
      */
-    @TableField("pricing_user_name")
-    private String pricingUserName;
+    @TableField("adjust_user_name")
+    private String adjustUserName;
 
     /**
      * 采购组织

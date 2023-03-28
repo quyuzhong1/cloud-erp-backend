@@ -9,6 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,8 +51,9 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO dto) {
-        return success();
+    public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+        PurchasePriceChangeEntity priceChange = purchasePriceChangeService.add(dto);
+        return priceChange != null ? success() : failure();
     }
 
 

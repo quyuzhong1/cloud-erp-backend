@@ -1,10 +1,10 @@
 package com.erp.model.scm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -22,55 +22,66 @@ public class PurchasePriceChangeDTO implements Serializable {
 
 
     /**
-     * 表id
+     * 添加采购价目变更
      */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO{
+
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 采购价目表id
+         */
+        @NotBlank(message = "采购价目表id 不能为空")
+        private String purchasePriceId;
+
+        /**
+         * 调价日期
+         */
+        @NotNull(message = "调价日期不能为空")
+        private LocalDate adjustDate;
+
+        /**
+         * 调价人id
+         */
+        private String adjustUserId;
 
 
-    /**
-     * 供应商表id
-     */
-    @NotBlank(message = "供应商不能为空")
-    private String supplierId;
+        /**
+         * 采购组织
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
 
-    /**
-     * 采购价目表id
-     */
-    @NotBlank(message = "采购价目表id 不能为空")
-    private String purchasePriceId;
-    /**
-     * 报价日期
-     */
-    private LocalDate quotedDate;
-
-    /**
-     * 报价人id
-     */
-    private String pricingUserId;
-
-    /**
-     * 报价人
-     */
-    private String pricingUserName;
-
-    /**
-     * 采购组织
-     */
-    private String purchaseOrgId;
-
-    /**
-     * 采购组织名
-     */
-    private String purchaseOrgName;
+        /**
+         * 报价明细
+         */
+        private List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList;
 
 
-    /**
-     * 提交类型
-     */
-    @StateEnumValue(strValues = {"submitAudit", "create"}, message = "提交类型有误")
-    private String submitType;
-    /**
-     * 报价明细
-     */
-    private List<PurchasePriceChangeDetailDTO> purchasePriceChangeDetailList;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

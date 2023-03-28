@@ -337,7 +337,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             //当前阶段
             String currentPhase = item.getCurrentPhase();
             String currentPhaseName = SupplierPhaseEnum.getPhaseName(currentPhase);
-            item.setCurrentPhase(currentPhaseName);
+            item.setCurrentPhaseName(currentPhaseName);
 
             //目标阶段
             String targetPhase = item.getTargetPhase();
