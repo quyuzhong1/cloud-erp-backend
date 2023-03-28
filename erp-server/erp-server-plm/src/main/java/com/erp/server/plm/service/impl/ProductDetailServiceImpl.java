@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -36,7 +37,6 @@ import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -1837,10 +1837,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<TaskRefSkuConfigEntity> configList = taskRefSkuConfigService.getByTaskIds(taskIdList);
 
             if (CollectionUtils.isNotEmpty(configList)) {
-                long jsonCount = configList.stream().filter(obj -> StringUtils.isNotBlank(obj.getFieldJson())).count();
-                if (jsonCount > 0) {
+                List<TaskRefSkuConfigEntity> hasConfigList = configList.stream().filter(obj -> StringUtils.isNotBlank(obj.getFieldJson())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(hasConfigList)) {
 
-                    List<String> configTaskIds = configList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+                    List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
 
                     //验证关联任务是否已全部完成
                     long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
