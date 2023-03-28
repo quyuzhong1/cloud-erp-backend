@@ -736,20 +736,22 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      **/
     @Override
     public PagingVO<TemplateTaskShowDTO> templateTaskList(PagingDTO<TemplateTaskSearchDTO> dto) {
-
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        String docsNameStr = null;
+                Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         TemplateTaskSearchDTO params = dto.getParams();
         if (StringUtils.isBlank(params.getTemplateId())) {
             throw new ServiceException(ApiError.ERROR_95157);
         }
-        String chargeNameStr = "";
-        String docsNameStr = "";
-        if (dto.getParams().getChargeName() != null && dto.getParams().getChargeName().size() > 0) {
-            chargeNameStr = StringUtils.strip(dto.getParams().getChargeName().toString(), "[]");
+        String chargeNameStr = StringUtils.join(params.getChargeName(), ",");;
+        List<String> docsName = params.getDocsName();
+        if (CollectionUtils.isEmpty(docsName)) {
+            docsName.add(params.getTemplateId());
         }
+        List<TemplateTaskDocsNameEntity> docsNamesById = templateTaskDocsNameService.getDocsNamesById(params.getDocsName());
+        if (CollectionUtils.isNotEmpty(docsNamesById)) {
+            List<String> collect = docsNamesById.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
+            docsNameStr = StringUtils.join(collect, ",");
 
-        if (dto.getParams().getDocsName() != null && dto.getParams().getDocsName().size() > 0) {
-            docsNameStr = StringUtils.strip(dto.getParams().getDocsName().toString(), "[]");
         }
         IPage<TemplateTaskShowDTO> paging = baseMapper.templateTaskList(query, params, chargeNameStr, docsNameStr);
         return new PagingVO(paging);

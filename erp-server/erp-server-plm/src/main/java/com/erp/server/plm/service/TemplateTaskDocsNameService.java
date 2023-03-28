@@ -61,4 +61,13 @@ public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNa
      * @return java.util.List<com.erp.model.plm.entity.TemplateTaskDocsNameEntity>
      */
     List<TemplateTaskDocsNameEntity> getByTemplateIds(List<String> templateIds);
+
+    /**
+     * 根据文档id查询模板文档信息
+     * @Author Luo_WG
+     * @Date 2023/3/28 10:58
+     * @param ids
+     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskDocsNameEntity>
+     **/
+    List<TemplateTaskDocsNameEntity> getDocsNamesById(List<String> ids);
 }
