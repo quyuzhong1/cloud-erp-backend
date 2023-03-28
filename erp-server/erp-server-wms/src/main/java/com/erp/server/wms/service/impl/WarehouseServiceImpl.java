@@ -227,8 +227,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
+        if(CollectionUtils.isEmpty(list)){
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus())).count();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
