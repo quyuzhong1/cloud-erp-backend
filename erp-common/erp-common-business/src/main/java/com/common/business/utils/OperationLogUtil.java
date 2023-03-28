@@ -48,8 +48,6 @@ public class OperationLogUtil {
         Iterator<Map.Entry<String, Object>> oldIterator = oldMap.size() == 0 ? null : oldMap.entrySet().iterator();
         Iterator<Map.Entry<String, Object>> newIterator = newMap.size() == 0 ? null : newMap.entrySet().iterator();
 
-
-
         //旧数据时记录
         if (ObjectUtils.isNotEmpty(oldIterator)) {
             while (oldIterator .hasNext()){
@@ -85,10 +83,9 @@ public class OperationLogUtil {
         if (ObjectUtils.isEmpty(value)) {
             return;
         }
-
         //判断value值的类型
-        int objectType = TransitionUtil.getObjectType(value);
-        if (objectType == 40) {//判断是否为List
+        if (value instanceof List) {
+            //判断是否为List
             Field declaredField = null;
             String typeName ="";
             try {
@@ -104,13 +101,14 @@ public class OperationLogUtil {
             List<Object> list = TransitionUtil.transitionType(value, List.class);
             List<String> stringList = new ArrayList<>();
             for (int i = 0; list.size() > i;i++) {
-                int objectType1 = TransitionUtil.getObjectType(list.get(i));
-                if (objectType1 == 30) {//判断是否是Map
-                    Map map = (Map) list.get(i);
+                Object obj = list.get(i);
+                if (obj instanceof Map) {
+                    //判断是否是Map
+                    Map map = (Map) obj;
                     Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
                     while (iterator .hasNext()){
                         newKey = oldKey;
-                        Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+                        Map.Entry entry  = iterator.next();
                         String k =  entry.getKey().toString();
                         Object v = entry.getValue();
                         if (!( v instanceof List)) {
@@ -118,19 +116,21 @@ public class OperationLogUtil {
                         }
                         doOpValue(newKey,v,resultMap,object,typeName,k);
                     }
-                } else if (objectType == 10) {//判断是否是日期
-                    Date date = (Date) list.get(i);
+                } else if (obj instanceof Date) {
+                    //判断是否是日期
+                    Date date = (Date) obj;
                     String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
                     stringList.add(newValue);
                 } else {
-                    String newValue = String.valueOf(list.get(i));
+                    String newValue = String.valueOf(obj);
                     stringList.add(newValue);
                 }
             }
             if (CollectionUtils.isNotEmpty(stringList)) {
                 resultMap.put(newKey,new Pair<>(type,String.join(",",stringList)));
             }
-        } else if (objectType == 30) {//判断是否为Map
+        } else if (value instanceof Map) {
+            //判断是否为Map
             Map map = TransitionUtil.transitionType(value, Map.class);
             try {
                 Field declaredField = object.getClass().getDeclaredField(newKey);
@@ -148,11 +148,13 @@ public class OperationLogUtil {
                 newKey = newKey.concat(".").concat(k);
                 doOpValue(newKey,v,resultMap,object,type,k);
             }
-        } else if (objectType == 10) {//判断是否是日期
+        } else if (value instanceof Date) {
+            //判断是否是日期
             Date date = (Date) value;
             String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
             resultMap.put(newKey,new Pair<>(type,newValue));
-        }  else if (objectType == 50) {//判断是否是BigDecimal类型
+        }  else if (value instanceof BigDecimal) {
+            //判断是否是BigDecimal类型
             BigDecimal bd = (BigDecimal)value;
             resultMap.put(newKey,new Pair<>(type,bd.stripTrailingZeros().toPlainString()));
         } else {

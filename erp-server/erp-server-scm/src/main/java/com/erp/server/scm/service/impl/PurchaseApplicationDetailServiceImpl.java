@@ -8,13 +8,16 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseApplicationDetailMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -39,6 +42,9 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
+
     @Override
     public void add(List<PurchaseApplicationDetailDTO.AddDTO> details, String purchaseApplicationId) {
         if (CollectionUtils.isEmpty(details)) {
@@ -58,6 +64,11 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchaseApplicationDetailEntity> oldList = this.listByPurchaseApplicationId(purchaseApplicationId);
         List<String> deleteIds = getDeleteIds(details, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
+
+            List<PurchaseApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getPurchaseApplicationId(), obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个采购申请明细【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"修改操作");
             this.removeByIds(deleteIds);
         }
         List<PurchaseApplicationDetailEntity> newList = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
@@ -142,6 +153,14 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             //收料组织名称
             String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
             entity.setReceiveOrgName(receiveOrgName);
+
+            //操作日志
+            if (StringUtils.isBlank(entity.getId())) {
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"修改操作");
+            } else {
+                PurchaseApplicationDetailEntity old = this.getById(entity.getId());
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"","");
+            }
         }
 
 

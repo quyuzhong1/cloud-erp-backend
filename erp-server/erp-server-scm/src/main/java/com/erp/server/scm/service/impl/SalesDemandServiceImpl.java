@@ -175,13 +175,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         log.info("备货申请单修改，id=【{}】", dto.getId());
 
         //添加日志
-        SalesDemandDTO.UpdateDTO old = new SalesDemandDTO.UpdateDTO();
-        SalesDemandDTO.ViewDTO view = this.view(dto.getId());
-        BeanMapperUtils.copy(view,old);
-        dto.setApplyDeptName(entity.getApplyDeptName());
-        dto.setShopName(entity.getShopName());
-        //操作日志
-        moduleOperateLogService.addModuleOperateLogByObj(old,dto,ModuleTypeEnum.SALES_DEMAND.getCode(),entity.getId(),"","");
+        SalesDemandEntity old = this.getById(dto.getId());
+        moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.SALES_DEMAND.getCode(),entity.getId(),"","");
         //更新主表数据
         this.updateById(entity);
         //更新明细数据

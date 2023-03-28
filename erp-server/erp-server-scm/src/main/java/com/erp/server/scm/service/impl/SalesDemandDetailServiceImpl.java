@@ -4,12 +4,15 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SalesDemandDetailMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesDemandDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -30,6 +33,8 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     @Override
     public void add(List<SalesDemandDetailDTO.AddDTO> details, String salesDemandId) {
@@ -37,17 +42,8 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             return;
         }
         List<SalesDemandDetailEntity> list = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
-        //仓库信息
-        List<String> destWarehouseIdList = list.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
 
-        for (SalesDemandDetailEntity entity : list) {
-            entity.setSalesDemandId(salesDemandId);
-            if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-                entity.setDestWarehouseName(warehouseName);
-            }
-        }
+        doOpHandleDataId(list,salesDemandId);
         this.saveBatch(list);
     }
 
@@ -60,19 +56,15 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<SalesDemandDetailEntity> oldList = this.listBySalesDemandId(salesDemandId);
         List<String> deleteIds = getDeleteIds(details, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<SalesDemandDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getSalesDemandId(), obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个备货申请明细【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"修改操作");
             this.removeByIds(deleteIds);
         }
         List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
-        //仓库信息
-        List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
-        for (SalesDemandDetailEntity entity : newList) {
-            entity.setSalesDemandId(salesDemandId);
-            if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-                entity.setDestWarehouseName(warehouseName);
-            }
-        }
+
+        doOpHandleDataId(newList,salesDemandId);
         this.saveOrUpdateBatch(newList);
     }
 
@@ -103,6 +95,30 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     @Override
     public SalesDemandDetailEntity getBySalesDemandIdAndSkuId(String salesDemandId, String skuId) {
         return lambdaQuery().eq(SalesDemandDetailEntity::getSalesDemandId,salesDemandId).eq(SalesDemandDetailEntity::getSkuId,skuId).one();
+    }
+
+    /**
+     * 处理明细中的数据id
+     */
+    private void doOpHandleDataId (List<SalesDemandDetailEntity> newList, String salesDemandId) {
+
+        //仓库信息
+        List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+        for (SalesDemandDetailEntity entity : newList) {
+            entity.setSalesDemandId(salesDemandId);
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
+                entity.setDestWarehouseName(warehouseName);
+            }
+            //操作日志
+            if (StringUtils.isBlank(entity.getId())) {
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"修改操作");
+            } else {
+                SalesDemandDetailEntity old = this.getById(entity.getId());
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"","");
+            }
+        }
     }
 
 }
