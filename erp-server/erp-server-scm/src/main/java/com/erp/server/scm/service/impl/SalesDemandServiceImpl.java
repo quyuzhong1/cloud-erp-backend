@@ -107,7 +107,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public PagingVO<SalesDemandDTO.ListDTO> paging(PagingDTO<SalesDemandDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<SalesDemandDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        IPage<SalesDemandDTO.ListDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
         //清空明细数据
         List<SalesDemandDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {

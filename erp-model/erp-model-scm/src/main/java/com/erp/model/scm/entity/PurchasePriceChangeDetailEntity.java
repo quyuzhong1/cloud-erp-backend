@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -83,13 +83,13 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
      * 生效时间
      */
     @TableField("effective_date")
-    private Date effectiveDate;
+    private LocalDate effectiveDate;
 
     /**
      * 失效时间
      */
     @TableField("expire_date")
-    private Date expireDate;
+    private LocalDate expireDate;
 
     /**
      * 税率
@@ -104,8 +104,13 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private BigDecimal purchasePriceDetailId;
 
 
-
-
+    /**
+     * 是否禁用
+     * true 禁用
+     * false 启用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
 
     @Override

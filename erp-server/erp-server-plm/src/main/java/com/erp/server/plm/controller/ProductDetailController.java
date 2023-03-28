@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.RequestPermissions;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -107,8 +110,7 @@ ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:15
      **/
     @PostMapping("/list")
-    //@RequestPermissions("plm:product:detail:list")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);

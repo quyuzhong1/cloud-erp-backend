@@ -154,4 +154,18 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 到货状态列表
+     *
+     * @return
+     */
+    @GetMapping("/arrivalStatus/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listArrivalStatus() {
+        List<ArrivalStatusEnum> list = Arrays.asList(ArrivalStatusEnum.values());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
 }

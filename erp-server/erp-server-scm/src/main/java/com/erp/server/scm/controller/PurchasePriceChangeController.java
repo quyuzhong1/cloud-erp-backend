@@ -3,12 +3,12 @@ package com.erp.server.scm.controller;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import org.springframework.validation.annotation.Validated;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 采购价目管理
+ * 采购价目变更管理
  *
  * @author Lambda
  * @since 2023-03-15
@@ -40,8 +40,9 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchasePriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
-        return success();
+    public ApiResult<PagingVO<PurchasePriceChangeDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {
+        PagingVO<PurchasePriceChangeDTO.PagingViewDTO> pagingVO = purchasePriceChangeService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
@@ -56,16 +57,67 @@ public class PurchasePriceChangeController extends BaseController {
         return priceChange != null ? success() : failure();
     }
 
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+        Boolean result = purchasePriceChangeService.addAndSubmit(dto);
+        return result == true ? success() : failure();
+    }
+
 
     /**
-     * 采购变更详情
+     * 采购价目变更详情
      *
      * @param dto
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<PurchasePriceChangeDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success();
+    public ApiResult<PurchasePriceChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        PurchasePriceChangeDTO.ViewDTO view = purchasePriceChangeService.view(dto.getId());
+        return success(view);
+    }
+
+    /**
+     * 修改采购价目变更
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+        PurchasePriceChangeEntity view = purchasePriceChangeService.updatePurchasePriceChange(dto);
+        return view == null ? success() : failure();
+    }
+
+
+    /**
+     * 删除采购价目
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceChangeService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 采购价目变更提交审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds());
+        return result == true ? success() : failure();
     }
 
 
@@ -77,6 +129,22 @@ public class PurchasePriceChangeController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = purchasePriceChangeService.approve(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-23 17:57
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceChangeService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
     }
 }

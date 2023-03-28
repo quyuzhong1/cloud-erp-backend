@@ -294,7 +294,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
             attachmentService.deleteByBusinessIds(ids);
         }
-        return null;
+        return result;
     }
 
 
@@ -534,7 +534,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             list.forEach(s -> s.setApproveStatus(statusEnum));
             return this.updateBatchById(list);
         }
-        return true;
+        return false;
     }
 
 

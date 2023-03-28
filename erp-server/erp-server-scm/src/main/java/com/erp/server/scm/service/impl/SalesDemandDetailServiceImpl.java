@@ -14,6 +14,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<SalesDemandDetailDTO.UpdateDTO> details,String salesDemandId) {
         if (details == null) {
             details = new ArrayList<>();
@@ -59,7 +61,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             List<SalesDemandDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getSalesDemandId(), obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个备货申请明细【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"修改操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
@@ -75,7 +77,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
                 map(SalesDemandDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SalesDemandDetailEntity::getId).collect(Collectors.toList());
-        return newIds.stream().filter(s -> !oldIds.contains(s)).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**
@@ -113,10 +115,10 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             }
             //操作日志
             if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"修改操作");
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"编辑操作");
             } else {
                 SalesDemandDetailEntity old = this.getById(entity.getId());
-                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"","");
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
     }

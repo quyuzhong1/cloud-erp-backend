@@ -39,6 +39,15 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      * @return List<PurchaseApplicationDetailEntity>
      */
     List<PurchaseApplicationDetailEntity> listByPurchaseApplicationId(String purchaseApplicationId);
+
+    /**
+     * @description: 根据采购申请主表ids查询明细
+     * @author Will
+     * @date: 2023/3/28 15:48
+     * @param ids
+     * @return List<PurchaseApplicationDetailEntity>
+     */
+    List<PurchaseApplicationDetailEntity> listByPurchaseApplicationIds(List<String> ids);
     /**
      * @description: 删除
      * @author Will
@@ -63,4 +72,6 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      * @return List<PurchaseApplicationDetailEntity> 
      */
     List<PurchaseApplicationDetailEntity> listCreatePurchaseOrderDetail(List<String> purchaseApplicationIds);
+
+
 }

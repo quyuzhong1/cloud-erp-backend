@@ -137,7 +137,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         //审核不通过
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
 
-
         List<String> statusList = new ArrayList<>(2);
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
@@ -146,8 +145,8 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //启动流程 todo
-
-        return true;
+        Boolean result = updateApproveStatus(list, ApproveStatusEnum.APPROVE_ING.getStatus());
+        return result;
     }
 
 
@@ -364,7 +363,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             list.forEach(s -> s.setApproveStatus(approveStatus));
             return this.updateBatchById(list);
         }
-        return true;
+        return false;
     }
 
 

@@ -46,6 +46,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseApplicationExcelListener;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -169,7 +170,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -259,6 +260,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByPurchaseApplicationIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        //只有未生成的单才能反审核
+        long createCount = detailList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
+        if (createCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98030);
+        }
 
         log.info("采购申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
         //取回流程 TODO
@@ -323,9 +333,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Transactional(rollbackFor = Exception.class)
     public Boolean generatePurchaseOrder(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
         List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> list = dto.getList();
+
+        List<String> ids = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getId).collect(Collectors.toList());
         //主表数据
-        PurchaseApplicationEntity entity = this.getById(list.get(0).getId());
-        if (ObjectUtils.isEmpty(entity)) {
+        List<PurchaseApplicationEntity> mainList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(mainList)) {
             throw new ServiceException(ApiError.ERROR_98016);
         }
 
@@ -346,11 +358,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             //本次采购数量
             Integer thisPurchaseQty = list.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(detail.getId())).map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-            
+
+            PurchaseApplicationEntity entity = mainList.stream().filter(obj -> obj.getId().equals(detail.getPurchaseApplicationId())).findFirst().orElse(null);
+
             //申请数量
             Integer applyQty = detail.getApplyQty();
             if (thisPurchaseQty > (applyQty - purchaseQty)) {
-                throw new ServiceException(new ApiResult(1,String.format("【%s】采购数量不能大于%s",detail.getSkuNo(),applyQty - purchaseQty)));
+                throw new ServiceException(new ApiResult(1,String.format("采购申请单【%s】下级SKU【%s】采购数量不能大于%s",entity.getCode(),detail.getSkuNo(),applyQty - purchaseQty)));
             } else if (thisPurchaseQty == (applyQty - purchaseQty)) {
                 detail.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
             } else {
@@ -373,6 +387,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> value = entry.getValue();
             //采购订单主表数据
             PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
+            PurchaseApplicationEntity entity = mainList.stream().filter(obj -> obj.getId().equals(value.get(0).getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98016);
+            }
             addDTO.setPurchaseUserId(entity.getApproveUserId());
             addDTO.setPurchaseDeptId(entity.getApplyDeptId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
