@@ -208,6 +208,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         PurchaseApplicationDTO.UpdateDTO old = new PurchaseApplicationDTO.UpdateDTO();
         PurchaseApplicationDTO.ViewDTO view = this.view(dto.getId());
         BeanMapperUtils.copy(view,old);
+        dto.setApplyDeptName(entity.getApplyDeptName());
         //操作日志
         moduleOperateLogService.addModuleOperateLogByObj(old,dto,ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"","");
         //更新主表数据

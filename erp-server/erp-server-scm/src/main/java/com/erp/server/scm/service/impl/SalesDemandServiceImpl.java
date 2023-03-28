@@ -166,7 +166,6 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public Boolean update(SalesDemandDTO.UpdateDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto,entity);
-
         List<SalesDemandDetailDTO.UpdateDTO> details = dto.getDetails();
         //校验明细是否有重复sku
         checkUpdateDetailsRepeatSku(details,dto.getId());
@@ -174,9 +173,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),dto.getShopId(),entity);
 
         log.info("备货申请单修改，id=【{}】", dto.getId());
+
+        //添加日志
         SalesDemandDTO.UpdateDTO old = new SalesDemandDTO.UpdateDTO();
         SalesDemandDTO.ViewDTO view = this.view(dto.getId());
         BeanMapperUtils.copy(view,old);
+        dto.setApplyDeptName(entity.getApplyDeptName());
+        dto.setShopName(entity.getShopName());
         //操作日志
         moduleOperateLogService.addModuleOperateLogByObj(old,dto,ModuleTypeEnum.SALES_DEMAND.getCode(),entity.getId(),"","");
         //更新主表数据
