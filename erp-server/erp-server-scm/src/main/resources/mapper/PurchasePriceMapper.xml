@@ -9,7 +9,7 @@
         pp.code,
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
-        pp.create_time,
+        pp.create_time AS createTime,
         pp.supplier_id,
         (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
         ppd.sku_id,
@@ -22,7 +22,8 @@
         ppd.effective_date,
         pp.purchase_org_id,
         pp.purchase_org_name,
-        ppd.id AS purchasePriceDetailId
+        ppd.id AS purchasePriceDetailId,
+        ppd.disabled
         FROM purchase_price_detail ppd
         LEFT JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id
@@ -55,7 +56,7 @@
         </if>
 
         <if test="params.createTimeList!=null and params.createTimeList.size>0">
-            AND pp.expire_date between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+            AND pp.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
         </if>
         <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
             AND pp.create_user_id IN
@@ -65,8 +66,16 @@
         </if>
         <if test="params.productName !=null and params.productName !=''">
             AND
-            ppd.name LIKE concat('%', #{params.productName} ,'%')
+            ppd.product_name LIKE concat('%', #{params.productName} ,'%')
         </if>
+
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC
     </select>
 
     <select id="getExport" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">

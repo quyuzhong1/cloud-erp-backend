@@ -125,15 +125,22 @@
         select
         pa.id,
         pa.code,
-        sd.approve_status as approveStatus,
+        pa.approve_status as approveStatus,
         case pa.approve_status
             when 'waitSubmit' then '待提交'
             when 'approveIng' then '审核中'
             when 'reject' then '审核不通过'
             when 'approve' then '已审核'
         end as approveStatusName,
-        pa.is_first_mass_product as isFirstMassProduct,
-        pad.create_po_type as createPoType,
+        case pa.is_first_mass_product
+            when true then '是'
+            when false then '否'
+        end as isFirstMassProduct,
+        case pad.create_po_type
+            when '0' then '未生成'
+            when '1' then '部分生成'
+            when '2' then '已生成'
+        end as createPoTypeName,
         pad.sku_no as skuNo,
         pad.product_name as productName,
         pad.plan_delivery_date as planDeliveryDate,

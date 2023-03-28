@@ -77,7 +77,7 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult view(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<PurchasePriceDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         PurchasePriceDTO.ViewDTO view = purchasePriceService.view(dto.getId());
         return  success(view);
     }

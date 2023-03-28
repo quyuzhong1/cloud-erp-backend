@@ -9,11 +9,12 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +44,11 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     private PurchasePriceDetailService purchasePriceDetailService;
 
     @Resource
-    private PlmTaskFeign plmTaskFeign;
+    private PurchasePriceHistoryService purchasePriceHistoryService;
 
     @Resource
-    private SysUserFeign sysUserFeign;
+    private PlmTaskFeign plmTaskFeign;
+
 
     /**
      * 检查区间报价是否重叠
@@ -172,11 +174,70 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
 
+    /**
+     * 审核通过后 需要修改采购价目详情表的数据
+     *
+     * @param purchasePriceChangeIds
+     * @return void
+     * @author yl
+     * @date 2023-03-28 19:06
+     */
+    @Override
+    public void updatePurchasePriceDetail(List<String> purchasePriceChangeIds) {
+        //获取到对应数据
+        List<PurchasePriceChangeDetailEntity> list = this.getEntityByPriceChangeIds(purchasePriceChangeIds);
+        List<String> purchasePriceDetailIdList = list.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
+        //获取采购价目详情集合
+        List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIdList);
+        List<PurchasePriceHistoryEntity> historyList = new ArrayList<>(purchasePriceDetailList.size());
+        List<PurchasePriceDetailEntity> updateList = new ArrayList<>(purchasePriceDetailList.size());
+        for (PurchasePriceDetailEntity item : purchasePriceDetailList) {
+            //采购详情表id
+            String priceDetailId = item.getId();
+            //更改的价目
+            PurchasePriceChangeDetailEntity changeDetail = list.stream().filter(P -> P.getPurchasePriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
+            if (changeDetail != null) {
+                //历史的
+                PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
+                BeanMapper.copy(item, history);
+                historyList.add(history);
+                item.setTaxRate(changeDetail.getTaxRate());
+                item.setExpireDate(changeDetail.getExpireDate());
+                item.setProductName(changeDetail.getProductName());
+                item.setSkuNo(changeDetail.getSkuNo());
+                item.setSkuId(changeDetail.getSkuId());
+                item.setTaxPrice(changeDetail.getTaxPrice());
+                item.setDeliveryDate(changeDetail.getDeliveryDate());
+                item.setCurrency(changeDetail.getCurrency());
+                item.setEffectiveDate(changeDetail.getEffectiveDate());
+                item.setMinQty(changeDetail.getMinQty());
+                item.setMaxQty(changeDetail.getMaxQty());
+                updateList.add(item);
+            }
+        }
+
+        //修改价目详情
+        purchasePriceDetailService.updateBatchById(updateList);
+
+        //添加历史
+        purchasePriceHistoryService.saveBatch(historyList);
+
+    }
+
+
     private List<PurchasePriceChangeDetailEntity> getEntityByPriceChangeId(String priceChangeId) {
         LambdaQueryWrapper<PurchasePriceChangeDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId, priceChangeId);
         return this.list(queryWrapper);
+    }
 
+    private List<PurchasePriceChangeDetailEntity> getEntityByPriceChangeIds(List<String> priceChangeIds) {
+        if (CollectionUtils.isEmpty(priceChangeIds)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<PurchasePriceChangeDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId, priceChangeIds);
+        return this.list(queryWrapper);
     }
 
 

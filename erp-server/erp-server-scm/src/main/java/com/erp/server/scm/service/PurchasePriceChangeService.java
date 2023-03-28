@@ -1,7 +1,9 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 
@@ -90,4 +92,13 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return java.lang.Boolean
      */
     Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 分页获取采购价目变更数据
+     * @author yl
+     * @date 2023-03-28 17:15
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.PurchasePriceChangeDTO.PagingViewDTO>
+     */
+    PagingVO<PurchasePriceChangeDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto);
 }

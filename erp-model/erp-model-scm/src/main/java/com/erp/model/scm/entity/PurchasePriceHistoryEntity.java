@@ -9,21 +9,21 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Date;
 
 /**
  * <p>
- * 产品采购变更价 明细表
+ * 
  * </p>
  *
  * @author Lambda
- * @since 2023-03-16
+ * @since 2023-03-28
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_price_change_detail")
-public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceChangeDetailEntity> {
+@TableName("purchase_price_history")
+public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryEntity> {
 
     /**
      * sku 表id
@@ -32,22 +32,16 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private String skuId;
 
     /**
-     * 采购价表采购变更表 id
+     * 采购价表 id
      */
-    @TableField("purchase_price_change_id")
-    private String purchasePriceChangeId;
+    @TableField("purchase_price_id")
+    private String purchasePriceId;
 
     /**
      * sku no
      */
     @TableField("sku_no")
     private String skuNo;
-
-    /**
-     * 采购交期
-     */
-    @TableField("delivery_date")
-    private Integer deliveryDate;
 
     /**
      * sku 名
@@ -80,16 +74,10 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private BigDecimal taxPrice;
 
     /**
-     * 生效时间
-     */
-    @TableField("effective_date")
-    private LocalDate effectiveDate;
-
-    /**
      * 失效时间
      */
     @TableField("expire_date")
-    private LocalDate expireDate;
+    private Date expireDate;
 
     /**
      * 税率
@@ -98,20 +86,41 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private BigDecimal taxRate;
 
     /**
-     * 详采购价目详情表
+     * 交期
      */
-    @TableField("purchase_price_detail_id")
-    private String purchasePriceDetailId;
-
+    @TableField("delivery_date")
+    private Integer deliveryDate;
 
     /**
-     * 是否禁用
-     * true 禁用
-     * false 启用
+     * 生效时间
      */
-    @TableField("disabled")
-    private Boolean disabled;
+    @TableField("effective_date")
+    private Date effectiveDate;
 
+
+    public static final String SKU_ID = "sku_id";
+
+    public static final String PURCHASE_PRICE_ID = "purchase_price_id";
+
+    public static final String SKU_NO = "sku_no";
+
+    public static final String PRODUCT_NAME = "product_name";
+
+    public static final String MIN_QTY = "min_qty";
+
+    public static final String MAX_QTY = "max_qty";
+
+    public static final String CURRENCY = "currency";
+
+    public static final String TAX_PRICE = "tax_price";
+
+    public static final String EXPIRE_DATE = "expire_date";
+
+    public static final String TAX_RATE = "tax_rate";
+
+    public static final String DELIVERY_DATE = "delivery_date";
+
+    public static final String EFFECTIVE_DATE = "effective_date";
 
     @Override
     public Serializable pkVal() {

@@ -1,14 +1,18 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -18,6 +22,7 @@ import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -29,10 +34,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -316,9 +318,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         if (result) {
             //当是审核通过的时候 就要去复写 且添加历史数据
-             if(isPass){
+            if (isPass) {
 
-             }
+                purchasePriceChangeDetailService.updatePurchasePriceDetail(ids);
+            }
 
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
@@ -330,12 +333,14 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
 
+
     /**
      * 取消流程
-     * @author yl
-     * @date 2023-03-28 16:56
+     *
      * @param ids
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-28 16:56
      */
     @Override
     public Boolean cancelProcess(List<String> ids) {
@@ -355,6 +360,40 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), pairList, "取消流程");
         }
         return result;
+    }
+
+    /**
+     * 分页获取采购价目变更数据
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.PurchasePriceChangeDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-03-28 17:15
+     */
+    @Override
+    public PagingVO<PurchasePriceChangeDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {
+        PurchasePriceChangeDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
+            //币种信息
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+            for(PurchasePriceChangeDTO.PagingViewDTO item:list){
+                ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+                item.setApproveStatusCode(approveStatusEnum.getStatus());
+                item.setApproveStatusName(approveStatusEnum.getName());
+                //币种
+                String currency = item.getCurrency();
+                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+                item.setCurrencySymbol(currencySymbol);
+            }
+        }
+
+        return new PagingVO<>(pageData);
     }
 
 
