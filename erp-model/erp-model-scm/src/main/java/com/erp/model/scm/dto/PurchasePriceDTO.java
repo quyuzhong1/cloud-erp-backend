@@ -258,6 +258,13 @@ public class PurchasePriceDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         *  禁用启用状态
+         *  true 禁用
+         *  fase 启用
+         */
+        private Boolean disabled;
     }
 
 
@@ -297,7 +304,7 @@ public class PurchasePriceDTO implements Serializable {
         private List<LocalDate> effectiveDateList;
 
         /**
-         * 生效时间
+         * 失效时间
          */
         private List<LocalDate> expireDateList;
 
