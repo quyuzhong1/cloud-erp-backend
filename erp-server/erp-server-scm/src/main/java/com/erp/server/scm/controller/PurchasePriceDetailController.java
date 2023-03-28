@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 /**
  * 采购价目管理
@@ -54,7 +55,7 @@ public class PurchasePriceDetailController extends BaseController {
      * 批量启用或者禁用 采购价目状态
      */
     @PostMapping("/updateDisabled")
-    public ApiResult updateDisabled(UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult updateDisabled(@RequestBody @Valid UpdateStateDTO.BatchUpdateDTO dto) {
         Boolean  result = purchasePriceDetailService.updateDisabled(dto);
         return result==true?success():failure();
     }

@@ -58,7 +58,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateWarehouse(WarehouseDTO.UpdateDTO dto);
+    WarehouseEntity updateWarehouse(WarehouseDTO.UpdateDTO dto);
 
     
     /**
@@ -166,4 +166,14 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return java.lang.Boolean
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    
+    /**
+     * 修改并审核
+     * @author yl
+     * @date 2023-03-28 11:17
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto);
 }

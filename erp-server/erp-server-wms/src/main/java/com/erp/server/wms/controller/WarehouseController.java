@@ -101,9 +101,25 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
-        Boolean result = warehouseService.updateWarehouse(dto);
+        WarehouseEntity warehouse  = warehouseService.updateWarehouse(dto);
+        return warehouse !=null ? success() : failure();
+    }
+
+
+
+
+    /**
+     * 修改并提交
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
+        Boolean result = warehouseService.updateAndSubmit(dto);
         return result == true ? success() : failure();
     }
+
 
     /**
      * 仓库详情

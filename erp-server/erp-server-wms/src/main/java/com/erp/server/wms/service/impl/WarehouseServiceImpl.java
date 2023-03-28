@@ -125,7 +125,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:08
      */
     @Override
-    public Boolean updateWarehouse(WarehouseDTO.UpdateDTO dto) {
+    public WarehouseEntity updateWarehouse(WarehouseDTO.UpdateDTO dto) {
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -138,7 +138,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkKingdeeWarehouseCode(code, name);
         BeanMapper.copy(warehouse, dto);
         Boolean result = this.updateById(warehouse);
-        return result;
+        if (result) {
+            return warehouse;
+        }
+        return null;
     }
 
 
@@ -227,7 +230,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
-        if(CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -500,6 +503,28 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
 
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-28 11:17
+     */
+    @Override
+    public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
+        WarehouseEntity entity = this.updateWarehouse(dto);
+        boolean result = true;
+        if(entity!=null){
+            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+            if (!entity.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
+                result = updateSubmitApproveStatus(entity, ApproveStatusEnum.APPROVE_ING.getStatus());
+            }
+        }
+        return result;
     }
 
 

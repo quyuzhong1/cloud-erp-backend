@@ -9,11 +9,14 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.server.scm.service.PurchasePriceChangeService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * 采购价目管理
@@ -26,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class PurchasePriceChangeController extends BaseController {
 
 
+    @Resource
+    private PurchasePriceChangeService purchasePriceChangeService;
 
 
     /**
@@ -39,12 +44,12 @@ public class PurchasePriceChangeController extends BaseController {
     }
 
     /**
-     * 保存或者修改采购变更
+     * 添加采购变更
      *
      * @param dto
      * @return
      */
-    @PostMapping("/saveOrUpdate")
+    @PostMapping("/add")
     public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO dto) {
         return success();
     }
@@ -64,6 +69,7 @@ public class PurchasePriceChangeController extends BaseController {
 
     /**
      * 采购价目变更审核
+     *
      * @param dto
      * @return
      */
