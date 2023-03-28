@@ -56,17 +56,33 @@ public class PurchasePriceChangeController extends BaseController {
         return priceChange != null ? success() : failure();
     }
 
+    /**
+     * 提交并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+        Boolean result = purchasePriceChangeService.addAndSubmit(dto);
+        return result == true ? success() : failure();
+    }
+
 
     /**
-     * 采购变更详情
+     * 采购价目变更详情
      *
      * @param dto
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<PurchasePriceChangeDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success();
+    public ApiResult<PurchasePriceChangeDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        PurchasePriceChangeDTO.UpdateDTO view = purchasePriceChangeService.view(dto.getId());
+        return success(view);
     }
+
+
+
 
 
     /**

@@ -16,13 +16,24 @@ import java.util.List;
  */
 public interface PurchasePriceChangeDetailService extends SuperService<PurchasePriceChangeDetailEntity> {
 
-    
+
     /**
      * 检查区间报价是否存在
-     * @author yl
-     * @date 2023-03-28 12:07
+     *
      * @param purchasePriceChangeDetailList
      * @return void
+     * @author yl
+     * @date 2023-03-28 12:07
      */
     void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList);
+
+    /**
+     * 根据变更表id 获取明细
+     *
+     * @param id
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-28 14:35
+     */
+    List<PurchasePriceChangeDetailDTO.UpdateDTO> getByPriceChangeId(String id);
 }

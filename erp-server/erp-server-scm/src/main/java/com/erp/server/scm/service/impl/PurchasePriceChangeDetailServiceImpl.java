@@ -1,8 +1,10 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper;
@@ -29,14 +31,15 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 检查区间报价是否重叠
-     * @author yl
-     * @date 2023-03-28 12:07
+     *
      * @param purchasePriceChangeDetailList
      * @return void
+     * @author yl
+     * @date 2023-03-28 12:07
      */
     @Override
     public void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList) {
-        if(CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)){
+        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
 
             //以sku 分组
             Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
@@ -73,6 +76,29 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             }
 
         }
+
+    }
+
+
+    /**
+     * 根据变更表id 获取明细
+     *
+     * @param priceChangeId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-28 14:35
+     */
+    @Override
+    public List<PurchasePriceChangeDetailDTO.UpdateDTO> getByPriceChangeId(String priceChangeId) {
+        List<PurchasePriceChangeDetailEntity> list = this.getEntityByPriceChangeId(priceChangeId);
+        return BeanMapper.copyList(list,PurchasePriceChangeDetailDTO.UpdateDTO.class);
+    }
+
+
+    private List<PurchasePriceChangeDetailEntity> getEntityByPriceChangeId(String priceChangeId) {
+        LambdaQueryWrapper<PurchasePriceChangeDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId, priceChangeId);
+        return this.list(queryWrapper);
 
     }
 

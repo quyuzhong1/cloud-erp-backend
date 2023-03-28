@@ -104,8 +104,13 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     private BigDecimal purchasePriceDetailId;
 
 
-
-
+    /**
+     * 是否禁用
+     * true 禁用
+     * false 启用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
 
     @Override
