@@ -320,6 +320,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //当是审核通过的时候 就要去复写 且添加历史数据
             if (isPass) {
 
+                purchasePriceChangeDetailService.updatePurchasePriceDetail(ids);
             }
 
             //添加日志
@@ -330,6 +331,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         return result;
     }
+
 
 
     /**

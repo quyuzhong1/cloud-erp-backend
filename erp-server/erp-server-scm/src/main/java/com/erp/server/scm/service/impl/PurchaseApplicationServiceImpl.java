@@ -138,10 +138,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount() {
-        PurchaseApplicationDTO.SearchParamDTO dto = new PurchaseApplicationDTO.SearchParamDTO();
         PurchaseApplicationListTypeEnum[] values = PurchaseApplicationListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = new ArrayList<>();
         for (PurchaseApplicationListTypeEnum item: values) {
+            PurchaseApplicationDTO.SearchParamDTO dto = new PurchaseApplicationDTO.SearchParamDTO();
             ListStatusCountDTO.PurchaseApplicationCountDTO resultDTO = new ListStatusCountDTO.PurchaseApplicationCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseApplicationListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
@@ -340,6 +340,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(mainList)) {
             throw new ServiceException(ApiError.ERROR_98016);
         }
+        //已审核数据才能生成采购单
+        long statusCount = mainList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (statusCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98033);
+        }
 
         List<String> detailIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseApplicationDetailId).distinct().collect(Collectors.toList());
         //查询关联信息
@@ -532,9 +537,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //根据ids查询
         List<PurchaseApplicationEntity> list = getList(ids);
         //待提交并且未作废允许提交
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) ).count();
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()) ).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_98032);
         }
 
         log.info("采购申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));

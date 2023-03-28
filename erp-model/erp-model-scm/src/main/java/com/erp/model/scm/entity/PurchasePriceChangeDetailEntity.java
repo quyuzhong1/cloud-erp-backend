@@ -101,7 +101,7 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
      * 详采购价目详情表
      */
     @TableField("purchase_price_detail_id")
-    private BigDecimal purchasePriceDetailId;
+    private String purchasePriceDetailId;
 
 
     /**

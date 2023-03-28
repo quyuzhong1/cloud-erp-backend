@@ -1,6 +1,9 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
@@ -118,6 +121,9 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
                 moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"编辑操作");
             } else {
                 SalesDemandDetailEntity old = this.getById(entity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98002);
+                }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"",String.format("【%s】",old.getSkuNo()));
             }
         }

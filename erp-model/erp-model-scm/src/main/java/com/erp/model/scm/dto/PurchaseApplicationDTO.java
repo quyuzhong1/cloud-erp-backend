@@ -222,11 +222,6 @@ public class PurchaseApplicationDTO implements Serializable {
         private String applyDeptId;
 
         /**
-         * 申请人部门名称
-         */
-        private String applyDeptName;
-
-        /**
          * 新品首批（false否,true是）
          */
         @NotNull(message = "新品首批不能为空")
