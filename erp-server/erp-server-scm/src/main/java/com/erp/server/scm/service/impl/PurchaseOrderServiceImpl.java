@@ -30,10 +30,12 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -45,10 +47,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
-import com.erp.server.scm.service.CommonService;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchaseOrderDetailService;
-import com.erp.server.scm.service.PurchaseOrderService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -96,6 +95,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -149,6 +151,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购单【%s】",code), ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"新增操作");
             //新增明细
             purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
+            //新增供应商信息
+
         }
         return entity.getId();
     }
@@ -172,6 +176,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         this.updateById(entity);
         //更新明细数据
         purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
+
         return Boolean.TRUE;
     }
 
@@ -185,6 +190,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98025);
         }
         BeanMapperUtils.copy(entity,dto);
+
+        //供应商信息
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.listByPurchaseOrderId(id);
+        PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
+        if (ObjectUtils.isEmpty(supplierUpdateDTO)) {
+            throw new ServiceException(ApiError.ERROR_98031);
+        }
+        BeanMapperUtils.copy(purchaseOrderSupplierEntity,supplierUpdateDTO);
+        dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
 
         //明细信息
         List<PurchaseOrderDetailEntity> entityDetails = purchaseOrderDetailService.listByPurchaseOrderId(id);
@@ -208,6 +222,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除供应商数据
+        purchaseOrderSupplierService.deleteByPurchaseOrderIds(ids);
         //删除明细数据
         purchaseOrderDetailService.removeByPurchaseOrderIds(ids);
         //删除主表数据

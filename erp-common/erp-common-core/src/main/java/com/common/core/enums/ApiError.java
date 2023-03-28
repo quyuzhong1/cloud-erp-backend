@@ -353,6 +353,7 @@ public enum ApiError implements Serializable {
     ERROR_98028(98028,"采购价目变更不存在"),
     ERROR_98029(98029,"只有采购价目审核通过才能变更"),
     ERROR_98030(98030,"只有未生成采购订单的申请单才能反审核"),
+    ERROR_98031(98031,"供应商信息不能为空"),
 
 
 

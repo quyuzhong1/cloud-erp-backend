@@ -125,7 +125,7 @@
         select
         pa.id,
         pa.code,
-        sd.approve_status as approveStatus,
+        pa.approve_status as approveStatus,
         case pa.approve_status
             when 'waitSubmit' then '待提交'
             when 'approveIng' then '审核中'
