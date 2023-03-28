@@ -121,14 +121,11 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //模板角色人员
         List<MemberPagingShowDTO> templateMembers = projectMembersService.listByRoleNames(null, templateId, null);
 
-
         List<CopySourceDTO> sourceList = new ArrayList<>();
 
         //List<ProjectMembersEntity> listByProductId = projectMembersService.getListByProductId(productId);
 
-
         List<MemberPagingShowDTO> memberPagingShowDTOS1 = projectMembersService.listByMembers(productId);
-
 
         if (CollectionUtils.isNotEmpty(templateMembers)) {
             List<ProjectMembersEntity> copyList = new ArrayList<>();
@@ -136,12 +133,12 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
                 MemberPagingShowDTO memberPagingShowDTO = memberPagingShowDTOS1.stream().filter(
                         projectMembers -> projectMembers.getMemberName().equals(item.getMemberName()) && projectMembers.getRoleName().equals(item.getRoleName())
                 ).findFirst().orElse(null);
-                CopySourceDTO sourceDTO = new CopySourceDTO();
-                String idStr = IdWorker.getIdStr();
-                sourceDTO.setNewCreateId(idStr);
-                sourceDTO.setDataId(item.getId());
-                sourceList.add(sourceDTO);
                 if (Objects.isNull(memberPagingShowDTO)) {
+                    CopySourceDTO sourceDTO = new CopySourceDTO();
+                    String idStr = IdWorker.getIdStr();
+                    sourceDTO.setNewCreateId(idStr);
+                    sourceDTO.setDataId(item.getId());
+                    sourceList.add(sourceDTO);
                     ProjectMembersEntity entity = new ProjectMembersEntity();
                     entity.setMemberId(item.getMemberId());
                     entity.setMemberName(item.getMemberName());
