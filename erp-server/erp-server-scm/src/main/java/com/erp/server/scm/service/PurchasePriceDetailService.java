@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
@@ -85,4 +86,13 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return com.erp.model.scm.dto.PurchasePriceDetailDTO.ImportDTO
      */
     PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile);
+
+    /**
+     * 批量更改禁用状态
+     * @author yl
+     * @date 2023-03-28 10:03
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateDisabled(UpdateStateDTO.BatchUpdateDTO dto);
 }

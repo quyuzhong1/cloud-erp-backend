@@ -77,12 +77,12 @@ public class WarehouseDTO implements Serializable {
 
 
         /**
-         * 状态
-         * true 启用
-         * false 未启用
+         * 禁用状态
+         * true 禁用
+         * false 启用
          */
         @NotNull(message = "仓库启用状态不能为空")
-        private Boolean enableStatus;
+        private Boolean disabled;
 
 
         /**
@@ -102,7 +102,7 @@ public class WarehouseDTO implements Serializable {
          * true 是
          */
         @NotNull(message = "是否是虚拟仓不能为空")
-        private String isVirtual;
+        private Boolean isVirtual;
     }
 
 
