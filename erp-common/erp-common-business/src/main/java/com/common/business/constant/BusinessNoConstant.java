@@ -16,5 +16,7 @@ public interface BusinessNoConstant {
 
     String GYS = "GYS";
 
-    String cgjm = "CGJM";
+    String CGJM = "CGJM";
+
+    String CGTJ = "CGTJ";
 }

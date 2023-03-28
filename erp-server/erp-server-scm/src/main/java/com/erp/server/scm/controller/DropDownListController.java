@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.*;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -72,6 +73,24 @@ public class DropDownListController extends BaseController {
         }
         List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
                 .map(x -> new BaseDropDownDTO.DisabledDTO(x.get("id").toString(), x.get("name").toString(),(Boolean)x.get("disabled")))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
+    /**
+     * 所有供应商下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/supplier/allList")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listALLSupplierDropDown() {
+        List<SupplierEntity> mapList = supplierService.list();
+        if (CollectionUtils.isEmpty(mapList)) {
+            return success(new ArrayList<>());
+        }
+        List<BaseDropDownDTO.DisabledDTO> result = mapList.stream()
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getId(), x.getName(),x.getDisabled()))
                 .collect(Collectors.toList());
         return success(result);
     }

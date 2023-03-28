@@ -14,7 +14,8 @@ public enum BusinessNoTypeEnum {
     CODE_BH(4, "bh","备货申请单编号"),
     CODE_GYS(5, "gys","供应商编号"),
     CODE_PL(6, "pl","采购申请单编号"),
-    CODE_CGJM(7, "cgjm","采购价目编号");
+    CODE_CGJM(7, "cgjm","采购价目编号"),
+    CODE_CGTJ(8, "cgtj","采购价目调价编号");
 
 
 

@@ -12,7 +12,8 @@ public enum ModuleTypeEnum {
     PURCHASE_APPLICATION("1", "采购申请单"),
     PURCHASE_ORDER("2", "采购订单"),
     SUPPLIER("3", "供应商"),
-    PURCHASE_PRICE("4", "采购价目申请单");
+    PURCHASE_PRICE("4", "采购价目申请单"),
+    PURCHASE_PRICE_CHANGE("5", "采购价目变更单");
 
 
 
