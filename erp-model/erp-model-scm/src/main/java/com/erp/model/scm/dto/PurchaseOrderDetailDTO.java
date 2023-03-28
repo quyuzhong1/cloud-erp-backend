@@ -7,6 +7,7 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Will
@@ -37,6 +38,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         @NotBlank(message = "sku编码不能为空")
         private String skuNo;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
 
         /**
          * 产品名称
@@ -77,7 +83,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         @NotNull(message = "采购数量不能为空")
         @Min(value = 0,message = "采购数量最小值为0")
-        @Max(value = 99999999,message = "采购数量最大值为99999999")
+        @Max(value = 999999999,message = "采购数量最大值为999999999")
         private Integer purchaseQty;
 
         /**
@@ -133,6 +139,20 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 主表id
          */
         private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<PurchaseOrderDetailDTO.AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
     }
 
 }

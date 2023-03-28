@@ -135,6 +135,12 @@ public class PurchaseApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 采购申请单号
+         */
+        private String code;
+
         /**
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */

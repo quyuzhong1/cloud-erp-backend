@@ -260,6 +260,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByPurchaseApplicationIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        //只有未生成的单才能反审核
+        long createCount = detailList.stream().filter(obj -> !CreatePoTypeEnum.NOT_GENERATED.getStatus().equals(obj.getCreatePoType())).count();
+        if (createCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98030);
+        }
 
         log.info("采购申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
         //取回流程 TODO

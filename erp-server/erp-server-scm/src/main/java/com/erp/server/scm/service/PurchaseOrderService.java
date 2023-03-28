@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -114,9 +115,9 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @date: 2023/3/16 11:58
      * @param excelFile
      * @param response
-     * @return Boolean
+     * @return PurchaseOrderDetailDTO.ImportDTO
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will

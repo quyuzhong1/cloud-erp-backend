@@ -84,6 +84,11 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
+    public List<PurchaseApplicationDetailEntity> listByPurchaseApplicationIds(List<String> ids) {
+        return  lambdaQuery().in(PurchaseApplicationDetailEntity::getPurchaseApplicationId,ids).list();
+    }
+
+    @Override
     public void removeByPurchaseApplicationIds(List<String> purchaseApplicationIds) {
         lambdaUpdate().in(PurchaseApplicationDetailEntity::getPurchaseApplicationId,purchaseApplicationIds).remove();
     }
