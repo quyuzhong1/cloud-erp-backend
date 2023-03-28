@@ -110,8 +110,8 @@ ProductDetailController extends BaseController {
      * @Date 2022/10/9 10:15
      **/
     @PostMapping("/list")
-    @RequestPermissions("plm:product:detail:list")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+//    @RequestPermissions("plm:product:detail:list")
+//    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
