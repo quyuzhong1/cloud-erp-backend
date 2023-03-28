@@ -19,6 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<PurchaseApplicationDetailDTO.UpdateDTO> details, String purchaseApplicationId) {
         if (details == null) {
             details = new ArrayList<>();
@@ -68,7 +70,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             List<PurchaseApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getPurchaseApplicationId(), obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个采购申请明细【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"修改操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个采购申请明细【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<PurchaseApplicationDetailEntity> newList = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
@@ -110,7 +112,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
                 map(PurchaseApplicationDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(PurchaseApplicationDetailEntity::getId).collect(Collectors.toList());
-        return newIds.stream().filter(s -> !oldIds.contains(s)).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**
@@ -156,10 +158,10 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
             //操作日志
             if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"修改操作");
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"编辑操作");
             } else {
                 PurchaseApplicationDetailEntity old = this.getById(entity.getId());
-                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"","");
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
 

@@ -112,7 +112,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
                 map(PurchaseOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        return newIds.stream().filter(s -> !oldIds.contains(s)).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**

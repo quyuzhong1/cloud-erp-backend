@@ -46,6 +46,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseApplicationExcelListener;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -169,7 +170,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
