@@ -147,11 +147,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),entity);
 
         log.info("采购订单修改，id=【{}】", dto.getId());
-        PurchaseOrderDTO.UpdateDTO old = new PurchaseOrderDTO.UpdateDTO();
-        PurchaseOrderDTO.ViewDTO view = this.view(dto.getId());
-        BeanMapperUtils.copy(view,old);
+        
         //操作日志
-        moduleOperateLogService.addModuleOperateLogByObj(old,dto,ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"","");
+        PurchaseOrderEntity old = this.getById(dto.getId());
+        moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"","");
         //更新主表数据
         this.updateById(entity);
         //更新明细数据

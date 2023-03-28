@@ -61,7 +61,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             List<SalesDemandDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getSalesDemandId(), obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个备货申请明细【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"编辑操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);

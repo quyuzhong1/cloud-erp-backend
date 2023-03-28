@@ -70,7 +70,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             List<PurchaseApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getPurchaseApplicationId(), obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个采购申请明细【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"编辑操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<PurchaseApplicationDetailEntity> newList = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
@@ -158,7 +158,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
             //操作日志
             if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"编辑操作");
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"编辑操作");
             } else {
                 PurchaseApplicationDetailEntity old = this.getById(entity.getId());
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"",String.format("【%s】",old.getSkuNo()));
