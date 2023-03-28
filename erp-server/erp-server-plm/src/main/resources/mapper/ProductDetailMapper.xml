@@ -56,7 +56,7 @@
         pi.name_en,
         pi.brand_name,
         pi.grade,
-        pi.charge_name AS productChargeName,
+        pd.charge_name AS productChargeName,
         pd.first_mass_product_date,
         pd.plan_listing_time,
         pp.trial_production_qty,
