@@ -149,4 +149,86 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         private Boolean disabled;
     }
 
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+        private String id;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        private String purchasePriceDetailId;
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDate;
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+
+
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 调前币种
+         */
+        private String oldCurrency;
+
+        /**
+         * 调后含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 调前含税单价
+         */
+        private BigDecimal oldTaxPrice;
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
+
+        /**
+         * 调后税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 调前税率
+         */
+        private BigDecimal oldTaxRate;
+
+
+
+
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+    }
+
 }

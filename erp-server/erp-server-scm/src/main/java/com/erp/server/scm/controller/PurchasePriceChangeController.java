@@ -3,6 +3,7 @@ package com.erp.server.scm.controller;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -76,13 +77,48 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<PurchasePriceChangeDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        PurchasePriceChangeDTO.UpdateDTO view = purchasePriceChangeService.view(dto.getId());
+    public ApiResult<PurchasePriceChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        PurchasePriceChangeDTO.ViewDTO view = purchasePriceChangeService.view(dto.getId());
         return success(view);
+    }
+
+    /**
+     * 修改采购价目变更
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+        PurchasePriceChangeEntity view = purchasePriceChangeService.updatePurchasePriceChange(dto);
+        return  view==null?success():failure();
     }
 
 
 
+    /**
+     * 删除采购价目
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceChangeService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 采购价目变更提交审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds());
+        return result == true ? success() : failure();
+    }
 
 
     /**
@@ -93,6 +129,22 @@ public class PurchasePriceChangeController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = purchasePriceChangeService.approve(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 取消流程
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-23 17:57
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchasePriceChangeService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
     }
 }
