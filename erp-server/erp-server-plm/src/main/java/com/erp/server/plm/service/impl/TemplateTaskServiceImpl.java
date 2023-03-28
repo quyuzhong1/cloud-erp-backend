@@ -390,7 +390,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
                     //判断负责人分配方式是否是角色
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
-                        List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
+                        List<String> roleIds = Arrays.stream(item.getRoleName().split(",")).collect(Collectors.toList());
                         List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(roleIds, projectTemplateEntity.getId());
                         if (CollectionUtils.isNotEmpty(templateMembersList)) {
                             List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());
