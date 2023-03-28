@@ -341,7 +341,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //已采购数量
             Integer purchaseQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(refList)) {
-                 purchaseQty = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                 purchaseQty = refList.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(detail.getId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             //本次采购数量
             Integer thisPurchaseQty = list.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(detail.getId())).map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);

@@ -41,7 +41,7 @@ public class PurchaseApplicationImportExcelDTO implements Serializable {
      * 申请数量
      */
     @ExcelProperty(value = "*申请数量", index = 3)
-    @FieldValid(fieldName = "申请数量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @FieldValid(fieldName = "申请数量", isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
     private String  applyQtyStr;
 
     /**

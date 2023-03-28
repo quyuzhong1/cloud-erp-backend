@@ -82,7 +82,7 @@
                 </foreach>
             </if>
             <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and pa.approve_status in
+                and po.approve_status in
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -93,9 +93,9 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-                and pod.dest_warehouse_id in
-                <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                and pod.delivery_warehouse_id in
+                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -112,10 +112,10 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and pd.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+                and po.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
             </if>
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and pd.approve_time between #{params.approveTimeList[0]} and #{params.approveTimeList[1]}
+                and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
             </if>
         </where>
         ORDER BY
@@ -124,7 +124,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pd.create_time desc
+        po.create_time desc
     </select>
     
     <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO">
@@ -204,9 +204,9 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-                and pod.dest_warehouse_id in
-                <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                and pod.delivery_warehouse_id in
+                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -223,10 +223,10 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and pd.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+                and po.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
             </if>
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and pd.approve_time between #{params.approveTimeList[0]} and #{params.approveTimeList[1]}
+                and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
             </if>
         </where>
         ORDER BY
@@ -235,7 +235,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pd.create_time desc
+        po.create_time desc
     </select>
 
 </mapper>

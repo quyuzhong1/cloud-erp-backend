@@ -41,7 +41,7 @@ public class SalesDemandImportExcelDTO implements Serializable {
      * 计划备货量
      */
     @ExcelProperty(value = "*计划备货量", index = 3)
-    @FieldValid(fieldName = "计划备货量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @FieldValid(fieldName = "计划备货量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
     private String  planStockQtyStr;
 
     /**
