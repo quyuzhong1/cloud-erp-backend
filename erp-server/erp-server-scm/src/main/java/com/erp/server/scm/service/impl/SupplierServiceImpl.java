@@ -99,7 +99,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierContactDTO.AddDTO> contactList = dto.getContactList();
         //检查联系人默认是否多个
         supplierContactService.checkIsDefault(contactList);
-
+        //供应商资质信息
+        List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
+        //检查资质日期
+        supplierCredentialService.checkDate(credentialList);
         //供应商id
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = new SupplierEntity();
@@ -128,8 +131,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
             //供应商联系人信息
             supplierContactService.saveBatchContact(supplierId, contactList);
-            //供应商资质信息
-            List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
+
             supplierCredentialService.saveBatchCredential(supplierId, credentialList);
             //添加日志
             String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
@@ -217,9 +219,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         statusList.add(waitSubmitStatus);
         if (!statusList.contains(supplier.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
-
         }
 
+
+        //资质信息
+        List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
+        List<SupplierCredentialDTO.AddDTO> credentialAddList=BeanMapper.copyList(credentialList,SupplierCredentialDTO.AddDTO.class);
+        supplierCredentialService.checkDate(credentialAddList);
         String code = supplier.getCode();
         //检查供应商名称
         checkName(supplierId, dto.getName());
@@ -250,8 +256,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //账户信息
             List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.updateAccount(bankAccountList, supplierId);
-            //资质信息
-            List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
+
             supplierCredentialService.updateCredential(credentialList, supplierId);
             return supplierId;
         }
@@ -650,9 +655,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 }
                 resultList.add(exportExcel);
 
-
             }
-
             String fileName = "供应商数据";
             try {
                 ExcelUtil.export(fileName, "供应商数据", resultList, SupplierExportExcelDTO.class, response);

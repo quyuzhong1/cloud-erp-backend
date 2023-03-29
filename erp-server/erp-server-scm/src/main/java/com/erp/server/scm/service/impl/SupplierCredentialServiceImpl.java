@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -189,6 +191,28 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
         this.remove(queryWrapper);
         attachmentService.deleteByBusinessIds(idList);
+    }
+
+
+    /**
+     * 检查资质日期
+     *
+     * @param credentialList
+     * @return void
+     * @author yl
+     * @date 2023-03-29 15:48
+     */
+    @Override
+    public void checkDate(List<SupplierCredentialDTO.AddDTO> credentialList) {
+        if (CollectionUtils.isNotEmpty(credentialList)) {
+            List<SupplierCredentialDTO.AddDTO> list = credentialList.stream().filter(c -> c.getEffectiveDate() != null && c.getExpireDate() != null).collect(Collectors.toList());
+            long count = list.stream().filter(c -> c.getExpireDate().compareTo(c.getEffectiveDate()) < 0).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_98035);
+            }
+
+        }
+
     }
 
 

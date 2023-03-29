@@ -53,4 +53,13 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
      * @return void
      */
     void removeBySupplierIds(List<String> ids);
+
+    /**
+     * 检查资质日期
+     * @author yl
+     * @date 2023-03-29 15:48
+     * @param credentialList
+     * @return void
+     */
+    void checkDate(List<SupplierCredentialDTO.AddDTO> credentialList);
 }
