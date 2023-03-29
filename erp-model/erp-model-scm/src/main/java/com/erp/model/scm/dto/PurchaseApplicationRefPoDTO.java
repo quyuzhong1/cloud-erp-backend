@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -42,5 +43,20 @@ public class PurchaseApplicationRefPoDTO implements Serializable {
          * 已采购数量
          */
         private Integer purchaseQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO {
+
+        /**
+         * 采购申请明细Ids
+         */
+        private List<String> purchaseApplicationDetailIds;
+
+        /**
+         * 采购订单Ids
+         */
+        private List<String> purchaseOrderIds;
     }
 }

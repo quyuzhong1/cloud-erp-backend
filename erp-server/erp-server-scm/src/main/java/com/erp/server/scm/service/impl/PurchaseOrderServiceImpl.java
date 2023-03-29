@@ -28,6 +28,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
@@ -48,6 +49,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -99,6 +101,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
+    @Resource
+    private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
+
+
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -132,7 +138,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(PurchaseOrderDTO.AddDTO dto) {
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -152,7 +158,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //新增明细
             purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
             //新增供应商信息
-
+            purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO());
         }
         return entity.getId();
     }
@@ -176,7 +182,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         this.updateById(entity);
         //更新明细数据
         purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
-
+        //供应商数据
+        purchaseOrderSupplierService.update(dto.getPurchaseOrderSupplierDTO());
         return Boolean.TRUE;
     }
 
@@ -227,7 +234,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //删除明细数据
         purchaseOrderDetailService.removeByPurchaseOrderIds(ids);
         //删除主表数据
-        return  this.removeByIds(ids);
+        this.removeByIds(ids);
+        //更新采购申请单的生成状态
+        updateCreatePoType(ids);
+        return Boolean.TRUE;
+    }
+
+    private void updateCreatePoType(List<String> purchaseOrderIds) {
+        //关联信息
+        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
+        searchParamDTO.setPurchaseOrderIds(purchaseOrderIds);
+        List<PurchaseApplicationRefPoDTO.ListDTO> list = purchaseApplicationRefPoService.list(searchParamDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (PurchaseApplicationRefPoDTO.ListDTO listDTO : list) {
+
+
+        }
+
+
     }
 
     @Override

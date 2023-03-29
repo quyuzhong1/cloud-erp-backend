@@ -1,6 +1,9 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.server.scm.mapper.PurchaseOrderSupplierMapper;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
@@ -28,4 +31,25 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     public PurchaseOrderSupplierEntity listByPurchaseOrderId(String purchaseOrderId) {
         return  lambdaQuery().eq(PurchaseOrderSupplierEntity::getPurchaseOrderId,purchaseOrderId).one();
     }
+
+    @Override
+    public void add(PurchaseOrderSupplierDTO.AddDTO dto) {
+        if (ObjectUtils.isEmpty(dto)) {
+            return;
+        }
+        PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
+        BeanMapperUtils.copy(dto,entity);
+        this.save(entity);
+    }
+
+    @Override
+    public void update(PurchaseOrderSupplierDTO.UpdateDTO dto) {
+        if (ObjectUtils.isEmpty(dto)) {
+            return;
+        }
+        PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
+        BeanMapperUtils.copy(dto,entity);
+        this.updateById(entity);
+    }
+
 }

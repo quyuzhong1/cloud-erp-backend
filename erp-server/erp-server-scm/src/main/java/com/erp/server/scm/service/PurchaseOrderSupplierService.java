@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 
 import java.util.List;
@@ -30,4 +31,18 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      * @return PurchaseOrderSupplierEntity
      */
     PurchaseOrderSupplierEntity listByPurchaseOrderId(String purchaseOrderId);
+    /**
+     * @description:新增供应商
+     * @author Will
+     * @date: 2023/3/28 19:41
+     * @param purchaseOrderSupplierDTO
+     */
+    void add(PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO);
+    /**
+     * @description: 修改供应商
+     * @author Will
+     * @date: 2023/3/28 19:49
+     * @param purchaseOrderSupplierDTO
+     */
+    void update(PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO);
 }
