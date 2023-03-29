@@ -14,6 +14,7 @@ import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -181,8 +182,11 @@ public class DropDownListController extends BaseController {
      * @return ApiResult<List<DropDownDTO>>
      */
     @GetMapping("/supplierContact/list")
-    public ApiResult<List<SupplierContactDTO.DropDownDTO>> listSupplierContactDropDown() {
-        List<SupplierContactEntity> resultList = SupplierContactService.list();
+    public ApiResult<List<SupplierContactDTO.DropDownDTO>> listSupplierContactDropDown(@RequestParam("supplierId") String supplierId) {
+        List<SupplierContactEntity> resultList = SupplierContactService
+                .lambdaQuery()
+                .eq(SupplierContactEntity::getSupplierId,supplierId)
+                .list();
         if (CollectionUtils.isEmpty(resultList)) {
             return success(new ArrayList<>());
         }

@@ -37,7 +37,7 @@ import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseApplicationListTypeEnum;
+import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -435,7 +435,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
         Integer count = this.baseMapper.listCount(dto);
         resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
-        resultDTO.setType(PurchaseApplicationListTypeEnum.TO_BE_APPROVE.getCode());
+        resultDTO.setType(PurchaseListTypeEnum.TO_BE_APPROVE.getCode());
         list.add(resultDTO);
         return list;
     }

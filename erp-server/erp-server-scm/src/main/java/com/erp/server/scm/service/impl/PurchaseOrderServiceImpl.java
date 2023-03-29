@@ -28,17 +28,16 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -447,6 +446,39 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         this.update(dto);
         //提交
         return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount() {
+        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = new ArrayList<>();
+        for (PurchaseListTypeEnum item: values) {
+            PurchaseApplicationDTO.SearchParamDTO dto = new PurchaseApplicationDTO.SearchParamDTO();
+            ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+               // count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
+                dto.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.NOT_GENERATED.getStatus(),CreatePoTypeEnum.PARTIAL_GENERATED.getStatus()));
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+               // count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
+                dto.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.ALL_GENERATED.getStatus()));
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+               // count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+               // count = this.baseMapper.listCount(dto);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**

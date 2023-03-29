@@ -10,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ExcelImportDTO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.server.scm.service.PurchaseOrderService;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 /**
  * 采购订单管理
@@ -51,6 +53,17 @@ public class PurchaseOrderController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 查询数量
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @return ApiResult
+     */
+    @GetMapping("/listCount")
+    public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount() {
+        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = purchaseOrderService.listCount();
+        return success(list);
+    }
 
     /**
      * 新增
