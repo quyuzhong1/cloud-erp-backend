@@ -123,5 +123,5 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param response
      * @return void
      */
-    void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportPurchasePrice(PurchasePriceDTO.ExportDTO dto, HttpServletResponse response);
 }

@@ -329,4 +329,15 @@ public class PurchasePriceDTO implements Serializable {
     }
 
 
+    /**
+     * 导出采购价目
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO  extends SupplierDTO.PagingParamDTO {
+        private List<String> ids;
+
+    }
+
+
 }

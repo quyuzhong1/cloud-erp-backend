@@ -425,7 +425,6 @@ public class SupplierDTO implements Serializable {
     public static class ExportDTO  extends PagingParamDTO{
         private List<String> ids;
 
-
     }
 
 

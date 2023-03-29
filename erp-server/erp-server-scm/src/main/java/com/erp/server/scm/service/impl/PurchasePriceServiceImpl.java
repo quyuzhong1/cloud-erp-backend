@@ -473,7 +473,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 17:55
      */
     @Override
-    public void exportPurchasePrice(PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportPurchasePrice(PurchasePriceDTO.ExportDTO dto, HttpServletResponse response) {
         //获取导出数据
         List<PurchasePriceDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<PurchasePriceExportExcelDTO> resultList = new ArrayList<>(viewList.size());

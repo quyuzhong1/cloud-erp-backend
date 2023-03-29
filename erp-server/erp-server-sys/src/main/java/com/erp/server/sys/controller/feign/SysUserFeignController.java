@@ -178,7 +178,7 @@ public class SysUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getUserByUserId")
-    public FindUserDTO getUserByUserId( String userId) {
+    public FindUserDTO getUserByUserId(@RequestBody String userId) {
         FindUserDTO dto = sysUserInfoService.getUserByUserId(userId);
         return dto;
     }

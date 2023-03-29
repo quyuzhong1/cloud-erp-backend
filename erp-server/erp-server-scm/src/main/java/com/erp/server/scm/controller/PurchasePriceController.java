@@ -165,7 +165,7 @@ public class PurchasePriceController extends BaseController {
      * 采购价目数据导出
      */
     @PostMapping("/exportPurchasePrice")
-    public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.ExportDTO dto, HttpServletResponse response) {
         purchasePriceService.exportPurchasePrice(dto, response);
         return success();
     }
