@@ -174,4 +174,80 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     }
 
+
+    /**
+     * 历史数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class HistoryDTO {
+
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * sku_no
+         */
+        private String skuNo;
+
+
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDate;
+
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+
+        /**
+         * 含税单价
+         */
+        @NotNull(message = "含税单价不能为空")
+        private BigDecimal taxPrice;
+
+
+        /**
+         * 税率
+         */
+        @NotNull(message = "税率不能为空")
+        private BigDecimal taxRate;
+
+
+    }
+
 }

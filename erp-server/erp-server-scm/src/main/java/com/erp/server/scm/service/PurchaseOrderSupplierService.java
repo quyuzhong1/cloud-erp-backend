@@ -1,6 +1,9 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 
@@ -45,4 +48,13 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      * @param purchaseOrderSupplierDTO
      */
     void update(PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO);
+
+    /**
+     * 获取供应商采购记录
+     * @author yl
+     * @date 2023-03-29 10:50
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.PurchaseOrderSupplierDTO.SupplierPurchaseDTO>
+     */
+    PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> supplierPurchasePaging(PagingDTO<BaseIdDTO> dto);
 }

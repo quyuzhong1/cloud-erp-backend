@@ -5,8 +5,10 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,9 @@ public class SupplierController extends BaseController {
 
     @Resource
     private SupplierService supplierService;
+
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
 
     /**
@@ -78,7 +83,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         SupplierEntity result = supplierService.updateSupplier(dto);
-        return result!=null? success() : failure();
+        return result != null ? success() : failure();
     }
 
     /**
@@ -188,6 +193,17 @@ public class SupplierController extends BaseController {
     public ApiResult downloadTemplate(HttpServletResponse response) {
         supplierService.downloadTemplate(response);
         return success();
+    }
+
+
+    /**
+     * 供应商采购记录
+     * 分页
+     */
+    @PostMapping("/purchasePaging")
+    public ApiResult<PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO>> purchasePaging(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> pagingVO = purchaseOrderSupplierService.supplierPurchasePaging(dto);
+        return success(pagingVO);
     }
 
 }

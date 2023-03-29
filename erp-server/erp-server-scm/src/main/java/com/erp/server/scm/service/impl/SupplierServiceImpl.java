@@ -119,7 +119,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         Boolean result = this.save(addEntity);
         //保存成功
         if (result) {
-
             //供应商账号信息
             List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
