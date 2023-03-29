@@ -110,4 +110,33 @@ public class SupplierContactDTO implements Serializable {
         private String telNumber;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 是否默认 true  是
+         */
+        private Boolean isDefault;
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+    }
+
 }

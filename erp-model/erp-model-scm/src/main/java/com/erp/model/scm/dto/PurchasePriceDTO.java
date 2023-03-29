@@ -275,6 +275,12 @@ public class PurchasePriceDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+
+        /**
+         * 供应商名称
+         */
+        private String name;
+
         /**
          * 产品名称
          */
