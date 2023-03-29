@@ -1,13 +1,17 @@
 package com.common.core.utils;
 
+import cn.hutool.core.lang.Snowflake;
+import cn.hutool.core.lang.generator.SnowflakeGenerator;
+import cn.hutool.core.math.MathUtil;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 /**
+ * @author yl
  * @Classname Md5Util MD5 工具
  * @Description TODO
  * @Date 2022-07-06 11:51
- * @Created by yl
  */
 public class Md5Util {
 
@@ -28,7 +32,7 @@ public class Md5Util {
             }
             return sb.toString();
         } catch (Exception e) {
-            return null;
+            throw new RuntimeException("MD5 algorithm not available", e);
         }
     }
 }
