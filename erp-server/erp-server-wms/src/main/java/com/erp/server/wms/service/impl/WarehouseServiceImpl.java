@@ -10,10 +10,10 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
@@ -43,10 +43,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -101,7 +98,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 10:17
      */
     @Override
-    public WarehouseEntity add(WarehouseDTO.AddDTO dto) {
+    public String add(WarehouseDTO.AddDTO dto) {
         //检查名称
         checkName(null, dto.getName());
         //检查金蝶编号
@@ -110,9 +107,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(dto, warehouse);
         Boolean result = this.save(warehouse);
         if (result) {
-            return warehouse;
+            return warehouse.getId();
         }
-        return null;
+        return "";
     }
 
 
@@ -125,7 +122,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:08
      */
     @Override
-    public WarehouseEntity updateWarehouse(WarehouseDTO.UpdateDTO dto) {
+    public String updateWarehouse(WarehouseDTO.UpdateDTO dto) {
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -136,12 +133,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String name = dto.getName();
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(code, name);
-        BeanMapper.copy(dto,warehouse);
+        BeanMapper.copy(dto, warehouse);
         Boolean result = this.updateById(warehouse);
         if (result) {
-            return warehouse;
+            return warehouseId;
         }
-        return null;
+        return "";
     }
 
 
@@ -155,11 +152,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
-        WarehouseEntity warehouse = this.add(dto);
-        if (warehouse != null) {
-            return updateSubmitApproveStatus(warehouse, ApproveStatusEnum.APPROVE_ING.getStatus());
+        String warehouseId = this.add(dto);
+        if (StringUtils.isBlank(warehouseId)) {
+            throw new ServiceException(ApiError.ERROR_1019);
         }
-        return false;
+        Boolean result = this.submit(Arrays.asList(warehouseId));
+        return result;
     }
 
 
@@ -516,17 +514,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
-        WarehouseEntity entity = this.updateWarehouse(dto);
-        boolean result = true;
-        if(entity!=null){
-            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-            if (!entity.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
-                result = updateSubmitApproveStatus(entity, ApproveStatusEnum.APPROVE_ING.getStatus());
-            }
+        String id = this.updateWarehouse(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
         }
-        return result;
-    }
+        return this.submit(Arrays.asList(id));
 
+    }
 
     /**
      * 更改状态
@@ -546,22 +540,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
 
-    /**
-     * 更改仓库的状态
-     *
-     * @param warehouse
-     * @param status
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-22 11:18
-     */
-    private Boolean updateSubmitApproveStatus(WarehouseEntity warehouse, String status) {
-        if (warehouse != null) {
-            warehouse.setApproveStatus(ApproveStatusEnum.getByStatus(status));
-            return this.updateById(warehouse);
-        }
-        return true;
-    }
+
 
 
     /**

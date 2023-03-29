@@ -48,7 +48,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param dto
      * @return com.erp.model.wms.entity.WarehouseEntity
      */
-    WarehouseEntity add(WarehouseDTO.AddDTO dto);
+    String add(WarehouseDTO.AddDTO dto);
 
     
     /**
@@ -58,7 +58,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    WarehouseEntity updateWarehouse(WarehouseDTO.UpdateDTO dto);
+    String updateWarehouse(WarehouseDTO.UpdateDTO dto);
 
     
     /**

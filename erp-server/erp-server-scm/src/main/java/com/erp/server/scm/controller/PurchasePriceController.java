@@ -9,8 +9,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.service.PurchasePriceService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,8 +54,8 @@ public class PurchasePriceController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        PurchasePriceEntity purchasePrice = purchasePriceService.add(dto);
-        return purchasePrice != null ? success() : failure();
+        String id = purchasePriceService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -73,24 +73,26 @@ public class PurchasePriceController extends BaseController {
 
     /**
      * 采购价目详情
+     *
      * @param dto
      * @return
      */
     @PostMapping("/view")
     public ApiResult<PurchasePriceDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         PurchasePriceDTO.ViewDTO view = purchasePriceService.view(dto.getId());
-        return  success(view);
+        return success(view);
     }
 
     /**
      * 修改采购价目
+     *
      * @param dto
      * @return
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
-        PurchasePriceEntity view = purchasePriceService.updatePurchasePrice(dto);
-        return  view==null?success():failure();
+        String id = purchasePriceService.updatePurchasePrice(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -132,7 +134,8 @@ public class PurchasePriceController extends BaseController {
 
 
     /**
-     *审核
+     * 审核
+     *
      * @param dto
      * @return
      */
@@ -159,7 +162,6 @@ public class PurchasePriceController extends BaseController {
 
 
     /**
-     *
      * 采购价目数据导出
      */
     @PostMapping("/exportPurchasePrice")
@@ -167,7 +169,6 @@ public class PurchasePriceController extends BaseController {
         purchasePriceService.exportPurchasePrice(dto, response);
         return success();
     }
-
 
 
 }

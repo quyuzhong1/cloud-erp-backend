@@ -28,7 +28,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param dto
      * @return com.erp.model.scm.entity.PurchasePriceEntity
      */
-    PurchasePriceEntity add(PurchasePriceDTO.AddDTO dto);
+    String add(PurchasePriceDTO.AddDTO dto);
 
     
     /**
@@ -47,7 +47,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param dto
      * @return com.erp.model.scm.entity.PurchasePriceEntity
      */
-    PurchasePriceEntity updatePurchasePrice(PurchasePriceDTO.ViewDTO dto);
+    String updatePurchasePrice(PurchasePriceDTO.ViewDTO dto);
     
     /**
      * 保存并提交审核 价目

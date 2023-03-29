@@ -30,6 +30,7 @@ import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,7 +79,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @GlobalTransactional
-    public PurchasePriceChangeEntity add(PurchasePriceChangeDTO.AddDTO dto) {
+    public String add(PurchasePriceChangeDTO.AddDTO dto) {
         //采购价目表的id
         String priceId = dto.getPurchasePriceId();
         PurchasePriceEntity purchasePrice = purchasePriceService.getById(priceId);
@@ -125,10 +126,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), id, "新增操作");
 
 
-            return changeEntity;
+            return id;
         }
 
-        return null;
+        return "";
     }
 
 
@@ -142,20 +143,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public Boolean addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
-        PurchasePriceChangeEntity changeEntity = this.add(dto);
-        Boolean result = true;
-        if (changeEntity != null) {
-            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-            if (!changeEntity.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
-                result = updateSubmitApproveStatus(changeEntity, ApproveStatusEnum.APPROVE_ING.getStatus());
-                if (result) {
-                    //添加日志
-                    String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-                    addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), changeEntity.getId(), "状态变更");
-                }
-            }
+        String id = this.add(dto);
+        if(StringUtils.isBlank(id)){
+            throw new ServiceException(ApiError.ERROR_1019);
         }
-        return null;
+        Boolean result = this.submitApprove(Arrays.asList(id));
+        return result;
     }
 
     /**
@@ -196,7 +189,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:40
      */
     @Override
-    public PurchasePriceChangeEntity updatePurchasePriceChange(PurchasePriceChangeDTO.UpdateDTO dto) {
+    public String updatePurchasePriceChange(PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = dto.getId();
         PurchasePriceChangeEntity priceChangeEntity = this.getById(id);
         if (Objects.isNull(priceChangeEntity)) {
@@ -230,7 +223,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(orgList)) {
             priceChangeEntity.setPurchaseOrgName(orgList.get(0).getName());
         }
-
         //修改成功
         Boolean result = this.updateById(priceChangeEntity);
         if (result) {
@@ -243,10 +235,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细
             purchasePriceChangeDetailService.updatePriceChangeDetail(id, dto.getPurchasePriceChangeDetailList());
-            return priceChangeEntity;
+            return id;
         }
-
-        return null;
+        return "";
     }
 
 
@@ -455,20 +446,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto) {
-        PurchasePriceChangeEntity priceChangeEntity = this.updatePurchasePriceChange(dto);
-        boolean result = false;
-        if(priceChangeEntity!=null){
-            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-            if (!priceChangeEntity.getApproveStatus().getStatus().equals(waitSubmitStatus)) {
-                result = updateSubmitApproveStatus(priceChangeEntity, ApproveStatusEnum.APPROVE_ING.getStatus());
-                if (result) {
-                    //添加日志
-                    String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-                    addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), priceChangeEntity.getId(), "状态变更");
-                }
-            }
+        String id = this.updatePurchasePriceChange(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
         }
-        return result;
+        return this.submitApprove(Arrays.asList(id));
     }
 
 
@@ -506,23 +488,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     }
 
-
-    /**
-     * 修改状态
-     *
-     * @param changeEntity
-     * @param status
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 14:12
-     */
-    private Boolean updateSubmitApproveStatus(PurchasePriceChangeEntity changeEntity, String status) {
-        if (changeEntity != null) {
-            changeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(status));
-            return this.updateById(changeEntity);
-        }
-        return false;
-    }
 
 
     /**

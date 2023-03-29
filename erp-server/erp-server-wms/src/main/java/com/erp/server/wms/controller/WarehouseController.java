@@ -6,8 +6,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.WarehouseService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,8 +51,8 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
-        WarehouseEntity warehouse = warehouseService.add(dto);
-        return warehouse != null ? success() : failure();
+        String id = warehouseService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -101,8 +101,8 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
-        WarehouseEntity warehouse  = warehouseService.updateWarehouse(dto);
-        return warehouse !=null ? success() : failure();
+        String id  = warehouseService.updateWarehouse(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
