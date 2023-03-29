@@ -119,6 +119,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
+                obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
@@ -129,7 +130,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     return;
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-                obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
                 list.add(obj.getId());
             });
         }

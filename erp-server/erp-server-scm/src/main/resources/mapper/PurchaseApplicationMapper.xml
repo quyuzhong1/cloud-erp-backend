@@ -163,6 +163,9 @@
         ) parp on pad.id = parp.purchase_application_detail_id
         <where>
             pa.is_deleted = false
+            <if test="params.code != null and params.code != ''">
+                and pa.code like concat('%',#{params.code},'%')
+            </if>
             <if test="params.productName != null and params.productName != ''">
                 and pad.product_name like concat('%',#{params.productName},'%')
             </if>

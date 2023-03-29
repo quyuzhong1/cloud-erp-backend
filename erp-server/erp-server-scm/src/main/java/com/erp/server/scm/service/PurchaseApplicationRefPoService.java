@@ -23,4 +23,19 @@ public interface PurchaseApplicationRefPoService extends SuperService<PurchaseAp
      * @return List<ListDTO>
      */
     List<PurchaseApplicationRefPoDTO.ListDTO> list(PurchaseApplicationRefPoDTO.SearchParamDTO dto);
+    /**
+     * @description: 根据采购订单Ids查询
+     * @author Will
+     * @date: 2023/3/29 10:46
+     * @param purchaseOrderIds
+     * @return List<PurchaseApplicationRefPoEntity>
+     */
+    List<PurchaseApplicationRefPoEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds);
+    /**
+     * @description: 根据采购订单ids删除
+     * @author Will
+     * @date: 2023/3/29 12:04
+     * @param purchaseOrderIds
+     */
+    void removeByPurchaseOrderIds(List<String> purchaseOrderIds);
 }
