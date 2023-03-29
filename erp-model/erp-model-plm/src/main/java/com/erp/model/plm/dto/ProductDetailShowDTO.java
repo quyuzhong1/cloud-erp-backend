@@ -145,15 +145,11 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private String grade;
 
-
-
     /**
      * 产品负责人
      * product_info
      */
     private String productChargeName;
-
-
 
     /**
      * 项目负责人
@@ -223,9 +219,6 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private String saleMethod;
 
-
-
-
     /**
      * 销售渠道
      * product_info
@@ -245,10 +238,6 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private String saleStateName;
 
-
-
-
-
     /**
      * 上市时间
      * product_sale
@@ -263,7 +252,6 @@ public class ProductDetailShowDTO implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime delistingTime;
 
-
     /**
      * 箱单数量
      */
@@ -273,4 +261,14 @@ public class ProductDetailShowDTO implements Serializable {
      * 最小起订量
      */
     private Integer moq;
+
+    /**
+     * 报关型号
+     */
+    private String declareModel;
+
+    /**
+     * 报关中文名
+     */
+    private String declareChineseName;
 }
