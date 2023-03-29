@@ -40,4 +40,9 @@ public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<Purcha
         lambdaUpdate().in(PurchaseApplicationRefPoEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
 
+    @Override
+    public void removeByPurchaseOrderDetailIds(List<String> purchaseOrderDetailIds) {
+        lambdaUpdate().in(PurchaseApplicationRefPoEntity::getPurchaseOrderDetailId,purchaseOrderDetailIds).remove();
+    }
+
 }

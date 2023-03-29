@@ -101,6 +101,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private PurchaseApplicationDetailService purchaseApplicationDetailService;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private SupplierService supplierService;
+
+    @Resource
+    private SupplierContactService supplierContactService;
+
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -344,17 +353,55 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
+
+        if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(purchaseOrderEntity.getApproveStatus()) || ApproveStatusEnum.REJECT.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98038);
+        }
+
         List<PurchaseOrderDetailEntity> list = purchaseOrderDetailService.listByPurchaseOrderId(id);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
         //主表数据处理 TODO
+        exportPdfDTO.setCode(purchaseOrderEntity.getCode());
+
+        //查询订单供应商信息
+        PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.getById(id);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());
+        //结算方式
+        DictBasicEntity payMethod = dictBasicService.getById(purchaseOrderSupplier.getPayMethodId());
+        if (ObjectUtils.isNotEmpty(payMethod)) {
+            exportPdfDTO.setPayMethodName(payMethod.getName());
+        }
+
+        //原供应商信息
+        SupplierEntity supplier = supplierService.getById(purchaseOrderSupplier.getSupplierId());
+        if (ObjectUtils.isEmpty(supplier)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        exportPdfDTO.setSupplierName(supplier.getName());
+        exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
+
+        //供应商联系人信息
+        if (StringUtils.isNotBlank(purchaseOrderSupplier.getSupplierContactId())) {
+            SupplierContactEntity supplierContact = supplierContactService.getById(purchaseOrderSupplier.getSupplierContactId());
+            if (ObjectUtils.isEmpty(supplierContact)) {
+                throw new ServiceException(ApiError.ERROR_98039);
+            }
+            exportPdfDTO.setSupplierEmail(supplierContact.getEmail());
+        }
+
+        //仓库信息 TODO
 
         List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
             PurchaseOrderDetailDTO.ExportPdfDTO detailDTO = new PurchaseOrderDetailDTO.ExportPdfDTO();
             BeanMapperUtils.copy(purchaseOrderDetailEntity,detailDTO);
-            //明细数据处理 TODO
+            //明细数据处理
+            detailDTO.setUnitName("个");
             details.add(detailDTO);
         }
         exportPdfDTO.setDetails(details);
