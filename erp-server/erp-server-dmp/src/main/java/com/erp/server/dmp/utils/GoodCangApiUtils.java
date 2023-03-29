@@ -13,13 +13,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class GoodCangApiUtils {
-    private static Integer APP_KEY;
+    private static String APP_KEY;
 
     private static String APP_token;
 
     private static String URL;
     @Value("${openApi.goodcang.appKey}")
-    public void setAppKey(Integer appKey){
+    public void setAppKey(String appKey){
         GoodCangApiUtils.APP_KEY = appKey;
     }
     @Value("${openApi.goodcang.appToken}")
