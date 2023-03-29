@@ -24,7 +24,7 @@ public class GoodCangOpenController {
     @RequestMapping ("/subscribe")
     public GoodCangDTO.ResultDTO subscribe(@RequestBody JSONObject dto){
         log.warn("GoodCangOpenController>>>subscribe>>>dto ={}", dto);
-        return new GoodCangDTO.ResultDTO();
+        return GoodCangDTO.ResultDTO.success();
     }
 
 }
