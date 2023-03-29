@@ -1,9 +1,9 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.SupplierContactEntity;
@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -135,6 +136,26 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
         LambdaQueryWrapper<SupplierContactEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SupplierContactEntity::getSupplierId, supplierIds);
         this.remove(queryWrapper);
+    }
+
+
+    /**
+     * 获取到供应商默认联系人信息
+     *
+     * @param supplierIdList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierContactEntity>
+     * @author yl
+     * @date 2023-03-29 14:39
+     */
+    @Override
+    public List<SupplierContactEntity> getDefaultBySupplierIdList(List<String> supplierIdList) {
+        if (CollectionUtils.isEmpty(supplierIdList)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SupplierContactEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierContactEntity::getSupplierId, supplierIdList);
+        queryWrapper.eq(SupplierContactEntity::getIsDefault, true);
+        return this.list(queryWrapper);
     }
 
     /**

@@ -39,7 +39,7 @@ public class SupplierContactDTO implements Serializable {
         /**
          * 电话
          */
-        @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
+       // @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
         private String telNumber;
 
         /**

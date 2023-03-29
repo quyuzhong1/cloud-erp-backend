@@ -7,7 +7,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.lang3.StringUtils;
@@ -182,6 +181,15 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        return success();
+    }
+
+    /**
+     * 供应商导出
+     */
+    @PostMapping("/exportSupplier")
+    public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.ExportDTO dto ,HttpServletResponse response) {
+        supplierService.exportSupplier(dto,response);
         return success();
     }
 

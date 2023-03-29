@@ -146,4 +146,15 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto);
+
+    
+    /**
+     * 供应商导出
+     * @author yl
+     * @date 2023-03-29 14:50
+     * @param dto
+     * @param response
+     * @return void
+     */
+    void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response);
 }

@@ -1,17 +1,20 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceHistoryService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 采购价目管理
@@ -25,6 +28,9 @@ public class PurchasePriceDetailController extends BaseController {
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+
+    @Resource
+    private PurchasePriceHistoryService purchasePriceHistoryService;
 
 
     /**
@@ -56,8 +62,17 @@ public class PurchasePriceDetailController extends BaseController {
      */
     @PostMapping("/updateDisabled")
     public ApiResult updateDisabled(@RequestBody @Valid UpdateStateDTO.BatchUpdateDTO dto) {
-        Boolean  result = purchasePriceDetailService.updateDisabled(dto);
-        return result==true?success():failure();
+        Boolean result = purchasePriceDetailService.updateDisabled(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 获取历史数据
+     */
+    @PostMapping("/history")
+    public ApiResult<List<PurchasePriceDetailDTO.HistoryDTO>> getHistory(@RequestBody @Valid BaseIdDTO dto) {
+        List<PurchasePriceDetailDTO.HistoryDTO> historyList = purchasePriceHistoryService.getHistory(dto.getId());
+        return success(historyList);
     }
 
 
