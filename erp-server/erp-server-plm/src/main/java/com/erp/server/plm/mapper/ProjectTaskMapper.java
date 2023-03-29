@@ -162,5 +162,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     ScheduleTaskExportExcelVO getExport(@Param("productId") String productId, @Param("taskId")  String taskId);
 
     List<ChangeScheduleExportVO> getExportChangeScheduleTask(@Param("dto") HandleTaskScheduleDTO dto);
+
+    Boolean removeBatch(@Param("ids") List<String> ids);
 }
 

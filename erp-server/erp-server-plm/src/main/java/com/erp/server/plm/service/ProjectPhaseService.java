@@ -45,4 +45,13 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
     List<ProjectPhaseEntity> listByPhaseNames(List<String> phaseNames,String productId);
 
     List<SelectShowDTO> listPhaseName();
+
+    /**
+     * 根据阶段名查询阶段信息
+     * @Author Luo_WG
+     * @param productId 产品id
+     * @param name 阶段名称
+     * @return com.erp.model.plm.entity.ProjectPhaseEntity
+     **/
+    ProjectPhaseEntity getProductPhaseByName(String productId, String name);
 }

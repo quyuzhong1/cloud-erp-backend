@@ -1,9 +1,11 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -12,6 +14,7 @@ import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -278,4 +281,23 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return
      */
     List<ProjectTaskEntity> listByTaskIds(List<String> preTaskIds);
+
+    /**
+     * 根据任务名称查询任务
+     * @param productId
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2022-09-22 16:36
+     */
+    ProjectTaskEntity getTaskByName(String productId, String name);
+
+    /**
+     * 批量删除任务
+     * @Author Luo_WG
+     * @Date 2023/3/29 18:00
+     * @param ids ids
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean removeBatch(List<String> ids);
 }

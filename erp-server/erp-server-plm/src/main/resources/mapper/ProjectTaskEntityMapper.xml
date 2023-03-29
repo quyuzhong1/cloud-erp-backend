@@ -1149,5 +1149,13 @@
         </foreach>
     </update>
 
+    <update id="removeBatch">
+        DELETE FROM project_task
+        WHERE id IN
+        <foreach item="id" collection="ids" separator="," open="(" close=")" index="">
+            #{id}
+        </foreach>
+    </update>
+
 
 </mapper>
