@@ -32,27 +32,27 @@ public class GoodCangDTO {
         /**
          * 用户令牌
          */
-        private String appToken;
+        private String AppToken;
         /**
          * 签名字符串
          */
-        private String sign;
+        private String Sign;
         /**
          * 数据类型
          */
-        private String messageType;
+        private String MessageType;
         /**
          * 签名字符串
          */
-        private MessageDTO message;
+        private MessageDTO Message;
         /**
          * 消息ID
          */
-        private String messageID;
+        private String MessageID;
         /**
          * 发送时间
          */
-        private LocalDateTime sendTime;
+        private LocalDateTime SendTime;
     }
 
     @Data
@@ -150,11 +150,10 @@ public class GoodCangDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ResultDTO{
-        @JsonProperty(value = "Status")
-        private String status;
 
-        @JsonProperty(value = "ErrorMessage")
-        private String errorMessage;
+        private String Status;
+
+        private String ErrorMessage;
 
         public static ResultDTO success(){
             ResultDTO success = new ResultDTO("SUCCESS", "");
