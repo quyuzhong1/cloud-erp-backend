@@ -101,4 +101,13 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.PurchasePriceChangeDTO.PagingViewDTO>
      */
     PagingVO<PurchasePriceChangeDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto);
+
+    /**
+     * 修改并审核
+     * @author yl
+     * @date 2023-03-29 9:42
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto);
 }

@@ -188,6 +188,19 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+
+        String status = purchasePrice.getApproveStatus().getStatus();
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        if (!statusList.contains(status)) {
+            throw new ServiceException(ApiError.ERROR_98019);
+        }
+
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
         priceDetailService.checkSkuInterval(purchasePriceDetailList);
@@ -196,6 +209,18 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String code = purchasePrice.getCode();
         BeanMapper.copy(dto, purchasePrice);
         purchasePrice.setCode(code);
+
+
+        String pricingUserId = dto.getPricingUserId();
+        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+        purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        String orgId = dto.getPurchaseOrgId();
+        //获取组织
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        if (CollectionUtils.isNotEmpty(orgList)) {
+            purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
+        }
+
         //修改成功
         Boolean result = this.updateById(purchasePrice);
         if (result) {
@@ -250,10 +275,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     public Boolean updateAndSubmit(PurchasePriceDTO.ViewDTO dto) {
         PurchasePriceEntity purchasePrice = this.updatePurchasePrice(dto);
-        boolean result = true;
+        boolean result = false;
         if (purchasePrice != null) {
             String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-            if (!purchasePrice.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
+            if (!purchasePrice.getApproveStatus().getStatus().equals(waitSubmitStatus)) {
                 result = updateSubmitApproveStatus(purchasePrice, ApproveStatusEnum.APPROVE_ING.getStatus());
                 if (result) {
                     //添加日志
