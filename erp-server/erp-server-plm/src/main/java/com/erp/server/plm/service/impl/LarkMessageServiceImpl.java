@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
@@ -82,7 +83,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 }
                 processId = task.getProcessId();
                 titleContent= String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
-                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), dateTimeFormatter.format(task.getPlanEndTime()), taskCharge, task.getChargeName());;
+                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());;
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_BUSINESS_NOT_EXIT);

@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -390,11 +391,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         LocalDate minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
         //最大计划结束时间
         LocalDate maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeEndTime).get();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
-        vo.setScheduleStartTine(dateTimeFormatter.format(minStartTime));
-        vo.setScheduleEndTine(dateTimeFormatter.format(maxEndTime));
+        vo.setScheduleStartTine(LocalDateTimeUtil.format(minStartTime, DateUtil.fmt_day));
+        vo.setScheduleEndTine(LocalDateTimeUtil.format(maxEndTime, DateUtil.fmt_day));
         //相差多少天
-        Long durationDay = DateUtil.getDiffDay(dateTimeFormatter.format(minStartTime), dateTimeFormatter.format(maxEndTime)) + 1;
+        Long durationDay = DateUtil.getDiffDay(LocalDateTimeUtil.format(minStartTime, DateUtil.fmt_day), LocalDateTimeUtil.format(maxEndTime, DateUtil.fmt_day)) + 1;
         vo.setDurationDay(Integer.parseInt(durationDay+""));
         vo.setWaitAuditTaskCount(planTaskList.size());
 
