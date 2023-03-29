@@ -331,6 +331,61 @@ public class PurchaseOrderDTO implements Serializable {
         private String code;
 
         /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 甲方
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 签订日期（甲方）
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 收货地址（甲方）
+         */
+        private String deliveryWarehouseAddress;
+
+        /**
+         * 联系人（甲方）
+         */
+        private String deliveryWarehouseContract;
+
+        /**
+         * 联系电话（甲方）
+         */
+        private String deliveryWarehouseTel;
+
+        /**
+         * 乙方
+         */
+        private String supplierName;
+
+        /**
+         * 供方地址（乙方）
+         */
+        private String supplierAddress;
+
+        /**
+         * 联系人（乙方）
+         */
+        private String supplierContract;
+
+        /**
+         * 联系电话（乙方）
+         */
+        private String supplierTel;
+
+        /**
+         * 邮箱（乙方）
+         */
+        private String supplierEmail;
+
+        /**
          * 明细信息
          */
         private List<PurchaseOrderDetailDTO.ExportPdfDTO> details;

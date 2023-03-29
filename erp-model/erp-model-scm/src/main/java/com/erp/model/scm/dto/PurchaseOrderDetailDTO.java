@@ -166,7 +166,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 名称
          */
-        private String productName;
+        private String declareName;
 
         /**
          * 型号
@@ -176,22 +176,17 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 描述
          */
-        private String desc;
+        private String productName;
 
         /**
-         * 采购数量
+         * 数量
          */
         private Integer purchaseQty;
 
         /**
          * 单位
          */
-        private String unit;
-
-        /**
-         * 单价
-         */
-        private BigDecimal price;
+        private String unitName;
 
         /**
          * 税率

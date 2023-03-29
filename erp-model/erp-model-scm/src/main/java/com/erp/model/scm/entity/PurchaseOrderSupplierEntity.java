@@ -44,14 +44,14 @@ public class PurchaseOrderSupplierEntity extends BaseEntity<PurchaseOrderSupplie
     /**
      * 结算方式
      */
-    @TableField("settle_method")
-    private String settleMethod;
+    @TableField("pay_method_id")
+    private String payMethodId;
 
     /**
      * 结算币种
      */
-    @TableField("settle_currency")
-    private String settleCurrency;
+    @TableField("pay_currency")
+    private String payCurrency;
 
     /**
      * 供应商联系人表id
@@ -78,9 +78,9 @@ public class PurchaseOrderSupplierEntity extends BaseEntity<PurchaseOrderSupplie
 
     public static final String SUPPLIER_NAME = "supplier_name";
 
-    public static final String SETTLE_METHOD = "settle_method";
+    public static final String PAY_METHOD_ID = "pay_method_id";
 
-    public static final String SETTLE_CURRENCY = "settle_currency";
+    public static final String PAY_CURRENCY = "pay_currency";
 
     public static final String SUPPLIER_CONTACT_ID = "supplier_contact_id";
 

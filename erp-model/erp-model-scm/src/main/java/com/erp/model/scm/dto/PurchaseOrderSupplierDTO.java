@@ -36,12 +36,12 @@ public class PurchaseOrderSupplierDTO implements Serializable {
         /**
          * 结算方式
          */
-        private String settleMethod;
+        private String payMethodId;
 
         /**
          * 结算币种
          */
-        private String settleCurrency;
+        private String payCurrency;
 
         /**
          * 供应商联系人表id
