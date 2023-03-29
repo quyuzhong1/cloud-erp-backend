@@ -98,6 +98,16 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         @NotBlank(message = "skuId不能为空")
         private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 
 

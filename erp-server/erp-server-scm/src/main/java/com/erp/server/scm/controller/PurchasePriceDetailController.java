@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -75,5 +76,17 @@ public class PurchasePriceDetailController extends BaseController {
         return success(historyList);
     }
 
+    /**
+     * 查询含税单价
+     * @author Will
+     * @date: 2023/3/27 9:22
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/getTaxPrice")
+    public ApiResult< List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> getTaxPrice(@RequestBody @Validated PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = purchasePriceDetailService.getTaxPrice(dto);
+        return success(list);
+    }
 
 }
