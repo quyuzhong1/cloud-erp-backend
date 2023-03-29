@@ -22,8 +22,8 @@ public interface PurchaseApplicationRefPoMapper extends BaseMapper<PurchaseAppli
      * @description: 根据采购申请明细ids查询
      * @author Will
      * @date: 2023/3/23 14:37
-     * @param purchaseApplicationDetailIds
+     * @param params
      * @return List<ListDTO>
      */
-    List<PurchaseApplicationRefPoDTO.ListDTO> listByPurchaseApplicationDetailIds(@Param("purchaseApplicationDetailIds") List<String> purchaseApplicationDetailIds);
+    List<PurchaseApplicationRefPoDTO.ListDTO> list(@Param("params") PurchaseApplicationRefPoDTO.SearchParamDTO params);
 }

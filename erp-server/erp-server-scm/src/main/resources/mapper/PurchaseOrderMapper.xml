@@ -53,7 +53,7 @@
             po.create_user_name as createUserName,
             po.create_time as createTime
         from purchase_order po
-        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         <where>
             po.is_deleted = false

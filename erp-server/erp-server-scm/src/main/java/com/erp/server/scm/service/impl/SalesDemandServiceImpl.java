@@ -52,6 +52,7 @@ import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesDemandDetailService;
 import com.erp.server.scm.service.SalesDemandService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -138,7 +139,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(SalesDemandDTO.AddDTO dto) {
         SalesDemandEntity entity = new SalesDemandEntity();
         BeanMapperUtils.copy(dto,entity);
