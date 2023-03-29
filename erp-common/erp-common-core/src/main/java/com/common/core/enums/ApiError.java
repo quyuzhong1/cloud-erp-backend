@@ -52,6 +52,7 @@ public enum ApiError implements Serializable {
     ERROR_1017(1017, "参数列表不能为空"),
     ERROR_1018(1018, "导入名称不能大于200字符"),
     ERROR_1019(1019, "数据新增失败"),
+    ERROR_1020(1020, "数据修改失败"),
     /**
      * 警告信息 从800 开始
      */

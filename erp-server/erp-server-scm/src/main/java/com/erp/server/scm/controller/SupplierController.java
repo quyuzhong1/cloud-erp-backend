@@ -10,6 +10,7 @@ import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,8 +57,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        SupplierEntity supplier = supplierService.addSupplier(dto);
-        return supplier != null ? success() : failure();
+        String supplierId = supplierService.addSupplier(dto);
+        return StringUtils.isNotBlank(supplierId) ? success() : failure();
     }
 
 
@@ -82,8 +83,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
-        SupplierEntity result = supplierService.updateSupplier(dto);
-        return result != null ? success() : failure();
+        String supplierId = supplierService.updateSupplier(dto);
+        return StringUtils.isNotBlank(supplierId) ? success() : failure();
     }
 
     /**

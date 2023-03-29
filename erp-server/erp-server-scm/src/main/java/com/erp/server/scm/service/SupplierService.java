@@ -29,7 +29,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    SupplierEntity addSupplier(SupplierDTO.AddDTO dto);
+    String addSupplier(SupplierDTO.AddDTO dto);
 
     
     /**
@@ -59,7 +59,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    SupplierEntity updateSupplier(SupplierDTO.UpdateDTO dto);
+    String updateSupplier(SupplierDTO.UpdateDTO dto);
 
     
     /**
