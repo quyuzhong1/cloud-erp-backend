@@ -157,6 +157,19 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 批量作废
+     * @author Will
+     * @date: 2023/3/15 17:50
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/invalid")
+    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = purchaseOrderService.invalid(dto.getIds(),dto.getRemark());
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 批量审核
      * @author Will
      * @date: 2023/3/15 17:54

@@ -159,4 +159,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<PurchaseOrderCountDTO>
      */
     List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount();
+    /**
+     * @description: 批量作废
+     * @author Will
+     * @date: 2023/3/29 10:28
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
+    Boolean invalid(List<String> ids, String remark);
 }

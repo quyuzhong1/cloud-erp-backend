@@ -45,7 +45,7 @@
             pa.create_user_name as createUserName,
             pa.create_time as createTime
         from purchase_application pa
-        left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         left join (
             select parp.purchase_application_detail_id,sum(pod.purchase_qty) as realPurchaseQty from purchase_application_ref_po parp
             left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false
@@ -154,7 +154,7 @@
         pa.create_user_name as createUserName,
         pa.create_time as createTime
         from purchase_application pa
-        inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         left join (
         select parp.purchase_application_detail_id,sum(pod.purchase_qty) as realPurchaseQty from purchase_application_ref_po parp
         left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false

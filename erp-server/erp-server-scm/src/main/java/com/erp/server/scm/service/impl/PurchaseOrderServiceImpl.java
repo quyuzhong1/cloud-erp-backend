@@ -34,7 +34,7 @@ import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.enums.CreatePoTypeEnum;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
@@ -453,32 +453,59 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseOrderCountDTO> list = new ArrayList<>();
         for (PurchaseListTypeEnum item: values) {
-            PurchaseApplicationDTO.SearchParamDTO dto = new PurchaseApplicationDTO.SearchParamDTO();
+            PurchaseOrderDTO.SearchParamDTO dto = new PurchaseOrderDTO.SearchParamDTO();
             ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-               // count = this.baseMapper.listCount(dto);
+                count = this.baseMapper.listCount(dto);
             }
             if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
-                dto.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.NOT_GENERATED.getStatus(),CreatePoTypeEnum.PARTIAL_GENERATED.getStatus()));
+                dto.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-               // count = this.baseMapper.listCount(dto);
+                count = this.baseMapper.listCount(dto);
             }
             if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
-                dto.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.ALL_GENERATED.getStatus()));
+                dto.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-               // count = this.baseMapper.listCount(dto);
+                count = this.baseMapper.listCount(dto);
             }
             if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-               // count = this.baseMapper.listCount(dto);
+               count = this.baseMapper.listCount(dto);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
             resultDTO.setType(item.getCode());
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public Boolean invalid(List<String> ids, String reason) {
+        //根据ids查询
+        List<PurchaseOrderEntity> list = getList(ids);
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新
+        lambdaUpdate().in(PurchaseOrderEntity::getId,ids)
+                .set(PurchaseOrderEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(PurchaseOrderEntity::getInvalidTime, LocalDateTime.now())
+                .set(PurchaseOrderEntity::getInvalidRemark,reason)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购订单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"作废操作");
+        return Boolean.TRUE;
     }
 
     /**
