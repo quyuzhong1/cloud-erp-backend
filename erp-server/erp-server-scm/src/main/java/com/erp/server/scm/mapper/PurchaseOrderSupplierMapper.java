@@ -1,8 +1,12 @@
 package com.erp.server.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -15,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PurchaseOrderSupplierMapper extends BaseMapper<PurchaseOrderSupplierEntity> {
 
+    IPage<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> supplierPurchasePaging(Page query, @Param("supplierId") String supplierId);
 }
