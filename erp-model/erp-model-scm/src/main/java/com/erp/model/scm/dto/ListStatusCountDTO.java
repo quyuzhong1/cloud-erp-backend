@@ -45,4 +45,18 @@ public class ListStatusCountDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderCountDTO {
+
+        /**
+         * 类型(toBeApprove待审批，toBeCreate待到货，created已到货，reject不通过)
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 }

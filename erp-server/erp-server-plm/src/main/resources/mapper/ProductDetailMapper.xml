@@ -72,13 +72,16 @@
         pi.sale_method,
         ps.sale_state,
         ppk.box_qty,
-        pp.moq
+        pp.moq,
+        pl.declare_model,
+        pl.declare_chinese_name
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
         LEFT join product_sale ps on pd.id = ps.sku_id AND ps.is_deleted = FALSE
         left join product_pack ppk on pd.id = ppk.sku_id AND ppk.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id and pl.is_deleted = FALSE
         WHERE pi.delete_state = 0 AND pi.is_deleted = FALSE
         <if test="params.no != null  and params.no != ''">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%') OR pd.name LIKE concat('%', #{params.no},'%'))

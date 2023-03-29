@@ -28,16 +28,16 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -48,6 +48,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -99,6 +100,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
+    @Resource
+    private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
+
+
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -132,7 +137,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(PurchaseOrderDTO.AddDTO dto) {
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -152,7 +157,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //新增明细
             purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
             //新增供应商信息
-
+            purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO());
         }
         return entity.getId();
     }
@@ -176,7 +181,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         this.updateById(entity);
         //更新明细数据
         purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
-
+        //供应商数据
+        purchaseOrderSupplierService.update(dto.getPurchaseOrderSupplierDTO());
         return Boolean.TRUE;
     }
 
@@ -227,7 +233,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //删除明细数据
         purchaseOrderDetailService.removeByPurchaseOrderIds(ids);
         //删除主表数据
-        return  this.removeByIds(ids);
+        this.removeByIds(ids);
+        //更新采购申请单的生成状态
+        updateCreatePoType(ids);
+        return Boolean.TRUE;
+    }
+
+    private void updateCreatePoType(List<String> purchaseOrderIds) {
+        //关联信息
+        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
+        searchParamDTO.setPurchaseOrderIds(purchaseOrderIds);
+        List<PurchaseApplicationRefPoDTO.ListDTO> list = purchaseApplicationRefPoService.list(searchParamDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (PurchaseApplicationRefPoDTO.ListDTO listDTO : list) {
+
+
+        }
+
+
     }
 
     @Override
@@ -421,6 +446,66 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         this.update(dto);
         //提交
         return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount() {
+        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = new ArrayList<>();
+        for (PurchaseListTypeEnum item: values) {
+            PurchaseOrderDTO.SearchParamDTO dto = new PurchaseOrderDTO.SearchParamDTO();
+            ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
+                dto.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
+                dto.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+               count = this.baseMapper.listCount(dto);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
+    }
+
+    @Override
+    public Boolean invalid(List<String> ids, String reason) {
+        //根据ids查询
+        List<PurchaseOrderEntity> list = getList(ids);
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新
+        lambdaUpdate().in(PurchaseOrderEntity::getId,ids)
+                .set(PurchaseOrderEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(PurchaseOrderEntity::getInvalidTime, LocalDateTime.now())
+                .set(PurchaseOrderEntity::getInvalidRemark,reason)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购订单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"作废操作");
+        return Boolean.TRUE;
     }
 
     /**

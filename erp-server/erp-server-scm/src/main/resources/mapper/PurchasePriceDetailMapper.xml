@@ -14,7 +14,7 @@
         left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         left join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
-            pp.is_deleted = false and pp.approve_status = 'approve' and now() >= ppd.effective_date
+            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >= ppd.effective_date
             <if test="params.skuId != null and params.skuId != ''">
                 and ppd.sku_id = #{params.skuId}
             </if>

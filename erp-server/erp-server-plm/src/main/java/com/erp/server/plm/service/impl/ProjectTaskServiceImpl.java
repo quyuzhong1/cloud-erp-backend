@@ -789,7 +789,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public ProjectTaskDetailsDTO getTaskDetails(String taskId) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
         ProjectTaskDetailsDTO detailsDTO = baseMapper.getTaskDetails(taskId);
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -806,21 +805,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         StringBuffer planTime = new StringBuffer();
         if (detailsDTO.getPlanStartTime() != null) {
-            planTime.append(dateTimeFormatter.format(detailsDTO.getPlanStartTime()));
+            planTime.append(LocalDateTimeUtil.format(detailsDTO.getPlanStartTime(), DateUtil.fmt_day));
         }
         planTime.append(" - ");
         if (detailsDTO.getPlanEndTime() != null) {
-            planTime.append(dateTimeFormatter.format(detailsDTO.getPlanEndTime()));
+            planTime.append(LocalDateTimeUtil.format(detailsDTO.getPlanEndTime(),  DateUtil.fmt_day));
         }
         detailsDTO.setPlanTime(planTime.toString());
 
         StringBuffer realityTime = new StringBuffer();
         if (detailsDTO.getRealityStartTime() != null) {
-            realityTime.append(dateTimeFormatter.format(detailsDTO.getRealityStartTime()));
+            realityTime.append(LocalDateTimeUtil.format(detailsDTO.getRealityStartTime(),  DateUtil.fmt_day));
         }
         realityTime.append(" - ");
         if (detailsDTO.getRealityEndTime() != null) {
-            realityTime.append(dateTimeFormatter.format(detailsDTO.getRealityEndTime()));
+            realityTime.append(LocalDateTimeUtil.format(detailsDTO.getRealityEndTime(),  DateUtil.fmt_day));
         }
         detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
@@ -4483,14 +4482,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     //获取预警信息
     public String getWarning(Integer state, Integer finishState, LocalDateTime planEndTime) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtils.DATE_FORMAT_10);
         Date nowDay = new Date();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         String warning = "";
         if (planEndTime != null) {
             //状态
             if (!finishState.equals(state) && !approvalPass.equals(state)) {
-                Long difference = DateUtil.getDiffDay(dateTimeFormatter.format(planEndTime), DateUtils.format(nowDay, DateUtils.DATE_FORMAT_10));
+                Long difference = DateUtil.getDiffDay(LocalDateTimeUtil.format(planEndTime, DateUtils.DATE_FORMAT_10), DateUtils.format(nowDay, DateUtils.DATE_FORMAT_10));
                 if (difference > 0) {
                     warning = "过期" + difference + "天";
                 }

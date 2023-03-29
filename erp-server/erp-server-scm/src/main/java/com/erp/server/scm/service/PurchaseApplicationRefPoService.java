@@ -16,7 +16,11 @@ import java.util.List;
  */
 public interface PurchaseApplicationRefPoService extends SuperService<PurchaseApplicationRefPoEntity> {
     /**
-     * 根据采购申请明细ids查询
+     * @description: 根据采购申请明细ids查询
+     * @author Will
+     * @date: 2023/3/28 20:12
+     * @param dto
+     * @return List<ListDTO>
      */
-    List<PurchaseApplicationRefPoDTO.ListDTO> listByPurchaseApplicationDetailIds(List<String> detailIds);
+    List<PurchaseApplicationRefPoDTO.ListDTO> list(PurchaseApplicationRefPoDTO.SearchParamDTO dto);
 }

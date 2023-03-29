@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -36,6 +36,13 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
      */
     @TableField("purchase_price_id")
     private String purchasePriceId;
+
+
+    /**
+     * 采购价详情表 id
+     */
+    @TableField("price_detail_id")
+    private String priceDetailId;
 
     /**
      * sku no
@@ -77,7 +84,7 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
      * 失效时间
      */
     @TableField("expire_date")
-    private Date expireDate;
+    private LocalDate expireDate;
 
     /**
      * 税率
@@ -95,7 +102,7 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
      * 生效时间
      */
     @TableField("effective_date")
-    private Date effectiveDate;
+    private LocalDate effectiveDate;
 
 
     public static final String SKU_ID = "sku_id";

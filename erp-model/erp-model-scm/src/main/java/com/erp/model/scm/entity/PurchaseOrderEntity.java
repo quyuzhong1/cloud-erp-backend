@@ -115,6 +115,12 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     @TableField("approve_user_name")
     private String approveUserName;
 
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -146,6 +152,7 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
 
     public static final String APPROVE_USER_NAME = "approve_user_name";
 
+    public static final String INVALID_REMARK = "invalid_remark";
 
     @Override
     public Serializable pkVal() {

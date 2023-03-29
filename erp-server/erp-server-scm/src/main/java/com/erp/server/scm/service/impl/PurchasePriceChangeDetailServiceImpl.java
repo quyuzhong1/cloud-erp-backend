@@ -16,6 +16,7 @@ import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -200,6 +201,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 //历史的
                 PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
                 BeanMapper.copy(item, history);
+                history.setPriceDetailId(priceDetailId);
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
                 item.setExpireDate(changeDetail.getExpireDate());
@@ -222,6 +224,67 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         //添加历史
         purchasePriceHistoryService.saveBatch(historyList);
 
+    }
+
+
+    /**
+     * 修改变更价目详情信息
+     *
+     * @param purchasePriceChangeId
+     * @param purchasePriceChangeDetailList
+     * @return void
+     * @author yl
+     * @date 2023-03-29 9:20
+     */
+    @Override
+    public void updatePriceChangeDetail(String purchasePriceChangeId, List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList) {
+        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
+            return;
+        }
+        List<PurchasePriceChangeDetailEntity> dbList = this.getEntityByPriceChangeId(purchasePriceChangeId);
+        //获取到要删除的id集合
+        List<String> deleteIdList = getDeleteIds(purchasePriceChangeDetailList, dbList);
+        this.removeByIds(deleteIdList);
+        List<String> skuIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<PurchasePriceChangeDetailEntity> saveOrUpdateList = new ArrayList<>(purchasePriceChangeDetailList.size());
+        LocalDate localDate = LocalDate.now();
+        for (PurchasePriceChangeDetailDTO.UpdateDTO item : purchasePriceChangeDetailList) {
+            PurchasePriceChangeDetailEntity entity = new PurchasePriceChangeDetailEntity();
+            BeanMapper.copy(item, entity);
+            String skuId = item.getSkuId();
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (skuVO != null) {
+                entity.setSkuNo(skuVO.getSkuNo());
+                entity.setProductName(skuVO.getSpuName());
+            }
+            entity.setPurchasePriceChangeId(purchasePriceChangeId);
+            //失效时间
+            entity.setExpireDate(localDate.plusYears(100));
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+            entity.setTaxRate(rate);
+            saveOrUpdateList.add(entity);
+        }
+        this.saveOrUpdateBatch(saveOrUpdateList);
+    }
+
+
+    /**
+     * 获取删除的id集合
+     *
+     * @param purchasePriceChangeDetailList
+     * @param dbList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-29 9:33
+     */
+    private List<String> getDeleteIds(List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList, List<PurchasePriceChangeDetailEntity> dbList) {
+        List<String> ids = purchasePriceChangeDetailList.stream().filter(p -> StringUtils.isNotBlank(p.getId())).
+                map(PurchasePriceChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(PurchasePriceChangeDetailEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
 
 

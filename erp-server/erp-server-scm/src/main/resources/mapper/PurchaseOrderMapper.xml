@@ -53,7 +53,7 @@
             po.create_user_name as createUserName,
             po.create_time as createTime
         from purchase_order po
-        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
         <where>
             po.is_deleted = false
@@ -236,6 +236,28 @@
             </foreach>
         </if>
         po.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct po.id)
+        from purchase_order po
+        left join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        <where>
+            po.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and po.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.arrivalStatusList != null and params.arrivalStatusList.size > 0">
+                and pod.arrival_status in
+                <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
     </select>
 
 </mapper>

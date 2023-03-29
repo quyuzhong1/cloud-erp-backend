@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -151,4 +152,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean 
      */
     Boolean updateAndSubmit(PurchaseOrderDTO.UpdateDTO dto);
+    /**
+     * @description: 查询列表数量
+     * @author Will
+     * @date: 2023/3/29 9:59
+     * @return List<PurchaseOrderCountDTO>
+     */
+    List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount();
+    /**
+     * @description: 批量作废
+     * @author Will
+     * @date: 2023/3/29 10:28
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
+    Boolean invalid(List<String> ids, String remark);
 }

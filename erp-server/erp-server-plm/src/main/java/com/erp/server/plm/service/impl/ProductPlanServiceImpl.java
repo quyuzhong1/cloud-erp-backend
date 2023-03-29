@@ -792,7 +792,6 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
      * @param typeName
      */
     private void setProductPlanProgress(ProductPlanEntity productPlanEntity,List<ProductPlanProgressDTO> progressList,String typeName) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.DATE_TIME_PATTERN_NO_SEC);
         ProductPlanProgressDTO productPlanProgressDTO = new ProductPlanProgressDTO();
         productPlanProgressDTO.setTypeName(typeName);
         productPlanProgressDTO.setIsComplete(Boolean.FALSE);
@@ -813,7 +812,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (ProductPlanProcessEnum.PRODUCT_DEVELOP.getName().equals(typeName)) {
                 //转开发
                 productPlanProgressDTO.setIsComplete(Boolean.TRUE);
-                productPlanProgressDTO.setStartTime(dateTimeFormatter.format(productInfoEntity.getCreateTime()));
+                productPlanProgressDTO.setStartTime(LocalDateTimeUtil.format(productInfoEntity.getCreateTime(), DateUtil.DATE_TIME_PATTERN_NO_SEC));
                 productPlanProgressDTO.setUserName(productInfoEntity.getCreateUserName());
                 progressList.add(productPlanProgressDTO);
                 return;

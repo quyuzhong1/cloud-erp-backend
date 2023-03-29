@@ -94,6 +94,18 @@ public class PurchasePriceChangeController extends BaseController {
         return view == null ? success() : failure();
     }
 
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+        Boolean result = purchasePriceChangeService.updateAndSubmit(dto);
+        return result == true ? success() : failure();
+    }
+
 
     /**
      * 删除采购价目

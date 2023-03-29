@@ -21,7 +21,8 @@ import java.util.List;
 public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<PurchaseApplicationRefPoMapper, PurchaseApplicationRefPoEntity> implements PurchaseApplicationRefPoService {
 
     @Override
-    public List<PurchaseApplicationRefPoDTO.ListDTO> listByPurchaseApplicationDetailIds(List<String> detailIds) {
-        return  baseMapper.listByPurchaseApplicationDetailIds(detailIds);
+    public List<PurchaseApplicationRefPoDTO.ListDTO> list(PurchaseApplicationRefPoDTO.SearchParamDTO dto) {
+        return  baseMapper.list(dto);
     }
+
 }

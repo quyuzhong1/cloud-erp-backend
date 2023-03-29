@@ -32,6 +32,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -196,6 +197,55 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     public PurchasePriceChangeEntity updatePurchasePriceChange(PurchasePriceChangeDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        PurchasePriceChangeEntity priceChangeEntity = this.getById(id);
+        if (Objects.isNull(priceChangeEntity)) {
+            throw new ServiceException(ApiError.ERROR_98028);
+        }
+        //状态值
+        String status = priceChangeEntity.getApproveStatus().getStatus();
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        if (!statusList.contains(status)) {
+            throw new ServiceException(ApiError.ERROR_98019);
+        }
+        //检查区间报价是否重叠
+        List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
+        purchasePriceChangeDetailService.checkSkuInterval(priceChangeDetailList);
+        //code
+        String code = priceChangeEntity.getCode();
+        BeanMapper.copy(dto, priceChangeEntity);
+        priceChangeEntity.setCode(code);
+        String pricingUserId = dto.getAdjustUserId();
+        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+        priceChangeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
+        String orgId = dto.getPurchaseOrgId();
+        //获取组织
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        if (CollectionUtils.isNotEmpty(orgList)) {
+            priceChangeEntity.setPurchaseOrgName(orgList.get(0).getName());
+        }
+
+        //修改成功
+        Boolean result = this.updateById(priceChangeEntity);
+        if (result) {
+            Class<PurchasePriceChangeEntity> credentialClass = PurchasePriceChangeEntity.class;
+            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            attachmentService.deleteByBusinessIds(Arrays.asList(dto.getId()));
+            //保存附件
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+            //修改明细
+            purchasePriceChangeDetailService.updatePriceChangeDetail(id, dto.getPurchasePriceChangeDetailList());
+            return priceChangeEntity;
+        }
+
         return null;
     }
 
@@ -277,7 +327,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         }
 
-        return null;
+        return result;
     }
 
 
@@ -290,6 +340,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:52
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
@@ -319,10 +370,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (result) {
             //当是审核通过的时候 就要去复写 且添加历史数据
             if (isPass) {
-
                 purchasePriceChangeDetailService.updatePurchasePriceDetail(ids);
             }
-
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -331,7 +380,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         return result;
     }
-
 
 
     /**
@@ -381,7 +429,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
-            for(PurchasePriceChangeDTO.PagingViewDTO item:list){
+            for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
@@ -394,6 +442,33 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
 
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-29 9:42
+     */
+    @Override
+    public Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto) {
+        PurchasePriceChangeEntity priceChangeEntity = this.updatePurchasePriceChange(dto);
+        boolean result = false;
+        if(priceChangeEntity!=null){
+            String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+            if (!priceChangeEntity.getApproveStatus().getStatus().equals(waitSubmitStatus)) {
+                result = updateSubmitApproveStatus(priceChangeEntity, ApproveStatusEnum.APPROVE_ING.getStatus());
+                if (result) {
+                    //添加日志
+                    String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+                    addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), priceChangeEntity.getId(), "状态变更");
+                }
+            }
+        }
+        return result;
     }
 
 

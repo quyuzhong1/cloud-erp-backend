@@ -41,11 +41,13 @@ public class DictBasicController extends BaseController {
 
     /**
      * 获取对应字典数据
-     *
+     *  supplierPayMode  供应商结算方式
+     *  supplierCategory 供应商分类
+     *  supplierAccountPayment  供应商支付方式
      * @return
      */
     @GetMapping("/list")
-    public ApiResult list(@RequestParam("key") String key) {
+    public ApiResult<List<DictBasicDTO>> list(@RequestParam("key") String key) {
         List<DictBasicDTO> list = dictBasicService.getByKey(key);
         return success(list);
     }

@@ -55,4 +55,15 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @return void
      */
     void updatePurchasePriceDetail(List<String> purchasePriceChangeIds);
+
+    
+    /**
+     * 修改变更价目详情信息
+     * @author yl
+     * @date 2023-03-29 9:20
+     * @param id
+     * @param purchasePriceChangeDetailList
+     * @return void
+     */
+    void updatePriceChangeDetail(String id, List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList);
 }
