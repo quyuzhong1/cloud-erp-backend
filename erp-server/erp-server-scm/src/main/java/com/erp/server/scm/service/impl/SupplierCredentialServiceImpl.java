@@ -208,7 +208,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             List<SupplierCredentialDTO.AddDTO> list = credentialList.stream().filter(c -> c.getEffectiveDate() != null && c.getExpireDate() != null).collect(Collectors.toList());
             long count = list.stream().filter(c -> c.getExpireDate().compareTo(c.getEffectiveDate()) < 0).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_98035);
+                throw new ServiceException(ApiError.ERROR_98037);
             }
 
         }

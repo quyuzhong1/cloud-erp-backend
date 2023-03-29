@@ -315,8 +315,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean finishDelivery(String id) {
-        return null;
+    public Boolean finishDelivery(List<String> ids) {
+        //ids为采购订单明细id集合
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        long count = purchaseOrderDetailList.stream().filter(obj -> !ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98035);
+        }
+        //查询签收单数量放些明细中的采购数量 TODO
+
+        //更新明细中的交货状态
+        purchaseOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(),ids);
+        return Boolean.TRUE;
     }
     @Override
     public Boolean purchaseChange(String id) {
@@ -324,8 +337,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean exportPurchaseContractPdf(String id) {
-        return null;
+    public PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id) {
+        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = new PurchaseOrderDTO.ExportPdfDTO();
+
+        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        List<PurchaseOrderDetailEntity> list = purchaseOrderDetailService.listByPurchaseOrderId(id);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //主表数据处理 TODO
+
+        List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
+        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
+            PurchaseOrderDetailDTO.ExportPdfDTO detailDTO = new PurchaseOrderDetailDTO.ExportPdfDTO();
+            BeanMapperUtils.copy(purchaseOrderDetailEntity,detailDTO);
+            //明细数据处理 TODO
+            details.add(detailDTO);
+        }
+        exportPdfDTO.setDetails(details);
+        return exportPdfDTO;
     }
 
     @Override
@@ -488,6 +521,58 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购订单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"作废操作");
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids) {
+        //采购订单主表信息
+        List<PurchaseOrderEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //采购订单明细信息
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //供应商信息
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderSupplierList)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+
+        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewList = new ArrayList<>();
+        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : detailList) {
+            PurchaseOrderDTO.ViewGenerateReceiveDTO viewDTO = new PurchaseOrderDTO.ViewGenerateReceiveDTO();
+            BeanMapperUtils.copy(purchaseOrderDetailEntity,viewDTO);
+            PurchaseOrderEntity purchaseOrderEntity = list.stream().filter(obj -> obj.getId().equals(purchaseOrderDetailEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                log.error("下推签收单，未找到对应采购明细");
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            viewDTO.setId(purchaseOrderEntity.getId());
+            viewDTO.setPurchaseOrderDetailId(purchaseOrderDetailEntity.getId());
+            viewDTO.setCode(purchaseOrderEntity.getCode());
+            //供应商信息
+            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+                log.error("下推签收单，未找到对应供应商信息");
+                throw new ServiceException(ApiError.ERROR_98036);
+            }
+            viewDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+            viewDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
+            //交货数量 TODO
+
+            viewList.add(viewDTO);
+        }
+        return viewList;
+    }
+
+    @Override
+    public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+        //生成下推签收单 TODO
+
         return Boolean.TRUE;
     }
 

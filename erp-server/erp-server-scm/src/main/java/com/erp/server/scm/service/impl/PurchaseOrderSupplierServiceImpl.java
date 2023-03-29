@@ -39,6 +39,11 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     }
 
     @Override
+    public List<PurchaseOrderSupplierEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        return lambdaQuery().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderIds).list();
+    }
+
+    @Override
     public void add(PurchaseOrderSupplierDTO.AddDTO dto) {
         if (ObjectUtils.isEmpty(dto)) {
             return;

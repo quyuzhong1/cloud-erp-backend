@@ -89,10 +89,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 结束交货
      * @author Will
      * @date: 2023/3/16 11:35
-     * @param id
+     * @param ids
      * @return Boolean
      */
-    Boolean finishDelivery(String id);
+    Boolean finishDelivery(List<String> ids);
 
     /**
      * @description: 采购变更
@@ -107,9 +107,9 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/16 11:42
      * @param id
-     * @return Boolean
+     * @return PurchaseOrderDTO.ExportPdfDTO
      */
-    Boolean exportPurchaseContractPdf(String id);
+    PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id);
     /**
      * @description: 导入
      * @author Will
@@ -168,4 +168,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean invalid(List<String> ids, String remark);
+    /**
+     * @description: 下推签收单弹框数据显示
+     * @author Will
+     * @date: 2023/3/29 15:55
+     * @param ids
+     * @return List<ViewGenerateReceiveDTO>
+     */
+    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids);
+    /**
+     * @description: 下推签收单保存
+     * @author Will
+     * @date: 2023/3/29 16:46
+     * @param dto
+     * @return Boolean
+     */
+    Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
 }
