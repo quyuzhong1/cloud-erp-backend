@@ -334,7 +334,7 @@ public class PurchasePriceDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportDTO  extends SupplierDTO.PagingParamDTO {
+    public static class ExportDTO  extends PagingParamDTO {
         private List<String> ids;
 
     }
