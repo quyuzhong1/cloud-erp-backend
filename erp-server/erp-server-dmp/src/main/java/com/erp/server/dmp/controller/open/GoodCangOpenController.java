@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/dmp/open/api/good/cang")
 public class GoodCangOpenController {
 
-    @PostMapping("/subscribe")
+    @RequestMapping ("/subscribe")
     public GoodCangDTO.ResultDTO subscribe(@RequestBody JSONObject dto){
         log.warn("GoodCangOpenController>>>subscribe>>>dto ={}", dto);
         return new GoodCangDTO.ResultDTO();
