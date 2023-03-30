@@ -1593,6 +1593,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         }
         //workflowFeign.taskPass(approveProcess);
+        //审核通过后发送到金蝶系统
+        syncKingdeeProductDetailService.syncDataToKingdee(entity);
         return true;
     }
 
@@ -1677,8 +1679,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
-        //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity);
+
 
         return this.updateById(entity);
     }
