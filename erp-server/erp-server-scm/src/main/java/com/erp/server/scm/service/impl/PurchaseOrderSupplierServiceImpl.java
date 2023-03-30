@@ -8,13 +8,18 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.mapper.PurchaseOrderSupplierMapper;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.SupplierService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -27,6 +32,9 @@ import java.util.List;
  */
 @Service
 public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseOrderSupplierMapper, PurchaseOrderSupplierEntity> implements PurchaseOrderSupplierService {
+
+    @Resource
+    private SupplierService supplierService;
 
     @Override
     public void deleteByPurchaseOrderIds(List<String> purchaseOrderIds) {
@@ -51,6 +59,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(dto, entity);
         entity.setPurchaseOrderId(purchaseOrderId);
+        doOpHandleDataId(dto.getSupplierId(),entity);
         this.save(entity);
     }
 
@@ -62,6 +71,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(dto, entity);
         entity.setPurchaseOrderId(purchaseOrderId);
+        doOpHandleDataId(dto.getSupplierId(),entity);
         this.saveOrUpdate(entity);
     }
 
@@ -88,4 +98,14 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         return new PagingVO(pageData);
     }
 
+    /**
+     * 同步id对应名称
+     */
+    private void doOpHandleDataId(String supplierId,PurchaseOrderSupplierEntity entity){
+        SupplierEntity supplierEntity = supplierService.getById(supplierId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98039);
+        }
+        entity.setSupplierName(supplierEntity.getName());
+    }
 }

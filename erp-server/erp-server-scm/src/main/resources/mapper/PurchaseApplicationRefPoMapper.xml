@@ -25,11 +25,12 @@
             parp.purchase_application_id,
             parp.purchase_order_detail_id,
             parp.purchase_order_id,
-            pod.purchase_qty
+            COALESCE(pod.purchase_qty,0) as purchaseQty
         from purchase_application_ref_po parp
-        left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and parp.is_deleted = false
+        left join purchase_order po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = '0'
+        left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and pod.is_deleted = false
         <where>
-            pod.is_deleted = false
+            parp.is_deleted = false
             <if test="params.purchaseApplicationDetailIds != null and params.purchaseApplicationDetailIds.size > 0">
                 and parp.purchase_application_detail_id in
                 <foreach collection="params.purchaseApplicationDetailIds" item="item" open="(" close=")" separator=",">

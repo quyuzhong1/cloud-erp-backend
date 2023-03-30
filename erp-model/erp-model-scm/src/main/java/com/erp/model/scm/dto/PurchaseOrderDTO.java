@@ -273,13 +273,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 供应商信息
          */
         @Valid
+        @NotNull(message = "供应商信息不能为空")
         private PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO;
 
         /**
          * 采购订单明细
          */
         @Valid
-        @NotEmpty(message = "采购订单明细数据不能为空")
+        @NotEmpty(message = "采购订单明细信息不能为空")
         private List<PurchaseOrderDetailDTO.AddDTO> details;
     }
 
@@ -297,12 +298,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 供应商信息
          */
         @Valid
+        @NotNull(message = "供应商信息不能为空")
         private PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO;
 
         /**
          * 采购订单明细
          */
         @Valid
+        @NotEmpty(message = "采购订单明细信息不能为空")
         private List<PurchaseOrderDetailDTO.UpdateDTO> details;
     }
 

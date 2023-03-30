@@ -739,7 +739,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //申请数量
             Integer applyQty = detail.getApplyQty();
             if (thisPurchaseQty > (applyQty - purchaseQty)) {
-                throw new ServiceException(new ApiResult(1,String.format("采购申请单【%s】下级SKU【%s】采购数量不能大于%s",entity.getCode(),detail.getSkuNo(),applyQty - purchaseQty)));
+                throw new ServiceException(new ApiResult(1,String.format("采购申请单【%s】下级SKU【%s】采购数量不能大于待申请数量",entity.getCode(),detail.getSkuNo())));
             } else if (thisPurchaseQty == (applyQty - purchaseQty)) {
                 detail.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
             } else {

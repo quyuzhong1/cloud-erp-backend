@@ -278,6 +278,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -310,6 +311,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
@@ -354,6 +356,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finishDelivery(List<String> ids) {
         //ids为采购订单明细id集合
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
@@ -588,6 +591,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
@@ -601,18 +605,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98012);
         }
         log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
-
-        //更新
-        lambdaUpdate().in(PurchaseOrderEntity::getId,ids)
-                .set(PurchaseOrderEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
-                .set(PurchaseOrderEntity::getInvalidTime, LocalDateTime.now())
-                .set(PurchaseOrderEntity::getInvalidRemark,reason)
-                .update();
+        //更新订单作废状态
+        updateInvalidStatus(ids,reason);
+        //更新采购申请单的生成状态
+        updateCreatePoType(ids);
+        //删除采购申请单和订单关联表数据
+        purchaseApplicationRefPoService.removeByPurchaseOrderIds(ids);
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购订单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"作废操作");
         return Boolean.TRUE;
     }
+
+
 
     @Override
     public List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids) {
@@ -882,5 +887,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setCurrency(value.get(0).getCurrency());
             addDTO.setCurrencySymbol(value.get(0).getCurrencySymbol());
         }
+    }
+
+    /**
+     * @description: 更新作废状态
+     * @author Will
+     * @date: 2023/3/30 18:09
+     * @param ids
+     * @param reason
+
+     */
+    private void updateInvalidStatus(List<String> ids,String reason) {
+        //更新
+        lambdaUpdate().in(PurchaseOrderEntity::getId,ids)
+                .set(PurchaseOrderEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(PurchaseOrderEntity::getInvalidTime, LocalDateTime.now())
+                .set(PurchaseOrderEntity::getInvalidRemark,reason)
+                .update();
     }
 }
