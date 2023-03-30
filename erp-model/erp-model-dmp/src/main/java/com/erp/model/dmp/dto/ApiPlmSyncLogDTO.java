@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -59,4 +60,14 @@ public class ApiPlmSyncLogDTO {
      * API请求参数
      */
     private String requestParamJson;
+
+    public ApiPlmSyncLogDTO(PlatformEnum platform, Integer code, String receivingCode, Integer sendResult, String msg, String jsonStr) {
+        this.apiPlatform = platform.getDesc();
+        this.apiPlatformId = platform.getCode().toString();
+        this.businessId = receivingCode;
+        this.moduleType = code;
+        this.status = sendResult;
+        this.msg = msg;
+        this.requestParamJson = jsonStr;
+    }
 }

@@ -109,4 +109,9 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_KINGDEE_DELIVERY_DETAIL = "original_kingdee_delivery_detail";
 
+    /**
+     * 谷仓入库单
+     */
+    String ORIGINAL_GC_INBOUND_ORDER = "original_gc_inbound_order";
+
 }

@@ -54,19 +54,6 @@ public class MQConsumerService {
         }
     }
 
-    @Service
-    @RocketMQMessageListener(topic = "%DLQ%${spring.profiles.active}-sales_order_consumer",
-            selectorExpression = "*",
-            consumerGroup = "${spring.profiles.active}-dlq_sales_order_consumer")
-    public class DLQConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
-        @Override
-        public void onMessage(DmpOrderInfoEntity ext) {
-            log.info("监听到死信队列销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpOrderInfoService.checkOrder(ext);
-        }
-    }
-
     /**
      * rocketmq 监听发货订单相关数据
      */
@@ -141,19 +128,6 @@ public class MQConsumerService {
         @Override
         public void onMessage(DmpSkuInfoEntity ext) {
             log.info("监听商品信息消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpSkuInfoService.checkOrder(ext);
-        }
-    }
-
-    @Service
-    @RocketMQMessageListener(topic = "%DLQ%${spring.profiles.active}-sales_sku_info_consumer",
-            selectorExpression = "*",
-            consumerGroup = "${spring.profiles.active}-dlq_sales_sku_info_consumer")
-    public class DLQConsumerErpSkuInfo implements RocketMQListener<DmpSkuInfoEntity> {
-        @Override
-        public void onMessage(DmpSkuInfoEntity ext) {
-            log.info("监听到死信队列sku订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             dmpSkuInfoService.checkOrder(ext);
         }
