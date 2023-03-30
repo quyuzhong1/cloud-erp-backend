@@ -1584,7 +1584,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveProcess.setUserId(userId);
         approveProcess.setComment(dto.getComment());*/
         //查询审核任务下所有待办
-        Integer code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
+        Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
         if (flag) {
