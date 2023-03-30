@@ -117,13 +117,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             save = apiUtils.save(param);
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
-            insertFailureLog(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg.concat("；").concat(e.getMessage()),type);
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg.concat("；").concat(e.getMessage()),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //数据id
         String id = save.getResult().getId();
         //新增成功操作日志
-        insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg,type);
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg,type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交
         submit(platformEntity, map,apiUtils,id,type);
     }
@@ -147,12 +147,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //提交失败操作日志及定时任务
             log.error("提交失败",e);
-            insertFailureLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),e.getMessage(),type);
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         log.info("提交成功,数据Id = 【{}】", JSONObject.toJSONString(ids));
         //提交成功操作日志
-        insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),"提交成功",type);
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),"提交成功",type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交成功后继续审核直至已审核
         audit(platformEntity, map,apiUtils,id,type);
     }
@@ -184,12 +184,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             } catch (Exception e) {
                 //审核失败操作日志及定时任务
                 log.error("审核失败",e);
-                insertFailureLog(platformEntity,String.valueOf(map.get("id")),"审核失败",e.getMessage(),type);
+                insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"审核失败",e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //审核成功操作日志
             log.info("审核成功,数据【{}】", JSONObject.toJSONString(viewMap));
-            insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"审核成功",type);
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
             //当审核状态非已审核时继续审核
             audit(platformEntity, map,apiUtils,id,type);
         }
@@ -215,12 +215,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             } catch (Exception e) {
                 //反审核失败操作日志及定时任务
                 log.error("反审核失败",e);
-                insertFailureLog(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type);
+                insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
                 return "";
             }
             //反审核成功操作日志
             log.info("反审核成功,数据【{}】", id);
-            insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"反审核成功",type);
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"反审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
             //当审核是已审核或者审核中时继续反审核
             String status = unAudit(platformEntity, map,apiUtils, id,type);
             //当状态为空时直接返回
@@ -243,44 +243,30 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @param msg
      */
     @Override
-    public void insertSuccessLog(PlatformEntity platformEntity,String businessId,String jsonData,String msg,Integer type) {
+    public void insertSyncLog(PlatformEntity platformEntity,String businessId,
+                                 String jsonData,String msg,Integer type,Integer status) {
         //新增日志信息
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
         apiPlmSyncLogDTO.setModuleType(type);
         apiPlmSyncLogDTO.setBusinessId(businessId);
-        apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
+        apiPlmSyncLogDTO.setStatus(status);
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
     }
 
-    /**
-     * @description: 操作失败添加日志
-     * @author Will
-     * @date: 2023/1/16 18:34
-     * @param platformEntity
-     * @param businessId
-     * @param jsonData
-     * @param msg
-     * @param type 数据类型
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void insertFailureLog(PlatformEntity platformEntity,String businessId,String jsonData,String msg,Integer type) {
-        //新增日志信息
-        ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
-        apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
-        apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-        apiPlmSyncLogDTO.setModuleType(type);
-        apiPlmSyncLogDTO.setBusinessId(businessId);
-        apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
-        apiPlmSyncLogDTO.setMsg(msg);
-        apiPlmSyncLogDTO.setRequestParamJson(jsonData);
-        apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
-        //更新业务单据状态
-        this.updateBusinessSyncKingdeeStatus(type.toString(),businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+    public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity,String businessId,
+                                                    String jsonData,String msg,Integer type,Integer status) {
+        //新增日志
+        insertSyncLog(platformEntity,businessId,jsonData,msg,type,status);
+        //更新金蝶同步状态
+        if (ApiSendStatusEnum.FAILURE.getCode().equals(status)) {
+            this.updateBusinessSyncKingdeeStatus(type.toString(),businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+        }
     }
 
     @Override

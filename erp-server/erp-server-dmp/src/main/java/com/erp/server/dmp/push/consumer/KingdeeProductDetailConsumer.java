@@ -11,10 +11,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -89,7 +86,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         if (CollectionUtils.isEmpty(mapList)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertFailureLog(platformEntity, String.valueOf(map.get("id")),"","未配置同步字段",type);
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //读取配置，初始化SDK
@@ -114,7 +111,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 save = apiUtils.save(param);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertFailureLog(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type);
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //新增成功后编辑二级类目
