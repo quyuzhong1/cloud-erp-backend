@@ -95,14 +95,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     Boolean finishDelivery(List<String> ids);
 
     /**
-     * @description: 采购变更
-     * @author Will
-     * @date: 2023/3/16 11:37
-     * @param id
-     * @return Boolean
-     */
-    Boolean purchaseChange(String id);
-    /**
      * @description: 导出采购合同PDF
      * @author Will
      * @date: 2023/3/16 11:42
@@ -118,7 +110,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param response
      * @return PurchaseOrderDetailDTO.ImportDTO
      */
-    PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
+    PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds,String supplierId, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will

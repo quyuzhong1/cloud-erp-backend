@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -22,6 +23,7 @@ import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -327,23 +329,37 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = listPurchaseTaxPriceView(dto);
+        String error = pair.getKey();
+        if (StringUtils.isNotBlank(error)) {
+            throw new ServiceException(new ApiResult(1,error));
+        }
+        return pair.getValue();
+    }
+
+    @Override
+    public Pair<String,List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>>  listPurchaseTaxPriceView (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
         //未找到报价信息
         if (StringUtils.isNotBlank(dto.getSupplierId()) && CollectionUtils.isEmpty(list)) {
-            log.error("SKU【{}】未找到数量【{}】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty());
-            throw new ServiceException(1,String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty()));
+            String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty());
+            log.error(error);
+            return new Pair<>(error,list);
         }
         List<String> currencyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_9041);
+            String error = "未发现币种对应符号";
+            log.error(error);
+            return new Pair<>(error,list);
         }
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : list) {
             CurrencyDTO.ViewDTO currencyDTO = viewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(null);
             viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
         }
-        return list;
+        return new Pair<>("",list);
     }
+
 
     /**
      * 判断是否按顺序排序

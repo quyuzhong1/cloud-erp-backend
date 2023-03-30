@@ -79,6 +79,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String currency;
 
         /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 采购数量
          */
         @NotNull(message = "采购数量不能为空")

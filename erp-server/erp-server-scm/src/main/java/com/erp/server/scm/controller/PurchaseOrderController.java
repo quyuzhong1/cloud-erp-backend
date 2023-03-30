@@ -250,20 +250,6 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 采购变更
-     * @author Will
-     * @date: 2023/3/15 17:59
-     * @param id
-     * @return ApiResult
-     */
-    @PostMapping("/purchaseChange")
-    public ApiResult purchaseChange(@RequestParam("id") String id) {
-        Boolean result = purchaseOrderService.purchaseChange(id);
-        return result == true ? success() : failure();
-    }
-
-
-    /**
      * 导出采购合同PDF
      * @author Will
      * @date: 2023/3/15 17:59
@@ -285,8 +271,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<PurchaseOrderDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        PurchaseOrderDetailDTO.ImportDTO importDTO = purchaseOrderService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(), response);
+    public ApiResult<PurchaseOrderDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.purchaseOrderExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        PurchaseOrderDetailDTO.ImportDTO importDTO = purchaseOrderService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),excelImportDTO.getSupplierId(), response);
         return success(importDTO);
     }
 

@@ -232,7 +232,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<PurchaseApplicationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+    public ApiResult<PurchaseApplicationDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
         PurchaseApplicationDetailDTO.ImportDTO dto = purchaseApplicationService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(), response);
         return success(dto);
     }

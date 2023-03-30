@@ -4,6 +4,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -47,6 +48,14 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>
      */
     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+    /**
+     * @description: 根据skuId查询是否存在符合条件的单价和税率(返回错误消息)
+     * @author Will
+     * @date: 2023/3/30 14:51
+     * @param dto
+     * @return Pair<List<PurchaseTaxPriceViewDTO>>
+     */
+    Pair<String,List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
 
     /**
      * 根据价目表id 获取产品明细信息

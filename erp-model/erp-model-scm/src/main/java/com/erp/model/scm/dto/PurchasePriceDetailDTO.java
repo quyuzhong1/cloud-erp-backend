@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -85,6 +86,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PurchaseTaxPriceSearchDTO {
 
         /**
