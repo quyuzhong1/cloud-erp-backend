@@ -75,7 +75,7 @@ public class SupplierCredentialDTO  implements Serializable {
          * 名称
          */
         @NotBlank(message = "资质名称不能为空")
-        @Size(max = 50,message = "最大50字符")
+        @Size(max = 50,message = "资质名称最大50字符")
         private String name;
 
 
@@ -93,7 +93,7 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 255,message = "最大255字符")
+        @Size(max = 255,message = "资质信息备注最大255字符")
         private String remark;
 
 

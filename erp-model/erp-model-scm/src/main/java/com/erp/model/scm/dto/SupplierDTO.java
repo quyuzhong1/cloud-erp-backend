@@ -106,7 +106,7 @@ public class SupplierDTO implements Serializable {
          * 名称
          */
         @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 50, message = "最大50字符")
+        @Size(max = 50, message = "供应商名称最大50字符")
         private String name;
 
 
@@ -118,7 +118,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 等级id
          */
-        @NotBlank(message = "等级id不能为空")
+        @NotBlank(message = "供应商等级不能为空")
         private String gradeId;
 
 
@@ -131,14 +131,14 @@ public class SupplierDTO implements Serializable {
         /**
          * 公司地址
          */
-        @Size(max = 100, message = "最大100字符")
+        @Size(max = 100, message = "公司地址最大100字符")
         private String companyAddress;
 
 
         /**
          * 公司网址
          */
-        @Size(max = 100, message = "最大100字符")
+        @Size(max = 100, message = "公司网址最大100字符")
         @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "公司网址有误")
         private String companyWebsite;
 
@@ -160,7 +160,7 @@ public class SupplierDTO implements Serializable {
          * true 禁用
          * false 启用
          */
-        @NotNull(message = "启用状态不能为空")
+        @NotNull(message = "供应商状态不能为空")
         private Boolean disabled;
 
     }

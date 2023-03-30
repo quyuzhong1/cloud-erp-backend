@@ -29,11 +29,13 @@ public class SupplierContactDTO implements Serializable {
          * 联系人
          */
         @NotBlank(message = "联系人不能为空")
+        @Size(max =50 ,message = "联系人最大50字符")
         private String person;
 
         /**
          * 职位
          */
+        @Size(max =50 ,message = "联系人职务最大50字符")
         private String position;
 
         /**

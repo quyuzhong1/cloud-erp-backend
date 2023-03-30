@@ -8,7 +8,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
-import com.erp.server.scm.service.SupplierContactService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -33,8 +32,6 @@ public class SupplierController extends BaseController {
     @Resource
     private SupplierService supplierService;
 
-    @Resource
-    private SupplierContactService supplierContactService;
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;

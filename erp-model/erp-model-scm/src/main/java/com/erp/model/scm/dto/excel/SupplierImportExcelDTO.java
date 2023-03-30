@@ -44,7 +44,6 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "采购员", index = 2)
-    @FieldValid(fieldName = "采购员",isNotBlank = true)
     private String purchaseUserName;
 
 

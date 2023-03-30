@@ -32,6 +32,7 @@ import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
+import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -690,6 +691,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<SupplierEntity> supplierList = this.list();
+        SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList,supplierList,userList);
 
 
         return null;
