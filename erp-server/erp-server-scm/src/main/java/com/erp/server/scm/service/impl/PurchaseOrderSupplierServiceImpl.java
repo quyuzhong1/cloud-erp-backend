@@ -44,23 +44,25 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     }
 
     @Override
-    public void add(PurchaseOrderSupplierDTO.AddDTO dto) {
+    public void add(PurchaseOrderSupplierDTO.AddDTO dto,String purchaseOrderId) {
         if (ObjectUtils.isEmpty(dto)) {
             return;
         }
         PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(dto, entity);
+        entity.setPurchaseOrderId(purchaseOrderId);
         this.save(entity);
     }
 
     @Override
-    public void update(PurchaseOrderSupplierDTO.UpdateDTO dto) {
+    public void update(PurchaseOrderSupplierDTO.UpdateDTO dto,String purchaseOrderId) {
         if (ObjectUtils.isEmpty(dto)) {
             return;
         }
         PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(dto, entity);
-        this.updateById(entity);
+        entity.setPurchaseOrderId(purchaseOrderId);
+        this.saveOrUpdate(entity);
     }
 
 

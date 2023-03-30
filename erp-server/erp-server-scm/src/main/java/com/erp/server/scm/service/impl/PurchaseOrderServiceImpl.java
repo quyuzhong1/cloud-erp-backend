@@ -166,7 +166,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //新增明细
             purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
             //新增供应商信息
-            purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO());
+            purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO(),entity.getId());
         }
         return entity.getId();
     }
@@ -191,7 +191,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //更新明细数据
         purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
         //供应商数据
-        purchaseOrderSupplierService.update(dto.getPurchaseOrderSupplierDTO());
+        purchaseOrderSupplierService.update(dto.getPurchaseOrderSupplierDTO(),entity.getId());
         return Boolean.TRUE;
     }
 
@@ -399,7 +399,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //查询订单供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.getById(id);
-        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+        if (ObjectUtils.isEmpty(purchaseOrderSupplier)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
         exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());

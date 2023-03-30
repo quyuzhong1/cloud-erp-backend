@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -184,12 +184,14 @@ public class PurchaseChangeDTO implements Serializable {
         /**
          * 采购订单id
          */
+        @NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
 
         /**
          * 变更日期
          */
-        private Date changeDate;
+        @NotNull(message = "变更日期不能为空")
+        private LocalDate changeDate;
 
         /**
          * 变更人id

@@ -94,7 +94,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public PurchaseOrderDetailEntity getByPurchaseOrderIdAndSkuId(String purchaseOrderId, String skuId) {
         return lambdaQuery()
-                .eq(PurchaseOrderDetailEntity::getPurchaseApplicationId,purchaseOrderId)
+                .eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId)
                 .eq(PurchaseOrderDetailEntity::getSkuId,skuId)
                 .one();
     }

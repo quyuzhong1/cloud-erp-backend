@@ -34,6 +34,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     public Boolean add(PurchaseChangeDTO.AddDTO dto) {
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
+
+
         return null;
     }
 

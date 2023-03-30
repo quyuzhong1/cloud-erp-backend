@@ -3,8 +3,7 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -29,6 +28,7 @@ public class PurchaseChangeDetailDTO implements Serializable {
         /**
          * 采购订单明细id
          */
+        @NotBlank(message = "采购订单明细id不能为空")
         private String purchaseOrderDetailId;
 
         /**
@@ -64,13 +64,16 @@ public class PurchaseChangeDetailDTO implements Serializable {
         /**
          * 新采购数量
          */
-        @NotEmpty(message = "采购数量不能为空")
+        @NotNull(message = "新采购数量不能为空")
+        @Min(value = 0,message = "新采购数量最小值为0")
+        @Max(value = 999999999,message = "新采购数量最大值为999999999")
         private Integer qty;
 
         /**
          * 新含税单价
          */
-        @NotEmpty(message = "新含税单价不能为空")
+        @NotNull(message = "新含税单价不能为空")
+        @Digits(integer = 16,fraction = 4,message = "新含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal price;
 
         /**
