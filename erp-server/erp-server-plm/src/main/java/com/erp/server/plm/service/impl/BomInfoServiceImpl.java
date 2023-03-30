@@ -952,7 +952,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         //是不是 第一次审核
         Boolean isFirstAudit = BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
-        bom.setState(BomStateEnum.AUDIT_ING.getState());
+//        bom.setState(BomStateEnum.AUDIT_ING.getState());
+        bom.setState(BomStateEnum.AUDIT_PASS.getState());
+        bom.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
         bom.setRemark(dto.getComment());
         Boolean result = this.updateById(bom);
 
