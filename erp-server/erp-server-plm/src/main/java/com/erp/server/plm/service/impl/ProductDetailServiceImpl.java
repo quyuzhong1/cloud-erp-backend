@@ -1593,6 +1593,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         }
         //workflowFeign.taskPass(approveProcess);
+        //审核通过后发送到金蝶系统
+        syncKingdeeProductDetailService.syncDataToKingdee(entity);
         return true;
     }
 
@@ -1677,8 +1679,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
-        //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity);
+
 
         return this.updateById(entity);
     }
@@ -1728,6 +1729,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //重新启动流程
         //TODO 2023-03-30 暂时取消审核流程 只改状态
 //        this.productDetailStartProcess(entity);
+        entity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
         //新增操作日志
@@ -1748,6 +1750,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //TODO 2023-03-30 暂时取消审核流程 只改状态
 //        this.productDetailStartProcess(entity);
+        entity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU[" + entity.getSkuNo() + "]重启审核流程"));
@@ -1858,7 +1861,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //启动流程
 //        productDetailStartProcess(productDetailEntity);
-
+        productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         return this.updateById(productDetailEntity);
     }
 

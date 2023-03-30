@@ -100,7 +100,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private SyncKingdeeBomInfoService syncKingdeeBomInfoService;
 
-
     /**
      * 添加bom
      *
@@ -985,8 +984,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             }
 //        }
-
-
+        // 发送到金蝶
+        syncKingdeeBomInfoService.syncDataToKingdee(bom);
     }
 
 

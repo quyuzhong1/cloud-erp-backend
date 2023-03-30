@@ -891,10 +891,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public List<ApproveNodeRecordVO> auditInfo(String id) {
-        if (StringUtils.isNotBlank(id)) {
+        //TODO 2023-03-30 暂时取消审核流程 只改状态
+        /*if (StringUtils.isNotBlank(id)) {
             List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
             return list;
-        }
+        }*/
         return new ArrayList<>();
     }
 
