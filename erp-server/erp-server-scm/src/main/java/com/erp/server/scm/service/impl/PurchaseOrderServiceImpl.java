@@ -221,6 +221,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98026);
         }
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
+        details.forEach(obj -> obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100)));
         dto.setDetails(details);
         //流程信息
         List<PurchaseOrderProcessDTO> processList = new ArrayList<>();

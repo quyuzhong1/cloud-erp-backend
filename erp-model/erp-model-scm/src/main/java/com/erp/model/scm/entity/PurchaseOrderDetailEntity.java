@@ -75,6 +75,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String currency;
 
     /**
+     * 币别符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+    /**
      * 采购数量
      */
     @TableField("purchase_qty")
