@@ -92,7 +92,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 预计交货日期
+         * 计划交期
          */
         private LocalDate planDeliveryDate;
 
@@ -155,4 +155,62 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String errorUrl;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExportPdfDTO {
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+
+        /**
+         * 名称
+         */
+        private String declareName;
+
+        /**
+         * 型号
+         */
+        private String declareModel;
+
+        /**
+         * 描述
+         */
+        private String productName;
+
+        /**
+         * 数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 含税金额
+         */
+        private BigDecimal purchaseAmount;
+
+        /**
+         * 交期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

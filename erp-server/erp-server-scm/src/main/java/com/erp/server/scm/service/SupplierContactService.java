@@ -64,4 +64,22 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @return void
      */
     void removeBySupplierIds(List<String> supplierIds);
+
+    /**
+     * 获取到供应商默认联系人信息
+     * @author yl
+     * @date 2023-03-29 14:39
+     * @param supplierIdList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierContactEntity>
+     */
+    List<SupplierContactEntity> getDefaultBySupplierIdList(List<String> supplierIdList);
+
+    /**
+     * 根据供应商id 获取供应商联系人信息
+     * @author yl
+     * @date 2023-03-29 17:05
+     * @param supplierId
+     * @return com.erp.model.scm.dto.SupplierContactDTO.ViewDTO
+     */
+    SupplierContactDTO.ViewDTO getDefaultBySupplierId(String supplierId);
 }

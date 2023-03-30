@@ -26,6 +26,7 @@ import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.SupplierPhaseService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,7 +65,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SupplierPhaseEntity add(SupplierPhaseDTO.AddDTO dto) {
+    public String add(SupplierPhaseDTO.AddDTO dto) {
         SupplierPhaseEntity entity = new SupplierPhaseEntity();
         String supplierId = dto.getSupplierId();
         SupplierEntity supplier = supplierService.getById(supplierId);
@@ -89,9 +90,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             String type = tableName.value();
             //保存附件信息
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
-            return entity;
+            return id;
         }
-        return null;
+        return "";
     }
 
 
@@ -105,16 +106,12 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      */
     @Override
     public Boolean addAndSubmit(SupplierPhaseDTO.AddDTO dto) {
-        SupplierPhaseEntity phase = this.add(dto);
-        if (phase != null) {
-            //这里要启动一个流程
-            Boolean startProcessResult = startProcess();
-            //启动成功
-            if (startProcessResult) {
-                return updateSubmitApproveStatus(phase, ApproveStatusEnum.APPROVE_ING.getStatus());
-            }
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
         }
-        return false;
+        Boolean result = this.submit(Arrays.asList(id));
+        return result;
     }
 
 
@@ -184,7 +181,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
      * @date 2023-03-23 17:23
      */
     @Override
-    public Boolean updateSupplierPhase(SupplierPhaseDTO.UpdateDTO dto) {
+    public String updateSupplierPhase(SupplierPhaseDTO.UpdateDTO dto) {
         String id = dto.getId();
         SupplierPhaseEntity phase = this.getById(id);
         if (Objects.isNull(phase)) {
@@ -219,8 +216,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             //获取到表名
             String attachmentType = tableName.value();
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), attachmentType, id);
+            return id;
         }
-        return result;
+        return "";
     }
 
     /**
@@ -348,6 +346,23 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         return new PagingVO(pageData);
     }
 
+    /**
+     * 修改并审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-29 16:20
+     */
+    @Override
+    public Boolean updateAndSubmit(SupplierPhaseDTO.UpdateDTO dto) {
+        String id = this.updateSupplierPhase(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
 
     /**
      * 更改状态
@@ -364,25 +379,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             return this.updateBatchById(list);
         }
         return false;
-    }
-
-
-    /**
-     * 更改状态
-     *
-     * @param phase
-     * @param status
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-23 16:44
-     */
-
-    private Boolean updateSubmitApproveStatus(SupplierPhaseEntity phase, String status) {
-        if (phase != null) {
-            phase.setApproveStatus(status);
-            return this.updateById(phase);
-        }
-        return true;
     }
 
 

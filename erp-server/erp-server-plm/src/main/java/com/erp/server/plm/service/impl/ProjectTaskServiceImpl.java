@@ -12,12 +12,14 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -4632,5 +4634,36 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //保存交付文档的审核人
         taskChargeDistributionService.removeAndSave(taskEntity.getId(), taskChargeDistributionList, MathUtil.THREE);
+    }
+
+    /**
+     * 根据任务名称查询任务
+     * @Author Luo_WG
+     * @Date 2023/3/29 14:08
+     * @param productId productId
+     * @param name name
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
+     **/
+    public ProjectTaskEntity getTaskByName(String productId, String name) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getName, name);
+        queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
+    /**
+     * 批量删除任务
+     * @Author Luo_WG
+     * @Date 2023/3/29 18:00
+     * @param ids ids
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @Transactional
+    public Boolean removeBatch(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        return baseMapper.removeBatch(ids);
     }
 }

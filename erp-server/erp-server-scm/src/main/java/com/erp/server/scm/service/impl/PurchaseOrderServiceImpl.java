@@ -31,13 +31,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseListTypeEnum;
+import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -103,6 +98,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
 
+    @Resource
+    private PurchaseApplicationDetailService purchaseApplicationDetailService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -236,23 +233,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         this.removeByIds(ids);
         //更新采购申请单的生成状态
         updateCreatePoType(ids);
+        //删除采购申请单和订单关联表数据
+        purchaseApplicationRefPoService.removeByPurchaseOrderIds(ids);
         return Boolean.TRUE;
-    }
-
-    private void updateCreatePoType(List<String> purchaseOrderIds) {
-        //关联信息
-        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
-        searchParamDTO.setPurchaseOrderIds(purchaseOrderIds);
-        List<PurchaseApplicationRefPoDTO.ListDTO> list = purchaseApplicationRefPoService.list(searchParamDTO);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        for (PurchaseApplicationRefPoDTO.ListDTO listDTO : list) {
-
-
-        }
-
-
     }
 
     @Override
@@ -332,8 +315,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean finishDelivery(String id) {
-        return null;
+    public Boolean finishDelivery(List<String> ids) {
+        //ids为采购订单明细id集合
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        long count = purchaseOrderDetailList.stream().filter(obj -> !ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98035);
+        }
+        //查询签收单数量放些明细中的采购数量 TODO
+
+        //更新明细中的交货状态
+        purchaseOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(),ids);
+        return Boolean.TRUE;
     }
     @Override
     public Boolean purchaseChange(String id) {
@@ -341,8 +337,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public Boolean exportPurchaseContractPdf(String id) {
-        return null;
+    public PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id) {
+        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = new PurchaseOrderDTO.ExportPdfDTO();
+
+        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        List<PurchaseOrderDetailEntity> list = purchaseOrderDetailService.listByPurchaseOrderId(id);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //主表数据处理 TODO
+
+        List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
+        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
+            PurchaseOrderDetailDTO.ExportPdfDTO detailDTO = new PurchaseOrderDetailDTO.ExportPdfDTO();
+            BeanMapperUtils.copy(purchaseOrderDetailEntity,detailDTO);
+            //明细数据处理 TODO
+            details.add(detailDTO);
+        }
+        exportPdfDTO.setDetails(details);
+        return exportPdfDTO;
     }
 
     @Override
@@ -508,6 +524,58 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids) {
+        //采购订单主表信息
+        List<PurchaseOrderEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //采购订单明细信息
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //供应商信息
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierList = purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderSupplierList)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+
+        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewList = new ArrayList<>();
+        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : detailList) {
+            PurchaseOrderDTO.ViewGenerateReceiveDTO viewDTO = new PurchaseOrderDTO.ViewGenerateReceiveDTO();
+            BeanMapperUtils.copy(purchaseOrderDetailEntity,viewDTO);
+            PurchaseOrderEntity purchaseOrderEntity = list.stream().filter(obj -> obj.getId().equals(purchaseOrderDetailEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                log.error("下推签收单，未找到对应采购明细");
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            viewDTO.setId(purchaseOrderEntity.getId());
+            viewDTO.setPurchaseOrderDetailId(purchaseOrderDetailEntity.getId());
+            viewDTO.setCode(purchaseOrderEntity.getCode());
+            //供应商信息
+            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+                log.error("下推签收单，未找到对应供应商信息");
+                throw new ServiceException(ApiError.ERROR_98036);
+            }
+            viewDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+            viewDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
+            //交货数量 TODO
+
+            viewList.add(viewDTO);
+        }
+        return viewList;
+    }
+
+    @Override
+    public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+        //生成下推签收单 TODO
+
+        return Boolean.TRUE;
+    }
+
     /**
      * 处理数据id
      */
@@ -606,5 +674,58 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
         }
     }
+
+    /**
+     * 更新采购申请单的生成状态
+     */
+    private void updateCreatePoType(List<String> purchaseOrderIds) {
+        //关联信息
+        List<PurchaseApplicationRefPoEntity> list = purchaseApplicationRefPoService.listByPurchaseOrderIds(purchaseOrderIds);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> purchaseApplicationDetailIds = list.stream().map(PurchaseApplicationRefPoEntity::getPurchaseApplicationDetailId).distinct().collect(Collectors.toList());
+        //查询采购订单明细下采购数量
+        List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(new PurchaseApplicationRefPoDTO.SearchParamDTO().setPurchaseApplicationDetailIds(purchaseApplicationDetailIds));
+        if (CollectionUtils.isEmpty(refList)) {
+            return;
+        }
+        //查询采购申请单明细申请数量
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listByIds(purchaseApplicationDetailIds);
+        if (CollectionUtils.isEmpty(purchaseApplicationDetailList)) {
+            log.error("采购订单删除，未找到关联采购申请单明细！");
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        List<PurchaseApplicationDetailEntity> updateList = new ArrayList<>();
+        //建采购订单明细按采购申请明细id分组后比较数量
+        Map<String, List<PurchaseApplicationRefPoDTO.ListDTO>> map = refList.stream().collect(Collectors.groupingBy(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseApplicationDetailId));
+        for (Map.Entry<String, List<PurchaseApplicationRefPoDTO.ListDTO>> entry: map.entrySet()) {
+            String purchaseApplicationDetailId = entry.getKey();
+            List<PurchaseApplicationRefPoDTO.ListDTO> value = entry.getValue();
+
+            PurchaseApplicationDetailEntity update = new PurchaseApplicationDetailEntity();
+            update.setId(purchaseApplicationDetailId);
+            //采购数量
+            Integer purchaseQty = value.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            //申请数量
+            Integer applyQty = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(purchaseApplicationDetailId)).map(PurchaseApplicationDetailEntity::getApplyQty).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(applyQty)) {
+                log.error(String.format("采购申请单明细Id【%s】不存在！",purchaseApplicationDetailId));
+                throw new ServiceException(ApiError.ERROR_98017);
+            }
+            if (MathUtil.compareTo(purchaseQty,MathUtil.ZERO) == 0) {
+                update.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+            } else if (MathUtil.compareTo(applyQty,purchaseQty) > 0) {
+                update.setCreatePoType(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus());
+            } else {
+                update.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
+            }
+            updateList.add(update);
+        }
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            purchaseApplicationDetailService.updateBatchById(updateList);
+        }
+    }
+
 
 }

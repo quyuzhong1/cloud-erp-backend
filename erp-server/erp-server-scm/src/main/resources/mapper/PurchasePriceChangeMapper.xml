@@ -73,7 +73,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pp.create_time DESC
+        ppd.create_time DESC
 
 
     </select>

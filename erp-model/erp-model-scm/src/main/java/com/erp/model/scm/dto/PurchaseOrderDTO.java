@@ -87,7 +87,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String productName;
 
         /**
-         * 预计交货日期
+         * 计划交期
          */
         private LocalDate planDeliveryDate;
 
@@ -322,5 +322,176 @@ public class PurchaseOrderDTO implements Serializable {
         private PurchaseOrderRefOtherDTO  purchaseOrderRefOtherDTO;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExportPdfDTO {
+        /**
+         * 合同号
+         */
+        private String code;
 
+        /**
+         * 结算方式名称
+         */
+        private String payMethodName;
+
+        /**
+         * 甲方
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 签订日期（甲方）
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 收货地址（甲方）
+         */
+        private String deliveryWarehouseAddress;
+
+        /**
+         * 联系人（甲方）
+         */
+        private String deliveryWarehouseContract;
+
+        /**
+         * 联系电话（甲方）
+         */
+        private String deliveryWarehouseTel;
+
+        /**
+         * 乙方
+         */
+        private String supplierName;
+
+        /**
+         * 供方地址（乙方）
+         */
+        private String supplierAddress;
+
+        /**
+         * 联系人（乙方）
+         */
+        private String supplierContract;
+
+        /**
+         * 联系电话（乙方）
+         */
+        private String supplierTel;
+
+        /**
+         * 邮箱（乙方）
+         */
+        private String supplierEmail;
+
+        /**
+         * 明细信息
+         */
+        private List<PurchaseOrderDetailDTO.ExportPdfDTO> details;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateReceiveDTO {
+        /**
+         * 采购订单主表id
+         */
+        private String id;
+
+        /**
+         * 采购订单明细Id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 计划交期
+         */
+        private String planDeliveryDate;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal purchaseAmount;
+
+        /**
+         * 已交货数量
+         */
+        private Integer receiveQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateReceiveDTO {
+
+        /**
+         * 采购订单明细id
+         */
+        @NotBlank(message = "采购订单明细id不能为空")
+        private String purchaseOrderDetailId;
+
+        /**
+         * 本次交货数量
+         */
+        private Integer thisReceiveQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListGenerateReceiveDTO {
+
+        @NotEmpty(message = "仓库签收单不能为空")
+        @Valid
+        List<GenerateReceiveDTO> list;
+    }
 }

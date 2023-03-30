@@ -113,7 +113,6 @@ public class SupplierDTO implements Serializable {
         /**
          * 分类id
          */
-        @NotBlank(message = "分类id不能为空")
         private String categoryId;
 
         /**
@@ -140,20 +139,20 @@ public class SupplierDTO implements Serializable {
          * 公司网址
          */
         @Size(max = 100, message = "最大50字符")
-        @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "网址有误")
+        @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "公司网址有误")
         private String companyWebsite;
 
 
         /**
          * 结算付款方式
          */
-        @NotBlank(message = "结算方式不能为空")
+        //@NotBlank(message = "结算方式不能为空")
         private String payMethodId;
 
         /**
          * 结算付款币种
          */
-        @NotBlank(message = "结算币种不能为空")
+        //@NotBlank(message = "结算币种不能为空")
         private String payCurrency;
 
 
@@ -266,14 +265,12 @@ public class SupplierDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO{
+    public static class PagingViewDTO {
 
         /**
          * 供应商表id
          */
         private String id;
-
-
 
 
         /**
@@ -321,7 +318,6 @@ public class SupplierDTO implements Serializable {
          * 审核状态名
          */
         private String approveStatusName;
-
 
 
         /**
@@ -382,9 +378,9 @@ public class SupplierDTO implements Serializable {
 
 
         /**
-         * 联系人
+         * 联系人电话
          */
-        private String contactPhone;
+        private String contactTelNumber;
 
 
         /**
@@ -417,6 +413,17 @@ public class SupplierDTO implements Serializable {
          * 创建人
          */
         private String createUserName;
+
+    }
+
+
+    /**
+     * 导出供应商
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO  extends PagingParamDTO{
+        private List<String> ids;
 
     }
 

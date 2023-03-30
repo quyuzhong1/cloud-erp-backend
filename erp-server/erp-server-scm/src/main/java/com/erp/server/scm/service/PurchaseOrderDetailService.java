@@ -49,6 +49,16 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<PurchaseOrderDetailEntity>
      */
     List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId);
+
+    /**
+     * @description: 根据采购订单ids查询
+     * @author Will
+     * @date: 2023/3/29 15:58
+     * @param purchaseOrderIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds);
+
     /**
      * @description: 根据订单ids删除明细
      * @author Will
@@ -57,4 +67,13 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
 
      */
     void removeByPurchaseOrderIds(List<String> purchaseOrderIds);
+    /**
+     * @description: 根据ids更新
+     * @author Will
+     * @date: 2023/3/29 15:32
+     * @param arrivalStatus
+     * @param ids
+     */
+    void updateArrivalStatusByIds(String arrivalStatus, List<String> ids);
+
 }

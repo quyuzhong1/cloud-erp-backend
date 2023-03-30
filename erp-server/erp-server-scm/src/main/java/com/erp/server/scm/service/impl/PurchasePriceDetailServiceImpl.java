@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -20,7 +21,6 @@ import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -337,6 +337,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : list) {
             CurrencyDTO.ViewDTO currencyDTO = viewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(null);
             viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
+        }
+        //存在供应商参数时，无返回数据则报错提示
+        if (StringUtils.isNotBlank(dto.getSupplierId()) && CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(1,String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty()));
         }
         return list;
     }

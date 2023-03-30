@@ -3,7 +3,6 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
@@ -29,7 +28,7 @@ public class SupplierAccountDTO  implements Serializable {
 
 
 
-        @NotBlank(message = "银行不能为空")
+        //@NotBlank(message = "银行不能为空")
         private String bankId;
 
 
@@ -49,7 +48,7 @@ public class SupplierAccountDTO  implements Serializable {
         /**
          * 支付方式
          */
-        @NotBlank(message = "支付方式不能为空")
+       // @NotBlank(message = "支付方式不能为空")
         private String payMethodId;
 
         /**

@@ -9,8 +9,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.server.scm.service.PurchasePriceChangeService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,8 +53,8 @@ public class PurchasePriceChangeController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
-        PurchasePriceChangeEntity priceChange = purchasePriceChangeService.add(dto);
-        return priceChange != null ? success() : failure();
+        String id = purchasePriceChangeService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -90,8 +90,8 @@ public class PurchasePriceChangeController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
-        PurchasePriceChangeEntity view = purchasePriceChangeService.updatePurchasePriceChange(dto);
-        return view == null ? success() : failure();
+        String id = purchasePriceChangeService.updatePurchasePriceChange(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**

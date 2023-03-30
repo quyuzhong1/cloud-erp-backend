@@ -133,4 +133,27 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         }
         return saveList;
     }
+
+    /**
+     * 保存文档名
+     * @Author Luo_WG
+     * @Date 2023/3/29 16:16
+     * @param dto dto
+     * @return java.lang.String
+     **/
+    @Override
+    public String saveDocs(DocsNameDTO dto) {
+        String name = dto.getName();
+        String productId = dto.getProductId();
+        List<DocsDTO> docksNames = getDocsNameList(productId);
+        List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
+            throw new ServiceException(ApiError.ERROR_95012);
+        }
+        TaskDocsNameEntity entity = new TaskDocsNameEntity();
+        entity.setName(name);
+        entity.setProductId(productId);
+        this.save(entity);
+        return entity.getId();
+    }
 }

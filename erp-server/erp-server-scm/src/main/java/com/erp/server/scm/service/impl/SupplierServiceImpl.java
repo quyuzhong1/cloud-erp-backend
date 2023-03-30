@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -15,11 +16,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
@@ -89,20 +93,20 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SupplierEntity addSupplier(SupplierDTO.AddDTO dto) {
-
+    public String addSupplier(SupplierDTO.AddDTO dto) {
         checkName(null, dto.getName());
-
         //供应商联系信息
         List<SupplierContactDTO.AddDTO> contactList = dto.getContactList();
         //检查联系人默认是否多个
         supplierContactService.checkIsDefault(contactList);
-
+        //供应商资质信息
+        List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
+        //检查资质日期
+        supplierCredentialService.checkDate(credentialList);
         //供应商id
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = new SupplierEntity();
         BeanMapper.copy(dto, addEntity);
-
 
         List<String> keyList = new ArrayList<>(1);
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
@@ -116,25 +120,26 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
         addEntity.setCode(code);
+        String purchaseUserId = dto.getPurchaseUserId();
+        FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
+        addEntity.setPurchaseUserName(user != null ? user.getUserName() : "");
         Boolean result = this.save(addEntity);
         //保存成功
         if (result) {
-
             //供应商账号信息
             List<SupplierAccountDTO.AddDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.saveBatchBankAccount(supplierId, bankAccountList);
             //供应商联系人信息
             supplierContactService.saveBatchContact(supplierId, contactList);
-            //供应商资质信息
-            List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
+
             supplierCredentialService.saveBatchCredential(supplierId, credentialList);
             //添加日志
             String content = String.format("新增了一个{%s}-供应商信息-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "新增操作");
-            return addEntity;
+            return supplierId;
         }
 
-        return null;
+        return "";
     }
 
     /**
@@ -146,21 +151,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-20 9:13
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(SupplierDTO.AddDTO dto) {
-        SupplierEntity supplier = this.addSupplier(dto);
-        boolean result = false;
-        if (supplier != null) {
-            result = updateSubmitApproveStatus(supplier, ApproveStatusEnum.APPROVE_ING.getStatus());
-            if (result) {
-                String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-                if (!supplier.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))) {
-                    //添加日志
-                    String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-                    addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "状态变更");
-                }
-            }
-
+        String supplierId = this.addSupplier(dto);
+        if (StringUtils.isBlank(supplierId)) {
+            throw new ServiceException(ApiError.ERROR_1019);
         }
+        Boolean result = this.submit(Arrays.asList(supplierId));
         return result;
     }
 
@@ -204,13 +201,31 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-20 10:56
      */
     @Override
-    public SupplierEntity updateSupplier(SupplierDTO.UpdateDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public String updateSupplier(SupplierDTO.UpdateDTO dto) {
         //供应商id
         String supplierId = dto.getId();
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        if (!statusList.contains(supplier.getApproveStatus().getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98019);
+        }
+
+
+        //资质信息
+        List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
+        List<SupplierCredentialDTO.AddDTO> credentialAddList=BeanMapper.copyList(credentialList,SupplierCredentialDTO.AddDTO.class);
+        supplierCredentialService.checkDate(credentialAddList);
         String code = supplier.getCode();
         //检查供应商名称
         checkName(supplierId, dto.getName());
@@ -222,6 +237,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         BeanMapper.copy(dto, supplier);
 
+        String purchaseUserId = dto.getPurchaseUserId();
+        FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
+        supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
         List<String> keyList = new ArrayList<>(1);
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
         //根据 key list 获取到对应数据
@@ -238,13 +256,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //账户信息
             List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.updateAccount(bankAccountList, supplierId);
-            //资质信息
-            List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
+
             supplierCredentialService.updateCredential(credentialList, supplierId);
-            return supplier;
+            return supplierId;
         }
 
-        return null;
+        return "";
     }
 
 
@@ -274,7 +291,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        //供应商id 集合
+        List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        //获取供应商默认联系人信息
+        List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
         for (SupplierDTO.PagingViewDTO item : list) {
+            String id = item.getId();
             //等级id
             String gradeId = item.getGradeId();
             String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
@@ -296,6 +318,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             item.setPhaseName(phaseEnum.getName());
             item.setApproveStatusCode(statusEnum.getStatus());
             item.setPhaseCode(phaseEnum.getPhase());
+            SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(id)).findFirst().orElse(null);
+            if (contact != null) {
+                item.setContactPerson(contact.getPerson());
+                item.setContactTelNumber(contact.getTelNumber());
+            }
 
         }
 
@@ -422,7 +449,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
-            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(),comment);
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
         if (result) {
             //添加日志
@@ -558,17 +585,86 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      */
     @Override
     public Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto) {
-        SupplierEntity supplier = this.updateSupplier(dto);
-        if (supplier != null) {
-            boolean result = updateSubmitApproveStatus(supplier, ApproveStatusEnum.APPROVE_ING.getStatus());
-            if (result) {
-                //添加日志
-                String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-                addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplier.getId(), "状态变更");
-            }
-            return result;
+        String supplierId = this.updateSupplier(dto);
+        if (StringUtils.isBlank(supplierId)) {
+            throw new ServiceException(ApiError.ERROR_1020);
         }
-        return false;
+        return this.submit(Arrays.asList(supplierId));
+    }
+
+
+    /**
+     * 供应商导出
+     *
+     * @param dto
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-03-29 14:50
+     */
+    @Override
+    public void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response) {
+        List<SupplierDTO.PagingViewDTO> list = baseMapper.getExportSupplier(dto);
+        List<SupplierExportExcelDTO> resultList = new ArrayList<>(list.size());
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> keyList = new ArrayList<>(3);
+            keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
+            keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
+            keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+            //获取供应商等级
+            List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+            //根据 key list 获取到对应数据
+            List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+            //供应商id 集合
+            List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
+            //获取供应商默认联系人信息
+            List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+            for (SupplierDTO.PagingViewDTO item : list) {
+                SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
+                exportExcel.setName(item.getName());
+                exportExcel.setCode(item.getCode());
+                //禁用状态 true 禁用
+                boolean disabled = item.getDisabled();
+                exportExcel.setEnableStatus(disabled == true ? "未启用" : "启用");
+                ApproveStatusEnum approveStatus = item.getApproveStatus();
+                exportExcel.setApproveStatusName(approveStatus.getName());
+                //阶段
+                SupplierPhaseEnum phaseEnum = item.getPhase();
+                exportExcel.setPhaseName(phaseEnum.getName());
+                //等级id
+                String gradeId = item.getGradeId();
+                String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                exportExcel.setGradeName(gradeName);
+                //分类
+                String categoryId = item.getCategoryId();
+                String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                exportExcel.setCategoryName(categoryName);
+                //结算方式
+                String payMethodId = item.getPayMethodId();
+                String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                exportExcel.setPayMethodName(payMethodName);
+                //采购员
+                exportExcel.setPurchaseUserName(item.getPurchaseUserName());
+                SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
+                if (contact != null) {
+                    exportExcel.setContactPerson(contact.getPerson());
+                    exportExcel.setContactTelNumber(contact.getTelNumber());
+                }
+                resultList.add(exportExcel);
+
+            }
+            String fileName = "供应商数据";
+            try {
+                ExcelUtil.export(fileName, "供应商数据", resultList, SupplierExportExcelDTO.class, response);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.ERROR_1015);
+            }
+        }
+
+
     }
 
     /**
@@ -594,20 +690,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     }
 
-
-    /**
-     * 更改 供应商审核状态
-     *
-     * @param supplier      供应商
-     * @param approveStatus 状态
-     */
-    private Boolean updateSubmitApproveStatus(SupplierEntity supplier, String approveStatus) {
-        if (supplier != null) {
-            supplier.setApproveStatus(ApproveStatusEnum.getByStatus(approveStatus));
-            return this.updateById(supplier);
-        }
-        return true;
-    }
 
     /**
      * 检查名称不能重复

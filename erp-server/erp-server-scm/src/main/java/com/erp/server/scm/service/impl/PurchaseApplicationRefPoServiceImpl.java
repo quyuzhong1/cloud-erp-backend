@@ -5,8 +5,10 @@ import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.server.scm.mapper.PurchaseApplicationRefPoMapper;
 import com.erp.server.scm.service.PurchaseApplicationRefPoService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,6 +25,19 @@ public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<Purcha
     @Override
     public List<PurchaseApplicationRefPoDTO.ListDTO> list(PurchaseApplicationRefPoDTO.SearchParamDTO dto) {
         return  baseMapper.list(dto);
+    }
+
+    @Override
+    public List<PurchaseApplicationRefPoEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)) {
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(PurchaseApplicationRefPoEntity::getPurchaseOrderId,purchaseOrderIds).list();
+    }
+
+    @Override
+    public void removeByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        lambdaUpdate().in(PurchaseApplicationRefPoEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
 
 }

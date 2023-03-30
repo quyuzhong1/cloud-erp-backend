@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -156,12 +155,4 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean updateAndSubmit(PurchaseApplicationDTO.UpdateDTO dto);
-    /**
-     * @description: 根据供应商id查询含税单价
-     * @author Will
-     * @date: 2023/3/27 9:24
-     * @param dto
-     * @return List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>
-     */
-    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
 }

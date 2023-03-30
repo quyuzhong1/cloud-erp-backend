@@ -39,13 +39,13 @@ public class SupplierContactDTO implements Serializable {
         /**
          * 电话
          */
-        @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
+       // @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MOBILE,message = "电话格式有误")
         private String telNumber;
 
         /**
          * 邮箱
          */
-        @Size(max = 50,message = "邮箱最大50字符")
+        @Size(max = 30,message = "邮箱最大30字符")
         @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
         private String email;
 
@@ -86,6 +86,35 @@ public class SupplierContactDTO implements Serializable {
          * 主表id
          */
         private String id;
+
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 是否默认 true  是
+         */
+        private Boolean isDefault;
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
 
         /**
          * 联系人

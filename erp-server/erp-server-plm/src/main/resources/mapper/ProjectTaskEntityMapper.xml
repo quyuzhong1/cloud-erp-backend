@@ -86,6 +86,7 @@
                  </choose>
             </foreach>
         </if>
+        pt.id asc,
         pt.create_time asc
     </select>
 
@@ -186,6 +187,7 @@
                 </choose>
             </foreach>
         </if>
+        pt.id asc,
         pt.create_time asc
     </select>
 
@@ -1146,6 +1148,14 @@
          WHERE  product_id=#{productId}  AND id IN
         <foreach item="taskId" collection="taskIdList" separator="," open="(" close=")" index="">
             #{taskId}
+        </foreach>
+    </update>
+
+    <update id="removeBatch">
+        DELETE FROM project_task
+        WHERE id IN
+        <foreach item="id" collection="ids" separator="," open="(" close=")" index="">
+            #{id}
         </foreach>
     </update>
 

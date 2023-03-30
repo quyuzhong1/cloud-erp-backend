@@ -29,7 +29,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    SupplierEntity addSupplier(SupplierDTO.AddDTO dto);
+    String addSupplier(SupplierDTO.AddDTO dto);
 
     
     /**
@@ -59,7 +59,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    SupplierEntity updateSupplier(SupplierDTO.UpdateDTO dto);
+    String updateSupplier(SupplierDTO.UpdateDTO dto);
 
     
     /**
@@ -146,4 +146,15 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(SupplierDTO.UpdateDTO dto);
+
+    
+    /**
+     * 供应商导出
+     * @author yl
+     * @date 2023-03-29 14:50
+     * @param dto
+     * @param response
+     * @return void
+     */
+    void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response);
 }

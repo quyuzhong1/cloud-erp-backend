@@ -1,28 +1,38 @@
 package com.erp.server.plm.controller;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.ProjectTaskExcelDTO;
 import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.server.plm.service.PreTaskService;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.TemplateTaskService;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.listener.ProjectTaskExcelListener;
+import com.erp.server.plm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -46,6 +56,15 @@ public class ProjectTaskController extends BaseController {
 
     @Autowired
     private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
+
+    @Autowired
+    private TaskDocsNameService taskDocsNameService;
 
     /**
      * 项目任务-分页列表
@@ -675,5 +694,57 @@ public class ProjectTaskController extends BaseController {
     @PostMapping(value = "/templateCiteTask")
     public ApiResult templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
         return success(templateTaskService.templateCiteTask(dto));
+    }
+
+    /**
+     * 项目任务-批量删除任务
+     * @Author Luo_WG
+     * @Date 2023/3/29 18:16
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/removeBatch")
+    public ApiResult removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = taskService.removeBatch(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-excel导入产品任务
+     * @param excelFile  文件流
+     * @param response   响应
+     * @return com.common.core.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     **/
+    @PostMapping("/importProjectTaskFile")
+    public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(taskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<ProjectTaskExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ProjectTaskExcelDTO> list = excelListenerUtil.getDateList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/productTaskTemplateError.xlsx";
+            String name = "productTaskTemplate";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+
+            return failure();
+        }
+        return success();
     }
 }

@@ -5,9 +5,13 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.SupplierContactService;
 import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +34,12 @@ public class SupplierController extends BaseController {
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private SupplierContactService supplierContactService;
+
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
+
 
     /**
      * 供应商分页列表
@@ -51,8 +61,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
-        SupplierEntity supplier = supplierService.addSupplier(dto);
-        return supplier != null ? success() : failure();
+        String supplierId = supplierService.addSupplier(dto);
+        return StringUtils.isNotBlank(supplierId) ? success() : failure();
     }
 
 
@@ -77,8 +87,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
-        SupplierEntity result = supplierService.updateSupplier(dto);
-        return result!=null? success() : failure();
+        String supplierId = supplierService.updateSupplier(dto);
+        return StringUtils.isNotBlank(supplierId) ? success() : failure();
     }
 
     /**
@@ -180,6 +190,15 @@ public class SupplierController extends BaseController {
     }
 
     /**
+     * 供应商导出
+     */
+    @PostMapping("/exportSupplier")
+    public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.ExportDTO dto, HttpServletResponse response) {
+        supplierService.exportSupplier(dto, response);
+        return success();
+    }
+
+    /**
      * 下载模板
      *
      * @return
@@ -188,6 +207,29 @@ public class SupplierController extends BaseController {
     public ApiResult downloadTemplate(HttpServletResponse response) {
         supplierService.downloadTemplate(response);
         return success();
+    }
+
+
+    /**
+     * 供应商采购记录
+     * 分页
+     */
+    @PostMapping("/purchasePaging")
+    public ApiResult<PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO>> purchasePaging(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> pagingVO = purchaseOrderSupplierService.supplierPurchasePaging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 获取供应商的默认联系人信息
+     *
+     * @return
+     */
+    @GetMapping("/getSupplierContact")
+    public ApiResult<SupplierContactDTO.ViewDTO> getSupplierContact(@RequestParam(value = "supplierId") String supplierId) {
+        SupplierContactDTO.ViewDTO viewDTO = supplierContactService.getDefaultBySupplierId(supplierId);
+        return success(viewDTO);
     }
 
 }

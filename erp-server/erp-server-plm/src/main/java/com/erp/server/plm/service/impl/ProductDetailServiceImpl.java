@@ -128,8 +128,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private BusinessProcessService businessProcessService;
 
-    @Resource
-    private WorkflowFeign workflowFeign;
+/*    @Resource
+    private WorkflowFeign workflowFeign;*/
 
     @Resource
     private ProductDetailCommentService productDetailCommentService;
@@ -186,7 +186,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
         //待审核查询分配给自己的数据
         if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
-            LoginUser loginUser = CommonInterceptor.threadLocal.get();
+            //TODO 2023-03-30 暂时取消审核流程 只改状态
+/*             LoginUser loginUser = CommonInterceptor.threadLocal.get();
             List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
             //无待办则直接返回
             if (CollectionUtils.isEmpty(workflowList)) {
@@ -194,7 +195,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 return new PagingVO(list);
             }
             List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
-            pagingDTO.getParams().setProcessIds(processIds);
+            pagingDTO.getParams().setProcessIds(processIds);*/
             //待审核，审核中
             pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(), ProductDetailStatusEnum.APPROVAL_ING.getCode()));
         }
@@ -1565,7 +1566,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
-        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+
+        //TODO 2023-03-30 暂时取消审核流程 只改状态
+/*        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
         //这是用户待审核的流程id
         List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
@@ -1579,9 +1582,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveProcess.setTaskId(taskShowDTO.getTaskId());
         approveProcess.setProcessInstanceId(entity.getProcessId());
         approveProcess.setUserId(userId);
-        approveProcess.setComment(dto.getComment());
+        approveProcess.setComment(dto.getComment());*/
         //查询审核任务下所有待办
-        Integer code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
+        Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
         if (flag) {
@@ -1589,7 +1592,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         }
-        workflowFeign.taskPass(approveProcess);
+        //workflowFeign.taskPass(approveProcess);
+        //审核通过后发送到金蝶系统
+        syncKingdeeProductDetailService.syncDataToKingdee(entity);
         return true;
     }
 
@@ -1609,7 +1614,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
-        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+        //TODO 2023-03-30 暂时取消审核流程 只改状态
+        /*List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
         //这是用户待审核的流程id
         List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
@@ -1618,12 +1624,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         String taskId = myToDoList.stream().filter(obj -> entity.getProcessId().equals(obj.getProcessInstanceId())).map(TaskShowDTO::getTaskId).findFirst().orElse("");
         //审核不通过
+
         ApproveProcessDTO approveProcess = new ApproveProcessDTO();
         approveProcess.setTaskId(taskId);
         approveProcess.setProcessInstanceId(entity.getProcessId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(dto.getComment());
-        workflowFeign.taskNoPass(approveProcess);
+        workflowFeign.taskNoPass(approveProcess);*/
 
         Integer code = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
         //更新产品信息状态
@@ -1640,7 +1647,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         commentEntity.setCreateUserId(loginUser.getUid());
         return productDetailCommentService.save(commentEntity);
     }
-
 
     @Override
     public Boolean updateApprover(ProductDetailApproveParamDTO dto) {
@@ -1673,8 +1679,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
-        //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity);
+
 
         return this.updateById(entity);
     }
@@ -1722,7 +1727,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         String statusName = ProductDetailStatusEnum.getName(entity.getStatus());
         //重新启动流程
-        this.productDetailStartProcess(entity);
+        //TODO 2023-03-30 暂时取消审核流程 只改状态
+//        this.productDetailStartProcess(entity);
+        entity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
         //新增操作日志
@@ -1741,7 +1748,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95088);
         }
-        this.productDetailStartProcess(entity);
+        //TODO 2023-03-30 暂时取消审核流程 只改状态
+//        this.productDetailStartProcess(entity);
+        entity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU[" + entity.getSkuNo() + "]重启审核流程"));
@@ -1851,8 +1860,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         //启动流程
-        productDetailStartProcess(productDetailEntity);
-
+//        productDetailStartProcess(productDetailEntity);
+        productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         return this.updateById(productDetailEntity);
     }
 
@@ -1867,9 +1876,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95118);
         }
         //中止之前的流程
-        ApproveProcessDTO processDTO = new ApproveProcessDTO();
+/*        ApproveProcessDTO processDTO = new ApproveProcessDTO();
         processDTO.setProcessInstanceId(productDetailEntity.getProcessId());
-        workflowFeign.terminate(processDTO);
+        workflowFeign.terminate(processDTO);*/
 
         //清除流程id
         productDetailEntity.setProcessId("");
@@ -2413,14 +2422,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             parameterMap.put("thirdApproveIdList", thirdApproveIdList);
             parameterMap.put("fourthApproveIdList", Arrays.asList(financial));
             startProcess.setParameterMap(parameterMap);
-            //启动流程
+            //TODO 2023-03-30 暂时取消审核流程 只改状态
+            /*//启动流程
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
             String processId = processResult.getProcessId();
             if (StringUtils.isNotBlank(processId)) {
                 productDetailEntity.setProcessId(processId);
                 productDetailEntity.setBusinessProcessId(processEntity.getId());
                 productDetailEntity.setStatus(waitConfirmCode);
-            }
+            }*/
         }
     }
 

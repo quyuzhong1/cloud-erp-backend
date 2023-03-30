@@ -87,7 +87,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal purchaseAmount;
 
     /**
-     * 预计交货日期
+     * 计划交期
      */
     @TableField("plan_delivery_date")
     private LocalDate planDeliveryDate;

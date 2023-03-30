@@ -28,7 +28,7 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @param dto
      * @return com.erp.model.scm.entity.SupplierPhaseEntity
      */
-    SupplierPhaseEntity add(SupplierPhaseDTO.AddDTO dto);
+    String add(SupplierPhaseDTO.AddDTO dto);
 
     /**
      * 提交并审核
@@ -65,7 +65,7 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @param dto
      * @return com.erp.model.scm.entity.SupplierPhaseEntity
      */
-    Boolean updateSupplierPhase(SupplierPhaseDTO.UpdateDTO dto);
+    String updateSupplierPhase(SupplierPhaseDTO.UpdateDTO dto);
 
     
     /**
@@ -104,4 +104,13 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SupplierPhaseDTO.PagingViewDTO>
      */
     PagingVO<SupplierPhaseDTO.PagingViewDTO> paging(PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto);
+
+    /**
+     * 修改并审核
+     * @author yl
+     * @date 2023-03-29 16:20
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(SupplierPhaseDTO.UpdateDTO dto);
 }

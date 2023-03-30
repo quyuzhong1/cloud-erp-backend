@@ -103,9 +103,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Resource
     private PurchaseOrderService purchaseOrderService;
 
-    @Resource
-    private PurchasePriceDetailService purchasePriceDetailService;
-
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -119,6 +116,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
+                obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
@@ -129,7 +127,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     return;
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-                obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
                 list.add(obj.getId());
             });
         }
@@ -619,11 +616,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         this.update(dto);
         //提交
         return this.submit(Arrays.asList(dto.getId()));
-    }
-
-    @Override
-    public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
-        return  purchasePriceDetailService.getTaxPrice(dto);
     }
 
 

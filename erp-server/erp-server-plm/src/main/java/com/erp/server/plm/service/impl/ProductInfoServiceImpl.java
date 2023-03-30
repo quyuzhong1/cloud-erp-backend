@@ -1487,5 +1487,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 
-
+    /**
+     * 根据名称查询产品信息
+     * @Author Luo_WG
+     * @Date 2023/3/29 14:26
+     * @param name 产品名称
+     * @return com.erp.model.plm.entity.ProductInfoEntity
+     **/
+    public ProductInfoEntity getProductByName(String name) {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductInfoEntity::getName, name);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
 }

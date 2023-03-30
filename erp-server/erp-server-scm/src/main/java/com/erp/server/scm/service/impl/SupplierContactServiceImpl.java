@@ -1,9 +1,9 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.SupplierContactEntity;
@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -135,6 +137,46 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
         LambdaQueryWrapper<SupplierContactEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SupplierContactEntity::getSupplierId, supplierIds);
         this.remove(queryWrapper);
+    }
+
+
+    /**
+     * 获取到供应商默认联系人信息
+     *
+     * @param supplierIdList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierContactEntity>
+     * @author yl
+     * @date 2023-03-29 14:39
+     */
+    @Override
+    public List<SupplierContactEntity> getDefaultBySupplierIdList(List<String> supplierIdList) {
+        if (CollectionUtils.isEmpty(supplierIdList)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SupplierContactEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierContactEntity::getSupplierId, supplierIdList);
+        queryWrapper.eq(SupplierContactEntity::getIsDefault, true);
+        return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 根据供应商id 获取供应商联系人信息
+     *
+     * @param supplierId
+     * @return com.erp.model.scm.dto.SupplierContactDTO.ViewDTO
+     * @author yl
+     * @date 2023-03-29 17:05
+     */
+    @Override
+    public SupplierContactDTO.ViewDTO getDefaultBySupplierId(String supplierId) {
+        SupplierContactDTO.ViewDTO result = new SupplierContactDTO.ViewDTO();
+        List<SupplierContactEntity> list = getDefaultBySupplierIdList(Arrays.asList(supplierId));
+        if (CollectionUtils.isNotEmpty(list)) {
+            SupplierContactEntity entity = list.get(0);
+            BeanMapper.copy(entity,result);
+        }
+        return result;
     }
 
     /**

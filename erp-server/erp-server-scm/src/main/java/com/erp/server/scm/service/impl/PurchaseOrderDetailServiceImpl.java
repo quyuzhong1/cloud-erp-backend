@@ -23,6 +23,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -111,8 +112,22 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
+    public List<PurchaseOrderDetailEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        return  lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).list();
+    }
+
+    @Override
     public void removeByPurchaseOrderIds(List<String> purchaseOrderIds) {
         lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
+    }
+
+    @Override
+    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
+        lambdaUpdate()
+                .in(PurchaseOrderDetailEntity::getId,ids)
+                .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
+                .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
+                .update();
     }
 
     /**

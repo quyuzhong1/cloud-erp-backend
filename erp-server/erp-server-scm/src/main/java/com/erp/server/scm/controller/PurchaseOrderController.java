@@ -52,7 +52,7 @@ public class PurchaseOrderController extends BaseController {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
     }
-
+    
     /**
      * 查询数量
      * @author Will
@@ -210,15 +210,42 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 下推签收单弹框数据显示
+     * @author Will
+     * @date: 2023/3/15 18:26
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/viewGenerateReceive")
+    public ApiResult<List<PurchaseOrderDTO.ViewGenerateReceiveDTO>> viewGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> list = purchaseOrderService.viewGenerateReceive(dto.getIds());
+        return success(list);
+    }
+
+
+    /**
+     * 下推签收单保存
+     * @author Will
+     * @date: 2023/3/15 18:26
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generateReceive")
+    public ApiResult generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+        Boolean flag = purchaseOrderService.generateReceive(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 结束交货
      * @author Will
      * @date: 2023/3/15 17:59
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/finishDelivery")
-    public ApiResult finishDelivery(@RequestParam("id") String id) {
-        Boolean result = purchaseOrderService.finishDelivery(id);
+    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchaseOrderService.finishDelivery(dto.getIds());
         return result == true ? success() : failure();
     }
 
@@ -243,10 +270,10 @@ public class PurchaseOrderController extends BaseController {
      * @param id
      * @return ApiResult
      */
-    @PostMapping("/exportPurchaseContractPdf")
-    public ApiResult exportPurchaseContractPdf(@RequestParam("id") String id) {
-        Boolean result = purchaseOrderService.exportPurchaseContractPdf(id);
-        return result == true ? success() : failure();
+    @GetMapping("/exportPurchaseContractPdf")
+    public ApiResult<PurchaseOrderDTO.ExportPdfDTO> exportPurchaseContractPdf(@RequestParam("id") String id) {
+        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.exportPurchaseContractPdf(id);
+        return success(exportPdfDTO);
     }
 
     /**

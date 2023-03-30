@@ -352,7 +352,7 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer applyQty;
 
         /**
-         * 已申请数量
+         * 已采购数量
          */
         private Integer purchasedQty;
     }
