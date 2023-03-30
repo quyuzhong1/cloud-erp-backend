@@ -105,7 +105,6 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 是否是赠品（false否，true是）
          */
-        @NotNull(message = "是否是赠品不能为空")
         private Boolean isGift;
 
         /**
