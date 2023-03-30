@@ -59,6 +59,7 @@
                 </choose>
             </foreach>
         </if>
+        tt.id asc,
         tt.create_time asc
     </select>
 
