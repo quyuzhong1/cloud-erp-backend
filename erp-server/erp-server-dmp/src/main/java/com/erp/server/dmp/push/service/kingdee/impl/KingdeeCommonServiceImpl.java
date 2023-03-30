@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -105,6 +106,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type) {
         SaveResult save;
         String msg = "新增数据";
@@ -115,13 +117,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             save = apiUtils.save(param);
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
-            insertFailureLog(platformEntity, map,JSONObject.toJSONString(json),msg.concat("；").concat(e.getMessage()),type);
+            insertFailureLog(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg.concat("；").concat(e.getMessage()),type);
             return;
         }
         //数据id
         String id = save.getResult().getId();
         //新增成功操作日志
-        insertSuccessLog(platformEntity,map,JSONObject.toJSONString(json),msg,type);
+        insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg,type);
         //提交
         submit(platformEntity, map,apiUtils,id,type);
     }
@@ -135,6 +137,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @param id
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,Integer type) {
         //提交
         List<String> ids = new ArrayList<>();
@@ -144,12 +147,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //提交失败操作日志及定时任务
             log.error("提交失败",e);
-            insertFailureLog(platformEntity,map,JSONObject.toJSONString(ids),e.getMessage(),type);
+            insertFailureLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),e.getMessage(),type);
             return;
         }
         log.info("提交成功,数据Id = 【{}】", JSONObject.toJSONString(ids));
         //提交成功操作日志
-        insertSuccessLog(platformEntity,map,JSONObject.toJSONString(ids),"提交成功",type);
+        insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),"提交成功",type);
         //提交成功后继续审核直至已审核
         audit(platformEntity, map,apiUtils,id,type);
     }
@@ -164,7 +167,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @param id
      * @return String 返回审核状态
      */
-    private void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Id",id);
         JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
@@ -179,12 +184,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             } catch (Exception e) {
                 //审核失败操作日志及定时任务
                 log.error("审核失败",e);
-                insertFailureLog(platformEntity,map,"审核失败",e.getMessage(),type);
+                insertFailureLog(platformEntity,String.valueOf(map.get("id")),"审核失败",e.getMessage(),type);
                 return;
             }
             //审核成功操作日志
             log.info("审核成功,数据【{}】", JSONObject.toJSONString(viewMap));
-            insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"审核成功",type);
+            insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"审核成功",type);
             //当审核状态非已审核时继续审核
             audit(platformEntity, map,apiUtils,id,type);
         }
@@ -194,6 +199,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Id",id);
@@ -209,12 +215,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             } catch (Exception e) {
                 //反审核失败操作日志及定时任务
                 log.error("反审核失败",e);
-                insertFailureLog(platformEntity,map,"反审核失败",e.getMessage(),type);
+                insertFailureLog(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type);
                 return "";
             }
             //反审核成功操作日志
             log.info("反审核成功,数据【{}】", id);
-            insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"反审核成功",type);
+            insertSuccessLog(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"反审核成功",type);
             //当审核是已审核或者审核中时继续反审核
             String status = unAudit(platformEntity, map,apiUtils, id,type);
             //当状态为空时直接返回
@@ -232,18 +238,18 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @author Will
      * @date: 2023/1/16 18:34
      * @param platformEntity
-     * @param map
+     * @param businessId
      * @param jsonData
      * @param msg
      */
     @Override
-    public void insertSuccessLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type) {
+    public void insertSuccessLog(PlatformEntity platformEntity,String businessId,String jsonData,String msg,Integer type) {
         //新增日志信息
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
         apiPlmSyncLogDTO.setModuleType(type);
-        apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
+        apiPlmSyncLogDTO.setBusinessId(businessId);
         apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
@@ -255,25 +261,26 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      * @author Will
      * @date: 2023/1/16 18:34
      * @param platformEntity
-     * @param map
+     * @param businessId
      * @param jsonData
      * @param msg
      * @param type 数据类型
      */
     @Override
-    public void insertFailureLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type) {
+    @Transactional(rollbackFor = Exception.class)
+    public void insertFailureLog(PlatformEntity platformEntity,String businessId,String jsonData,String msg,Integer type) {
         //新增日志信息
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
         apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
         apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
         apiPlmSyncLogDTO.setModuleType(type);
-        apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
+        apiPlmSyncLogDTO.setBusinessId(businessId);
         apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
         //更新业务单据状态
-        this.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+        this.updateBusinessSyncKingdeeStatus(type.toString(),businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
     }
 
     @Override

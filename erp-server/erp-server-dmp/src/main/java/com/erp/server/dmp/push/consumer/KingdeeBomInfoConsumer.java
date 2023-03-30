@@ -87,7 +87,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         if (CollectionUtils.isEmpty(mapList)) {
             log.error(ApiError.ERROR_97025.msg);
             //错误日志
-            kingdeeCommonService.insertFailureLog(platformEntity, map,"","未配置同步字段",type);
+            kingdeeCommonService.insertFailureLog(platformEntity,String.valueOf(map.get("id")),"","未配置同步字段",type);
             return;
         }
         //读取配置，初始化SDK
@@ -112,7 +112,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
                 save = apiUtils.save(param);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertFailureLog(platformEntity, map,JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type);
+                kingdeeCommonService.insertFailureLog(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type);
                 return;
             }
             //新增成功后编辑用量
@@ -160,7 +160,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
-            kingdeeCommonService.insertFailureLog(platformEntity, map,filterStr,"未查询到子单据id",type);
+            kingdeeCommonService.insertFailureLog(platformEntity, String.valueOf(map.get("id")),filterStr,"未查询到子单据id",type);
             return;
         }
         //主单据id
