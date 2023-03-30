@@ -85,6 +85,11 @@ public class PurchasePriceDTO implements Serializable {
          * 表id
          */
         private String id;
+
+        /**
+         * code
+         */
+        private String code;
         /**
          * 供应商表id
          */
@@ -98,6 +103,11 @@ public class PurchasePriceDTO implements Serializable {
         private LocalDate quotedDate;
 
 
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
         /**
          * 报价人id
          */

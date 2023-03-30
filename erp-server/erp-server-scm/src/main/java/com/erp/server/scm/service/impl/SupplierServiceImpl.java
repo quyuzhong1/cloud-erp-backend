@@ -29,6 +29,7 @@ import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -692,7 +693,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<SupplierEntity> supplierList = this.list();
-        SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList,supplierList,userList);
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(null);
+        SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList,supplierList,userList,currencyList);
 
 
         return null;
