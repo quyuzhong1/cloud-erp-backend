@@ -14,7 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -160,24 +159,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
     }
 
 
-    /**
-     * 根据供应商id 获取供应商联系人信息
-     *
-     * @param supplierId
-     * @return com.erp.model.scm.dto.SupplierContactDTO.ViewDTO
-     * @author yl
-     * @date 2023-03-29 17:05
-     */
-    @Override
-    public SupplierContactDTO.ViewDTO getDefaultBySupplierId(String supplierId) {
-        SupplierContactDTO.ViewDTO result = new SupplierContactDTO.ViewDTO();
-        List<SupplierContactEntity> list = getDefaultBySupplierIdList(Arrays.asList(supplierId));
-        if (CollectionUtils.isNotEmpty(list)) {
-            SupplierContactEntity entity = list.get(0);
-            BeanMapper.copy(entity,result);
-        }
-        return result;
-    }
+
 
     /**
      * 获取到要删除的集合

@@ -35,7 +35,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private List<BaseIdDTO> orgList;
 
-    private List<WarehouseEntity> addWarehouseList;
+    private List<WarehouseEntity> addWarehouseList=new ArrayList<>();
 
 
     /**

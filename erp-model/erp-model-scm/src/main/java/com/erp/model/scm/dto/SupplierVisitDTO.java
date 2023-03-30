@@ -71,7 +71,7 @@ public class SupplierVisitDTO implements Serializable {
          * 结果
          */
         @NotBlank(message = "拜访结果不能为空")
-        @StateEnumValue(strValues = {"conformity", "nonconformity", "pending"}, message = "拜访类型有误")
+        @StateEnumValue(strValues = {"conformity", "nonconformity", "pending"}, message = "拜访结果有误")
         private String result;
 
         /**

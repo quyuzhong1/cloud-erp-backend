@@ -131,14 +131,14 @@ public class SupplierDTO implements Serializable {
         /**
          * 公司地址
          */
-        @Size(max = 100, message = "最大50字符")
+        @Size(max = 100, message = "最大100字符")
         private String companyAddress;
 
 
         /**
          * 公司网址
          */
-        @Size(max = 100, message = "最大50字符")
+        @Size(max = 100, message = "最大100字符")
         @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "公司网址有误")
         private String companyWebsite;
 
@@ -427,5 +427,48 @@ public class SupplierDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+
+        /**
+         * 联系表id
+         */
+        private String contactId;
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 是否默认 true  是
+         */
+        private Boolean isDefault;
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算币种
+         */
+        private String payCurrency;
+    }
 
 }

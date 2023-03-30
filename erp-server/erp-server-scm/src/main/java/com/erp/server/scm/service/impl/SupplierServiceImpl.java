@@ -42,6 +42,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -224,7 +225,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         //资质信息
         List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
-        List<SupplierCredentialDTO.AddDTO> credentialAddList=BeanMapper.copyList(credentialList,SupplierCredentialDTO.AddDTO.class);
+        List<SupplierCredentialDTO.AddDTO> credentialAddList = BeanMapper.copyList(credentialList, SupplierCredentialDTO.AddDTO.class);
         supplierCredentialService.checkDate(credentialAddList);
         String code = supplier.getCode();
         //检查供应商名称
@@ -665,6 +666,60 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
 
 
+    }
+
+
+    /**
+     * 供应商导入
+     *
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-03-30 9:44
+     */
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        List<String> keyList = new ArrayList<>(3);
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        //用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+
+        return null;
+    }
+
+
+    /**
+     * 获取供应商的一些信息
+     *
+     * @param supplierId
+     * @return com.erp.model.scm.dto.SupplierDTO.ViewDTO
+     * @author yl
+     * @date 2023-03-30 10:48
+     */
+    @Override
+    public SupplierDTO.ViewDTO getBySupplierId(String supplierId) {
+        SupplierEntity entity = this.getById(supplierId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        SupplierDTO.ViewDTO view = new SupplierDTO.ViewDTO();
+        List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(Arrays.asList(supplierId));
+        if (CollectionUtils.isNotEmpty(contactList)) {
+            SupplierContactEntity contact = contactList.get(0);
+            BeanMapper.copy(contact, view);
+            view.setContactId(contact.getId());
+        }
+        view.setPayMethodId(entity.getPayMethodId());
+        view.setPayCurrency(entity.getPayCurrency());
+        return view;
     }
 
     /**

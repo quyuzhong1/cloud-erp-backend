@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -157,4 +158,25 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return void
      */
     void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response);
+
+
+    
+    /**
+     * 供应商导入
+     * @author yl
+     * @date 2023-03-30 9:44
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 获取供应商的一些信息
+     * @author yl
+     * @date 2023-03-30 10:48
+     * @param supplierId
+     * @return com.erp.model.scm.dto.SupplierDTO.ViewDTO
+     */
+    SupplierDTO.ViewDTO getBySupplierId(String supplierId);
 }

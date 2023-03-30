@@ -6,7 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
-import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierContactService;
@@ -186,7 +185,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return success();
+        Boolean result = supplierService.importFile(excelFile,response);
+        return result==true?success():failure();
     }
 
     /**
@@ -222,13 +222,13 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 获取供应商的默认联系人信息
+     * 获取供应商的信息
      *
      * @return
      */
-    @GetMapping("/getSupplierContact")
-    public ApiResult<SupplierContactDTO.ViewDTO> getSupplierContact(@RequestParam(value = "supplierId") String supplierId) {
-        SupplierContactDTO.ViewDTO viewDTO = supplierContactService.getDefaultBySupplierId(supplierId);
+    @GetMapping("/getSupplierInfo")
+    public ApiResult<SupplierDTO.ViewDTO> getSupplierContact(@RequestParam(value = "supplierId") String supplierId) {
+        SupplierDTO.ViewDTO viewDTO = supplierService.getBySupplierId(supplierId);
         return success(viewDTO);
     }
 
