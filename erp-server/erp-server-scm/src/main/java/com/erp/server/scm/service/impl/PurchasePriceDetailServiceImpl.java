@@ -84,10 +84,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 //查询是否有无区间的
                 long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
                 //表示有无区间的
-                if (noInterval > 0) {
-                    if (skuPriceList.size() > 0) {
-                        throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
-                    }
+                if (noInterval > 1) {
+                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 } else {
                     //没有无区间 就要检查又没有不同区间的
                     List<Integer> intervalList = new ArrayList<>(10);
@@ -165,7 +163,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         BigDecimal hundred = new BigDecimal("100");
 
-        for(PurchasePriceDetailDTO.ViewDTO item:viewList){
+        for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
             //币种
             String currency = item.getCurrency();
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().

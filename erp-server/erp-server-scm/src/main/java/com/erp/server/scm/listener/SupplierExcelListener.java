@@ -269,13 +269,13 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         if (CollectionUtils.isNotEmpty(addList)) {
             for (SupplierDTO.ImportAddDTO add : addList) {
                 String supplierName = add.getName();
-                List<SupplierContactDTO.ImportAddDTO> contactAddList = contactList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                List<SupplierContactDTO.ImportAddDTO> contactAddList = contactList.stream().filter(c -> c.getSupplierName().equals(supplierName)&&StringUtils.isNotBlank(c.getPerson())).collect(Collectors.toList());
                 add.setContactList(contactAddList);
 
-                List<SupplierAccountDTO.ImportAddDTO> bankAccountAddList = bankAccountList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                List<SupplierAccountDTO.ImportAddDTO> bankAccountAddList = bankAccountList.stream().filter(c -> c.getSupplierName().equals(supplierName)&&StringUtils.isNotBlank(c.getPayee())).collect(Collectors.toList());
                 add.setBankAccountList(bankAccountAddList);
 
-                List<SupplierCredentialDTO.ImportAddDTO> credentialAddList = credentialList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                List<SupplierCredentialDTO.ImportAddDTO> credentialAddList = credentialList.stream().filter(c -> c.getSupplierName().equals(supplierName)&&StringUtils.isNotBlank(c.getName())).collect(Collectors.toList());
                 add.setCredentialList(credentialAddList);
             }
 
