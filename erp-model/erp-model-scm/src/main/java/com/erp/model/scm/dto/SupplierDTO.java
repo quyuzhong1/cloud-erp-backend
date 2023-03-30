@@ -59,6 +59,98 @@ public class SupplierDTO implements Serializable {
     }
 
 
+    /**
+     * 供应商基础导入的dto
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class ImportAddDTO  {
+
+
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        @Size(max = 50, message = "供应商名称最大50字符")
+        private String name;
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+        /**
+         * 等级id
+         */
+        @NotBlank(message = "供应商等级不能为空")
+        private String gradeId;
+
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+
+        /**
+         * 公司地址
+         */
+        @Size(max = 100, message = "公司地址最大100字符")
+        private String companyAddress;
+
+
+        /**
+         * 公司网址
+         */
+        @Size(max = 100, message = "公司网址最大100字符")
+        @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "公司网址有误")
+        private String companyWebsite;
+
+
+        /**
+         * 结算付款方式
+         */
+        //@NotBlank(message = "结算方式不能为空")
+        private String payMethodId;
+
+        /**
+         * 结算付款币种
+         */
+        //@NotBlank(message = "结算币种不能为空")
+        private String payCurrency;
+
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        @NotNull(message = "供应商状态不能为空")
+        private Boolean disabled;
+
+        /**
+         * 供应商联系信息
+         */
+        @Valid
+        private List<SupplierContactDTO.ImportAddDTO> contactList;
+
+        /**
+         * 供应商银行账户信息
+         */
+        @Valid
+        private List<SupplierAccountDTO.ImportAddDTO> bankAccountList;
+
+        /**
+         * 供应商资质信息
+         */
+        @Valid
+        private List<SupplierCredentialDTO.ImportAddDTO> credentialList;
+
+    }
+
+
 
     /**
      * 供应商修改信息

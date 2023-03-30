@@ -50,17 +50,17 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
     /**
      * 联系人信息
      */
-    private List<SupplierContactDTO.AddDTO> contactList=new ArrayList<>();
+    private List<SupplierContactDTO.ImportAddDTO> contactList=new ArrayList<>();
 
     /**
      *  账户信息
      */
-    List<SupplierAccountDTO.AddDTO> bankAccountList=new ArrayList<>();
+    List<SupplierAccountDTO.ImportAddDTO> bankAccountList=new ArrayList<>();
 
     /**
      * 资质信息
      */
-    List<SupplierCredentialDTO.AddDTO> credentialList=new ArrayList<>();
+    List<SupplierCredentialDTO.ImportAddDTO> credentialList=new ArrayList<>();
 
 
     //币种信息
@@ -70,7 +70,7 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
      */
     private List<SupplierImportExcelDTO> errorList = new ArrayList<>();
 
-    private List<SupplierDTO.AddDTO> addList = new ArrayList<>();
+    private List<SupplierDTO.ImportAddDTO> addList = new ArrayList<>();
 
     public SupplierExcelListener(SupplierService supplierService, List<SupplierGradeEntity> supplierGradeList, List<DictBasicEntity> dictBasicList,
                                  List<SupplierEntity> supplierList, List<FindUserDTO> userList,
@@ -103,8 +103,7 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        SupplierDTO.AddDTO addDTO = new SupplierDTO.AddDTO();
-
+        SupplierDTO.ImportAddDTO addDTO = new SupplierDTO.ImportAddDTO();
         //供应商名称
         String name = excelDTO.getName();
         long count = supplierList.stream().filter(s -> s.getName().equals(name)).count();
@@ -122,13 +121,15 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         addDTO.setGradeId(gradeId);
         //采购员
         String purchaseUserName = excelDTO.getPurchaseUserName();
-        String purchaseUserId = "";
         if (StringUtils.isNotBlank(purchaseUserName)) {
-            purchaseUserId = userList.stream().filter(u -> u.getUserName().equals(purchaseUserName)).findFirst().
+            String purchaseUserId = userList.stream().filter(u -> u.getUserName().equals(purchaseUserName)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
-            errorMsgList.add("采购员不存在");
+            if(StringUtils.isBlank(purchaseUserId)){
+                errorMsgList.add("采购员不存在");
+            }
+            addDTO.setPurchaseUserId(purchaseUserId);
         }
-        addDTO.setPurchaseUserId(purchaseUserId);
+
         addDTO.setCompanyAddress(excelDTO.getCompanyAddress());
         addDTO.setCompanyWebsite(excelDTO.getCompanyWebsite());
         //启用状态
@@ -136,15 +137,15 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         addDTO.setDisabled(!enabled.equals("启用"));
         //结算方式
         String payMethodName = excelDTO.getPayMethodName();
-        String payMethodId = "";
         if (StringUtils.isNotBlank(payMethodName)) {
-            payMethodId = dictBasicList.stream().filter(d -> d.getName().equals(payMethodName)).findFirst().
+            String  payMethodId = dictBasicList.stream().filter(d -> d.getName().equals(payMethodName)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StringUtils.isBlank(payMethodId)) {
                 errorMsgList.add("结算方式不存在");
             }
+            addDTO.setPayMethodId(payMethodId);
         }
-        addDTO.setPayMethodId(payMethodId);
+
         //结算币种
         String payCurrency = excelDTO.getPayCurrency();
         if (StringUtils.isNotBlank(payCurrency)) {
@@ -154,14 +155,10 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
             }
         }
         addDTO.setPayCurrency(payCurrency);
-        //在已添加的供应商里面找到对应供应商信息
-        SupplierDTO.AddDTO existSupplier = addList.stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null);
-        if (Objects.isNull(existSupplier)) {
-            addList.add(addDTO);
-        }
+
 
         //联系人信息
-        SupplierContactDTO.AddDTO contact = new SupplierContactDTO.AddDTO();
+        SupplierContactDTO.ImportAddDTO contact = new SupplierContactDTO.ImportAddDTO();
         contact.setPerson(excelDTO.getPerson());
         contact.setPosition(excelDTO.getPosition());
         contact.setEmail(excelDTO.getEmail());
@@ -172,29 +169,22 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         String isDefault = excelDTO.getIsDefault();
         contact.setIsDefault(isDefault.equals("是"));
         contact.setSupplierName(name);
-        //存在的联系人
-        SupplierContactDTO.AddDTO existContact = contactList.stream().filter(c -> c.getSupplierName().equals(name) &&
-                c.getPerson().equals(excelDTO.getPerson())).findFirst().orElse(null);
-        if (Objects.isNull(existContact)) {
-            contactList.add(contact);
-        }
-
 
         //账户信息
-        SupplierAccountDTO.AddDTO bankAccount = new SupplierAccountDTO.AddDTO();
+        SupplierAccountDTO.ImportAddDTO bankAccount = new SupplierAccountDTO.ImportAddDTO();
         bankAccount.setBankAccount(excelDTO.getBankAccount());
         bankAccount.setPayee(excelDTO.getPayee());
         //银行信息
         String bankName = excelDTO.getBankName();
-        String bankId = "";
         if (StringUtils.isNotBlank(bankName)) {
-            bankId = bankList.stream().filter(b -> b.getName().equals(bankName)).findFirst().
+            String  bankId = bankList.stream().filter(b -> b.getName().equals(bankName)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StringUtils.isBlank(bankId)) {
                 errorMsgList.add("银行不存在");
             }
+            bankAccount.setBankId(bankId);
         }
-        bankAccount.setBankId(bankId);
+
         bankAccount.setBankSubbranch(excelDTO.getBankSubbranch());
         bankAccount.setRemark(excelDTO.getAccountRemark());
         //银行支付方式
@@ -203,21 +193,17 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         if (StringUtils.isNotBlank(bankPayMethodName)) {
             bankPayMethodId = dictBasicList.stream().filter(d -> d.getName().equals(bankPayMethodName)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-        }
-        if (StringUtils.isBlank(bankPayMethodId)) {
-            errorMsgList.add("支付方式不存在");
-        }
-        bankAccount.setSupplierName(name);
-        bankAccount.setPayMethodId(bankPayMethodId);
-        //已存在的
-        SupplierAccountDTO.AddDTO existAccount = bankAccountList.stream().filter(b -> b.getPayee().equals(excelDTO.getPayee()) &&
-                b.getSupplierName().equals(name)).findFirst().orElse(null);
-        if (Objects.isNull(existAccount)) {
-            bankAccountList.add(bankAccount);
+            if (StringUtils.isBlank(bankPayMethodId)) {
+                errorMsgList.add("支付方式不存在");
+            }
         }
 
+        bankAccount.setSupplierName(name);
+        bankAccount.setPayMethodId(bankPayMethodId);
+
+
         //资质信息
-        SupplierCredentialDTO.AddDTO credential = new SupplierCredentialDTO.AddDTO();
+        SupplierCredentialDTO.ImportAddDTO credential = new SupplierCredentialDTO.ImportAddDTO();
         credential.setName(excelDTO.getCredentialName());
         credential.setRemark(excelDTO.getCredentialRemark());
         //有效日期 起
@@ -232,12 +218,7 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         credential.setExpireDate(expireDate);
         credential.setEffectiveDate(effectiveDate);
         credential.setSupplierName(name);
-        //已存在的
-        SupplierCredentialDTO.AddDTO existCredential = credentialList.stream().filter(c -> c.getSupplierName().equals(name) &&
-                c.getName().equals(excelDTO.getCredentialName())).findFirst().orElse(null);
-        if (Objects.isNull(existCredential)) {
-            credentialList.add(credential);
-        }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -245,6 +226,33 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
             return;
         }
 
+
+        //已存在的
+        SupplierCredentialDTO.ImportAddDTO existCredential = credentialList.stream().filter(c -> c.getSupplierName().equals(name) &&
+                c.getName().equals(excelDTO.getCredentialName())).findFirst().orElse(null);
+        if (Objects.isNull(existCredential)) {
+            credentialList.add(credential);
+        }
+
+
+        //已存在的
+        SupplierAccountDTO.ImportAddDTO existAccount = bankAccountList.stream().filter(b -> b.getPayee().equals(excelDTO.getPayee()) &&
+                b.getSupplierName().equals(name)).findFirst().orElse(null);
+        if (Objects.isNull(existAccount)) {
+            bankAccountList.add(bankAccount);
+        }
+        //存在的联系人
+        SupplierContactDTO.ImportAddDTO existContact = contactList.stream().filter(c -> c.getSupplierName().equals(name) &&
+                c.getPerson().equals(excelDTO.getPerson())).findFirst().orElse(null);
+        if (Objects.isNull(existContact)) {
+            contactList.add(contact);
+        }
+
+        //在已添加的供应商里面找到对应供应商信息
+        SupplierDTO.ImportAddDTO existSupplier = addList.stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null);
+        if (Objects.isNull(existSupplier)) {
+            addList.add(addDTO);
+        }
     }
 
 
@@ -259,15 +267,15 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (CollectionUtils.isNotEmpty(addList)) {
-            for (SupplierDTO.AddDTO add : addList) {
+            for (SupplierDTO.ImportAddDTO add : addList) {
                 String supplierName = add.getName();
-                List<SupplierContactDTO.AddDTO> contactAddList = contactList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                List<SupplierContactDTO.ImportAddDTO> contactAddList = contactList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
                 add.setContactList(contactAddList);
 
-                List<SupplierAccountDTO.AddDTO> bankAccountAddList = bankAccountList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                List<SupplierAccountDTO.ImportAddDTO> bankAccountAddList = bankAccountList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
                 add.setBankAccountList(bankAccountAddList);
 
-                List<SupplierCredentialDTO.AddDTO> credentialAddList = credentialList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                List<SupplierCredentialDTO.ImportAddDTO> credentialAddList = credentialList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
                 add.setCredentialList(credentialAddList);
             }
 

@@ -180,11 +180,17 @@ public class SupplierImportExcelDTO implements Serializable {
     private String bankName;
 
 
+
+    @ColumnWidth(30)
+    @ExcelProperty(value = "开户行支行", index = 18)
+    @FieldValid(fieldName = "开户行支行",maxLength = 255)
+    private String bankSubbranch;
+
     /**
      * 银行账号
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "银行账号", index = 18)
+    @ExcelProperty(value = "银行账号", index = 19)
     @FieldValid(fieldName = "银行账号",maxLength = 20)
     private String bankAccount;
 
@@ -192,14 +198,10 @@ public class SupplierImportExcelDTO implements Serializable {
      * 支付方式
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "支付方式", index = 19)
+    @ExcelProperty(value = "支付方式", index = 20)
     @FieldValid(fieldName = "支付方式",maxLength = 20)
     private String bankPayMethodName;
 
-    @ColumnWidth(30)
-    @ExcelProperty(value = "开户行支行", index = 20)
-    @FieldValid(fieldName = "开户行支行",maxLength = 255)
-    private String bankSubbranch;
 
 
     @ColumnWidth(30)

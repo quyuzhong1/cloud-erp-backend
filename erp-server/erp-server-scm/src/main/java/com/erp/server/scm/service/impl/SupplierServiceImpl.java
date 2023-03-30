@@ -34,7 +34,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.listener.SupplierExcelListener;
@@ -701,7 +700,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(new ArrayList<>());
         List<BaseIdDTO> bankList = sysUserFeign.getBankList(new ArrayList<>());
         SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList, supplierList, userList, currencyList, bankList);
-
         try {
             EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -710,7 +708,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierImportExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "供应商导入错误信息";
-            ExcelUtil.export(fileName, "supplierError", errorList, WarehouseExcelDTO.class, response);
+            ExcelUtil.export(fileName, "supplierError", errorList, SupplierImportExcelDTO.class, response);
             return Boolean.FALSE;
         }
           return Boolean.TRUE;

@@ -26,8 +26,6 @@ public class SupplierContactDTO implements Serializable {
     public static class AddDTO{
 
 
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        private String supplierName;
 
         /**
          * 联系人
@@ -53,6 +51,57 @@ public class SupplierContactDTO implements Serializable {
          */
         @Size(max = 30,message = "邮箱最大30字符")
         @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
+        private String email;
+
+        /**
+         * 是否默认 true  是
+         */
+        private Boolean isDefault;
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 备注信息
+         */
+        private String remark;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ImportAddDTO{
+
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private String supplierName;
+
+        /**
+         * 联系人
+         */
+        @Size(max =50 ,message = "联系人最大50字符")
+        private String person;
+
+        /**
+         * 职位
+         */
+        @Size(max =50 ,message = "联系人职务最大50字符")
+        private String position;
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+
+        /**
+         * 邮箱
+         */
+        @Size(max = 30,message = "邮箱最大30字符")
         private String email;
 
         /**
