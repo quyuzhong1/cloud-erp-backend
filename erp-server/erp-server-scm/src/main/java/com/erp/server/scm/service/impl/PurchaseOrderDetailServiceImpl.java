@@ -174,6 +174,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         for (PurchaseOrderDetailEntity entity : newList) {
             entity.setPurchaseOrderId(purchaseOrderId);
+            entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
             //收料组织名称
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
                 throw new ServiceException(ApiError.ERROR_9040);

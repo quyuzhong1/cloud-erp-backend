@@ -9,7 +9,7 @@
             s.name as supplierName,
             ppd.currency,
             ppd.tax_price as taxPrice,
-            ppd.tax_rate as taxRate,
+            ppd.tax_rate * 100 as taxRate,
             ppd.min_qty as minQty,
             ppd.max_qty as maxQty
         from purchase_price pp
