@@ -447,6 +447,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             BeanMapperUtils.copy(purchaseOrderDetailEntity,detailDTO);
             //明细数据处理
             detailDTO.setUnitName("个");
+            detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(),MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
         exportPdfDTO.setDetails(details);

@@ -354,6 +354,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
+        //设置采购订单生成类型
+        List<PurchaseApplicationDetailEntity> detailList = setCreatePoType(list, mainList);
+
         //供应商默认联系人
         List<String> supplierIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
@@ -437,8 +441,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isNotEmpty(resultList)) {
             resultList.forEach(obj -> purchaseOrderService.add(obj));
         }
-        //设置采购订单生成类型
-        List<PurchaseApplicationDetailEntity> detailList = setCreatePoType(list, mainList);
+
         //更新申请明细生成状态
         purchaseApplicationDetailService.saveOrUpdateBatch(detailList);
         return Boolean.TRUE;
