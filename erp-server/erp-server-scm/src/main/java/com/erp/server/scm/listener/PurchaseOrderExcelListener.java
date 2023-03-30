@@ -10,7 +10,6 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -57,11 +56,6 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
     private List<SkuVO> skuList;
 
     /**
-     * 仓库数据
-     */
-    private List<WarehouseDTO.UpdateDTO> warehouseList;
-
-    /**
      * 核算公司
      */
     private List<BaseIdDTO> companyList;
@@ -69,9 +63,8 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public PurchaseOrderExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds,List<BaseIdDTO> companyList) {
+    public PurchaseOrderExcelListener(List<SkuVO> skuList,List<String> skuIds,List<BaseIdDTO> companyList) {
         this.skuList = skuList;
-        this.warehouseList = warehouseList;
         this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
         this.companyList = companyList;
     }
@@ -108,19 +101,6 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
                         excelDTO.setDeclareModel(skuEntity.getDeclareModel());
                         excelDTO.setDeclareName(skuEntity.getDeclareName());
                     }
-                }
-            }
-        }
-        //仓库验证
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            errorMsgList.add("系统中未发现已启用仓库");
-        } else {
-            if (StringUtils.isNotBlank(importExcelDTO.getDeliveryWarehouseName())) {
-                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getDeliveryWarehouseName())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(warehouseDTO)) {
-                    errorMsgList.add("请录入已审核并且启用的仓库");
-                } else {
-                    excelDTO.setDeliveryWarehouseId(warehouseDTO.getId());
                 }
             }
         }

@@ -150,7 +150,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //校验明细是否有重复sku
         checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
-        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),entity);
+        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),dto.getDeliveryWarehouseId(),entity);
         log.info("采购订单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PL, BusinessNoTypeEnum.CODE_PL.getCode()));
@@ -176,7 +176,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //校验明细是否有重复sku
         checkUpdateDetailsRepeatSku(dto.getDetails(),dto.getId());
         //处理数据id
-        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),entity);
+        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),dto.getDeliveryWarehouseId(),entity);
 
         log.info("采购订单修改，id=【{}】", dto.getId());
         
@@ -362,8 +362,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        //主表数据处理 TODO
+        //主数据处理
         exportPdfDTO.setCode(purchaseOrderEntity.getCode());
+        //采购组织
+        exportPdfDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+        //甲方签收日期
+        exportPdfDTO.setFirstSignDate(purchaseOrderEntity.getCreateTime().toLocalDate());
+        //乙方签收日期
+        exportPdfDTO.setSecondSignDate(purchaseOrderEntity.getCreateTime().toLocalDate());
 
         //查询订单供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.getById(id);
@@ -371,6 +377,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98036);
         }
         exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());
+
         //结算方式
         DictBasicEntity payMethod = dictBasicService.getById(purchaseOrderSupplier.getPayMethodId());
         if (ObjectUtils.isNotEmpty(payMethod)) {
@@ -394,8 +401,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             exportPdfDTO.setSupplierEmail(supplierContact.getEmail());
         }
 
-        //仓库信息 TODO
+        //仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(purchaseOrderEntity.getDeliveryWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.get(0);
+        exportPdfDTO.setDeliveryWarehouseAddress(warehouseDTO.getAddress());
+        exportPdfDTO.setDeliveryWarehouseTel(warehouseDTO.getContactTelNumber());
+        exportPdfDTO.setDeliveryWarehouseContract(warehouseDTO.getContacts());
 
+        //明细物料信息
         List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
             PurchaseOrderDetailDTO.ExportPdfDTO detailDTO = new PurchaseOrderDetailDTO.ExportPdfDTO();
@@ -412,12 +428,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //查询所有审核通过并启用的仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
 
-        PurchaseOrderExcelListener excelListenerUtil = new PurchaseOrderExcelListener(skuList,warehouseList,skuIds,companyList);
+        PurchaseOrderExcelListener excelListenerUtil = new PurchaseOrderExcelListener(skuList,skuIds,companyList);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -626,7 +640,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId (String purchaseUserId,String purchaseDeptId,String purchaseOrgId,PurchaseOrderEntity entity) {
+    private void doOpHandleDataId (String purchaseUserId,String purchaseDeptId,String purchaseOrgId,String deliveryWarehouseId,PurchaseOrderEntity entity) {
         //申请人
         if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(purchaseUserId);
@@ -650,6 +664,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(ApiError.ERROR_9029);
             }
             entity.setPurchaseOrgName(accountingCompanyList.get(0).getName());
+        }
+        //仓库
+        if (StringUtils.isNotBlank(deliveryWarehouseId)) {
+            //仓库信息
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryWarehouseId));
+            if (CollectionUtils.isEmpty(warehouseList)) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
+            entity.setDeliveryWarehouseName(warehouseName);
         }
     }
 

@@ -39,7 +39,7 @@
             pod.sku_no as skuNo,
             pod.product_name as productName,
             pod.plan_delivery_date as planDeliveryDate,
-            pod.delivery_warehouse_name as deliveryWarehouseName,
+            po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
             pod.purchase_qty as purchaseQty,
             pod.purchase_amount as purchaseAmount,
@@ -94,7 +94,7 @@
                 </foreach>
             </if>
             <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                and pod.delivery_warehouse_id in
+                and po.delivery_warehouse_id in
                 <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -150,7 +150,7 @@
             pod.sku_no as skuNo,
             pod.product_name as productName,
             pod.plan_delivery_date as planDeliveryDate,
-            pod.delivery_warehouse_name as deliveryWarehouseName,
+            po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
             pod.purchase_qty as purchaseQty,
             pod.purchase_amount as purchaseAmount,
@@ -205,7 +205,7 @@
                 </foreach>
             </if>
             <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                and pod.delivery_warehouse_id in
+                and po.delivery_warehouse_id in
                 <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>

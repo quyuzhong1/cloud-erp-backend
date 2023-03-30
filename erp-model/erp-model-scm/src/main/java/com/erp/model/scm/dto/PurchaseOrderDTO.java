@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -232,6 +233,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 采购日期
          */
+        @NotNull(message = "采购日期不能为空")
         private LocalDate purchaseDate;
 
         /**
@@ -247,11 +249,19 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 采购组织id
          */
+        @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
+
+        /**
+         * 交货仓库id
+         */
+        @NotBlank(message = "交货仓库不能为空")
+        private String deliveryWarehouseId;
 
         /**
          * 新品首批（false否,true是）
          */
+        @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
     }
 
@@ -343,7 +353,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 签订日期（甲方）
          */
-        private LocalDateTime createTime;
+        private LocalDate firstSignDate;
 
         /**
          * 收货地址（甲方）
@@ -364,6 +374,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 乙方
          */
         private String supplierName;
+
+        /**
+         * 签订日期（乙方）
+         */
+        private LocalDate  secondSignDate;
 
         /**
          * 供方地址（乙方）

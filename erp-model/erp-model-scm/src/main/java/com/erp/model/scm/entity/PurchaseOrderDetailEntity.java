@@ -105,18 +105,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String receiveOrgName;
 
     /**
-     * 交货仓库id
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
-
-    /**
-     * 交货仓库名称
-     */
-    @TableField("delivery_warehouse_name")
-    private String deliveryWarehouseName;
-
-    /**
      * 是否是赠品（false否，true是）
      */
     @TableField("is_gift")

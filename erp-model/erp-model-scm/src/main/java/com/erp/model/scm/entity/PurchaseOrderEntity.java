@@ -79,6 +79,19 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     @TableField("purchase_dept_name")
     private String purchaseDeptName;
 
+
+    /**
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
+
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
+
     /**
      * 新品首批（false否,true是）
      */

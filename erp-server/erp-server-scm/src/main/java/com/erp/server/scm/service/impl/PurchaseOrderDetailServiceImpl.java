@@ -15,7 +15,6 @@ import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
@@ -167,9 +166,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      * 处理明细中的数据id
      */
     private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
-        //仓库信息
-        List<String> deliveryWarehouseIds = newList.stream().map(PurchaseOrderDetailEntity::getDeliveryWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(deliveryWarehouseIds);
 
         //收料组织信息
         List<String> receiveOrgIds = newList.stream().map(PurchaseOrderDetailEntity::getReceiveOrgId).collect(Collectors.toList());
@@ -178,12 +174,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         for (PurchaseOrderDetailEntity entity : newList) {
             entity.setPurchaseOrderId(purchaseOrderId);
-            //仓库名称
-            if (CollectionUtils.isEmpty(warehouseList)) {
-                throw new ServiceException(ApiError.ERROR_99002);
-            }
-            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-            entity.setDeliveryWarehouseName(warehouseName);
             //收料组织名称
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
                 throw new ServiceException(ApiError.ERROR_9040);

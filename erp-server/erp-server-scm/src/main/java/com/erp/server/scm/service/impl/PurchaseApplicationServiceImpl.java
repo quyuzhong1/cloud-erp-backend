@@ -388,7 +388,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<PurchaseOrderDTO.AddDTO> resultList = new ArrayList<>();
 
         //主表数据按供应商和采购组织分组
-        Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat("|").concat(obj.getPurchaseOrgId())));
+        Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat("|").concat(obj.getPurchaseOrgId()).concat("|").concat(obj.getDestWarehouseId())));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> entry : map.entrySet()) {
             List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> value = entry.getValue();
             //采购订单主表数据
@@ -401,10 +401,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseDeptId(entity.getApplyDeptId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
+            addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
 
             List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
             //明细数据按skuId、仓库、收料组织、交期分组
-            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId().concat("|").concat(obj.getReceiveOrgId()).concat(obj.getDestWarehouseId()).concat("|").concat(String.valueOf(obj.getPlanDeliveryDate()))));
+            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId().concat("|").concat(obj.getReceiveOrgId()).concat("|").concat(String.valueOf(obj.getPlanDeliveryDate()))));
             for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailEntry : detailMap.entrySet()) {
 
                 List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> detailValue = detailEntry.getValue();
@@ -421,7 +422,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setDeclareModel(skuVO.getDeclareModel());
                 addDetailDTO.setDeclareName(skuVO.getDeclareName());
                 addDetailDTO.setReceiveOrgId(detailValue.get(0).getReceiveOrgId());
-                addDetailDTO.setDeliveryWarehouseId(detailValue.get(0).getDestWarehouseId());
                 addDetailDTO.setPlanDeliveryDate(detailValue.get(0).getPlanDeliveryDate());
                 addDetailDTO.setTaxPrice(detailValue.get(0).getTaxPrice());
                 //采购数量

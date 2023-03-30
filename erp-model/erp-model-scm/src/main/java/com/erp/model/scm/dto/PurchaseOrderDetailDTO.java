@@ -103,12 +103,6 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String receiveOrgId;
 
         /**
-         * 交货仓库id
-         */
-        @NotBlank(message = "交货仓库不能为空")
-        private String deliveryWarehouseId;
-
-        /**
          * 是否是赠品（false否，true是）
          */
         @NotNull(message = "是否是赠品不能为空")
