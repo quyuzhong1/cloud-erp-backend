@@ -45,7 +45,6 @@ public interface KingdeeCommonService {
      * @param msg
      * @param type
      * @param status
-
      */
     void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity,String businessId,
                                                     String jsonData,String msg,Integer type,Integer status);
