@@ -90,8 +90,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     //没有无区间 就要检查又没有不同区间的
                     List<Integer> intervalList = new ArrayList<>(10);
                     for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
-                        intervalList.add(interval.getMinQty());
-                        intervalList.add(interval.getMaxQty());
+                        if (interval.getMinQty() != null) {
+                            intervalList.add(interval.getMinQty());
+                        }
+                        if (interval.getMaxQty() != null) {
+                            intervalList.add(interval.getMaxQty());
+                        }
                     }
                     //判断是否是按顺序的
                     boolean isSortedResult = isSorted(intervalList);
