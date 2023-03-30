@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.List;
  * @Author Cloud
  * @Date 2023/3/29 10:45
  **/
-public class GoodCangDTO {
+public class GoodcangDTO {
 
     /**
      * 入库单推送 接收数据格式
@@ -32,27 +33,33 @@ public class GoodCangDTO {
         /**
          * 用户令牌
          */
-        private String AppToken;
+        @JsonProperty("AppToken")
+        private String appToken;
         /**
          * 签名字符串
          */
-        private String Sign;
+        @JsonProperty("Sign")
+        private String sign;
         /**
          * 数据类型
          */
-        private String MessageType;
+        @JsonProperty("MessageType")
+        private String messageType;
         /**
          * 签名字符串
          */
-        private MessageDTO Message;
+        @JsonProperty("Message")
+        private MessageDTO message;
         /**
          * 消息ID
          */
-        private String MessageID;
+        @JsonProperty("MessageID")
+        private String messageId;
         /**
          * 发送时间
          */
-        private LocalDateTime SendTime;
+        @JsonProperty("SendTime")
+        private LocalDateTime sendTime;
     }
 
     @Data
@@ -60,23 +67,28 @@ public class GoodCangDTO {
         /**
          * 入库单号
          */
-        private String receiving_code;
+        @JsonProperty("receiving_code")
+        private String receivingCode;
         /**
          * 参考号
          */
-        private String reference_no;
+        @JsonProperty("reference_no")
+        private String referenceNo;
         /**
          * 状态
          */
-        private Integer receiving_status;
+        @JsonProperty("receiving_status")
+        private Integer receivingStatus;
         /**
          * 仓库编码
          */
-        private String warehouse_code;
+        @JsonProperty("warehouse_code")
+        private String warehouseCode;
         /**
          * 仓库id
          */
-        private Integer warehouse_id;
+        @JsonProperty("warehouse_id")
+        private Integer warehouseId;
         /**
          * 创建时间
          */
@@ -88,11 +100,17 @@ public class GoodCangDTO {
         /**
          * 入库单类型
          */
-        private Integer receiving_type;
+        @JsonProperty("receiving_type")
+        private Integer receivingType;
         /**
          * 入库明细
          */
         private List<ReceivingDetailDTO> receivingDetail;
+
+        /**
+         * 重试次数
+         */
+        private Integer retry = 1;
     }
 
     /**
@@ -103,19 +121,23 @@ public class GoodCangDTO {
         /**
          * 商品编码 唯一
          */
-        private String product_barcode;
+        @JsonProperty("product_barcode")
+        private String productBarcode;
         /**
          * 客户商品编码
          */
-        private String product_sku;
+        @JsonProperty("product_sku")
+        private String productSku;
         /**
          * 箱号编码
          */
-        private String box_no;
+        @JsonProperty("box_no")
+        private String boxNo;
         /**
          * 参考箱号
          */
-        private String reference_box_no;
+        @JsonProperty("reference_box_no")
+        private String referenceBoxNo;
         /**
          * 送货数量
          */
@@ -127,7 +149,8 @@ public class GoodCangDTO {
         /**
          * 上架数量
          */
-        private Integer putawayQty;
+        @JsonProperty("putawayQty")
+        private Integer putAwayQty;
         /**
          * 不良品数量
          */
@@ -150,10 +173,11 @@ public class GoodCangDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ResultDTO{
+        @JsonProperty("Status")
+        private String status;
 
-        private String Status;
-
-        private String ErrorMessage;
+        @JsonProperty("ErrorMessage")
+        private String errorMessage;
 
         public static ResultDTO success(){
             ResultDTO success = new ResultDTO("SUCCESS", "");

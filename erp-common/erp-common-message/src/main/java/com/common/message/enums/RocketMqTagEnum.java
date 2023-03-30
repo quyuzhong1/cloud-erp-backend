@@ -114,6 +114,9 @@ public enum RocketMqTagEnum {
      * BOM管理同步金蝶
      */
     KINGDEE_BOM_INFO_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
+
+    GC_STOCK_INBOUND_ORDER_TAG(21,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
+
     ;
     
     
@@ -127,6 +130,7 @@ public enum RocketMqTagEnum {
 
     public static final String SYNC_KINGDEE = "sync_kingdee";
 
+    public static final String STOCK = "stock";
 
     private Integer code;
 
