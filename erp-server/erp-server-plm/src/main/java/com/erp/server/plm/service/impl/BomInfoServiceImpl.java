@@ -75,8 +75,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private BomOperateLogService bomOperateLogService;
 
-/*    @Resource
-    private WorkflowFeign workflowFeign;*/
+    @Resource
+    private WorkflowFeign workflowFeign;
 
 
     @Resource
@@ -1064,11 +1064,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public List<ApproveNodeRecordVO> auditInfo(String bomId) {
-        //TODO 2020330暂时取消审核流程，只修改状态
-        /*if (StringUtils.isNotBlank(bomId)) {
+        if (StringUtils.isNotBlank(bomId)) {
             List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
             return list;
-        }*/
+        }
         return new ArrayList<>();
     }
 
