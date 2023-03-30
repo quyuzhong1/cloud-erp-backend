@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * TODO
@@ -63,6 +65,8 @@ public class GoodcangDTO {
     }
 
     @Data
+    @ToString
+    @NoArgsConstructor
     public static class MessageDTO{
         /**
          * 入库单号
@@ -99,6 +103,9 @@ public class GoodcangDTO {
         private LocalDateTime updateTime;
         /**
          * 入库单类型
+         * 0标准
+         * 3中转(易渡代发)
+         * 4原标 5FBA
          */
         @JsonProperty("receiving_type")
         private Integer receivingType;
@@ -111,12 +118,27 @@ public class GoodcangDTO {
          * 重试次数
          */
         private Integer retry = 1;
+
+        public MessageDTO(OmsImlDTO.MessageDTO dto) {
+            this.receivingCode = dto.getReceivingCode();
+            this.referenceNo = dto.getReferenceNo();
+            this.receivingStatus = 1;
+            this.warehouseCode = dto.getWarehouseCode();
+            this.warehouseId = 0;
+            this.addTime = dto.getAddTime();
+            this.updateTime = dto.getUpdateTime();
+            this.receivingType = 0;
+            this.receivingDetail = ReceivingDetailDTO.createReceivingDetail(dto.getItems());
+        }
+
     }
 
     /**
      * 入库明细
      */
     @Data
+    @ToString
+    @NoArgsConstructor
     public static class ReceivingDetailDTO{
         /**
          * 商品编码 唯一
@@ -159,6 +181,21 @@ public class GoodcangDTO {
          * 良品数量
          */
         private Integer sellableQty;
+
+        public static List<ReceivingDetailDTO> createReceivingDetail(List<OmsImlDTO.ReceivingDetailDTO> receivingDetail) {
+            return receivingDetail.stream().map(ReceivingDetailDTO::new).collect(Collectors.toList());
+        }
+        public ReceivingDetailDTO(OmsImlDTO.ReceivingDetailDTO dto){
+            this.productBarcode = dto.getProductBarcode();
+            this.productSku = dto.getProductSku();
+            this.boxNo = dto.getBoxNo().toString();
+            this.referenceBoxNo = dto.getReferenceBoxNo();
+            this.deliveryQty = dto.getQuantity();
+            this.receiptQty = dto.getReceiptQty();
+            this.putAwayQty = dto.getPutAwayQty();
+            this.unsellableQty = null != dto.getLoCountType() ? (dto.getLoCountType().size() > 1 ? dto.getLoCountType().get(1) : 0) : 0;
+            this.sellableQty = null != dto.getLoCountType() ? dto.getLoCountType().get(0) : 0;
+        }
     }
 
 
@@ -181,6 +218,10 @@ public class GoodcangDTO {
 
         public static ResultDTO success(){
             ResultDTO success = new ResultDTO("SUCCESS", "");
+            return success;
+        }
+        public static ResultDTO fail(String msg){
+            ResultDTO success = new ResultDTO("FAILED", msg);
             return success;
         }
     }

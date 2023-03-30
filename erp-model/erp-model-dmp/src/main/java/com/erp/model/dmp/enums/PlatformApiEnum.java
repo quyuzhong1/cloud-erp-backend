@@ -65,6 +65,8 @@ public enum PlatformApiEnum {
     //网店管理
     ECC_SHOP(22, "ECC_Shop"),
 
+    IML_OMS_ASN_LIST(23,"getAsnList"),
+
     ;
 
     /** 状态码 */

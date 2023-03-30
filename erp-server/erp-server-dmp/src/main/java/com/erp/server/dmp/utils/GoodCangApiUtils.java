@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class GoodCangApiUtils {
     private static String APP_KEY;
 
-    private static String APP_token;
+    private static String APP_TOKEN;
 
     private static String URL;
     @Value("${openApi.goodcang.appKey}")
@@ -24,7 +24,7 @@ public class GoodCangApiUtils {
     }
     @Value("${openApi.goodcang.appToken}")
     public void setSecretKey(String secretKey) {
-        GoodCangApiUtils.APP_token = secretKey;
+        GoodCangApiUtils.APP_TOKEN = secretKey;
     }
     @Value("${openApi.goodcang.url}")
     public void setSessionKey(String url) {
