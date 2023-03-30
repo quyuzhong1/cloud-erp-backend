@@ -75,8 +75,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private BomOperateLogService bomOperateLogService;
 
-    @Resource
-    private WorkflowFeign workflowFeign;
+/*    @Resource
+    private WorkflowFeign workflowFeign;*/
 
 
     @Resource
@@ -136,11 +136,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (saveResult) {
             //保存历史bom信息
             productBomHistoryService.insert(bom, bomSkuList);
-            //但是待审核的时候
+            //TODO 2020330暂时取消审核流程，只修改状态
+/*            //但是待审核的时候
             if (isSubmitAudit) {
                 //这里要发起一个bom流程
                 startBomProcess(bomId, dto.getSkuList());
-            }
+            }*/
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
             //添加 bom的操作日志
@@ -248,7 +249,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-01-31 14:44
      */
-    public void startBomProcess(String bomId, List<BomSkuDTO> skuList) {
+    //TODO 2020330暂时取消审核流程，只修改状态
+    /*public void startBomProcess(String bomId, List<BomSkuDTO> skuList) {
         FindProcessDTO findProcess = new FindProcessDTO();
         String userId = commonService.getUserInfo().getUid();
         String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
@@ -308,7 +310,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         }
 
-    }
+    }*/
 
 
     /**
@@ -373,12 +375,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
             String userId = commonService.getUserInfo().getUid();
             //获取我的待办信息
-            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            //TODO 2020330暂时取消审核流程，只修改状态
+            /*List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(bomIdList)) {
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
-            }
+            }*/
         }
 
         IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
@@ -613,7 +616,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             //发起bom 流程
-            startBomProcess(bomId, skuList);
+            //TODO 2020330暂时取消审核流程，只修改状态
+            /*startBomProcess(bomId, skuList);*/
         }
         return result;
     }
@@ -651,7 +655,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
             //发起bom 流程
-            startBomProcess(bomId, list);
+            //TODO 2020330暂时取消审核流程，只修改状态
+            /*startBomProcess(bomId, list);*/
         }
         return result;
 
@@ -878,12 +883,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
             String userId = commonService.getUserInfo().getUid();
             //获取我的待办信息
-            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            //TODO 2020330暂时取消审核流程，只修改状态
+/*            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(bomIdList)) {
                 ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
                 return;
-            }
+            }*/
             stateList.add(BomStateEnum.WAIT_AUDIT.getState());
             stateList.add(BomStateEnum.AUDIT_ING.getState());
         }
@@ -951,8 +957,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setRemark(dto.getComment());
         Boolean result = this.updateById(bom);
 
-
-        String userId = commonService.getUserInfo().getUid();
+        //TODO 2020330暂时取消审核流程，只修改状态
+/*        String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);
@@ -971,14 +977,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Map<String, Object> parameterMap = new HashMap<>();
         parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
-        ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
-        if (node != null) {
+        ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);*/
+//        if (node != null) {
             if (result && isFirstAudit) {
                 String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName());
                 //操作记录
                 bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             }
-        }
+//        }
 
 
     }
@@ -1057,10 +1063,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public List<ApproveNodeRecordVO> auditInfo(String bomId) {
-        if (StringUtils.isNotBlank(bomId)) {
+        //TODO 2020330暂时取消审核流程，只修改状态
+        /*if (StringUtils.isNotBlank(bomId)) {
             List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
             return list;
-        }
+        }*/
         return new ArrayList<>();
     }
 
@@ -1090,15 +1097,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
-        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+        //TODO 2020330暂时取消审核流程，只修改状态
+/*        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
         if (Objects.isNull(processTask)) {
             throw new ServiceException(ApiError.ERROR_94005);
-        }
+        }*/
 
         //流程需要关闭吗
         Boolean result = this.updateById(bom);
 
-        ApproveProcessDTO process = new ApproveProcessDTO();
+       /* ApproveProcessDTO process = new ApproveProcessDTO();
         process.setComment(dto.getComment());
         process.setProcessInstanceId(processTask.getProcessInstanceId());
         process.setUserId(userId);
@@ -1107,8 +1115,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Map<String, Object> parameterMap = new HashMap<>();
         parameterMap.put("agree", false);
         process.setParameterMap(parameterMap);
-        //
-        workflowFeign.taskNoPass(process);
+        workflowFeign.taskNoPass(process);*/
 
         if (result) {
             String statusName = BomStateEnum.AUDIT_ING.getName();
