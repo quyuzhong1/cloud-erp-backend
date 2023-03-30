@@ -117,6 +117,8 @@ public enum RocketMqTagEnum {
 
     GC_STOCK_INBOUND_ORDER_TAG(21,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
 
+    IML_STOCK_INBOUND_ORDER_TAG(22,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
+
     ;
     
     

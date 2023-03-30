@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.open;
 
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.server.dmp.pull.service.GoodcangStockService;
@@ -29,7 +30,14 @@ public class GoodcangOpenController {
     public GoodcangDTO.ResultDTO subscribe(@RequestBody(required = false) JSONObject dto){
         log.warn("GoodCangOpenController>>>subscribe>>>dto ={}", dto);
 
+        // 类型校验
+
+        // 签名校验
+
         GoodcangDTO.MessageDTO messageDTO = new GoodcangDTO.MessageDTO();
+        if(StrUtil.isBlank(messageDTO.getReceivingCode())){
+            return GoodcangDTO.ResultDTO.fail("receiving_code 为空");
+        }
         goodcangStockService.receiveGoDownEntry(messageDTO);
         return GoodcangDTO.ResultDTO.success();
     }
