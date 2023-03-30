@@ -59,6 +59,7 @@ public class SupplierDTO implements Serializable {
     }
 
 
+
     /**
      * 供应商修改信息
      */

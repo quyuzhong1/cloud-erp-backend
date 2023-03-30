@@ -168,8 +168,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setAttachmentNameList(attachmentNameList);
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
-        List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList = priceDetailService.getByPurchasePriceId(id);
+        List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList = priceDetailService.getByPurchasePriceId(id);
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
+
         return viewDTO;
     }
 
@@ -184,7 +185,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String updatePurchasePrice(PurchasePriceDTO.ViewDTO dto) {
+    public String updatePurchasePrice(PurchasePriceDTO.UpdateDTO dto) {
         String id = dto.getId();
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
@@ -267,7 +268,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 11:58
      */
     @Override
-    public Boolean updateAndSubmit(PurchasePriceDTO.ViewDTO dto) {
+    public Boolean updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
         String id = this.updatePurchasePrice(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
@@ -503,9 +504,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         }
         String fileName = "采购价目数据";
-        String excelPath = "excel/PurchasePriceExport.xlsx";
         try {
-         //   new ExcelPrintUtils().patchExport(resultList, response,fileName, excelPath);
             ExcelUtil.export(fileName,"采购价目数据",resultList,PurchasePriceExportExcelDTO.class,response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);

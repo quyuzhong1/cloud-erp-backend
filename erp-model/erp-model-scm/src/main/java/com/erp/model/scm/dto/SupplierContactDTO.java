@@ -2,6 +2,7 @@ package com.erp.model.scm.dto;
 
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,9 @@ public class SupplierContactDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO{
 
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private String supplierName;
 
         /**
          * 联系人

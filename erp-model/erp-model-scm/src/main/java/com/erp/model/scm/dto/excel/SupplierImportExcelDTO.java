@@ -188,36 +188,44 @@ public class SupplierImportExcelDTO implements Serializable {
     @FieldValid(fieldName = "银行账号",maxLength = 20)
     private String bankAccount;
 
+    /**
+     * 支付方式
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "支付方式", index = 19)
+    @FieldValid(fieldName = "支付方式",maxLength = 20)
+    private String bankPayMethodName;
+
     @ColumnWidth(30)
-    @ExcelProperty(value = "开户行支行", index = 19)
+    @ExcelProperty(value = "开户行支行", index = 20)
     @FieldValid(fieldName = "开户行支行",maxLength = 255)
     private String bankSubbranch;
 
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "账户备注", index = 20)
+    @ExcelProperty(value = "账户备注", index = 21)
     @FieldValid(fieldName = "账户备注",maxLength = 255)
     private String accountRemark;
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "资质名称", index = 21)
+    @ExcelProperty(value = "资质名称", index = 22)
     @FieldValid(fieldName = "资质名称",maxLength = 50)
     private String credentialName;
 
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "资质有效期起", index = 22)
+    @ExcelProperty(value = "资质有效期起", index = 23)
     private LocalDate effectiveDate;
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "资质有效期止", index = 23)
+    @ExcelProperty(value = "资质有效期止", index = 24)
     private LocalDate expireDate;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "资质备注", index = 24)
+    @ExcelProperty(value = "资质备注", index = 25)
     @FieldValid(fieldName = "资质备注",maxLength = 255)
     private String credentialRemark;
 
@@ -226,6 +234,6 @@ public class SupplierImportExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =25 )
+    @ExcelProperty(value = "错误数据", index =26)
     private String  errorMsg;
 }

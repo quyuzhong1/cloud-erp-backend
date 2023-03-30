@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -7,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -22,6 +24,7 @@ import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
+import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -31,6 +34,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.listener.SupplierExcelListener;
@@ -694,11 +698,22 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<SupplierEntity> supplierList = this.list();
         //币种信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(null);
-        SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList,supplierList,userList,currencyList);
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(new ArrayList<>());
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(new ArrayList<>());
+        SupplierExcelListener excelListener = new SupplierExcelListener(this, supplierGradeList, dictBasicList, supplierList, userList, currencyList, bankList);
 
-
-        return null;
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("供应商导入错误！", e);
+        }
+        List<SupplierImportExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "供应商导入错误信息";
+            ExcelUtil.export(fileName, "supplierError", errorList, WarehouseExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+          return Boolean.TRUE;
     }
 
 

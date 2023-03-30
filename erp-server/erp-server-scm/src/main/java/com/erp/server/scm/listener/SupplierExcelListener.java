@@ -2,9 +2,13 @@ package com.erp.server.scm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
+import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
@@ -16,9 +20,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Lambda
@@ -38,6 +45,24 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
     private List<FindUserDTO> userList;
     private List<SupplierEntity> supplierList;
 
+    private List<BaseIdDTO> bankList;
+
+    /**
+     * 联系人信息
+     */
+    private List<SupplierContactDTO.AddDTO> contactList=new ArrayList<>();
+
+    /**
+     *  账户信息
+     */
+    List<SupplierAccountDTO.AddDTO> bankAccountList=new ArrayList<>();
+
+    /**
+     * 资质信息
+     */
+    List<SupplierCredentialDTO.AddDTO> credentialList=new ArrayList<>();
+
+
     //币种信息
     private List<CurrencyDTO.ViewDTO> currencyList;
     /**
@@ -48,13 +73,15 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
     private List<SupplierDTO.AddDTO> addList = new ArrayList<>();
 
     public SupplierExcelListener(SupplierService supplierService, List<SupplierGradeEntity> supplierGradeList, List<DictBasicEntity> dictBasicList,
-                                 List<SupplierEntity> supplierList, List<FindUserDTO> userList, List<CurrencyDTO.ViewDTO> currencyList) {
+                                 List<SupplierEntity> supplierList, List<FindUserDTO> userList,
+                                 List<CurrencyDTO.ViewDTO> currencyList, List<BaseIdDTO> bankList) {
         this.supplierService = supplierService;
         this.supplierGradeList = supplierGradeList;
         this.dictBasicList = dictBasicList;
         this.supplierList = supplierList;
         this.userList = userList;
         this.currencyList = currencyList;
+        this.bankList = bankList;
     }
 
 
@@ -76,13 +103,14 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        SupplierDTO.AddDTO addDTO = new SupplierDTO.AddDTO();
+
         //供应商名称
         String name = excelDTO.getName();
         long count = supplierList.stream().filter(s -> s.getName().equals(name)).count();
         if (count > 0) {
             errorMsgList.add("供应商名称已存在");
         }
-        SupplierDTO.AddDTO addDTO = new SupplierDTO.AddDTO();
         addDTO.setName(name);
         //等级名称
         String gradeName = excelDTO.getGradeName();
@@ -116,6 +144,7 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
                 errorMsgList.add("结算方式不存在");
             }
         }
+        addDTO.setPayMethodId(payMethodId);
         //结算币种
         String payCurrency = excelDTO.getPayCurrency();
         if (StringUtils.isNotBlank(payCurrency)) {
@@ -124,8 +153,14 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
                 errorMsgList.add("结算币种不存在");
             }
         }
+        addDTO.setPayCurrency(payCurrency);
+        //在已添加的供应商里面找到对应供应商信息
+        SupplierDTO.AddDTO existSupplier = addList.stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null);
+        if (Objects.isNull(existSupplier)) {
+            addList.add(addDTO);
+        }
+
         //联系人信息
-        List<SupplierContactDTO.AddDTO> contactList = new ArrayList<>(5);
         SupplierContactDTO.AddDTO contact = new SupplierContactDTO.AddDTO();
         contact.setPerson(excelDTO.getPerson());
         contact.setPosition(excelDTO.getPosition());
@@ -136,6 +171,80 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         contact.setTelNumber(excelDTO.getTelNumber());
         String isDefault = excelDTO.getIsDefault();
         contact.setIsDefault(isDefault.equals("是"));
+        contact.setSupplierName(name);
+        //存在的联系人
+        SupplierContactDTO.AddDTO existContact = contactList.stream().filter(c -> c.getSupplierName().equals(name) &&
+                c.getPerson().equals(excelDTO.getPerson())).findFirst().orElse(null);
+        if (Objects.isNull(existContact)) {
+            contactList.add(contact);
+        }
+
+
+        //账户信息
+        SupplierAccountDTO.AddDTO bankAccount = new SupplierAccountDTO.AddDTO();
+        bankAccount.setBankAccount(excelDTO.getBankAccount());
+        bankAccount.setPayee(excelDTO.getPayee());
+        //银行信息
+        String bankName = excelDTO.getBankName();
+        String bankId = "";
+        if (StringUtils.isNotBlank(bankName)) {
+            bankId = bankList.stream().filter(b -> b.getName().equals(bankName)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(bankId)) {
+                errorMsgList.add("银行不存在");
+            }
+        }
+        bankAccount.setBankId(bankId);
+        bankAccount.setBankSubbranch(excelDTO.getBankSubbranch());
+        bankAccount.setRemark(excelDTO.getAccountRemark());
+        //银行支付方式
+        String bankPayMethodName = excelDTO.getBankPayMethodName();
+        String bankPayMethodId = "";
+        if (StringUtils.isNotBlank(bankPayMethodName)) {
+            bankPayMethodId = dictBasicList.stream().filter(d -> d.getName().equals(bankPayMethodName)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        }
+        if (StringUtils.isBlank(bankPayMethodId)) {
+            errorMsgList.add("支付方式不存在");
+        }
+        bankAccount.setSupplierName(name);
+        bankAccount.setPayMethodId(bankPayMethodId);
+        //已存在的
+        SupplierAccountDTO.AddDTO existAccount = bankAccountList.stream().filter(b -> b.getPayee().equals(excelDTO.getPayee()) &&
+                b.getSupplierName().equals(name)).findFirst().orElse(null);
+        if (Objects.isNull(existAccount)) {
+            bankAccountList.add(bankAccount);
+        }
+
+        //资质信息
+        SupplierCredentialDTO.AddDTO credential = new SupplierCredentialDTO.AddDTO();
+        credential.setName(excelDTO.getCredentialName());
+        credential.setRemark(excelDTO.getCredentialRemark());
+        //有效日期 起
+        LocalDate effectiveDate = excelDTO.getEffectiveDate();
+        //有效日期 止
+        LocalDate expireDate = excelDTO.getExpireDate();
+        if (effectiveDate != null && expireDate != null) {
+            if (effectiveDate.compareTo(expireDate) > 0) {
+                errorMsgList.add("资质有效起不能大于资质有效止");
+            }
+        }
+        credential.setExpireDate(expireDate);
+        credential.setEffectiveDate(effectiveDate);
+        credential.setSupplierName(name);
+        //已存在的
+        SupplierCredentialDTO.AddDTO existCredential = credentialList.stream().filter(c -> c.getSupplierName().equals(name) &&
+                c.getName().equals(excelDTO.getCredentialName())).findFirst().orElse(null);
+        if (Objects.isNull(existCredential)) {
+            credentialList.add(credential);
+        }
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
+            return;
+        }
+
     }
 
 
@@ -149,6 +258,35 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+        if (CollectionUtils.isNotEmpty(addList)) {
+            for (SupplierDTO.AddDTO add : addList) {
+                String supplierName = add.getName();
+                List<SupplierContactDTO.AddDTO> contactAddList = contactList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                add.setContactList(contactAddList);
 
+                List<SupplierAccountDTO.AddDTO> bankAccountAddList = bankAccountList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                add.setBankAccountList(bankAccountAddList);
+
+                List<SupplierCredentialDTO.AddDTO> credentialAddList = credentialList.stream().filter(c -> c.getSupplierName().equals(supplierName)).collect(Collectors.toList());
+                add.setCredentialList(credentialAddList);
+            }
+
+            System.out.println(JSONObject.toJSON(addList));
+
+        }
+
+
+    }
+
+
+    /**
+     * 获取错误信息
+     * @author yl
+     * @date 2023-03-30 16:13
+     * @param
+     * @return java.util.List<com.erp.model.scm.dto.excel.SupplierImportExcelDTO>
+     */
+    public List<SupplierImportExcelDTO> getErrorList() {
+        return errorList;
     }
 }

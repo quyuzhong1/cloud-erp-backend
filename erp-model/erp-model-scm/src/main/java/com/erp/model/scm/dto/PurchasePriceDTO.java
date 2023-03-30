@@ -134,6 +134,71 @@ public class PurchasePriceDTO implements Serializable {
          * 报价明细
          */
         @Valid
+        private List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList;
+
+    }
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 报价日期
+         */
+        @NotNull(message = "报价日期不能为空")
+        private LocalDate quotedDate;
+
+
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 报价人id
+         */
+        private String pricingUserId;
+
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 附件地址
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名称
+         */
+        private List<String> attachmentNameList;
+
+
+        /**
+         * 报价明细
+         */
+        @Valid
         private List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList;
 
     }

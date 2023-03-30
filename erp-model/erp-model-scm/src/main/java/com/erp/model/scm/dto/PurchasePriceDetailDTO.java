@@ -187,13 +187,9 @@ public class PurchasePriceDetailDTO implements Serializable {
     }
 
 
-    /**
-     * 历史数据
-     */
     @Data
     @NoArgsConstructor
-    public static class HistoryDTO {
-
+    public static class ViewDTO{
 
         /**
          * sku id
@@ -249,17 +245,22 @@ public class PurchasePriceDetailDTO implements Serializable {
         /**
          * 含税单价
          */
-        @NotNull(message = "含税单价不能为空")
         private BigDecimal taxPrice;
 
 
         /**
          * 税率
          */
-        @NotNull(message = "税率不能为空")
         private BigDecimal taxRate;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
 
     }
+
+
 
 }

@@ -41,6 +41,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -156,9 +157,25 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-27 9:48
      */
     @Override
-    public List<PurchasePriceDetailDTO.UpdateDTO> getByPurchasePriceId(String purchasePriceId) {
+    public List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String purchasePriceId) {
         List<PurchasePriceDetailEntity> list = this.getListByPurchasePriceId(purchasePriceId);
-        return BeanMapper.copyList(list, PurchasePriceDetailDTO.UpdateDTO.class);
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
+        List<String> currencyIdList = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        BigDecimal hundred = new BigDecimal("100");
+
+        for(PurchasePriceDetailDTO.ViewDTO item:viewList){
+            //币种
+            String currency = item.getCurrency();
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+            item.setCurrencySymbol(currencySymbol);
+            BigDecimal taxRate = item.getTaxRate();
+            item.setTaxRate(taxRate.multiply(hundred));
+        }
+
+        return viewList;
     }
 
 
@@ -293,11 +310,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         List<PurchasePriceDetailEntity> detailList = this.listByIds(ids);
         Boolean disabled = dto.getDisabled();
-        long count= detailList.stream().filter(d->!d.getDisabled()==disabled).count();
-        if(count!=detailList.size()){
+        long count = detailList.stream().filter(d -> !d.getDisabled() == disabled).count();
+        if (count != detailList.size()) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        detailList.forEach(d->d.setDisabled(disabled));
+        detailList.forEach(d -> d.setDisabled(disabled));
 
         return this.updateBatchById(detailList);
     }
@@ -332,32 +349,32 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = listPurchaseTaxPriceView(dto);
         String error = pair.getKey();
         if (StringUtils.isNotBlank(error)) {
-            throw new ServiceException(new ApiResult(1,error));
+            throw new ServiceException(new ApiResult(1, error));
         }
         return pair.getValue();
     }
 
     @Override
-    public Pair<String,List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>>  listPurchaseTaxPriceView (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+    public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
         //未找到报价信息
         if (StringUtils.isNotBlank(dto.getSupplierId()) && CollectionUtils.isEmpty(list)) {
-            String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty());
+            String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", dto.getSkuNo(), dto.getPurchaseQty());
             log.error(error);
-            return new Pair<>(error,list);
+            return new Pair<>(error, list);
         }
         List<String> currencyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
         if (CollectionUtils.isEmpty(viewList)) {
             String error = "未发现币种对应符号";
             log.error(error);
-            return new Pair<>(error,list);
+            return new Pair<>(error, list);
         }
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : list) {
             CurrencyDTO.ViewDTO currencyDTO = viewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(null);
             viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
         }
-        return new Pair<>("",list);
+        return new Pair<>("", list);
     }
 
 

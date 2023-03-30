@@ -90,7 +90,7 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
+    public ApiResult update(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
         String id = purchasePriceService.updatePurchasePrice(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -102,7 +102,7 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
         Boolean result = purchasePriceService.updateAndSubmit(dto);
         return result == true ? success() : failure();
     }

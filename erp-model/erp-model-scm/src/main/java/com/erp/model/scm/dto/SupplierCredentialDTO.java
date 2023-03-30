@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,10 @@ public class SupplierCredentialDTO  implements Serializable {
     @NoArgsConstructor
     public  static class AddDTO {
 
+
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private String supplierName;
         /**
          * 名称
          */
