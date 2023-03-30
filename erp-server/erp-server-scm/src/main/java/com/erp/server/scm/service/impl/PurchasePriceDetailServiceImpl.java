@@ -20,6 +20,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
  * @author admin
  * @since 2023-03-15
  */
+@Slf4j
 @Service
 public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePriceDetailMapper, PurchasePriceDetailEntity> implements PurchasePriceDetailService {
 
@@ -326,8 +328,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return list;
+        //未找到报价信息
+        if (StringUtils.isNotBlank(dto.getSupplierId()) && CollectionUtils.isEmpty(list)) {
+            log.error("SKU【{}】未找到数量【{}】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty());
+            throw new ServiceException(1,String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty()));
         }
         List<String> currencyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
@@ -337,10 +341,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : list) {
             CurrencyDTO.ViewDTO currencyDTO = viewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(null);
             viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
-        }
-        //存在供应商参数时，无返回数据则报错提示
-        if (StringUtils.isNotBlank(dto.getSupplierId()) && CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(1,String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty()));
         }
         return list;
     }

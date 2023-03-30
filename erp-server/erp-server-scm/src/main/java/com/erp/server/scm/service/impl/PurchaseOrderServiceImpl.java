@@ -488,8 +488,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public Boolean submit(List<String> ids) {
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
-        //待提交并且未作废允许提交
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) ).count();
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
@@ -518,6 +518,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(PurchaseOrderDTO.UpdateDTO dto) {
         //修改
         this.update(dto);
@@ -632,7 +633,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
-        //生成下推签收单 TODO
+        //生成下推签收单  TODO
+
+
 
         return Boolean.TRUE;
     }
