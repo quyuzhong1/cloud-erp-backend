@@ -9,22 +9,11 @@ spring:
         namespace: prod
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml
-#  mail:
-#    host: smtp.feishu.cn
-#    nickname: erp
-#    username: pm@ulanzi.cn
-#    password: 74F9yA8jWHZr3f4r
-#    default-encoding: utf-8
-#    properties:
-#      mail:
-#        smtp:
-#          socketFactory:
-#            class: javax.net.ssl.SSLSocketFactory
-#            port: 465
-#          auth: true
-#          starttls:
-#            enable: true
-#            required: true
+sfs:
+  nacos:
+    server-addr: 172.16.100.12:8848
+    namespace: seata-server
+    group: SEATA_GROUP
 
 
 

@@ -9,7 +9,11 @@ spring:
         namespace: uat
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml,erp-third-party.yml
-
+sfs:
+  nacos:
+    server-addr: 172.16.100.12:8848
+    namespace: seata-server
+    group: SEATA_GROUP
 
 
 
