@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -34,5 +35,6 @@ public class BaseApproveParamDTO {
     /**
      * 意见
      */
+    @Size(max = 255, message = "审核意见最大255个字符")
     private String comment;
 }

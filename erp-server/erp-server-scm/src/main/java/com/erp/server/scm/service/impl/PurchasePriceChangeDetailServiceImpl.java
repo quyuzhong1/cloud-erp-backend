@@ -10,7 +10,9 @@ import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
@@ -23,10 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +48,10 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
 
     /**
@@ -122,6 +125,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         //获取到对应的价目明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
         BigDecimal hundred = new BigDecimal("100");
+        List<String> currencyIdList = resultList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         for (PurchasePriceChangeDetailDTO.ViewDTO item : resultList) {
             String priceDetailId = item.getPurchasePriceDetailId();
             PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
@@ -130,6 +136,10 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 item.setOldTaxPrice(priceDetailEntity.getTaxPrice());
                 item.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(hundred));
                 item.setTaxRate(item.getTaxRate().multiply(hundred));
+                String currency = item.getCurrency();
+                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+                item.setCurrencySymbol(currencySymbol);
             }
         }
 
