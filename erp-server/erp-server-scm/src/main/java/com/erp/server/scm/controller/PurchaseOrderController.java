@@ -207,7 +207,7 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * @description: 采购变更数据显示
+     * 采购变更数据显示
      * @author Will
      * @date: 2023/3/31 14:28
      * @param id

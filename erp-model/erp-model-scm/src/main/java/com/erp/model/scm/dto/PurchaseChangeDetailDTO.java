@@ -82,6 +82,16 @@ public class PurchaseChangeDetailDTO implements Serializable {
         private BigDecimal amount;
 
         /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 变更备注
          */
         @Size(max = 255,message = "变更备注不能大于255字符")

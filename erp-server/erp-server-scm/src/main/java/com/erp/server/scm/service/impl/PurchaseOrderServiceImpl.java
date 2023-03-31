@@ -365,7 +365,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //ids为采购订单明细id集合
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98017);
+            throw new ServiceException(ApiError.ERROR_98026);
         }
         long count = purchaseOrderDetailList.stream().filter(obj -> !ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
         if (count > 0) {
@@ -729,6 +729,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setSkuId(detailEntity.getSkuId());
             detailDTO.setSkuNo(detailEntity.getSkuNo());
             detailDTO.setProductName(detailEntity.getProductName());
+            detailDTO.setCurrency(detailEntity.getCurrency());
+            detailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
             detailDTO.setOldQty(detailEntity.getPurchaseQty());
             detailDTO.setOldPrice(detailEntity.getTaxPrice());
             detailDTO.setOldAmount(detailEntity.getPurchaseAmount());

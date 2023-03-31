@@ -31,6 +31,7 @@
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
         select
             po.id,
+            pod.id as purchaseDetailId,
             po.code,
             pos.supplier_name as supplierName,
             po.approve_status as approveStatus,
@@ -39,6 +40,7 @@
             pod.sku_no as skuNo,
             pod.product_name as productName,
             pod.plan_delivery_date as planDeliveryDate,
+            pod.is_urgent as isUrgent,
             po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
             pod.purchase_qty as purchaseQty,

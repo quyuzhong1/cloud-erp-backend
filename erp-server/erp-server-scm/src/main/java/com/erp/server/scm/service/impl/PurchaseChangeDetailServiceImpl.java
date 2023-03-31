@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -12,6 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -39,10 +41,13 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             return;
         }
         List<PurchaseChangeDetailEntity> list = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
+        //计算金额
+        doOpCalculateAmount(list);
         this.saveBatch(list);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<PurchaseChangeDetailDTO.UpdateDTO> details, String purchaseChangeId) {
         if (details == null) {
             details = new ArrayList<>();
@@ -59,8 +64,11 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             this.removeByIds(deleteIds);
         }
         List<PurchaseChangeDetailEntity> newList = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
+        //计算金额
+        doOpCalculateAmount(newList);
         this.saveOrUpdateBatch(newList);
     }
+
 
     @Override
     public List<PurchaseChangeDetailEntity> listByPurchaseChangeIds(List<String> purchaseChangeIds) {
@@ -76,5 +84,17 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 map(PurchaseChangeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(PurchaseChangeDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * 更新金额
+     */
+    private void doOpCalculateAmount(List<PurchaseChangeDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(obj->{
+            obj.setAmount(MathUtil.multiply(obj.getPrice(),obj.getQty()));
+        });
     }
 }

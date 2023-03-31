@@ -34,6 +34,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String id;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseDetailId;
+
+        /**
          * 采购单号
          */
         private String code;
@@ -47,6 +52,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+
         /**
          * 审核状态名称（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
@@ -86,6 +92,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
 
         /**
          * 计划交期
