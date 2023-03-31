@@ -5,6 +5,7 @@ import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -33,7 +34,7 @@ public class ProductCertificateEntity extends BaseEntity implements Serializable
      * 证书有效期
      */
     @TableField(value = "certificate_valid_time")
-    private LocalDateTime certificateValidTime;
+    private LocalDate certificateValidTime;
 
     /**
      * 产品表id
