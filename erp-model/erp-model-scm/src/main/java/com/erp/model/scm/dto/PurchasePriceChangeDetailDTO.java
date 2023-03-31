@@ -166,6 +166,18 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * sku_no
+         */
+        private String skuNo;
+
+
         private String purchasePriceDetailId;
 
         /**
@@ -188,6 +200,12 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * 币种
          */
         private String currency;
+
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
 
         /**

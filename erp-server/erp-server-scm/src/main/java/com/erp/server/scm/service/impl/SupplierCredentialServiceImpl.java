@@ -15,6 +15,7 @@ import com.erp.server.scm.mapper.SupplierCredentialMapper;
 import com.erp.server.scm.service.AttachmentService;
 import com.erp.server.scm.service.SupplierCredentialService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -133,6 +134,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
         }
+        //这是修改的
+        List<SupplierCredentialDTO.UpdateDTO> updateList = credentialList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         List<SupplierCredentialEntity> saveOrUpdateList = new ArrayList<>(credentialList.size());
         Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -143,6 +146,11 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         //获取到业务表id 集合
         List<String> businessIdList = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
         attachmentService.deleteByBusinessIds(businessIdList);
+
+        List<String> deleteIdList = getDeleteIds(updateList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
 
         for (SupplierCredentialDTO.UpdateDTO item : credentialList) {
             SupplierCredentialEntity entity = new SupplierCredentialEntity();
@@ -169,6 +177,22 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         this.saveOrUpdateBatch(saveOrUpdateList);
         attachmentService.saveBatch(batchAttachmentList);
 
+    }
+
+    
+    /**
+     * 获取要删除的
+     * @author yl
+     * @date 2023-03-31 15:54
+     * @param updateList
+     * @param dbList
+     * @return java.util.List<java.lang.String>
+     */
+    private List<String> getDeleteIds(List<SupplierCredentialDTO.UpdateDTO> updateList, List<SupplierCredentialEntity> dbList) {
+        List<String> ids = updateList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
 
 

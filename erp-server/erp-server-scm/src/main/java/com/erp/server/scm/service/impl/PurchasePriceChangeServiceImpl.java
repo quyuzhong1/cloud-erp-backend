@@ -19,6 +19,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -52,6 +53,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private PurchasePriceService purchasePriceService;
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
 
     @Resource
@@ -144,7 +147,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public Boolean addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
         String id = this.add(dto);
-        if(StringUtils.isBlank(id)){
+        if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submitApprove(Arrays.asList(id));
@@ -456,6 +459,20 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
 
     /**
+     * 根据采购价目表id  获取对应产品信息
+     *
+     * @param purchasePriceId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO>
+     * @author yl
+     * @date 2023-03-31 16:07
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId) {
+        return purchasePriceDetailService.getByPurchasePriceId(purchasePriceId);
+    }
+
+
+    /**
      * 修改状态
      *
      * @param list
@@ -488,7 +505,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
 
     }
-
 
 
     /**

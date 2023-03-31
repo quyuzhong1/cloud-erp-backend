@@ -9,15 +9,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 采购价目变更管理
@@ -57,6 +56,18 @@ public class PurchasePriceChangeController extends BaseController {
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
+
+    /**
+     * 新增变更  获取对应变更sku列表
+     *
+     * @return
+     */
+    @GetMapping("/getSkuChangeList")
+    public ApiResult<List<PurchasePriceDetailDTO.ViewDTO>> getSkuChangeList(@RequestParam(value = "purchasePriceId") String purchasePriceId) {
+        List<PurchasePriceDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(purchasePriceId);
+        return success(list);
+    }
+
     /**
      * 提交并审核
      *
@@ -81,6 +92,7 @@ public class PurchasePriceChangeController extends BaseController {
         PurchasePriceChangeDTO.ViewDTO view = purchasePriceChangeService.view(dto.getId());
         return success(view);
     }
+
 
     /**
      * 修改采购价目变更
