@@ -380,6 +380,16 @@ public class PurchaseApplicationDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 采购数量
          */
         @NotNull(message = "采购数量不能为空")

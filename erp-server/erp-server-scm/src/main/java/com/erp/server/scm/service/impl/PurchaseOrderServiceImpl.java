@@ -55,6 +55,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -450,6 +451,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(),MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
+        BigDecimal totalAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        exportPdfDTO.setTotalAmount(totalAmount);
+        exportPdfDTO.setCurrency(list.get(0).getCurrency());
         exportPdfDTO.setDetails(details);
         return exportPdfDTO;
     }

@@ -408,6 +408,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 if (ObjectUtils.isEmpty(skuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
+                addDetailDTO.setCurrency(detailValue.get(0).getCurrency());
+                addDetailDTO.setCurrencySymbol(detailValue.get(0).getCurrencySymbol());
                 addDetailDTO.setSkuId(skuVO.getSkuId());
                 addDetailDTO.setSkuNo(skuVO.getSkuNo());
                 addDetailDTO.setProductName(skuVO.getSkuName());

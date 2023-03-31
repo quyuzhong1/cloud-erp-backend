@@ -356,6 +356,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String payMethodName;
 
         /**
+         * 合计
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
          * 甲方
          */
         private String purchaseOrgName;
