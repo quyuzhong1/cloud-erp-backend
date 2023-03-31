@@ -981,7 +981,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);*/
 //        if (node != null) {
             if (result && isFirstAudit) {
-                String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName());
+                String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName() + "  审核意见：" + comment);
                 //操作记录
                 bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             }
@@ -1122,7 +1122,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (isFirstAudit) {
                 statusName = BomStateEnum.WAIT_AUDIT.getName();
             }
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, statusName, BomStateEnum.AUDIT_NO_PASS.getName());
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, statusName, BomStateEnum.AUDIT_NO_PASS.getName() + "  审核意见：" + dto.getComment());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
         }

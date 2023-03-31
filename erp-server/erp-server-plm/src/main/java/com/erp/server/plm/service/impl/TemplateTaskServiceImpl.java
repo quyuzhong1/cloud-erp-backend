@@ -477,14 +477,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         Integer type = dto.getType();
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
+        //TODO 2023-03-30 暂时取消审核流程
         //如果配置表单 一般任务 一定要走流程,自定义审核人，存在多级审核及会签，暂时用两层list接收，之后公共审核模块可添加审核人表储存
-        if (needCheckFirst || needCheckSecond) {
+/*        if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
-        }
+        }*/
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
         if (StringUtils.isBlank(dto.getId())) {

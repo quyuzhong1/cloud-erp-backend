@@ -24,9 +24,11 @@
             pt.role_name as roleName,
             pt.distribution_type as distributionType,
             pt.related_sku_type as relatedSkuType,
-            pp.seq
+            pp.seq,
+            pi.spu_no
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
         WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
             AND pt.phase_id = #{params.phaseId}
@@ -126,9 +128,11 @@
             pt.role_name as roleName,
             pt.distribution_type as distributionType,
             pt.related_sku_type as relatedSkuType,
-            pp.seq
+            pp.seq,
+            pi.spu_no
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
         WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
             AND pt.phase_id = #{params.phaseId}
@@ -225,7 +229,8 @@
         t.product_id,t.business_process_id,t.related_sku_type,
         pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,
         pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName,
-        (CASE WHEN pttr.task_time is null THEN 0 else pttr.task_time end)/8 as realTaskTime
+        (CASE WHEN pttr.task_time is null THEN 0 else pttr.task_time end)/8 as realTaskTime,
+        pi.spu_no
         FROM   project_task t
         LEFT JOIN product_info pi ON pi.id=t.product_id AND pi.is_deleted = FALSE
         LEFT JOIN project_info pj ON pj.product_id=pi.id AND pj.is_deleted = FALSE
@@ -254,9 +259,24 @@
     </select>
 
     <select id="allChildrenList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-          SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
-            charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
-            WHERE product_id=#{productId} AND pid !='0' AND is_deleted = FALSE
+        SELECT
+            pt.id,
+            pt.pid,
+            pt.phase_id,
+            pt.name,
+            pt.type,
+            pt.plan_start_time,
+            pt.plan_end_time,
+            pt.priority,
+            pt.status,
+            pt.charge_name,
+            pt.quote_sys_task_id,
+            pt.product_id,
+            pt.charge_id,
+            pi.spu_no
+        FROM project_task pt
+        LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
+        WHERE product_id=#{productId} AND pid !='0' AND is_deleted = FALSE
     </select>
 
 
@@ -282,9 +302,11 @@
             pt.distribution_type as distributionType,
             pt.related_sku_type as relatedSkuType,
             pt.work_period as workPeriod,
-            pp.seq
+            pp.seq,
+            pi.spu_no
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
         WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE <!--AND pid='0'--> AND pt.process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
             #{processId}
@@ -570,7 +592,8 @@
                pt.role_name as roleName,
                pt.distribution_type as distributionType,
                pt.related_sku_type as relatedSkuType,
-               pt.work_period AS workPeriod
+               pt.work_period AS workPeriod,
+               pdi.spu_no AS spu_no
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id AND pdi.is_deleted = FALSE
         left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE

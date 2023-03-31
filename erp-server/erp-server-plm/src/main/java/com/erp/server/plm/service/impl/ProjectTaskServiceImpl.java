@@ -3218,7 +3218,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             taskIdList.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.NOT_START.getName(), TaskStateEnum.ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
+                sysLogEntityList.add(
+                        new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.NOT_START.getName(), TaskStateEnum.ING.getName()))
+                                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc())
+                                .setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送开始任务通知
@@ -3792,6 +3795,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.WAIT_CONFIRM.getName(), TaskStateEnum.APPROVAL_ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
+
+        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+        for (String taskId : taskIds) {
+            //添加评论
+            TaskCommentEntity comment = new TaskCommentEntity();
+            comment.setComment("[审核结果-审核通过]" + dto.getComment());
+            comment.setTaskId(taskId);
+            comment.setCreateUserName(loginUser.getUserName());
+            comment.setCreateUserId(loginUser.getUid());
+            taskCommentList.add(comment);
+        }
+        taskCommentService.batchSaveTaskComment(taskCommentList);
 
         String comment = dto.getComment();
         if (StringUtils.isBlank(comment)) {
@@ -4472,14 +4487,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //一般任务
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
+        //TODO 2023-03-30 暂时取消审核流程
         //如果是一般任务 必须要有审核流程
-        if (needCheckFirst || needCheckSecond) {
+     /*   if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
-        }
+        }*/
     }
 
     //获取预警信息
