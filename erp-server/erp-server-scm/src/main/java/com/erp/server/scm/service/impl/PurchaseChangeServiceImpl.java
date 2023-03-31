@@ -19,13 +19,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
-import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
-import com.erp.model.scm.entity.PurchaseChangeEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -78,6 +77,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
+    @Resource
+    private PurchaseOrderService purchaseOrderService;
+
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -117,6 +122,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
         log.info("采购变更单新增");
+        //数据验证
+        checkPurchaseChange(dto.getPurchaseOrderId());
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.POC, BusinessNoTypeEnum.CODE_POC.getCode()));
         entity.setCode(code);
@@ -227,6 +234,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
             //更新单据状态(后面有流程了可删)
             updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
+
+            //更新采购订单原有数据
+            updatePurchaseOrderData(ids);
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -242,7 +252,14 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public Boolean exportExcel(PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
-        return null;
+        List<PurchaseChangeExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        String fileName = "采购变更数据";
+        try {
+            ExcelUtil.export(fileName, "采购变更数据", resultList, PurchaseChangeExportExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -379,5 +396,42 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 .set(PurchaseChangeEntity::getInvalidTime, LocalDateTime.now())
                 .set(PurchaseChangeEntity::getInvalidRemark,reason)
                 .update();
+    }
+
+    /**
+     * @description: 审核通过更新采购订单数据
+     * @author Will
+     * @date: 2023/3/31 16:33
+     * @param ids
+     */
+    private void updatePurchaseOrderData (List<String> ids) {
+
+        List<PurchaseChangeDetailEntity> purchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
+        if (CollectionUtils.isEmpty(purchaseChangeDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98043);
+        }
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = new ArrayList<>();
+        for (PurchaseChangeDetailEntity detailEntity : purchaseChangeDetailList) {
+            PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity();
+            entity.setId(detailEntity.getPurchaseOrderDetailId());
+            entity.setPurchaseQty(detailEntity.getQty());
+            entity.setTaxPrice(detailEntity.getPrice());
+            entity.setPurchaseAmount(detailEntity.getAmount());
+            purchaseOrderDetailList.add(entity);
+        }
+        purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
+    }
+
+    /**
+     * 数据验证
+     */
+    private void checkPurchaseChange (String purchaseOrderId) {
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderId);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98045);
+        }
     }
 }
