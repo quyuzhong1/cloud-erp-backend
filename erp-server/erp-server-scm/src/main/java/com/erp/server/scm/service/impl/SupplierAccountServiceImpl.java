@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -121,6 +123,31 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         queryWrapper.in(SupplierAccountEntity::getSupplierId, ids);
         this.remove(queryWrapper);
 
+    }
+
+
+    /**
+     * 转化 导入的数据
+     *
+     * @param supplierId
+     * @param accountList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     * @author yl
+     * @date 2023-03-31 9:11
+     */
+    @Override
+    public List<SupplierAccountEntity> transform(String supplierId, List<SupplierAccountDTO.ImportAddDTO> accountList) {
+        if (CollectionUtils.isEmpty(accountList)) {
+            return Collections.emptyList();
+        }
+        List<SupplierAccountEntity> addList = new ArrayList<>(accountList.size());
+        for (SupplierAccountDTO.ImportAddDTO item : accountList) {
+            SupplierAccountEntity account = new SupplierAccountEntity();
+            BeanMapper.copy(item, account);
+            account.setSupplierId(supplierId);
+            addList.add(account);
+        }
+        return addList;
     }
 
 

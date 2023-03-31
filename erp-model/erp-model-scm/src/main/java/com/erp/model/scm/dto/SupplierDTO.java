@@ -96,6 +96,12 @@ public class SupplierDTO implements Serializable {
 
 
         /**
+         * 采购员
+         */
+        private String purchaseUserName;
+
+
+        /**
          * 公司地址
          */
         @Size(max = 100, message = "公司地址最大100字符")

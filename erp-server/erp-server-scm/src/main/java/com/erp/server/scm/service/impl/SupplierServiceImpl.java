@@ -25,10 +25,7 @@ import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.entity.SupplierGradeEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
@@ -711,7 +708,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             ExcelUtil.export(fileName, "supplierError", errorList, SupplierImportExcelDTO.class, response);
             return Boolean.FALSE;
         }
-          return Boolean.TRUE;
+        return Boolean.TRUE;
     }
 
 
@@ -739,6 +736,55 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         view.setPayMethodId(entity.getPayMethodId());
         view.setPayCurrency(entity.getPayCurrency());
         return view;
+    }
+
+
+    /**
+     * 批量保存 导入的供应商
+     *
+     * @param addList
+     * @return void
+     * @author yl
+     * @date 2023-03-30 20:01
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList) {
+        if (CollectionUtils.isNotEmpty(addList)) {
+            int initSize = addList.size();
+            //供应商添加信息
+            List<SupplierEntity> addSupplierList = new ArrayList<>(initSize);
+            //供应商联系信息
+            List<SupplierContactEntity> addContactList = new ArrayList<>(initSize);
+            //账户信息
+            List<SupplierAccountEntity> addAccountList = new ArrayList<>(initSize);
+            //资质信息
+            List<SupplierCredentialEntity> addCredentialList = new ArrayList<>(initSize);
+            for (SupplierDTO.ImportAddDTO item : addList) {
+                SupplierEntity supplier = new SupplierEntity();
+                BeanMapper.copy(item, supplier);
+                String supplierId = IdWorker.getIdStr();
+                supplier.setId(supplierId);
+                addSupplierList.add(supplier);
+                //账户
+                List<SupplierAccountDTO.ImportAddDTO> accountList = item.getBankAccountList();
+                addAccountList.addAll(supplierAccountService.transform(supplierId, accountList));
+                //联系人信息
+                List<SupplierContactDTO.ImportAddDTO> contactList = item.getContactList();
+                addContactList.addAll(supplierContactService.transform(supplierId, contactList));
+                //资质信息
+                List<SupplierCredentialDTO.ImportAddDTO> credentialList = item.getCredentialList();
+                addCredentialList.addAll(supplierCredentialService.transform(supplierId, credentialList));
+            }
+
+            this.saveBatch(addSupplierList);
+            supplierAccountService.saveBatch(addAccountList);
+            supplierContactService.saveBatch(addContactList);
+            supplierCredentialService.saveBatch(addCredentialList);
+
+        }
+
+
     }
 
     /**

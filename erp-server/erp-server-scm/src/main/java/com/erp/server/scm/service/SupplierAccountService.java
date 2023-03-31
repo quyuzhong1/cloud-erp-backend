@@ -54,4 +54,14 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @return void
      */
     void removeBySupplierIds(List<String> ids);
+
+    /**
+     * 转化 导入的数据
+     * @author yl
+     * @date 2023-03-31 9:11
+     * @param supplierId
+     * @param accountList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     */
+    List<SupplierAccountEntity> transform(String supplierId, List<SupplierAccountDTO.ImportAddDTO> accountList);
 }

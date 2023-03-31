@@ -74,5 +74,14 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      */
     List<SupplierContactEntity> getDefaultBySupplierIdList(List<String> supplierIdList);
 
-
+    /**
+     * 转化 导入的数据
+     *
+     * @param supplierId
+     * @param accountList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     * @author yl
+     * @date 2023-03-31 9:11
+     */
+    List<SupplierContactEntity> transform(String supplierId, List<SupplierContactDTO.ImportAddDTO> accountList);
 }

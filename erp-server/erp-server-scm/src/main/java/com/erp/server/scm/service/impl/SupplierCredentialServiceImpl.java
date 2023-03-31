@@ -216,6 +216,31 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     }
 
 
+    /**
+     * 转化 导入的数据
+     *
+     * @param supplierId
+     * @param credentialList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     * @author yl
+     * @date 2023-03-31 9:11
+     */
+    @Override
+    public List<SupplierCredentialEntity> transform(String supplierId, List<SupplierCredentialDTO.ImportAddDTO> credentialList) {
+        if (CollectionUtils.isEmpty(credentialList)) {
+            return Collections.emptyList();
+        }
+        List<SupplierCredentialEntity> addList = new ArrayList<>(credentialList.size());
+        for (SupplierCredentialDTO.ImportAddDTO item : credentialList) {
+            SupplierCredentialEntity credential = new SupplierCredentialEntity();
+            BeanMapper.copy(item, credential);
+            credential.setSupplierId(supplierId);
+            addList.add(credential);
+        }
+        return addList;
+    }
+
+
     private List<SupplierCredentialEntity> getList(String supplierId) {
         LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SupplierCredentialEntity::getSupplierId, supplierId);

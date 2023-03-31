@@ -159,6 +159,29 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
     }
 
 
+    /**
+     * 转化 导入的数据
+     *
+     * @param supplierId
+     * @param contactList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     * @author yl
+     * @date 2023-03-31 9:11
+     */
+    @Override
+    public List<SupplierContactEntity> transform(String supplierId, List<SupplierContactDTO.ImportAddDTO> contactList) {
+        if (CollectionUtils.isEmpty(contactList)) {
+            return Collections.emptyList();
+        }
+        List<SupplierContactEntity> addList = new ArrayList<>(contactList.size());
+        for (SupplierContactDTO.ImportAddDTO item : contactList) {
+            SupplierContactEntity contact = new SupplierContactEntity();
+            BeanMapper.copy(item, contact);
+            contact.setSupplierId(supplierId);
+            addList.add(contact);
+        }
+        return addList;
+    }
 
 
     /**

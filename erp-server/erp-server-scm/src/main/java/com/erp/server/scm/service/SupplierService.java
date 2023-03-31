@@ -179,4 +179,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return com.erp.model.scm.dto.SupplierDTO.ViewDTO
      */
     SupplierDTO.ViewDTO getBySupplierId(String supplierId);
+
+    
+    /**
+     * 批量保存 导入的供应商
+     * @author yl
+     * @date 2023-03-30 20:01
+     * @param addList
+     * @return void
+     */
+    void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList);
 }

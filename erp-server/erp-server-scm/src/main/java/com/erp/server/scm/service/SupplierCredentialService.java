@@ -62,4 +62,14 @@ public interface SupplierCredentialService extends SuperService<SupplierCredenti
      * @return void
      */
     void checkDate(List<SupplierCredentialDTO.AddDTO> credentialList);
+
+    /**
+     * 转化 导入的数据
+     * @author yl
+     * @date 2023-03-31 9:11
+     * @param supplierId
+     * @param credentialList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     */
+    List<SupplierCredentialEntity> transform(String supplierId, List<SupplierCredentialDTO.ImportAddDTO> credentialList);
 }

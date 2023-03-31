@@ -149,6 +149,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 表id
          */
+        @NotBlank(message = "采购价目表id不能为空")
         private String id;
 
         /**
