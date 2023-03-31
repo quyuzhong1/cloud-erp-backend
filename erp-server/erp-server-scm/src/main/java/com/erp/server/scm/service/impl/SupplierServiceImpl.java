@@ -124,7 +124,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
         addEntity.setCode(code);
         String purchaseUserId = dto.getPurchaseUserId();
-        if(StringUtils.isNotBlank(purchaseUserId)){
+        if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
             addEntity.setPurchaseUserName(user != null ? user.getUserName() : "");
         }
@@ -450,7 +450,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
-            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(),comment);
+            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -808,6 +808,41 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return 0;
         }
         return lambdaQuery().in(SupplierEntity::getGradeId, gradeIdList).count();
+    }
+
+
+    /**
+     * 阶段审核通过后 更改供应商的阶段
+     *
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-03-31 16:45
+     */
+    @Override
+    public void updatePhase(List<SupplierPhaseEntity> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> supplierIds = list.stream().map(SupplierPhaseEntity::getSupplierId).distinct().collect(Collectors.toList());
+            List<SupplierEntity> supplierList = this.listByIds(supplierIds);
+            List<SupplierEntity> updateList = new ArrayList<>(list.size());
+            for (SupplierPhaseEntity item : list) {
+                String supplierId = item.getSupplierId();
+                SupplierEntity supplier = supplierList.stream().filter(s -> s.getId().equals(supplierId)).findFirst().orElse(null);
+                if (supplier != null) {
+                    String targetPhase = item.getTargetPhase();
+                    SupplierPhaseEnum target = SupplierPhaseEnum.getPhase(targetPhase);
+                    if (target != null) {
+                        supplier.setPhase(target);
+                        updateList.add(supplier);
+                    }
+                }
+            }
+            if (CollectionUtils.isNotEmpty(updateList)) {
+                this.updateBatchById(updateList);
+            }
+        }
+
+
     }
 
     /**

@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -198,4 +199,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return int
      */
     int occupiedGrade(List<String> deleteIdList);
+
+    
+    /**
+     * 阶段审核通过后 更改供应商的阶段
+     * @author yl
+     * @date 2023-03-31 16:45
+     * @param list
+     * @return void
+     */
+    void updatePhase(List<SupplierPhaseEntity> list);
 }

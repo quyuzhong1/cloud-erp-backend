@@ -247,6 +247,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             Boolean result = this.updateApproveStatus(list, approveStatus);
+            //通过后更改供应商的阶段
+            supplierService.updatePhase(list);
+
             return result;
         } else {
             //审核不通过
@@ -322,7 +325,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         if (searchType.equals(SearchType.WAIT_APPROVE)) {
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
-        IPage pageData = baseMapper.paging(query, params,statusList);
+        IPage pageData = baseMapper.paging(query, params, statusList);
         List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
