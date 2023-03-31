@@ -401,7 +401,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setSecondSignDate(purchaseOrderEntity.getCreateTime().toLocalDate());
 
         //查询订单供应商信息
-        PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.getById(id);
+        PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.listByPurchaseOrderId(id);
         if (ObjectUtils.isEmpty(purchaseOrderSupplier)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }

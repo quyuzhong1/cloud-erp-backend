@@ -14,7 +14,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.scm.mapper.PurchaseOrderSupplierMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,9 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
 
     @Resource
     private SupplierService supplierService;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     @Override
     public void deleteByPurchaseOrderIds(List<String> purchaseOrderIds) {
@@ -72,6 +77,13 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         BeanMapperUtils.copy(dto, entity);
         entity.setPurchaseOrderId(purchaseOrderId);
         doOpHandleDataId(dto.getSupplierId(),entity);
+
+        PurchaseOrderSupplierEntity old = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        //操作日志
+        moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"","");
         this.saveOrUpdate(entity);
     }
 
