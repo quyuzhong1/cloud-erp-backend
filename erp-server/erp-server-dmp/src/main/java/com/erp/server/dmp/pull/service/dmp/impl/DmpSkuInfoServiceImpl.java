@@ -70,8 +70,9 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
         DmpSkuInfoEntity dmpOrderInfoEntity = this.getSkuBySkuNo(dmpSkuInfoEntity.getSkuNo(), dmpSkuInfoEntity.getCompanyId());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
+            dmpSkuInfoEntity.setId(dmpOrderInfoEntity.getId());
             if (!dmpOrderInfoEntity.toString().equals(dmpSkuInfoEntity.toString())) {
-                this.updateSkuBySkuNo(dmpOrderInfoEntity);
+                this.updateById(dmpSkuInfoEntity);
             }
         } else {
             this.add(dmpSkuInfoEntity);
