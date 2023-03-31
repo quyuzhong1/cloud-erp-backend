@@ -76,7 +76,7 @@ public class PurchasePriceDetailExcelListener extends AnalysisEventListener<Purc
             }
 
             addDTO.setCurrency(purchasePriceDetailImportExcelDTO.getCurrency());
-            addDTO.setDeliveryDate(purchasePriceDetailImportExcelDTO.getDeliveryDate());
+            addDTO.setDeliveryDay(purchasePriceDetailImportExcelDTO.getDeliveryDay());
             String effectiveDateStr = purchasePriceDetailImportExcelDTO.getEffectiveDateStr();
             addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : LocalDate.parse(effectiveDateStr, dateTimeFormatter));
             addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMinQty());

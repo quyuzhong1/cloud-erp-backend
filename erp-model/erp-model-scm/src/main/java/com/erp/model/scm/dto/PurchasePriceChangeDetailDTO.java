@@ -39,7 +39,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
         /**
          * 最小数量
          */
@@ -105,7 +105,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
         /**
          * 最小数量
          */
@@ -171,7 +171,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
         /**
          * 最小数量
          */

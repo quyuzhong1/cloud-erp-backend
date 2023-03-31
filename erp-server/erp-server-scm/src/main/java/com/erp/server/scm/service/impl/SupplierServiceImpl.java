@@ -234,7 +234,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         checkName(supplierId, dto.getName());
         //联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = dto.getContactList();
-        long count = contactList.stream().filter(c -> c.getIsDefault()).count();
+        long count = contactList.stream().filter(c -> c.getIsDefault()!=null&&c.getIsDefault()).count();
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }

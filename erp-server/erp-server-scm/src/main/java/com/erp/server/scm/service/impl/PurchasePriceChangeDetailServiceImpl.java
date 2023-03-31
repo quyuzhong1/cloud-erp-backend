@@ -209,7 +209,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 item.setSkuNo(changeDetail.getSkuNo());
                 item.setSkuId(changeDetail.getSkuId());
                 item.setTaxPrice(changeDetail.getTaxPrice());
-                item.setDeliveryDate(changeDetail.getDeliveryDate());
+                item.setDeliveryDay(changeDetail.getDeliveryDay());
                 item.setCurrency(changeDetail.getCurrency());
                 item.setEffectiveDate(changeDetail.getEffectiveDate());
                 item.setMinQty(changeDetail.getMinQty());

@@ -33,7 +33,7 @@ public class PurchasePriceDetailImportExcelDTO  {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*采购交期", index = 1)
-    private Integer  deliveryDate;
+    private Integer  deliveryDay;
 
 
     /**
