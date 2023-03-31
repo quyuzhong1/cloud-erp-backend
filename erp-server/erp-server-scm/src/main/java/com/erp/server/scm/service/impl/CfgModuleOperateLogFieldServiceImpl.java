@@ -34,20 +34,15 @@ public class CfgModuleOperateLogFieldServiceImpl extends SuperServiceImpl<CfgMod
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
         String  classPath = String.valueOf(PurchaseOrderDetailEntity.class);
         List<CfgModuleOperateLogFieldEntity> logFields =  Arrays.asList(
-                new CfgModuleOperateLogFieldEntity().setField("skuNo").setFieldName("sku编码").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("taxPrice").setFieldName("含税单价").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("supplierName").setFieldName("供应商名称").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("payMethodId").setFieldName("结算方式").setClassPath(classPath).setType(3) .setEnumClass(""),
 
-                new CfgModuleOperateLogFieldEntity().setField("currency").setFieldName("币别").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("payCurrency").setFieldName("结算币种").setClassPath(classPath).setType(0) .setEnumClass(""),
 
-                new CfgModuleOperateLogFieldEntity().setField("purchaseQty").setFieldName("采购数量").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("contactName").setFieldName("联系人名称").setClassPath(classPath).setType(0) .setEnumClass(""),
 
-                new CfgModuleOperateLogFieldEntity().setField("planDeliveryDate").setFieldName("计划交期").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgModuleOperateLogFieldEntity().setField("contactTelNumber").setFieldName("联系人电话").setClassPath(classPath).setType(0) .setEnumClass("")
 
-                new CfgModuleOperateLogFieldEntity().setField("receiveOrgName").setFieldName("收料组织名称").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("isGift").setFieldName("是否是赠品").setClassPath(classPath).setType(1) .setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("isUrgent").setFieldName("是否加急").setClassPath(classPath).setType(1) .setEnumClass(""),
-
-                new CfgModuleOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0) .setEnumClass("")
 
                 );
         return this.saveBatch(logFields);

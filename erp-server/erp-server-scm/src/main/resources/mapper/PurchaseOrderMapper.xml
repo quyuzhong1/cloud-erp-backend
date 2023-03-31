@@ -60,6 +60,9 @@
             <if test="params.productName != null and params.productName != ''">
                 and pod.product_name like concat('%',#{params.productName},'%')
             </if>
+            <if test="params.code != null and params.code != ''">
+                and po.code like concat('%',#{params.code},'%')
+            </if>
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
             </if>

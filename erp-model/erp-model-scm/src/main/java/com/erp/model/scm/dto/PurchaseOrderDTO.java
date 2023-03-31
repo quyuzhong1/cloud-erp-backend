@@ -166,6 +166,13 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private List<String> skuNoList;
 
+
+        /**
+         * 采购订单编号
+         */
+        private String code;
+
+
         /**
          * 产品名称
          */
