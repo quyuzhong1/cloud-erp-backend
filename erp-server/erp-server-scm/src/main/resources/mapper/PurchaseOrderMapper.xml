@@ -103,13 +103,13 @@
                 </foreach>
             </if>
             <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                and pod.purchase_user_id in
+                and po.purchase_user_id in
                 <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and pod.create_user_id in
+                and po.create_user_id in
                 <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -214,13 +214,13 @@
                 </foreach>
             </if>
             <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                and pod.purchase_user_id in
+                and po.purchase_user_id in
                 <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and pod.create_user_id in
+                and po.create_user_id in
                 <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>

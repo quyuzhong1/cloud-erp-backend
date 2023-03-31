@@ -127,9 +127,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
+                obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
+                    obj.setSupplierName(null);
+                    obj.setDeliveryWarehouseName(null);
                     obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setInvalidStatus(null);

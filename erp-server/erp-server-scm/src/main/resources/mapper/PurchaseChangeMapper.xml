@@ -40,35 +40,35 @@
         <where>
             pc.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
-                and pod.product_name like concat('%',#{params.productName},'%')
+                and pcd.product_name like concat('%',#{params.productName},'%')
             </if>
             <if test="params.code != null and params.code != ''">
-                and po.code like concat('%',#{params.code},'%')
+                and pc.code like concat('%',#{params.code},'%')
             </if>
             <if test="params.invalidStatus != null and params.invalidStatus != ''">
-                and po.invalid_status = #{params.invalidStatus}
+                and pc.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and pod.sku_no in
+                and pcd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-                and pos.supplier_id in
+                and pc.supplier_id in
                 <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and po.approve_status in
+                and pc.approve_status in
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
 
             <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                and po.delivery_warehouse_id in
+                and pc.delivery_warehouse_id in
                 <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
