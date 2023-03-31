@@ -120,6 +120,24 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     @TableField("invalid_time")
     private Date invalidTime;
 
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -152,6 +170,12 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     public static final String INVALID_STATUS = "invalid_status";
 
     public static final String INVALID_TIME = "invalid_time";
+
+    public static final String APPROVE_USER_ID = "approve_user_id";
+
+    public static final String APPROVE_USER_NAME = "approve_user_name";
+
+    public static final String INVALID_REMARK = "invalid_remark";
 
     @Override
     public Serializable pkVal() {

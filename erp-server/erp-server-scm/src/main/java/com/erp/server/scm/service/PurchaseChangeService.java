@@ -2,8 +2,8 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 
@@ -35,7 +35,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    Boolean add(PurchaseChangeDTO.AddDTO dto);
+    String add(PurchaseChangeDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -53,21 +53,13 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      */
     PurchaseChangeDTO.ViewDTO view(String id);
     /**
-     * @description: 删除
-     * @author Will
-     * @date: 2023/3/16 12:09
-     * @param ids
-     * @return Boolean
-     */
-    Boolean delete(List<String> ids);
-    /**
      * @description: 作废
      * @author Will
      * @date: 2023/3/16 12:09
      * @param ids
      * @return Boolean
      */
-    Boolean invalid(List<String> ids);
+    Boolean invalid(List<String> ids,String reason);
     /**
      * @description: 审核
      * @author Will
@@ -101,4 +93,12 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return Boolean
      */
     Boolean addAndSubmit(PurchaseChangeDTO.AddDTO dto);
+    /**
+     * @description: 修改并提交
+     * @author Will
+     * @date: 2023/3/31 10:36
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto);
 }

@@ -208,7 +208,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         BeanMapperUtils.copy(entity,dto);
 
         //供应商信息
-        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.listByPurchaseOrderId(id);
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
         if (ObjectUtils.isEmpty(supplierUpdateDTO)) {
             throw new ServiceException(ApiError.ERROR_98031);
@@ -291,7 +291,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         String type = baseApproveParamDTO.getType();
 
-        log.info("采购申请单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+        log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过 TODO
@@ -402,7 +402,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setSecondSignDate(purchaseOrderEntity.getCreateTime().toLocalDate());
 
         //查询订单供应商信息
-        PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.listByPurchaseOrderId(id);
+        PurchaseOrderSupplierEntity purchaseOrderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         if (ObjectUtils.isEmpty(purchaseOrderSupplier)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }

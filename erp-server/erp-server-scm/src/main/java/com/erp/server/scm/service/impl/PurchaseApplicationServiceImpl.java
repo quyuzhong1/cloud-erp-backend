@@ -396,8 +396,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             //采购订单明细信息
             List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
-            //明细数据按skuId、仓库、收料组织、交期分组
-            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId().concat("|").concat(obj.getReceiveOrgId()).concat("|").concat(String.valueOf(obj.getPlanDeliveryDate()))));
+            //明细数据按skuId、仓库、收料组织分组
+            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId().concat("|").concat(obj.getReceiveOrgId())));
             for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailEntry : detailMap.entrySet()) {
 
                 List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> detailValue = detailEntry.getValue();
@@ -416,7 +416,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setDeclareModel(skuVO.getDeclareModel());
                 addDetailDTO.setDeclareName(skuVO.getDeclareName());
                 addDetailDTO.setReceiveOrgId(detailValue.get(0).getReceiveOrgId());
-                addDetailDTO.setPlanDeliveryDate(detailValue.get(0).getPlanDeliveryDate());
                 addDetailDTO.setTaxPrice(detailValue.get(0).getTaxPrice());
                 //采购数量
                 Integer purchaseQty = detailValue.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(0, Integer::sum);

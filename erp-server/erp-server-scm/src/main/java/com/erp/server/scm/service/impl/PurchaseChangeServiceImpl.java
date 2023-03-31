@@ -1,38 +1,52 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
+import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchaseChangeDetailService;
-import com.erp.server.scm.service.PurchaseChangeService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -58,13 +72,46 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Resource
     private PurchaseChangeDetailService purchaseChangeDetailService;
 
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
+
     @Override
-    public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
-        return null;
+    public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        //清空明细数据
+        List<PurchaseChangeDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            List<String> ids = records.stream().map(PurchaseChangeDTO.ListDTO::getId).collect(Collectors.toList());
+            //查询流程id判断是否存在流程 TODO
+
+            List<String> list = new ArrayList<>();
+            records.forEach(obj -> {
+                boolean contains = list.contains(obj.getId());
+                if (contains) {
+                    obj.setCode(null);
+                    obj.setApproveStatus(null);
+                    obj.setApproveStatusName(null);
+                    obj.setInvalidStatus(null);
+                    obj.setInvalidStatusName(null);
+                    obj.setCreateUserName(null);
+                    return;
+                }
+                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+                obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+                list.add(obj.getId());
+            });
+        }
+        return new PagingVO(pageData);
     }
 
     @Override
-    public Boolean add(PurchaseChangeDTO.AddDTO dto) {
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public String add(PurchaseChangeDTO.AddDTO dto) {
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
         log.info("采购变更单新增");
@@ -82,11 +129,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             purchaseChangeDetailService.add(dto.getDetails(),entity.getId());
         }
 
-
-        return null;
+        return entity.getId();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseChangeDTO.UpdateDTO dto) {
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -94,37 +141,101 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         doOpHandleDataId(dto.getChangeUserId(),dto.getChangeDeptId(),dto.getPurchaseOrgId(),dto.getSupplierId(),entity);
         log.info("采购变更单修改，id=【{}】", dto.getId());
 
-
-
-
         //操作日志
         PurchaseChangeEntity old = this.getById(dto.getId());
         moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.PURCHASE_CHANGE.getCode(),entity.getId(),"","");
         //更新主表数据
         this.updateById(entity);
         //更新明细数据
-        //purchaseChangeDetailService.update(dto.getDetails(),entity.getId());
-        return null;
+        purchaseChangeDetailService.update(dto.getDetails(),entity.getId());
+        return Boolean.TRUE;
     }
 
     @Override
     public PurchaseChangeDTO.ViewDTO view(String id) {
-        return null;
+        PurchaseChangeDTO.ViewDTO dto = new PurchaseChangeDTO.ViewDTO();
+
+        //主表信息
+        PurchaseChangeEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98042);
+        }
+        BeanMapperUtils.copy(entity,dto);
+
+        //供应商信息
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        PurchaseOrderSupplierDTO.UpdateDTO supplierDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
+        BeanMapperUtils.copy(supplierEntity,supplierDTO);
+        dto.setSupplierDTO(supplierDTO);
+
+        //明细信息
+        List<PurchaseChangeDetailEntity> entityDetails = purchaseChangeDetailService.listByPurchaseChangeIds(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(entityDetails)) {
+            throw new ServiceException(ApiError.ERROR_98043);
+        }
+        List<PurchaseChangeDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseChangeDetailDTO.UpdateDTO.class, entityDetails);
+        dto.setDetails(details);
+        return dto;
     }
 
     @Override
-    public Boolean delete(List<String> ids) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean invalid(List<String> ids,String reason) {
+        //根据ids查询
+        List<PurchaseChangeEntity> list = getList(ids);
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("采购变更作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //更新作废状态
+        updateInvalidStatus(ids,reason);
+
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购变更【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"作废操作");
+        return Boolean.TRUE;
     }
 
     @Override
-    public Boolean invalid(List<String> ids) {
-        return null;
-    }
-
-    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        //根据ids查询
+        List<PurchaseChangeEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String type = baseApproveParamDTO.getType();
 
+        log.info("采购变更单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+        //审核通过
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+            //审核通过 TODO
+
+            //更新单据状态(后面有流程了可删)
+            updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
+        }
+        //审核不通过
+        if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
+            //中止当前审核流程
+
+            //更新单据状态
+            updateApproveStatusForApprove(ids,ApproveStatusEnum.REJECT.getStatus());
+        }
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购变更单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"审核操作");
     }
 
     @Override
@@ -133,13 +244,46 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<PurchaseChangeEntity> list = getList(ids);
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        log.info("采购变更单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //启动流程 TODO
+
+        //更新审核状态
+        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购变更单【%s】", ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"提交操作");
+        return Boolean.TRUE;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(PurchaseChangeDTO.AddDTO dto) {
-        return null;
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        return this.submit(Arrays.asList(id));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto) {
+        //修改
+        this.update(dto);
+        //提交
+        return this.submit(Arrays.asList(dto.getId()));
     }
 
     /**
@@ -178,7 +322,60 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             }
             entity.setSupplierName(supplierEntity.getName());
         }
-
     }
 
+    /**
+     * 根据ids查询数据
+     */
+    private List<PurchaseChangeEntity>  getList(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<PurchaseChangeEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98016);
+        }
+        return list;
+    }
+
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(List<String> ids,String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(PurchaseChangeEntity::getId,ids)
+                .set(PurchaseChangeEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    /**
+     * 审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+
+        this.lambdaUpdate().in(PurchaseChangeEntity::getId,ids)
+                .set(PurchaseChangeEntity::getApproveUserId,userInfo.getUid())
+                .set(PurchaseChangeEntity::getApproveUserName,userInfo.getUserName())
+                .set(PurchaseChangeEntity::getApproveStatus,approveStatus)
+                .set(PurchaseChangeEntity::getApproveTime, LocalDateTime.now())
+                .update();
+    }
+
+    /**
+     * @description: 更新作废状态
+     * @author Will
+     * @date: 2023/3/30 18:09
+     * @param ids
+     * @param reason
+     */
+    private void updateInvalidStatus(List<String> ids,String reason) {
+        //更新
+        lambdaUpdate().in(PurchaseChangeEntity::getId,ids)
+                .set(PurchaseChangeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(PurchaseChangeEntity::getInvalidTime, LocalDateTime.now())
+                .set(PurchaseChangeEntity::getInvalidRemark,reason)
+                .update();
+    }
 }

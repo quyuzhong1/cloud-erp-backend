@@ -165,6 +165,11 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+
+        /**
+         * 采购交期（天）
+         */
+        private Integer deliveryDay;
     }
 
 

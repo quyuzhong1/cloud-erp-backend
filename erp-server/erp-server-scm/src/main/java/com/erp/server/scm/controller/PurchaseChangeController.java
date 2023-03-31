@@ -2,16 +2,16 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.server.scm.service.PurchaseChangeService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -52,8 +52,8 @@ public class PurchaseChangeController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
-        Boolean flag = purchaseChangeService.add(dto);
-        return flag == true ? success() : failure();
+        purchaseChangeService.add(dto);
+        return success();
     }
 
     /**
@@ -83,6 +83,19 @@ public class PurchaseChangeController extends BaseController {
     }
 
     /**
+     * 修改并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
+        Boolean flag = purchaseChangeService.updateAndSubmit(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 查询详情
      * @author Will
      * @date: 2023/3/15 17:44
@@ -95,30 +108,17 @@ public class PurchaseChangeController extends BaseController {
         return success(dto);
     }
 
-    /**
-     * 批量删除
-     * @author Will
-     * @date: 2023/3/15 17:47
-     * @param ids
-     * @return ApiResult
-     */
-    @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.delete(ids);
-        return flag == true ? success() : failure();
-    }
-
 
     /**
      * 批量作废
      * @author Will
      * @date: 2023/3/15 17:50
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/invalid")
-    public ApiResult invalid(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.invalid(ids);
+    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = purchaseChangeService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
     }
 

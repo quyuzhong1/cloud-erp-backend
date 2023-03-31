@@ -342,9 +342,9 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer moq;
 
         /**
-         * 采购交期
+         * 采购交期（天）
          */
-        private LocalDate planDeliveryDate;
+        private Integer deliveryDay;
 
         /**
          * 申请数量
@@ -433,9 +433,9 @@ public class PurchaseApplicationDTO implements Serializable {
         private String destWarehouseId;
 
         /**
-         * 采购交期
+         * 采购交期（天）
          */
-        private LocalDate planDeliveryDate;
+        private Integer deliveryDay;
 
     }
 

@@ -47,7 +47,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     }
 
     @Override
-    public PurchaseOrderSupplierEntity listByPurchaseOrderId(String purchaseOrderId) {
+    public PurchaseOrderSupplierEntity getByPurchaseOrderId(String purchaseOrderId) {
         return lambdaQuery().eq(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderId).one();
     }
 

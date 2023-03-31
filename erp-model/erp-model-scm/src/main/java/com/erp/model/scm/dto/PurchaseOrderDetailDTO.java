@@ -97,9 +97,14 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 计划交期
+         * 预计交货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 采购交期（天）
+         */
+        private Integer deliveryDay;
 
         /**
          * 收料组织id

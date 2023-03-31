@@ -33,7 +33,7 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      * @param purchaseOrderId
      * @return PurchaseOrderSupplierEntity
      */
-    PurchaseOrderSupplierEntity listByPurchaseOrderId(String purchaseOrderId);
+    PurchaseOrderSupplierEntity getByPurchaseOrderId(String purchaseOrderId);
 
     /**
      * @description: 根据订单主表ids查询供应商

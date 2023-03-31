@@ -23,4 +23,21 @@ public interface PurchaseChangeDetailService extends SuperService<PurchaseChange
      * @param purchaseChangeId
      */
     void add(List<PurchaseChangeDetailDTO.AddDTO> details, String purchaseChangeId);
+    /**
+     * @description: 修改变更单
+     * @author Will
+     * @date: 2023/3/31 10:07
+     * @param details
+     * @param id
+
+     */
+    void update(List<PurchaseChangeDetailDTO.UpdateDTO> details, String id);
+    /**
+     * @description: 根据采购变更单明细ids查询
+     * @author Will
+     * @date: 2023/3/31 10:18
+     * @param asList
+     * @return List<PurchaseChangeDetailEntity>
+     */
+    List<PurchaseChangeDetailEntity> listByPurchaseChangeIds(List<String> asList);
 }

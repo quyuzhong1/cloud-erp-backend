@@ -74,18 +74,15 @@ public class PurchaseOrderSupplierDTO implements Serializable {
          */
         private String code;
 
-
         /**
          * 采购数量
          */
         private String purchaseQty;
 
-
         /**
          * 采购金额
          */
         private BigDecimal purchaseAmount;
-
 
         /**
          * 采购状态
@@ -96,7 +93,6 @@ public class PurchaseOrderSupplierDTO implements Serializable {
          * 采购状态名
          */
         private String approveStatusName;
-
 
         /**
          * 创建时间

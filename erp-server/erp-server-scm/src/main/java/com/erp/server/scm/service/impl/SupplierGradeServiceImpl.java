@@ -46,7 +46,7 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
         //查询是否 有供应商占用 要删除的id 如果有就不能删除
         int occupiedCount = supplierService.occupiedGrade(deleteIdList);
         if (occupiedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98042);
+            throw new ServiceException(ApiError.ERROR_98044);
         }
 
 

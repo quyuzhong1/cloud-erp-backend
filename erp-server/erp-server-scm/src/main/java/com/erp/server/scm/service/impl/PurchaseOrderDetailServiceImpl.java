@@ -173,15 +173,15 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
 
         for (PurchaseOrderDetailEntity entity : newList) {
-            entity.setPurchaseOrderId(purchaseOrderId);
-            entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
             //收料组织名称
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
                 throw new ServiceException(ApiError.ERROR_9040);
             }
             String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+            entity.setPurchaseOrderId(purchaseOrderId);
+            entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
             entity.setReceiveOrgName(receiveOrgName);
-
+            entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
             //操作日志
             if (StringUtils.isBlank(entity.getId())) {
                 moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"编辑操作");

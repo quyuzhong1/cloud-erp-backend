@@ -53,7 +53,17 @@ public class PurchaseChangeDTO implements Serializable {
         private String approveStatus;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态 （0未作废，1已作废）
+         */
+        private String invalidStatus;
+
+        /**
+         * 作废状态名称
          */
         private String invalidStatusName;
 
@@ -137,6 +147,11 @@ public class PurchaseChangeDTO implements Serializable {
         private List<String> skuNoList;
 
         /**
+         * 采购变更单号
+         */
+        private String code;
+
+        /**
          * 产品名称
          */
         private String productName;
@@ -165,7 +180,6 @@ public class PurchaseChangeDTO implements Serializable {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
-
 
         /**
          * 审核时间开始
@@ -260,6 +274,11 @@ public class PurchaseChangeDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 供应商信息
+         */
+        private PurchaseOrderSupplierDTO.UpdateDTO supplierDTO;
 
     }
 

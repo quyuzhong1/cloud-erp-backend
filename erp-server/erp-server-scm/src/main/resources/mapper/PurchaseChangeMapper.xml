@@ -31,4 +31,68 @@
         <result column="invalid_time" property="invalidTime" />
     </resultMap>
 
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseChangeDTO$ListDTO">
+        select
+               *
+        from
+        purchase_change pc
+        left join purchase_change_detail pcd on pc.id = pcd.purchase_change_id and pcd.is_deleted = false
+        <where>
+            pc.is_deleted = false
+            <if test="params.productName != null and params.productName != ''">
+                and pod.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.code != null and params.code != ''">
+                and po.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                and po.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pod.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pos.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and po.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                and po.delivery_warehouse_id in
+                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and pod.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and po.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
+            </if>
+            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        po.create_time desc
+    </select>
+
 </mapper>
