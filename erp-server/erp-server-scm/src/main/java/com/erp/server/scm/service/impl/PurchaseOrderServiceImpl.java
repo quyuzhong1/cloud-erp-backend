@@ -700,6 +700,44 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public PurchaseChangeDTO.AddDTO viewPurchaseChange(String id) {
+        PurchaseChangeDTO.AddDTO addDTO = new PurchaseChangeDTO.AddDTO();
+        //采购主表信息
+        PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
+        addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+        addDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
+        //采购供应商信息
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        addDTO.setSupplierId(supplierEntity.getSupplierId());
+        //采购订单明细
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(id);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        List<PurchaseChangeDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
+        for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailList) {
+            PurchaseChangeDetailDTO.AddDTO detailDTO = new PurchaseChangeDetailDTO.AddDTO();
+            detailDTO.setPurchaseOrderDetailId(detailEntity.getId());
+            detailDTO.setSkuId(detailEntity.getSkuId());
+            detailDTO.setSkuNo(detailEntity.getSkuNo());
+            detailDTO.setProductName(detailEntity.getProductName());
+            detailDTO.setOldQty(detailEntity.getPurchaseQty());
+            detailDTO.setOldPrice(detailEntity.getTaxPrice());
+            detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
+            detailDTOList.add(detailDTO);
+        }
+        addDTO.setDetails(detailDTOList);
+        return addDTO;
+    }
+
     /**
      * 处理数据id
      */

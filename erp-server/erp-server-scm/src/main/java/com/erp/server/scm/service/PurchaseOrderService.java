@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -176,4 +177,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
+    /**
+     * @description: 采购变更数据显示
+     * @author Will
+     * @date: 2023/3/31 14:29
+     * @param id
+     * @return AddDTO
+     */
+    PurchaseChangeDTO.AddDTO viewPurchaseChange(String id);
 }

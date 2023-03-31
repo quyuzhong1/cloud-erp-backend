@@ -94,6 +94,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
+                    obj.setSupplierName(null);
+                    obj.setDeliveryWarehouseName(null);
                     obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setInvalidStatus(null);

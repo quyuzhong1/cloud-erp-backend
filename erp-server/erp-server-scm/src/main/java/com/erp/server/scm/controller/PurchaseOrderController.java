@@ -9,10 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.ListStatusCountDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -208,6 +205,20 @@ public class PurchaseOrderController extends BaseController {
         Boolean result = purchaseOrderService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
+
+    /**
+     * @description: 采购变更数据显示
+     * @author Will
+     * @date: 2023/3/31 14:28
+     * @param id
+     * @return ApiResult<AddDTO>
+     */
+    @GetMapping("/viewPurchaseChange")
+    public ApiResult<PurchaseChangeDTO.AddDTO> viewPurchaseChange(@RequestParam("id") String id) {
+        PurchaseChangeDTO.AddDTO addDTO = purchaseOrderService.viewPurchaseChange(id);
+        return success(addDTO);
+    }
+
 
     /**
      * 下推签收单弹框数据显示
