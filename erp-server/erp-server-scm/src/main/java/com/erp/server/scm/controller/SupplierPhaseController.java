@@ -1,10 +1,7 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -19,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 供应商阶段管理
@@ -59,6 +57,20 @@ public class SupplierPhaseController extends BaseController {
     }
 
     /**
+     * 变更阶段的时候 获取对应的阶段列表
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BaseDropDownDTO.CommonDTO>>
+     * @author yl
+     * @date 2023-03-31 14:20
+     */
+    @PostMapping("/listByChange")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listByChange(@RequestBody @Validated SupplierPhaseDTO.ListDTO dto) {
+        List<BaseDropDownDTO.CommonDTO> list = supplierPhaseService.listByChange(dto);
+        return success(list);
+    }
+
+    /**
      * 修改供应商阶段
      *
      * @param dto
@@ -67,7 +79,7 @@ public class SupplierPhaseController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SupplierPhaseDTO.UpdateDTO dto) {
         String id = supplierPhaseService.updateSupplierPhase(dto);
-        return  StringUtils.isNotBlank(id) ? success() : failure();
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**

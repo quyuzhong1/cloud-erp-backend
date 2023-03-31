@@ -124,8 +124,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.GYS, BusinessNoTypeEnum.CODE_GYS.getCode()));
         addEntity.setCode(code);
         String purchaseUserId = dto.getPurchaseUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
-        addEntity.setPurchaseUserName(user != null ? user.getUserName() : "");
+        if(StringUtils.isNotBlank(purchaseUserId)){
+            FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
+            addEntity.setPurchaseUserName(user != null ? user.getUserName() : "");
+        }
         Boolean result = this.save(addEntity);
         //保存成功
         if (result) {
@@ -234,7 +236,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         checkName(supplierId, dto.getName());
         //联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = dto.getContactList();
-        long count = contactList.stream().filter(c -> c.getIsDefault()!=null&&c.getIsDefault()).count();
+        long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }
@@ -403,18 +405,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
-
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
         }
         return result;
@@ -527,19 +530,20 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
         //反审核
         if (result) {
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
-
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
         }
         return result;

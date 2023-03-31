@@ -48,7 +48,7 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 255,message = "最大255字符")
+        @Size(max = 250,message = "资质备注最大250字符")
         private String remark;
 
 

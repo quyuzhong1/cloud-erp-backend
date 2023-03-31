@@ -70,6 +70,30 @@ public class SupplierPhaseDTO implements Serializable {
         private List<String> attachmentNameList;
     }
 
+    /**
+     * 添加阶段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 操作类型
+         */
+        @NotBlank(message = "操作类型不能为空")
+        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
+        private String operateType;
+
+        /**
+         * 当前阶段
+         */
+        @NotBlank(message = "当前阶段不能为空")
+        private String currentPhase;
+
+
+
+    }
+
 
     @Data
     @NoArgsConstructor
