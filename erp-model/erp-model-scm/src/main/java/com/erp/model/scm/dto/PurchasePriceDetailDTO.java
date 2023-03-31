@@ -190,6 +190,9 @@ public class PurchasePriceDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO{
 
+
+        private String id;
+
         /**
          * sku id
          */
