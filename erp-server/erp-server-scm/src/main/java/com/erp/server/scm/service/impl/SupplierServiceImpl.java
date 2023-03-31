@@ -214,6 +214,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+        //旧的
+        SupplierEntity old = new SupplierEntity();
+        BeanMapper.copy(supplier,old);
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -225,8 +228,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (!statusList.contains(supplier.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
-
-
         //资质信息
         List<SupplierCredentialDTO.UpdateDTO> credentialList = dto.getCredentialList();
         List<SupplierCredentialDTO.AddDTO> credentialAddList = BeanMapper.copyList(credentialList, SupplierCredentialDTO.AddDTO.class);
@@ -254,9 +255,19 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         supplier.setCategoryName(categoryName);
         supplier.setCode(code);
+
+
+
+
+
         Boolean result = this.updateById(supplier);
         //修改成功
         if (result) {
+            /**
+             * 添加修改日志
+             */
+            moduleOperateLogService.addModuleOperateLogByObj(old,supplier,ModuleTypeEnum.SUPPLIER.getCode(),supplierId,"","");
+
             supplierContactService.updateSupplierContact(contactList, supplierId);
             //账户信息
             List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();

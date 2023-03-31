@@ -45,5 +45,6 @@
                 #{approveStatus}
             </foreach>
         </if>
+        ORDER BY sp.create_time DESC
     </select>
 </mapper>
