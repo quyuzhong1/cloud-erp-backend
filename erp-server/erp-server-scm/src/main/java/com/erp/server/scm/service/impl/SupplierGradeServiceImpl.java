@@ -1,18 +1,19 @@
 package com.erp.server.scm.service.impl;
 
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.server.scm.mapper.SupplierGradeMapper;
 import com.erp.server.scm.service.SupplierGradeService;
+import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +29,9 @@ import java.util.stream.Collectors;
 @Service
 public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapper, SupplierGradeEntity> implements SupplierGradeService {
 
+    @Resource
+    private SupplierService supplierService;
+
     @Override
     public Boolean saveOrUpdateBatchGrade(List<SupplierDTO.SupplierGradeDTO> gradeList) {
         if (CollectionUtils.isEmpty(gradeList)) {
@@ -36,17 +40,23 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
         List<SupplierGradeEntity> dbList = this.list();
         //检查名称
         checkName(gradeList, dbList);
-        List<SupplierGradeEntity> batchGradeList = new ArrayList<>(gradeList.size());
-        batchGradeList = BeanMapper.copyList(gradeList, SupplierGradeEntity.class);
+
         //获取到删除的 等级id
         List<String> deleteIdList = getDeleteIds(gradeList, dbList);
+        //查询是否 有供应商占用 要删除的id 如果有就不能删除
+        int occupiedCount = supplierService.occupiedGrade(deleteIdList);
+        if (occupiedCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98042);
+        }
+
+
+        List<SupplierGradeEntity> batchGradeList = BeanMapper.copyList(gradeList, SupplierGradeEntity.class);
+
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
         return this.saveOrUpdateBatch(batchGradeList);
     }
-
-
 
 
     /**

@@ -115,6 +115,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
+        saveOrUpdateList.forEach(s->s.setSupplierId(supplierId));
         this.saveOrUpdateBatch(saveOrUpdateList);
 
 

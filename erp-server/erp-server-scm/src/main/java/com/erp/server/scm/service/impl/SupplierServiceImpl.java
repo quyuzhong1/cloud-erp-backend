@@ -789,6 +789,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     }
 
+
+    /**
+     * 查询是否 有供应商占用 要删除的id 如果有就不能删除
+     *
+     * @param gradeIdList
+     * @return int
+     * @author yl
+     * @date 2023-03-31 11:07
+     */
+    @Override
+    public int occupiedGrade(List<String> gradeIdList) {
+        if (CollectionUtils.isEmpty(gradeIdList)) {
+            return 0;
+        }
+        return lambdaQuery().in(SupplierEntity::getGradeId, gradeIdList).count();
+    }
+
     /**
      * 更改状态
      */

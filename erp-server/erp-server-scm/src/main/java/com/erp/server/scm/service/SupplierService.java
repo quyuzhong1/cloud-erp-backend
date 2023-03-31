@@ -189,4 +189,13 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return void
      */
     void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList);
+
+    /**
+     *  查询是否 有供应商占用 要删除的id 如果有就不能删除
+     * @author yl
+     * @date 2023-03-31 11:07
+     * @param deleteIdList
+     * @return int
+     */
+    int occupiedGrade(List<String> deleteIdList);
 }

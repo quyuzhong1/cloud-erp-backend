@@ -101,6 +101,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
+        saveOrUpdateList.forEach(s->s.setSupplierId(supplierId));
         this.saveOrUpdateBatch(saveOrUpdateList);
 
     }

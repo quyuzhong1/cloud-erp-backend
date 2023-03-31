@@ -187,10 +187,12 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         }
         List<SupplierCredentialEntity> allList = this.getList(supplierIds);
         List<String> idList = allList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
-        LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
-        this.remove(queryWrapper);
-        attachmentService.deleteByBusinessIds(idList);
+        if(CollectionUtils.isNotEmpty(idList)){
+            LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
+            this.remove(queryWrapper);
+            attachmentService.deleteByBusinessIds(idList);
+        }
     }
 
 
