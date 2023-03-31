@@ -28,7 +28,7 @@ public class SupplierAccountDTO implements Serializable {
         /**
          * 收款方
          */
-        @Size(max = 50, message = "账户名称最大100字符")
+        @Size(max = 50, message = "账户名称最大50字符")
         @NotBlank(message = "账户名称不能为空")
         private String payee;
 
@@ -48,7 +48,7 @@ public class SupplierAccountDTO implements Serializable {
         /**
          * 支行
          */
-        @Size(max = 255, message = "账户名称最大255字符")
+        @Size(max = 250, message = "开户行支行最大250字符")
         private String bankSubbranch;
 
         /**

@@ -316,15 +316,13 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-
         String searchType = params.getSearchType();
-        List<String> supplierPhaseIdList = new ArrayList<>();
-
+        List<String> statusList = new ArrayList<>(4);
         //待我审核
         if (searchType.equals(SearchType.WAIT_APPROVE)) {
-
+            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
-        IPage pageData = baseMapper.paging(query, params, supplierPhaseIdList);
+        IPage pageData = baseMapper.paging(query, params,statusList);
         List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
@@ -448,7 +446,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             }
         }
         return resultList;
-}
+    }
 
 
     /**

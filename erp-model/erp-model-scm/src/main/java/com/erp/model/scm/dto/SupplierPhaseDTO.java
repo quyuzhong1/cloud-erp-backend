@@ -223,10 +223,6 @@ public class SupplierPhaseDTO implements Serializable {
         @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
         private String searchType;
 
-        /**
-         * 供应商名
-         */
-        private String name;
 
 
         /**
@@ -235,22 +231,10 @@ public class SupplierPhaseDTO implements Serializable {
         private List<String> categoryIdList;
 
 
-        /**
-         * 阶段列表
-         */
-        private List<String> phaseList;
 
+        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
+        private String operateType;
 
-        /**
-         * 联系人名
-         */
-        private String contactPerson;
-
-
-        /**
-         * 联系人
-         */
-        private String contactTelNumber;
 
         /**
          * 状态
