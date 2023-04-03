@@ -108,17 +108,7 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
     @TableField("remark")
     private String remark;
 
-    /**
-     * 交货仓库id
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
 
-    /**
-     * 交货仓库名称
-     */
-    @TableField("delivery_warehouse_name")
-    private String deliveryWarehouseName;
 
 
     public static final String PURCHASE_CHANGE_ID = "purchase_change_id";
@@ -144,10 +134,6 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
     public static final String AMOUNT = "amount";
 
     public static final String REMARK = "remark";
-
-    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
-
-    public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
 
     public static final String CURRENCY = "currency";
 

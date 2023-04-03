@@ -7,6 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.server.scm.service.PurchaseChangeService;
 import org.apache.ibatis.annotations.Param;
@@ -41,6 +42,18 @@ public class PurchaseChangeController extends BaseController {
     public ApiResult<PagingVO<PurchaseChangeDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseChangeDTO.ListDTO> pagingVO = purchaseChangeService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 查询数量
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @return ApiResult
+     */
+    @GetMapping("/listCount")
+    public ApiResult<List<ListStatusCountDTO.PurchaseChangeCountDTO>> listCount() {
+        List<ListStatusCountDTO.PurchaseChangeCountDTO> list = purchaseChangeService.listCount();
+        return success(list);
     }
 
     /**
@@ -108,6 +121,18 @@ public class PurchaseChangeController extends BaseController {
         return success(dto);
     }
 
+    /**
+     * 取消流程
+     * @author Will
+     * @date: 2023/3/15 17:59
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchaseChangeService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
+    }
 
     /**
      * 批量作废
@@ -127,12 +152,12 @@ public class PurchaseChangeController extends BaseController {
      * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.submit(ids);
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseChangeService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 

@@ -139,6 +139,18 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
 
+    /**
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
+
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -177,6 +189,10 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     public static final String APPROVE_USER_NAME = "approve_user_name";
 
     public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
+
+    public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
 
     @Override
     public Serializable pkVal() {

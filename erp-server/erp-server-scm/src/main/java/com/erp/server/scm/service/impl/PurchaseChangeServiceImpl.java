@@ -20,6 +20,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
@@ -27,9 +29,11 @@ import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -82,6 +86,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Resource
     private PurchaseOrderService purchaseOrderService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
@@ -303,6 +311,55 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         this.update(dto);
         //提交
         return this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        //根据ids查询
+        List<PurchaseChangeEntity> list = getList(ids);
+
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        log.info("采购申请单撤销流程，ids=【{}】", ids);
+
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+
+        //更新单据为待提交
+        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("采购申请单【%s】取消流程", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"取消流程操作");
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount() {
+        PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
+        List<ListStatusCountDTO.PurchaseChangeCountDTO> list = new ArrayList<>();
+        for (PurchaseChangeListTypeEnum item: values) {
+            PurchaseChangeDTO.SearchParamDTO dto = new PurchaseChangeDTO.SearchParamDTO();
+            ListStatusCountDTO.PurchaseChangeCountDTO resultDTO = new ListStatusCountDTO.PurchaseChangeCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(dto);
+            }
+            if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(dto);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**
