@@ -116,13 +116,13 @@ public class PurchaseChangeExportExcelDTO implements Serializable {
      * 申请人
      */
     @ExcelProperty(value = "申请人", index = 16)
-    private BigDecimal changeUserName;
+    private String changeUserName;
 
     /**
      * 审核人（最新）
      */
     @ExcelProperty(value = "审核人（最新）", index = 17)
-    private BigDecimal approveUserName;
+    private String approveUserName;
 
     /**
      * 创建人

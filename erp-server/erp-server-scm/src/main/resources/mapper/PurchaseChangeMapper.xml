@@ -118,7 +118,7 @@
         select
         pc.id,
         pc.code,
-        po.code as purchaseOrderCode,
+        po.code as poCode,
         pc.supplier_name as supplierName,
         case pc.approve_status
             when 'waitSubmit' then '待提交'
