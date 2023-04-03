@@ -141,10 +141,11 @@ public class PurchaseChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
         /**
-         * sku编码
+         * 主键ids
          */
-        private List<String> skuNoList;
+        private List<String> ids;
 
         /**
          * 采购变更单号
@@ -155,6 +156,11 @@ public class PurchaseChangeDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
 
         /**
          * 供应商id

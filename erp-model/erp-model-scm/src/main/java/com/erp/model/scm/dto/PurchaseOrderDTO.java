@@ -172,22 +172,26 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
-        /**
-         * sku编码
-         */
-        private List<String> skuNoList;
 
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
 
         /**
          * 采购订单编号
          */
         private String code;
 
-
         /**
          * 产品名称
          */
         private String productName;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
 
         /**
          * 供应商id

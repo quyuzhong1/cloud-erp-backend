@@ -136,6 +136,12 @@ public class PurchaseApplicationDTO implements Serializable {
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
 
+
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
+
         /**
          * 采购申请单号
          */

@@ -132,7 +132,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
-            //操作日志
+            //采购变更操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购变更单【%s】",code), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),entity.getId(),"新增操作");
             //新增明细
             purchaseChangeDetailService.add(dto.getDetails(),entity.getId());

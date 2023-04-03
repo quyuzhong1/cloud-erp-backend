@@ -151,50 +151,58 @@
         left join purchase_order po on pc.purchase_order_id = po.id and po.is_deleted = false
         <where>
             pc.is_deleted = false
-            <if test="params.productName != null and params.productName != ''">
-                and pcd.product_name like concat('%',#{params.productName},'%')
-            </if>
-            <if test="params.code != null and params.code != ''">
-                and pc.code like concat('%',#{params.code},'%')
-            </if>
-            <if test="params.invalidStatus != null and params.invalidStatus != ''">
-                and pc.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and pcd.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+            <if test="params.ids != null and params.ids.size > 0">
+                and pc.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-                and pc.supplier_id in
-                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and pc.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-                and pc.delivery_warehouse_id in
-                <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and pc.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and pc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
-            </if>
-            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.productName != null and params.productName != ''">
+                    and pcd.product_name like concat('%',#{params.productName},'%')
+                </if>
+                <if test="params.code != null and params.code != ''">
+                    and pc.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                    and pc.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and pcd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                    and pc.supplier_id in
+                    <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and pc.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+                    and pc.delivery_warehouse_id in
+                    <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and pc.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and pc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
+                </if>
+                <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                    and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+                </if>
             </if>
         </where>
         ORDER BY

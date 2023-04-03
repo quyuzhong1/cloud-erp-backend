@@ -13,15 +13,12 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchaseApplicationDetailService;
-import com.erp.server.scm.service.PurchaseApplicationRefPoService;
-import com.erp.server.scm.service.PurchaseOrderDetailService;
+import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -48,7 +45,7 @@ import java.util.stream.Collectors;
 public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrderDetailMapper, PurchaseOrderDetailEntity> implements PurchaseOrderDetailService {
 
     @Resource
-    private WmsTaskFeign wmsTaskFeign;
+    private PurchaseOrderService purchaseOrderService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -76,6 +73,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (flag) {
             //新增关联关系
             List<PurchaseApplicationRefPoEntity> refList = new ArrayList<>();
+
             for (PurchaseOrderDetailEntity entity : list) {
                 if (StringUtils.isBlank(entity.getPurchaseApplicationDetailId())) {
                     continue;
@@ -87,7 +85,19 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 refPoEntity.setPurchaseApplicationDetailId(entity.getPurchaseApplicationDetailId());
                 refList.add(refPoEntity);
             }
-            purchaseApplicationRefPoService.saveBatch(refList);
+            if (CollectionUtils.isNotEmpty(refList)) {
+                //新增关联关系
+                purchaseApplicationRefPoService.saveBatch(refList);
+
+                PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderId);
+                if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                    throw new ServiceException(ApiError.ERROR_98025);
+                }
+                //采购申请单生成日志
+                List<Pair<String, String>> pairList = refList.stream().map(obj -> new Pair<>(obj.getPurchaseApplicationId(), purchaseOrderEntity.getCode())).distinct().collect(Collectors.toList());
+                moduleOperateLogService.batchAddModuleOperateLog("生成采购单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"生成采购单");
+            }
+
         }
     }
 
@@ -105,6 +115,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (details == null) {
             details = new ArrayList<>();
         }
+        //验证录入的SKU明细报价信息是否正确
+        //checkPurchasePrice(details,purchaseOrderId);
+
         //原明细数据
         List<PurchaseOrderDetailEntity> oldList = this.listByPurchaseOrderId(purchaseOrderId);
         List<String> deleteIds = getDeleteIds(details, oldList);
@@ -118,6 +131,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             this.removeByIds(deleteIds);
         }
         List<PurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
+
         //处理明细id及操作日志
         doOpHandleDetails(newList,purchaseOrderId);
 

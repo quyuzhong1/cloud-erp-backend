@@ -914,6 +914,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        List<PurchaseOrderDetailDTO.AddDTO> removeList = new ArrayList<>();
         for (PurchaseOrderDetailDTO.AddDTO addDTO : successList) {
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDTO.getPurchaseQty(),addDTO.getSkuId(),addDTO.getSkuNo(),supplierId);
             PurchaseOrderImportExcelDTO purchaseOrderImportExcelDTO = excelDateList.stream().filter(obj -> addDTO.getSkuNo().equals(obj.getSkuNo())).findFirst().orElse(null);
@@ -924,9 +925,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             String error = pair.getKey();
             //存在错误信息则
             if (StringUtils.isNotBlank(error)) {
-                purchaseOrderImportExcelDTO.setErrorMsg(error);
+                purchaseOrderImportExcelDTO.setErrorMsg("1、".concat(error));
                 errorList.add(purchaseOrderImportExcelDTO);
-                successList.remove(addDTO);
+                removeList.add(addDTO);
                 continue;
             }
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
@@ -934,6 +935,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setTaxPrice(value.get(0).getTaxPrice());
             addDTO.setCurrency(value.get(0).getCurrency());
             addDTO.setCurrencySymbol(value.get(0).getCurrencySymbol());
+        }
+        if (CollectionUtils.isNotEmpty(removeList)) {
+            successList.removeAll(removeList);
         }
     }
 

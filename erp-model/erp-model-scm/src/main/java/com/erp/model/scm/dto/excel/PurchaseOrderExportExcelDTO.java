@@ -60,6 +60,16 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private String productName;
 
     /**
+     * 报关名称
+     */
+    private String declareName;
+
+    /**
+     * 报关型号
+     */
+    private String declareModel;
+
+    /**
      * 计划交期
      */
     @ExcelProperty(value = "计划交期", index = 7)
