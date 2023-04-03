@@ -2,7 +2,6 @@ package com.erp.server.scm.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
@@ -15,14 +14,17 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -63,6 +65,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
     /**
      * 检查sku 区间报价
      *
@@ -198,6 +202,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailEntity> dbList = this.getListByPurchasePriceId(purchasePriceId);
         //获取到删除id集合
         List<String> deleteIdList = getDeleteIds(purchasePriceDetailList, dbList);
+        List<PurchasePriceDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
+
+
         this.removeByIds(deleteIdList);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -220,6 +227,28 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
             entity.setTaxRate(rate);
             saveOrUpdateList.add(entity);
+        }
+
+        //这是要添加的
+        List<PurchasePriceDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+        //这是修改的
+        List<PurchasePriceDetailEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(purchasePriceId, obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchasePriceId, obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE.getCode(), addPairList, "编辑操作");
+
+        //修改的
+        for (PurchasePriceDetailEntity update : updateList) {
+            String id = update.getId();
+            PurchasePriceDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if(old!=null){
+                moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.PURCHASE_PRICE.getCode(),purchasePriceId,"","");
+            }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }

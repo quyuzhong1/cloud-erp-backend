@@ -198,6 +198,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (Objects.isNull(priceChangeEntity)) {
             throw new ServiceException(ApiError.ERROR_98028);
         }
+        PurchasePriceChangeEntity old = new PurchasePriceChangeEntity();
+        BeanMapper.copy(priceChangeEntity,old);
         //状态值
         String status = priceChangeEntity.getApproveStatus().getStatus();
         //待审核
@@ -229,6 +231,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //修改成功
         Boolean result = this.updateById(priceChangeEntity);
         if (result) {
+
+            /**
+             * 添加修改日志
+             */
+            moduleOperateLogService.addModuleOperateLogByObj(old, priceChangeEntity, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), id, "", "");
+
             Class<PurchasePriceChangeEntity> credentialClass = PurchasePriceChangeEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
@@ -355,7 +363,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
-            content = String.format("状态由[%s]变更为[%s],意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(),comment);
+            content = String.format("状态由[%s]变更为[%s],意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();

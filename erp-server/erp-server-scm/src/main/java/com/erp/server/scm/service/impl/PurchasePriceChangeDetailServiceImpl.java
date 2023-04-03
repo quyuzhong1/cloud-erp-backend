@@ -10,15 +10,18 @@ import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +54,10 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
 
 
@@ -254,6 +261,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchasePriceChangeDetailEntity> dbList = this.getEntityByPriceChangeId(purchasePriceChangeId);
         //获取到要删除的id集合
         List<String> deleteIdList = getDeleteIds(purchasePriceChangeDetailList, dbList);
+        List<PurchasePriceChangeDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
         List<String> skuIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -276,6 +284,27 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
             entity.setTaxRate(rate);
             saveOrUpdateList.add(entity);
+        }
+        //这是要添加的
+        List<PurchasePriceChangeDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+        //这是修改的
+        List<PurchasePriceChangeDetailEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(purchasePriceChangeId, obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchasePriceChangeId, obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), addPairList, "编辑操作");
+
+        //修改的
+        for (PurchasePriceChangeDetailEntity update : updateList) {
+            String id = update.getId();
+            PurchasePriceChangeDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if(old!=null){
+                moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.PURCHASE_PRICE.getCode(),purchasePriceChangeId,"","");
+            }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
