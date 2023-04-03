@@ -256,10 +256,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         supplier.setCategoryName(categoryName);
         supplier.setCode(code);
 
-
-
-
-
         Boolean result = this.updateById(supplier);
         //修改成功
         if (result) {
@@ -268,11 +264,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
              */
             moduleOperateLogService.addModuleOperateLogByObj(old,supplier,ModuleTypeEnum.SUPPLIER.getCode(),supplierId,"","");
 
+            //联系人的
             supplierContactService.updateSupplierContact(contactList, supplierId);
             //账户信息
             List<SupplierAccountDTO.UpdateDTO> bankAccountList = dto.getBankAccountList();
             supplierAccountService.updateAccount(bankAccountList, supplierId);
-
+            //资质的
             supplierCredentialService.updateCredential(credentialList, supplierId);
             return supplierId;
         }
