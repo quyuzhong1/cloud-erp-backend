@@ -19,13 +19,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -65,7 +63,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -291,16 +292,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<SalesDemandExportExcelDTO> exportExcelList = baseMapper.listExportExcel(dto);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/salesDemandExport.xlsx";
-        String name = "备货申请单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
+        List<SalesDemandExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        String fileName = "备货申请单数据";
         try {
-            new ExcelPrintUtils().patchExport(exportExcelList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
+            ExcelUtil.export(fileName, "备货申请单数据", resultList, SalesDemandExportExcelDTO.class, response);
+        } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
