@@ -1180,9 +1180,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         if (ObjectUtils.isNotEmpty(productDetailEntity)) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+            List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
 
-                if (productInfoEntity.getSpecType() == 1 && productInfoEntity.getIsFinishedProductDev() != 1) {
+                if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() != 1) {
                     productInfoService.removeById(productInfoEntity.getId());
                 }
 
