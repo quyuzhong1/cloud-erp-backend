@@ -1,9 +1,11 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -48,6 +50,10 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult<PagingVO<List<ScmPurchaseApplicationViewDTO>>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:purchaseApplication:paging",
+            tableAlias = "pa")
     public ApiResult<PagingVO<PurchaseApplicationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseApplicationDTO.ListDTO> pagingVO = purchaseApplicationService.paging(dto);
         return success(pagingVO);
@@ -276,6 +282,10 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:purchaseApplication:paging",
+            tableAlias = "pa")
     public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseApplicationService.exportExcel(dto, response);
         return flag == true ? success() : failure();

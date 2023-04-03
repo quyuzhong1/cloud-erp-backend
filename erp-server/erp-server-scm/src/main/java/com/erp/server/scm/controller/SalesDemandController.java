@@ -1,9 +1,11 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -49,7 +51,8 @@ public class SalesDemandController extends BaseController {
     * @return ApiResult<PagingVO<SalesDemandDTO.listDTO>>
     */
    @PostMapping("/paging")
-    public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
+   @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "scm:salesDemand:paging", tableAlias = "sd")
+   public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
         PagingVO<SalesDemandDTO.ListDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
     }
@@ -264,6 +267,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "scm:salesDemand:paging", tableAlias = "sd")
     public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = salesDemandService.exportExcel(dto, response);
         return flag == true ? success() : failure();
