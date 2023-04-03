@@ -30,7 +30,6 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
-import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -344,15 +343,15 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             PurchaseChangeDTO.SearchParamDTO dto = new PurchaseChangeDTO.SearchParamDTO();
             ListStatusCountDTO.PurchaseChangeCountDTO resultDTO = new ListStatusCountDTO.PurchaseChangeCountDTO();
             Integer count = MathUtil.ZERO;
-            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(dto);
             }
-            if (PurchaseListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+            if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(dto);
             }
-            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(dto);
             }
