@@ -11,7 +11,6 @@ public enum PurchaseListTypeEnum {
     TO_BE_APPROVE("toBeApprove", "待审批"),
     TO_BE_CREATE("toBeCreate", "待生成"),
     CREATED("created", "已生成"),
-    APPROVE("approve", "审核通过"),
     REJECT("reject", "不通过");
 
 
