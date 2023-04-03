@@ -118,9 +118,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private PurchaseChangeService purchaseChangeService;
 
-    @Resource
-    private PurchaseChangeDetailService purchaseChangeDetailService;
-
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());

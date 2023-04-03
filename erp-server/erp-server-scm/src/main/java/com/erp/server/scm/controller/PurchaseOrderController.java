@@ -135,7 +135,7 @@ public class PurchaseOrderController extends BaseController {
      * @param dto
      * @return ApiResult<AssociatedDocumentDTO>
      */
-    @GetMapping("/viewAssociatedDocuments")
+    @PostMapping("/viewAssociatedDocuments")
     public ApiResult<PurchaseOrderDTO.AssociatedDocumentDTO> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
         PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = purchaseOrderService.viewAssociatedDocuments(dto);
         return success(resultDTO);

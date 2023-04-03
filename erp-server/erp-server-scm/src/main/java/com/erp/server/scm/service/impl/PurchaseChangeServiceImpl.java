@@ -301,6 +301,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         //根据ids查询
         List<PurchaseChangeEntity> list = getList(ids);
@@ -465,6 +466,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             purchaseOrderDetailList.add(entity);
         }
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
+
+        //更新采购订单生成PO类型
+        //purchaseOrderDetailService.updateCreatePoType();
     }
 
     /**

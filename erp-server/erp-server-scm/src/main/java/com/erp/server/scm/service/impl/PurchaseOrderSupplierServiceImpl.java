@@ -20,6 +20,7 @@ import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import com.erp.server.scm.service.SupplierService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -69,6 +70,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(PurchaseOrderSupplierDTO.UpdateDTO dto,String purchaseOrderId) {
         if (ObjectUtils.isEmpty(dto)) {
             return;
