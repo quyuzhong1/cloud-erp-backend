@@ -5,12 +5,12 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -52,8 +52,8 @@ public class PurchasePriceDetailController extends BaseController {
      * @return
      */
     @PostMapping("/importFile")
-    public ApiResult<PurchasePriceDetailDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        PurchasePriceDetailDTO.ImportDTO result = purchasePriceDetailService.importFile(excelFile);
+    public ApiResult<PurchasePriceDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
+        PurchasePriceDetailDTO.ImportDTO result = purchasePriceDetailService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getSkuIds(),response);
         return success(result);
     }
 

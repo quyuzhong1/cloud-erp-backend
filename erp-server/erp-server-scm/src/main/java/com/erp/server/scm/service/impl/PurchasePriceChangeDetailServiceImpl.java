@@ -7,6 +7,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
@@ -60,7 +61,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     private ModuleOperateLogService moduleOperateLogService;
 
 
-
     /**
      * 检查区间报价是否重叠
      *
@@ -70,9 +70,16 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @date 2023-03-28 12:07
      */
     @Override
-    public void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList) {
+    public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList) {
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
-
+            /**
+             * 查询到
+             * 采购价目表的明细
+             * 因为变更 也不能有区间重复的
+             */
+            List<PurchasePriceDetailDTO.ViewDTO> purchasePriceList = purchasePriceDetailService.getByPurchasePriceId(purchasePriceId);
+            List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(purchasePriceList, PurchasePriceChangeDetailDTO.AddDTO.class);
+            purchasePriceChangeDetailList.addAll(list);
             //以sku 分组
             Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
@@ -302,8 +309,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         for (PurchasePriceChangeDetailEntity update : updateList) {
             String id = update.getId();
             PurchasePriceChangeDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.PURCHASE_PRICE.getCode(),purchasePriceChangeId,"","");
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceChangeId, "", "");
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);

@@ -80,7 +80,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         List<WarehouseEntity> list = lambdaQuery().
                 eq(WarehouseEntity::getApproveStatus, approveStatus).
-                eq(WarehouseEntity::getDisabled, Boolean.FALSE).
                 list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();

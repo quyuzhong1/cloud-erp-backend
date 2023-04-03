@@ -20,13 +20,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
@@ -62,7 +60,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -495,16 +496,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<PurchaseApplicationExportExcelDTO> exportExcelList = baseMapper.listExportExcel(dto);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/purchaseApplicationExport.xlsx";
-        String name = "采购申请单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
+        List<PurchaseApplicationExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        String fileName = "采购申请单数据";
         try {
-            new ExcelPrintUtils().patchExport(exportExcelList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
+            ExcelUtil.export(fileName, "采购申请单数据", resultList, PurchaseApplicationExportExcelDTO.class, response);
+        } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;

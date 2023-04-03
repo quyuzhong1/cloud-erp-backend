@@ -230,4 +230,37 @@
         </where>
     </select>
 
+    <select id="list" resultType="com.erp.model.scm.dto.PurchaseChangeDTO$ListDTO">
+        select
+            pc.id,
+            pc.code,
+            pc.supplier_name as supplierName,
+            pc.approve_status as approveStatus,
+            pc.invalid_status as invalidStatus,
+            pcd.sku_no as skuNo,
+            pcd.product_name as productName,
+            pcd.old_qty as oldQty,
+            pc.delivery_warehouse_name as deliveryWarehouseName,
+            pcd.old_price as oldPrice,
+            pcd.old_amount as oldAmount,
+            pcd.qty as qty,
+            pcd.price as price,
+            pcd.amount as amount,
+            pcd.remark as remark,
+            pc.change_user_name as changeUserName,
+            pc.approve_user_name as approveUserName,
+            pc.create_user_name as createUserName,
+            pc.create_time as createTime
+        from
+        purchase_change pc
+        left join purchase_change_detail pcd on pc.id = pcd.purchase_change_id and pcd.is_deleted = false
+        <where>
+            pc.is_deleted = false
+            <if test="params.id != null and params.id != ''">
+                and pc.purchase_order_id = #{params.id}
+            </if>
+        </where>
+        order by pc.create_time desc
+    </select>
+
 </mapper>

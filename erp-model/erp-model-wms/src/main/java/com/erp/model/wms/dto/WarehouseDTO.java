@@ -48,7 +48,6 @@ public class WarehouseDTO implements Serializable {
         /**
          * 负责人id
          */
-        @NotBlank(message = "仓库负责人不能为空")
         private String chargeId;
 
         /**

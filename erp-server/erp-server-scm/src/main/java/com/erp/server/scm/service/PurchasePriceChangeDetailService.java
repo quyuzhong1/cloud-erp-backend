@@ -21,11 +21,12 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * 检查区间报价是否存在
      *
      * @param purchasePriceChangeDetailList
+     * @param purchasePriceId 采购价目表id
      * @return void
      * @author yl
      * @date 2023-03-28 12:07
      */
-    void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList);
+    void checkSkuInterval(String purchasePriceId,List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList);
 
     /**
      * 根据变更表id 获取明细

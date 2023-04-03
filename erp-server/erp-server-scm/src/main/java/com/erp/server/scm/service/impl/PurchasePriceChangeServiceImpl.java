@@ -94,7 +94,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98029);
         }
         //检查区间报价是否重叠
-        purchasePriceChangeDetailService.checkSkuInterval(dto.getPurchasePriceChangeDetailList());
+        purchasePriceChangeDetailService.checkSkuInterval(priceId,dto.getPurchasePriceChangeDetailList());
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
@@ -214,7 +214,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         //检查区间报价是否重叠
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
-        purchasePriceChangeDetailService.checkSkuInterval(priceChangeDetailList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(),priceChangeDetailList);
         //code
         String code = priceChangeEntity.getCode();
         BeanMapper.copy(dto, priceChangeEntity);

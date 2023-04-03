@@ -241,6 +241,11 @@ public class SupplierPhaseDTO implements Serializable {
          */
         private List<String> approveStatusList;
 
+        /**
+         * name
+         */
+        private String name;
+
     }
 
 

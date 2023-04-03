@@ -20,13 +20,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
@@ -57,7 +55,10 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -113,6 +114,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+
+    @Resource
+    private PurchaseChangeService purchaseChangeService;
+
+    @Resource
+    private PurchaseChangeDetailService purchaseChangeDetailService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -507,16 +514,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<PurchaseOrderExportExcelDTO> exportExcelList = baseMapper.listExportExcel(dto);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/purchaseOrderExport.xlsx";
-        String name = "采购订单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
+        List<PurchaseOrderExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        String fileName = "采购订单数据";
         try {
-            new ExcelPrintUtils().patchExport(exportExcelList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
+            ExcelUtil.export(fileName, "采购订单数据", resultList, PurchaseOrderExportExcelDTO.class, response);
+        } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
@@ -744,6 +746,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return viewDTO;
     }
 
+    @Override
+    public PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto) {
+        PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = new PurchaseOrderDTO.AssociatedDocumentDTO();
+        //采购变更单
+        List<PurchaseChangeDTO.ListDTO> purchaseChangeList = purchaseChangeService.list(dto);
+        resultDTO.setPurchaseChangeList(purchaseChangeList);
+        return resultDTO;
+    }
+
     /**
      * 处理数据id
      */
@@ -921,7 +932,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderDetailDTO.AddDTO> removeList = new ArrayList<>();
         for (PurchaseOrderDetailDTO.AddDTO addDTO : successList) {
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDTO.getPurchaseQty(),addDTO.getSkuId(),addDTO.getSkuNo(),supplierId);
-            PurchaseOrderImportExcelDTO purchaseOrderImportExcelDTO = excelDateList.stream().filter(obj -> addDTO.getSkuNo().equals(obj.getSkuNo())).findFirst().orElse(null);
+            PurchaseOrderImportExcelDTO purchaseOrderImportExcelDTO = excelDateList.stream().filter(obj -> addDTO.getSkuNo().equals(obj.getSkuNo()) && addDTO.getPurchaseQty().toString().equals(obj.getPurchaseQtyStr())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderImportExcelDTO)) {
                 continue;
             }

@@ -140,8 +140,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
         }
-        //这是修改的
-        List<SupplierCredentialDTO.UpdateDTO> updateList = credentialList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+
         //这是要添加的
         List<SupplierCredentialDTO.UpdateDTO> addList = credentialList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -156,16 +155,12 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         List<String> businessIdList = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
         attachmentService.deleteByBusinessIds(businessIdList);
 
-        List<String> deleteIdList = getDeleteIds(updateList, dbList);
+        List<String> deleteIdList = getDeleteIds(credentialList, dbList);
         //这是要删除的
         List<SupplierCredentialEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
-        if (CollectionUtils.isNotEmpty(deleteIdList)) {
-            this.removeByIds(deleteIdList);
-        }
-
         for (SupplierCredentialDTO.UpdateDTO item : credentialList) {
             SupplierCredentialEntity entity = new SupplierCredentialEntity();
             BeanMapper.copy(item, entity);
@@ -187,7 +182,8 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
             }
         }
-
+        //这是修改的
+        List<SupplierCredentialEntity> updateList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
 
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(supplierId, obj.getName())).collect(Collectors.toList());
@@ -198,11 +194,11 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         moduleOperateLogService.batchAddModuleOperateLog("添加了一个资质名称【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
 
         //修改的
-        for (SupplierCredentialDTO.UpdateDTO update : updateList) {
+        for (SupplierCredentialEntity update : updateList) {
             String id = update.getId();
             SupplierCredentialEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.SUPPLIER.getCode(),supplierId,"","");
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
@@ -210,14 +206,15 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
     }
 
-    
+
     /**
      * 获取要删除的
-     * @author yl
-     * @date 2023-03-31 15:54
+     *
      * @param updateList
      * @param dbList
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-31 15:54
      */
     private List<String> getDeleteIds(List<SupplierCredentialDTO.UpdateDTO> updateList, List<SupplierCredentialEntity> dbList) {
         List<String> ids = updateList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
@@ -242,7 +239,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         }
         List<SupplierCredentialEntity> allList = this.getList(supplierIds);
         List<String> idList = allList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(idList)){
+        if (CollectionUtils.isNotEmpty(idList)) {
             LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
             this.remove(queryWrapper);

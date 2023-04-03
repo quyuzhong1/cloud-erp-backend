@@ -295,7 +295,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-27 16:51
      */
     @Override
-    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile) {
+    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds,HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         PurchasePriceDetailExcelListener excelListenerUtil = new PurchasePriceDetailExcelListener(skuList);

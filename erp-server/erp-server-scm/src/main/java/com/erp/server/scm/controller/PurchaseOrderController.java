@@ -2,6 +2,7 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -125,6 +126,19 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult<PurchaseOrderDTO.ViewDTO> view(@Param("id") String id) {
         PurchaseOrderDTO.ViewDTO dto = purchaseOrderService.view(id);
         return success(dto);
+    }
+
+    /**
+     * 查询关联单据
+     * @author Will
+     * @date: 2023/4/3 14:32
+     * @param dto
+     * @return ApiResult<AssociatedDocumentDTO>
+     */
+    @GetMapping("/viewAssociatedDocuments")
+    public ApiResult<PurchaseOrderDTO.AssociatedDocumentDTO> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
+        PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = purchaseOrderService.viewAssociatedDocuments(dto);
+        return success(resultDTO);
     }
 
     /**
