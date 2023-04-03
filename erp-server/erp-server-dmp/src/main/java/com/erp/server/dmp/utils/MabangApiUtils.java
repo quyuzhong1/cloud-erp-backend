@@ -253,6 +253,7 @@ public class MabangApiUtils {
                 params.put("cursor", pageIndex);
             }
             params.put("paidTime", sdf.format(endDate));
+//            params.put("platformOrderId","2504091767101901901");
             params.put("pageSize", pageSize);
             ParamHeaderVO paramVo = getParamMap(method, 0, params);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);

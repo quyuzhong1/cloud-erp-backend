@@ -121,9 +121,8 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
         // 标准退货单
-        queryFilters.add(String.format("FBillTypeID = '%s'", "73383412199a402bb58439509e089077"));
+        queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
-        //
         queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
