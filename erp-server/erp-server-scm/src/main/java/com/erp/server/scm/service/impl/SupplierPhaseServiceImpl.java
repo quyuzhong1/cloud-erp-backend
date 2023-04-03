@@ -211,7 +211,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         BeanMapper.copy(phase, dto);
         Boolean result = this.updateById(phase);
         if (result) {
-            attachmentService.deleteByBusinessIds(Arrays.asList(id));
             Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
