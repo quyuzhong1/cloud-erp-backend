@@ -701,30 +701,34 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseChangeDTO.AddDTO viewPurchaseChange(String id) {
-        PurchaseChangeDTO.AddDTO addDTO = new PurchaseChangeDTO.AddDTO();
+    public PurchaseChangeDTO.ViewDTO viewPurchaseChange(String id) {
+        PurchaseChangeDTO.ViewDTO viewDTO = new PurchaseChangeDTO.ViewDTO();
         //采购主表信息
         PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
-        addDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
-        addDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
+        viewDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
+        viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
+        viewDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
         //采购供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         if (ObjectUtils.isEmpty(supplierEntity)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
-        addDTO.setSupplierId(supplierEntity.getSupplierId());
+        PurchaseOrderSupplierDTO.UpdateDTO supplierDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
+        BeanMapperUtils.copy(supplierEntity,supplierDTO);
+        viewDTO.setSupplierDTO(supplierDTO);
+        viewDTO.setSupplierId(supplierEntity.getSupplierId());
         //采购订单明细
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(id);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        List<PurchaseChangeDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
+        List<PurchaseChangeDetailDTO.UpdateDTO> detailDTOList = new ArrayList<>();
         for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailList) {
-            PurchaseChangeDetailDTO.AddDTO detailDTO = new PurchaseChangeDetailDTO.AddDTO();
+            PurchaseChangeDetailDTO.UpdateDTO detailDTO = new PurchaseChangeDetailDTO.UpdateDTO();
             detailDTO.setPurchaseOrderDetailId(detailEntity.getId());
             detailDTO.setSkuId(detailEntity.getSkuId());
             detailDTO.setSkuNo(detailEntity.getSkuNo());
@@ -736,8 +740,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
             detailDTOList.add(detailDTO);
         }
-        addDTO.setDetails(detailDTOList);
-        return addDTO;
+        viewDTO.setDetails(detailDTOList);
+        return viewDTO;
     }
 
     /**

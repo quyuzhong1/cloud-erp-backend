@@ -214,9 +214,9 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<AddDTO>
      */
     @GetMapping("/viewPurchaseChange")
-    public ApiResult<PurchaseChangeDTO.AddDTO> viewPurchaseChange(@RequestParam("id") String id) {
-        PurchaseChangeDTO.AddDTO addDTO = purchaseOrderService.viewPurchaseChange(id);
-        return success(addDTO);
+    public ApiResult<PurchaseChangeDTO.ViewDTO> viewPurchaseChange(@RequestParam("id") String id) {
+        PurchaseChangeDTO.ViewDTO viewDTO = purchaseOrderService.viewPurchaseChange(id);
+        return success(viewDTO);
     }
 
 

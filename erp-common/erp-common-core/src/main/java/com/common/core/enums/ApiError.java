@@ -369,6 +369,7 @@ public enum ApiError implements Serializable {
     ERROR_98043(98043,"未找到采购变更明细单"),
     ERROR_98044(98044,"存在已被供应商引用的等级"),
     ERROR_98045(98045,"非已审核采购订单不支持变更"),
+    ERROR_98046(98046,"请输入采购报价查询条件"),
 
 
 

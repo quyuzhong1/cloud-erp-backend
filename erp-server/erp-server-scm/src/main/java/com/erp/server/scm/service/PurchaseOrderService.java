@@ -182,7 +182,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/31 14:29
      * @param id
-     * @return AddDTO
+     * @return ViewDTO
      */
-    PurchaseChangeDTO.AddDTO viewPurchaseChange(String id);
+    PurchaseChangeDTO.ViewDTO viewPurchaseChange(String id);
 }

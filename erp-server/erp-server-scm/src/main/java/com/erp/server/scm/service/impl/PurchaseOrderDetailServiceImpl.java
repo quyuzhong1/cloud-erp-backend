@@ -10,10 +10,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
-import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -58,6 +56,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private PurchaseApplicationDetailService purchaseApplicationDetailService;
+
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
+
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -115,8 +119,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (details == null) {
             details = new ArrayList<>();
         }
-        //验证录入的SKU明细报价信息是否正确
-        //checkPurchasePrice(details,purchaseOrderId);
+        List<PurchaseOrderDetailDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.AddDTO.class, details);
+        //checkPurchasePrice(addDTOS,purchaseOrderId);
 
         //原明细数据
         List<PurchaseOrderDetailEntity> oldList = this.listByPurchaseOrderId(purchaseOrderId);
@@ -140,6 +144,24 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         //更新采购申请单生成类型
         updateCreatePoType(purchaseOrderId);
+    }
+
+    private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
+        if (CollectionUtils.isEmpty(details)) {
+            return;
+        }
+
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        //验证录入的SKU明细报价信息是否正确
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
+
+        }
+
+
     }
 
     @Override

@@ -234,6 +234,11 @@ public class PurchaseChangeDTO implements Serializable {
         private Boolean isFirstMassProduct;
 
         /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseId;
+
+        /**
          * 供应商id
          */
         private String supplierId;
