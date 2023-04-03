@@ -51,7 +51,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     private List<ProductDetailExcelDTO> dataList = new ArrayList<>();
 
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public ProductDetailExcelListener(Integer importType, ProductDetailService productDetailService, ProductUnitService productUnitService,
                                       BasicCategoryService basicCategoryService, BasicDictService basicDictService, SysUserFeign sysUserFeign) {
@@ -280,11 +280,11 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
         productPurchaseDTO.setEan(dto.getEan());
         productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQtyStr()));
-        productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), dateTimeFormatter));
+        productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), dateTimeFormatter));
         productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoqStr()));
         productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycleStr()));
-        productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), dateTimeFormatter));
         productPurchaseDTO.setArrivalState(purchaseState);
         if (purchaseUserList.size() > 0) {
             productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
@@ -300,8 +300,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmountStr()));
         productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQtyStr()));
         productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmountStr()));
-        productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), dateTimeFormatter));
+        productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), dateTimeFormatter));
         if (StringUtils.isNotBlank(saleCountryStr)) {
             productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
         }

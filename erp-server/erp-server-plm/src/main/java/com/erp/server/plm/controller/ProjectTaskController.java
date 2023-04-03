@@ -714,8 +714,8 @@ public class ProjectTaskController extends BaseController {
      * @Date 2022/9/28 11:46
      **/
     @PostMapping("/importProjectTaskFile")
-    public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(taskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService);
+    public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(importType, taskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

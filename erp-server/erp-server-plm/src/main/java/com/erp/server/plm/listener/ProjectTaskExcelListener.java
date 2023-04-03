@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskExcelDTO> {
-
+    private Integer importType;
     private ProjectTaskService projectTaskService;
 
     private ProductInfoService productInfoService;
@@ -42,8 +42,11 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
     private List<ProjectTaskExcelDTO> dataList = new ArrayList<>();
 
-    public ProjectTaskExcelListener(ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+
+    public ProjectTaskExcelListener(Integer importType, ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
                                     ProjectPhaseService projectPhaseService, TaskDocsNameService taskDocsNameService) {
+        this.importType = importType;
         this.projectTaskService = projectTaskService;
         this.productInfoService = productInfoService;
         this.sysUserFeign = sysUserFeign;
@@ -55,6 +58,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
     @Override
     public void invoke(ProjectTaskExcelDTO projectTaskExcelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
+        ProjectTaskDTO projectTaskDTO = new ProjectTaskDTO();
 
         //添加数据用于判断是否为空
         dataList.add(projectTaskExcelDTO);
@@ -70,13 +74,34 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             errorMsgList.add("[所属产品]在系统中未找到，请输入已有的产品名称");
         }
 
-        ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
-        if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
-            errorMsgList.add("[任务名称]在系统中已存在，不可重复");
-        }
-
         if (!projectTaskExcelDTO.getType().equals("一般任务") && !projectTaskExcelDTO.getType().equals("审核任务")) {
             errorMsgList.add("[任务类型]请输入'一般任务'或'审核任务'");
+        }
+
+        if (projectTaskExcelDTO.getType().equals("一般任务")){
+            projectTaskDTO.setType(0);
+        } else {
+            projectTaskDTO.setType(1);
+        }
+
+        ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
+        // 判断是修改还是新增 1：新增 2：修改
+        /**
+         * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
+         */
+        if (importType == 2) {
+            //不可编辑：待审核  审核通过  已完成
+            if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
+                errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
+            } else {
+                projectTaskDTO.setId(projectTaskEntity.getId());
+                projectTaskDTO.setType(projectTaskEntity.getType());
+            }
+
+        } else {
+            if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
+                errorMsgList.add("[任务名称]在系统中已存在，不可重复");
+            }
         }
 
         List<String> chargeNameList = new ArrayList<>();
@@ -168,24 +193,21 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             return;
         }
 
-        ProjectTaskDTO projectTaskDTO = new ProjectTaskDTO();
+
         projectTaskDTO.setProjectId(productInfoEntity.getId());
         projectTaskDTO.setProductId(productInfoEntity.getId());
         projectTaskDTO.setName(projectTaskExcelDTO.getName());
-        if (!projectTaskExcelDTO.getType().equals("一般任务")){
-            projectTaskDTO.setType(0);
-        } else {
-            projectTaskDTO.setType(1);
-        }
+
         projectTaskDTO.setChargeIds(chargeNameList);
         projectTaskDTO.setPreTaskIdList(preTaskList);
         if (projectTaskExcelDTO.getPlanStartTime() != null) {
-            projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanStartTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+
+            projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanStartTime(), dateTimeFormatter));
         }
         if (projectTaskExcelDTO.getPlanEndTime() != null) {
-            projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanEndTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+            projectTaskDTO.setPlanEndTime(LocalDate.parse(projectTaskExcelDTO.getPlanEndTime(), dateTimeFormatter));
         }
-        if (projectTaskExcelDTO.getPriority().equals("高")){
+        if (projectTaskExcelDTO.getPriority().equals("高")) {
             projectTaskDTO.setPriority(3);
         } else if (projectTaskExcelDTO.getPriority().equals("中")) {
             projectTaskDTO.setPriority(2);
@@ -206,8 +228,12 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         projectTaskDTO.setRefSkuIdList(new ArrayList<>());
         projectTaskDTO.setRelatedSkuType("3");
         projectTaskDTO.setWorkPeriod(projectTaskExcelDTO.getWorkPeriod());
+        if (importType == 2) {
+            projectTaskService.updateTask(projectTaskDTO);
+        } else {
+            projectTaskService.save(projectTaskDTO);
+        }
 
-        projectTaskService.save(projectTaskDTO);
     }
 
     @Override
