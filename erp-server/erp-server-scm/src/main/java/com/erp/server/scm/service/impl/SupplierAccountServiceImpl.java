@@ -103,11 +103,13 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         List<SupplierAccountDTO.UpdateDTO> addList = bankAccountList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
 
-        //这是要添加的
-        List<SupplierAccountDTO.UpdateDTO> updateList = bankAccountList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+
 
 
         List<SupplierAccountEntity> saveOrUpdateList = BeanMapper.copyList(bankAccountList, SupplierAccountEntity.class);
+
+        //这是要修改
+        List<SupplierAccountEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
 
         List<SupplierAccountEntity> dbList = this.getList(supplierId);
         //获取到删除的 账户id
@@ -129,7 +131,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         moduleOperateLogService.batchAddModuleOperateLog("添加了一个账户【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
 
         //修改的
-        for (SupplierAccountDTO.UpdateDTO update : updateList) {
+        for (SupplierAccountEntity update : updateList) {
             String id = update.getId();
             SupplierAccountEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
             if (old != null) {
