@@ -1,14 +1,20 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
+import com.erp.model.scm.entity.PurchaseChangeEntity;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.scm.mapper.PurchaseChangeDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchaseChangeDetailService;
+import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -16,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,12 +42,24 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
+
+    @Resource
+    private PurchaseChangeService purchaseChangeService;
+
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<PurchaseChangeDetailDTO.AddDTO> details, String purchaseChangeId) {
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
         List<PurchaseChangeDetailEntity> list = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
+        //验证数量、单价是否符合供应商报价
+        checkPurchasePrice(list,purchaseChangeId);
         //计算金额
         doOpCalculateAmount(list,purchaseChangeId);
         this.saveBatch(list);
@@ -64,11 +83,12 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             this.removeByIds(deleteIds);
         }
         List<PurchaseChangeDetailEntity> newList = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
+        //验证验证数量、单价是否符合供应商报价
+        checkPurchasePrice(newList,purchaseChangeId);
         //计算金额
         doOpCalculateAmount(newList,purchaseChangeId);
         this.saveOrUpdateBatch(newList);
     }
-
 
     @Override
     public List<PurchaseChangeDetailEntity> listByPurchaseChangeIds(List<String> purchaseChangeIds) {
@@ -97,5 +117,43 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             obj.setPurchaseChangeId(purchaseChangeId);
             obj.setAmount(MathUtil.multiply(obj.getPrice(),obj.getQty()));
         });
+    }
+
+    /**
+     * @description: 验证是否存在供应商报价
+     * @author Will
+     * @date: 2023/4/3 16:44
+     */
+    private void checkPurchasePrice (List<PurchaseChangeDetailEntity> list,String purchaseChangeId) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        PurchaseChangeEntity purchaseChangeEntity = purchaseChangeService.getById(purchaseChangeId);
+        if (ObjectUtils.isEmpty(purchaseChangeEntity)) {
+            throw new ServiceException(ApiError.ERROR_98042);
+        }
+        List<String> purchaseOrderDetailIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        for (PurchaseChangeDetailEntity purchaseChangeDetailEntity : list) {
+            //赠品无需判断供应商报价
+            long count = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()) && obj.getIsGift()).count();
+            if (count > 0) {
+                continue;
+            }
+
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(purchaseChangeDetailEntity.getQty(),purchaseChangeDetailEntity.getSkuId(),purchaseChangeDetailEntity.getSkuNo(),purchaseChangeEntity.getSupplierId());
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(dto);
+            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+            //单价
+            BigDecimal taxPrice = viewDTO.getTaxPrice();
+            if (MathUtil.compareTo(taxPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
+                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+                throw new ServiceException(new ApiResult(1,error));
+            }
+        }
     }
 }

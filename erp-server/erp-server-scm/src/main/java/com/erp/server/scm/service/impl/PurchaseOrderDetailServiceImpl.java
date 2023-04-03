@@ -123,9 +123,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (details == null) {
             details = new ArrayList<>();
         }
-        List<PurchaseOrderDetailDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.AddDTO.class, details);
+        List<PurchaseOrderDetailDTO.AddDTO> addList = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.AddDTO.class, details);
         //验证报价信息
-        checkPurchasePrice(addDTOS,purchaseOrderId);
+        checkPurchasePrice(addList,purchaseOrderId);
 
         //原明细数据
         List<PurchaseOrderDetailEntity> oldList = this.listByPurchaseOrderId(purchaseOrderId);
@@ -151,45 +151,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         updateCreatePoType(purchaseOrderId);
     }
 
-    private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
-        if (CollectionUtils.isEmpty(details)) {
-            return;
-        }
-
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-            throw new ServiceException(ApiError.ERROR_98036);
-        }
-        //验证录入的SKU明细报价信息是否正确
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !obj.getIsGift()).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(priceList)) {
-            return;
-        }
-        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
-            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
-            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-            //汇率
-            BigDecimal taxRate = viewDTO.getTaxRate();
-            //单价
-            BigDecimal taxPrice = viewDTO.getTaxPrice();
-
-            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(addDTO)) {
-                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
-                throw new ServiceException(new ApiResult(1,error));
-            }
-            if (MathUtil.compareTo(taxRate,addDTO.getTaxRate()) != MathUtil.ZERO) {
-                String error = String.format("SKU【%s】,数量【%s】录入汇率与报价汇率不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
-                throw new ServiceException(new ApiResult(1,error));
-            }
-            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO) {
-                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
-                throw new ServiceException(new ApiResult(1,error));
-            }
-        }
-
-
-    }
 
     @Override
     public List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId) {
@@ -216,52 +177,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     /**
-     * 查询需要删除的数据
-     */
-    private List<String> getDeleteIds(List<PurchaseOrderDetailDTO.UpdateDTO> newList, List<PurchaseOrderDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(PurchaseOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
-    }
-
-    /**
-     * 处理明细中的数据id
-     */
-    private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
-
-        //收料组织信息
-        List<String> receiveOrgIds = newList.stream().map(PurchaseOrderDetailEntity::getReceiveOrgId).collect(Collectors.toList());
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(receiveOrgIds);
-
-
-        for (PurchaseOrderDetailEntity entity : newList) {
-            //收料组织名称
-            if (CollectionUtils.isEmpty(accountingCompanyList)) {
-                throw new ServiceException(ApiError.ERROR_9040);
-            }
-            String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
-            entity.setPurchaseOrderId(purchaseOrderId);
-            entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
-            entity.setReceiveOrgName(receiveOrgName);
-            entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
-            //操作日志
-            if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"编辑操作");
-            } else {
-                PurchaseOrderDetailEntity old = this.getById(entity.getId());
-                if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98026);
-                }
-                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"",String.format("【%s】",old.getSkuNo()));
-            }
-        }
-    }
-
-    /**
      * 更新生成状态
      */
-    private void updateCreatePoType (String purchaseOrderId) {
+    @Override
+    public void updateCreatePoType (String purchaseOrderId) {
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(new PurchaseApplicationRefPoDTO.SearchParamDTO().setPurchaseOrderIds(Arrays.asList(purchaseOrderId)));
         //无关联数据则不处理
         if (CollectionUtils.isEmpty(refList)) {
@@ -312,4 +231,92 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         purchaseApplicationDetailService.updateBatchById(resultList);
     }
 
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<PurchaseOrderDetailDTO.UpdateDTO> newList, List<PurchaseOrderDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PurchaseOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * 处理明细中的数据id
+     */
+    private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
+
+        //收料组织信息
+        List<String> receiveOrgIds = newList.stream().map(PurchaseOrderDetailEntity::getReceiveOrgId).collect(Collectors.toList());
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(receiveOrgIds);
+
+
+        for (PurchaseOrderDetailEntity entity : newList) {
+            //收料组织名称
+            if (CollectionUtils.isEmpty(accountingCompanyList)) {
+                throw new ServiceException(ApiError.ERROR_9040);
+            }
+            String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+            entity.setPurchaseOrderId(purchaseOrderId);
+            entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
+            entity.setReceiveOrgName(receiveOrgName);
+            entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
+            //操作日志
+            if (StringUtils.isBlank(entity.getId())) {
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"编辑操作");
+            } else {
+                PurchaseOrderDetailEntity old = this.getById(entity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98026);
+                }
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+    }
+
+
+    /**
+     * 供应商报价验证
+     */
+    private void checkPurchasePrice (List<PurchaseOrderDetailDTO.AddDTO> details,String purchaseOrderId) {
+        if (CollectionUtils.isEmpty(details)) {
+            return;
+        }
+
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        //验证录入的SKU明细报价信息是否正确
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !obj.getIsGift()).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(priceList)) {
+            return;
+        }
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
+
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
+            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+            //汇率
+            BigDecimal taxRate = viewDTO.getTaxRate();
+            //单价
+            BigDecimal taxPrice = viewDTO.getTaxPrice();
+
+            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(addDTO)) {
+                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
+                throw new ServiceException(new ApiResult(1,error));
+            }
+            if (MathUtil.compareTo(taxRate,addDTO.getTaxRate()) != MathUtil.ZERO) {
+                String error = String.format("SKU【%s】,数量【%s】录入汇率与报价汇率不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
+                throw new ServiceException(new ApiResult(1,error));
+            }
+            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO) {
+                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
+                throw new ServiceException(new ApiResult(1,error));
+            }
+        }
+
+
+    }
 }

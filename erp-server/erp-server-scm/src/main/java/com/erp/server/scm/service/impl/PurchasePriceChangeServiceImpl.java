@@ -241,7 +241,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
-            attachmentService.deleteByBusinessIds(Arrays.asList(dto.getId()));
             //保存附件
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细

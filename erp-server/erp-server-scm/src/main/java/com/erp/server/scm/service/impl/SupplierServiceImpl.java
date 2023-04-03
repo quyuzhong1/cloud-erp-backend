@@ -86,6 +86,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
+
     /**
      * 保存供应商信息
      *
@@ -216,7 +219,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         //旧的
         SupplierEntity old = new SupplierEntity();
-        BeanMapper.copy(supplier,old);
+        BeanMapper.copy(supplier, old);
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -262,7 +265,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             /**
              * 添加修改日志
              */
-            moduleOperateLogService.addModuleOperateLogByObj(old,supplier,ModuleTypeEnum.SUPPLIER.getCode(),supplierId,"","");
+            moduleOperateLogService.addModuleOperateLogByObj(old, supplier, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
 
             //联系人的
             supplierContactService.updateSupplierContact(contactList, supplierId);
@@ -308,6 +311,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
         //获取供应商默认联系人信息
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+
+        //获取到采购订单数据
+        List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
+
         for (SupplierDTO.PagingViewDTO item : list) {
             String id = item.getId();
             //等级id
@@ -336,7 +343,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 item.setContactPerson(contact.getPerson());
                 item.setContactTelNumber(contact.getTelNumber());
             }
-
+            //采购次数
+            long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
+            item.setPurchasesCount((int) purchasesCount);
         }
 
         return new PagingVO(pageData);

@@ -68,4 +68,12 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      */
     PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> supplierPurchasePaging(PagingDTO<BaseIdDTO> dto);
 
+    /**
+     * 根据供应商获取到 供应商订单信息
+     * @author yl
+     * @date 2023-04-03 17:11
+     * @param supplierIdList
+     * @return void
+     */
+    List<PurchaseOrderSupplierEntity>  getBySupplierIds(List<String> supplierIdList);
 }
