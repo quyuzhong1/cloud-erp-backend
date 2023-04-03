@@ -151,9 +151,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         String type = tableName.value();
         List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         List<SupplierCredentialEntity> dbList = this.getList(supplierId);
-        //获取到业务表id 集合
-        List<String> businessIdList = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
-        attachmentService.deleteByBusinessIds(businessIdList);
+
 
         List<String> deleteIdList = getDeleteIds(credentialList, dbList);
         //这是要删除的
@@ -202,7 +200,10 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
-        attachmentService.saveBatch(batchAttachmentList);
+        if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+            attachmentService.saveBatch(batchAttachmentList);
+        }
+
 
     }
 
