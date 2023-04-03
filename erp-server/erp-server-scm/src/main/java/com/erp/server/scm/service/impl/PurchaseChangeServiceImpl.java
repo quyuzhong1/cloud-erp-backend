@@ -331,7 +331,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("采购申请单【%s】取消流程", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"取消流程操作");
+        moduleOperateLogService.batchAddModuleOperateLog("采购变更单【%s】取消流程", ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"取消流程操作");
         return Boolean.TRUE;
     }
 

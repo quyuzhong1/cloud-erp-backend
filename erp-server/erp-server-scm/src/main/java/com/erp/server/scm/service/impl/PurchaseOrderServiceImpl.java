@@ -167,10 +167,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (save) {
             //操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购订单【%s】",code), ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"新增操作");
-            //新增明细
-            purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
             //新增供应商信息
             purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO(),entity.getId());
+            //新增明细
+            purchaseOrderDetailService.add(dto.getDetails(),entity.getId());
         }
         return entity.getId();
     }
@@ -192,10 +192,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getId(),"","");
         //更新主表数据
         this.updateById(entity);
-        //更新明细数据
-        purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
         //供应商数据
         purchaseOrderSupplierService.update(dto.getPurchaseOrderSupplierDTO(),entity.getId());
+        //更新明细数据
+        purchaseOrderDetailService.update(dto.getDetails(),entity.getId());
         return Boolean.TRUE;
     }
 
