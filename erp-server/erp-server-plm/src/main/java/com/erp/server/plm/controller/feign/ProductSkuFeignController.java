@@ -26,7 +26,7 @@ import java.util.Optional;
  * @Date 2022/12/14 15:09
  **/
 @RestController
-@RequestMapping("plm/feign/product")
+@RequestMapping("feign/product")
 public class ProductSkuFeignController {
 
     @Resource

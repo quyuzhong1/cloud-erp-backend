@@ -42,7 +42,7 @@ import java.util.*;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("/plm/task")
+@RequestMapping("/task")
 public class ProjectTaskController extends BaseController {
 
     @Autowired

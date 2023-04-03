@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * @date 2022/11/18 15:01
  */
 @RestController
-@RequestMapping("/plm/task/progress")
+@RequestMapping("/task/progress")
 public class ProjectTaskProgressController extends BaseController {
 
     @Autowired

@@ -25,7 +25,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/plm/sys/field")
+@RequestMapping("sys/field")
 public class SysProductFieldController extends BaseController {
 
     @Autowired

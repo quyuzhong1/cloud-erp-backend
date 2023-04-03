@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  **/
 
 @RestController
-@RequestMapping("plm/drop/down")
+@RequestMapping("/drop/down")
 public class PlmDropDownListController extends BaseController {
 
     /**

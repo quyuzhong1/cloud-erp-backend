@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/plm/field")
+@RequestMapping("/field")
 public class ProductFieldController  extends BaseController {
 
     @Autowired

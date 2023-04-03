@@ -21,7 +21,7 @@ import java.util.List;
  * @date 2022/11/17 9:58
  */
 @RestController
-@RequestMapping("plm/templatePhase")
+@RequestMapping("templatePhase")
 public class TemplatePhaseController extends BaseController {
 
     @Autowired
