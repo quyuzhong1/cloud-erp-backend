@@ -1180,7 +1180,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         if (ObjectUtils.isNotEmpty(productDetailEntity)) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+            List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+
+                if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    productInfoService.removeById(productInfoEntity.getId());
+                }
+
                 //添加操作日志
                 SysLogEntity sysLogEntity = new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(productInfoEntity.getId()).setPid(productInfoEntity.getId()).setOperation("删除信息").setContent("删除了一个SKU：[" + productDetailEntity.getSkuNo() + "]");
                 sysLogService.addSysLogByOther(sysLogEntity);
