@@ -6,11 +6,9 @@ package com.erp.model.scm.enums;
  * @description: TODO
  * @date 2023/3/27 10:52
  */
-public enum PurchaseListTypeEnum {
+public enum PurchaseChangeListTypeEnum {
 
     TO_BE_APPROVE("toBeApprove", "待审批"),
-    TO_BE_CREATE("toBeCreate", "待生成"),
-    CREATED("created", "已生成"),
     APPROVE("approve", "审核通过"),
     REJECT("reject", "不通过");
 
@@ -18,7 +16,7 @@ public enum PurchaseListTypeEnum {
     private String code;
     private String name;
 
-    PurchaseListTypeEnum(String code, String name) {
+    PurchaseChangeListTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }

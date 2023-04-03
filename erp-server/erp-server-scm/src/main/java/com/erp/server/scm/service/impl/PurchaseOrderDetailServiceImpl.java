@@ -176,10 +176,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 throw new ServiceException(new ApiResult(1,error));
             }
             if (MathUtil.compareTo(taxRate,addDTO.getTaxRate()) != MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_98047);
+                String error = String.format("SKU【%s】,数量【%s】录入汇率与报价汇率不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
+                throw new ServiceException(new ApiResult(1,error));
             }
             if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_98048);
+                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
+                throw new ServiceException(new ApiResult(1,error));
             }
         }
 

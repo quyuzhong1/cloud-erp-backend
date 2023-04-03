@@ -214,4 +214,20 @@
         pc.create_time desc
     </select>
 
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct pc.id)
+        from purchase_change pc
+        left join purchase_change_detail pcd on pc.id = pcd.purchase_change_id and pcd.is_deleted = false
+        <where>
+            pc.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and pc.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 </mapper>

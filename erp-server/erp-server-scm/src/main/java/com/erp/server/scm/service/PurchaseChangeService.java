@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 
@@ -101,4 +102,19 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return Boolean
      */
     Boolean updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto);
+    /**
+     * @description: 撤销流程
+     * @author Will
+     * @date: 2023/4/3 11:46
+     * @param ids
+     * @return Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+    /**
+     * @description: 查询数量
+     * @author Will
+     * @date: 2023/4/3 11:50
+     * @return List<PurchaseChangeCountDTO>
+     */
+    List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount();
 }
