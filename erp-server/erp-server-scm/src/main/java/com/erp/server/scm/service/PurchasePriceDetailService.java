@@ -94,7 +94,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param excelFile
      * @return com.erp.model.scm.dto.PurchasePriceDetailDTO.ImportDTO
      */
-    PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile);
+    PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds,HttpServletResponse response);
 
     /**
      * 批量更改禁用状态
