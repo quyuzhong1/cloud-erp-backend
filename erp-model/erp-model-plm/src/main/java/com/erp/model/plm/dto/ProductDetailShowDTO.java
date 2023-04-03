@@ -271,4 +271,9 @@ public class ProductDetailShowDTO implements Serializable {
      * 报关中文名
      */
     private String declareChineseName;
+
+    /**
+     * 变体属性
+     */
+    private String variantProperty;
 }
