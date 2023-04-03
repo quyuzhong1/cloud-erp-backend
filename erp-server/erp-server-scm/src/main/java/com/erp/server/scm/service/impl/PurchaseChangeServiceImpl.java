@@ -232,6 +232,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
             //更新采购订单原有数据
             updatePurchaseOrderData(ids);
+
+            //更新采购申请单生成PO类型
+            updatePurchaseOrderCreatePoType(list);
+
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -466,9 +470,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             purchaseOrderDetailList.add(entity);
         }
         purchaseOrderDetailService.updateBatchById(purchaseOrderDetailList);
-
-        //更新采购订单生成PO类型
-        //purchaseOrderDetailService.updateCreatePoType();
     }
 
     /**
@@ -514,5 +515,22 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             list.add(obj.getId());
         });
+    }
+
+    /**
+     * @description: 更新采购申请单生成PO类型
+     * @author Will
+     * @date: 2023/4/3 17:16
+     * @param list
+     */
+    private void updatePurchaseOrderCreatePoType (List<PurchaseChangeEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> purchaseOrderIds = list.stream().map(PurchaseChangeEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+        for (String purchaseOrderId : purchaseOrderIds) {
+            //更新采购申请单生成PO类型
+            purchaseOrderDetailService.updateCreatePoType(purchaseOrderId);
+        }
     }
 }

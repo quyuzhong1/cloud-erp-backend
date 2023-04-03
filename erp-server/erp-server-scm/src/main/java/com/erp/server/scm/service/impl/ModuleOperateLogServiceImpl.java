@@ -214,4 +214,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
         }
         return this.saveBatch(list);
     }
+
+    @Override
+    public void removeByBusinessIds(List<String> businessIds) {
+        lambdaUpdate().in(ModuleOperateLogEntity::getBusinessId,businessIds).remove();
+    }
 }

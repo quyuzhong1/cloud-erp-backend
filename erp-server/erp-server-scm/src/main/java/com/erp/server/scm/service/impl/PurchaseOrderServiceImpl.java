@@ -282,6 +282,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         updateCreatePoType(ids);
         //删除采购申请单和订单关联表数据
         purchaseApplicationRefPoService.removeByPurchaseOrderIds(ids);
+        //删除操作日志
+        moduleOperateLogService.removeByBusinessIds(ids);
         return Boolean.TRUE;
     }
 

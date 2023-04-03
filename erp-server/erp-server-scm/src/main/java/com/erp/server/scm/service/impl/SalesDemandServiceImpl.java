@@ -337,6 +337,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         salesDemandDetailService.removeBySalesDemandIds(ids);
+        //删除操作日志
+        moduleOperateLogService.removeByBusinessIds(ids);
         //删除主表数据
         return  this.removeByIds(ids);
     }

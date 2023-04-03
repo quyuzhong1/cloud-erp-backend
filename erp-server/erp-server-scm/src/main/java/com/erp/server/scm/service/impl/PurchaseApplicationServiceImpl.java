@@ -520,6 +520,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         purchaseApplicationDetailService.removeByPurchaseApplicationIds(ids);
+        //删除操作日志
+        moduleOperateLogService.removeByBusinessIds(ids);
         //删除主表数据
         return  this.removeByIds(ids);
     }
