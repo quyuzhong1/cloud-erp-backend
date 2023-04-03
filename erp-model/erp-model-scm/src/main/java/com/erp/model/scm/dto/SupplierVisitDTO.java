@@ -107,6 +107,12 @@ public class SupplierVisitDTO implements Serializable {
 
 
         /**
+         * 供应商名
+         */
+        private String  supplierName;
+
+
+        /**
          * 表id
          */
         private SupplierVisitEnum visitType;
