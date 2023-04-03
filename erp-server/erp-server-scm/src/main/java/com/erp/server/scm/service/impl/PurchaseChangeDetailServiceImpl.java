@@ -42,7 +42,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         }
         List<PurchaseChangeDetailEntity> list = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
         //计算金额
-        doOpCalculateAmount(list);
+        doOpCalculateAmount(list,purchaseChangeId);
         this.saveBatch(list);
     }
 
@@ -65,7 +65,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         }
         List<PurchaseChangeDetailEntity> newList = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
         //计算金额
-        doOpCalculateAmount(newList);
+        doOpCalculateAmount(newList,purchaseChangeId);
         this.saveOrUpdateBatch(newList);
     }
 
@@ -89,11 +89,12 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
     /**
      * 更新金额
      */
-    private void doOpCalculateAmount(List<PurchaseChangeDetailEntity> list) {
+    private void doOpCalculateAmount(List<PurchaseChangeDetailEntity> list,String purchaseChangeId) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         list.forEach(obj->{
+            obj.setPurchaseChangeId(purchaseChangeId);
             obj.setAmount(MathUtil.multiply(obj.getPrice(),obj.getQty()));
         });
     }

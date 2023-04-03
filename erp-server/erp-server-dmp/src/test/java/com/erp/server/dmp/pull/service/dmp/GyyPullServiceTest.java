@@ -5,7 +5,10 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.erp.server.dmp.pull.service.gyy.*;
+import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
+import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.gyy.GyyRefundServiceImpl;
+import com.erp.server.dmp.pull.service.gyy.GyyReturnOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +18,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -131,7 +133,7 @@ public class GyyPullServiceTest {
     }
 
     @Test
-    public void pullRefundSalesTest(){
+    public void pullRefundSalesTeste(){
         GyyRefundServiceImpl gyyOrderInfoService = new GyyRefundServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -156,7 +158,7 @@ public class GyyPullServiceTest {
 
 
     @Test
-    public void pullReturnSalesTest(){
+    public void pullReturnSalesTests(){
         GyyReturnOrderInfoServiceImpl gyyOrderInfoService = new GyyReturnOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_RETURN_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -180,7 +182,7 @@ public class GyyPullServiceTest {
     }
 
     @Test
-    public void pullRefundSalesTest(){
+    public void pullRefundSalesTests(){
         GyyRefundServiceImpl gyyOrderInfoService = new GyyRefundServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
@@ -205,7 +207,7 @@ public class GyyPullServiceTest {
 
 
     @Test
-    public void pullReturnSalesTest(){
+    public void pullReturnSalesTestr(){
         GyyReturnOrderInfoServiceImpl gyyOrderInfoService = new GyyReturnOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_RETURN_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();

@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -46,7 +47,7 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
      * 变更日期
      */
     @TableField("change_date")
-    private Date changeDate;
+    private LocalDate changeDate;
 
     /**
      * 变更人id
@@ -118,7 +119,7 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
      * 作废时间
      */
     @TableField("invalid_time")
-    private Date invalidTime;
+    private LocalDate invalidTime;
 
     /**
      * 审核人id

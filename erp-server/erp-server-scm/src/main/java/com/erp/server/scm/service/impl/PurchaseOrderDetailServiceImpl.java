@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,6 +70,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
+        //验证报价信息
+        checkPurchasePrice(details,purchaseOrderId);
+
         List<PurchaseOrderDetailEntity> list = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
         //处理明细中的数据id
         doOpHandleDetails(list,purchaseOrderId);
@@ -120,7 +124,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             details = new ArrayList<>();
         }
         List<PurchaseOrderDetailDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.AddDTO.class, details);
-        //checkPurchasePrice(addDTOS,purchaseOrderId);
+        //验证报价信息
+        checkPurchasePrice(addDTOS,purchaseOrderId);
 
         //原明细数据
         List<PurchaseOrderDetailEntity> oldList = this.listByPurchaseOrderId(purchaseOrderId);
@@ -158,7 +163,24 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //验证录入的SKU明细报价信息是否正确
         List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
         for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
+            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+            //汇率
+            BigDecimal taxRate = viewDTO.getTaxRate();
+            //单价
+            BigDecimal taxPrice = viewDTO.getTaxPrice();
 
+            PurchaseOrderDetailDTO.AddDTO addDTO = details.stream().filter(obj -> obj.getSkuId().equals(priceDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(addDTO)) {
+                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
+                throw new ServiceException(new ApiResult(1,error));
+            }
+            if (MathUtil.compareTo(taxRate,addDTO.getTaxRate()) != MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_98047);
+            }
+            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_98048);
+            }
         }
 
 
