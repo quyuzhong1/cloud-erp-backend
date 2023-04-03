@@ -37,14 +37,12 @@ public class WarehouseDTO implements Serializable {
         /**
          * 名称
          */
-        @NotBlank(message = "仓库名称不能为空")
         @Size(max = 200, message = "仓库名称最大200字符")
         private String name;
 
         /**
          * 仓库类型 对应dict 表id
          */
-        @NotBlank(message = "仓库类型不能为空")
         private String typeId;
 
         /**
@@ -56,7 +54,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 联系人
          */
-        @NotBlank(message = "联系人不能为空")
+        @Size(max = 20, message = "联系人最大20字符")
         private String contacts;
 
 
@@ -72,7 +70,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 联系人电话
          */
-        @NotBlank(message = "联系人电话不能为空")
+        @Size(max = 20, message = "联系人电话最大20字符")
         private String contactTelNumber;
 
 
@@ -88,6 +86,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 地址
          */
+        @Size(max = 200, message = "仓库地址最大200字符")
         private String address;
 
         /**

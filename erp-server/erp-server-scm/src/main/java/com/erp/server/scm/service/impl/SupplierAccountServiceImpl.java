@@ -6,7 +6,6 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierAccountMapper;

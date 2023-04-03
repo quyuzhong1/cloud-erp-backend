@@ -9,6 +9,7 @@ import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.server.scm.mapper.AttachmentMapper;
 import com.erp.server.scm.service.AttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,6 +112,26 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             return Collections.EMPTY_LIST;
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    /**
+     * 删除附件
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-04-03 14:13
+     */
+    @Override
+    public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
+        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AttachmentEntity::getAttachUrl, dto.getAttachUrl());
+        if (StringUtils.isNotBlank(dto.getBusinessId())) {
+            queryWrapper.eq(AttachmentEntity::getBusinessId, dto.getBusinessId());
+
+        }
+        this.remove(queryWrapper);
+        FastDFSClientUtil.deleteFile(dto.getAttachUrl());
     }
 
 

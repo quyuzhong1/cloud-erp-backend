@@ -161,7 +161,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             throw new ServiceException(ApiError.ERROR_98036);
         }
         //验证录入的SKU明细报价信息是否正确
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !obj.getIsGift()).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(priceList)) {
+            return;
+        }
         for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO: priceList) {
             List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(priceDTO);
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);

@@ -57,4 +57,14 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
      */
     List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
+
+    
+    /**
+     * 删除附件
+     * @author yl
+     * @date 2023-04-03 14:13
+     * @param dto
+     * @return void
+     */
+    void removeAttachment(AttachmentDTO.DeleteDTO dto);
 }
