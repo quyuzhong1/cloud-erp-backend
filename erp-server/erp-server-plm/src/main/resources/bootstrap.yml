@@ -4,7 +4,7 @@ spring:
   profiles:
     active: dev
 server:
-  port: 9051
+  port: 9050
 
 logging:
   config: classpath:logback-spring.xml
