@@ -103,8 +103,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         changeEntity.setCode(code);
         changeEntity.setId(id);
         String pricingUserId = dto.getAdjustUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-        changeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
+        if(StringUtils.isNotBlank(pricingUserId)){
+            FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+            changeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
+        }
         String orgId = dto.getPurchaseOrgId();
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
@@ -220,8 +222,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         BeanMapper.copy(dto, priceChangeEntity);
         priceChangeEntity.setCode(code);
         String pricingUserId = dto.getAdjustUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-        priceChangeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
+        if(StringUtils.isNotBlank(pricingUserId)){
+            FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+            priceChangeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
+        }
         String orgId = dto.getPurchaseOrgId();
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));

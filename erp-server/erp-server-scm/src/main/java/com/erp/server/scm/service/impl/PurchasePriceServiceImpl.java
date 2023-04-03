@@ -97,8 +97,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
         String pricingUserId = dto.getPricingUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-        purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        if(StringUtils.isNotBlank(pricingUserId)){
+            FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+            purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        }
+
         String orgId = dto.getPurchaseOrgId();
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
@@ -216,8 +219,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
 
         String pricingUserId = dto.getPricingUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-        purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        if(StringUtils.isNotBlank(pricingUserId)){
+            FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+            purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        }
+
         String orgId = dto.getPurchaseOrgId();
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));

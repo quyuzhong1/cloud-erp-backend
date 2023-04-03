@@ -247,8 +247,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(dto, supplier);
 
         String purchaseUserId = dto.getPurchaseUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
-        supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
+        if(StringUtils.isNotBlank(purchaseUserId)){
+            FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
+            supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
+        }
         List<String> keyList = new ArrayList<>(1);
         keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
         //根据 key list 获取到对应数据
