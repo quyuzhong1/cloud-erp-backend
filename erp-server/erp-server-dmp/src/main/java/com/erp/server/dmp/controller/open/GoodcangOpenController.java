@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.open;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.server.dmp.pull.service.GoodcangStockService;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,8 @@ public class GoodcangOpenController {
         // 类型校验
 
         // 签名校验
-
-        GoodcangDTO.MessageDTO messageDTO = new GoodcangDTO.MessageDTO();
+        JSONObject message = dto.getJSONObject("Message");
+        GoodcangDTO.MessageDTO messageDTO = JSONUtil.toBean(message, GoodcangDTO.MessageDTO.class);
         if(StrUtil.isBlank(messageDTO.getReceivingCode())){
             return GoodcangDTO.ResultDTO.fail("receiving_code 为空");
         }

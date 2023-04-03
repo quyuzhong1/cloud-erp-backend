@@ -113,7 +113,7 @@ public class DmpWarehouseInboundRecordEntity extends BaseEntity<DmpWarehouseInbo
         this.warehouseId = ext.getWarehouseId();
         this.platformAddTime = ext.getAddTime();
         this.platformUpdateTime = ext.getUpdateTime();
-        this.platformSign = "谷仓";
+        this.platformSign = ext.getPlatformSign();
     }
 
     @Override

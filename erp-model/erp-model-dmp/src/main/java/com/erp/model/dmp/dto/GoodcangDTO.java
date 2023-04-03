@@ -109,6 +109,8 @@ public class GoodcangDTO {
          */
         @JsonProperty("receiving_type")
         private Integer receivingType;
+
+        private String platformSign;
         /**
          * 入库明细
          */
@@ -129,6 +131,7 @@ public class GoodcangDTO {
             this.updateTime = dto.getUpdateTime();
             this.receivingType = 0;
             this.receivingDetail = ReceivingDetailDTO.createReceivingDetail(dto.getItems());
+            this.platformSign = "艾姆勒";
         }
 
     }
