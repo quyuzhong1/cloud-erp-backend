@@ -26,7 +26,7 @@ import java.util.Objects;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/feign/user")
+@RequestMapping("feign/user")
 public class SysUserFeignController extends BaseController {
 
     @Autowired

@@ -26,7 +26,7 @@ import java.util.Objects;
  * @since 2022-12-08 14:33:46
  */
 @RestController
-@RequestMapping("bi/dashboard")
+@RequestMapping("dashboard")
 public class BiDashboardController extends BaseController {
 
 

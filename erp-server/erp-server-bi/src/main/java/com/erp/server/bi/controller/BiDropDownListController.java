@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  **/
 
 @RestController
-@RequestMapping("bi/drop/down")
+@RequestMapping("drop/down")
 public class BiDropDownListController extends BaseController {
 
     @Resource

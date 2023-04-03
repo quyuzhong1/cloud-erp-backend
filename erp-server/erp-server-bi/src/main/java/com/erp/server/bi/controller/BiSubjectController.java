@@ -31,7 +31,7 @@ import java.util.List;
  * @since 2022-12-08 14:31:58
  */
 @RestController
-@RequestMapping("bi/subject")
+@RequestMapping("subject")
 public class BiSubjectController extends BaseController {
 
     /**

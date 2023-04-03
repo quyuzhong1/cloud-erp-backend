@@ -21,7 +21,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("plm/task/phase")
+@RequestMapping("task/phase")
 public class ProjectPhaseController extends BaseController {
 
     @Autowired

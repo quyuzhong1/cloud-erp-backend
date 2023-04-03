@@ -14,6 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 public interface AuthFeign {
 
     //设置登录ip账号登录
-    @PostMapping("auth/feign/user/logout")
+    @PostMapping("feign/user/logout")
     ApiResult logout(String  accessToken);
 }

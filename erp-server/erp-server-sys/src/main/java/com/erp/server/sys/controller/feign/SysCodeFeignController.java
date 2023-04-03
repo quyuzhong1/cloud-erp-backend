@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @date 2022/11/21 19:15
  */
 @RestController
-@RequestMapping("sys/feign/code")
+@RequestMapping("feign/code")
 public class SysCodeFeignController extends BaseController {
 
     @Autowired

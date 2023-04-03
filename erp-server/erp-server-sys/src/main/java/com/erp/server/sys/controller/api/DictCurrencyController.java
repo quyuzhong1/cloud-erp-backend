@@ -22,7 +22,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/sys/currency")
+@RequestMapping("currency")
 public class DictCurrencyController extends BaseController {
 
     @Resource

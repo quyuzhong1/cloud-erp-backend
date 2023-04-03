@@ -21,7 +21,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("plm/docsChange")
+@RequestMapping("docsChange")
 public class DocsChangeRecordController extends BaseController {
 
     @Autowired

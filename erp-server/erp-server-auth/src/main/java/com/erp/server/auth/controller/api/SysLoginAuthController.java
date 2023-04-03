@@ -36,7 +36,7 @@ import java.util.Objects;
  * @Created by yl
  */
 @RestController
-@RequestMapping("auth/user")
+@RequestMapping("user")
 public class SysLoginAuthController extends BaseController {
 
     @Autowired

@@ -22,7 +22,7 @@ import java.util.List;
  * @Date 2022/12/29 18:08
  **/
 @RestController
-@RequestMapping("bi/cost/benefit")
+@RequestMapping("cost/benefit")
 public class BiCostBenefitAnalysisController extends BaseController {
 
     @Resource

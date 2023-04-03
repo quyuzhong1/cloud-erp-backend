@@ -25,7 +25,7 @@ import java.util.List;
  * @since 2022-12-08 14:31:14
  */
 @RestController
-@RequestMapping("bi/module")
+@RequestMapping("module")
 @Validated
 public class BiModuleController extends BaseController {
     /**

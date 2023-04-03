@@ -23,7 +23,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("admin/menu")
+@RequestMapping("menu")
 public class AdminApiController  extends BaseController {
 
     @Autowired

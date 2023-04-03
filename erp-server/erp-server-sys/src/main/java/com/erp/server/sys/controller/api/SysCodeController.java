@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @date 2022/11/21 11:33
  */
 @RestController
-@RequestMapping("/sys/code")
+@RequestMapping("code")
 public class SysCodeController extends BaseController {
 
     @Autowired

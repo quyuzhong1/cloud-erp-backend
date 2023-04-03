@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * @since 2023-02-24
  */
 @RestController
-@RequestMapping("/sys/calendar")
+@RequestMapping("calendar")
 public class SysCalendarController extends BaseController {
 
     @Resource

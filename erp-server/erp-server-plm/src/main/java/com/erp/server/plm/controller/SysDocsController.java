@@ -25,7 +25,7 @@ import java.util.Map;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("/plm/sys/docs")
+@RequestMapping("sys/docs")
 public class SysDocsController extends BaseController {
 
     @Autowired

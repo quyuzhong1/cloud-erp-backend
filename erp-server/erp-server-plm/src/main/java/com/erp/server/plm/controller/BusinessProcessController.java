@@ -19,7 +19,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("plm/process")
+@RequestMapping("process")
 public class BusinessProcessController extends BaseController {
 
 

@@ -14,7 +14,7 @@ import java.util.List;
  * @date 2023/3/17 16:01
  */
 @RestController
-@RequestMapping("wms/feign/warehouse")
+@RequestMapping("feign/warehouse")
 public class WarehouseFeignController {
 
     @Resource

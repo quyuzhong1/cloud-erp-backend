@@ -20,7 +20,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/postUser")
+@RequestMapping("postUser")
 public class SysPostUserController  extends BaseController {
 
     @Autowired

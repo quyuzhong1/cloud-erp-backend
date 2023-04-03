@@ -22,7 +22,7 @@ import javax.annotation.Resource;
  * @author Cloud
  */
 @RestController
-@RequestMapping("bi/indicator/sale")
+@RequestMapping("indicator/sale")
 public class BiTargetSaleController extends BaseController {
 
     @Resource

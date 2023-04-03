@@ -19,7 +19,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
-@RequestMapping("plm/notice/node")
+@RequestMapping("notice/node")
 public class NoticeNodeController extends BaseController {
 
     @Autowired

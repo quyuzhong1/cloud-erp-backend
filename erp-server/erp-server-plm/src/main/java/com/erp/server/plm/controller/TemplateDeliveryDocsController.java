@@ -20,7 +20,7 @@ import java.util.List;
  * @date 2022/11/14 17:31
  */
 @RestController
-@RequestMapping("/plm/templateDeliveryDocs")
+@RequestMapping("templateDeliveryDocs")
 public class TemplateDeliveryDocsController extends BaseController {
 
     @Autowired

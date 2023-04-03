@@ -21,7 +21,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
-@RequestMapping("bi/sys/module")
+@RequestMapping("sys/module")
 public class BiSysModuleController extends BaseController {
 
 

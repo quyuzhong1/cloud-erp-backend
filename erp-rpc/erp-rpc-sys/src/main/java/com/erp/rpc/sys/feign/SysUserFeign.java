@@ -28,143 +28,143 @@ public interface SysUserFeign {
     /**
      *  账号登录
      */
-    @PostMapping("sys/feign/user/accountLogin")
+    @PostMapping("feign/user/accountLogin")
     ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO loginDTO);
 
     /**
      * 设置登录ip账号登录
      */
-    @PostMapping("sys/feign/user/setLoginIp")
+    @PostMapping("feign/user/setLoginIp")
     ApiResult<SysUserDTO> setLoginIp(@RequestBody SysLoginIpDTO loginDTO);
 
     /**
      * 扫码登录
      */
-    @PostMapping("sys/feign/user/scanCodeLogin")
+    @PostMapping("feign/user/scanCodeLogin")
     ApiResult<SysUserDTO> scanCodeLogin(@RequestBody SysUserThirdDTO loginDTO);
 
 
     /**
      * 获取用户列表
      */
-    @PostMapping("sys/feign/user/findList")
+    @PostMapping("feign/user/findList")
     ApiResult<List<FindUserDTO>> userList(@RequestBody BaseSearchDTO dto);
 
     /**
      * 获取用户权限
      * */
-    @PostMapping("sys/feign/user/getRequestPermissionsList")
+    @PostMapping("feign/user/getRequestPermissionsList")
     List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId);
 
     /**
      * 获取用户列表
      */
-    @GetMapping("sys/feign/user/getUserList")
+    @GetMapping("feign/user/getUserList")
     List<FindUserDTO> getUserList();
 
     /**
      * 获取部门的用户
      */
-    @GetMapping("sys/feign/user/getDepUserList")
+    @GetMapping("feign/user/getDepUserList")
     List<String> getDepUserList(@RequestBody String userId);
 
     /**
      *  根据用户id 获取用户角色的id
      */
-    @PostMapping("sys/feign/user/getRoleIdList")
+    @PostMapping("feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
 
     /**
      *   根据第三方平台 以及union id 获取用户id
      */
-    @PostMapping("sys/feign/user/getUserIdByThird")
+    @PostMapping("feign/user/getUserIdByThird")
     String getUidByUnionId(@RequestBody FindUserByThirdDTO third);
 
-    @PostMapping("sys/feign/user/getThirdUnionId")
+    @PostMapping("feign/user/getThirdUnionId")
     List<ThirdUnionDTO> getThirdUnionId(@RequestBody String fsPlatform);
 
     /**
      *   根据userId查询用户
      */
-    @PostMapping("sys/feign/user/getUserByUserId")
+    @PostMapping("feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
     /**
      *  根据用户名称查询用户
      */
-    @GetMapping("sys/feign/user/getUserByUserName")
+    @GetMapping("feign/user/getUserByUserName")
     FindUserDTO getUserByUserName(@RequestBody String userName);
 
     /**
      *  根据userIds查询用户集合
      */
-    @GetMapping("sys/feign/user/getUserListByUserIds")
+    @GetMapping("feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 
     /**
      * 查询sku编码
      */
-    @PostMapping("sys/feign/code/getSkuNo")
+    @PostMapping("feign/code/getSkuNo")
     String getSkuNo(@RequestBody SysCodeSkuDTO dto);
 
     /**
      *  查询spu编码
      */
-    @PostMapping("sys/feign/code/getSpuNo")
+    @PostMapping("feign/code/getSpuNo")
     String getSpuNo(@RequestBody SysCodeDTO dto);
 
     /**
      * 查询时间格式的业务编码
      */
-    @PostMapping("sys/feign/code/getBusinessNo")
+    @PostMapping("feign/code/getBusinessNo")
     String getBusinessNo(SysCodeDTO dto);
 
-    @PostMapping("sys/feign/user/getUserDeptList")
+    @PostMapping("feign/user/getUserDeptList")
     List<SysUserDeptDTO> getUserDeptList();
 
     /**
      *  根据部门id查询部门
      */
-    @PostMapping("sys/feign/user/getUserDeptById")
+    @PostMapping("feign/user/getUserDeptById")
     SysDepartmentDTO getUserDeptById(@RequestBody String deptId);
 
 
     /**
      * 根据部门名称查询部门id  包括字部门
      */
-    @PostMapping("sys/feign/dept/getDeptIdList")
+    @PostMapping("feign/dept/getDeptIdList")
     List<String> getDeptIdsByName(@RequestBody String deptName);
 
     /**
      * 获取所有的部门信息
       */
-    @GetMapping("sys/feign/dept/getDeptList")
+    @GetMapping("feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
 
-    @PostMapping("sys/feign/user/getSysUserById")
+    @PostMapping("feign/user/getSysUserById")
     SysUserDTO getSysUserById(@RequestBody String uid);
     /**
      * 根据用户id查询所有上级用户
      */
-    @PostMapping("sys/feign/user/listSuperiorByUserIds")
+    @PostMapping("feign/user/listSuperiorByUserIds")
     List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds);
 
     /**
      *  根据角色id查用户名称
      */
-    @PostMapping("sys/feign/user/listRoleByIds")
+    @PostMapping("feign/user/listRoleByIds")
     List<String> listRoleByIds(@RequestBody List<String> roleIds);
 
     /**
      *  根据用户ids查询角色
      */
-    @PostMapping("sys/feign/user/listRoleByUserIds")
+    @PostMapping("feign/user/listRoleByUserIds")
     List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
 
     /**
      *  根据部门名称查询部门负责人
      */
-    @PostMapping("sys/feign/dept/getByDeptNames")
+    @PostMapping("feign/dept/getByDeptNames")
     List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
 
     /**
@@ -172,7 +172,7 @@ public interface SysUserFeign {
      * @param dto
      * @return
      */
-    @PostMapping("sys/feign/calendar/list")
+    @PostMapping("feign/calendar/list")
     List<SysCalendarListVO> listCalendar(@RequestBody SysCalendarDTO.ListDTO dto);
 
 
@@ -181,7 +181,7 @@ public interface SysUserFeign {
      * @param ids
      * @return
      */
-    @PostMapping("sys/feign/bank/getByIds")
+    @PostMapping("feign/bank/getByIds")
     List<BaseIdDTO> getBankList(@RequestBody List<String> ids);
 
 
@@ -192,7 +192,7 @@ public interface SysUserFeign {
       * @param ids
       * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
       */
-    @PostMapping("sys/feign/accountingCompany/getByIds")
+    @PostMapping("feign/accountingCompany/getByIds")
     List<BaseIdDTO> getAccountingCompanyList(@RequestBody List<String> ids);
 
     /**
@@ -201,12 +201,12 @@ public interface SysUserFeign {
      * @date: 2023/3/22 16:35
      * @return List<BaseIdDTO>
      */
-    @GetMapping("sys/feign/accountingCompany/list")
+    @GetMapping("feign/accountingCompany/list")
     List<BaseIdDTO> listAccountingCompany();
 
     /**
      * 根据币种查询
      */
-    @PostMapping("sys/feign/currency/listByCurrency")
+    @PostMapping("feign/currency/listByCurrency")
     List<CurrencyDTO.ViewDTO> listByCurrency(@RequestBody List<String> currencyList);
 }

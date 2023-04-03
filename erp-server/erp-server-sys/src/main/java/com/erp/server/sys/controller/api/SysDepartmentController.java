@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * @date 2022-07-11 14:05:47
  */
 @RestController
-@RequestMapping("sys/department")
+@RequestMapping("department")
 public class SysDepartmentController extends BaseController {
 
 
