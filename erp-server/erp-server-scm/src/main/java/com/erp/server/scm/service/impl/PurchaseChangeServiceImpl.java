@@ -98,30 +98,17 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         IPage<PurchaseChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         //清空明细数据
         List<PurchaseChangeDTO.ListDTO> records = pageData.getRecords();
-        if (CollectionUtils.isNotEmpty(records)) {
-            List<String> ids = records.stream().map(PurchaseChangeDTO.ListDTO::getId).collect(Collectors.toList());
-            //查询流程id判断是否存在流程 TODO
-
-            List<String> list = new ArrayList<>();
-            records.forEach(obj -> {
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSupplierName(null);
-                    obj.setDeliveryWarehouseName(null);
-                    obj.setApproveStatus(null);
-                    obj.setApproveStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setCreateUserName(null);
-                    return;
-                }
-                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-                obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-                list.add(obj.getId());
-            });
-        }
+        //格式化变更数据
+        formatPurchaseChange(records);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<PurchaseChangeDTO.ListDTO> list(BaseIdDTO dto) {
+        List<PurchaseChangeDTO.ListDTO> list = baseMapper.list(dto);
+        //格式化变更数据
+        formatPurchaseChange(list);
+        return list;
     }
 
     @Override
@@ -362,6 +349,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         return list;
     }
 
+
     /**
      * 处理数据id
      */
@@ -490,5 +478,37 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98045);
         }
+    }
+    /**
+     * @description: 格式化列表数据
+     * @author Will
+     * @date: 2023/4/3 15:16
+     * @param records
+     */
+    private void formatPurchaseChange( List<PurchaseChangeDTO.ListDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        List<String> ids = records.stream().map(PurchaseChangeDTO.ListDTO::getId).collect(Collectors.toList());
+        //查询流程id判断是否存在流程 TODO
+
+        List<String> list = new ArrayList<>();
+        records.forEach(obj -> {
+            boolean contains = list.contains(obj.getId());
+            if (contains) {
+                obj.setCode(null);
+                obj.setSupplierName(null);
+                obj.setDeliveryWarehouseName(null);
+                obj.setApproveStatus(null);
+                obj.setApproveStatusName(null);
+                obj.setInvalidStatus(null);
+                obj.setInvalidStatusName(null);
+                obj.setCreateUserName(null);
+                return;
+            }
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            list.add(obj.getId());
+        });
     }
 }

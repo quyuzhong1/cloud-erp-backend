@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -185,4 +186,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return ViewDTO
      */
     PurchaseChangeDTO.ViewDTO viewPurchaseChange(String id);
+    /**
+     * @description: 查询关联单据
+     * @author Will
+     * @date: 2023/4/3 14:34
+     * @param dto
+     * @return AssociatedDocumentDTO
+     */
+    PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto);
 }

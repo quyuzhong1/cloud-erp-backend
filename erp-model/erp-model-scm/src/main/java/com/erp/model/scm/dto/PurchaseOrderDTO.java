@@ -544,4 +544,14 @@ public class PurchaseOrderDTO implements Serializable {
         @Valid
         List<GenerateReceiveDTO> list;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class AssociatedDocumentDTO {
+
+        /**
+         * 采购变更单
+         */
+        private List<PurchaseChangeDTO.ListDTO> purchaseChangeList;
+    }
 }

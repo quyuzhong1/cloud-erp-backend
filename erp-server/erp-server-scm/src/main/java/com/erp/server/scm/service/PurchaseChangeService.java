@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -28,7 +29,14 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return PagingVO<PurchaseChangeDTO.listDTO>
      */
     PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
-
+    /**
+     * @description: 列表查询
+     * @author Will
+     * @date: 2023/4/3 15:10
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<PurchaseChangeDTO.ListDTO> list(BaseIdDTO dto);
     /**
      * @description: 新增
      * @author Will
@@ -117,4 +125,6 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @return List<PurchaseChangeCountDTO>
      */
     List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount();
+
+
 }

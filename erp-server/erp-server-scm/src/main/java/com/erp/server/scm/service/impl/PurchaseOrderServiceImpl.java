@@ -114,6 +114,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
+    @Resource
+    private PurchaseChangeService purchaseChangeService;
+
+    @Resource
+    private PurchaseChangeDetailService purchaseChangeDetailService;
+
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -742,6 +748,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         viewDTO.setDetails(detailDTOList);
         return viewDTO;
+    }
+
+    @Override
+    public PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto) {
+        PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = new PurchaseOrderDTO.AssociatedDocumentDTO();
+        //采购变更单
+        List<PurchaseChangeDTO.ListDTO> purchaseChangeList = purchaseChangeService.list(dto);
+        resultDTO.setPurchaseChangeList(purchaseChangeList);
+        return resultDTO;
     }
 
     /**
