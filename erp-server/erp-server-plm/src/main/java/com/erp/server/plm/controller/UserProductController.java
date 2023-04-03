@@ -19,7 +19,7 @@ import java.util.Map;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("user/product")
+@RequestMapping("plm/user/product")
 public class UserProductController extends BaseController {
 
     @Autowired

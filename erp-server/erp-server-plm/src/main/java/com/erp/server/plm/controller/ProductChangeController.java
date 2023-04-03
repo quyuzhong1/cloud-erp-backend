@@ -34,7 +34,7 @@ import java.util.Objects;
  * @since 2023-01-11 14:05:03
  */
 @RestController
-@RequestMapping("/change")
+@RequestMapping("plm/change")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 @Slf4j
 public class ProductChangeController extends BaseController {

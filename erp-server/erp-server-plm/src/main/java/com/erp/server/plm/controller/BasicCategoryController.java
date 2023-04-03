@@ -20,7 +20,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("/category")
+@RequestMapping("/plm/category")
 public class BasicCategoryController extends BaseController {
 
     @Autowired

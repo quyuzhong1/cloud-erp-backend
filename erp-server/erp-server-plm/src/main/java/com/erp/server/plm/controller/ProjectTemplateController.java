@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("template")
+@RequestMapping("/plm/template")
 public class ProjectTemplateController extends BaseController {
 
     @Autowired

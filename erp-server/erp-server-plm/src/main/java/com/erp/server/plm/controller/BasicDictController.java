@@ -19,7 +19,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("/dict")
+@RequestMapping("plm/dict")
 public class BasicDictController extends BaseController {
 
     @Autowired

@@ -36,7 +36,7 @@ import java.util.List;
  * @date: 2023/2/21 9:45
  */
 @RestController
-@RequestMapping("product/plan")
+@RequestMapping("plm/product/plan")
 public class ProductPlanController extends BaseController {
 
     @Resource

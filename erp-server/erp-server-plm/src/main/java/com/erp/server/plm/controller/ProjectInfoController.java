@@ -28,7 +28,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("project")
+@RequestMapping("plm/project")
 public class ProjectInfoController extends BaseController {
 
     @Autowired

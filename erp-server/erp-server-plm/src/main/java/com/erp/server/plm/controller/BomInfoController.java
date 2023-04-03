@@ -38,7 +38,7 @@ import java.util.List;
  * @since 2023-01-09 11:45:28
  */
 @RestController
-@RequestMapping("/bom")
+@RequestMapping("plm/bom")
 public class BomInfoController extends BaseController {
     /**
      * 服务对象

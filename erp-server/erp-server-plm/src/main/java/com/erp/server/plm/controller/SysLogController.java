@@ -22,7 +22,7 @@ import java.util.List;
  * @date 2022/12/5 20:36
  */
 @RestController
-@RequestMapping("sys/log")
+@RequestMapping("/plm/sys/log")
 public class SysLogController extends BaseController {
 
     @Autowired

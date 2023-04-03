@@ -36,7 +36,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
-@RequestMapping("app/user/notice/")
+@RequestMapping("plm/app/user/notice/")
 public class UserNoticeMessageController extends BaseController {
 
     @Autowired

@@ -25,7 +25,7 @@ import java.util.Map;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/notice/message")
+@RequestMapping("plm/notice/message")
 public class NoticeMessageController extends BaseController {
 
 

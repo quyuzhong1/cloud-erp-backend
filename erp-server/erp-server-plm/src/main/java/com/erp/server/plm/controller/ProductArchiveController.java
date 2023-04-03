@@ -27,7 +27,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/product/archive")
+@RequestMapping("plm/product/archive")
 public class ProductArchiveController extends BaseController {
     @Autowired
     private ProductArchiveService productArchiveService;

@@ -19,7 +19,7 @@ import com.common.core.controller.BaseController;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("finish/docs")
+@RequestMapping("/plm/finish/docs")
 public class TaskDocsFinishController extends BaseController {
 
     @Autowired

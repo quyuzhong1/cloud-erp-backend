@@ -25,7 +25,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("sys/taskPhase")
+@RequestMapping("plm/sys/taskPhase")
 public class SysTaskPhaseController extends BaseController {
 
     @Autowired

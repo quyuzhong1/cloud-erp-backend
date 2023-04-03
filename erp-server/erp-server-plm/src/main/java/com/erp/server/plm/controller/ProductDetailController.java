@@ -47,7 +47,7 @@ import java.util.*;
  * @Date 2022/9/22 11:48
  **/
 @RestController
-@RequestMapping("/product/detail")
+@RequestMapping("plm/product/detail")
 public class
 
 ProductDetailController extends BaseController {

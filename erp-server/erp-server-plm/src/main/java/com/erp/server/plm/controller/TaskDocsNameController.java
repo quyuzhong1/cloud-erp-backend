@@ -20,7 +20,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("taskName")
+@RequestMapping("/plm/taskName")
 public class TaskDocsNameController extends BaseController {
 
     @Autowired

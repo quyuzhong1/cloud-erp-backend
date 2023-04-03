@@ -26,7 +26,7 @@ import java.util.Map;
  * @date 2022/11/14 9:15
  */
 @RestController
-@RequestMapping("template/task")
+@RequestMapping("/plm/template/task")
 public class TemplateTaskController extends BaseController {
 
     @Autowired

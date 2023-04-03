@@ -29,7 +29,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/common")
+@RequestMapping("plm/common")
 public class CommonController extends BaseController {
 
     @Resource

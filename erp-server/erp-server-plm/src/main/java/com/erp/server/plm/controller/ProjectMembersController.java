@@ -22,7 +22,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("project/member")
+@RequestMapping("plm/project/member")
 public class ProjectMembersController extends BaseController {
 
     @Autowired
