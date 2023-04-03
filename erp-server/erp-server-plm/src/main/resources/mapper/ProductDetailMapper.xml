@@ -512,7 +512,10 @@
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
-        WHERE pi.delete_state = 0 AND pd.status=#{state} AND pd.is_deleted = FALSE
+        WHERE pi.delete_state = 0  AND pd.is_deleted = FALSE
+        <if test="state!=null">
+            AND pd.status=#{state}
+        </if>
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (

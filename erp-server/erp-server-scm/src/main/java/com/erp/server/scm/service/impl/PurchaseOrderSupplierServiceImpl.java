@@ -125,10 +125,10 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
      */
     @Override
     public List<PurchaseOrderSupplierEntity> getBySupplierIds(List<String> supplierIdList) {
-        if (CollectionUtils.isNotEmpty(supplierIdList)) {
+        if (CollectionUtils.isEmpty(supplierIdList)) {
             return Collections.emptyList();
         }
-        List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getSupplierId).list();
+        List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getSupplierId,supplierIdList).list();
         return list;
     }
 

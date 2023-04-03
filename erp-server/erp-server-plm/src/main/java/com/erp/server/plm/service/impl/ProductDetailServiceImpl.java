@@ -31,12 +31,8 @@ import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -1982,6 +1978,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return baseMapper.getSkuInfoBySkuIds(skuIds);
 
+    }
+
+    @Override
+    public List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto) {
+        return baseMapper.searchSku(dto.getSearchKeyword(),dto.getStatus());
     }
 
 
