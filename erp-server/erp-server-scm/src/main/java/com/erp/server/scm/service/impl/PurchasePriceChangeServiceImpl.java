@@ -389,7 +389,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     public Boolean cancelProcess(List<String> ids) {
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approveIngStatus)).count();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }

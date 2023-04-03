@@ -6,11 +6,15 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierAccountMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SupplierAccountService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +39,9 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     /**
      * 批量保存供应商账户信息
@@ -93,15 +100,44 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         if (CollectionUtils.isEmpty(bankAccountList)) {
             return;
         }
+        //这是要添加的
+        List<SupplierAccountDTO.UpdateDTO> addList = bankAccountList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+
+        //这是要添加的
+        List<SupplierAccountDTO.UpdateDTO> updateList = bankAccountList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+
+
         List<SupplierAccountEntity> saveOrUpdateList = BeanMapper.copyList(bankAccountList, SupplierAccountEntity.class);
 
         List<SupplierAccountEntity> dbList = this.getList(supplierId);
         //获取到删除的 账户id
         List<String> deleteIdList = getDeleteIds(bankAccountList, dbList);
+        //这是要删除的
+        List<SupplierAccountEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
+
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
-        saveOrUpdateList.forEach(s->s.setSupplierId(supplierId));
+        saveOrUpdateList.forEach(s -> s.setSupplierId(supplierId));
+
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(supplierId, obj.getPayee())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个账户【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(supplierId, obj.getPayee())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个账户【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
+
+        //修改的
+        for (SupplierAccountDTO.UpdateDTO update : updateList) {
+            String id = update.getId();
+            SupplierAccountEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
+            }
+        }
+
         this.saveOrUpdateBatch(saveOrUpdateList);
 
     }

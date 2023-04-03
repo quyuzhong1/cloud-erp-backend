@@ -7,12 +7,17 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.scm.mapper.SupplierContactMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SupplierContactService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +33,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContactMapper, SupplierContactEntity> implements SupplierContactService {
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
 
     /**
@@ -61,7 +69,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
 
     @Override
     public void checkIsDefault(List<SupplierContactDTO.AddDTO> contactList) {
-        long count = contactList.stream().filter(c -> c.getIsDefault()!=null&&c.getIsDefault()).count();
+        long count = contactList.stream().filter(c -> c.getIsDefault() != null && c.getIsDefault()).count();
         if (count > 1) {
             throw new ServiceException(ApiError.ERROR_98003);
         }
@@ -94,6 +102,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
      * @date 2023-03-20 11:11
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateSupplierContact(List<SupplierContactDTO.UpdateDTO> contactList, String supplierId) {
         if (CollectionUtils.isEmpty(contactList)) {
             return;
@@ -112,12 +121,31 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
         saveOrUpdateList.addAll(addEntityList);
         List<SupplierContactEntity> dbList = this.getList(supplierId);
         List<String> deleteIdList = getDeleteIds(updateList, dbList);
+        //这是要删除的
+        List<SupplierContactEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
-        saveOrUpdateList.forEach(s->s.setSupplierId(supplierId));
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        saveOrUpdateList.forEach(s -> s.setSupplierId(supplierId));
 
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(obj.getSupplierId(), obj.getPerson())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个联系人【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(supplierId, obj.getPerson())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个联系人【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
+        //修改的
+        for (SupplierContactEntity update : updateEntityList) {
+            String id = update.getId();
+            SupplierContactEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if(old!=null){
+                moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.SUPPLIER.getCode(),supplierId,"","");
+            }
+        }
+
+
+        this.saveOrUpdateBatch(saveOrUpdateList);
 
     }
 

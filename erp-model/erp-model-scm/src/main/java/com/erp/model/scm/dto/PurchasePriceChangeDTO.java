@@ -194,6 +194,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
 
+        /**
+         * 原因
+         */
+        private String reason;
+
 
         /**
          * 资质附件url
