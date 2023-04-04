@@ -77,7 +77,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
              * 采购价目表的明细
              * 因为变更 也不能有区间重复的
              */
-            List<PurchasePriceDetailDTO.ViewDTO> purchasePriceList = purchasePriceDetailService.getByPurchasePriceId(purchasePriceId);
+            List<String> purchasePriceDetailIds=purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+            List<PurchasePriceDetailDTO.ViewDTO> purchasePriceList = purchasePriceDetailService.getPriceDetail(purchasePriceId,purchasePriceDetailIds);
             List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(purchasePriceList, PurchasePriceChangeDetailDTO.AddDTO.class);
             purchasePriceChangeDetailList.addAll(list);
             //以sku 分组

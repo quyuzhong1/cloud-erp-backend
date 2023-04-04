@@ -61,10 +61,21 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * 根据价目表id 获取产品明细信息
      * @author yl
      * @date 2023-03-27 9:48
-     * @param id
+     * @param purchasePriceId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String id);
+    List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String purchasePriceId);
+
+
+    /**
+     * 根据价目表id 和详情表id 集合获取对应数据
+     * @author yl
+     * @date 2023-03-27 9:48
+     * @param purchasePriceId
+     * @param purchasePriceDetailIds 采购价目详情表id 集合
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
+     */
+    List<PurchasePriceDetailDTO.ViewDTO> getPriceDetail(String purchasePriceId,List<String> purchasePriceDetailIds);
 
     
     /**

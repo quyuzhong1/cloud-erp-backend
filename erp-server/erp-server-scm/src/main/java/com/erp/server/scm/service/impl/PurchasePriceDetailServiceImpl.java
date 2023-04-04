@@ -67,6 +67,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
+
     /**
      * 检查sku 区间报价
      *
@@ -186,6 +187,28 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
     /**
+     * 根据价目表id 和详情表id 集合获取对应数据
+     *
+     * @param purchasePriceId
+     * @param purchasePriceDetailIds 采购价目详情表id 集合
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-27 9:48
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.ViewDTO> getPriceDetail(String purchasePriceId, List<String> purchasePriceDetailIds) {
+        LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
+        if (CollectionUtils.isNotEmpty(purchasePriceDetailIds)) {
+            queryWrapper.notIn(PurchasePriceDetailEntity::getId, purchasePriceDetailIds);
+        }
+        List<PurchasePriceDetailEntity> list = this.list(queryWrapper);
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
+        return viewList;
+    }
+
+
+    /**
      * 修改产品明细
      *
      * @param purchasePriceId
@@ -246,8 +269,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         for (PurchasePriceDetailEntity update : updateList) {
             String id = update.getId();
             PurchasePriceDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.PURCHASE_PRICE.getCode(),purchasePriceId,"","");
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceId, "", "");
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
@@ -295,7 +318,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-27 16:51
      */
     @Override
-    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds,HttpServletResponse response) {
+    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         PurchasePriceDetailExcelListener excelListenerUtil = new PurchasePriceDetailExcelListener(skuList);
