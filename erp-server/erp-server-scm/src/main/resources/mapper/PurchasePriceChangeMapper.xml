@@ -67,6 +67,17 @@
             AND
             ppd.product_name LIKE concat('%', #{params.productName} ,'%')
         </if>
+
+        <if test="statusList !=null and statusList.size>0">
+            AND pp.approve_status IN
+            <foreach collection="statusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

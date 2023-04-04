@@ -8,6 +8,8 @@ import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 采购价变更表 Mapper 接口
@@ -19,5 +21,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChangeEntity> {
 
-    IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params);
+    IPage<PurchasePriceChangeDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceChangeDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
 }

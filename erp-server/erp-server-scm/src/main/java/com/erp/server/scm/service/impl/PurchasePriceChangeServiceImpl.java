@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -429,7 +430,16 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         PurchasePriceChangeDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+
+        String searchType = params.getSearchType();
+
+        List<String> statusList = new ArrayList<>(1);
+        //待我审核
+        if (searchType.equals(SearchType.WAIT_APPROVE)) {
+            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+
+        IPage pageData = baseMapper.paging(query, params,statusList);
         List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());

@@ -79,6 +79,11 @@
             and create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > create_time
         </if>
 
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

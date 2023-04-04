@@ -43,6 +43,11 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:paging",
+//            tableAlias = "supplier"
+//    )
     public ApiResult<PagingVO<SupplierDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         PagingVO<SupplierDTO.PagingViewDTO> pagingVO = supplierService.paging(dto);
         return success(pagingVO);

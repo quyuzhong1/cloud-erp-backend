@@ -74,17 +74,25 @@ public class PurchasePriceDetailExcelListener extends AnalysisEventListener<Purc
             if (Objects.isNull(skuEntity)) {
                 errorMsgList.add("sku有误");
             }
+            if (skuEntity != null) {
+                addDTO.setCurrency(purchasePriceDetailImportExcelDTO.getCurrency());
+                addDTO.setDeliveryDay(purchasePriceDetailImportExcelDTO.getDeliveryDay());
+                String effectiveDateStr = purchasePriceDetailImportExcelDTO.getEffectiveDateStr();
+                addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : LocalDate.parse(effectiveDateStr, dateTimeFormatter));
+                addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMinQty());
+                addDTO.setMinQty(purchasePriceDetailImportExcelDTO.getMinQty());
+                addDTO.setTaxPrice(purchasePriceDetailImportExcelDTO.getTaxPrice());
+                addDTO.setTaxRate(purchasePriceDetailImportExcelDTO.getTaxRate());
+                addDTO.setSkuId(skuEntity.getSkuId());
+                successList.add(addDTO);
+            }
+        }
 
-            addDTO.setCurrency(purchasePriceDetailImportExcelDTO.getCurrency());
-            addDTO.setDeliveryDay(purchasePriceDetailImportExcelDTO.getDeliveryDay());
-            String effectiveDateStr = purchasePriceDetailImportExcelDTO.getEffectiveDateStr();
-            addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : LocalDate.parse(effectiveDateStr, dateTimeFormatter));
-            addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMinQty());
-            addDTO.setMinQty(purchasePriceDetailImportExcelDTO.getMinQty());
-            addDTO.setTaxPrice(purchasePriceDetailImportExcelDTO.getTaxPrice());
-            addDTO.setTaxRate(purchasePriceDetailImportExcelDTO.getTaxRate());
-            addDTO.setSkuId(skuEntity.getSkuId());
-            successList.add(addDTO);
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            purchasePriceDetailImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(purchasePriceDetailImportExcelDTO);
+            return;
         }
 
     }
@@ -104,13 +112,12 @@ public class PurchasePriceDetailExcelListener extends AnalysisEventListener<Purc
     }
 
 
-    public List<PurchasePriceDetailImportExcelDTO> getErrorList(){
+    public List<PurchasePriceDetailImportExcelDTO> getErrorList() {
         return errorList;
     }
 
 
-
-    public List<PurchasePriceDetailDTO.AddDTO> getSuccessList(){
+    public List<PurchasePriceDetailDTO.AddDTO> getSuccessList() {
         return successList;
     }
 }

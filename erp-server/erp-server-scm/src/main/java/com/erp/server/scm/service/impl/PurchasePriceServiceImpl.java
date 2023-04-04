@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -163,7 +164,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
-        viewDTO.setApproveStatus(purchasePrice.getApproveStatus().getStatus());
+        viewDTO.setApproveStatus(purchasePrice.getApproveStatus());
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
@@ -194,9 +195,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        ApproveStatusEnum status = purchasePrice.getApproveStatus();
+
         PurchasePriceEntity old = new PurchasePriceEntity();
         BeanMapper.copy(purchasePrice,old);
-        String status = purchasePrice.getApproveStatus().getStatus();
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -204,7 +206,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<String> statusList = new ArrayList<>(2);
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
-        if (!statusList.contains(status)) {
+        if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
 
@@ -216,7 +218,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         String code = purchasePrice.getCode();
         BeanMapper.copy(dto, purchasePrice);
         purchasePrice.setCode(code);
-
+        purchasePrice.setApproveStatus(status);
 
         String pricingUserId = dto.getPricingUserId();
         if(StringUtils.isNotBlank(pricingUserId)){
@@ -422,7 +424,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public Boolean cancelProcess(List<String> ids) {
         List<PurchasePriceEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approveIngStatus)).count();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
@@ -454,8 +456,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
+        String searchType = params.getSearchType();
+
+        List<String> statusList = new ArrayList<>(1);
+        //待我审核
+        if (searchType.equals(SearchType.WAIT_APPROVE)) {
+            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage pageData = baseMapper.paging(query, params,statusList);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
