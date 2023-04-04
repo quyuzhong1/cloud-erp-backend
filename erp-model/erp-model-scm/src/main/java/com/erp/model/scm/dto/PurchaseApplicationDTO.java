@@ -82,6 +82,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 计划交期
          */
         private LocalDate planDeliveryDate;
@@ -311,6 +316,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
 
         /**
          * 采购组织id

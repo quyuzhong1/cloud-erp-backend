@@ -50,6 +50,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 报关型号
          */
         private String declareModel;

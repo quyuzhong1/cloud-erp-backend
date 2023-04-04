@@ -9,7 +9,6 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * <p>
@@ -91,6 +90,12 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     @TableField("remark")
     private String remark;
 
+    /**
+     * 变体信息
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+
 
     public static final String SKU_ID = "sku_id";
 
@@ -111,6 +116,8 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
     public static final String REMARK = "remark";
+
+    public static final String VARIANT_PROPERTY = "variant_property";
 
     @Override
     public Serializable pkVal() {

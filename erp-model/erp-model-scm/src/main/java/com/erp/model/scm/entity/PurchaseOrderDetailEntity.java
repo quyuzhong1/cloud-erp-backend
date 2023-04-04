@@ -171,6 +171,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("is_urgent")
     private Boolean isUrgent;
 
+    /**
+     * 变体信息
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+
    /** 采购申请明细id(无需传值，后端使用)
     *
     */
@@ -233,6 +239,8 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String RETURN_QTY = "return_qty";
 
     public static final String IS_URGENT = "is_urgent";
+
+    public static final String VARIANT_PROPERTY = "variant_property";
 
 
     @Override

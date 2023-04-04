@@ -414,6 +414,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setSkuId(skuVO.getSkuId());
                 addDetailDTO.setSkuNo(skuVO.getSkuNo());
                 addDetailDTO.setProductName(skuVO.getSkuName());
+                addDetailDTO.setVariantProperty(skuVO.getVariantProperty());
                 addDetailDTO.setDeclareModel(skuVO.getDeclareModel());
                 addDetailDTO.setDeclareName(skuVO.getDeclareName());
                 addDetailDTO.setReceiveOrgId(detailValue.get(0).getReceiveOrgId());

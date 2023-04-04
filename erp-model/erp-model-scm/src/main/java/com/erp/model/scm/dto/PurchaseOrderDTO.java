@@ -94,6 +94,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 是否加急（false否，true是）
          */
         private Boolean isUrgent;

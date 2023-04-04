@@ -98,6 +98,7 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
                         excelDTO.setSkuId(skuEntity.getSkuId());
                         excelDTO.setSkuNo(skuEntity.getSkuNo());
                         excelDTO.setProductName(skuEntity.getSkuName());
+                        excelDTO.setVariantProperty(skuEntity.getVariantProperty());
                         excelDTO.setDeclareModel(skuEntity.getDeclareModel());
                         excelDTO.setDeclareName(skuEntity.getDeclareName());
                     }

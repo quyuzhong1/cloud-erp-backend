@@ -36,6 +36,7 @@
             sd.shop_name as shopName,
             sdd.sku_no as skuNo,
             sdd.product_name as productName,
+            sdd.variant_property as variantProperty,
             sdd.is_urgent as isUrgent,
             sd.is_first_mass_product as isFirstMassProduct,
             sdd.plan_delivery_date as planDeliveryDate,

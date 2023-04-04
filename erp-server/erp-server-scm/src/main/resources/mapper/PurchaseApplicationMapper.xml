@@ -34,6 +34,7 @@
             pad.create_po_type as createPoType,
             pad.sku_no as skuNo,
             pad.product_name as productName,
+            pad.variant_property as variantProperty,
             pad.plan_delivery_date as planDeliveryDate,
             pad.apply_qty as applyQty,
             parp.realPurchaseQty,

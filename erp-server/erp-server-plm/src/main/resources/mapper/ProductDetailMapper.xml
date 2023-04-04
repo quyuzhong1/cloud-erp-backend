@@ -509,10 +509,14 @@
         pd.sku_no,
         pd.images_url AS skuImagesUrl,
         pd.name AS skuName,
-        pp.box_qty as unitQty
+        pd.variant_property,
+        pp.box_qty as unitQty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         WHERE pi.delete_state = 0  AND pd.is_deleted = FALSE
         <if test="state!=null">
             AND pd.status=#{state}
@@ -601,6 +605,7 @@
         pd.sku_no,
         pd.images_url AS skuImagesUrl,
         pd.name AS skuName,
+        pd.variant_property as variantProperty,
         pl.declare_chinese_name as declareName,
         pl.declare_model as declareModel
         FROM  product_detail pd

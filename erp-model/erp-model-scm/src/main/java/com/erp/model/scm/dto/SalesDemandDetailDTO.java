@@ -44,6 +44,11 @@ public class SalesDemandDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 单箱数量
          */
         @Min(value = 0,message = "计划备货数量最小值为0")

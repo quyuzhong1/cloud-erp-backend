@@ -106,6 +106,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
                         excelDTO.setSkuNo(skuEntity.getSkuNo());
                         excelDTO.setProductName(skuEntity.getSkuName());
                         excelDTO.setUnitQty(skuEntity.getUnitQty());
+                        excelDTO.setVariantProperty(skuEntity.getVariantProperty());
                     }
                 }
             }

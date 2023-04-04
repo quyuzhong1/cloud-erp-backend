@@ -39,6 +39,7 @@
             pod.arrival_status as arrivalStatus,
             pod.sku_no as skuNo,
             pod.product_name as productName,
+            pod.variant_property as variantProperty,
             pod.plan_delivery_date as planDeliveryDate,
             pod.is_urgent as isUrgent,
             po.delivery_warehouse_name as deliveryWarehouseName,
