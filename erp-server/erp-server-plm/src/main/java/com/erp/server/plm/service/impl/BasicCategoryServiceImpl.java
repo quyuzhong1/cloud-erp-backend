@@ -22,6 +22,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -350,6 +351,15 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         }
         List<BasicCategoryTreeDTO> dbTreeList = getDbTree();
         return getChildCategory(dbTreeList, categoryId);
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus) {
+        return  this.lambdaUpdate()
+                .eq(BasicCategoryEntity::getId,categoryId)
+                .set(BasicCategoryEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .update();
     }
 
     /**
