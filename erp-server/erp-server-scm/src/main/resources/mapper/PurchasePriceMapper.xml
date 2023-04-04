@@ -52,15 +52,15 @@
         </if>
 
         <if test="params.effectiveDateList!=null and params.effectiveDateList.size>0">
-            AND ppd.effective_date between #{params.effectiveDateList[0]} and #{params.effectiveDateList[1]}
+            AND ppd.effective_date >= #{params.effectiveDateList[0]} and (#{params.effectiveDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ppd.effective_date
         </if>
 
         <if test="params.expireDateList!=null and params.expireDateList.size>0">
-            AND ppd.expire_date between #{params.expireDateList[0]} and #{params.expireDateList[1]}
+            AND ppd.expire_date >= #{params.expireDateList[0]} and (#{params.expireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ppd.expire_date
         </if>
 
         <if test="params.createTimeList!=null and params.createTimeList.size>0">
-            AND pp.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+            AND pp.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pp.create_time
         </if>
         <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
             AND pp.create_user_id IN

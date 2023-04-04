@@ -192,11 +192,11 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
         String  newValue = "";
         List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
         if (CollectionUtils.isNotEmpty(oldList)) {
-            oldValue = oldList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
+            oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }
         List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
         if (CollectionUtils.isNotEmpty(newList)) {
-            newValue = newList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
+            newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }
         return new Pair<>(oldValue,newValue);
     }
