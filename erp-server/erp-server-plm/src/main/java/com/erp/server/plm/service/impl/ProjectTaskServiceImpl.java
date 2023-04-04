@@ -2757,8 +2757,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         boolean deleteTaskShow = true;
         Integer IsFixed = taskEntity.getIsFixed();
+        LoginUser userInfo = CommonInterceptor.threadLocal.get();
+
         //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed)) {
+        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(userInfo.getUserAccount())) {
             deleteTaskShow = false;
         }
         //删除任务
