@@ -114,7 +114,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             return;
         }
         //查询编辑前数据
-        List<String> detailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderDetailId())).map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> detailIds = list.stream().map(PurchaseChangeDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseChangeDetailEntity> oldList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(detailIds)) {
              oldList = this.listByIds(detailIds);
@@ -129,7 +129,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             } else {
                 PurchaseChangeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98017);
+                    throw new ServiceException(ApiError.ERROR_98043);
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_CHANGE.getCode(),purchaseChangeId,"",String.format("【%s】",old.getSkuNo()));
             }
