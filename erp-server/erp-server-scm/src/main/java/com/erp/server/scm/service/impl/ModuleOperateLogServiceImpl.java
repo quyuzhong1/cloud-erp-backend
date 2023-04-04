@@ -9,7 +9,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.utils.OperationLogUtil;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
@@ -69,17 +68,14 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
 
         Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
         //判断是否为空
-        if (operationLogMap.size() == 0) {
-            return true;
+        if (CollectionUtils.isEmpty(operationLogMap)) {
+            return Boolean.TRUE;
         }
         List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
         List<CfgModuleOperateLogFieldEntity> fieldList = cfgModuleOperateLogFieldService.listByClassPaths(classPaths);
         if (CollectionUtils.isEmpty(fieldList)) {
-            return true;
+            return Boolean.TRUE;
         }
-        LoginUser loginUser = commonService.getUserInfo();
-        String userName = loginUser.getUserName();
-        String userId = loginUser.getUid();
         List<ModuleOperateLogEntity> list = new LinkedList<>();
         for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
             //Pair<字段名称, 类路径>
@@ -94,82 +90,33 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             }
             String fieldName = fieldEntity.getFieldName();
             Integer type = fieldEntity.getType();
-            String oldValue = String.valueOf(valuePair.getKey());
-            String newValue = String.valueOf(valuePair.getValue());
             if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
-                //是或否
-                oldValue = Boolean.TRUE.toString().equals(oldValue) ? "是" : "否";
-                newValue = Boolean.TRUE.toString().equals(newValue) ? "是" : "否";
-                //值不变则不用新增操作日志
-                if (oldValue.equals(newValue)) {
-                    continue;
-                }
+                valuePair = setBooleanValue(fieldEntity, valuePair);
             }
             //枚举
             if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
-                if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
-                    throw new ServiceException(ApiError.ERROR_9028);
-                }
-                Class<?> aClass = null;
-                try {
-                    aClass = Class.forName(fieldEntity.getEnumClass());
-                } catch (ClassNotFoundException e) {
-                    throw new ServiceException(ApiError.ERROR_9028);
-                }
-                boolean anEnum = aClass.isEnum();
-                if (!anEnum) {
-                    throw new ServiceException(ApiError.ERROR_9028);
-                }
-                if (StringUtils.isNotBlank(oldValue)) {
-                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass);
-                    if (ObjectUtils.isNotEmpty(enumObject)) {
-                        oldValue = enumObject.getName();
-                    } else {
-                        oldValue = "";
-                    }
-                }
-                if (StringUtils.isNotBlank(newValue)) {
-                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass);
-                    if (ObjectUtils.isNotEmpty(enumObject)) {
-                        newValue = enumObject.getName();
-                    } else {
-                        newValue = "";
-                    }
-                }
-
+                valuePair = setEnumValue(fieldEntity,valuePair);
             }
             //字典
             if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
-                List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(oldValue.split(",")));
-                if (CollectionUtils.isNotEmpty(oldList)) {
-                    oldValue = oldList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
-                }
-                List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(newValue.split(",")));
-                if (CollectionUtils.isNotEmpty(newList)) {
-                    newValue = newList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
-                }
+                valuePair = setDistValue(valuePair);
             }
             //人员
             if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
-
-                List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(oldValue.split(",")));
-                if (CollectionUtils.isNotEmpty(oldList)) {
-                    oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
-                }
-                List<FindUserDTO> newList = sysUserFeign.getUserListByUserIds(Arrays.asList(newValue.split(",")));
-                if (CollectionUtils.isNotEmpty(newList)) {
-                    newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
-                }
-
+                valuePair = setUserValue(valuePair);
             }
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
+
             if (oldValue.equals(newValue)) {
                 continue;
             }
-            String content = "";
+            String content;
+            String concat = msg.concat("编辑了[").concat(fieldName).concat("]");
             if (StringUtils.isBlank(valuePair.getKey())) {
-                content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
+                content = concat.concat("由空值变更为[").concat(newValue).concat("]");
             } else {
-                content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+                content = concat.concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
             ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
             entity.setModuleType(moduleType)
@@ -179,9 +126,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                     .setNewValue(newValue)
                     .setFieldName(fieldName)
                     .setContent(content)
-                    .setOperation("编辑信息")
-                    .setCreateUserId(userId)
-                    .setCreateUserName(userName);
+                    .setOperation("编辑信息");
             list.add(entity);
         }
         return this.saveBatch(list);
@@ -218,5 +163,95 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     @Override
     public void removeByBusinessIds(List<String> businessIds) {
         lambdaUpdate().in(ModuleOperateLogEntity::getBusinessId,businessIds).remove();
+    }
+
+
+    /**
+     * 设置布尔值
+     */
+    private Pair<String,String> setBooleanValue (CfgModuleOperateLogFieldEntity fieldEntity,Pair<String, String> valuePair) {
+        String trueValue = "是";
+        String falseValue = "否";
+        String booleanValue = fieldEntity.getBooleanValue();
+        if (StringUtils.isNotBlank(booleanValue)) {
+            String[] booleanValues = booleanValue.split("\\|");
+            trueValue = booleanValues[0];
+            falseValue = booleanValues[1];
+        }
+        //是或否
+       String oldValue = Boolean.TRUE.toString().equals(valuePair.getKey()) ? trueValue : falseValue;
+       String newValue = Boolean.TRUE.toString().equals(valuePair.getValue()) ? trueValue : falseValue;
+
+        return new Pair<>(oldValue,newValue);
+    }
+    /**
+     * 设置字典值
+     */
+    private Pair<String,String> setDistValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
+        }
+        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+
+    /**
+     * 设置人员值
+     */
+    private Pair<String,String> setUserValue (Pair<String, String> valuePair) {
+        String  oldValue = "";
+        String  newValue = "";
+        List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(valuePair.getKey().split(",")));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+        }
+        List<FindUserDTO> newList = sysUserFeign.getUserListByUserIds(Arrays.asList(valuePair.getValue().split(",")));
+        if (CollectionUtils.isNotEmpty(newList)) {
+            newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+        }
+        return new Pair<>(oldValue,newValue);
+    }
+    /**
+     * 设置枚举值
+     */
+    private Pair<String,String> setEnumValue (CfgModuleOperateLogFieldEntity fieldEntity,Pair<String, String> valuePair) {
+        if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
+            throw new ServiceException(ApiError.ERROR_9028);
+        }
+        String  oldValue = "";
+        String  newValue = "";
+        Class<?> aClass ;
+        try {
+            aClass = Class.forName(fieldEntity.getEnumClass());
+        } catch (ClassNotFoundException e) {
+            throw new ServiceException(ApiError.ERROR_9028);
+        }
+        boolean anEnum = aClass.isEnum();
+        if (!anEnum) {
+            throw new ServiceException(ApiError.ERROR_9028);
+        }
+        if (StringUtils.isNotBlank(valuePair.getKey())) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(valuePair.getKey()), aClass);
+            if (ObjectUtils.isNotEmpty(enumObject)) {
+                oldValue = enumObject.getName();
+            } else {
+                oldValue = "";
+            }
+        }
+        if (StringUtils.isNotBlank(valuePair.getValue())) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(valuePair.getValue()), aClass);
+            if (ObjectUtils.isNotEmpty(enumObject)) {
+                newValue = enumObject.getName();
+            } else {
+                newValue = "";
+            }
+        }
+        return new Pair<>(oldValue,newValue);
     }
 }

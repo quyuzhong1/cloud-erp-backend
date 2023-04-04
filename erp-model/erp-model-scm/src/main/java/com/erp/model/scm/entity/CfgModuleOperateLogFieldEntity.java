@@ -48,7 +48,13 @@ public class CfgModuleOperateLogFieldEntity extends BaseEntity<CfgModuleOperateL
     private Integer type;
 
     /**
-     * 枚举类型
+     * true|false对应值,竖线分隔
+     */
+    @TableField("boolean_value")
+    private String booleanValue;
+
+    /**
+     * 枚举类型(用于枚举值转换,需要枚举整个路径)
      */
     @TableField("enum_class")
     private String enumClass;
