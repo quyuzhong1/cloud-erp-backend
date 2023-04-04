@@ -32,6 +32,7 @@ public class WarehouseDTO implements Serializable {
     public static class AddDTO {
 
         @NotBlank(message = "金蝶仓库编号不能为空")
+        @Size(max = 30, message = "金蝶仓库编号最大30字符")
         private String kingdeeWarehouseCode;
 
         /**
