@@ -88,7 +88,6 @@ public class WarehouseExcelDTO  implements Serializable {
     @FieldValid(fieldName = "仓库地址",isNotBlank = true)
     private String address;
 
-
     /**
      * 仓库状态
      */
@@ -96,6 +95,7 @@ public class WarehouseExcelDTO  implements Serializable {
     @ExcelProperty(value = "仓库状态", index = 8)
     @FieldValid(fieldName = "仓库状态",isNotBlank = true)
     private String enabled;
+
 
 
     /**

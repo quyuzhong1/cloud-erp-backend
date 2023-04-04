@@ -120,7 +120,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (!enabledList.contains(enabled)) {
             errorMsgList.add("仓库状态有误");
         }
-        addEntity.setDisabled(!enabled.equals("启用"));
+        addEntity.setDisabled(!"启用".equals(enabled));
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             warehouseExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));

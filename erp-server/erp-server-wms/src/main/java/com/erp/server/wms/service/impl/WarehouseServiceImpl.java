@@ -485,7 +485,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //获取到仓库类型
         List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(null);
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
         WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
