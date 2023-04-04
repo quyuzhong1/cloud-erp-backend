@@ -121,6 +121,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String categoryId = dto.getCategoryId();
         String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        String gradeId = dto.getGradeId();
+        String gradeName = supplierGradeList.stream().filter(d -> d.getId().equals(gradeId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        addEntity.setGradeName(gradeName);
+
         addEntity.setId(supplierId);
         addEntity.setCategoryName(categoryName);
         //生成单号
@@ -247,7 +255,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(dto, supplier);
 
         String purchaseUserId = dto.getPurchaseUserId();
-        if(StringUtils.isNotBlank(purchaseUserId)){
+        if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
             supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
         }
@@ -260,6 +268,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         supplier.setCategoryName(categoryName);
         supplier.setCode(code);
+
+
+        //获取供应商等级
+        List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        String gradeId = dto.getGradeId();
+        String gradeName = supplierGradeList.stream().filter(d -> d.getId().equals(gradeId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        supplier.setGradeName(gradeName);
 
         Boolean result = this.updateById(supplier);
         //修改成功
@@ -502,6 +518,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         supplier.setDisabled(dto.getState());
+
+        //添加日志
+        String content = String.format("编辑了供应商[%s] 启用状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
+        addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
+
         return this.updateById(supplier);
     }
 

@@ -220,6 +220,14 @@ public class SupplierDTO implements Serializable {
         @NotBlank(message = "供应商等级不能为空")
         private String gradeId;
 
+        /**
+         * 等级名称
+         * 日志会用到
+         *
+         */
+        private String gradeName;
+
+
 
         /**
          * 采购员id
@@ -253,6 +261,12 @@ public class SupplierDTO implements Serializable {
          */
         //@NotBlank(message = "结算币种不能为空")
         private String payCurrency;
+
+        /**
+         * 结算付款币种名称
+         * 日志会到
+         */
+        private String payCurrencyName;
 
 
         /**

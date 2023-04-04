@@ -102,11 +102,17 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         //这是要添加的
         List<SupplierAccountDTO.UpdateDTO> addList = bankAccountList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
-
-
-
-
         List<SupplierAccountEntity> saveOrUpdateList = BeanMapper.copyList(bankAccountList, SupplierAccountEntity.class);
+
+        List<String> bankIdList = addList.stream().map(SupplierAccountDTO.UpdateDTO::getBankId).collect(Collectors.toList());
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIdList);
+        for (SupplierAccountEntity item : saveOrUpdateList) {
+            String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setSupplierId(supplierId);
+            item.setBankName(bankName);
+        }
+
 
         //这是要修改
         List<SupplierAccountEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -120,7 +126,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
-        saveOrUpdateList.forEach(s -> s.setSupplierId(supplierId));
+
 
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(supplierId, obj.getPayee())).collect(Collectors.toList());

@@ -61,6 +61,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:add",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         String supplierId = supplierService.addSupplier(dto);
         return StringUtils.isNotBlank(supplierId) ? success() : failure();
@@ -74,6 +80,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:add",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         Boolean result = supplierService.addAndSubmit(dto);
         return result == true ? success() : failure();
@@ -87,6 +99,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:update",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         String supplierId = supplierService.updateSupplier(dto);
         return StringUtils.isNotBlank(supplierId) ? success() : failure();
@@ -99,6 +117,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:update",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         Boolean result = supplierService.updateAndSubmit(dto);
         return result == true ? success() : failure();
@@ -112,6 +136,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:update",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult<SupplierDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         SupplierDTO.UpdateDTO view = supplierService.view(dto.getId());
         return success(view);
@@ -125,6 +155,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:update",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
@@ -138,6 +174,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "purchase_user_id",
+//            menuCode = "scm:supplier:update",
+//            serviceClass = SupplierService.class,
+//            keyIdName = "id"
+//    )
     public ApiResult submit(@RequestBody BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierService.submit(dto.getIds());
         return result == true ? success() : failure();
@@ -187,8 +229,8 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = supplierService.importFile(excelFile,response);
-        return result==true?success():failure();
+        Boolean result = supplierService.importFile(excelFile, response);
+        return result == true ? success() : failure();
     }
 
     /**
