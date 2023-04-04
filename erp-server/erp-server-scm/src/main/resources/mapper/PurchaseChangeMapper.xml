@@ -55,7 +55,7 @@
             pc.create_time as createTime
         from
         purchase_change pc
-        left join purchase_change_detail pcd on pc.id = pcd.purchase_change_id and pcd.is_deleted = false
+        inner join purchase_change_detail pcd on pc.id = pcd.purchase_change_id and pcd.is_deleted = false
         left join purchase_order po on pc.purchase_order_id = po.id and po.is_deleted = false
         <where>
             pc.is_deleted = false
