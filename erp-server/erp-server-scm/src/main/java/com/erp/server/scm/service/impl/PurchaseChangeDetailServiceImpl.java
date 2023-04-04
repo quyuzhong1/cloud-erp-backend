@@ -113,10 +113,27 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        list.forEach(obj->{
-            obj.setPurchaseChangeId(purchaseChangeId);
-            obj.setAmount(MathUtil.multiply(obj.getPrice(),obj.getQty()));
-        });
+        //查询编辑前数据
+        List<String> detailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getPurchaseOrderDetailId())).map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseChangeDetailEntity> oldList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(detailIds)) {
+             oldList = this.listByIds(detailIds);
+        }
+
+        for (PurchaseChangeDetailEntity entity : list) {
+            entity.setPurchaseChangeId(purchaseChangeId);
+            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            //操作日志
+            if (StringUtils.isBlank(entity.getId())) {
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),purchaseChangeId,"编辑操作");
+            } else {
+                PurchaseChangeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98017);
+                }
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_CHANGE.getCode(),purchaseChangeId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
     }
 
     /**

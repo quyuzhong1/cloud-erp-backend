@@ -674,6 +674,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
         //生成下推签收单  TODO
         List<PurchaseOrderDTO.GenerateReceiveDTO> list = dto.getList();
