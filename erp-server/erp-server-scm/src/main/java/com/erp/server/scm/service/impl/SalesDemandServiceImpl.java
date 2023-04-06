@@ -11,6 +11,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -426,12 +427,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public List<ListStatusCountDTO.SalesDemandCountDTO> listCount() {
-        SalesDemandDTO.SearchParamDTO dto = new SalesDemandDTO.SearchParamDTO();
+    public List<ListStatusCountDTO.SalesDemandCountDTO> listCount(PermissionsDTO dto) {
+        SalesDemandDTO.SearchParamDTO searchParamDTO = new SalesDemandDTO.SearchParamDTO();
+        searchParamDTO.setParam(dto.getParam());
         List<ListStatusCountDTO.SalesDemandCountDTO> list = new ArrayList<>();
         ListStatusCountDTO.SalesDemandCountDTO resultDTO = new ListStatusCountDTO.SalesDemandCountDTO();
-        dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-        Integer count = this.baseMapper.listCount(dto);
+        searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+        Integer count = this.baseMapper.listCount(searchParamDTO);
         resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
         resultDTO.setType(PurchaseListTypeEnum.TO_BE_APPROVE.getCode());
         list.add(resultDTO);

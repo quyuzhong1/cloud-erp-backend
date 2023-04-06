@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -152,7 +153,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @date: 2023/3/29 9:59
      * @return List<PurchaseOrderCountDTO>
      */
-    List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount();
+    List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount(PermissionsDTO dto);
     /**
      * @description: 批量作废
      * @author Will

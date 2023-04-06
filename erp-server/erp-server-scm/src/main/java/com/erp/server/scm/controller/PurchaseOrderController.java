@@ -2,10 +2,7 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -63,9 +60,13 @@ public class PurchaseOrderController extends BaseController {
      * @date: 2023/3/15 17:34
      * @return ApiResult
      */
-    @GetMapping("/listCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount() {
-        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = purchaseOrderService.listCount();
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = purchaseOrderService.listCount(dto);
         return success(list);
     }
 

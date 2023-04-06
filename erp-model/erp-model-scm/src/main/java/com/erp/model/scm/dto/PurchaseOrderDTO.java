@@ -280,6 +280,12 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseOrgId;
 
         /**
+         * 收料组织id
+         */
+        @NotBlank(message = "收料组织不能为空")
+        private String receiveOrgId;
+
+        /**
          * 交货仓库id
          */
         @NotBlank(message = "交货仓库不能为空")

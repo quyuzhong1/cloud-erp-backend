@@ -1,7 +1,6 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -247,20 +246,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      */
     private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
 
-        //收料组织信息
-        List<String> receiveOrgIds = newList.stream().map(PurchaseOrderDetailEntity::getReceiveOrgId).collect(Collectors.toList());
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(receiveOrgIds);
-
-
         for (PurchaseOrderDetailEntity entity : newList) {
-            //收料组织名称
-            if (CollectionUtils.isEmpty(accountingCompanyList)) {
-                throw new ServiceException(ApiError.ERROR_9040);
-            }
-            String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
             entity.setPurchaseOrderId(purchaseOrderId);
             entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
-            entity.setReceiveOrgName(receiveOrgName);
             entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
             //操作日志
             if (StringUtils.isBlank(entity.getId())) {
@@ -289,7 +277,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             throw new ServiceException(ApiError.ERROR_98036);
         }
         //验证录入的SKU明细报价信息是否正确
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !obj.getIsGift()).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift())).map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceList)) {
             return;
         }
@@ -307,14 +295,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
-            if (MathUtil.compareTo(taxRate,addDTO.getTaxRate()) != MathUtil.ZERO) {
-                String error = String.format("SKU【%s】,数量【%s】录入汇率与报价汇率不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
-                throw new ServiceException(new ApiResult(1,error));
-            }
             if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO) {
                 String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
+            addDTO.setTaxRate(taxRate);
         }
 
 

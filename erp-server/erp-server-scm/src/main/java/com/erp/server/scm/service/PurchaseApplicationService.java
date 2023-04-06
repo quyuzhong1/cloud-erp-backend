@@ -2,6 +2,7 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -36,7 +37,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @date: 2023/3/27 10:47
      * @return List<PurchaseApplicationCountDTO>
      */
-    List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount();
+    List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PermissionsDTO dto);
     /**
      * @description: 新增
      * @author Will
