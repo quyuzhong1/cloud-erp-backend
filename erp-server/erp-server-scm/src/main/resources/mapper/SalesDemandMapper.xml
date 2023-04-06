@@ -98,6 +98,9 @@
             <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
                 and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -195,6 +198,9 @@
                     and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
                 </if>
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -217,6 +223,9 @@
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>

@@ -129,6 +129,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PurchaseOrderDTO.viewDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:view",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseOrderDTO.ViewDTO> view(@Param("id") String id) {
         PurchaseOrderDTO.ViewDTO dto = purchaseOrderService.view(id);
         return success(dto);
@@ -351,7 +356,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {

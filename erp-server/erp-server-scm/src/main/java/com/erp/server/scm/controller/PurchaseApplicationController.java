@@ -51,7 +51,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "apply_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult<PagingVO<PurchaseApplicationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
@@ -131,6 +131,11 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult<PurchaseApplicationDTO.ViewDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:purchaseApplication:view",
+            serviceClass = PurchaseApplicationService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseApplicationDTO.ViewDTO> view(@RequestParam("id") String id) {
         PurchaseApplicationDTO.ViewDTO dto = purchaseApplicationService.view(id);
         return success(dto);
@@ -283,7 +288,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "apply_user_id",
             menuCode = "scm:purchaseApplication:paging",
             tableAlias = "pa")
     public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {

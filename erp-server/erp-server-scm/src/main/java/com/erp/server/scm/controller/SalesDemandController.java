@@ -51,7 +51,10 @@ public class SalesDemandController extends BaseController {
     * @return ApiResult<PagingVO<SalesDemandDTO.listDTO>>
     */
    @PostMapping("/paging")
-   @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "scm:salesDemand:paging", tableAlias = "sd")
+   @DataPermission(operationType = DataAttributeEnum.LIST,
+           tableField = "apply_user_id",
+           menuCode = "scm:salesDemand:paging",
+           tableAlias = "sd")
    public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
         PagingVO<SalesDemandDTO.ListDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
@@ -129,6 +132,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult<ScmSalesDemandDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:view",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "id")
     public ApiResult<SalesDemandDTO.ViewDTO> view(@Param("id") String id) {
         SalesDemandDTO.ViewDTO dto = salesDemandService.view(id);
         return success(dto);
@@ -267,7 +275,10 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "scm:salesDemand:paging", tableAlias = "sd")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:paging",
+            tableAlias = "sd")
     public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = salesDemandService.exportExcel(dto, response);
         return flag == true ? success() : failure();
