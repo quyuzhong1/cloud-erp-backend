@@ -128,6 +128,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (save) {
             //采购变更操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购变更单【%s】",code), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),entity.getId(),"新增操作");
+           //采购订单操作日志
+            moduleOperateLogService.addModuleOperateLog(String.format("生成了一个采购变更单【%s】",code), ModuleTypeEnum.PURCHASE_ORDER.getCode(),entity.getPurchaseOrderId(),"采购变更");
             //新增明细
             purchaseChangeDetailService.add(dto.getDetails(),entity.getId());
         }

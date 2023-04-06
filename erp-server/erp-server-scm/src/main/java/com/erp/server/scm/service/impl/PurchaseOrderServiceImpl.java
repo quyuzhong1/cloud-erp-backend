@@ -237,17 +237,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderProcessOperationEnum item : values) {
             PurchaseOrderProcessDTO processDTO = new PurchaseOrderProcessDTO();
             processDTO.setOperation(item.getName());
-            processDTO.setIsArrive(Boolean.TRUE);
+            processDTO.setIsArrive(Boolean.FALSE);
             //创建
             if (PurchaseOrderProcessOperationEnum.CREATE.getCode().equals(item.getCode())) {
                 processDTO.setUserName(entity.getCreateUserName());
                 processDTO.setTime(entity.getCreateTime());
+                processDTO.setIsArrive(Boolean.TRUE);
             }
             //审核
             if (PurchaseOrderProcessOperationEnum.APPROVE.getCode().equals(item.getCode())) {
                 if (StringUtils.isBlank(entity.getApproveUserName())) {
-                    processDTO.setIsArrive(Boolean.FALSE);
-                    continue;
+                    processDTO.setIsArrive(Boolean.TRUE);
                 }
                 processDTO.setUserName(entity.getApproveUserName());
                 processDTO.setTime(entity.getApproveTime());
