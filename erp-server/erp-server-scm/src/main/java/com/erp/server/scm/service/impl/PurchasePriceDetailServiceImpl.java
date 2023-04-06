@@ -498,34 +498,24 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 采购价目表 点击变更报价 获取到详情
      *
-     * @param priceDetailId
+     * @param purchasePriceId
      * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
      * @author yl
      * @date 2023-04-06 12:03
      */
     @Override
-    public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String priceDetailId) {
+    public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String purchasePriceId) {
         PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
-        PurchasePriceDetailEntity detailEntity = this.getById(priceDetailId);
-        if (Objects.isNull(detailEntity)) {
-            throw new ServiceException(ApiError.ERROR_98049);
-        }
-        String purchasePriceId = detailEntity.getPurchasePriceId();
         PurchasePriceEntity priceEntity = priceService.getById(purchasePriceId);
-        if (priceEntity != null) {
-            viewDTO.setPurchasePriceId(priceEntity.getId());
-            viewDTO.setSupplierId(priceEntity.getSupplierId());
-            viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
+        if (Objects.isNull(priceEntity)) {
+            throw new ServiceException(ApiError.ERROR_98024);
         }
-        List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceChangeDetailList = new ArrayList<>(1);
-        PurchasePriceChangeDetailDTO.ViewDTO detail = new PurchasePriceChangeDetailDTO.ViewDTO();
-        detail.setPurchasePriceDetailId(priceDetailId);
-        detail.setOldTaxRate(detailEntity.getTaxRate());
-        detail.setOldTaxPrice(detailEntity.getTaxPrice());
-        detail.setOldCurrency(detailEntity.getCurrency());
-        detail.setSkuId(detailEntity.getSkuId());
-        detail.setSkuNo(detailEntity.getSkuNo());
-        purchasePriceChangeDetailList.add(detail);
+        viewDTO.setPurchasePriceId(purchasePriceId);
+        viewDTO.setSupplierId(priceEntity.getSupplierId());
+        viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
+        viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = this.getByPurchasePriceId(purchasePriceId);
+        List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceChangeDetailList = BeanMapper.copyList(viewList,PurchasePriceChangeDetailDTO.ViewDTO.class);
         viewDTO.setPurchasePriceChangeDetailList(purchasePriceChangeDetailList);
         return viewDTO;
     }

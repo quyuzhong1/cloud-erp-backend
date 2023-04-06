@@ -472,21 +472,22 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
         String searchType = params.getSearchType();
-
         List<String> statusList = new ArrayList<>(1);
         //待我审核
-        if (searchType.equals(SearchType.WAIT_APPROVE)) {
+        if (SearchType.WAIT_APPROVE.equals(searchType)) {
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
 
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
+        List<String> flagList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceDTO.PagingViewDTO item : list) {
+                boolean contains = flagList.contains(item.getId());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
@@ -495,6 +496,19 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 item.setCurrencySymbol(currencySymbol);
+
+
+                if (contains) {
+                    item.setCode("");
+                    item.setSupplierName("");
+                    item.setPurchaseOrgId("");
+                    item.setPurchaseOrgName("");
+                    item.setApproveStatus(null);
+                    item.setApproveStatusName("");
+                    item.setCreateUserName("");
+                    item.setCreateTime(null);
+                }
+                flagList.add(item.getId());
             }
         }
         return new PagingVO<>(pageData);
@@ -515,7 +529,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //获取导出数据
         List<PurchasePriceDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<PurchasePriceExportExcelDTO> resultList = new ArrayList<>(viewList.size());
-
         if (CollectionUtils.isNotEmpty(viewList)) {
             List<String> currencyIdList = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息

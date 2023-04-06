@@ -98,7 +98,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //根据供应商 获取到 对应 已有的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId);
         //检查区间报价是否重叠
-        purchasePriceChangeDetailService.checkSkuInterval(priceId, dto.getPurchasePriceChangeDetailList(),supplierPriceDetailList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceId, dto.getPurchasePriceChangeDetailList(), supplierPriceDetailList);
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
@@ -225,7 +225,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId);
         //检查区间报价是否重叠
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
-        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList,supplierPriceDetailList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList);
         //code
         String code = priceChangeEntity.getCode();
         BeanMapper.copy(dto, priceChangeEntity);
@@ -450,10 +450,15 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
+
+            List<String> flagIdList = new ArrayList<>(10);
+
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
+                boolean contains = flagIdList.contains(item.getId());
+
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
@@ -462,6 +467,19 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 item.setCurrencySymbol(currencySymbol);
+
+                if (contains) {
+                    item.setCode("");
+                    item.setSupplierName("");
+                    item.setPurchaseOrgId("");
+                    item.setPurchaseOrgName("");
+                    item.setApproveStatus(null);
+                    item.setApproveStatusName("");
+                    item.setCreateUserName("");
+                    item.setCreateTime(null);
+                }
+
+                flagIdList.add(item.getId());
             }
         }
 

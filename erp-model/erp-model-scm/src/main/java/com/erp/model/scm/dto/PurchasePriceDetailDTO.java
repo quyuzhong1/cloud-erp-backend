@@ -193,7 +193,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewDTO{
+    public static class ViewDTO {
 
 
         private String id;
@@ -214,7 +214,6 @@ public class PurchasePriceDetailDTO implements Serializable {
          * sku_no
          */
         private String skuNo;
-
 
 
         /**
@@ -265,9 +264,15 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         private String currencySymbol;
 
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
 
     }
-
 
 
 }
