@@ -246,7 +246,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * true 禁用
          * false 启用
          */
-        private Boolean disabled;
+        private Boolean disabled=false;
     }
 
 }

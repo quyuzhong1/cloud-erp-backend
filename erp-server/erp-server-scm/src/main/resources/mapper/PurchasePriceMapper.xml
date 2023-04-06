@@ -25,7 +25,7 @@
         ppd.id AS purchasePriceDetailId,
         ppd.disabled
         FROM purchase_price_detail ppd
-        LEFT JOIN purchase_price pp
+        INNER JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id
         WHERE pp.is_deleted=false AND ppd.is_deleted= false
         <if test="params.skuIdList!=null and params.skuIdList.size>0">
