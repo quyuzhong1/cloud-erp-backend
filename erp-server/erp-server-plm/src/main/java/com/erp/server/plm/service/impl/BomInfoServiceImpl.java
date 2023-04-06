@@ -322,8 +322,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public void checkAuditor(List<BomSkuDTO> skuList) {
-
-        //skuId
+        //TODO 暂时取消流程
+/*        //skuId
         List<String> skuIdList = getSkuIdList(skuList);
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
@@ -339,7 +339,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9032);
-        }
+        }*/
     }
 
     /**
