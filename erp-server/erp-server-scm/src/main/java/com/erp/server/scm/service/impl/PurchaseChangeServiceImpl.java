@@ -117,13 +117,13 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
         log.info("采购变更单新增");
-        //数据验证
-        checkPurchaseChange(dto.getPurchaseOrderId());
+        //数据验证及赋值
+        checkPurchaseChange(dto.getPurchaseOrderId(),entity);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.POC, BusinessNoTypeEnum.CODE_POC.getCode()));
         entity.setCode(code);
         //处理数据id
-        doOpHandleDataId(dto.getChangeUserId(),dto.getChangeDeptId(),dto.getPurchaseOrgId(),dto.getSupplierId(),entity);
+        doOpHandleDataId(dto.getChangeUserId(),dto.getChangeDeptId(),entity);
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
@@ -144,7 +144,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
         //处理数据id
-        doOpHandleDataId(dto.getChangeUserId(),dto.getChangeDeptId(),dto.getPurchaseOrgId(),dto.getSupplierId(),entity);
+        doOpHandleDataId(dto.getChangeUserId(),dto.getChangeDeptId(),entity);
         log.info("采购变更单修改，id=【{}】", dto.getId());
 
         //操作日志
@@ -360,7 +360,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId (String changeUserId, String changeDeptId, String purchaseOrgId,String supplierId, PurchaseChangeEntity entity) {
+    private void doOpHandleDataId (String changeUserId, String changeDeptId, PurchaseChangeEntity entity) {
         //申请人
         if (StringUtils.isNotBlank(changeUserId)) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(changeUserId);
@@ -376,22 +376,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 throw new ServiceException(ApiError.ERROR_9029);
             }
             entity.setChangeDeptName(depart.getName());
-        }
-        //采购组织
-        if (StringUtils.isNotBlank(purchaseOrgId)) {
-            List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId));
-            if (CollectionUtils.isEmpty(accountingCompanyList)) {
-                throw new ServiceException(ApiError.ERROR_9029);
-            }
-            entity.setPurchaseOrgName(accountingCompanyList.get(0).getName());
-        }
-        //供应商id
-        if (StringUtils.isNotBlank(supplierId)) {
-            SupplierEntity supplierEntity = supplierService.getById(supplierId);
-            if (ObjectUtils.isEmpty(supplierEntity)) {
-                throw new ServiceException(ApiError.ERROR_98031);
-            }
-            entity.setSupplierName(supplierEntity.getName());
         }
     }
 
@@ -477,7 +461,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     /**
      * 数据验证
      */
-    private void checkPurchaseChange (String purchaseOrderId) {
+    private void checkPurchaseChange (String purchaseOrderId,PurchaseChangeEntity entity) {
+        //采购订单
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderId);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
@@ -485,6 +470,18 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98045);
         }
+        //采购供应商
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        entity.setSupplierId(supplierEntity.getSupplierId());
+        entity.setSupplierName(supplierEntity.getSupplierName());
+        entity.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+        entity.setDeliveryWarehouseName(purchaseOrderEntity.getDeliveryWarehouseName());
+        entity.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+        entity.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+        entity.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
     }
     /**
      * @description: 格式化列表数据

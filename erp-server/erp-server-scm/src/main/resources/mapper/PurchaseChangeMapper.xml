@@ -99,10 +99,10 @@
                 </foreach>
             </if>
             <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and pc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
+                and pc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.create_time
             </if>
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+                and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.approve_time
             </if>
         </where>
         ORDER BY
@@ -198,10 +198,10 @@
                     </foreach>
                 </if>
                 <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                    and pc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.create_time
+                    and pc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.create_time
                 </if>
                 <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
-                    and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
+                    and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.approve_time
                 </if>
             </if>
         </where>

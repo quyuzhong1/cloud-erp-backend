@@ -223,25 +223,6 @@ public class PurchaseChangeDTO implements Serializable {
          */
         private String changeDeptId;
 
-        /**
-         * 采购组织id
-         */
-        private String purchaseOrgId;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
-         * 交货仓库
-         */
-        private String deliveryWarehouseId;
-
-        /**
-         * 供应商id
-         */
-        private String supplierId;
     }
 
     @Data
@@ -285,6 +266,26 @@ public class PurchaseChangeDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
         /**
          * 供应商信息
