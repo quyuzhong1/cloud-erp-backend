@@ -86,6 +86,18 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     private String purchaseOrgName;
 
     /**
+     * 收料组织id
+     */
+    @TableField("receive_org_id")
+    private String receiveOrgId;
+
+    /**
+     * 收料组织名称
+     */
+    @TableField("receive_org_name")
+    private String receiveOrgName;
+
+    /**
      * 新品首批（false否,true是）
      */
     @TableField("is_first_mass_product")
@@ -171,6 +183,10 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     public static final String PURCHASE_ORG_ID = "purchase_org_id";
 
     public static final String PURCHASE_ORG_NAME = "purchase_org_name";
+
+    public static final String RECEIVE_ORG_ID = "receive_org_id";
+
+    public static final String RECEIVE_ORG_NAME = "receive_org_name";
 
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
 

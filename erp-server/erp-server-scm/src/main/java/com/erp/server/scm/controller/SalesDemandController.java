@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -66,9 +67,13 @@ public class SalesDemandController extends BaseController {
      * @date: 2023/3/15 17:34
      * @return ApiResult
      */
-    @GetMapping("/listCount")
-    public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount() {
-        List<ListStatusCountDTO.SalesDemandCountDTO> list = salesDemandService.listCount();
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:paging",
+            tableAlias = "sd")
+    public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<ListStatusCountDTO.SalesDemandCountDTO> list = salesDemandService.listCount(dto);
         return success(list);
     }
 

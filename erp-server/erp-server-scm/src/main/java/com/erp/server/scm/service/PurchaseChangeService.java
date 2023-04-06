@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -124,7 +125,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @date: 2023/4/3 11:50
      * @return List<PurchaseChangeCountDTO>
      */
-    List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount();
+    List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount(PermissionsDTO dto);
 
 
 }

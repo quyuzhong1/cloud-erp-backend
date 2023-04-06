@@ -99,18 +99,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private LocalDate planDeliveryDate;
 
     /**
-     * 收料组织id
-     */
-    @TableField("receive_org_id")
-    private String receiveOrgId;
-
-    /**
-     * 收料组织名称
-     */
-    @TableField("receive_org_name")
-    private String receiveOrgName;
-
-    /**
      * 是否是赠品（false否，true是）
      */
     @TableField("is_gift")
@@ -211,10 +199,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String PURCHASE_AMOUNT = "purchase_amount";
 
     public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
-
-    public static final String RECEIVE_ORG_ID = "receive_org_id";
-
-    public static final String RECEIVE_ORG_NAME = "receive_org_name";
 
     public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
 

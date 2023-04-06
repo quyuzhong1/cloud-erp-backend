@@ -112,12 +112,6 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer deliveryDay;
 
         /**
-         * 收料组织id
-         */
-        @NotBlank(message = "收料组织不能为空")
-        private String receiveOrgId;
-
-        /**
          * 是否是赠品（false否，true是）
          */
         private Boolean isGift;

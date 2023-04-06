@@ -46,30 +46,23 @@ public class PurchaseOrderImportExcelDTO implements Serializable {
     private String  planDeliveryDateStr;
 
     /**
-     * 收料组织
-     */
-    @ExcelProperty(value = "*收料组织", index = 4)
-    @FieldValid(fieldName = "收料组织",isNotBlank = true)
-    private String  receiveOrgName;
-
-    /**
      * 是否赠品
      */
-    @ExcelProperty(value = "*是否赠品", index = 5)
+    @ExcelProperty(value = "*是否赠品", index = 4)
     @FieldValid(fieldName = "是否赠品", isNotBlank = true,fieldValues = "是,否")
     private String  isGiftStr;
 
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 6)
+    @ExcelProperty(value = "备注", index = 5)
     @FieldValid(fieldName = "备注",maxLength = 255)
     private String  remark;
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 7)
+    @ExcelProperty(value = "错误数据", index = 6)
     private String  errorMsg;
 
 }

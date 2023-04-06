@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -56,9 +57,13 @@ public class PurchaseChangeController extends BaseController {
      * @date: 2023/3/15 17:34
      * @return ApiResult
      */
-    @GetMapping("/listCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseChangeCountDTO>> listCount() {
-        List<ListStatusCountDTO.PurchaseChangeCountDTO> list = purchaseChangeService.listCount();
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:paging",
+            tableAlias = "pc")
+    public ApiResult<List<ListStatusCountDTO.PurchaseChangeCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<ListStatusCountDTO.PurchaseChangeCountDTO> list = purchaseChangeService.listCount(dto);
         return success(list);
     }
 

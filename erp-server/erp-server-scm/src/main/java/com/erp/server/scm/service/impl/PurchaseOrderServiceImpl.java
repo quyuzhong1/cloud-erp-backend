@@ -12,6 +12,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -161,7 +162,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //校验明细是否有重复sku
         checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
-        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),dto.getDeliveryWarehouseId(),entity);
+        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),dto.getReceiveOrgId(),dto.getDeliveryWarehouseId(),entity);
         log.info("采购订单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PO, BusinessNoTypeEnum.CODE_PO.getCode()));
@@ -187,7 +188,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //校验明细是否有重复sku
         checkUpdateDetailsRepeatSku(dto.getDetails(),dto.getId());
         //处理数据id
-        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),dto.getDeliveryWarehouseId(),entity);
+        doOpHandleDataId(dto.getPurchaseUserId(),dto.getPurchaseDeptId(),dto.getPurchaseOrgId(),dto.getReceiveOrgId(),dto.getDeliveryWarehouseId(),entity);
 
         log.info("采购订单修改，id=【{}】", dto.getId());
         
@@ -471,10 +472,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds,String supplierId, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //查询所有启用核算公司
-        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
 
-        PurchaseOrderExcelListener excelListenerUtil = new PurchaseOrderExcelListener(skuList,skuIds,companyList);
+        PurchaseOrderExcelListener excelListenerUtil = new PurchaseOrderExcelListener(skuList,skuIds);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), PurchaseOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -567,30 +566,31 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount() {
+    public List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount(PermissionsDTO dto) {
         PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseOrderCountDTO> list = new ArrayList<>();
         for (PurchaseListTypeEnum item: values) {
-            PurchaseOrderDTO.SearchParamDTO dto = new PurchaseOrderDTO.SearchParamDTO();
+            PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
+            searchParamDTO.setParam(dto.getParam());
             ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
-                dto.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(),ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
-                dto.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-               count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+               count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
             resultDTO.setType(item.getCode());
@@ -712,6 +712,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         viewDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
         viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+        viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
         //采购供应商信息
@@ -758,7 +759,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId (String purchaseUserId,String purchaseDeptId,String purchaseOrgId,String deliveryWarehouseId,PurchaseOrderEntity entity) {
+    private void doOpHandleDataId (String purchaseUserId,String purchaseDeptId,String purchaseOrgId,String receiveOrgId,String deliveryWarehouseId,PurchaseOrderEntity entity) {
         //申请人
         if (StringUtils.isNotBlank(purchaseUserId)) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(purchaseUserId);
@@ -775,14 +776,27 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             entity.setPurchaseDeptName(depart.getName());
         }
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId,receiveOrgId));
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_9029);
+        }
         //采购组织
         if (StringUtils.isNotBlank(purchaseOrgId)) {
-            List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId));
-            if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            BaseIdDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrgId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(baseIdDTO)) {
                 throw new ServiceException(ApiError.ERROR_9029);
             }
-            entity.setPurchaseOrgName(accountingCompanyList.get(0).getName());
+            entity.setPurchaseOrgName(baseIdDTO.getName());
         }
+        //收料组织
+        if (StringUtils.isNotBlank(receiveOrgId)) {
+            BaseIdDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(baseIdDTO)) {
+                throw new ServiceException(ApiError.ERROR_9029);
+            }
+            entity.setPurchaseOrgName(baseIdDTO.getName());
+        }
+
         //仓库
         if (StringUtils.isNotBlank(deliveryWarehouseId)) {
             //仓库信息

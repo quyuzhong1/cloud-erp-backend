@@ -10,6 +10,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -330,24 +331,25 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
-    public List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount() {
+    public List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount(PermissionsDTO dto) {
         PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseChangeCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item: values) {
-            PurchaseChangeDTO.SearchParamDTO dto = new PurchaseChangeDTO.SearchParamDTO();
+            PurchaseChangeDTO.SearchParamDTO searchParamDTO = new PurchaseChangeDTO.SearchParamDTO();
+            searchParamDTO.setParam(dto.getParam());
             ListStatusCountDTO.PurchaseChangeCountDTO resultDTO = new ListStatusCountDTO.PurchaseChangeCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
             resultDTO.setType(item.getCode());
@@ -481,6 +483,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         entity.setDeliveryWarehouseName(purchaseOrderEntity.getDeliveryWarehouseName());
         entity.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
         entity.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+        entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgName());
+        entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgId());
         entity.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
     }
     /**

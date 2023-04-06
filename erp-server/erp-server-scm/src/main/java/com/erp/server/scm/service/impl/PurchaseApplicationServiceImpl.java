@@ -12,6 +12,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -139,30 +140,31 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount() {
+    public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PermissionsDTO dto) {
         PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = new ArrayList<>();
         for (PurchaseListTypeEnum item: values) {
-            PurchaseApplicationDTO.SearchParamDTO dto = new PurchaseApplicationDTO.SearchParamDTO();
+            PurchaseApplicationDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationDTO.SearchParamDTO();
+            searchParamDTO.setParam(dto.getParam());
             ListStatusCountDTO.PurchaseApplicationCountDTO resultDTO = new ListStatusCountDTO.PurchaseApplicationCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
-                dto.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.NOT_GENERATED.getStatus(),CreatePoTypeEnum.PARTIAL_GENERATED.getStatus()));
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.NOT_GENERATED.getStatus(),CreatePoTypeEnum.PARTIAL_GENERATED.getStatus()));
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
-                dto.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.ALL_GENERATED.getStatus()));
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setCreatePoTypeList(Arrays.asList(CreatePoTypeEnum.ALL_GENERATED.getStatus()));
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(dto);
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
             resultDTO.setType(item.getCode());
@@ -367,7 +369,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<PurchaseOrderDTO.AddDTO> resultList = new ArrayList<>();
 
         //主表数据按供应商和采购组织分组
-        Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat("|").concat(obj.getPurchaseOrgId()).concat("|").concat(obj.getDestWarehouseId())));
+        Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSupplierId().concat("|").concat(obj.getPurchaseOrgId()).concat("|").concat(obj.getReceiveOrgId()).concat("|").concat(obj.getDestWarehouseId())));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> entry : map.entrySet()) {
             List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> value = entry.getValue();
             //采购订单主表数据
@@ -377,6 +379,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 throw new ServiceException(ApiError.ERROR_98016);
             }
             addDTO.setPurchaseUserId(entity.getApproveUserId());
+            addDTO.setReceiveOrgId(value.get(0).getReceiveOrgId());
             addDTO.setPurchaseDeptId(entity.getApplyDeptId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
@@ -398,7 +401,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //采购订单明细信息
             List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
             //明细数据按skuId、仓库、收料组织分组
-            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId().concat("|").concat(obj.getReceiveOrgId())));
+            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId()));
             for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailEntry : detailMap.entrySet()) {
 
                 List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> detailValue = detailEntry.getValue();
@@ -417,7 +420,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setVariantProperty(skuVO.getVariantProperty());
                 addDetailDTO.setDeclareModel(skuVO.getDeclareModel());
                 addDetailDTO.setDeclareName(skuVO.getDeclareName());
-                addDetailDTO.setReceiveOrgId(detailValue.get(0).getReceiveOrgId());
                 addDetailDTO.setTaxPrice(detailValue.get(0).getTaxPrice());
                 //采购数量
                 Integer purchaseQty = detailValue.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(0, Integer::sum);
@@ -430,9 +432,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 if (count > 0) {
                     addDetailDTO.setIsGift(Boolean.TRUE);
                 }
-                //采购报价单取税率 TODO
-                addDetailDTO.setTaxRate(BigDecimal.ZERO);
-
                 addDetailDTO.setPurchaseApplicationId(detailValue.get(0).getId());
                 addDetailDTO.setPurchaseApplicationDetailId(detailValue.get(0).getPurchaseApplicationDetailId());
                 details.add(addDetailDTO);

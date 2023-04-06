@@ -5,7 +5,6 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
@@ -55,18 +54,12 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
      */
     private List<SkuVO> skuList;
 
-    /**
-     * 核算公司
-     */
-    private List<BaseIdDTO> companyList;
-
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public PurchaseOrderExcelListener(List<SkuVO> skuList,List<String> skuIds,List<BaseIdDTO> companyList) {
+    public PurchaseOrderExcelListener(List<SkuVO> skuList,List<String> skuIds) {
         this.skuList = skuList;
         this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
-        this.companyList = companyList;
     }
 
     @Override
@@ -102,20 +95,6 @@ public class PurchaseOrderExcelListener extends AnalysisEventListener<PurchaseOr
                         excelDTO.setDeclareModel(skuEntity.getDeclareModel());
                         excelDTO.setDeclareName(skuEntity.getDeclareName());
                     }
-                }
-            }
-        }
-
-        if (CollectionUtils.isEmpty(companyList)) {
-            errorMsgList.add("系统中未发现已启用的收料组织");
-        } else {
-            //收料组织验证
-            if (StringUtils.isNotBlank(importExcelDTO.getReceiveOrgName())) {
-                BaseIdDTO baseIdDTO = companyList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getReceiveOrgName())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(baseIdDTO)) {
-                    errorMsgList.add("请录入启用收料组织");
-                } else {
-                    excelDTO.setReceiveOrgId(baseIdDTO.getId());
                 }
             }
         }
