@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.server.scm.service.PurchasePriceChangeService;
+import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,10 @@ public class PurchasePriceChangeController extends BaseController {
 
     @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
+
+
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
 
     /**
@@ -54,6 +59,19 @@ public class PurchasePriceChangeController extends BaseController {
     public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
         String id = purchasePriceChangeService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+
+    /**
+     * 采购价目表  点击变更报价获取详情
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/priceChangeDetail")
+    public ApiResult<PurchasePriceChangeDTO.ViewDTO> priceChangeDetail(@RequestBody @Validated BaseIdDTO dto) {
+        PurchasePriceChangeDTO.ViewDTO view = purchasePriceDetailService.priceChangeDetail(dto.getId());
+        return success(view);
     }
 
 

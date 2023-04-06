@@ -60,6 +60,18 @@ public class PurchasePriceController extends BaseController {
 
 
     /**
+     * 列表tab数据
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/tab/list")
+    public ApiResult tabList(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
+        String id = purchasePriceService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+    /**
      * 提交并审核
      *
      * @param dto

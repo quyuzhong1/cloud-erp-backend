@@ -12,9 +12,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceChangeDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -23,6 +26,7 @@ import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -65,6 +69,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
+
+    @Resource
+    private PurchasePriceService priceService;
 
 
     /**
@@ -479,9 +486,44 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
-
         List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList);
         return list;
+    }
+
+
+    /**
+     * 采购价目表 点击变更报价 获取到详情
+     *
+     * @param priceDetailId
+     * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
+     * @author yl
+     * @date 2023-04-06 12:03
+     */
+    @Override
+    public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String priceDetailId) {
+        PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
+        PurchasePriceDetailEntity detailEntity = this.getById(priceDetailId);
+        if (Objects.isNull(detailEntity)) {
+            throw new ServiceException(ApiError.ERROR_98049);
+        }
+        String purchasePriceId = detailEntity.getPurchasePriceId();
+        PurchasePriceEntity priceEntity = priceService.getById(purchasePriceId);
+        if (priceEntity != null) {
+            viewDTO.setPurchasePriceId(priceEntity.getId());
+            viewDTO.setSupplierId(priceEntity.getSupplierId());
+            viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
+        }
+        List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceChangeDetailList = new ArrayList<>(1);
+        PurchasePriceChangeDetailDTO.ViewDTO detail = new PurchasePriceChangeDetailDTO.ViewDTO();
+        detail.setPurchasePriceDetailId(priceDetailId);
+        detail.setOldTaxRate(detailEntity.getTaxRate());
+        detail.setOldTaxPrice(detailEntity.getTaxPrice());
+        detail.setOldCurrency(detailEntity.getCurrency());
+        detail.setSkuId(detailEntity.getSkuId());
+        detail.setSkuNo(detailEntity.getSkuNo());
+        purchasePriceChangeDetailList.add(detail);
+        viewDTO.setPurchasePriceChangeDetailList(purchasePriceChangeDetailList);
+        return viewDTO;
     }
 
 
