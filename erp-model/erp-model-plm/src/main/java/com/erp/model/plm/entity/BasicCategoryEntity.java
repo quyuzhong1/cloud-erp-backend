@@ -73,4 +73,10 @@ public class BasicCategoryEntity implements Serializable {
      */
     @TableField("sync_kingdee_time")
     private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 }

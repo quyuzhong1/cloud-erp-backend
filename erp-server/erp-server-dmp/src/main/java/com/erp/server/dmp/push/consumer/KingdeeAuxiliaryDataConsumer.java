@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
@@ -71,7 +70,7 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
     public void onMessage(Map<String, Object> map) {
 
         //模块类型
-        Integer type = ApiModuleTypeEnum.ASSISTANT_DATA.getCode();
+        Integer type = (Integer)map.get("moduleType");
 
         //传入map数据不能为空
         if (CollectionUtils.isEmpty(map)) {

@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -54,11 +55,14 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         resultMap.put("code",entity.getCode());
         //名称
         resultMap.put("name",entity.getName());
+        //模块类型
+        Integer moduleType = ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode();
         //辅助资料类型编码
         String fNumber = AssistantDataEnum.ONE_LEVEL_CATEGORY.getCode();
 
         //二级分类
         if (isExistParent) {
+            moduleType = ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode();
             fNumber = AssistantDataEnum.SECOND_LEVEL_CATEGORY.getCode();
             //查询上级分类编码
             BasicCategoryEntity parent = basicCategoryService.lambdaQuery().eq(BasicCategoryEntity::getId, entity.getPid()).one();
@@ -71,13 +75,14 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
             //二级编码
             resultMap.put("code",parent.getCode().concat(entity.getCode()));
         }
+        resultMap.put("moduleType",moduleType);
         resultMap.put("fNumber", fNumber);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CATEGORY_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return basicCategoryService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                return basicCategoryService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
             }
             return Boolean.TRUE;
         });

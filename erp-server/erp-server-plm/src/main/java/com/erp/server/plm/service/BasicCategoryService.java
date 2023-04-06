@@ -74,5 +74,5 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     /**
      * 更新金蝶同步状态
      */
-    Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus);
+    Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus,String syncKingdeeId);
 }

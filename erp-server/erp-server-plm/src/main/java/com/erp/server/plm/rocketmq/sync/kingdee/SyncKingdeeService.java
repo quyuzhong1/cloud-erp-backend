@@ -11,7 +11,7 @@ import java.util.Map;
 public interface SyncKingdeeService {
 
     /**
-     * 参数，code类型编码，businessId业务id，status状态
+     * 参数，code类型编码，businessId业务id，status状态，kingdeeId金蝶id
      */
     void updateBusinessSyncKingdeeStatus(Map<String, String> params);
 }

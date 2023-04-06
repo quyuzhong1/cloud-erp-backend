@@ -120,6 +120,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //数据id
         String id = save.getResult().getId();
+        //更新业务表中的金蝶id
+        updateBusinessSyncKingdeeStatus(type.toString(),String.valueOf(map.get("id")),"",id);
         //新增成功操作日志
         insertSuccessLog(platformEntity,map,JSONObject.toJSONString(json),msg,type);
         //提交
@@ -189,7 +191,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             audit(platformEntity, map,apiUtils,id,type);
         }
         //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"");
     }
 
 
@@ -273,16 +275,17 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
         //更新业务单据状态
-        this.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+        this.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),"");
     }
 
     @Override
-    public void updateBusinessSyncKingdeeStatus(String code,String businessId,String status){
+    public void updateBusinessSyncKingdeeStatus(String code,String businessId,String status,String kingdeeId){
         //更新业务单据状态
         Map<String,String> params = new HashMap<>(MathUtil.THREE);
         params.put("code",code);
         params.put("businessId",businessId);
         params.put("status", status);
+        params.put("kingdeeId", kingdeeId);
         plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 

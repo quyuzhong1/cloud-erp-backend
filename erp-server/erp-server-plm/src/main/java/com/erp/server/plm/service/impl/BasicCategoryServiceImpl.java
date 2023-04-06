@@ -365,11 +365,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus) {
+    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus, String syncKingdeeId) {
         return  this.lambdaUpdate()
                 .eq(BasicCategoryEntity::getId,categoryId)
-                .set(BasicCategoryEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),BasicCategoryEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
     }
 

@@ -41,7 +41,9 @@ public interface PlmTaskFeign {
     @PostMapping("plm/feign/product/getSpuByParam")
     ProductInfoDTO getSpuByParam(@RequestBody Map<String,String> params);
 
-    //更新业务单据状态
+    /**
+     * 更新业务单据状态
+     */
     @PostMapping("plm/feign/product/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String,String> params);
 }

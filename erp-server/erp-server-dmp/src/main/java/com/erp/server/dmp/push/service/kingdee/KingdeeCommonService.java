@@ -53,8 +53,7 @@ public interface KingdeeCommonService {
      * @param businessId
      * @param status
      */
-    void updateBusinessSyncKingdeeStatus(String code,String businessId,String status);
-
+    void updateBusinessSyncKingdeeStatus(String code,String businessId,String status,String kingdeeId);
     /**
      * @description: 新增或修改
      * @author Will
