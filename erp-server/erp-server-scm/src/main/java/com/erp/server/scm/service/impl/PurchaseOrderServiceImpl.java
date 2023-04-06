@@ -247,7 +247,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //审核
             if (PurchaseOrderProcessOperationEnum.APPROVE.getCode().equals(item.getCode())) {
-                if (StringUtils.isBlank(entity.getApproveUserName())) {
+                if (StringUtils.isNotBlank(entity.getApproveUserName())) {
                     processDTO.setIsArrive(Boolean.TRUE);
                 }
                 processDTO.setUserName(entity.getApproveUserName());
@@ -336,7 +336,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"反审核操作");
@@ -359,7 +359,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         workflowFeign.cancelProcess(ids);
 
         //更新单据为待提交
-        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购申请单【%s】取消流程", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"取消流程操作");
@@ -817,6 +817,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //更新审核状态
         lambdaUpdate().in(PurchaseOrderEntity::getId,ids)
                 .set(PurchaseOrderEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    /**
+     * 反审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids,String approveStatus) {
+
+        this.lambdaUpdate().in(PurchaseOrderEntity::getId,ids)
+                .set(PurchaseOrderEntity::getApproveStatus,approveStatus)
+                .set(PurchaseOrderEntity::getApproveUserId,"")
+                .set(PurchaseOrderEntity::getApproveUserName,"")
+                .set(PurchaseOrderEntity::getApproveTime,null)
                 .update();
     }
 

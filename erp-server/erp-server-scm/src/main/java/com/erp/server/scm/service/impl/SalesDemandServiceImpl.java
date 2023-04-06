@@ -284,7 +284,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         workflowFeign.cancelProcess(ids);
 
         //更新单据为待提交
-        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("备货申请单【%s】取消流程", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"取消流程操作");
@@ -318,7 +318,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"反审核操作");
@@ -477,6 +477,19 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //更新审核状态
         lambdaUpdate().in(SalesDemandEntity::getId,ids)
                 .set(SalesDemandEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    /**
+     * 反审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids,String approveStatus) {
+
+        this.lambdaUpdate().in(SalesDemandEntity::getId,ids)
+                .set(SalesDemandEntity::getApproveStatus,approveStatus)
+                .set(SalesDemandEntity::getApproveUserId,"")
+                .set(SalesDemandEntity::getApproveUserName,"")
+                .set(SalesDemandEntity::getApproveTime,null)
                 .update();
     }
 
