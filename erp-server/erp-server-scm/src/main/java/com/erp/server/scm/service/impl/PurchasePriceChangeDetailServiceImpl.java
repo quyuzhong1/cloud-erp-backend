@@ -277,6 +277,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
                 BeanMapper.copy(item, history);
                 history.setPriceDetailId(priceDetailId);
+                //失效时间
+                history.setExpireDate( changeDetail.getEffectiveDate().minusDays(1));
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
                 item.setExpireDate(changeDetail.getExpireDate());
