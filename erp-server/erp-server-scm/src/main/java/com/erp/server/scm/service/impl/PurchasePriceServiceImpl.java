@@ -260,7 +260,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
-            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentUrlList(), type, id);
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细
             priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList());
             return id;
