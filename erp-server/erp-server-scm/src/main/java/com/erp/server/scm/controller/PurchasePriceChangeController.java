@@ -9,7 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import org.apache.commons.lang3.StringUtils;
@@ -81,8 +81,8 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @GetMapping("/getSkuChangeList")
-    public ApiResult<List<PurchasePriceDetailDTO.ViewDTO>> getSkuChangeList(@RequestParam(value = "purchasePriceId") String purchasePriceId) {
-        List<PurchasePriceDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(purchasePriceId);
+    public ApiResult<List<PurchasePriceChangeDetailDTO.ViewDTO>> getSkuChangeList(@RequestParam(value = "purchasePriceId") String purchasePriceId) {
+        List<PurchasePriceChangeDetailDTO.ViewDTO> list = purchasePriceChangeService.getSkuChangeList(purchasePriceId);
         return success(list);
     }
 

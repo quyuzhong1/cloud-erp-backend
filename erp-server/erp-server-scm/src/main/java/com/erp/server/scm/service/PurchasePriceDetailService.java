@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import org.apache.commons.math3.util.Pair;
@@ -138,4 +139,13 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
      */
     PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String id);
+
+    /**
+     * 根据采购价目表id 获取到采购价目变更的明细
+     * @author yl
+     * @date 2023-04-06 18:54
+     * @param purchasePriceId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
+     */
+    List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId);
 }

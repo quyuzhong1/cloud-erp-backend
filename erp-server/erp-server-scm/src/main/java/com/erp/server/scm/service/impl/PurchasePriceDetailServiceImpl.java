@@ -150,6 +150,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
+                long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
+                //表示有无区间的
+                if (noInterval > 1) {
+                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+                }
+
                 //没有无区间 就要检查又没有不同区间的
                 List<Integer> intervalList = new ArrayList<>(10);
                 for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
@@ -515,9 +521,48 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         List<PurchasePriceDetailDTO.ViewDTO> viewList = this.getByPurchasePriceId(purchasePriceId);
-        List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceChangeDetailList = BeanMapper.copyList(viewList,PurchasePriceChangeDetailDTO.ViewDTO.class);
-        viewDTO.setPurchasePriceChangeDetailList(purchasePriceChangeDetailList);
+        List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
+        for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
+            PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
+            result.setOldCurrency(item.getCurrency());
+            result.setOldTaxPrice(item.getTaxPrice());
+            result.setOldTaxRate(item.getTaxRate());
+            result.setPurchasePriceDetailId(item.getId());
+            result.setMinQty(item.getMinQty());
+            result.setMaxQty(item.getMaxQty());
+            resultList.add(result);
+        }
+        viewDTO.setPurchasePriceChangeDetailList(resultList);
         return viewDTO;
+    }
+
+
+    /**
+     * 根据采购价目表id 获取到采购价目变更的明细
+     *
+     * @param purchasePriceId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-04-06 18:54
+     */
+    @Override
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId) {
+
+        List<PurchasePriceDetailDTO.ViewDTO> list = this.getByPurchasePriceId(purchasePriceId);
+        List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(list.size());
+        for (PurchasePriceDetailDTO.ViewDTO item : list) {
+            PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
+            result.setMaxQty(item.getMaxQty());
+            result.setMinQty(item.getMinQty());
+            result.setOldTaxRate(item.getTaxRate());
+            result.setOldTaxPrice(item.getTaxPrice());
+            result.setOldCurrency(item.getCurrency());
+            result.setSkuId(item.getSkuId());
+            result.setSkuNo(item.getSkuNo());
+            result.setProductName(item.getProductName());
+            resultList.add(result);
+        }
+        return resultList;
     }
 
 

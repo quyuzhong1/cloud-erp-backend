@@ -514,8 +514,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-31 16:07
      */
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId) {
-        return purchasePriceDetailService.getByPurchasePriceId(purchasePriceId);
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId) {
+        return purchasePriceDetailService.getPriceChangeDetail(purchasePriceId);
     }
 
 

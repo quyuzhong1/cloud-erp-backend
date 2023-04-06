@@ -5,7 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 
 import java.util.List;
@@ -119,5 +119,5 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param purchasePriceId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId);
+    List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId);
 }
