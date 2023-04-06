@@ -373,6 +373,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String searchType;
 
         /**
+         * 供应商名称
+         */
+        private String name;
+
+        /**
          * 产品名称
          */
         private String productName;

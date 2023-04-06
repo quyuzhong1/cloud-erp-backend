@@ -80,6 +80,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
+        entity.setDisabled(dto.getState());
         return this.updateById(entity);
     }
 

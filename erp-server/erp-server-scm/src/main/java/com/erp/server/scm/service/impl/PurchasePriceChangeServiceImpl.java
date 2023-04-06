@@ -443,7 +443,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<String> statusList = new ArrayList<>(1);
         //待我审核
-        if (searchType.equals(SearchType.WAIT_APPROVE)) {
+        if (SearchType.WAIT_APPROVE.equals(searchType)) {
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
 
