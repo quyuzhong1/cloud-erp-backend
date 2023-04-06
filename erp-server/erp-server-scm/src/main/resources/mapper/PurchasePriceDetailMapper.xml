@@ -23,7 +23,7 @@
                 and ppd.sku_id = #{params.skuId}
             </if>
             <if test="params.purchaseQty != null ">
-                and ppd.max_qty >= #{params.purchaseQty} and #{params.purchaseQty} >= ppd.min_qty
+                and ppd.max_qty >= #{params.purchaseQty} and #{params.purchaseQty} > ppd.min_qty
             </if>
             <if test="params.supplierId != null and params.supplierId != ''">
                 and pp.supplier_id = #{params.supplierId}
