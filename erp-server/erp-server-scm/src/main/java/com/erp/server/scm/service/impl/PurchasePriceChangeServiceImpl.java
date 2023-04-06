@@ -94,8 +94,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98029);
         }
+        String supplierId = purchasePrice.getSupplierId();
+        //根据供应商 获取到 对应 已有的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId);
         //检查区间报价是否重叠
-        purchasePriceChangeDetailService.checkSkuInterval(priceId,dto.getPurchasePriceChangeDetailList());
+        purchasePriceChangeDetailService.checkSkuInterval(priceId, dto.getPurchasePriceChangeDetailList(),supplierPriceDetailList);
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
@@ -104,7 +107,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         changeEntity.setCode(code);
         changeEntity.setId(id);
         String pricingUserId = dto.getAdjustUserId();
-        if(StringUtils.isNotBlank(pricingUserId)){
+        if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             changeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
         }
@@ -202,7 +205,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98028);
         }
         PurchasePriceChangeEntity old = new PurchasePriceChangeEntity();
-        BeanMapper.copy(priceChangeEntity,old);
+        BeanMapper.copy(priceChangeEntity, old);
         //状态值
         String status = priceChangeEntity.getApproveStatus().getStatus();
         //待审核
@@ -215,15 +218,19 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (!statusList.contains(status)) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
+
+        String supplierId = priceChangeEntity.getSupplierId();
+        //根据供应商 获取到 对应 已有的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId);
         //检查区间报价是否重叠
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
-        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(),priceChangeDetailList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList,supplierPriceDetailList);
         //code
         String code = priceChangeEntity.getCode();
         BeanMapper.copy(dto, priceChangeEntity);
         priceChangeEntity.setCode(code);
         String pricingUserId = dto.getAdjustUserId();
-        if(StringUtils.isNotBlank(pricingUserId)){
+        if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             priceChangeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
         }
@@ -439,7 +446,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
 
-        IPage pageData = baseMapper.paging(query, params,statusList);
+        IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());

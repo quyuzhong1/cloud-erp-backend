@@ -27,7 +27,7 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @author yl
      * @date 2023-03-28 12:07
      */
-    void checkSkuInterval(String purchasePriceId,List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList);
+    void checkSkuInterval(String purchasePriceId,List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList);
 
     /**
      * 根据变更表id 获取明细

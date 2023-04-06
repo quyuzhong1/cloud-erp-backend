@@ -107,8 +107,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             //参数 以sku 分组
             Map<String, List<PurchasePriceDetailDTO.AddDTO>> map = purchasePriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : map.entrySet()) {
-                //skuId
-                String skuId = item.getKey();
                 //对应的报价
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
                 //查询是否有无区间的
@@ -125,9 +123,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                         }
                     }
                     //判断是否重复
-                    boolean isSortedResult = isRepetition(intervalList);
+                    boolean isRepetition = isRepetition(intervalList);
                     //当有重复的时候
-                    if (isSortedResult) {
+                    if (isRepetition) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
                 }

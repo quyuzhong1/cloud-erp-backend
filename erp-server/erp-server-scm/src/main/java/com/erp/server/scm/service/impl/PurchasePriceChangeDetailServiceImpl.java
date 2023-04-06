@@ -71,46 +71,63 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @date 2023-03-28 12:07
      */
     @Override
-    public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList) {
+    public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList) {
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
+
+            //检查区间
+            for (PurchasePriceChangeDetailDTO.AddDTO item : purchasePriceChangeDetailList) {
+                Integer min = item.getMinQty();
+                Integer max = item.getMaxQty();
+                if (min != null) {
+                    if (max == null) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_EXIST);
+                    }
+                }
+                if (max != null) {
+                    if (min == null) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_EXIST);
+                    }
+                }
+                //当两个都不为空的时候
+                if (min != null && max != null) {
+                    if (min.equals(max)) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_DIFFERENT);
+                    }
+                }
+
+            }
+
             /**
              * 查询到
              * 采购价目表的明细
              * 因为变更 也不能有区间重复的
              */
-            List<String> purchasePriceDetailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
-            List<PurchasePriceDetailDTO.ViewDTO> purchasePriceList = purchasePriceDetailService.getPriceDetail(purchasePriceId, purchasePriceDetailIds);
-            List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(purchasePriceList, PurchasePriceChangeDetailDTO.AddDTO.class);
+
+            List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(supplierPriceDetailList, PurchasePriceChangeDetailDTO.AddDTO.class);
             purchasePriceChangeDetailList.addAll(list);
             //以sku 分组
             Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = purchasePriceChangeDetailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
-                //skuId
-                String skuId = item.getKey();
+
                 //对应的报价
                 List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
                 //查询是否有无区间的
                 long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
                 //表示有无区间的
-                if (noInterval > 0) {
-                    if (skuPriceList.size() > 0) {
-                        throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
-                    }
+                if (noInterval > 1) {
+                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 } else {
                     //没有无区间 就要检查又没有不同区间的
                     List<Integer> intervalList = new ArrayList<>(10);
                     for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
-                        intervalList.add(interval.getMinQty());
-                        intervalList.add(interval.getMaxQty());
+                        if (interval.getMinQty() != null && interval.getMaxQty() != null) {
+                            intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        }
                     }
                     //判断是否是按顺序的
-                    boolean isSortedResult = isSorted(intervalList);
+                    boolean isRepetitionResult = isRepetition(intervalList);
                     //当不是的时候
-                    if (!isSortedResult) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
-                    }
-                    long distCount = intervalList.stream().distinct().count();
-                    if (distCount != intervalList.size()) {
+                    if (!isRepetitionResult) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
                 }
@@ -118,6 +135,14 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
         }
 
+    }
+
+    private List<Integer> getInterval(Integer min, Integer max) {
+        List<Integer> resultList = new ArrayList<>(10);
+        for (int i = min + 1; i <= max; i++) {
+            resultList.add(i);
+        }
+        return resultList;
     }
 
 
@@ -332,7 +357,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         List<String> statusList = new ArrayList<>(5);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId,statusList);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList);
         return list;
     }
 
@@ -378,13 +403,16 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @author yl
      * @date 2023-03-24 14:28
      */
-    private boolean isSorted(List<Integer> list) {
-        for (int i = 0; i < list.size() - 1; i++) {
-            if (list.get(i) > list.get(i + 1)) {
+    private boolean isRepetition(List<Integer> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            Set<Integer> set = new HashSet<>(list);
+            if (set.size() < list.size()) {
+                return true;
+            } else {
                 return false;
             }
         }
-        return true;
+        return false;
     }
 
 }
