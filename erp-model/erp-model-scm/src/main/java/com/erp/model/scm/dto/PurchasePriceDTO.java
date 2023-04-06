@@ -109,6 +109,12 @@ public class PurchasePriceDTO implements Serializable {
          * 审核状态
          */
         private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 审核状态
+         */
+        private String approveStatusCode;
         /**
          * 报价人id
          */

@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -77,8 +78,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
              * 采购价目表的明细
              * 因为变更 也不能有区间重复的
              */
-            List<String> purchasePriceDetailIds=purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
-            List<PurchasePriceDetailDTO.ViewDTO> purchasePriceList = purchasePriceDetailService.getPriceDetail(purchasePriceId,purchasePriceDetailIds);
+            List<String> purchasePriceDetailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+            List<PurchasePriceDetailDTO.ViewDTO> purchasePriceList = purchasePriceDetailService.getPriceDetail(purchasePriceId, purchasePriceDetailIds);
             List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(purchasePriceList, PurchasePriceChangeDetailDTO.AddDTO.class);
             purchasePriceChangeDetailList.addAll(list);
             //以sku 分组
@@ -315,6 +316,24 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
+    }
+
+
+    /**
+     * 根据供应商id获取到已变更区间数据
+     *
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     * @author yl
+     * @date 2023-04-06 10:01
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId) {
+        List<String> statusList = new ArrayList<>(5);
+        statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId,statusList);
+        return list;
     }
 
 

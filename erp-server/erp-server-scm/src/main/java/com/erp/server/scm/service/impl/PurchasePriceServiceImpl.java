@@ -65,6 +65,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private PurchasePriceDetailService priceDetailService;
 
     @Resource
+    private PurchasePriceChangeDetailService priceChangeDetailService;
+
+    @Resource
     private AttachmentService attachmentService;
 
     @Resource
@@ -88,8 +91,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+        //根据供应商 获取到 对应 已有的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId);
+
+        //根据供应商 获取到 对应 变更的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(supplierId);
+
+
         //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList());
+        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(),supplierPriceDetailList,supplierPriceChangeDetailList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -98,7 +108,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
         String pricingUserId = dto.getPricingUserId();
-        if(StringUtils.isNotBlank(pricingUserId)){
+        if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
         }
@@ -130,6 +140,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         return "";
     }
+
+
 
 
     /**
@@ -165,6 +177,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
         viewDTO.setApproveStatus(purchasePrice.getApproveStatus());
+        viewDTO.setApproveStatusCode(purchasePrice.getApproveStatus().getStatus());
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
@@ -198,7 +211,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
 
         PurchasePriceEntity old = new PurchasePriceEntity();
-        BeanMapper.copy(purchasePrice,old);
+        BeanMapper.copy(purchasePrice, old);
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -210,9 +223,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_98019);
         }
 
+        //根据供应商 获取到 对应 已有的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId());
+
+        //根据供应商 获取到 对应 变更的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(purchasePrice.getSupplierId());
+
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList);
+        priceDetailService.checkSkuInterval(purchasePriceDetailList,supplierPriceDetailList,supplierPriceChangeDetailList);
 
         //编号
         String code = purchasePrice.getCode();
@@ -221,7 +240,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePrice.setApproveStatus(status);
 
         String pricingUserId = dto.getPricingUserId();
-        if(StringUtils.isNotBlank(pricingUserId)){
+        if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
         }
@@ -465,7 +484,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
 
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params,statusList);
+        IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());

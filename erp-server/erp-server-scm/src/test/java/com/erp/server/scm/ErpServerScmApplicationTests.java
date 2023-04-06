@@ -41,4 +41,7 @@ public class ErpServerScmApplicationTests {
         );
         logFieldService.saveBatch(logFields);
     }
+
+
+
 }

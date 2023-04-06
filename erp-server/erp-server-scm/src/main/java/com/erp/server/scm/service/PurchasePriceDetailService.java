@@ -25,10 +25,12 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      *  检查sku 区间报价
      * @author yl
      * @date 2023-03-24 14:01
-     * @param purchasePriceDetailList
+     * @param purchasePriceDetailList 参数的
+     * @param  supplierPriceDetailList  供应商已有的
+     * @param  supplierPriceChangeDetailList 供应商变更的
      * @return void
      */
-    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList);
+    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList);
 
     
     /**
@@ -115,4 +117,14 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return java.lang.Boolean
      */
     Boolean updateDisabled(UpdateStateDTO.BatchUpdateDTO dto);
+
+    
+    /**
+     * 查询供应商的
+     * @author yl
+     * @date 2023-04-06 9:37
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     */
+    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
 }

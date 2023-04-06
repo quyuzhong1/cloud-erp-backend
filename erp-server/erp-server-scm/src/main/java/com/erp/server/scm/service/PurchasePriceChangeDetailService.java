@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.common.business.service.SuperService;
 
@@ -67,4 +68,14 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @return void
      */
     void updatePriceChangeDetail(String id, List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList);
+
+    
+    /**
+     * 根据供应商id获取到已变更区间数据
+     * @author yl
+     * @date 2023-04-06 10:01
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     */
+    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
 }
