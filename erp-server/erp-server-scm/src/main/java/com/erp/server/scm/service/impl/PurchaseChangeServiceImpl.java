@@ -483,8 +483,8 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         entity.setDeliveryWarehouseName(purchaseOrderEntity.getDeliveryWarehouseName());
         entity.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
         entity.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
-        entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgName());
-        entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgId());
+        entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
+        entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
         entity.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
     }
     /**

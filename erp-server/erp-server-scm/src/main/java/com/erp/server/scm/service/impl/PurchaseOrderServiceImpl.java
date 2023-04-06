@@ -794,7 +794,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (ObjectUtils.isEmpty(baseIdDTO)) {
                 throw new ServiceException(ApiError.ERROR_9029);
             }
-            entity.setPurchaseOrgName(baseIdDTO.getName());
+            entity.setReceiveOrgName(baseIdDTO.getName());
         }
 
         //仓库
