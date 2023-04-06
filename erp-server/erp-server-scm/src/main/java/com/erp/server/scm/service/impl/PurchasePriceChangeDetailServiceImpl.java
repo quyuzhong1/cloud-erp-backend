@@ -124,7 +124,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                     //判断是否是按顺序的
                     boolean isRepetitionResult = isRepetition(intervalList);
                     //当不是的时候
-                    if (!isRepetitionResult) {
+                    if (isRepetitionResult) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
                 }
@@ -151,7 +151,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 //判断是否是按顺序的
                 boolean isRepetitionResult = isRepetition(intervalList);
                 //当不是的时候
-                if (!isRepetitionResult) {
+                if (isRepetitionResult) {
                     throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
             }
