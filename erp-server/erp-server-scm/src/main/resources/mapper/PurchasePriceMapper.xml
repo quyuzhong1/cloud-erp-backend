@@ -90,7 +90,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pp.create_time DESC
+        pp.create_time DESC,ppd.id DESC
     </select>
 
     <select id="getExport" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">

@@ -101,14 +101,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             }
 
-            /**
-             * 查询到
-             * 采购价目表的明细
-             * 因为变更 也不能有区间重复的
-             */
 
-            List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(supplierPriceDetailList, PurchasePriceChangeDetailDTO.AddDTO.class);
-            checkList.addAll(list);
             //以sku 分组
             Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
@@ -136,6 +129,33 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                     }
                 }
             }
+
+
+            /**
+             * 查询到
+             * 采购价目表的明细
+             * 因为变更 也不能有区间重复的
+             */
+            List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(supplierPriceDetailList, PurchasePriceChangeDetailDTO.AddDTO.class);
+            checkList.addAll(list);
+            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
+                //对应的报价
+                List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
+                //没有无区间 就要检查又没有不同区间的
+                List<Integer> intervalList = new ArrayList<>(10);
+                for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
+                    if (interval.getMinQty() != null && interval.getMaxQty() != null) {
+                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                    }
+                }
+                //判断是否是按顺序的
+                boolean isRepetitionResult = isRepetition(intervalList);
+                //当不是的时候
+                if (!isRepetitionResult) {
+                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                }
+            }
+
 
         }
 
