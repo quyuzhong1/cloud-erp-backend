@@ -669,8 +669,8 @@ ProductDetailController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 
     /**
