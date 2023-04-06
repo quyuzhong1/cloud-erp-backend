@@ -20,7 +20,7 @@ feign:
 seata:
   enabled: true
   application-id : ${spring.application.name}
-  tx-service-group: plm_seata_tx_group
+  tx-service-group: scm_seata_tx_group
   use-jdk-proxy: true
   #  data-source-proxy-mode: AT
   enable-auto-data-source-proxy: true
