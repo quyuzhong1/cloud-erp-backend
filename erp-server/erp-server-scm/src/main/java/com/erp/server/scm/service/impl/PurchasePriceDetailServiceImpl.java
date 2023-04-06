@@ -530,6 +530,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setPurchasePriceDetailId(item.getId());
             result.setMinQty(item.getMinQty());
             result.setMaxQty(item.getMaxQty());
+            result.setProductName(item.getProductName());
+            result.setSkuNo(item.getSkuNo());
+            result.setSkuId(item.getSkuId());
             resultList.add(result);
         }
         viewDTO.setPurchasePriceChangeDetailList(resultList);
