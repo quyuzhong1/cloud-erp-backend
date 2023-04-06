@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
@@ -14,6 +13,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -41,12 +42,17 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Autowired
     private ProductInfoService productInfoService;
 
+    @Autowired
+    private SyncKingdeeCategoryService syncKingdeeCategoryService;
+
+
     /**
      * 保存 产品分类信息
      *
      * @param dto
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, null);
@@ -56,6 +62,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         entity.setCode(dto.getCode());
         this.save(entity);
+        //组装数据发送到金蝶
+        syncKingdeeCategoryService.syncDataToKingdee(entity);
     }
 
     /**
@@ -75,11 +83,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             throw new ServiceException(ApiError.ERROR_95072);
         }
         checkCategoryCode(dto.getCode(), found.getPid(), dto.getId());
-        LambdaUpdateWrapper<BasicCategoryEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(BasicCategoryEntity::getName, categoryName);
-        updateWrapper.set(BasicCategoryEntity::getCode, dto.getCode());
-        updateWrapper.eq(BasicCategoryEntity::getId, dto.getId());
-        return this.update(updateWrapper);
+        BasicCategoryEntity entity = new BasicCategoryEntity();
+        BeanMapperUtils.copy(found,entity);
+        entity.setCode(dto.getCode());
+        entity.setName(categoryName);
+        this.updateById(entity);
+        //组装数据发送到金蝶
+        syncKingdeeCategoryService.syncDataToKingdee(entity);
+        return Boolean.TRUE;
     }
 
 

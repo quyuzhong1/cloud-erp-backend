@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
@@ -56,8 +57,12 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FNumber = '%s'", "SouthChina"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FNumber,FDataValue,FId.FNumber,FParentId,";
+        String fieldKeys = "FNumber,FDataValue,FId,FId.FNumber,FId.FName,FParentId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("number","SouthChina");
+        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
         System.out.println(queryList);
     }
 
@@ -66,10 +71,10 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
     public void onMessage(Map<String, Object> map) {
 
         //模块类型
-        Integer type = (Integer)map.get("moduleType");
+        Integer type = ApiModuleTypeEnum.ASSISTANT_DATA.getCode();
 
         //传入map数据不能为空
-        if (ObjectUtils.isEmpty(map) || map.size() == 0) {
+        if (CollectionUtils.isEmpty(map)) {
             log.error("同步数据不存在！");
             return;
         }
@@ -93,6 +98,25 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
 
+        //判断是否存在上级
+        Boolean isExistParent = (Boolean)map.get("isExistParent");
+        if (isExistParent) {
+            //根据上级编码查询上级id
+            String parentCode = (String)map.get("parentCode");
+            LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+            viewMap.put("number",parentCode);
+            JSONObject model;
+            try {
+                model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+            } catch (Exception e) {
+                //更新数据
+                kingdeeCommonService.insertFailureLog(platformEntity, map,"","未找到上级辅助资料",type);
+                return;
+            }
+            String id = (String) model.get("Id");
+            map.put("pid",id);
+        }
+
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
@@ -111,7 +135,7 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         }
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
-        Integer id = (Integer) model.get("Id");
+        String id = (String) model.get("Id");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
             documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, String.valueOf(id),type);
