@@ -74,11 +74,12 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList) {
 
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
-            //这个是初始的
-            List<PurchasePriceChangeDetailDTO.AddDTO> initList = purchasePriceChangeDetailList;
+            //这个是检查的
+            List<PurchasePriceChangeDetailDTO.AddDTO> checkList = new ArrayList<>(10);
+            checkList.addAll(purchasePriceChangeDetailList);
 
             //检查区间
-            for (PurchasePriceChangeDetailDTO.AddDTO item : initList) {
+            for (PurchasePriceChangeDetailDTO.AddDTO item : checkList) {
                 Integer min = item.getMinQty();
                 Integer max = item.getMaxQty();
                 if (min != null) {
@@ -107,9 +108,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
              */
 
             List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(supplierPriceDetailList, PurchasePriceChangeDetailDTO.AddDTO.class);
-            initList.addAll(list);
+            checkList.addAll(list);
             //以sku 分组
-            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = initList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
+            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> map = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
 
                 //对应的报价

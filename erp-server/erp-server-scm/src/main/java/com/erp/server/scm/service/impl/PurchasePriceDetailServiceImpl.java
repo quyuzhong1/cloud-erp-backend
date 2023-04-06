@@ -89,11 +89,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
         if (CollectionUtils.isNotEmpty(purchasePriceDetailList)) {
-            //这个是初始的
-            List<PurchasePriceDetailDTO.AddDTO> initList = purchasePriceDetailList;
+            //这个是要检查的
+            List<PurchasePriceDetailDTO.AddDTO> checkList = new ArrayList<>(10);
+            checkList.addAll(purchasePriceDetailList);
 
             //检查区间
-            for (PurchasePriceDetailDTO.AddDTO item : initList) {
+            for (PurchasePriceDetailDTO.AddDTO item : checkList) {
                 Integer min = item.getMinQty();
                 Integer max = item.getMaxQty();
                 if (min != null) {
@@ -116,7 +117,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
 
             //参数 以sku 分组
-            Map<String, List<PurchasePriceDetailDTO.AddDTO>> map = initList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+            Map<String, List<PurchasePriceDetailDTO.AddDTO>> map = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : map.entrySet()) {
                 //对应的报价
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
@@ -143,9 +144,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
 
 
-            initList.addAll(supplierPriceDetailList);
+            checkList.addAll(supplierPriceDetailList);
             //参数 以sku 分组 这个是添加了供应商的
-            Map<String, List<PurchasePriceDetailDTO.AddDTO>> supplierMap = initList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+            Map<String, List<PurchasePriceDetailDTO.AddDTO>> supplierMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
@@ -166,10 +167,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
             //变更
             if (CollectionUtils.isNotEmpty(supplierPriceChangeDetailList)) {
-                initList.addAll(supplierPriceChangeDetailList);
+                checkList.addAll(supplierPriceChangeDetailList);
 
                 //参数 以sku 分组 这个是添加了供应商的
-                Map<String, List<PurchasePriceDetailDTO.AddDTO>> supplierChangeMap = initList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+                Map<String, List<PurchasePriceDetailDTO.AddDTO>> supplierChangeMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
                 for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : supplierChangeMap.entrySet()) {
                     //对应的报价
                     List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
