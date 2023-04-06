@@ -119,6 +119,7 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
             errorMsgList.add("供应商等级不存在");
         }
         addDTO.setGradeId(gradeId);
+        addDTO.setGradeName(gradeName);
         //采购员
         String purchaseUserName = excelDTO.getPurchaseUserName();
         if (StringUtils.isNotBlank(purchaseUserName)) {

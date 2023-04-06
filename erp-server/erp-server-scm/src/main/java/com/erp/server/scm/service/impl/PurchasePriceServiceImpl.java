@@ -97,9 +97,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //根据供应商 获取到 对应 变更的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(supplierId);
 
-
         //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(),supplierPriceDetailList,supplierPriceChangeDetailList);
+        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList, supplierPriceChangeDetailList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -142,8 +141,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
 
-
-
     /**
      * 添加日志
      *
@@ -176,8 +173,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
-        viewDTO.setApproveStatus(purchasePrice.getApproveStatus());
-        viewDTO.setApproveStatusCode(purchasePrice.getApproveStatus().getStatus());
+        viewDTO.setApproveStatus(purchasePrice.getApproveStatus().getStatus());
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
@@ -231,7 +227,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList,supplierPriceDetailList,supplierPriceChangeDetailList);
+        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList, supplierPriceChangeDetailList);
 
         //编号
         String code = purchasePrice.getCode();

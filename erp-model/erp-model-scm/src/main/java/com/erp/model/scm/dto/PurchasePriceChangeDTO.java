@@ -183,6 +183,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         @NotNull(message = "调价日期不能为空")
         private LocalDate adjustDate;
 
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
         /**
          * 调价人id
          */

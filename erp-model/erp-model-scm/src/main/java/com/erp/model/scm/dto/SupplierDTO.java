@@ -90,6 +90,12 @@ public class SupplierDTO implements Serializable {
 
 
         /**
+         * 等级名
+         */
+        private String gradeName;
+
+
+        /**
          * 采购员id
          */
         private String purchaseUserId;
