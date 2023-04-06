@@ -91,12 +91,6 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
     @TableField("approve_user_name")
     private String approveUserName;
 
-    /**
-     * 变体信息
-     */
-    @TableField("variant_property")
-    private String variantProperty;
-
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -116,7 +110,6 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
 
     public static final String APPROVE_TIME = "approve_time";
 
-    public static final String VARIANT_PROPERTY = "variant_property";
 
     @Override
     public Serializable pkVal() {

@@ -123,6 +123,9 @@
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
                 and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -243,6 +246,9 @@
                 <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
                     and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
                 </if>
+                <if test="params.param != null and params.param != ''">
+                    ${params.param}
+                </if>
             </if>
         </where>
         ORDER BY
@@ -272,6 +278,9 @@
                 <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>

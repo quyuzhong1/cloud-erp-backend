@@ -42,7 +42,7 @@ public class PurchaseChangeController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "change_user_id",
             menuCode = "scm:purchaseChange:paging",
             tableAlias = "pc")
     public ApiResult<PagingVO<PurchaseChangeDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
@@ -122,6 +122,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<ScmPurchaseChangeDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:view",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseChangeDTO.ViewDTO> view(@Param("id") String id) {
         PurchaseChangeDTO.ViewDTO dto = purchaseChangeService.view(id);
         return success(dto);
@@ -190,8 +195,8 @@ public class PurchaseChangeController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:purchaseChange:paging",
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:exportExcel",
             tableAlias = "pc")
     public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseChangeService.exportExcel(dto, response);

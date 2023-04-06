@@ -49,7 +49,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
@@ -142,6 +142,10 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<AssociatedDocumentDTO>
      */
     @PostMapping("/viewAssociatedDocuments")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:paging",
+            tableAlias = "pc")
     public ApiResult<PurchaseOrderDTO.AssociatedDocumentDTO> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
         PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = purchaseOrderService.viewAssociatedDocuments(dto);
         return success(resultDTO);

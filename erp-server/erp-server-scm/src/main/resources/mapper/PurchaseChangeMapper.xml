@@ -104,6 +104,9 @@
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
                 and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.approve_time
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -204,6 +207,9 @@
                     and pc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pc.approve_time
                 </if>
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -226,6 +232,9 @@
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>
@@ -258,6 +267,9 @@
             pc.is_deleted = false
             <if test="params.id != null and params.id != ''">
                 and pc.purchase_order_id = #{params.id}
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         order by pc.create_time desc
