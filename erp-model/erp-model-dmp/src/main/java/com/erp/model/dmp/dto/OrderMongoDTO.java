@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import lombok.AllArgsConstructor;
@@ -67,7 +68,9 @@ public class  OrderMongoDTO {
     public static OrderMongoDTO getByBillNoAndOrderNo(String fBillNo, String fOrderNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setBillNo(fBillNo);
-        orderMongoDTO.setOrderNo(fOrderNo);
+        if(StrUtil.isNotBlank(fOrderNo)){
+            orderMongoDTO.setOrderNo(fOrderNo);
+        }
         return orderMongoDTO;
     }
 

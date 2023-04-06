@@ -22,8 +22,6 @@ public class KingdeeReturnOrderEntity {
     private String fBillTypeCode;
     @Alias("FBillNo")
     private String fBillNo;
-    @Alias("FOrderNo")
-    private String fOrderNo;
     @Alias("FDate")
     private String fDate;
     @Alias("FDocumentStatus")
