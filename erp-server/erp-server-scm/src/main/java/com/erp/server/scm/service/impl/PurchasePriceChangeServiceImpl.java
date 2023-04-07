@@ -96,7 +96,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         String supplierId = purchasePrice.getSupplierId();
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId,"");
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId,priceId);
         //检查区间报价是否重叠
         purchasePriceChangeDetailService.checkSkuInterval(priceId, dto.getPurchasePriceChangeDetailList(), supplierPriceDetailList);
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
@@ -222,7 +222,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         String supplierId = priceChangeEntity.getSupplierId();
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId,"");
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId,priceChangeEntity.getPurchasePriceId());
         //检查区间报价是否重叠
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
         purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList);
