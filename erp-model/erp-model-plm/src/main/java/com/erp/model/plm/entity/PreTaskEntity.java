@@ -3,8 +3,10 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
+import com.common.core.entity.BaseEntity;
 import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
@@ -18,12 +20,7 @@ import lombok.NoArgsConstructor;
 @TableName(value ="pre_task")
 @Data
 @NoArgsConstructor
-public class PreTaskEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class PreTaskEntity extends BaseEntity implements Serializable {
 
     /**
      * 任务id
@@ -35,23 +32,10 @@ public class PreTaskEntity implements Serializable {
      */
     private String preTaskId;
 
-
     /**
      * 产品id
      */
     private String productId;
-
-    /**
-     * 
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 
     /**
      * 间隔工期
@@ -78,7 +62,7 @@ public class PreTaskEntity implements Serializable {
     }
 
     public PreTaskEntity(PreTaskUpdateDTO updateDTO) {
-        this.id = updateDTO.getId();
+        super(updateDTO.getId());
         this.intervalWorkPeriod = updateDTO.getIntervalWorkPeriod();
         this.relationship = TaskRelationshipEnum.getByCode(updateDTO.getRelationshipCode());
     }

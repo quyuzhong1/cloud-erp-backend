@@ -15,9 +15,16 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.enums.BomOperationTypeEnum;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.ProductChangeStateEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -28,11 +35,13 @@ import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.cglib.core.Local;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,10 +93,15 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Autowired
     private SysLogService sysLogService;
 
+    @Resource
+    private BomOperateLogService bomOperateLogService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
+
+    private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
+    private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     /**
      * 添加变更
@@ -122,6 +136,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Boolean saveResult = this.save(change);
         if (saveResult) {
             changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
+        }
+        AddChangeDTO oldDto = new AddChangeDTO();
+        if (ObjectUtils.isNotEmpty(oldDto)) {
+            BeanMapperUtils.copy(oldDto, dto);
         }
 
         //启动一个流程
@@ -649,9 +667,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
         this.updateById(changeEntity);
+
+        String operateContent = String.format("[变更审核通过]" + BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName() + "  审核意见：" + dto.getComment());
+        //操作记录
+        bomOperateLogService.saveOperate(changeEntity.getSourceId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
-
-
     }
 
 
@@ -675,7 +696,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        changeEntity.setApprovalFinishTime(new Date());
+        changeEntity.setApprovalFinishTime(LocalDateTime.now());
         changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         this.updateById(changeEntity);
 
@@ -725,7 +746,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             ProductChangeEntity change = this.getById(id);
             if (change != null) {
                 String type = change.getType();
-                change.setApprovalFinishTime(new Date());
+                change.setApprovalFinishTime(LocalDateTime.now());
                 change.setState(ProductChangeStateEnum.AUDIT_PASS.getState());
                 this.updateById(change);
                 //获取到对应的 json
@@ -890,10 +911,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public List<ApproveNodeRecordVO> auditInfo(String id) {
-        if (StringUtils.isNotBlank(id)) {
+        //TODO 2023-03-30 暂时取消审核流程 只改状态
+        /*if (StringUtils.isNotBlank(id)) {
             List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
             return list;
-        }
+        }*/
         return new ArrayList<>();
     }
 
@@ -931,7 +953,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         return resultList;
     }
-
 
     private void setList(Object newObj, Object oldObj, List<String> resultList) {
         List<String> list = sysLogService.listSysLogField(newObj, oldObj);

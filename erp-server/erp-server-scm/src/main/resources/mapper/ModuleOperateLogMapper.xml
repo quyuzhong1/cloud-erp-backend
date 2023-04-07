@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.ModuleOperateLogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.ModuleOperateLogEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="moduleType" property="moduleType" />
+        <result column="field_name" property="fieldName" />
+        <result column="business_id" property="businessId" />
+        <result column="old_value" property="oldValue" />
+        <result column="new_value" property="newValue" />
+        <result column="content" property="content" />
+        <result column="operation" property="operation" />
+        <result column="pid" property="pid" />
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.ModuleOperateLogDTO$ListDTO">
+        select
+        sol.module_type,
+        sol.business_id,
+        sol.create_time,
+        max(sol.create_user_name) as create_user_name,
+        array_to_string(array_agg(DISTINCT sol.operation),',') as operation,
+        array_to_string(array_agg(DISTINCT sol.content),',') as content
+        from module_operate_log sol
+        <where>
+            <if test="params.businessId !=null and params.businessId!=''">
+                AND sol.business_id = #{params.businessId}
+            </if>
+            <if test="params.pid !=null and params.pid!=''">
+                AND sol.pid = #{params.pid}
+            </if>
+        </where>
+        group by sol.module_type,sol.business_id,sol.create_time
+        order by sol.create_time desc
+    </select>
+
+</mapper>

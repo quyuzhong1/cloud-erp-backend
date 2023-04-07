@@ -4,5 +4,27 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.TemplateTaskDocsNameMapper">
 
-
+    <select id="getDocsNamesById" resultType="com.erp.model.plm.entity.TemplateTaskDocsNameEntity">
+        SELECT
+            id,
+            name,
+            template_id,
+            create_time,
+            update_time,
+            status,
+            create_user_name,
+            create_user_id,
+            update_user_id,
+            update_user_name,
+            version,
+            is_deleted
+        FROM template_task_docs_name
+        WHERE is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

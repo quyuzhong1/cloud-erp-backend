@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @Description 产品证书表
@@ -34,8 +34,7 @@ public class ProductCertificateDTO implements Serializable {
     /**
      * 证书有效期
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date certificateValidTime;
+    private LocalDate certificateValidTime;
 
     private static final long serialVersionUID = 1L;
 }

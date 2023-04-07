@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,16 +18,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("sys_project_phase")
-public class SysTaskPhaseEntity  implements Serializable {
-
-
-    /**
-     * 表id
-     * @author yl
-     * @date 2022-10-09 10:47
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class SysTaskPhaseEntity extends BaseEntity implements Serializable {
 
     /**
      * 阶段名
@@ -44,12 +36,4 @@ public class SysTaskPhaseEntity  implements Serializable {
     @TableField("is_project_approval")
     private Integer isProjectApproval;
 
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 }

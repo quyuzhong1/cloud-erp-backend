@@ -1,8 +1,6 @@
 package com.common.core.anno;
 
 
-import com.common.core.anno.StateEnumValue;
-
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
@@ -38,6 +36,6 @@ public class StateEnumValueValidator  implements ConstraintValidator<StateEnumVa
                 }
             }
         }
-        return false;
+        return true;
     }
 }

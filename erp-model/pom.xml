@@ -20,6 +20,8 @@
         <module>erp-model-plm</module>
         <module>erp-model-bi</module>
         <module>erp-model-dmp</module>
+        <module>erp-model-scm</module>
+        <module>erp-model-wms</module>
     </modules>
 
     <dependencies>

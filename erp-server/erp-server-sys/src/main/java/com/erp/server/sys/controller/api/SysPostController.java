@@ -25,7 +25,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/post")
+@RequestMapping("post")
 public class SysPostController extends BaseController {
 
     @Autowired

@@ -23,7 +23,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("workflow/business")
+@RequestMapping("business")
 @Slf4j
 public class WorkflowBusinessController extends BaseController {
 

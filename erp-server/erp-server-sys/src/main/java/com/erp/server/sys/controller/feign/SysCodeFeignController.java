@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @date 2022/11/21 19:15
  */
 @RestController
-@RequestMapping("sys/feign/code")
+@RequestMapping("feign/code")
 public class SysCodeFeignController extends BaseController {
 
     @Autowired
@@ -49,6 +49,13 @@ public class SysCodeFeignController extends BaseController {
         return sysCode;
     }
 
+    /**
+     * 根据编码信息生成时间格式的业务编码
+     * @author Will
+     * @date: 2023/3/27 16:22
+     * @param dto
+     * @return String
+     */
     @PostMapping("/getBusinessNo")
     public String getBusinessNo(@RequestBody SysCodeDTO dto) {
         String sysCode = sysCodeService.getBusinessNo(dto);

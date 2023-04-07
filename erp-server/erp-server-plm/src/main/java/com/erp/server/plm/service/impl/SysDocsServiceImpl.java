@@ -15,7 +15,7 @@ import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.SysDocsMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.SysDocsService;

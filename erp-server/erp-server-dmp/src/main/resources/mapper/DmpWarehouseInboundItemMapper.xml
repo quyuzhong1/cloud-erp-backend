@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpWarehouseInboundItemMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.server.dmp.entity.DmpWarehouseInboundItemEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="record_id" property="recordId" />
+        <result column="product_barcode" property="productBarcode" />
+        <result column="sku_no" property="skuNo" />
+        <result column="box_no" property="boxNo" />
+        <result column="reference_box_no" property="referenceBoxNo" />
+        <result column="delivery_qty" property="deliveryQty" />
+        <result column="receipt_qty" property="receiptQty" />
+        <result column="put_away_qty" property="putAwayQty" />
+        <result column="unsellable_qty" property="unsellableQty" />
+        <result column="sellable_qty" property="sellableQty" />
+    </resultMap>
+
+</mapper>

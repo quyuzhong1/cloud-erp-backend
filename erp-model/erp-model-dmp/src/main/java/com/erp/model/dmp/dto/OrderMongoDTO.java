@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import lombok.AllArgsConstructor;
@@ -39,9 +40,18 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "fId")
     private String fId;
 
+    @Panno(findType = PannoEnum.EQ,field = "fMaterialId")
+    private String fMaterialId;
+
     public OrderMongoDTO(String platformCode, String code) {
         this.platformCode = platformCode;
         this.code = code;
+    }
+
+    public static OrderMongoDTO getByCode(String code) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setCode(code);
+        return orderMongoDTO;
     }
 
     public OrderMongoDTO(String id) {
@@ -58,7 +68,9 @@ public class  OrderMongoDTO {
     public static OrderMongoDTO getByBillNoAndOrderNo(String fBillNo, String fOrderNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setBillNo(fBillNo);
-        orderMongoDTO.setOrderNo(fOrderNo);
+        if(StrUtil.isNotBlank(fOrderNo)){
+            orderMongoDTO.setOrderNo(fOrderNo);
+        }
         return orderMongoDTO;
     }
 
@@ -66,6 +78,12 @@ public class  OrderMongoDTO {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setPlatformOrderId(platformOrderId);
         orderMongoDTO.setSalesRecordNumber(salesRecordNumber);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getShopByMaterialId(String fMaterialId) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setFMaterialId(fMaterialId);
         return orderMongoDTO;
     }
 }

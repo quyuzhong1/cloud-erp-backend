@@ -11,7 +11,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
@@ -322,5 +322,20 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         }
         resultList.addAll(otherList);
         return resultList;
+    }
+
+    /**
+     * 根据阶段名查询阶段信息
+     * @Author Luo_WG
+     * @param productId 产品id
+     * @param name 阶段名称
+     * @return com.erp.model.plm.entity.ProjectPhaseEntity
+     **/
+    public ProjectPhaseEntity getProductPhaseByName(String productId, String name) {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectPhaseEntity::getName, name);
+        queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 }

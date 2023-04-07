@@ -6,11 +6,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.enums.BusinessNoTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.SysCodeService;
@@ -80,9 +80,9 @@ public class SysCodeServiceImpl implements SysCodeService {
             dto.setCustomized("");
         }
         //产品的版本 1-9，A-Z
-        int version = entity.getVersion().intValue();
+        int version = entity.getProductVersion().intValue();
         if (9 >= version ) {
-            dto.setVersion(entity.getVersion().toString());
+            dto.setVersion(entity.getProductVersion().toString());
         } else {
             //version为10以上时转换成大写英文字母
             //大写字母A到Z的ascii码是从65到90

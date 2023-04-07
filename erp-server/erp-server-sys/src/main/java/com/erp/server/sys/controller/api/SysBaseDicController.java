@@ -30,7 +30,7 @@ import java.util.Map;
  * @since 2022-08-09
  */
 @RestController
-@RequestMapping("/sys/dic")
+@RequestMapping("dic")
 public class SysBaseDicController extends BaseController {
 
     @Autowired

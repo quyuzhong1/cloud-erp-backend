@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SalesDemandMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SalesDemandEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="code" property="code" />
+        <result column="apply_date" property="applyDate" />
+        <result column="apply_user_id" property="applyUserId" />
+        <result column="apply_user_name" property="applyUserName" />
+        <result column="apply_dept_id" property="applyDeptId" />
+        <result column="apply_dept_name" property="applyDeptName" />
+        <result column="is_first_mass_product" property="isFirstMassProduct" />
+        <result column="shop_id" property="shopId" />
+        <result column="shop_name" property="shopName" />
+        <result column="remark" property="remark" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_time" property="invalidTime" />
+        <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.SalesDemandDTO$ListDTO">
+        select
+            sd.id,
+            sd.code,
+            sd.shop_name as shopName,
+            sdd.sku_no as skuNo,
+            sdd.product_name as productName,
+            sdd.variant_property as variantProperty,
+            sdd.is_urgent as isUrgent,
+            sd.is_first_mass_product as isFirstMassProduct,
+            sdd.plan_delivery_date as planDeliveryDate,
+            sdd.plan_stock_qty as planStockQty,
+            sdd.dest_warehouse_name as destWarehouseName,
+            sdd.remark as remark,
+            sd.remark as stockReason,
+            sd.approve_status as approveStatus,
+            sd.invalid_status as invalidStatus,
+            sd.approve_user_name as approveUserName,
+            sd.create_user_name as createUserName,
+            sd.create_time as createTime
+        from sales_demand  sd
+        inner join  sales_demand_detail sdd  on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        <where>
+            sd.is_deleted = false
+            <if test="params.code != null and params.code != ''">
+                and sd.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.productName != null and params.productName != ''">
+                and sdd.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.isUrgent != null ">
+                and sdd.is_urgent = #{params.isUrgent}
+            </if>
+            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                and sd.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sd.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                     #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and sdd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                     #{item}
+                </foreach>
+            </if>
+            <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
+                and sdd.dest_warehouse_id in
+                <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and sd.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and sd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.create_time
+            </if>
+            <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
+                and sdd.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdd.plan_delivery_date
+            </if>
+            <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
+                and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sd.create_time desc
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO">
+        select
+        sd.id,
+        sd.code,
+        sd.shop_name as shopName,
+        sdd.sku_no as skuNo,
+        sdd.product_name as productName,
+        sdd.is_urgent as isUrgent,
+        case sd.is_first_mass_product
+            when true then '是'
+            when false then '否'
+        end as isFirstMassProduct,
+        sdd.plan_delivery_date as planDeliveryDate,
+        sdd.plan_stock_qty as planStockQty,
+        sdd.dest_warehouse_name as destWarehouseName,
+        sdd.remark as remark,
+        sd.remark as stockReason,
+        case sd.approve_status
+            when 'waitSubmit' then '待提交'
+            when 'approveIng' then '审核中'
+            when 'reject' then '审核不通过'
+            when 'approve' then '已审核'
+        end as approveStatusName,
+        case sd.invalid_status
+            when '0' then '未作废'
+            when '1' then '已作废'
+        end as invalidStatusName,
+        sd.approve_user_name as approveUserName,
+        sd.create_user_name as createUserName,
+        sd.create_time as createTime
+        from sales_demand sd
+        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        <where>
+            sd.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and sd.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.code != null and params.code != ''">
+                    and sd.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.productName != null and params.productName != ''">
+                    and sdd.product_name like concat('%',#{params.productName},'%')
+                </if>
+                <if test="params.isUrgent != null ">
+                    and sd.is_urgent = #{params.isUrgent}
+                </if>
+                <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                    and sd.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and sd.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and sdd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
+                    and sdd.dest_warehouse_id in
+                    <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and sd.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and sd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.create_time
+                </if>
+                <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
+                    and sdd.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdd.plan_delivery_date
+                </if>
+                <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
+                    and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
+                </if>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sd.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+            count(distinct sd.id)
+        from sales_demand sd
+        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        <where>
+            sd.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sd.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

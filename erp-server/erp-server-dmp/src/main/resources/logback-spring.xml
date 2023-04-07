@@ -175,7 +175,7 @@
 		</root>
 	</springProfile>
 	<springProfile name="uat">
-		<root level="INFO">
+		<root level="WARN">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_INFO" />
 		</root>

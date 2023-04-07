@@ -6,7 +6,7 @@ spring:
         namespace: ${NACOS_NAMESPACE:dev}
       config:
         server-addr: 172.16.100.12
-        namespace: ${NACOS_NAMESPACE:dev}
+        namespace: dev
         file-extension: yml
         shared-configs: gateway.yml,common.yml
 #    gateway:

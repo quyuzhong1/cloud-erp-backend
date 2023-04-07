@@ -24,7 +24,7 @@ import java.util.List;
  * @Date 2022/12/20 10:32
  **/
 @RestController
-@RequestMapping("bi/target/")
+@RequestMapping("target/")
 public class BiTargetModuleController extends BaseController {
 
     @Resource

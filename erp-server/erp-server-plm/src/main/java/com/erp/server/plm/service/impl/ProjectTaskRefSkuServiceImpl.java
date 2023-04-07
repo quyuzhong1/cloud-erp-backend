@@ -11,7 +11,7 @@ import com.erp.model.plm.dto.TaskFinishSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
@@ -53,9 +53,9 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
      * @date 2022-11-21 15:46
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void addTaskSkuRef(String taskId, String productId, List<String> refSkuIdList) {
-        deleteByTaskId(taskId);
+        removeTaskSkuRefByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> addList = new ArrayList<>(CollectionUtils.isEmpty(refSkuIdList) ? 10 : refSkuIdList.size());
         if (CollectionUtils.isNotEmpty(refSkuIdList)) {
             for (String skuId : refSkuIdList) {
@@ -259,7 +259,8 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
      * @author yl
      * @date 2022-11-21 15:47
      */
-    public void deleteByTaskId(String taskId) {
+    @Override
+    public void removeTaskSkuRefByTaskId(String taskId) {
         LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
         this.remove(queryWrapper);

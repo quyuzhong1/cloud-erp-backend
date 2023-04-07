@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
  * @since 2023-02-23
  */
 @RestController
-@RequestMapping("/plm/task/time/record")
+@RequestMapping("task/time/record")
 public class ProjectTaskTimeRecordController extends BaseController {
 
     @Resource

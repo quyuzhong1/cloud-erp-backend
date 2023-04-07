@@ -21,7 +21,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -53,32 +52,7 @@ import java.util.*;
 public class ExcelPrintUtils {
 	private static final Log log = LogFactory.getLog(ExcelPrintUtils.class);
 
-	long startTime = 0;
 
-	public static void main(String[] args) throws InvalidFormatException, IOException {
-		List<String> templateSheetNames = new ArrayList<String>();
-		List<String> sheetNames = new ArrayList<String>();
-		List<Map<String, Object>> beansList = new ArrayList<Map<String, Object>>();
-		Map<String, Object> introBeansMap = new HashMap<String, Object>();
-		introBeansMap.put("cs", "测试数据1");
-		FileInputStream is = new FileInputStream(new File("D:/model.xlsx"));
-		// Populate each list here with the same number of objects.
-		templateSheetNames.add("instro");
-		sheetNames.add("Introduction");
-		beansList.add(introBeansMap);
-		templateSheetNames.add("sheetToClone");
-		sheetNames.add("Q1 2011");
-//		beansList.add(introBeansMap);
-		templateSheetNames.add("sheetToClone");
-		sheetNames.add("Q2 2011");
-		beansList.add(introBeansMap);
-		templateSheetNames.add("sheetToClone");
-		sheetNames.add("Q3 2011");
-		beansList.add(introBeansMap);
-		templateSheetNames.add("sheetToClone");
-		sheetNames.add("Q4 2011");
-		beansList.add(introBeansMap);
-	}
 
 	/**
 	 * 保存临时文件
@@ -431,14 +405,6 @@ public class ExcelPrintUtils {
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-			// 根据模板生成excel
-//			ExcelWriter excelWriter = EasyExcel.write(out)
-//					.registerConverter(new SqlDateNumberConverter())
-//					.registerConverter(new SqlDateStringConverter())
-//					.registerConverter(new SqlTimestampStringConverter())
-//					.registerWriteHandler(new ExcelPrintMergeStrategy(cols, mergeRowIndex, mergeRowIndex))
-//					.withTemplate(stream)
-//					.build();
 			ExcelWriterBuilder excelWriterBuilder  = EasyExcel.write(out)
 			.registerConverter(new SqlDateNumberConverter())
 			.registerConverter(new SqlDateStringConverter())

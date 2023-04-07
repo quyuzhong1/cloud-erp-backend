@@ -43,6 +43,11 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
      */
     private static final String APP_URL = "/app/";
 
+    /**
+     * 开放API
+     */
+    private static final String OPEN_API_URL = "/open/api/";
+
     @Autowired
     private TokenService tokenService;
 
@@ -64,7 +69,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 return unauthorizedResponse(exchange, ApiError.ERROR_5001.msg, ApiError.ERROR_5001.code);
             }
             //判断是否是app 如果是 直接放行
-            if(uri.contains(APP_URL)){
+            if(uri.contains(OPEN_API_URL)){
                 return chain.filter(exchange);
             }
 

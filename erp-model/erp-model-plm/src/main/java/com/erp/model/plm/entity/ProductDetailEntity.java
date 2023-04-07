@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -18,13 +18,7 @@ import java.util.List;
 @TableName(value ="product_detail")
 @Data
 @NoArgsConstructor
-public class ProductDetailEntity implements Serializable {
-    /**
-     * 主键id
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
+public class ProductDetailEntity extends BaseEntity implements Serializable {
     /**
      * 产品表id
      */
@@ -53,15 +47,13 @@ public class ProductDetailEntity implements Serializable {
      * 计划上市时间
      */
     @TableField(value = "plan_listing_time")
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planListingTime;
+    private LocalDate planListingTime;
 
     /**
      * 首批量产入库时间
      */
     @TableField(value = "first_mass_product_date")
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date firstMassProductDate;
+    private LocalDate firstMassProductDate;
     
     /**
      * 单位表id
@@ -74,30 +66,6 @@ public class ProductDetailEntity implements Serializable {
      */
     @TableField(value = "product_state")
     private Integer productState;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 修改人id
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
 
     /**
      * sku图片
@@ -122,18 +90,6 @@ public class ProductDetailEntity implements Serializable {
      */
     @TableField(value = "charge_name")
     private String chargeName;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value = "create_user_name")
-    private String createUserName;
-
-    /**
-     * 修改人名称
-     */
-    @TableField(value = "update_user_name")
-    private String updateUserName;
 
     /**
      *禁止修改的字段

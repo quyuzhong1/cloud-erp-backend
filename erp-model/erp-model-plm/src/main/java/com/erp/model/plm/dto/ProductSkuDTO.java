@@ -1,11 +1,10 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -21,6 +20,11 @@ public class ProductSkuDTO extends PermissionsDTO {
      * sku/spu/编号
      */
     private String no;
+
+    /**
+     * sku名称
+     */
+    private String name;
 
     /**
      * 0所有产品，1待审核产品，2已审核产品
@@ -103,14 +107,12 @@ public class ProductSkuDTO extends PermissionsDTO {
     /**
      * 开始时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date startTime;
+    private LocalDate startTime;
 
     /**
      * 结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date endTime;
+    private LocalDate endTime;
 
 
 
@@ -145,7 +147,20 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private List<Integer> saleStateList;
 
+    /**
+     * sku集合
+     */
+    private List<String> skuList;
 
+    /**
+     * spu集合
+     */
+    private List<String> spuList;
+
+    /**
+     * 供应商名称
+     */
+    private List<String> supplierNameList;
 }
 
 

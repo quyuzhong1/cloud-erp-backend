@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -104,7 +105,7 @@ public class DeliveryDocsDTO implements Serializable {
     /**
      * 文提交时间
      */
-    private Date submitTime;
+    private LocalDateTime submitTime;
 
 
     /**

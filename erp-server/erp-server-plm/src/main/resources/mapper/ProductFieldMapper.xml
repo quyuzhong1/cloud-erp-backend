@@ -6,7 +6,7 @@
         SELECT id,name,scope,create_user_id,create_time,
         create_user_name,if_required,type,(state=${flagState}) AS state,content,update_time
         FROM product_field
-        WHERE is_sys=1
+        WHERE is_sys=1 AND is_deleted = FALSE
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -18,7 +18,7 @@
         (SELECT id,name,scope,create_user_id,create_time,
         create_user_name,if_required,type,(state=${flagState}) AS state,content,update_time
         FROM product_field
-        WHERE is_sys=1 AND scope=1
+        WHERE is_sys=1 AND scope=1 AND is_deleted = FALSE
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -29,7 +29,7 @@
         (SELECT id,name,scope,create_user_id,create_time,
         create_user_name,if_required,type,(state=${flagState}) AS state,content,update_time
         FROM product_field
-        WHERE product_id=#{params.flagId}
+        WHERE product_id=#{params.flagId} AND is_deleted = FALSE
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>

@@ -19,6 +19,11 @@ fdfs:
   so-timeout: 1500
   tracker-list:
     - 172.16.100.12:22122
+sfs:
+  nacos:
+    server-addr: 172.16.100.12:8848
+    namespace: seata-server
+    group: SEATA_GROUP
 
 
 

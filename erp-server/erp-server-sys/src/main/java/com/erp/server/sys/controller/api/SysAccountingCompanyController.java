@@ -1,17 +1,18 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BatchStateDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.StateDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.CompanyPagingSearchDTO;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,13 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
+ * @author Administrator
  * @Classname SysAccountingCompanyController
  * @Description TODO
  * @Date 2022-07-12 9:39
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/company")
+@RequestMapping("company")
 public class SysAccountingCompanyController extends BaseController {
 
     @Autowired
@@ -40,29 +42,37 @@ public class SysAccountingCompanyController extends BaseController {
         return success(pagingVO);
     }
 
-    //添加公司
+    /**
+     * 添加公司
+     */
     @RequestMapping("/save")
     public ApiResult save(@RequestBody @Validated SysAccountingCompanyDTO dto) {
         boolean flag = sysAccountingCompanyService.saveCompany(dto);
         return flag == true ? success() : failure();
     }
 
-    //修改公司
+    /**
+     * 修改公司
+     */
     @RequestMapping("/update")
     public ApiResult update(@RequestBody @Validated SysAccountingCompanyDTO dto) {
         boolean flag = sysAccountingCompanyService.updateCompany(dto);
         return flag == true ? success() : failure();
     }
 
-    //更改状态 禁用或者启用
+    /**
+     * 更改状态 禁用或者启用
+     */
     @RequestMapping("/updateState")
-    public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
+    public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
         boolean flag = sysAccountingCompanyService.updateCompanyState(dto);
         return flag == true ? success() : failure();
     }
 
 
-    //更改状态 禁用或者启用
+    /**
+     * 更改状态 禁用或者启用
+     */
     @RequestMapping("/batchUpdateState")
     public ApiResult batchUpdateState(@RequestBody @Validated BatchStateDTO dto) {
         boolean flag = sysAccountingCompanyService.batchUpdateCompanyState(dto);
@@ -70,10 +80,27 @@ public class SysAccountingCompanyController extends BaseController {
     }
 
 
-    //更改状态 禁用或者启用
+    /**
+     * 更改状态 禁用或者启用
+     */
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody @Validated List<String> ids) {
         sysAccountingCompanyService.removeByIds(ids);
         return success();
     }
+
+    /**
+     * 获取组织列表
+     *
+     * @return
+     * @author yl
+     * @date 2023-03-21 17:3
+     */
+    @GetMapping("/list")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> list() {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList();
+        return success(list);
+
+    }
+
 }

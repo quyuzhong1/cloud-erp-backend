@@ -3,7 +3,10 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
+
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 /**
@@ -12,12 +15,7 @@ import lombok.Data;
  */
 @TableName(value ="task_comment")
 @Data
-public class TaskCommentEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class TaskCommentEntity extends BaseEntity implements Serializable {
 
     /**
      * 
@@ -33,28 +31,6 @@ public class TaskCommentEntity implements Serializable {
      * 内容
      */
     private String comment;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 创建人id
-     */
-    private String createUserId;
-
-    /**
-     * 创建人名
-     */
-    private String createUserName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

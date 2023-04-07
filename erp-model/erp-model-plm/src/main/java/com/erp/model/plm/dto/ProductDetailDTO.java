@@ -1,12 +1,11 @@
 package com.erp.model.plm.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @Description: 多规格sku信息请求参数
@@ -34,7 +33,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 产品sku名称
      */
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 50, message = "产品名称最大50字符")
     private String name;
 
     /**
@@ -45,14 +44,12 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 计划上市时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planListingTime;
+    private LocalDate planListingTime;
 
     /**
      * 首批量产入库时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date firstMassProductDate;
+    private LocalDate firstMassProductDate;
 
     /**
      * 单位表id
@@ -116,4 +113,26 @@ public class ProductDetailDTO implements Serializable {
     private String businessProcessId;
 
     private static final long serialVersionUID = 1L;
+
+
+    /**
+     * 搜索sku
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+
+
+        /**
+         * 搜索关键字
+         */
+        private String searchKeyword;
+
+
+        /**
+         * 状态
+         */
+        private  Integer status;
+
+    }
 }

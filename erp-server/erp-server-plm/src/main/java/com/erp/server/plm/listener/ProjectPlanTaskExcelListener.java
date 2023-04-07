@@ -12,6 +12,9 @@ import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,6 +50,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
     private String productId;
 
     private String productName;
+
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public ProjectPlanTaskExcelListener(List<ProjectTaskEntity>  projectTaskList, ProjectTaskService projectTaskService, String productId, List<FindUserDTO> sysUserList, String productName) {
         this.projectTaskService = projectTaskService;
@@ -160,8 +165,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
         taskIdList.add(task.getId());
         productId = task.getProductId();
-        task.setPlanStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month));
-        task.setPlanEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month));
+        task.setPlanStartTime(LocalDate.parse(vo.getPlanStartTime(), dateTimeFormatter));
+        task.setPlanEndTime(LocalDate.parse(vo.getPlanEndTime(), dateTimeFormatter));
         projectTaskService.updateById(task);
     }
 

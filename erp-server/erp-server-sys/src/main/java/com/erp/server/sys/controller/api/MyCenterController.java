@@ -25,7 +25,7 @@ import javax.validation.Valid;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/personalCenter")
+@RequestMapping("personalCenter")
 public class MyCenterController extends BaseController {
 
     @Autowired

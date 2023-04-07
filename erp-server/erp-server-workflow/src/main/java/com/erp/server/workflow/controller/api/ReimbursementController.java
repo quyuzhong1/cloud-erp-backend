@@ -23,7 +23,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("workflow")
+@RequestMapping("/")
 @Slf4j
 public class ReimbursementController extends BaseController {
 

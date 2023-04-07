@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,11 @@ public class ProjectTaskDetailsDTO implements Serializable {
      * 任务id
      */
     private String taskId;
+
+    /**
+     * spu编码
+     */
+    private String spuNo;
 
     /**
      * 产品id
@@ -96,12 +102,12 @@ public class ProjectTaskDetailsDTO implements Serializable {
     /**
      * 计划开始时间
      */
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * 计划结束时间
      */
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
     /**
      * 计划时间
@@ -112,12 +118,12 @@ public class ProjectTaskDetailsDTO implements Serializable {
     /**
      * 实际开始时间
      */
-    private Date realityStartTime;
+    private LocalDateTime realityStartTime;
 
     /**
      * 实际结束时间
      */
-    private Date realityEndTime;
+    private LocalDateTime realityEndTime;
 
     /**
      * 实际时间
@@ -133,7 +139,7 @@ public class ProjectTaskDetailsDTO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 任务阶段
@@ -143,7 +149,7 @@ public class ProjectTaskDetailsDTO implements Serializable {
     /**
      * 更新时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 创建人

@@ -18,6 +18,7 @@
            ttd.update_user_name
         from template_task_docs_name ttd
         <where>
+            ttd.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                and ttd.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
@@ -30,7 +31,8 @@
 
     <select id="getDocsByTaskIdAndTemplateId" resultType="com.erp.model.plm.dto.DocsDTO">
         SELECT id ,docs_name AS name,is_sys FROM template_delivery_docs
-        WHERE task_id = #{taskId} AND template_id = #{templateId}
+        WHERE task_id = #{taskId} AND template_id = #{templateId} AND is_deleted = FALSE
+
     </select>
 
 </mapper>

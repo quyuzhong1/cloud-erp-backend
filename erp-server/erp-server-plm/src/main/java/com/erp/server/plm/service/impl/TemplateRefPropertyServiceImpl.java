@@ -1,7 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.core.serveice.SuperServiceImpl;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.plm.dto.TemplatePropertyDTO;
 import com.erp.model.plm.entity.TemplateRefPropertyEntity;
 import com.erp.server.plm.mapper.TemplateRefPropertyMapper;

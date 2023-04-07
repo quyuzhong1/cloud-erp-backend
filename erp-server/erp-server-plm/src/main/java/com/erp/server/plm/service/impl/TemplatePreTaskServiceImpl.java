@@ -124,7 +124,7 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
         Map<String, TemplatePreTaskEntity> oldTaskPreMap = new HashMap<>();
         if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
             //先删除前置任务
-            removeTemplatePreTask(taskId,templateId, preTaskIdList);
+            removeTemplatePreTask(taskId,templateId);
             oldTaskPreMap = oldTaskEntityList.stream()
                     .collect(Collectors.toMap(task -> StrUtil.format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
         }
@@ -165,15 +165,11 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
      * @date: 2022/11/16 10:28
      * @param taskId
      * @param templateId
-     * @param preTaskIdList
      */
-    private void removeTemplatePreTask(String taskId,String templateId, List<String> preTaskIdList) {
+    private void removeTemplatePreTask(String taskId,String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTaskId, taskId);
         queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            queryWrapper.in(TemplatePreTaskEntity::getPreTaskId, preTaskIdList);
-        }
         this.remove(queryWrapper);
     }
 }

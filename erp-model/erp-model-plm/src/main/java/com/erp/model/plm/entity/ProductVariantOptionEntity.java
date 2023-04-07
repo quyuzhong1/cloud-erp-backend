@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -15,12 +16,7 @@ import java.util.List;
  */
 @TableName(value ="product_variant_option")
 @Data
-public class ProductVariantOptionEntity implements Serializable {
-    /**
-     * 主键
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class ProductVariantOptionEntity extends BaseEntity implements Serializable {
 
     /**
      * 产品id
@@ -39,8 +35,6 @@ public class ProductVariantOptionEntity implements Serializable {
      */
     @TableField(value = "variant_value")
     private String variantValue;
-
-
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

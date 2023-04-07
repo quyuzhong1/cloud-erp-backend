@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -53,7 +54,7 @@ public class ProductArchiveDTO implements Serializable {
     /**
      * 归档时间
      */
-    private Date archiveTime;
+    private LocalDateTime archiveTime;
 
 
 
@@ -79,5 +80,5 @@ public class ProductArchiveDTO implements Serializable {
     /**
      * 产品创建时间
      */
-    private Date productCreateTime;
+    private LocalDateTime productCreateTime;
 }

@@ -19,17 +19,11 @@ import java.util.List;
  * @date 2022/11/16 12:23
  */
 @RestController
-@RequestMapping("/plm/templateTaskName")
+@RequestMapping("templateTaskName")
 public class TemplateTaskDocsNameController extends BaseController {
 
     @Autowired
     private TemplateTaskDocsNameService templateTaskDocsNameService;
-
-
-
-
-
-
 
 
     /**
@@ -74,5 +68,4 @@ public class TemplateTaskDocsNameController extends BaseController {
         List<DocsDTO> list = templateTaskDocsNameService.getDocsNameList(templateId);
         return success(list);
     }
-
 }

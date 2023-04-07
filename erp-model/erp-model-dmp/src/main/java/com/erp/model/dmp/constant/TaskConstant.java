@@ -20,4 +20,9 @@ public interface TaskConstant {
      * 金蝶云星空任务名称
      */
     String KINGDEE_PULL_DATA_TASK = "KINGDEE_PULL_DATA_TASK";
+
+    /**
+     * 艾姆勒任务名称
+     */
+    String IML_PULL_DATA_TASK = "IML_PULL_DATA_TASK";
 }

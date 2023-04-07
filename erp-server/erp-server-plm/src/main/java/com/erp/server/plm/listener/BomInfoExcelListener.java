@@ -15,7 +15,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.enums.BusinessNoTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.service.*;
 import org.springframework.transaction.annotation.Transactional;

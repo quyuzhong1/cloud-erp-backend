@@ -22,4 +22,13 @@ public interface TaskDocsNameService  extends IService<TaskDocsNameEntity> {
     List<TaskDocsNameEntity> saveBySysTaskIds(List<String> sysTaskIds,String productId);
 
     List<TaskDocsNameEntity> saveBySys(String productId);
+
+    /**
+     * 保存文档名
+     * @Author Luo_WG
+     * @Date 2023/3/29 16:16
+     * @param dto dto
+     * @return java.lang.String
+     **/
+    String saveDocs(DocsNameDTO dto);
 }

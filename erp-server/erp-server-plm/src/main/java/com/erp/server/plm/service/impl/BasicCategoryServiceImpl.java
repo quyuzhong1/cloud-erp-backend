@@ -10,7 +10,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;

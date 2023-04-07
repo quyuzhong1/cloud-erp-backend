@@ -23,7 +23,7 @@ import java.util.List;
  * @date 2022/11/15 10:59
  */
 @RestController
-@RequestMapping("/plm/templateRole")
+@RequestMapping("templateRole")
 public class TemplateRoleController extends BaseController {
 
     @Autowired

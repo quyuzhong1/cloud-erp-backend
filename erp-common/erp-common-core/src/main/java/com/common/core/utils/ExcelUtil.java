@@ -2,12 +2,15 @@ package com.common.core.utils;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.converters.ConverterKeyBuild;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.EasyExcelLocalDateConverter;
+import com.common.core.excel.EasyExcelLocalTimeConverter;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -56,6 +59,16 @@ public class ExcelUtil {
             excelWriter = getExportExcelWriter(outputStream);
             WriteTable writeTable = EasyExcel.writerTable(0).head(clazz).needHead(true).build();
             WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
+
+            // LocalDateTime转化器，导入导出都可以使用
+            EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+            // LocalDate转化器，导入导出都可以使用
+            EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+
             // 写出数据
             excelWriter.write(dataResult, writeSheet, writeTable);
 

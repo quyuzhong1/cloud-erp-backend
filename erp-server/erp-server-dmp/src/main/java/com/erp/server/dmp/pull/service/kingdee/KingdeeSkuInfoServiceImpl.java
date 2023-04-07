@@ -64,8 +64,22 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         log.info("拉取金蝶SKU信息列表数据 entityList.size = {} ", entityList.size());
         List<KingdeeSkuEntity> insertList = new ArrayList<>();
         List<KingdeeSkuEntity> pushToMqList = new ArrayList<>();
+        // 对于多条数据同时存在进行去重
+        entityList = entityList.stream()
+                .collect(Collectors.toMap(KingdeeSkuEntity::getFMaterialId,
+                        item -> item,
+                        (oldItem, newItem) -> {
+                    // 保留最近更新的一条
+                    if(newItem.getFModifyDate().compareTo(oldItem.getFModifyDate())> 0){
+                        return newItem;
+                    }else {
+                        return oldItem;
+                    }
+                })).values().stream()
+                .sorted(Comparator.comparing(KingdeeSkuEntity::getFModifyDate))
+                .collect(Collectors.toList());
         for (KingdeeSkuEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getFMaterialId());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getShopByMaterialId(entity.getFMaterialId());
             List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
@@ -74,7 +88,6 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
             }
             KingdeeSkuEntity mongoDatum = mongoData.get(0);
             String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;

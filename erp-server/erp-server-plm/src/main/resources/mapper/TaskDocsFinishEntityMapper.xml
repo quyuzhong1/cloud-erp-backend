@@ -5,7 +5,7 @@
     <!-- 通用查询映射结果 -->
     <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT product_id AS flagId  ,count(*) AS count FROM task_finish_docs
-        WHERE product_id !='' GROUP BY product_id
+        WHERE product_id !='' AND is_deleted = FALSE GROUP BY product_id
    </select>
 
 </mapper>

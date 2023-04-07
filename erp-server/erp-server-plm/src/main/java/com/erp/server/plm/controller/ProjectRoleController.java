@@ -20,7 +20,7 @@ import java.util.List;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("plm/role")
+@RequestMapping("role")
 public class ProjectRoleController extends BaseController {
 
     @Autowired

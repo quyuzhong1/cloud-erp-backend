@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.gyy;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -35,9 +36,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +66,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         List<GyyDeliveryDetailEntity> insertList = new ArrayList<>();
         List<GyyDeliveryDetailEntity> pushToMqList = new ArrayList<>();
         for (GyyDeliveryDetailEntity entity : gyyDeliveryDetailEntityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getPlatformCode(), entity.getCode());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(entity.getCode());
             List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
@@ -94,15 +93,33 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             log.warn("管易发货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
-        // 构造订单结构
-        List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
-                .map(this::initOrderInfoEntity)
-                .collect(Collectors.toList());
-
+        // 构造订单结构  管易需要拆单处理
+        List<DmpDeliveryDetailInfoEntity> entityToMqlist = new ArrayList<>();
+        pushToMqList.stream()
+            .forEach(x -> {
+                if (CollectionUtil.isEmpty(x.getDetails()) ||  1 == x.getDetails().size()) {
+                    entityToMqlist.add(initOrderInfoEntity(x));
+                }else {
+                    // 对应多个销售订单时进行拆单操作
+                    Map<String, List<DeliveryDetailsBean>> tradeCodeItemMap = x.getDetails().stream()
+                            .collect(Collectors.groupingBy(DeliveryDetailsBean::getTradeCode));
+                    if (1 == tradeCodeItemMap.keySet().size()) {
+                        entityToMqlist.add(initOrderInfoEntity(x));
+                    }else {
+                        tradeCodeItemMap.keySet().stream().forEach(tradeCode -> {
+                            List<DeliveryDetailsBean> itemList = tradeCodeItemMap.get(tradeCode);
+                            GyyDeliveryDetailEntity deliveryInfoEntity = new GyyDeliveryDetailEntity();
+                            BeanUtil.copyProperties(x, deliveryInfoEntity);
+                            deliveryInfoEntity.setDetails(itemList);
+                            entityToMqlist.add(initOrderInfoEntity(deliveryInfoEntity));
+                        });
+                    }
+                }
+        });
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
-                    msg, msg.getBillNo());
+                    msg, StrUtil.format("{}_{}", msg.getBillNo(), msg.getOrderNo()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -254,7 +271,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(itemEntity.getItemUnitName());
             //是否是赠品 1. 是 2. 否
-            dmpReturnOrderItemEntity.setIsGift((null != itemEntity.getIsGift() && itemEntity.getIsGift() == 0) ? 1 : 2);
+            dmpReturnOrderItemEntity.setIsGift((null != itemEntity.getIsGift() && itemEntity.getIsGift() == 1) ? 1 : 2);
             //属性
             dmpReturnOrderItemEntity.setSpecifics(itemEntity.getPlatformSkuName());
             //订单商品备注
@@ -263,6 +280,8 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             dmpReturnOrderItemEntity.setStockName(gyyDeliveryDetailEntity.getWarehouseName());
             //库位
             dmpReturnOrderItemEntity.setWarehouseLocation(itemEntity.getLocationCode());
+            // 对应销售单号 管易
+            dmpReturnOrderItemEntity.setSaleOrderNo(itemEntity.getTradeCode());
             orderItemList.add(dmpReturnOrderItemEntity);
         });
        return orderItemList;

@@ -27,7 +27,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("workflow/feign/process")
+@RequestMapping("feign/process")
 @Slf4j
 public class ProcessFeignController extends BaseController {
 
@@ -102,6 +102,12 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/terminate")
     public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.terminateProcess(dto.getProcessInstanceId());
+    }
+
+    //取消流程
+    @PostMapping("/cancelProcess")
+    public void cancelProcess(@RequestBody List<String> ids) {
+        workflowService.cancelProcess(ids);
     }
 
     //驳回到源点

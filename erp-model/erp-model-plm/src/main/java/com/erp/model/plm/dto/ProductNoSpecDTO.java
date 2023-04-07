@@ -44,6 +44,7 @@ public class ProductNoSpecDTO {
     /**
      * 产品销售信息
      */
+    @Valid
     @NotNull(message = "产品销售不能为空")
     private ProductSaleDTO productSaleDTO;
 
@@ -61,6 +62,7 @@ public class ProductNoSpecDTO {
     /**
      * 产品证书信息
      */
+    @Valid
     private List<ProductCertificateDTO> productCertificateList;
 
 
@@ -68,11 +70,13 @@ public class ProductNoSpecDTO {
     /**
      * 包装辅料
      */
+    @Valid
     private List<ProductAccessoriesDTO> productAccessoriesList;
 
 
     /**
      * 产品认证
      */
+    @Valid
     private List<ProductAttestationDTO> productAttestationList;
 }

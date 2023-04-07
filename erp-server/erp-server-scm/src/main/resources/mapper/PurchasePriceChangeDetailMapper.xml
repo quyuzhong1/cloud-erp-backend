@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper">
+
+
+    <select id="getBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$AddDTO">
+        SELECT
+          sku_id,
+          delivery_day,
+          min_qty,
+          max_qty,
+          currency,
+          tax_price,
+          tax_rate,
+          disabled
+        FROM  purchase_price_change_detail  WHERE
+        is_deleted=FALSE  AND
+        purchase_price_change_id IN (
+          SELECT id FROM purchase_price_change
+          WHERE supplier_id=#{supplierId} AND is_deleted=FALSE
+          <if test="statusList!=null and statusList.size>0">
+          AND approve_status IN
+             <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                 #{status}
+             </foreach>
+          </if>
+        )
+
+    </select>
+</mapper>

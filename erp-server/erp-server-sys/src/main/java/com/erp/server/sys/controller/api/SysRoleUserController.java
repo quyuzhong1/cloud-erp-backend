@@ -24,7 +24,7 @@ import java.util.List;
  * @date 2022-07-08 11:23:00
  */
 @RestController
-@RequestMapping("sys/roleUser")
+@RequestMapping("roleUser")
 public class SysRoleUserController  extends BaseController {
 
     @Autowired

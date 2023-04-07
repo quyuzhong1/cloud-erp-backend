@@ -19,7 +19,7 @@ import java.util.Map;
  * @since 2022-12-08 14:24:02
  */
 @RestController
-@RequestMapping("bi/dict")
+@RequestMapping("dict")
 public class BiDictController extends BaseController {
     /**
      * 服务对象

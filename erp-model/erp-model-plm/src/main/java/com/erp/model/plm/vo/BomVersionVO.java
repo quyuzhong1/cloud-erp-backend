@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -43,7 +44,7 @@ public class BomVersionVO implements Serializable {
     private String type;
 
 
-    private Date createTime;
+    private LocalDateTime createTime;
 
 
     private String createUserId;

@@ -17,7 +17,7 @@ import java.util.Map;
  * @date 2022/12/19 9:51
  */
 @RestController
-@RequestMapping("bi/settlementExchangeRate")
+@RequestMapping("settlementExchangeRate")
 public class BiSettlementExchangeRateController extends BaseController {
 
     @Resource

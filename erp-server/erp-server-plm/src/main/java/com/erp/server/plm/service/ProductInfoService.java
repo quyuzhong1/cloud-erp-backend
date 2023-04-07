@@ -164,6 +164,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     List<ProductInfoEntity> getRoleClassifyList(boolean isFinishedProductDev, boolean isArchive);
 
-    
+    /**
+     * 根据名称查询产品信息
+     * @Author Luo_WG
+     * @Date 2023/3/29 14:26
+     * @param name 产品名称
+     * @return com.erp.model.plm.entity.ProductInfoEntity
+     **/
+    ProductInfoEntity getProductByName(String name);
 
 }

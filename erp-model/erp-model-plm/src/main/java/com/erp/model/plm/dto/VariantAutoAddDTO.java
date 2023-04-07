@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -17,6 +18,7 @@ public class VariantAutoAddDTO {
     /**
      * 产品spu基础信息
      */
+    @Valid
     private ProductInfoDTO productSpuBaseInfoDTO;
 
     /**

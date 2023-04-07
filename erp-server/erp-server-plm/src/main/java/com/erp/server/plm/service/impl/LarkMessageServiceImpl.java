@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
@@ -27,6 +28,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +67,8 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         String textContent = null;
         NoticeEnum noticeFlag = null;
         String processId = null;
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
+
         switch (businessType){
             case PRODUCT_TASK :
                 noticeFlag = NoticeEnum.APPROVAL_TASK;
@@ -78,7 +83,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 }
                 processId = task.getProcessId();
                 titleContent= String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
-                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());;
+                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());;
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_BUSINESS_NOT_EXIT);

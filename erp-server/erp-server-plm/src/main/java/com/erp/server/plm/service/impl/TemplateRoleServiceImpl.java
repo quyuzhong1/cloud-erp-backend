@@ -19,7 +19,9 @@ import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
 import com.erp.model.plm.dto.TemplateSearchDTO;
+import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectRoleEntity;
+import com.erp.model.plm.entity.TemplateMembersEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.mapper.TemplateRoleMapper;
 import com.erp.server.plm.service.ProjectRoleService;
@@ -30,6 +32,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -90,23 +94,35 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     @Override
     public List<CopySourceDTO> copyTemplateRole(String templateId, String productId, String projectId) {
         List<TemplateRoleEntity> list = getByTemplateId(templateId);
+
+        List<ProjectRoleEntity> projectRoleByProductId = projectRoleService.getProjectRoleByProductId(productId);
+
         List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectRoleEntity> copyList = new ArrayList<>();
             for (TemplateRoleEntity item : list) {
+                ProjectRoleEntity projectRoleEntity = projectRoleByProductId.stream().filter(projectMembers -> projectMembers.getName().equals(item.getName())).findFirst().orElse(null);
                 CopySourceDTO sourceDTO = new CopySourceDTO();
-                ProjectRoleEntity entity = new ProjectRoleEntity();
-                BeanMapper.copy(item, entity);
-                entity.setProjectId(projectId);
-                entity.setProductId(productId);
                 String id = IdWorker.getIdStr();
-                entity.setId(id);
                 sourceDTO.setNewCreateId(id);
                 sourceDTO.setDataId(item.getId());
-                copyList.add(entity);
+
+                if (Objects.isNull(projectRoleEntity)) {
+                    ProjectRoleEntity entity = new ProjectRoleEntity();
+                    BeanMapper.copy(item, entity);
+                    entity.setProjectId(projectId);
+                    entity.setProductId(productId);
+                    entity.setId(id);
+                    copyList.add(entity);
+                } else {
+                    sourceDTO.setNewCreateId(projectRoleEntity.getId());
+                }
                 sourceList.add(sourceDTO);
             }
-            projectRoleService.saveBatch(copyList);
+
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                projectRoleService.saveBatch(copyList);
+            }
         }
         return sourceList;
     }

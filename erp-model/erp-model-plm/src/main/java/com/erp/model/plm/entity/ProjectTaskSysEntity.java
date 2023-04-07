@@ -1,10 +1,12 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -18,12 +20,9 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_task_sys")
-public class ProjectTaskSysEntity implements Serializable {
+public class ProjectTaskSysEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 任务名
@@ -59,13 +58,13 @@ public class ProjectTaskSysEntity implements Serializable {
      * 计划开始时间
      */
     @TableField(value = "plan_start_time" ,insertStrategy = FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
-    private Date planStartTime;
+    private LocalDateTime planStartTime;
 
     /**
      * j计划结束时间
      */
     @TableField(value = "plan_end_time" ,insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
-    private Date planEndTime;
+    private LocalDateTime planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
@@ -82,8 +81,6 @@ public class ProjectTaskSysEntity implements Serializable {
     @TableField("phase_name")
     private String phaseName;
 
-
-
     @TableField("property")
     private Integer property;
 
@@ -98,24 +95,6 @@ public class ProjectTaskSysEntity implements Serializable {
      */
     @TableField("description")
     private String description;
-
-    @TableField("create_user_id")
-    private String createUserId;
-
-    @TableField("create_user_name")
-    private String createUserName;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 
     @TableField("business_process_id")
     private String businessProcessId;

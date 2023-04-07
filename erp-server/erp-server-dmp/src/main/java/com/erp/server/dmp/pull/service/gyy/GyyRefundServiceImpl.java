@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -91,7 +93,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         List<GyyRefundEntity> insertList = new ArrayList<>();
         List<GyyRefundEntity> pushToMqList = new ArrayList<>();
         for (GyyRefundEntity entity : gyyRefundEntityList) {
-            GyyRefundDTO orderMongoDTO = new GyyRefundDTO(entity.getPlatfromCode(), entity.getRefundCode());
+            GyyRefundDTO orderMongoDTO = new GyyRefundDTO(entity.getCode(), entity.getRefundCode());
             List<GyyRefundEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
@@ -179,14 +181,18 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             Integer agreeRefuse = gyyRefundEntity.getAgreeRefuse();
             if (agreeRefuse == 1) {
                 refundStatus = 4;
-            } else if (agreeRefuse == 1) {
+            } else if (agreeRefuse == 2) {
                 refundStatus = 5;
             }
         }
         //退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
         dmpRefundInfoEntity.setRefundStatus(refundStatus);
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //申请时间
-        dmpRefundInfoEntity.setRefundCreateTime(gyyRefundEntity.getCreateDate());
+        if (!"null".equalsIgnoreCase(gyyRefundEntity.getCreateDate()) && StrUtil.isNotBlank(gyyRefundEntity.getCreateDate())) {
+            dmpRefundInfoEntity.setRefundCreateTime(LocalDateTime.parse(gyyRefundEntity.getCreateDate(), sdf));
+        }
+
         //店铺编号
         dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopId());
         //店铺名称
@@ -220,13 +226,16 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         //退货图片多个用英文 , 隔开
         dmpRefundInfoEntity.setPictureUrl("");
         //平台最后修改时间
-        dmpRefundInfoEntity.setPlatformUpdateTime(gyyRefundEntity.getModifyDate());
+        if (!"null".equalsIgnoreCase(gyyRefundEntity.getModifyDate()) && StrUtil.isNotBlank(gyyRefundEntity.getModifyDate())) {
+            dmpRefundInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(gyyRefundEntity.getModifyDate(), sdf));
+        }
         //包裹单号
         dmpRefundInfoEntity.setTrackNumber("");
         //平台标识
         dmpRefundInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
         dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());
         dmpRefundInfoEntity.setItemList(initOrderItem(gyyRefundEntity));
+        dmpRefundInfoEntity.setCancel(gyyRefundEntity.getCancel());
         return dmpRefundInfoEntity;
     }
 

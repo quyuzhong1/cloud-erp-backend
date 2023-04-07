@@ -9,7 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsNameDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.TaskDocsNameMapper;
 import com.erp.server.plm.service.SysDocsService;
 import com.erp.server.plm.service.TaskDeliveryService;
@@ -132,5 +132,28 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
             this.saveBatch(saveList);
         }
         return saveList;
+    }
+
+    /**
+     * 保存文档名
+     * @Author Luo_WG
+     * @Date 2023/3/29 16:16
+     * @param dto dto
+     * @return java.lang.String
+     **/
+    @Override
+    public String saveDocs(DocsNameDTO dto) {
+        String name = dto.getName();
+        String productId = dto.getProductId();
+        List<DocsDTO> docksNames = getDocsNameList(productId);
+        List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
+            throw new ServiceException(ApiError.ERROR_95012);
+        }
+        TaskDocsNameEntity entity = new TaskDocsNameEntity();
+        entity.setName(name);
+        entity.setProductId(productId);
+        this.save(entity);
+        return entity.getId();
     }
 }

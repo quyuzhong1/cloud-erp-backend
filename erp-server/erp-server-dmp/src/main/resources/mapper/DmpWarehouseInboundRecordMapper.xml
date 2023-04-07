@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpWarehouseInboundRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="receiving_code" property="receivingCode" />
+        <result column="referenceNo" property="referenceNo" />
+        <result column="receiving_status" property="receivingStatus" />
+        <result column="warehouse_code" property="warehouseCode" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="platform_add_time" property="platformAddTime" />
+        <result column="platform_update_time" property="platformUpdateTime" />
+        <result column="receiving_type" property="receivingType" />
+        <result column="platform_sign" property="platfromSign" />
+    </resultMap>
+
+</mapper>

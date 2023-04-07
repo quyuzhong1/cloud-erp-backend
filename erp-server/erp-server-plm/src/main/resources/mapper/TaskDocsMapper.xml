@@ -5,6 +5,7 @@
     <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT task_id  AS flagId ,count(*) AS count FROM task_delivery_docs
         <where>
+            is_deleted = FALSE
             <if test="taskIds !=null and taskIds.size>0">
                 AND task_id IN
                 <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
@@ -22,8 +23,8 @@
        COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
-       FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
-       where d.product_id = #{params.flagId}
+       FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id AND f.is_deleted = FALSE
+       where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
             AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
        </if>
@@ -43,8 +44,8 @@
         COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
         f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
-        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
-        where d.product_id = #{params.flagId}
+        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id AND f.is_deleted = FALSE
+        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
         <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
             AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -65,8 +66,8 @@
         COALESCE(f.file_size,0) fileSize,
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName,
         f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name
-        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
-        where d.task_id=#{taskId}
+        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id AND f.is_deleted = FALSE
+        where d.task_id=#{taskId} AND d.is_deleted = FALSE
     </select>
 
 
@@ -74,12 +75,12 @@
 
     <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT product_id AS flagId  ,count(*) AS count FROM task_delivery_docs
-        WHERE product_id !='' GROUP BY product_id
+        WHERE product_id !='' AND is_deleted = FALSE GROUP BY product_id
     </select>
 
     <select id="getDocsByTaskId" resultType="com.erp.model.plm.dto.DocsDTO">
        SELECT id ,docs_name AS name,is_sys FROM task_delivery_docs
-       WHERE task_id=#{taskId}
+       WHERE task_id=#{taskId} AND is_deleted = FALSE
 
     </select>
 

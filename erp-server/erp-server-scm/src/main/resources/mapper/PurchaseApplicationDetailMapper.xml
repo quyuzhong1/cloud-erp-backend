@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchaseApplicationDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.PurchaseApplicationDetailEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="sku_id" property="skuId" />
+        <result column="sku_no" property="skuNo" />
+        <result column="product_name" property="productName" />
+        <result column="unit_qty" property="unitQty" />
+        <result column="is_urgent" property="isUrgent" />
+        <result column="plan_delivery_date" property="planDeliveryDate" />
+        <result column="apply_qty" property="applyQty" />
+        <result column="dest_warehouse_id" property="destWarehouseId" />
+        <result column="dest_warehouse_name" property="destWarehouseName" />
+        <result column="purchase_org_id" property="purchaseOrgId" />
+        <result column="purchase_org_name" property="purchaseOrgName" />
+        <result column="receive_org_id" property="receiveOrgId" />
+        <result column="receive_org_name" property="receiveOrgName" />
+        <result column="receive_qty" property="receiveQty" />
+        <result column="stock_in_qty" property="stockInQty" />
+        <result column="create_po_type" property="createPoType" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+</mapper>

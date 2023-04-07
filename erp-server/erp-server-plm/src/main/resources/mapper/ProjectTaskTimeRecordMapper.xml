@@ -37,9 +37,10 @@
         pi.create_time AS productCreateDate,
         pi.approval_time AS productApprovalDate
         FROM "project_task" pt
-        LEFT JOIN product_info  pi on pt.product_id = pi.id
-        LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id
+        LEFT JOIN product_info  pi on pt.product_id = pi.id AND pi.is_deleted = FALSE
+        LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id AND pttr.is_deleted = FALSE
         <where>
+            pt.is_deleted = FALSE
             <if test="null != params and null != params.searchKeyword and '' != params.searchKeyword">
                and (pi."name" like concat('%',#{params.searchKeyword} ,'%') or pi.spu_no like concat('%',#{params.searchKeyword} ,'%'))
             </if>

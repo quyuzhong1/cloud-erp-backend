@@ -1,9 +1,11 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -14,11 +16,7 @@ import java.util.Date;
  */
 @TableName(value = "user_cancel_notice")
 @Data
-public class UserCancelNoticeEntity implements Serializable {
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
+public class UserCancelNoticeEntity extends BaseEntity implements Serializable {
 
     /**
      * 用户id
@@ -29,18 +27,5 @@ public class UserCancelNoticeEntity implements Serializable {
      * 取消的消息通知id
      */
     private String cancelNoticeId;
-
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
 
 }

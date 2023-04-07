@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -28,7 +29,7 @@ public class ProductDocsDTO implements Serializable {
     private String projectPersonInCharge;
 
     //归档时间
-    private Date archiveTime;
+    private LocalDateTime archiveTime;
 
     //项目状态
     private Integer productState;

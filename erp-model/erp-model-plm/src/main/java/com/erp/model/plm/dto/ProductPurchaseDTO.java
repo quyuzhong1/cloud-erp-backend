@@ -4,13 +4,14 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * @Description 产品采购信息表请求参数
@@ -35,41 +36,45 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * EAN码
      */
+    @Size(max = 200,message = "EAN码不能大于200字符")
     private String ean;
 
     /**
      * 计划首批下单量
      */
+    @DecimalMax(value = "999999999",message ="计划首批下单量超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long planOrderQty;
 
     /**
      * 首批下单时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date placeOrderTime;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate placeOrderTime;
 
     /**
      * 预计首批到货时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planArrivalTime;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate planArrivalTime;
 
     /**
      * MOQ(最小起订量)
      */
+    @DecimalMax(value = "999999999",message ="MOQ超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Integer moq;
 
     /**
      * 交货周期(天)
      */
-    @Digits(integer = 20,fraction = 4,message = "交货周期(天)最大20字符")
+    @Digits(integer = 16,fraction = 4,message = "报关申报价格最大16字符，小数位不能大于4位")
     private BigDecimal deliveryCycle;
 
     /**
      * 实际首批到货时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date actualArrivalTime;
+    private LocalDate actualArrivalTime;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货
@@ -106,16 +111,22 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 实际首批到货量
      */
+    @DecimalMax(value = "999999999",message ="实际首批到货量超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long actualArrivalQty;
 
     /**
      * 试产数量
      */
+    @DecimalMax(value = "999999999",message ="试产数量超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long trialProductionQty;
 
     /**
      * 首批量产数量
      */
+    @DecimalMax(value = "999999999",message ="首批量产数量超出最大值" )
+    @DecimalMin(value = "0",message ="最小值为0" )
     private Long firstMassQty;
 
     @TableField(exist = false)

@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -14,6 +15,7 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -36,6 +38,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -167,10 +170,14 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         dmpOrderInfoEntity.setOrderStatus(orderStatus);
         //店铺编号
         dmpOrderInfoEntity.setShopNo(orderEntity.getShopId());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         // 平台订单时间
-        dmpOrderInfoEntity.setPlatformCreateTime(orderEntity.getPaidTime());
+        if (!"null".equalsIgnoreCase(orderEntity.getCreateDate()) && StrUtil.isNotBlank(orderEntity.getCreateDate())) {
+            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate(), sdf));
+        }
         //订单来源平台
-        dmpOrderInfoEntity.setSourcePlatform(orderEntity.getPlatformId());
+        MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
+        dmpOrderInfoEntity.setSourcePlatform(null != sourcePlatformEnum ? sourcePlatformEnum.getDesc() : orderEntity.getPlatformId());
         //买家地址1
         dmpOrderInfoEntity.setManStreet(orderEntity.getStreet1());
         //买家地址2
@@ -198,7 +205,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         //企业名称
 //        dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         //发货时间
-        dmpOrderInfoEntity.setDeliveryTime(orderEntity.getTransportTime());
+        if (!"null".equalsIgnoreCase(orderEntity.getExpressTime()) && StrUtil.isNotBlank(orderEntity.getExpressTime())) {
+            dmpOrderInfoEntity.setDeliveryTime(LocalDateTime.parse(orderEntity.getExpressTime(), sdf));
+        }
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
         dmpOrderInfoEntity.setItemList(initOrderItem(orderEntity));
         return dmpOrderInfoEntity;

@@ -1,11 +1,12 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProductMilepostEnum;
 import com.erp.model.plm.enums.ProjectStateEnum;
@@ -90,7 +91,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             });
             //立项前的任务,排序：已完成，实际完成时间，创建时间
             List<ProjectTaskEntity> beforeList;
-            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && (ObjectUtils.isEmpty(productInfoEntity.getApprovalTime()) || (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime()) && e.getCreateTime().before(productInfoEntity.getApprovalTime()))))
+            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && (ObjectUtils.isEmpty(productInfoEntity.getApprovalTime()) || (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime()) && e.getCreateTime().isBefore(productInfoEntity.getApprovalTime()))))
                     .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
                             .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
                             .thenComparing(ProjectTaskEntity::getCreateTime))
@@ -125,7 +126,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             //立项后的任务
             List<ProjectTaskEntity> afterList = new ArrayList<>();
             if (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime())) {
-                afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().after(productInfoEntity.getApprovalTime()))
+                afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().isAfter(productInfoEntity.getApprovalTime()))
                         .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
                                 .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
                                 .thenComparing(ProjectTaskEntity::getCreateTime))
@@ -352,7 +353,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
      */
     private ProductMilepostDateDTO getTaskMilepostDate(String taskId, ProductMilepostDateDTO dateDTO) {
         ProjectTaskEntity projectTaskEntity = projectTaskService.getById(taskId);
-        dateDTO.setPlanEndTime(projectTaskEntity.getPlanEndTime());
+        dateDTO.setPlanEndTime(LocalDateTimeUtil.of(projectTaskEntity.getPlanEndTime()));
         dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
         return dateDTO;
     }

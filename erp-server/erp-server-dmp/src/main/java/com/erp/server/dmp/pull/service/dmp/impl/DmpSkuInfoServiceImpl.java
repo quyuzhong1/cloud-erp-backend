@@ -6,6 +6,7 @@ import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpSkuInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
@@ -28,15 +29,18 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
 
     /**
      * 根据sku查询商品信息
+     *
+     * @param skuNo     商品sku
+     * @param companyId
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
-     * @param skuNo 商品sku
-     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     @Override
-    public DmpSkuInfoEntity getSkuBySkuNo(String skuNo){
+    public DmpSkuInfoEntity getSkuBySkuNo(String skuNo, String companyId){
         LambdaQueryWrapper<DmpSkuInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpSkuInfoEntity::getSkuNo, skuNo);
+        lambdaQueryWrapper.eq(DmpSkuInfoEntity::getCompanyId, companyId);
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -61,12 +65,14 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
      * @return void
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void checkOrder(DmpSkuInfoEntity dmpSkuInfoEntity) {
-        DmpSkuInfoEntity dmpOrderInfoEntity = this.getSkuBySkuNo(dmpSkuInfoEntity.getSkuNo());
+        DmpSkuInfoEntity dmpOrderInfoEntity = this.getSkuBySkuNo(dmpSkuInfoEntity.getSkuNo(), dmpSkuInfoEntity.getCompanyId());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
+            dmpSkuInfoEntity.setId(dmpOrderInfoEntity.getId());
             if (!dmpOrderInfoEntity.toString().equals(dmpSkuInfoEntity.toString())) {
-                this.updateSkuBySkuNo(dmpOrderInfoEntity);
+                this.updateById(dmpSkuInfoEntity);
             }
         } else {
             this.add(dmpSkuInfoEntity);

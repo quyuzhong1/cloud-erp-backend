@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
+ * @author Administrator
  * @Classname SysAccountingCompanyDTO
  * @Description TODO
  * @Date 2022-07-12 10:03
@@ -48,6 +49,33 @@ public class SysAccountingCompanyDTO {
     private String contactAddress;
 
     @NotBlank(message = "币种不能为空")
-    private String currency;
+    private String currencyId;
+
+
+    /**
+     * 列表展示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * ID
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String companyName;
+
+        /**
+         * 是否禁用
+         * true 禁用
+         */
+        private Boolean disabled;
+
+    }
+
 
 }

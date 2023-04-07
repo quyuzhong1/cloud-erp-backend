@@ -1,5 +1,6 @@
 package com.erp.server.plm.listener;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -13,6 +14,8 @@ import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -29,14 +32,16 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
     private List<ScheduleTaskExportErrorExcelVO> errorList;
 
     private List<ScheduleTaskExportErrorExcelVO> dataList;
-    private List<ChangeScheduleExportVO> succeedList;
-    private List<FindUserDTO> sysUserList;
 
+    private List<ChangeScheduleExportVO> succeedList;
+
+    private List<FindUserDTO> sysUserList;
 
     private String productName;
 
-
     private String productId;
+
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public ChangeScheduleExcelListener(List<ProjectTaskEntity> projectTaskList, String productId, List<FindUserDTO> sysUserList, String productName) {
         this.projectTaskList = projectTaskList;
@@ -128,13 +133,13 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month));
-        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month));
+        changeVO.setChangeStartTime(LocalDateTime.parse(vo.getPlanStartTime(), dateTimeFormatter));
+        changeVO.setChangeEndTime(LocalDateTime.parse(vo.getPlanEndTime(), dateTimeFormatter));
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());
-        changeVO.setOriginStartTime(task.getPlanStartTime());
-        changeVO.setOriginEndTime(task.getPlanEndTime());
+        changeVO.setOriginStartTime(LocalDateTimeUtil.of(task.getPlanStartTime()));
+        changeVO.setOriginEndTime(LocalDateTimeUtil.of(task.getPlanEndTime()));
         String taskChargeId = task.getChargeId();
         String taskChargeName = task.getChargeName();
         List<String> chargeIdList = new ArrayList<>();

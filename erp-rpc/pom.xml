@@ -19,6 +19,7 @@
         <module>erp-rpc-workflow</module>
         <module>erp-rpc-plm</module>
         <module>erp-rpc-dmp</module>
+        <module>erp-rpc-wms</module>
     </modules>
 
    <dependencies>

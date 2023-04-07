@@ -4,14 +4,14 @@
 
     <select id="paging" resultType="com.erp.model.sys.entity.SysAccountingCompanyEntity">
         SELECT id,company_name,company_address,contact_name,
-        contact_mobile,contact_address,currency,company_state,create_time
-        FROM sys_accounting_company  sac WHERE delete_state=1
+        contact_mobile,contact_address,currency_id,disabled,create_time
+        FROM sys_accounting_company  sac WHERE is_deleted=false
         <if test="params.state!=null">
             AND sac.company_state =#{params.state}
         </if>
-        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
+<!--        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
             AND sac.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
-        </if>
+        </if>-->
 
         ORDER BY update_time DESC
 

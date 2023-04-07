@@ -12,7 +12,8 @@
                tcd.seq
         from task_charge_distribution tcd
         <where>
-            tcd.source in
+            tcd.is_deleted = FALSE
+            AND tcd.source in
             <foreach collection="source" item="item" open="(" close=")" separator=",">
                  #{item}
             </foreach>

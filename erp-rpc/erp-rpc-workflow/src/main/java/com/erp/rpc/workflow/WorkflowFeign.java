@@ -22,11 +22,11 @@ public interface WorkflowFeign {
 
 
     //启动流程
-    @PostMapping("workflow/feign/process/startProcess")
+    @PostMapping("feign/process/startProcess")
     ProcessNodeDTO startProcess(@RequestBody StartProcessDTO startProcessDTO);
 
     //根据人员获取我待办的任务列表
-    @PostMapping("workflow/feign/process/queryMyToDo")
+    @PostMapping("feign/process/queryMyToDo")
     List<TaskShowDTO> queryMyToDo(@RequestParam(value="userId") String userId);
 
     /**
@@ -36,45 +36,47 @@ public interface WorkflowFeign {
      * @param userId
      * @return java.util.List<com.erp.model.workflow.vo.MyToDoTaskVO>
      */
-    @PostMapping("workflow/feign/process/getMyToDoTasks")
+    @PostMapping("feign/process/getMyToDoTasks")
     List<MyToDoTaskVO> getMyToDoTasks(@RequestParam(value="userId") String userId);
 
 
 
     //审核任务通过
-    @PostMapping("workflow/feign/process/taskPass")
+    @PostMapping("feign/process/taskPass")
     ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 
 
     //审核任务不通过
-    @PostMapping("workflow/feign/process/taskNoPass")
+    @PostMapping("feign/process/taskNoPass")
     ProcessNodeDTO taskNoPass(@RequestBody ApproveProcessDTO dto);
 
     //撤销流程
-    @PostMapping("workflow/feign/process/withDraw")
+    @PostMapping("feign/process/withDraw")
     void withDraw(@RequestBody ApproveProcessDTO dto);
 
     //取回流程
-    @PostMapping("workflow/feign/process/fetchBack")
+    @PostMapping("feign/process/fetchBack")
     void fetchBack(@RequestBody ApproveProcessDTO dto);
 
 
     //取回起始点
-    @PostMapping("workflow/feign/process/rejectOrigin")
+    @PostMapping("feign/process/rejectOrigin")
     void rejectOrigin(@RequestBody ApproveProcessDTO dto);
 
     //终止流程
-    @PostMapping("workflow/feign/process/terminate")
+    @PostMapping("feign/process/terminate")
     void terminate(@RequestBody ApproveProcessDTO dto);
 
-
+    //取消流程
+    @PostMapping("feign/process/cancelProcess")
+    void cancelProcess(@RequestBody List<String> ids);
 
     //根据审核任务id获取我待办的任务列表
-    @PostMapping("workflow/feign/process/queryMyToDoByTaskId")
+    @PostMapping("feign/process/queryMyToDoByTaskId")
     List<TaskShowDTO> queryMyToDoByTaskId(@RequestParam(value="taskId") String taskId);
 
     //获取审核记录
-    @PostMapping("workflow/feign/process/getHistoryTaskByProcessId")
+    @PostMapping("feign/process/getHistoryTaskByProcessId")
     List<AuditorHandleDTO> getHistoryTaskByProcessId(@RequestParam(value="processId") String processId);
 
     /**
@@ -84,7 +86,7 @@ public interface WorkflowFeign {
      * @param findProcess
      * @return com.erp.model.workflow.dto.WorkflowBusinessDTO
      */
-    @PostMapping("workflow/feign/process/getBusiness")
+    @PostMapping("feign/process/getBusiness")
     BusinessInfoDTO getBusiness(@RequestBody FindProcessDTO findProcess);
 
     /**
@@ -94,13 +96,13 @@ public interface WorkflowFeign {
      * @param businessProcess
      * @return void
      */
-    @PostMapping("workflow/feign/process/saveBusinessProcess")
+    @PostMapping("feign/process/saveBusinessProcess")
     Boolean saveBusinessProcess(@RequestBody WorkflowBusinessProcessDTO businessProcess);
 
-    @PostMapping("workflow/feign/process/getProcessByBusinessTable")
+    @PostMapping("feign/process/getProcessByBusinessTable")
     MyToDoTaskVO getByBusinessTableId(@RequestBody BusinessTableDTO  dto);
 
-    @PostMapping("workflow/feign/process/getProcess")
+    @PostMapping("feign/process/getProcess")
     List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds);
 
     /**
@@ -110,7 +112,7 @@ public interface WorkflowFeign {
      * @param id
      * @return java.util.List<com.erp.model.workflow.dto.ApproveRecordShowDTO>
      */
-    @PostMapping("workflow/feign/process/getHistoryTaskByBusinessTableId")
+    @PostMapping("feign/process/getHistoryTaskByBusinessTableId")
     List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(@RequestBody String id);
 
 
@@ -119,7 +121,7 @@ public interface WorkflowFeign {
      * @param businessTableIds
      * @return
      */
-    @PostMapping("workflow/feign/process/getProcessCurrentAudit")
+    @PostMapping("feign/process/getProcessCurrentAudit")
     List<ProcessCurrentAuditorVO> getProcessCurrentAudit(@RequestBody List<String> businessTableIds);
 
 
@@ -128,7 +130,7 @@ public interface WorkflowFeign {
      * @param businessTableId
      * @return
      */
-    @PostMapping("workflow/feign/process/getProcessNextAudit")
+    @PostMapping("feign/process/getProcessNextAudit")
     ProcessCurrentAuditorVO getProcessNextAudit(@RequestBody String businessTableId);
 
 
@@ -137,6 +139,6 @@ public interface WorkflowFeign {
      * @param dto
      * @return
      */
-    @PostMapping("workflow/feign/process/withDrawByBusiness")
+    @PostMapping("feign/process/withDrawByBusiness")
     Boolean withDrawByBusiness(@RequestBody WithDrawProcessBusinessDTO dto);
 }

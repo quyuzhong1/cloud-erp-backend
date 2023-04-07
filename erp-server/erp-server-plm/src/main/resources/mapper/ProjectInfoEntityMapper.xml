@@ -17,13 +17,14 @@
         p.category,
         pph.name as projectPhase
         FROM product_info p INNER JOIN project_info pi
-        ON p.id=pi.product_id
+        ON p.id=pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -132,13 +133,14 @@
         p.category,
         pph.name as projectPhase
         FROM product_info p
-        INNER JOIN project_info pi ON p.id=pi.product_id
+        INNER JOIN project_info pi ON p.id=pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -233,13 +235,14 @@
         SELECT
                p.id, p.name
         FROM product_info p
-        INNER JOIN project_info pi ON p.id=pi.product_id
+        INNER JOIN project_info pi ON p.id=pi.product_id AND pi.is_deleted = FALSE
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1
+        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="params.categoryId!=null and params.categoryId!=''  ">
             AND P.category_id=#{params.categoryId}
         </if>
@@ -285,11 +288,12 @@
         FROM product_info p INNER JOIN project_info pi
         ON p.id=pi.product_id
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10)
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
-        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq
-        WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1
+        left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test=" params.categoryId!=null  and params.categoryId!='' ">
             AND P.category_id = #{params.categoryId}
         </if>

@@ -12,9 +12,9 @@
         approval_finish_time,
         remark
         FROM product_change
-        <where>
+        WHERE is_deleted = FALSE
             <if test="searchList!=null and searchList.size>0">
-                source_id  IN
+                AND source_id  IN
                <foreach collection="searchList" item="sourceId" open="(" separator="," close=")">
                    #{sourceId}
                </foreach>
@@ -25,15 +25,14 @@
                 #{id}
                </foreach>
             </if>
-        </where>
         ORDER BY create_time DESC
     </select>
 
 
     <select id="getChangeSearchCondition" resultType="java.lang.String">
-        SELECT id FROM product_bom_info WHERE  serial_number LIKE   concat('%',#{searchKeyword},'%')
+        SELECT id FROM product_bom_info WHERE  serial_number LIKE concat('%',#{searchKeyword},'%') AND product_bom_info.is_deleted = FALSE
             UNION ALL
         SELECT id FROM product_detail WHERE
-         sku_no!='' AND  (sku_no LIKE concat('%',#{searchKeyword},'%') OR  name LIKE   concat('%',#{searchKeyword},'%'))
+         sku_no!='' AND product_detail.is_deleted = FALSE AND  (sku_no LIKE concat('%',#{searchKeyword},'%') OR  name LIKE   concat('%',#{searchKeyword},'%'))
     </select>
 </mapper>

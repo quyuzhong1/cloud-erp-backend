@@ -238,6 +238,9 @@ public class DmpRefundInfoEntity implements Serializable {
     private Integer retryCount;
 
     @TableField(exist = false)
+    private Boolean cancel;
+
+    @TableField(exist = false)
     private List<DmpRefundItemEntity> itemList;
 
     @TableField(exist = false)

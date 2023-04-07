@@ -4,9 +4,10 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
+ * @author Administrator
  * @Classname ysAccountingCompanyEntity
  * @Description TODO
  * @Date 2022-07-12 9:39
@@ -40,22 +41,31 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     private String contactAddress;
 
-    private String currency;
+    private String currencyId;
 
-    //状态 1 正常 0 禁用
-    private Integer companyState;
+    /**
+     * 是否禁用
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
-    @TableLogic(value = "1",delval = "0")
-    private Integer deleteState;
+    @TableLogic
+    private Boolean isDeleted;
     /**
      * 创建时间
      */
-    @TableField(fill= FieldFill.INSERT)
-    private Date createTime;
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDate createTime;
 
     /**
      * 更新时间
      */
-    @TableField(fill= FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDate updateTime;
+
+    @TableField(fill = FieldFill.INSERT)
+    private String createUserId;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
 }

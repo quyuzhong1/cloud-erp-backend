@@ -1,0 +1,251 @@
+package com.erp.server.plm.listener;
+
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.FindUserDTO;
+import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.DocsNameDTO;
+import com.erp.model.plm.dto.ProjectTaskDTO;
+import com.erp.model.plm.dto.excel.ProjectTaskExcelDTO;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProjectPhaseEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.service.ProductInfoService;
+import com.erp.server.plm.service.ProjectPhaseService;
+import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.TaskDocsNameService;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskExcelDTO> {
+    private Integer importType;
+    private ProjectTaskService projectTaskService;
+
+    private ProductInfoService productInfoService;
+
+    private SysUserFeign sysUserFeign;
+
+    private ProjectPhaseService projectPhaseService;
+
+    private TaskDocsNameService taskDocsNameService;
+
+    private List<ProjectTaskExcelDTO> list;
+
+    private List<ProjectTaskExcelDTO> dataList = new ArrayList<>();
+
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+
+    public ProjectTaskExcelListener(Integer importType, ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
+                                    ProjectPhaseService projectPhaseService, TaskDocsNameService taskDocsNameService) {
+        this.importType = importType;
+        this.projectTaskService = projectTaskService;
+        this.productInfoService = productInfoService;
+        this.sysUserFeign = sysUserFeign;
+        this.projectPhaseService = projectPhaseService;
+        this.taskDocsNameService = taskDocsNameService;
+        this.list = new ArrayList<>();
+    }
+
+    @Override
+    public void invoke(ProjectTaskExcelDTO projectTaskExcelDTO, AnalysisContext analysisContext) {
+        List<String> errorMsgList = new ArrayList<>();
+        ProjectTaskDTO projectTaskDTO = new ProjectTaskDTO();
+
+        //添加数据用于判断是否为空
+        dataList.add(projectTaskExcelDTO);
+
+        //注解基础校验
+        List<String> msgList = FieldValidUtil.fieldValid(projectTaskExcelDTO);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
+        }
+
+        ProductInfoEntity productInfoEntity = productInfoService.getProductByName(projectTaskExcelDTO.getProductName());
+        if (ObjectUtil.isEmpty(productInfoEntity)) {
+            errorMsgList.add("[所属产品]在系统中未找到，请输入已有的产品名称");
+        }
+
+        if (!projectTaskExcelDTO.getType().equals("一般任务") && !projectTaskExcelDTO.getType().equals("审核任务")) {
+            errorMsgList.add("[任务类型]请输入'一般任务'或'审核任务'");
+        }
+
+        if (projectTaskExcelDTO.getType().equals("一般任务")){
+            projectTaskDTO.setType(0);
+        } else {
+            projectTaskDTO.setType(1);
+        }
+
+        ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
+        // 判断是修改还是新增 1：新增 2：修改
+        /**
+         * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
+         */
+        if (importType == 2) {
+            //不可编辑：待审核  审核通过  已完成
+            if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
+                errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
+            } else {
+                projectTaskDTO.setId(projectTaskEntity.getId());
+                projectTaskDTO.setType(projectTaskEntity.getType());
+            }
+
+        } else {
+            if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
+                errorMsgList.add("[任务名称]在系统中已存在，不可重复");
+            }
+        }
+
+        List<String> chargeNameList = new ArrayList<>();
+        String chargeName = projectTaskExcelDTO.getChargeName();
+        String[] chargeNames = chargeName.split(",");
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        for (String name : chargeNames) {
+            FindUserDTO findUserDTO = userList.stream().filter(u -> name.equals(u.getUserName())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(findUserDTO)) {
+                errorMsgList.add("[任务负责人]在系统中未找到，多个负责人请用英文逗号','隔开");
+            } else {
+                chargeNameList.add(findUserDTO.getUserId());
+            }
+        }
+
+        ProjectPhaseEntity projectPhaseEntity = projectPhaseService.getProductPhaseByName(productInfoEntity.getId(), projectTaskExcelDTO.getPhaseName());
+        if (ObjectUtil.isEmpty(projectPhaseEntity)) {
+            errorMsgList.add("[阶段名称]在这个[所属产品]下不存在");
+        }
+
+        String preTask = projectTaskExcelDTO.getPreTask();
+        List<String> preTaskList = new ArrayList<>();
+        if (StringUtils.isNotBlank(preTask)) {
+            List<ProjectTaskEntity> projectTaskEntities = projectTaskService.listByProductId(productInfoEntity.getId());
+            String[] split = preTask.split(",");
+            for (String task : split) {
+                ProjectTaskEntity projectTaskEntity1 = projectTaskEntities.stream().filter(t -> t.getName().equals(task)).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(projectTaskEntity1)) {
+                    errorMsgList.add("[前置任务]在这个[所属产品]下不存在，多个前置任务请用英文逗号','隔开");
+                } else {
+                    preTaskList.add(projectTaskEntity1.getId());
+                }
+            }
+        }
+
+        String priority = projectTaskExcelDTO.getPriority();
+        if (StringUtils.isNotBlank(priority)) {
+            if (!priority.equals("高") && !priority.equals("中") && !priority.equals("低")) {
+                errorMsgList.add("[任务优先级]请输入'高'或'中''低'");
+            }
+        }
+
+        String isMilepost = projectTaskExcelDTO.getIsMilepost();
+        if (StringUtils.isNotBlank(isMilepost)) {
+            if (!isMilepost.equals("是") && !isMilepost.equals("否")) {
+                errorMsgList.add("[设置里程碑]请输入'是'或'否'");
+            }
+        }
+
+        if (projectTaskExcelDTO.getPlanStartTime() != null) {
+            if (projectTaskExcelDTO.getPlanEndTime() == null) {
+                errorMsgList.add("[计划开始时间]存在的同时[计划结束时间]不能为空，");
+            }
+        }
+
+        if (projectTaskExcelDTO.getPlanEndTime() != null) {
+            if (projectTaskExcelDTO.getPlanStartTime() == null) {
+                errorMsgList.add("[计划结束时间]存在的同时[计划开始时间]不能为空，");
+            }
+        }
+
+        String docsName = projectTaskExcelDTO.getDocsName();
+        List<DocsDTO> docsNameList = new ArrayList<>();
+        if (StringUtils.isNotBlank(docsName)) {
+            List<DocsDTO> docsList = taskDocsNameService.getDocsNameList(productInfoEntity.getId());
+            String[] split = docsName.split(",");
+            for (String docs : split) {
+                DocsDTO docsDTO = docsList.stream().filter(t -> t.getName().equals(docs)).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(docsDTO)) {
+                    DocsNameDTO docsNameDTO = new DocsNameDTO();
+                    docsNameDTO.setName(docs);
+                    docsNameDTO.setProductId(productInfoEntity.getId());
+                    String id = taskDocsNameService.saveDocs(docsNameDTO);
+                    DocsDTO dto = new DocsDTO();
+                    dto.setId(id);
+                    dto.setName(docs);
+                    dto.setState(false);
+                    docsNameList.add(dto);
+                } else {
+                    docsNameList.add(docsDTO);
+                }
+            }
+        }
+
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            list.add(projectTaskExcelDTO);
+            return;
+        }
+
+
+        projectTaskDTO.setProjectId(productInfoEntity.getId());
+        projectTaskDTO.setProductId(productInfoEntity.getId());
+        projectTaskDTO.setName(projectTaskExcelDTO.getName());
+
+        projectTaskDTO.setChargeIds(chargeNameList);
+        projectTaskDTO.setPreTaskIdList(preTaskList);
+        if (projectTaskExcelDTO.getPlanStartTime() != null) {
+
+            projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanStartTime(), dateTimeFormatter));
+        }
+        if (projectTaskExcelDTO.getPlanEndTime() != null) {
+            projectTaskDTO.setPlanEndTime(LocalDate.parse(projectTaskExcelDTO.getPlanEndTime(), dateTimeFormatter));
+        }
+        if (projectTaskExcelDTO.getPriority().equals("高")) {
+            projectTaskDTO.setPriority(3);
+        } else if (projectTaskExcelDTO.getPriority().equals("中")) {
+            projectTaskDTO.setPriority(2);
+        } else {
+            projectTaskDTO.setPriority(1);
+        }
+        projectTaskDTO.setPhaseId(projectPhaseEntity.getId());
+        projectTaskDTO.setPhaseName(projectPhaseEntity.getName());
+        projectTaskDTO.setDescription(projectTaskExcelDTO.getDescription());
+        projectTaskDTO.setProcessId("");
+        projectTaskDTO.setApprovalList(new ArrayList<>());
+        projectTaskDTO.setDeliveryDocsList(docsNameList);
+        if (isMilepost.equals("是")) {
+            projectTaskDTO.setIsMilepost(1);
+        } else {
+            projectTaskDTO.setIsMilepost(0);
+        }
+        projectTaskDTO.setRefSkuIdList(new ArrayList<>());
+        projectTaskDTO.setRelatedSkuType("3");
+        projectTaskDTO.setWorkPeriod(projectTaskExcelDTO.getWorkPeriod());
+        if (importType == 2) {
+            projectTaskService.updateTask(projectTaskDTO);
+        } else {
+            projectTaskService.save(projectTaskDTO);
+        }
+
+    }
+
+    @Override
+    public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+
+    }
+
+    public List<ProjectTaskExcelDTO> getDateList(){
+        return list;
+    }
+
+    public List<ProjectTaskExcelDTO> getExcelDateList(){
+        return dataList;
+    }
+}

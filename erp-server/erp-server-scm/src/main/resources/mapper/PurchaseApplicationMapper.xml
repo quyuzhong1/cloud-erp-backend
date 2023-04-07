@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchaseApplicationMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.PurchaseApplicationEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="code" property="code" />
+        <result column="apply_date" property="applyDate" />
+        <result column="apply_user_id" property="applyUserId" />
+        <result column="apply_user_name" property="applyUserName" />
+        <result column="apply_dept_id" property="applyDeptId" />
+        <result column="apply_dept_name" property="applyDeptName" />
+        <result column="is_first_mass_product" property="isFirstMassProduct" />
+        <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseApplicationDTO$ListDTO">
+        select
+            pa.id,
+            pa.code,
+            pad.is_urgent as isUrgent,
+            pa.approve_status as approveStatus,
+            pa.is_first_mass_product as isFirstMassProduct,
+            pad.create_po_type as createPoType,
+            pad.sku_no as skuNo,
+            pad.product_name as productName,
+            pad.variant_property as variantProperty,
+            pad.plan_delivery_date as planDeliveryDate,
+            pad.apply_qty as applyQty,
+            parp.realPurchaseQty,
+            pad.receive_qty as receiveQty,
+            pad.stock_in_qty as stockInQty,
+            pad.dest_warehouse_name as destWarehouseName,
+            pad.remark,
+            pa.approve_user_name as approveUserName,
+            pa.create_user_name as createUserName,
+            pa.create_time as createTime
+        from purchase_application pa
+        inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        left join (
+            select parp.purchase_application_detail_id,sum(pod.purchase_qty) as realPurchaseQty from purchase_application_ref_po parp
+            left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false
+            where parp.is_deleted = false
+            group by parp.purchase_application_detail_id
+        ) parp on pad.id = parp.purchase_application_detail_id
+        <where>
+            pa.is_deleted = false
+            <if test="params.code != null and params.code != ''">
+                and pa.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.productName != null and params.productName != ''">
+                and pad.product_name like concat('%',#{params.productName},'%')
+            </if>
+            <if test="params.isUrgent != null ">
+                and pad.is_urgent = #{params.isUrgent}
+            </if>
+            <if test="params.isFirstMassProduct != null ">
+                and pa.is_first_mass_product = #{params.isFirstMassProduct}
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and pa.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createPoTypeList != null and params.createPoTypeList.size > 0">
+                and pad.create_po_type in
+                <foreach collection="params.createPoTypeList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and pad.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
+                and pad.dest_warehouse_id in
+                <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.applyUserIdList != null and params.applyUserIdList.size > 0">
+                and pa.apply_user_id in
+                <foreach collection="params.applyUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and pa.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
+                and pad.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pad.plan_delivery_date
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and pa.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.create_time
+            </if>
+            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                and pa.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.approve_time
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time desc , pad.create_po_type asc
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO">
+        select
+        pa.id,
+        pa.code,
+        pa.approve_status as approveStatus,
+        case pa.approve_status
+            when 'waitSubmit' then '待提交'
+            when 'approveIng' then '审核中'
+            when 'reject' then '审核不通过'
+            when 'approve' then '已审核'
+        end as approveStatusName,
+        case pa.is_first_mass_product
+            when true then '是'
+            when false then '否'
+        end as isFirstMassProduct,
+        case pad.create_po_type
+            when '0' then '未生成'
+            when '1' then '部分生成'
+            when '2' then '已生成'
+        end as createPoTypeName,
+        pad.sku_no as skuNo,
+        pad.product_name as productName,
+        pad.plan_delivery_date as planDeliveryDate,
+        pad.apply_qty as applyQty,
+        parp.realPurchaseQty,
+        pad.receive_qty as receiveQty,
+        pad.stock_in_qty as stockInQty,
+        pad.dest_warehouse_name as destWarehouseName,
+        pad.remark,
+        pa.approve_user_name as approveUserName,
+        pa.create_user_name as createUserName,
+        pa.create_time as createTime
+        from purchase_application pa
+        left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        left join (
+        select parp.purchase_application_detail_id,sum(pod.purchase_qty) as realPurchaseQty from purchase_application_ref_po parp
+        left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and pod.is_deleted = false
+        where parp.is_deleted = false
+        group by parp.purchase_application_detail_id
+        ) parp on pad.id = parp.purchase_application_detail_id
+        <where>
+            pa.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and pa.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.code != null and params.code != ''">
+                    and pa.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.productName != null and params.productName != ''">
+                    and pad.product_name like concat('%',#{params.productName},'%')
+                </if>
+                <if test="params.isUrgent != null ">
+                    and pad.is_urgent = #{params.isUrgent}
+                </if>
+                <if test="params.isFirstMassProduct != null ">
+                    and pa.is_first_mass_product = #{params.isFirstMassProduct}
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and pa.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createPoTypeList != null and params.createPoTypeList.size > 0">
+                    and pad.create_po_type in
+                    <foreach collection="params.createPoTypeList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and pad.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
+                    and pad.dest_warehouse_id in
+                    <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.applyUserIdList != null and params.applyUserIdList.size > 0">
+                    and pa.apply_user_id in
+                    <foreach collection="params.applyUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and pa.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
+                    and pad.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pad.plan_delivery_date
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and pa.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.create_time
+                </if>
+                <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                    and pa.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pa.approve_time
+                </if>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+            count(distinct pa.id)
+        from purchase_application pa
+        left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        <where>
+            pa.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and pa.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createPoTypeList != null and params.createPoTypeList.size > 0">
+                and pad.create_po_type in
+                <foreach collection="params.createPoTypeList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

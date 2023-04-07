@@ -26,7 +26,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/plm/taskDocs")
+@RequestMapping("taskDocs")
 public class TaskDeliveryDocsController extends BaseController {
 
     @Autowired

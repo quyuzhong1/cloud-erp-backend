@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.PurchaseApplicationRefPoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.PurchaseApplicationRefPoEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="purchase_application_detail_id" property="purchaseApplicationDetailId" />
+        <result column="purchase_application_id" property="purchaseApplicationId" />
+        <result column="purchase_order_detail_id" property="purchaseOrderDetailId" />
+        <result column="purchase_order_id" property="purchaseOrderId" />
+    </resultMap>
+    <select id="list"
+            resultType="com.erp.model.scm.dto.PurchaseApplicationRefPoDTO$ListDTO">
+        select
+            parp.purchase_application_detail_id,
+            parp.purchase_application_id,
+            parp.purchase_order_detail_id,
+            parp.purchase_order_id,
+            COALESCE(pod.purchase_qty,0) as purchaseQty
+        from purchase_application_ref_po parp
+        left join purchase_order po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = '0'
+        left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and pod.is_deleted = false
+        <where>
+            parp.is_deleted = false
+            <if test="params.purchaseApplicationDetailIds != null and params.purchaseApplicationDetailIds.size > 0">
+                and parp.purchase_application_detail_id in
+                <foreach collection="params.purchaseApplicationDetailIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrderIds != null and params.purchaseOrderIds.size > 0">
+                and parp.purchase_order_id in
+                <foreach collection="params.purchaseOrderIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+</mapper>

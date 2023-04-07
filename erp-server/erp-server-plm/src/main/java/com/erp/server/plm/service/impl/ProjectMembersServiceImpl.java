@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -21,16 +22,18 @@ import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.constant.IsConstant;
+import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -500,7 +503,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Override
     public List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList, List<Integer> stateList) {
-        Date date = new Date();
+        LocalDateTime date = LocalDateTime.now();
         List<TaskConductDTO> resultList = new ArrayList<>();
         List<ProjectTaskEntity> list = projectTaskService.list();
         Integer finishState = TaskStateEnum.FINISH.getCode();
@@ -528,7 +531,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
             TaskConductDTO dto = new TaskConductDTO();
             dto.setMembersId(item.getUserId());
             dto.setMembersName(item.getUserName());
@@ -680,5 +683,28 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProjectMembersEntity::getProductId, productIds);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 根据角色名称和模板id查询人员
+     * @Author Luo_WG
+     * @Date 2023/3/27 12:01
+     * @param roles roles
+     * @param templateId templateId
+     * @return java.util.List<com.erp.model.plm.entity.ProjectMembersEntity>
+     **/
+    public List<MemberPagingShowDTO> listByRoleNames( List<String> roles, String templateId, String roleName) {
+        return baseMapper.listByRoleNames(roles, templateId, roleName);
+    }
+
+    /**
+     * 根据产品id查询角色人员
+     * @Author Luo_WG
+     * @Date 2023/3/27 18:54
+     * @param productId productId
+     * @return java.util.List<com.erp.model.plm.dto.MemberPagingShowDTO>
+     **/
+    public List<MemberPagingShowDTO> listByMembers(String productId) {
+        return baseMapper.listByMembers(productId);
     }
 }

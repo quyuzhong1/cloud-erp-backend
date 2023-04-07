@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.excel.util.DateUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -51,6 +50,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -812,11 +812,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (ProductPlanProcessEnum.PRODUCT_DEVELOP.getName().equals(typeName)) {
                 //转开发
                 productPlanProgressDTO.setIsComplete(Boolean.TRUE);
-                productPlanProgressDTO.setStartTime(DateUtils.format(productInfoEntity.getCreateTime(), DateUtil.DATE_TIME_PATTERN_NO_SEC));
+                productPlanProgressDTO.setStartTime(LocalDateTimeUtil.format(productInfoEntity.getCreateTime(), DateUtil.DATE_TIME_PATTERN_NO_SEC));
                 productPlanProgressDTO.setUserName(productInfoEntity.getCreateUserName());
                 progressList.add(productPlanProgressDTO);
                 return;
             }
+
             //已生成项目
             ProjectInfoEntity projectInfoEntity = projectInfoService.getByProductId(productId);
             if (ObjectUtils.isEmpty(projectInfoEntity) || ProjectStateEnum.NOT_START.getState().equals(projectInfoEntity.getProjectStatus())) {
@@ -914,9 +915,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(firstMassProductList)) {
-            Date firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
+            LocalDate firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
                     .map(ProductDetailEntity::getFirstMassProductDate).get();
-            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : LocalDateUtil.date2LocalDate(firstMassProductDate));
+            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : firstMassProductDate);
         }
         List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //查询销售信息最后的上市时间
@@ -924,9 +925,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isNotEmpty(productSaleList)) {
             productSaleList = productSaleList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getListingTime())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(productSaleList)) {
-                Date listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
+                LocalDate listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
                         .map(ProductSaleEntity::getListingTime).get();
-                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : LocalDateUtil.date2LocalDate(listingTime));
+                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null :listingTime);
             }
         }
     }

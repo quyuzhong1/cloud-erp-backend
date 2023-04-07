@@ -3,12 +3,16 @@ package com.erp.server.dmp.pull.service.dmp;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
+import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.kingdee.KingdeeDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.kingdee.KingdeeReturnOrderInfoImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -76,6 +80,55 @@ public class KingdeePullServiceTest {
         try {
             List<KingdeeEccShopEntity> kingdeeEccShopEntities = shopService.pullDate(requestDTO);
             System.out.println("kingdeeEccShopEntities = " + kingdeeEccShopEntities);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void pullKingdeeDeliveryDetailTest(){
+        KingdeeDeliveryDetailServiceImpl deliveryDetailService = new KingdeeDeliveryDetailServiceImpl();
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(PlatformApiEnum.SAL_OUTSTOCK.getTaskName());
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取订单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-01-02 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.SAL_OUTSTOCK);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            List<KingdeeDeliveryDetailEntity> entityList = deliveryDetailService.pullDate(requestDTO);
+            System.out.println("entityList = " + entityList);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Test
+    public void pullKingdeeReturnOrderTest(){
+        KingdeeReturnOrderInfoImpl returnOrderService = new KingdeeReturnOrderInfoImpl();
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(PlatformApiEnum.SAL_RETURNSTOCK.getTaskName());
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取订单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-03-27 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-03-28 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.SAL_RETURNSTOCK);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            List<KingdeeReturnOrderEntity> entityList = returnOrderService.pullDate(requestDTO);
+            System.out.println("entityList = " + entityList);
         }catch (Exception e) {
             e.printStackTrace();
         }

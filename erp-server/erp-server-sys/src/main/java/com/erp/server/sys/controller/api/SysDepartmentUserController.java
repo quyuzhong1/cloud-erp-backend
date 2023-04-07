@@ -1,19 +1,18 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.BatchSysDepartUserDTO;
 import com.erp.model.sys.dto.DepartmentSearchDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.server.sys.service.SysDepartmentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,7 +23,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/departmentUser")
+@RequestMapping("departmentUser")
 public class SysDepartmentUserController extends BaseController {
 
     @Autowired
@@ -55,7 +54,18 @@ public class SysDepartmentUserController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 根据人员id查询部门
+     * @author Will
+     * @date: 2023/3/27 12:10
+     * @param userId
+     * @return ApiResult
+     */
+    @GetMapping("/getDeptByUserId")
+    public ApiResult getDeptByUserId(@RequestParam("userId") String userId) {
+        SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getDeptByUserId(userId);
+        return success(dto);
+    }
 
 
 }

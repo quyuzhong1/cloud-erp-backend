@@ -1,10 +1,12 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -15,10 +17,7 @@ import java.util.Date;
  */
 @Data
 @TableName("product_field")
-public class ProductFieldEntity implements Serializable {
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class ProductFieldEntity extends BaseEntity implements Serializable {
 
     @TableField("scope")
     private Integer scope;
@@ -29,16 +28,13 @@ public class ProductFieldEntity implements Serializable {
     @TableField("if_required")
     private Integer ifRequired;
 
-
     //字段类型 1：单选框 2 文本框 3：多选框 4 ： 日期  5：成员
     @TableField("type")
     private Integer type;
 
-
     //1 启用  0 未启用
     @TableField("state")
     private Integer state;
-
 
     @TableField("content")
     private String content;
@@ -46,25 +42,10 @@ public class ProductFieldEntity implements Serializable {
     @TableField("is_sys")
     private Integer isSys;
 
-
     @TableField("product_id")
     private String productId;
 
     @TableField("quote_sys_id")
     private String quoteSysId;
-
-    @TableField("create_user_id")
-    private String createUserId;
-
-    @TableField("create_user_name")
-    private String createUserName;
-
-    @TableField(value="create_time",fill = FieldFill.INSERT)
-    private Date createTime;
-
-    @TableField(value="update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-
 
 }

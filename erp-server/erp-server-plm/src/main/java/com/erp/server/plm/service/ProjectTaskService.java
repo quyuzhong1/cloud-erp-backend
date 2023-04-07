@@ -1,9 +1,11 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -12,7 +14,9 @@ import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.web.bind.annotation.PostMapping;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +65,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     ProjectTaskDetailsDTO getTaskDetails(String taskId);
 
+    /**
+     * 修改任务
+     * @author yl
+     * @date 2023-03-13 9:55
+     * @param dto
+     * @return java.lang.Boolean
+     */
     Boolean updateTask(ProjectTaskDTO dto);
 
     ProductTaskCountDTO getProductTaskCount(ProductTaskCountShowDTO showDTO, Date date);
@@ -72,7 +83,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     List<ProjectTaskEntity> getByTaskIds(List<String> taskIds);
 
-    boolean updateTaskState(List<String> taskIds, Integer state,Date realityStart,Date realityEnd);
+    boolean updateTaskState(List<String> taskIds, Integer state, LocalDateTime realityStart, LocalDateTime realityEnd);
 
 
     int countUndoneByTaskIds(Integer code, Integer approvalPass, List<String> preTaskIds);
@@ -270,4 +281,23 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return
      */
     List<ProjectTaskEntity> listByTaskIds(List<String> preTaskIds);
+
+    /**
+     * 根据任务名称查询任务
+     * @param productId
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2022-09-22 16:36
+     */
+    ProjectTaskEntity getTaskByName(String productId, String name);
+
+    /**
+     * 批量删除任务
+     * @Author Luo_WG
+     * @Date 2023/3/29 18:00
+     * @param ids ids
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean removeBatch(List<String> ids);
 }

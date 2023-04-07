@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -102,7 +103,23 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public String checkOrder(DmpOrderInfoEntity orderInfoEntity) {
         String orderInfoId = "";
         DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber(), orderInfoEntity.getPlatformOrderId());
+        // 是否为销售订单 避免订单类型修改
+        Boolean skipOrderType = StringUtils.isEmpty(orderInfoEntity.getOrderTypeName()) || !"销售订单".equals(orderInfoEntity.getOrderTypeName());
+        // 跳过取消订单 避免状态变更为取消
+        Boolean skipCancel =  StrUtil.isNotBlank(orderInfoEntity.getPlatformOrderStatus()) && orderInfoEntity.getPlatformOrderStatus().contains("取消");
+        boolean isGyyPlatform = PlatformEnum.GYY.getDesc().equals(orderInfoEntity.getPlatformSign());
         if (null != dmpOrderInfoEntity) {
+            // 删除已存在取消订单  和非销售订单
+            if(isGyyPlatform && (skipOrderType || skipCancel)){
+                removeById(dmpOrderInfoEntity.getId());
+                List<DmpOrderItemEntity> list = dmpOrderItemService.lambdaQuery()
+                        .eq(DmpOrderItemEntity::getOrderId, dmpOrderInfoEntity.getId())
+                        .list();
+                if(CollectionUtil.isNotEmpty(list)){
+                    dmpOrderItemService.removeByIds(list.stream().map(DmpOrderItemEntity::getId).collect(Collectors.toList()));
+                }
+                return orderInfoId;
+            }
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
                 orderInfoEntity.setId(dmpOrderInfoEntity.getId());
@@ -110,6 +127,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             orderInfoId = dmpOrderInfoEntity.getId();
         } else {
+            // 跳过不存在取消订单 和非销售订单
+            if(isGyyPlatform && (skipOrderType || skipCancel)){
+                return orderInfoId;
+            }
             // 修正状态同步
             orderInfoEntity.setCorrectionStatus(orderInfoEntity.getOrderStatus());
             orderInfoId = add(orderInfoEntity);
@@ -206,7 +227,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
                 if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
-                    DmpSkuInfoEntity skuBySkuNo = dmpSkuInfoService.getSkuBySkuNo(dmpOrderItemEntity.getSkuNo());
+                    DmpSkuInfoEntity skuBySkuNo = dmpSkuInfoService.getSkuBySkuNo(dmpOrderItemEntity.getSkuNo(), ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
                     boolean updateStatus = false;
                     if (skuBySkuNo != null) {
                         if(!Objects.equals(skuBySkuNo.getParentCategoryName(),dmpOrderItemEntity.getCategoryName())){

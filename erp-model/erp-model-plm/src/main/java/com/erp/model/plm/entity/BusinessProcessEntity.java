@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,12 +14,7 @@ import java.io.Serializable;
  */
 @TableName("business_process")
 @Data
-public class BusinessProcessEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class BusinessProcessEntity extends BaseEntity implements Serializable {
 
     /**
      * 业务流程的key

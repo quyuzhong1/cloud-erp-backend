@@ -21,7 +21,7 @@ import javax.annotation.Resource;
  **/
 
 @RestController
-@RequestMapping("dmp/producer")
+@RequestMapping("producer")
 public class RocketMQProducerController extends BaseController {
 
     @Resource

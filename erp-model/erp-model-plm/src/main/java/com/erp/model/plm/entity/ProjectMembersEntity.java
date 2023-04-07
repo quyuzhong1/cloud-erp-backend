@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,12 +27,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_members")
-public class ProjectMembersEntity implements Serializable {
+public class ProjectMembersEntity extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 成员id
@@ -57,31 +55,10 @@ public class ProjectMembersEntity implements Serializable {
     @TableField("is_charge")
     private Integer isCharge;
 
-
     /**
      * 产品id
      */
     @TableField("product_id")
     private String productId;
-
-
-
-
-    /**
-     * 产品id
-     */
-    @TableField("create_user_id")
-    private String createUserId;
-
-    @TableField("create_user_name")
-    private String createUserName;
-
-
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
 
 }

@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -23,8 +22,6 @@ public class KingdeeReturnOrderEntity {
     private String fBillTypeCode;
     @Alias("FBillNo")
     private String fBillNo;
-    @Alias("FOrderNo")
-    private String fOrderNo;
     @Alias("FDate")
     private String fDate;
     @Alias("FDocumentStatus")

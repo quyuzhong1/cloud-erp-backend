@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -13,10 +14,7 @@ import com.common.business.interceptor.CommonInterceptor;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.LoginUser;
-import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
-import com.erp.model.plm.dto.TemplateMembersDTO;
-import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.TemplateMembersMapper;
@@ -29,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -65,6 +64,13 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
 
     @Autowired
     private ProjectTaskSysService projectTaskSysService;
+
+    @Autowired
+    private RoleRefMemberService roleRefMemberService;
+
+
+    @Autowired
+    private ProjectRoleService projectRoleService;
 
     /**
      * 保存 模板成员
@@ -111,24 +117,54 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
      */
     @Override
     public List<CopySourceDTO> copyTemplateMembers(String templateId, String productId, String projectId) {
-        List<TemplateMembersEntity> templateMembers = getByTemplateId(templateId);
+        //List<TemplateMembersEntity> templateMembers = getByTemplateId(templateId);
+        //模板角色人员
+        List<MemberPagingShowDTO> templateMembers = projectMembersService.listByRoleNames(null, templateId, null);
+
         List<CopySourceDTO> sourceList = new ArrayList<>();
+
+        //List<ProjectMembersEntity> listByProductId = projectMembersService.getListByProductId(productId);
+
+        List<MemberPagingShowDTO> memberPagingShowDTOS1 = projectMembersService.listByMembers(productId);
+
         if (CollectionUtils.isNotEmpty(templateMembers)) {
             List<ProjectMembersEntity> copyList = new ArrayList<>();
-            for (TemplateMembersEntity item : templateMembers) {
-                ProjectMembersEntity entity = new ProjectMembersEntity();
-                CopySourceDTO sourceDTO = new CopySourceDTO();
-                BeanMapper.copy(item, entity);
-                entity.setProductId(productId);
-                entity.setProjectId(projectId);
-                entity.setId(IdWorker.getIdStr());
-                sourceDTO.setNewCreateId(entity.getId());
-                sourceDTO.setDataId(item.getId());
-                sourceList.add(sourceDTO);
-                copyList.add(entity);
+            for (MemberPagingShowDTO item : templateMembers) {
+                MemberPagingShowDTO memberPagingShowDTO = memberPagingShowDTOS1.stream().filter(
+                        projectMembers -> projectMembers.getMemberName().equals(item.getMemberName()) && projectMembers.getRoleName().equals(item.getRoleName())
+                ).findFirst().orElse(null);
+                if (Objects.isNull(memberPagingShowDTO)) {
+                    CopySourceDTO sourceDTO = new CopySourceDTO();
+                    String idStr = IdWorker.getIdStr();
+                    sourceDTO.setNewCreateId(idStr);
+                    sourceDTO.setDataId(item.getId());
+                    sourceList.add(sourceDTO);
+                    ProjectMembersEntity entity = new ProjectMembersEntity();
+                    entity.setMemberId(item.getMemberId());
+                    entity.setMemberName(item.getMemberName());
+                    entity.setIsCharge(item.getIsCharge());
+                    entity.setProductId(productId);
+                    entity.setProjectId(projectId);
+                    entity.setId(idStr);
+                    copyList.add(entity);
+                }/* else {
+                    ProjectMembersEntity entity = new ProjectMembersEntity();
+                    CopySourceDTO sourceDTO = new CopySourceDTO();
+                    entity.setMemberId(memberPagingShowDTO.getMemberId());
+                    entity.setMemberName(memberPagingShowDTO.getMemberName());
+                    entity.setIsCharge(memberPagingShowDTO.getIsCharge());
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    entity.setProjectId(projectId);
+                    entity.setId(IdWorker.getIdStr());
+                    sourceDTO.setNewCreateId(entity.getId());
+                    sourceDTO.setDataId(item.getId());
+                    sourceList.add(sourceDTO);
+                }*/
             }
-            projectMembersService.saveBatch(copyList);
-
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                projectMembersService.saveBatch(copyList);
+            }
         }
         return sourceList;
     }
@@ -303,6 +339,8 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
 
     @Override
     public List<TemplateMembersEntity> getByTemplateId(String templateId) {
+
+
         LambdaQueryWrapper<TemplateMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateMembersEntity::getTemplateId, templateId);
         return this.list(queryWrapper);

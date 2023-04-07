@@ -22,7 +22,7 @@ import java.util.List;
  * @Date 2022/12/16 11:07
  **/
 @RestController
-@RequestMapping("bi/comprehensive")
+@RequestMapping("comprehensive")
 public class BiComprehensiveAnalyseController extends BaseController {
     @Resource
     private BiComprehensiveAnalyseService biComprehensiveAnalyseService;

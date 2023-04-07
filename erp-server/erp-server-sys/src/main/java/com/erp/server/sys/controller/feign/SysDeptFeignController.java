@@ -16,7 +16,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/feign/dept")
+@RequestMapping("feign/dept")
 public class SysDeptFeignController extends BaseController {
 
     @Resource

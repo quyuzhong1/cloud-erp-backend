@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
  * @date 2022/12/5 20:36
  */
 @RestController
-@RequestMapping("/plm/sys/logField")
+@RequestMapping("sys/logField")
 public class SysLogFieldController extends BaseController {
 
     @Autowired

@@ -1,12 +1,14 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 消息通知记录表
@@ -15,13 +17,7 @@ import java.util.Date;
 @TableName(value ="notice_message_log")
 @Data
 @NoArgsConstructor
-public class NoticeMessageRecordEntity implements Serializable {
-    /**
-     * 
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
-
+public class NoticeMessageRecordEntity extends BaseEntity implements Serializable {
     /**
      * 任务id
      */
@@ -43,18 +39,6 @@ public class NoticeMessageRecordEntity implements Serializable {
     private String productName;
 
     /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
      * 消息内容
      */
     private String messageContent;
@@ -72,8 +56,7 @@ public class NoticeMessageRecordEntity implements Serializable {
     /**
      *预计结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planEndTime;
+    private LocalDate planEndTime;
     /**
      * 通知的用户id
      */

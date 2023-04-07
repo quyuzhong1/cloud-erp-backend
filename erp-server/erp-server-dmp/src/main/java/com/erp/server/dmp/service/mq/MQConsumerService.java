@@ -122,7 +122,7 @@ public class MQConsumerService {
 
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "gyy_sku_info_tag||kingdee_sku_info_tag||mabang_sku_info_tag",
+            selectorExpression = "kingdee_sku_info_tag",
             consumerGroup = "${spring.profiles.active}-sales_sku_info_consumer")
     public class ConsumerErpSkuInfo implements RocketMQListener<DmpSkuInfoEntity> {
         @Override
@@ -132,6 +132,5 @@ public class MQConsumerService {
             dmpSkuInfoService.checkOrder(ext);
         }
     }
-
 
 }

@@ -28,15 +28,17 @@
         template_task tt
         left join (
             select a.task_id,a.template_id,string_agg(b.id, ',') as id,string_agg(b.name, ',') as name from template_pre_task a
-                inner join template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id
+                inner join template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id AND b.is_deleted = FALSE
+            WHERE a.is_deleted = FALSE
             group by a.task_id,a.template_id
             ) tpt on tt.id = tpt.task_id and tt.template_id = tpt.template_id
         left join (
-            select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs group by template_id, task_id
+            select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs where is_deleted = FALSE group by template_id, task_id
             ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
 
         left join template_phase tp  on tp.id=tt.phase_id
         <where>
+            tt.is_deleted = FALSE
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                 and tt.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
@@ -57,6 +59,7 @@
                 </choose>
             </foreach>
         </if>
+        tt.id asc,
         tt.create_time asc
     </select>
 
@@ -73,7 +76,7 @@
            tt.create_user_name,
            tt.create_user_id,
            tt.create_time
-           from template_task tt where tt.distribution_type = 0 and string_to_array(tt.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
+           from template_task tt where tt.distribution_type = 0 AND tt.is_deleted = FALSE and string_to_array(tt.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
            union
         select
             tts.id,
@@ -87,8 +90,130 @@
             tts.create_user_name,
             tts.create_user_id,
             tts.create_time
-        from project_task_sys tts where tts.distribution_type = 0 and string_to_array(tts.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
+        from project_task_sys tts where tts.distribution_type = 0 AND tts.is_deleted = FALSE and string_to_array(tts.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
     </select>
 
+    <select id="templateTaskList" resultType="com.erp.model.plm.dto.TemplateTaskShowDTO">
+        select
+        tt.id,
+        tt.name,
+        tt.pid,
+        tt.type,
+        case when tt.distribution_type = 0 then tt.role_name
+        when tt.distribution_type = 1 then tt.charge_name
+        else '' end as charge_name,
+        tt.priority,
+        tt.is_fixed,
+        tt.create_user_name,
+        tt.create_user_id,
+        tt.create_time as createTime,
+        tt.work_period,
+        tp.name as phaseName,
+        tpt.id as preTaskId,
+        tpt.name as preTaskName,
+        tdd.docsNames
+        from
+        template_task tt
+        left join (
+        select a.task_id,a.template_id,string_agg(b.id, ',') as id,string_agg(b.name, ',') as name from template_pre_task a
+        inner join template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id AND b.is_deleted = FALSE
+        WHERE a.is_deleted = FALSE
+        group by a.task_id,a.template_id
+        ) tpt on tt.id = tpt.task_id and tt.template_id = tpt.template_id
+        left join (
+        select task_id,template_id,string_agg(docs_name, ',') as docsNames,string_agg(id, ',') as docsIds from template_delivery_docs WHERE is_deleted = FALSE group by template_id, task_id
+        ) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
+        left join template_phase tp  on tp.id=tt.phase_id AND tp.is_deleted = FALSE
+        WHERE 1=1 AND tt.is_deleted = FALSE
+            <if test="params.phaseNames != null and params.phaseNames.size > 0">
+                AND tp.id IN
+                <foreach collection="params.phaseNames" item="phaseName" open="(" separator="," close=")">
+                    #{phaseName}
+                </foreach>
+            </if>
+            <if test="chargeNameStr != null and chargeNameStr != ''">
+                <![CDATA[
+                    AND string_to_array(case when tt.distribution_type = 0 then tt.role_id
+                    when tt.distribution_type = 1 then tt.charge_id
+                    else '' end,',') && string_to_array(
+                ]]>
+                replace(#{chargeNameStr},' ','')
+                ,',')
+            </if>
+
+            <if test="params.TaskType != null and params.TaskType != ''">
+                AND tt.type = #{params.taskType}
+            </if>
+
+            <if test="docsNameStr != null and docsNameStr != ''">
+                <![CDATA[
+                    AND  string_to_array(tdd.docsNames,',') && string_to_array(
+                ]]>
+                replace(#{docsNameStr},' ','')
+                ,',')
+            </if>
+
+            <if test="params.isFixed != null and params.isFixed != ''">
+                AND tt.is_fixed = #{params.isFixed}
+            </if>
+
+            <if test="params.taskName != '' and params.taskName != null">
+                and tt.name like concat('%', #{params.taskName} ,'%')
+            </if>
+
+            <if test="params.templateId != '' and params.templateId != null">
+                and tt.template_id like concat('%', #{params.templateId} ,'%')
+            </if>
+        order by tt.create_time asc
+    </select>
+
+    <select id="getByTemplateId" resultType="com.erp.model.plm.entity.TemplateTaskEntity">
+        SELECT
+            id,
+            name,
+            type,
+            charge_id,
+            charge_name,
+            pid,
+            plan_start_time,
+            plan_end_time,
+            priority,
+            phase_id,
+            is_fixed,
+            description,
+            create_time,
+            update_time,
+            source_task_id,
+            template_id,
+            property,
+            phase_name,
+            business_process_id,
+            create_user_name,
+            create_user_id,
+            update_user_name,
+            update_user_id,
+            is_milepost,
+            role_id,
+            role_name,
+            distribution_type,
+            related_sku_type,
+            work_period,
+            version,
+            is_deleted
+        FROM template_task
+        <where>
+            is_deleted = FALSE
+            <if test="tastIdList != null and tastIdList.size > 0">
+                 AND id IN
+                <foreach collection="tastIdList" item="taskId" open="(" separator="," close=")">
+                    #{taskId}
+                </foreach>
+            </if>
+            <if test="templateId != null and templateId != ''">
+                and template_id = #{templateId}
+            </if>
+        </where>
+        ORDER BY create_time ASC
+    </select>
 
 </mapper>

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Created by yl
  */
 @RestController
-@RequestMapping("auth/feign/user")
+@RequestMapping("feign/user")
 public class SysLoginFeignController extends BaseController {
 
     @Autowired

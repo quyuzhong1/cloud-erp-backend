@@ -9,28 +9,27 @@
         nm.create_user_id,nm.create_time,nm.update_user_id,nm.update_time,
         nd.id AS nodeId,nd.node_name
         FROM notice_message nm LEFT JOIN notice_node nd
-        ON nm.node_id=nd.id
-        <where>
+        ON nm.node_id=nd.id AND nd.is_deleted = FALSE
+        WHERE nm.is_deleted = FALSE
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-                nd.node_name LIKE concat('%',#{params.searchKeyword},'%')
+                AND nd.node_name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
-        </where>
         ORDER BY nm.create_time ASC
     </select>
 
     <select id="getUserNoticeNode" resultType="com.erp.model.plm.dto.UserNoticeNodeDTO">
         SELECT nm.id AS noticeMessageId,nd.id AS nodeId,nd.node_name
         FROM notice_message nm LEFT JOIN notice_node nd
-        ON nm.node_id=nd.id
-        WHERE nm.state=#{state}
+        ON nm.node_id=nd.id AND nd.is_deleted = FALSE
+        WHERE nm.state=#{state} AND nm.is_deleted = FALSE
         ORDER BY nm.create_time ASC
     </select>
 
     <select id="getByNodeFlag" resultType="com.erp.model.plm.entity.NoticeMessageEntity">
        SELECT nm.id,nm.node_id,nm.item_people,nm.other_people,nm.state
        FROM notice_message nm INNER JOIN notice_node nd
-       ON nm.node_id=nd.id
-       WHERE nd.node_flag=#{nodeFlag} AND nm.state=1
+       ON nm.node_id=nd.id AND nd.is_deleted = FALSE
+       WHERE nd.node_flag=#{nodeFlag} AND nm.state=1 AND nm.is_deleted = FALSE
 
     </select>
 
