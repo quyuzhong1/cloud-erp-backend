@@ -2,11 +2,13 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -14,9 +16,8 @@ import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
-import com.erp.server.plm.constant.AdminUserConstant;
-import com.common.business.constant.IsConstant;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.server.plm.constant.AdminUserConstant;
 import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -184,8 +185,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(entity)) {
+                    continue;
+                }
                 //当没审核通过
-                if (Objects.isNull(entity) || !entity.getStatus().equals(approvalPass)) {
+                if (!entity.getStatus().equals(approvalPass)) {
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());

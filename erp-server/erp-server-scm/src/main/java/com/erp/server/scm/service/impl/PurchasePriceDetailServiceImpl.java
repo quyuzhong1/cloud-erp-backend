@@ -259,8 +259,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-            item.setTaxRate(rate);
+            if(taxRate!=null){
+                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                item.setTaxRate(rate);
+            }
+
         }
         this.saveBatch(addList);
     }
@@ -290,7 +293,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
             item.setCurrencySymbol(currencySymbol);
             BigDecimal taxRate = item.getTaxRate();
-            item.setTaxRate(taxRate.multiply(hundred));
+            if(taxRate!=null){
+                item.setTaxRate(taxRate.multiply(hundred));
+            }
             Integer minQty = item.getMinQty();
             Integer maxQty = item.getMaxQty();
             if (minQty == 0 && maxQty == 0) {
@@ -364,8 +369,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             entity.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-            entity.setTaxRate(rate);
+            if(taxRate!=null){
+                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                entity.setTaxRate(rate);
+            }
             saveOrUpdateList.add(entity);
         }
 
