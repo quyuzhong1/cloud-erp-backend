@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -31,6 +32,14 @@ public class PurchasePriceDetailDTO implements Serializable {
         @NotBlank(message = "sku不能为空")
         private String skuId;
 
+
+        /**
+         * sku id
+         */
+        private String skuNo;
+
+
+        private String productName;
 
         /**
          * 采购交期
@@ -270,6 +279,93 @@ public class PurchasePriceDetailDTO implements Serializable {
          * false 启用
          */
         private Boolean disabled;
+
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class HistoryDTO {
+
+
+        private String id;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * sku_no
+         */
+        private String skuNo;
+
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDay;
+
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+
+        private LocalDateTime createTime;
 
 
     }

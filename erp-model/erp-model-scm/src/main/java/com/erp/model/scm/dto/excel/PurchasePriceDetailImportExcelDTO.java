@@ -61,20 +61,12 @@ public class PurchasePriceDetailImportExcelDTO  {
 
 
 
-    /**
-     * 含税单价
-     */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "币种", index = 5)
-    @FieldValid(fieldName = "币种", isNotBlank = true)
-    private String currency;
-
 
     /**
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率", index = 6)
+    @ExcelProperty(value = "税率", index = 5)
     private BigDecimal taxRate;
 
 
@@ -82,7 +74,7 @@ public class PurchasePriceDetailImportExcelDTO  {
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "生效时间", index = 7)
+    @ExcelProperty(value = "生效时间", index = 6)
     @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String effectiveDateStr;
 
@@ -90,7 +82,7 @@ public class PurchasePriceDetailImportExcelDTO  {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 8)
+    @ExcelProperty(value = "错误数据", index = 7)
     private String  errorMsg;
 
 

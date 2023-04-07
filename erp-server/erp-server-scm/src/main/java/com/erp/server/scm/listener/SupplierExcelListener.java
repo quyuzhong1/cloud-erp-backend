@@ -153,17 +153,18 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         //结算币种
         String payCurrency = excelDTO.getPayCurrency();
         if (StringUtils.isNotBlank(payCurrency)) {
-            long currencyCount = currencyList.stream().filter(c -> c.getId().equals(payCurrency)).count();
-            if (currencyCount <= 0) {
+            CurrencyDTO.ViewDTO  currency = currencyList.stream().filter(c -> c.getName().equals(payCurrency)).findFirst().orElse(null);
+            if (Objects.isNull(currency)) {
                 errorMsgList.add("结算币种不存在");
             }
+            addDTO.setPayCurrency(currency.getId());
         }
-        addDTO.setPayCurrency(payCurrency);
+
 
         //分类名
         String categoryName = excelDTO.getCategoryName();
         if (StringUtils.isNotBlank(categoryName)) {
-            String categoryId= dictBasicList.stream().filter(d -> d.getName().equals(categoryName)).findFirst().
+            String categoryId = dictBasicList.stream().filter(d -> d.getName().equals(categoryName)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StringUtils.isBlank(categoryId)) {
                 errorMsgList.add("供应商分类不存在");
@@ -186,7 +187,17 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         contact.setTelNumber(excelDTO.getTelNumber());
         String isDefault = excelDTO.getIsDefault();
         if (StringUtils.isNotBlank(isDefault)) {
-            contact.setIsDefault(isDefault.equals("是"));
+            boolean isDefaultResult = isDefault.equals("是");
+            //当是默认联系人的时候
+            if (isDefaultResult) {
+                //存在的 默认联系人
+                SupplierContactDTO.ImportAddDTO existContact = contactList.stream().filter(c -> c.getSupplierName().equals(name) &&
+                        c.getIsDefault()).findFirst().orElse(null);
+                if(existContact!=null){
+                    errorMsgList.add("默认联系人已存在");
+                }
+            }
+            contact.setIsDefault(isDefaultResult);
         }
         //当不为空的时候就要检查 联系人是否为空
         if (!checkObjAllFieldsIsNull(contact)) {

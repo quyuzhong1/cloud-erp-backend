@@ -32,14 +32,14 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
 
 
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> getHistory(String priceDetailId) {
+    public List<PurchasePriceDetailDTO.HistoryDTO> getHistory(String priceDetailId) {
         List<PurchasePriceHistoryEntity> list = this.getByPriceDetailId(priceDetailId);
         BigDecimal hundred = new BigDecimal("100");
-        List<PurchasePriceDetailDTO.ViewDTO> resultList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
-        List<String> currencyIdList = resultList.stream().map(PurchasePriceDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
+        List<PurchasePriceDetailDTO.HistoryDTO> resultList = BeanMapper.copyList(list, PurchasePriceDetailDTO.HistoryDTO.class);
+        List<String> currencyIdList = resultList.stream().map(PurchasePriceDetailDTO.HistoryDTO::getCurrency).collect(Collectors.toList());
         //币种信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
-        for (PurchasePriceDetailDTO.ViewDTO item : resultList) {
+        for (PurchasePriceDetailDTO.HistoryDTO item : resultList) {
             //币种
             String currency = item.getCurrency();
             BigDecimal taxRate = item.getTaxRate();

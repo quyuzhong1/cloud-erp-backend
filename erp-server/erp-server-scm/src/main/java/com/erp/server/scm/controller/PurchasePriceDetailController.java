@@ -71,8 +71,8 @@ public class PurchasePriceDetailController extends BaseController {
      * 获取历史数据
      */
     @PostMapping("/history")
-    public ApiResult<List<PurchasePriceDetailDTO.ViewDTO>> getHistory(@RequestBody @Valid BaseIdDTO dto) {
-        List<PurchasePriceDetailDTO.ViewDTO> historyList = purchasePriceHistoryService.getHistory(dto.getId());
+    public ApiResult<List<PurchasePriceDetailDTO.HistoryDTO>> getHistory(@RequestBody @Valid BaseIdDTO dto) {
+        List<PurchasePriceDetailDTO.HistoryDTO> historyList = purchasePriceHistoryService.getHistory(dto.getId());
         return success(historyList);
     }
 

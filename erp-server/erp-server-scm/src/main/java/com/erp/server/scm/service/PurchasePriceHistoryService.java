@@ -24,5 +24,5 @@ public interface PurchasePriceHistoryService extends SuperService<PurchasePriceH
      * @param priceDetailId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.HistoryDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> getHistory(String priceDetailId);
+    List<PurchasePriceDetailDTO.HistoryDTO> getHistory(String priceDetailId);
 }

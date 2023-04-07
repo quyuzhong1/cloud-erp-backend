@@ -75,15 +75,17 @@ public class PurchasePriceDetailExcelListener extends AnalysisEventListener<Purc
                 errorMsgList.add("sku有误");
             }
             if (skuEntity != null) {
-                addDTO.setCurrency(purchasePriceDetailImportExcelDTO.getCurrency());
+                addDTO.setCurrency("CNY");
                 addDTO.setDeliveryDay(purchasePriceDetailImportExcelDTO.getDeliveryDay());
                 String effectiveDateStr = purchasePriceDetailImportExcelDTO.getEffectiveDateStr();
                 addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : LocalDate.parse(effectiveDateStr, dateTimeFormatter));
-                addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMinQty());
                 addDTO.setMinQty(purchasePriceDetailImportExcelDTO.getMinQty());
+                addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMaxQty());
                 addDTO.setTaxPrice(purchasePriceDetailImportExcelDTO.getTaxPrice());
                 addDTO.setTaxRate(purchasePriceDetailImportExcelDTO.getTaxRate());
                 addDTO.setSkuId(skuEntity.getSkuId());
+                addDTO.setSkuNo(skuEntity.getSkuNo());
+                addDTO.setProductName(skuEntity.getSpuName());
                 successList.add(addDTO);
             }
         }
