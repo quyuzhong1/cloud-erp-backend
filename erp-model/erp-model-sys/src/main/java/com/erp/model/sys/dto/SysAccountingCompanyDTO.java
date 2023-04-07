@@ -31,25 +31,29 @@ public class SysAccountingCompanyDTO {
      * 公司地址
      */
     @NotBlank(message = "公司地址不能为空")
+    @Size( max = 200, message = "公司地址不能超过200个字符")
     private String companyAddress;
 
     @NotBlank(message = "联系人电话不能为空")
+    @Size( max = 15, message = "联系人电话不能超过15个字符")
     private String contactMobile;
 
     /**
      * 联系人名字
      */
     @NotBlank(message = "联系人不能为空")
+    @Size( max = 20, message = "联系人不能超过20个字符")
     private String contactName;
 
     /**
      * 联系人地址
      */
     @NotBlank(message = "联系人地址不能为空")
+    @Size( max = 100, message = "联系人地址超过100个字符")
     private String contactAddress;
 
     @NotBlank(message = "币种不能为空")
-    private String currencyId;
+    private String currency;
 
 
     /**

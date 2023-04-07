@@ -50,6 +50,7 @@ public class SysAccountingCompanyEntity implements Serializable {
     private Boolean disabled;
 
     @TableLogic
+    @TableField("is_deleted")
     private Boolean isDeleted;
     /**
      * 创建时间

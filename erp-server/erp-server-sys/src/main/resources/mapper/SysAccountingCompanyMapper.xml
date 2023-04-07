@@ -3,8 +3,10 @@
 <mapper namespace="com.erp.server.sys.mapper.SysAccountingCompanyMapper">
 
     <select id="paging" resultType="com.erp.model.sys.entity.SysAccountingCompanyEntity">
-        SELECT id,company_name,company_address,contact_name,
-        contact_mobile,contact_address,currency_id,disabled,create_time
+        SELECT id,company_name,company_address,
+        contact_name,contact_mobile,
+        contact_address,currency,disabled,
+        create_time,is_deleted
         FROM sys_accounting_company  sac WHERE is_deleted=false
         <if test="params.state!=null">
             AND sac.company_state =#{params.state}

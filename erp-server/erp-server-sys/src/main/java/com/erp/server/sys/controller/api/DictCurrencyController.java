@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 货币
+ * 公共基础
  *
  * @author Lambda
  * @Classname DictCurrencyController
@@ -28,6 +28,10 @@ public class DictCurrencyController extends BaseController {
     @Resource
     private  DictCurrencyService dictCurrencyService;
 
+    /**
+     * 获取到货币列表
+     * @return
+     */
     @GetMapping("/list")
     public ApiResult<List<CurrencyDTO.ViewDTO>> getList() {
         List<CurrencyDTO.ViewDTO>  list=  dictCurrencyService.getList();
