@@ -35,7 +35,9 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private List<BaseIdDTO> orgList;
 
-    private List<WarehouseEntity> addWarehouseList=new ArrayList<>();
+    private List<WarehouseEntity> existList;
+
+    private List<WarehouseEntity> addWarehouseList = new ArrayList<>();
 
 
     /**
@@ -44,11 +46,12 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     private List<WarehouseExcelDTO> errorList = new ArrayList<>();
 
 
-    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO> orgList) {
+    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO> orgList, List<WarehouseEntity> existList) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
         this.userList = userList;
         this.orgList = orgList;
+        this.existList = existList;
 
     }
 
@@ -78,6 +81,28 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
                 flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         if (StringUtils.isBlank(typeId)) {
             errorMsgList.add("仓库类型不存在");
+        }
+        String name = warehouseExcelDTO.getName();
+        long nameCount = existList.stream().filter(w -> name.equals(w.getName())).count();
+        if(nameCount>0){
+            errorMsgList.add("仓库名称已存在");
+        }
+
+
+        long addNameCount = addWarehouseList.stream().filter(w -> name.equals(w.getName())).count();
+        if(addNameCount>0){
+            errorMsgList.add("仓库名称已存在");
+        }
+
+        String kingdeeWarehouseCode = warehouseExcelDTO.getKingdeeWarehouseCode();
+        long codeCount = existList.stream().filter(w -> kingdeeWarehouseCode.equals(w.getKingdeeWarehouseCode())).count();
+        if(codeCount>0){
+            errorMsgList.add("金蝶仓库编号已存在");
+        }
+
+        long addCodeCount = addWarehouseList.stream().filter(w -> kingdeeWarehouseCode.equals(w.getKingdeeWarehouseCode())).count();
+        if(addCodeCount>0){
+            errorMsgList.add("金蝶仓库编号已存在");
         }
         addEntity.setName(warehouseExcelDTO.getName());
         addEntity.setTypeId(typeId);
@@ -147,7 +172,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         }
     }
 
-    public List<WarehouseExcelDTO> getErrorList(){
+    public List<WarehouseExcelDTO> getErrorList() {
         return errorList;
     }
 }

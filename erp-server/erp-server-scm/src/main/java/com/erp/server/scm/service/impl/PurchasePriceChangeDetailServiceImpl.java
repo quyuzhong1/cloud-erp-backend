@@ -142,7 +142,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
              */
             List<PurchasePriceChangeDetailDTO.AddDTO> list = BeanMapper.copyList(supplierPriceDetailList, PurchasePriceChangeDetailDTO.AddDTO.class);
             checkList.addAll(list);
-            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : map.entrySet()) {
+            //以sku 分组
+            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> supplierMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
+            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
                 //没有无区间 就要检查又没有不同区间的
@@ -209,6 +211,13 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 item.setCurrencySymbol(currencySymbol);
+
+                Integer minQty = item.getMinQty();
+                Integer maxQty = item.getMaxQty();
+                if (minQty == 0 && maxQty == 0) {
+                    item.setMinQty(null);
+                    item.setMaxQty(null);
+                }
             }
         }
 

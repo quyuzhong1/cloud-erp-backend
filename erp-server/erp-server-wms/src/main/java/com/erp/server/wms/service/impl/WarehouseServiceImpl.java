@@ -486,7 +486,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList);
+        List<WarehouseEntity> warehouseList = this.list();
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList,warehouseList);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -537,9 +538,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return true;
     }
-
-
-
 
 
     /**

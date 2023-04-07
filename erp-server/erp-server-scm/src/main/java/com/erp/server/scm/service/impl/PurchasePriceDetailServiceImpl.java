@@ -112,7 +112,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     if (min.equals(max)) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_DIFFERENT);
                     }
-                    if (min>max) {
+                    if (min > max) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_SIZE);
                     }
                 }
@@ -291,6 +291,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setCurrencySymbol(currencySymbol);
             BigDecimal taxRate = item.getTaxRate();
             item.setTaxRate(taxRate.multiply(hundred));
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            if (minQty == 0 && maxQty == 0) {
+                item.setMinQty(null);
+                item.setMaxQty(null);
+            }
         }
 
         return viewList;
@@ -494,12 +500,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,String purchasePriceId) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, String purchasePriceId) {
         List<String> statusList = new ArrayList<>(3);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList,purchasePriceId);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, purchasePriceId);
         return list;
     }
 

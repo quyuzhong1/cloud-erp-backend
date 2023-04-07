@@ -17,12 +17,23 @@ import java.io.Serializable;
 @Data
 public class WarehouseExcelDTO  implements Serializable {
 
+
+
+    /**
+     * 金蝶仓库编号
+     */
+    @ColumnWidth(25)
+    @ExcelProperty(value = "金蝶仓库编号", index = 0)
+    @FieldValid(fieldName = "金蝶仓库编号",isNotBlank = true,maxLength=30)
+    private String kingdeeWarehouseCode;
+
+
     /**
      * 仓库名称
      */
     @ColumnWidth(25)
-    @ExcelProperty(value = "仓库名称", index = 0)
-    @FieldValid(fieldName = "仓库名称",isNotBlank = true)
+    @ExcelProperty(value = "仓库名称", index = 1)
+    @FieldValid(fieldName = "仓库名称",isNotBlank = true,maxLength=50)
     private String name;
 
 
@@ -30,7 +41,7 @@ public class WarehouseExcelDTO  implements Serializable {
      * 仓库类型
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库类型", index = 1)
+    @ExcelProperty(value = "仓库类型", index = 2)
     @FieldValid(fieldName = "仓库类型",isNotBlank = true)
     private String typeName;
 
@@ -39,7 +50,7 @@ public class WarehouseExcelDTO  implements Serializable {
      * 仓库组织
      */
     @ColumnWidth(25)
-    @ExcelProperty(value = "仓库组织", index = 2)
+    @ExcelProperty(value = "仓库组织", index = 3)
     @FieldValid(fieldName = "仓库组织",isNotBlank = true)
     private String orgName;
 
@@ -47,7 +58,7 @@ public class WarehouseExcelDTO  implements Serializable {
      * 是否虚拟仓
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "是否虚拟仓", index = 3)
+    @ExcelProperty(value = "是否虚拟仓", index = 4)
     @FieldValid(fieldName = "是否虚拟仓",fieldValues = "是,否")
     private String isVirtual;
 
@@ -56,7 +67,7 @@ public class WarehouseExcelDTO  implements Serializable {
      * 仓库负责人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "仓库负责人", index = 4)
+    @ExcelProperty(value = "仓库负责人", index = 5)
     @FieldValid(fieldName = "仓库负责人",isNotBlank = true)
     private String chargeName;
 
@@ -65,8 +76,8 @@ public class WarehouseExcelDTO  implements Serializable {
      * 联系人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "联系人", index = 5)
-    @FieldValid(fieldName = "联系人",isNotBlank = true)
+    @ExcelProperty(value = "联系人", index = 6)
+    @FieldValid(fieldName = "联系人",maxLength = 50)
     private String contacts;
 
 
@@ -74,8 +85,8 @@ public class WarehouseExcelDTO  implements Serializable {
      * 联系人电话
      */
     @ColumnWidth(25)
-    @ExcelProperty(value = "联系人电话", index = 6)
-    @FieldValid(fieldName = "联系人电话",isNotBlank = true)
+    @ExcelProperty(value = "联系人电话", index = 7)
+    @FieldValid(fieldName = "联系人电话",maxLength = 20)
     private String contactTelNumber;
 
 
@@ -84,16 +95,16 @@ public class WarehouseExcelDTO  implements Serializable {
      * 仓库地址
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库地址", index = 7)
-    @FieldValid(fieldName = "仓库地址",isNotBlank = true)
+    @ExcelProperty(value = "仓库地址", index = 8)
+    @FieldValid(fieldName = "仓库地址",isNotBlank = true,maxLength = 200)
     private String address;
 
     /**
      * 仓库状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "仓库状态", index = 8)
-    @FieldValid(fieldName = "仓库状态",isNotBlank = true)
+    @ExcelProperty(value = "仓库状态", index = 9)
+    @FieldValid(fieldName = "仓库状态",isNotBlank = true,fieldValues = "启用,停用")
     private String enabled;
 
 
@@ -102,7 +113,7 @@ public class WarehouseExcelDTO  implements Serializable {
      * 错误信息
      */
     @ColumnWidth(200)
-    @ExcelProperty(value = "错误信息", index = 9)
+    @ExcelProperty(value = "错误信息", index = 10)
     private String errorMsg;
 
 
