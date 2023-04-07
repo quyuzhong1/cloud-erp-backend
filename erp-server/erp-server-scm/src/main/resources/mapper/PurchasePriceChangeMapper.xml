@@ -6,6 +6,7 @@
     <select id="paging" resultType="com.erp.model.scm.dto.PurchasePriceChangeDTO$PagingViewDTO">
         SELECT
           pp.id,
+          ppd.id AS changeDetailId,
           pp.code,
           pp.create_user_id AS createUserId,
           pp.create_user_name AS createUserName,
