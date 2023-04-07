@@ -668,13 +668,17 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).collect(Collectors.toList());
             //获取供应商默认联系人信息
             List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+
+            //获取到采购订单数据
+            List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
             for (SupplierDTO.PagingViewDTO item : list) {
+                String id = item.getId();
                 SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
                 exportExcel.setName(item.getName());
                 exportExcel.setCode(item.getCode());
                 //禁用状态 true 禁用
                 boolean disabled = item.getDisabled();
-                exportExcel.setEnableStatus(disabled == true ? "未启用" : "启用");
+                exportExcel.setEnableStatus(disabled == true ? "停用" : "启用");
                 ApproveStatusEnum approveStatus = item.getApproveStatus();
                 exportExcel.setApproveStatusName(approveStatus.getName());
                 //阶段
@@ -702,6 +706,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                     exportExcel.setContactPerson(contact.getPerson());
                     exportExcel.setContactTelNumber(contact.getTelNumber());
                 }
+                //采购次数
+                long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
+                exportExcel.setPurchasesCount((int) purchasesCount);
+
+
                 resultList.add(exportExcel);
 
             }

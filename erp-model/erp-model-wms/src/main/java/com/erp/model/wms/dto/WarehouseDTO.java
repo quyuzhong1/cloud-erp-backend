@@ -264,6 +264,9 @@ public class WarehouseDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+
+
+
         /**
          * 仓库名
          */
@@ -298,6 +301,17 @@ public class WarehouseDTO implements Serializable {
          */
         private List<String> typeIdList;
 
+    }
+
+
+
+    /**
+     * 导出仓库
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        private List<String> ids;
     }
 
 

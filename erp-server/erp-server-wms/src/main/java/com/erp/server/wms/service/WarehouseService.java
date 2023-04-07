@@ -145,7 +145,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param response
      * @return void
      */
-    void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportWarehouse(WarehouseDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 下载仓库模板

@@ -178,7 +178,7 @@ public class WarehouseController extends BaseController {
      * 仓库数据
      */
     @PostMapping("/exportWarehouse")
-    public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto, HttpServletResponse response) {
         warehouseService.exportWarehouse(dto, response);
         return success();
     }

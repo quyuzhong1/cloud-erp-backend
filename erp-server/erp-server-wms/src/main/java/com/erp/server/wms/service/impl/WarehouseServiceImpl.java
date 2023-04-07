@@ -262,8 +262,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public Boolean disApprove(List<String> warehouseIds) {
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
 
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
@@ -272,11 +271,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 
         List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_99003);
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
         return result;
@@ -388,7 +386,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 16:08
      */
     @Override
-    public void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportWarehouse(WarehouseDTO.ExportDTO dto, HttpServletResponse response) {
         //获取导出数据
         List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<WarehouseExportExcelDTO> resultList = new ArrayList<>(viewList.size());
