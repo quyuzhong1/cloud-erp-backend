@@ -37,19 +37,19 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //更新状态
         String status = params.get("status");
         //金蝶id
-        String kingdeeId = params.get("kingdeeId");
+        String syncKingdeeId = params.get("kingdeeId");
 
         //产品管理
         if (ApiModuleTypeEnum.PRODUCT_DETAIL.getCode().toString().equals(code)) {
-            productDetailService.updateSyncKingdeeStatus(businessId,status);
+            productDetailService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
         }
         //bom管理
         if (ApiModuleTypeEnum.BOM_INFO.getCode().toString().equals(code)) {
-            bomInfoService.updateSyncKingdeeStatus(businessId,status);
+            bomInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
         }
         //产品管理
         if (ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode().toString().equals(code) || ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode().toString().equals(code)) {
-            basicCategoryService.updateSyncKingdeeStatus(businessId,status,kingdeeId);
+            basicCategoryService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
         }
     }
 }

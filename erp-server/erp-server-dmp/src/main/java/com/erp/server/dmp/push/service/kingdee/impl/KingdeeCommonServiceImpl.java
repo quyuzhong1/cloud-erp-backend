@@ -2,26 +2,26 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiFieldTypeEnum;
-import com.erp.model.dmp.enums.ApiGroupTypeEnum;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
+import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.CfgApiFieldMapValueService;
+import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +41,9 @@ import java.util.stream.Collectors;
 public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
+    private CfgApiFieldMapService cfgApiFieldMapService;
+
+    @Resource
     private CfgApiFieldMapValueService cfgApiFieldMapValueService;
 
     @Resource
@@ -50,17 +53,28 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     private KingdeeCommonService kingdeeCommonService;
 
     @Resource
+    private PlatformService platformService;
+
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Override
-    public JSONObject makeApiFieldJson(Map<String, Object> map,List<CfgApiFieldMapDTO> mapList) {
-        JSONObject json = new JSONObject();
+    public JSONObject makeApiFieldJson(Map<String, Object> map,String apiPlatformId,Integer moduleType) {
 
-        List<String> fieldMapIds = mapList.stream().map(CfgApiFieldMapDTO::getId).collect(Collectors.toList());
-        //无值直接返回
-        if (CollectionUtils.isEmpty(fieldMapIds)) {
+        JSONObject json = new JSONObject();
+        //查询配置字段
+        CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
+        dto.setApiPlatformId(apiPlatformId);
+        dto.setModuleType(moduleType);
+        List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
+
+        //未配置发送字段
+        if (CollectionUtils.isEmpty(mapList)) {
             return json;
         }
+
+        List<String> fieldMapIds = mapList.stream().map(CfgApiFieldMapDTO::getId).collect(Collectors.toList());
         //查询配置的值映射
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
@@ -102,6 +116,36 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return json;
     }
 
+    @Override
+    public PlatformEntity getPlatformEntity (Map<String, Object> map,Integer type) {
+        //传入map数据不能为空
+        if (CollectionUtils.isEmpty(map)) {
+            log.error("同步数据不存在！");
+            return null;
+        }
+        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
+        if (ObjectUtils.isEmpty(platformEntity)) {
+            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),"",String.format("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc()),type, ApiSendStatusEnum.FAILURE.getCode());
+        }
+        return platformEntity;
+    }
+
+
+    @Override
+    public JSONObject view (KingdeeApiUtils apiUtils,String id,String number) {
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+
+        if (StringUtils.isNotBlank(id)) {
+            viewMap.put("id",id);
+        } else {
+            viewMap.put("number",number);
+            //现默认唯迹科技
+            viewMap.put("CreateOrgId",1);
+        }
+        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        return model;
+    }
 
 
 
@@ -202,36 +246,22 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Id",id);
-        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        //单据状态
-        String documentStatus = (String) model.get("DocumentStatus");
-        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            //审核中或已审核则要先反审
-            ArrayList<String> ids = new ArrayList<>();
-            ids.add(id);
-            try {
-                apiUtils.unAuditById(ids);
-            } catch (Exception e) {
-                //反审核失败操作日志及定时任务
-                log.error("反审核失败",e);
-                insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
-                return "";
-            }
-            //反审核成功操作日志
-            log.info("反审核成功,数据【{}】", id);
-            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"反审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
-            //当审核是已审核或者审核中时继续反审核
-            String status = unAudit(platformEntity, map,apiUtils, id,type);
-            //当状态为空时直接返回
-            if (StringUtils.isBlank(status)) {
-                return status;
-            }
-            documentStatus = status;
+    public Boolean unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
+        //审核中或已审核则要先反审
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add(id);
+        try {
+            apiUtils.unAuditById(ids);
+        } catch (Exception e) {
+            //反审核失败操作日志及定时任务
+            log.error("反审核失败",e);
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return Boolean.FALSE;
         }
-        return  documentStatus;
+        //反审核成功操作日志
+        log.info("反审核成功,数据【{}】", id);
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),id,"反审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
+        return Boolean.TRUE;
     }
 
 

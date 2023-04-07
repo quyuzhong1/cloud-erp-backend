@@ -57,6 +57,8 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         if (CollectionUtils.isEmpty(bomList)) {
             return;
         }
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //父级物料
         BomSkuDTO parent = bomList.get(0);
         //父级sku编码
@@ -83,7 +85,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName(), resultMap, entity.getId());
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                return bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
             }
             return Boolean.TRUE;
         });

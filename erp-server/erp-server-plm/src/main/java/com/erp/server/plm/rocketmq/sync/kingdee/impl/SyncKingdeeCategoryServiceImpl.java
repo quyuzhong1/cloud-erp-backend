@@ -44,7 +44,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
      */
     @Override
     public void syncDataToKingdee(BasicCategoryEntity entity) {
-        Map<String, Object> resultMap = new HashMap<>(MathUtil.FIVE);
+        Map<String, Object> resultMap = new HashMap<>();
 
         //是否存在上级
         boolean isExistParent = !MathUtil.ZERO.toString().equals(entity.getPid());

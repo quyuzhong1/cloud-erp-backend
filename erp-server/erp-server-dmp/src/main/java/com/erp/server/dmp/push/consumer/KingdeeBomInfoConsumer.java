@@ -4,16 +4,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
@@ -60,11 +57,16 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "1001010005_1"));
+        queryFilters.add(String.format("FNumber = '%s'", "A009CNA1_2"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FDENOMINATOR,FNUMERATOR";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
+
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("id","324203");
+        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        System.out.println(viewJson);
     }
 
     @Override
@@ -72,43 +74,28 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     public void onMessage(Map<String, Object> map) {
         //同步模块类型
         Integer type = ApiModuleTypeEnum.BOM_INFO.getCode();
-        //传入map数据不能为空
-        if (ObjectUtils.isEmpty(map) || map.size() == 0) {
-            log.error("同步数据不存在！");
-            return;
-        }
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
+        //业务id
+        String  businessId = String.valueOf(map.get("id"));
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
-            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
-            kingdeeCommonService.insertFailureLog(platformEntity, map,"",String.format("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc()),type);
-            return;
-        }
-        CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
-        dto.setApiPlatformId(platformEntity.getId());
-        dto.setModuleType(type);
-        List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
-        //未配置发送字段
-        if (CollectionUtils.isEmpty(mapList)) {
-            log.error(ApiError.ERROR_97025.msg);
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
+        //根据录入值和字段配置生成JSONObject
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map,platformEntity.getId(),type);
+        //未配置发送字段
+        if (CollectionUtils.isEmpty(json)) {
+            //错误日志
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity,businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
         //判断金蝶系统是否已存在该数据
-        String version = (String)map.get("version");
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("number",version);
-        //默认唯迹科技
-        viewMap.put("CreateOrgId",1);
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
-            model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("version"));
         } catch (Exception e) {
             //未查找到数据，新增数据
             SaveResult save;
@@ -116,7 +103,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
                 save = apiUtils.save(param);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type,ApiSendStatusEnum.FAILURE.getCode());
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type,ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //新增成功后编辑用量
@@ -134,27 +121,26 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         Integer id = (Integer) model.get("Id");
+        Boolean flag = Boolean.FALSE;
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, String.valueOf(id),type);
+            flag = kingdeeCommonService.unAudit(platformEntity, map,apiUtils, String.valueOf(id),type);
         }
         //创建状态则直接修改
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
+        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
             setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
-            //需要更新的字段
-            List<String> apiFieldList = mapList.stream().map(obj -> obj.getApiField()).sorted().distinct().collect(Collectors.toList());
-            ArrayList<String> needUpDateFields = new ArrayList<>();
-            for (String field:apiFieldList) {
-                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("\\.")).collect(Collectors.toList());
-                needUpDateFields.addAll(splitFields);
-            }
-            param.setNeedUpDateFields(needUpDateFields);
+
+            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
     }
 
+    /**
+     * 给修改json对象赋值ID
+     */
     private void setQueryJSONObject (Integer id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FId = '%s'", id));

@@ -1954,11 +1954,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
-                .set(ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),ProductDetailEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
     }
 

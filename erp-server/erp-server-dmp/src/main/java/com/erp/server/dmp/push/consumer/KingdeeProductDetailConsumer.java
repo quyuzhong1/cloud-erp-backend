@@ -1,16 +1,16 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.ApiSendStatusEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
@@ -70,44 +70,29 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
     public void onMessage(Map<String, Object> map) {
         //同步模块类型
         Integer type = ApiModuleTypeEnum.PRODUCT_DETAIL.getCode();
+        //业务id
+        String  businessId = String.valueOf(map.get("id"));
 
-        //传入map数据不能为空
-        if (ObjectUtils.isEmpty(map) || map.size() == 0) {
-            log.error("同步数据不存在！");
-            return;
-        }
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
-            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
-            kingdeeCommonService.insertFailureLog(platformEntity, map,"",String.format("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc()),type);
-            return;
-        }
-        CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
-        dto.setApiPlatformId(platformEntity.getId());
-        dto.setModuleType(type);
-        List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
-        //未配置发送字段
-        if (CollectionUtils.isEmpty(mapList)) {
-            log.error(ApiError.ERROR_97025.msg);
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_MATERIAL.getCode());
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
+        //根据录入值和字段配置生成JSONObject
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map,platformEntity.getId(),type);
+        //未配置发送字段
+        if (CollectionUtils.isEmpty(json)) {
+            //错误日志
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
         //判断金蝶系统是否已存在该数据
-        String skuNo = (String)map.get("skuNo");
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("number",skuNo);
-        //默认唯迹科技
-        viewMap.put("CreateOrgId",1);
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
-            model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("skuNo"));
         } catch (Exception e) {
             //未查找到数据，新增数据
             SaveResult save;
@@ -115,26 +100,16 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 save = apiUtils.save(param);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type, ApiSendStatusEnum.FAILURE.getCode());
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //新增成功后编辑二级类目
             String id = save.getResult().getId();
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",id);
-            //需要修改字段添加二级类目
-            ArrayList<String> needUpDateFields = new ArrayList<>();
-            String secondLevelCategory = mapList.stream().filter(obj -> "secondLevelCategory".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
-            String secondLevelCategoryCode = mapList.stream().filter(obj -> "secondLevelCategoryCode".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
-            String grossWeight = mapList.stream().filter(obj -> "grossWeight".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
-            String mainSupplier = mapList.stream().filter(obj -> "mainSupplier".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
-            needUpDateFields.addAll(Arrays.stream(grossWeight.split("\\.")).collect(Collectors.toList()));
-            needUpDateFields.addAll(Arrays.stream(mainSupplier.split("\\.")).collect(Collectors.toList()));
-            ArrayList<String> fields =(ArrayList<String>) Arrays.stream(secondLevelCategory.split("\\.")).collect(Collectors.toList());
-            needUpDateFields.addAll(fields);
-            ArrayList<String> codeFields =(ArrayList<String>) Arrays.stream(secondLevelCategoryCode.split("\\.")).collect(Collectors.toList());
-            needUpDateFields.addAll(codeFields);
-            param.setNeedUpDateFields(needUpDateFields);
+            //需要修改字段
+            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
@@ -142,12 +117,13 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         Integer id = (Integer) model.get("Id");
+        Boolean flag = Boolean.FALSE;
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-            documentStatus = kingdeeCommonService.unAudit(platformEntity, map,apiUtils,String.valueOf(id),type);
+            flag = kingdeeCommonService.unAudit(platformEntity, map,apiUtils,String.valueOf(id),type);
         }
         //创建状态则直接修改
-        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
+        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
 
             LinkedList<String> queryFilters = new LinkedList<>();
             queryFilters.add(String.format("FMATERIALID = '%s'", id));
@@ -167,14 +143,9 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 Map.Entry entry = (Map.Entry) iter.next();
                 KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),".",entry.getValue());
             }
-            //需要更新的字段
-            List<String> apiFieldList = mapList.stream().map(obj -> obj.getApiField()).sorted().distinct().collect(Collectors.toList());
-            ArrayList<String> needUpDateFields = new ArrayList<>();
-            for (String field:apiFieldList) {
-                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("\\.")).collect(Collectors.toList());
-                needUpDateFields.addAll(splitFields);
-            }
-            param.setNeedUpDateFields(needUpDateFields);
+            //需要修改字段
+            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
