@@ -84,26 +84,27 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         }
         String name = warehouseExcelDTO.getName();
         long nameCount = existList.stream().filter(w -> name.equals(w.getName())).count();
-        if(nameCount>0){
+        if (nameCount > 0) {
             errorMsgList.add("仓库名称已存在");
         }
 
 
         long addNameCount = addWarehouseList.stream().filter(w -> name.equals(w.getName())).count();
-        if(addNameCount>0){
+        if (addNameCount > 0) {
             errorMsgList.add("仓库名称已存在");
         }
 
         String kingdeeWarehouseCode = warehouseExcelDTO.getKingdeeWarehouseCode();
         long codeCount = existList.stream().filter(w -> kingdeeWarehouseCode.equals(w.getKingdeeWarehouseCode())).count();
-        if(codeCount>0){
+        if (codeCount > 0) {
             errorMsgList.add("金蝶仓库编号已存在");
         }
 
         long addCodeCount = addWarehouseList.stream().filter(w -> kingdeeWarehouseCode.equals(w.getKingdeeWarehouseCode())).count();
-        if(addCodeCount>0){
+        if (addCodeCount > 0) {
             errorMsgList.add("金蝶仓库编号已存在");
         }
+        addEntity.setKingdeeWarehouseCode(kingdeeWarehouseCode);
         addEntity.setName(warehouseExcelDTO.getName());
         addEntity.setTypeId(typeId);
         //组织
