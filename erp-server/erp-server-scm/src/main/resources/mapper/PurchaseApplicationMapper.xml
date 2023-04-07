@@ -122,7 +122,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pa.create_time desc
+        pa.create_time desc , pad.create_po_type asc
     </select>
 
     <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO">
