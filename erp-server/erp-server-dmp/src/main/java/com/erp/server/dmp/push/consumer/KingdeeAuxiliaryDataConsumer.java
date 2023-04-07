@@ -114,7 +114,7 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
                 model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
             } catch (Exception e) {
                 //更新数据
-                kingdeeCommonService.insertFailureLog(platformEntity, map,"","未找到上级辅助资料",type);
+                kingdeeCommonService.insertFailureLog(platformEntity, map,JSONArray.toJSONString(viewMap),"未找到上级辅助资料",type);
                 return;
             }
             String id = (String) model.get("Id");
