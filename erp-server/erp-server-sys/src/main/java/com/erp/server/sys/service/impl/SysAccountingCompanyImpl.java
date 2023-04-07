@@ -60,8 +60,16 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
 
     @Override
     public boolean updateCompany(SysAccountingCompanyDTO dto) {
-        SysAccountingCompanyEntity entity = new SysAccountingCompanyEntity();
-        BeanMapperUtils.copy(dto, entity);
+        SysAccountingCompanyEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+        entity.setCompanyAddress(dto.getCompanyAddress());
+        entity.setCompanyName(dto.getCompanyName());
+        entity.setContactAddress(dto.getContactAddress());
+        entity.setContactMobile(dto.getContactMobile());
+        entity.setCurrency(dto.getCurrency());
+        entity.setContactName(dto.getContactName());
         return this.updateById(entity);
     }
 
