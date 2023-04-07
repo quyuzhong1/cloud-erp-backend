@@ -41,7 +41,7 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     private String contactAddress;
 
-    private String currencyId;
+    private String currency;
 
     /**
      * 是否禁用
