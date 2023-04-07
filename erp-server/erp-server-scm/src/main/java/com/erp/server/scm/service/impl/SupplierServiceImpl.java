@@ -187,13 +187,15 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-20 10:00
      */
     @Override
-    public SupplierDTO.UpdateDTO view(String supplierId) {
-        SupplierDTO.UpdateDTO result = new SupplierDTO.UpdateDTO();
+    public SupplierDTO.SupplierViewDTO view(String supplierId) {
+        SupplierDTO.SupplierViewDTO result = new SupplierDTO.SupplierViewDTO();
         SupplierEntity supplier = this.getById(supplierId);
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         BeanMapper.copy(supplier, result);
+        result.setApproveStatus(supplier.getApproveStatus().getStatus());
+        result.setPhase(supplier.getPhase().getPhase());
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.getBySupplierId(supplierId);
         result.setContactList(contactList);

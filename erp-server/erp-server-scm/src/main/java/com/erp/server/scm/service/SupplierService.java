@@ -51,7 +51,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param supplierId
      * @return com.erp.model.scm.dto.SupplierDTO.updateDTO
      */
-    SupplierDTO.UpdateDTO view(String supplierId);
+    SupplierDTO.SupplierViewDTO view(String supplierId);
 
     
     /**

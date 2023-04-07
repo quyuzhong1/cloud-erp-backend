@@ -142,8 +142,8 @@ public class SupplierController extends BaseController {
 //            serviceClass = SupplierService.class,
 //            keyIdName = "id"
 //    )
-    public ApiResult<SupplierDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        SupplierDTO.UpdateDTO view = supplierService.view(dto.getId());
+    public ApiResult<SupplierDTO.SupplierViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        SupplierDTO.SupplierViewDTO view = supplierService.view(dto.getId());
         return success(view);
     }
 

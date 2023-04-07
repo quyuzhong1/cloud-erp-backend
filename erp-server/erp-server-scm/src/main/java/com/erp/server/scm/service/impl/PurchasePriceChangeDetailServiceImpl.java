@@ -320,7 +320,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      */
     @Override
     public void updatePriceChangeDetail(String purchasePriceChangeId, List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList) {
-        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
+        if (CollectionUtils.isEmpty(purchasePriceChangeDetailList)) {
             return;
         }
         List<PurchasePriceChangeDetailEntity> dbList = this.getEntityByPriceChangeId(purchasePriceChangeId);

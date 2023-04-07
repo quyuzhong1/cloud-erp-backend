@@ -65,8 +65,7 @@ public class SupplierDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @Valid
-    public static class ImportAddDTO  {
-
+    public static class ImportAddDTO {
 
 
         /**
@@ -81,6 +80,12 @@ public class SupplierDTO implements Serializable {
          * 分类id
          */
         private String categoryId;
+
+
+        /**
+         * 分类名
+         */
+        private String categoryName;
 
         /**
          * 等级id
@@ -163,7 +168,6 @@ public class SupplierDTO implements Serializable {
     }
 
 
-
     /**
      * 供应商修改信息
      */
@@ -171,6 +175,120 @@ public class SupplierDTO implements Serializable {
     @NoArgsConstructor
     @Valid
     public static class UpdateDTO extends SupplierBaseDTO {
+
+        /**
+         * 供应商联系信息
+         */
+        @Valid
+        private List<SupplierContactDTO.UpdateDTO> contactList;
+
+        /**
+         * 供应商银行账户信息
+         */
+        @Valid
+        private List<SupplierAccountDTO.UpdateDTO> bankAccountList;
+
+        /**
+         * 供应商资质信息
+         */
+        @Valid
+        private List<SupplierCredentialDTO.UpdateDTO> credentialList;
+
+    }
+
+
+    /**
+     * 供应商详情
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class SupplierViewDTO {
+
+
+        /**
+         * 表id
+         */
+        private String id;
+
+
+        /**
+         * 名称
+         */
+
+        private String name;
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+        /**
+         * 等级id
+         */
+
+        private String gradeId;
+
+        /**
+         * 等级名称
+         * 日志会用到
+         */
+        private String gradeName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 阶段
+         */
+        private String phase;
+
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+
+        /**
+         * 公司地址
+         */
+        private String companyAddress;
+
+
+        /**
+         * 公司网址
+         */
+
+        private String companyWebsite;
+
+
+        /**
+         * 结算付款方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算付款币种
+         */
+        private String payCurrency;
+
+        /**
+         * 结算付款币种名称
+         * 日志会到
+         */
+        private String payCurrencyName;
+
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
 
         /**
          * 供应商联系信息
@@ -229,10 +347,8 @@ public class SupplierDTO implements Serializable {
         /**
          * 等级名称
          * 日志会用到
-         *
          */
         private String gradeName;
-
 
 
         /**
@@ -541,7 +657,7 @@ public class SupplierDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportDTO  extends PagingParamDTO{
+    public static class ExportDTO extends PagingParamDTO {
         private List<String> ids;
 
     }
@@ -550,7 +666,6 @@ public class SupplierDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
 
 
         /**

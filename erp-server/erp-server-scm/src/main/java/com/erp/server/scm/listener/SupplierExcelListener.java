@@ -160,7 +160,18 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         }
         addDTO.setPayCurrency(payCurrency);
 
+        //分类名
+        String categoryName = excelDTO.getCategoryName();
+        if (StringUtils.isNotBlank(categoryName)) {
+            String categoryId= dictBasicList.stream().filter(d -> d.getName().equals(categoryName)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StringUtils.isBlank(categoryId)) {
+                errorMsgList.add("供应商分类不存在");
+            }
+            addDTO.setCategoryId(categoryId);
+        }
 
+        addDTO.setCategoryName(categoryName);
         //联系人信息
         SupplierContactDTO.ImportAddDTO contact = new SupplierContactDTO.ImportAddDTO();
         String person = excelDTO.getPerson();
@@ -234,10 +245,10 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         String effectiveDate = excelDTO.getEffectiveDate();
         //有效日期 止
         String expireDate = excelDTO.getExpireDate();
-        LocalDate effective= StringUtils.isBlank(effectiveDate) ? null : LocalDate.parse(effectiveDate, dateTimeFormatter);
-        LocalDate expire= StringUtils.isBlank(expireDate) ? null : LocalDate.parse(expireDate, dateTimeFormatter);
+        LocalDate effective = StringUtils.isBlank(effectiveDate) ? null : LocalDate.parse(effectiveDate, dateTimeFormatter);
+        LocalDate expire = StringUtils.isBlank(expireDate) ? null : LocalDate.parse(expireDate, dateTimeFormatter);
 
-        if (effective!=null && expire!=null) {
+        if (effective != null && expire != null) {
             if (effective.compareTo(expire) > 0) {
                 errorMsgList.add("资质有效起不能大于资质有效止");
             }
