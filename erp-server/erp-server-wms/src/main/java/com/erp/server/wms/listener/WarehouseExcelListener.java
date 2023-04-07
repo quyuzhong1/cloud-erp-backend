@@ -141,10 +141,6 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         addEntity.setAddress(address);
         //状态
         String enabled = warehouseExcelDTO.getEnabled();
-        List enabledList = Arrays.asList("启用", "未启用");
-        if (!enabledList.contains(enabled)) {
-            errorMsgList.add("仓库状态有误");
-        }
         addEntity.setDisabled(!"启用".equals(enabled));
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
