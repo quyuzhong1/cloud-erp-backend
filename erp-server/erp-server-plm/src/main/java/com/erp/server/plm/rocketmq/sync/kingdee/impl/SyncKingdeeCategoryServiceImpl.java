@@ -55,6 +55,9 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         resultMap.put("code",entity.getCode());
         //名称
         resultMap.put("name",entity.getName());
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+
         //模块类型
         Integer moduleType = ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode();
         //辅助资料类型编码

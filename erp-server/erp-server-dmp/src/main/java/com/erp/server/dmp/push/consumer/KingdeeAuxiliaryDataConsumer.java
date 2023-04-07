@@ -4,9 +4,11 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
@@ -56,13 +58,15 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FNumber = '%s'", "SouthChina"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FNumber,FDataValue,FId,FId.FNumber,FId.FName,FParentId";
+        String fieldKeys = "FEntryId,FNumber,FDataValue,FId,FId.FNumber,FId.FName,FParentId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("number","SouthChina");
         JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
         System.out.println(queryList);
+        System.out.println(viewJson);
+
     }
 
     @Override
@@ -85,7 +89,8 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(platformEntity.getId());
-        dto.setModuleType(type);
+        //模块默认辅助资料
+        dto.setModuleType(ApiModuleTypeEnum.ASSISTANT_DATA.getCode());
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         //未配置发送字段
         if (CollectionUtils.isEmpty(mapList)) {
@@ -120,9 +125,14 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
         //判断金蝶系统是否已存在该数据
+        String syncKingdeeId = (String)map.get("syncKingdeeId");
         String code = (String)map.get("code");
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("number",code);
+        if (StringUtils.isNotBlank(syncKingdeeId)) {
+            viewMap.put("id",syncKingdeeId);
+        } else {
+            viewMap.put("number",code);
+        }
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
@@ -142,7 +152,7 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
+            KingdeeUtils.makeFieldJson(json,"FEntryId",".", id);
             //需要更新的字段
             List<String> apiFieldList = mapList.stream().map(CfgApiFieldMapDTO::getApiField).sorted().distinct().collect(Collectors.toList());
             ArrayList<String> needUpDateFields = new ArrayList<>();
