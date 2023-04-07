@@ -1175,7 +1175,7 @@
     </update>
 
     <update id="removeBatch">
-        DELETE FROM project_task
+        UPDATE project_task SET is_deleted = TRUE
         WHERE id IN
         <foreach item="id" collection="ids" separator="," open="(" close=")" index="">
             #{id}
