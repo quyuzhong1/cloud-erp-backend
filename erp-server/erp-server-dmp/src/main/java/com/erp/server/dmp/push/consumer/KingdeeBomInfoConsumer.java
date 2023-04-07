@@ -11,10 +11,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.CfgApiFieldMapService;
-import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -41,16 +38,7 @@ import java.util.stream.Collectors;
 public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
-    private PlatformService platformService;
-
-    @Resource
-    private CfgApiFieldMapService cfgApiFieldMapService;
-
-    @Resource
     private KingdeeCommonService kingdeeCommonService;
-
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
 
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();

@@ -12,8 +12,6 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.CfgApiFieldMapService;
-import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -38,12 +36,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_product_detail_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PRODUCT_DETAIL)
 public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String, Object>> {
-
-    @Resource
-    private PlatformService platformService;
-
-    @Resource
-    private CfgApiFieldMapService cfgApiFieldMapService;
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
