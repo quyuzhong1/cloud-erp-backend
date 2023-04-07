@@ -128,7 +128,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param supplierId
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
-    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
+    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,String purchasePriceId);
 
     
     /**

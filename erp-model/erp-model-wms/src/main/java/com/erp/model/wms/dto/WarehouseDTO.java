@@ -39,6 +39,7 @@ public class WarehouseDTO implements Serializable {
          * 名称
          */
         @Size(max = 200, message = "仓库名称最大200字符")
+        @NotBlank(message = "仓库名称不能为空")
         private String name;
 
         /**

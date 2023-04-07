@@ -5,6 +5,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.server.scm.service.AttachmentService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +33,7 @@ public class AttachmentController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult removeAttachment(AttachmentDTO.DeleteDTO dto) {
+    public ApiResult removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
         attachmentService.removeAttachment(dto);
         return success();
     }

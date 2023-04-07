@@ -3,11 +3,11 @@ package com.erp.model.scm.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 
 /**
  * @author Lambda
@@ -219,12 +219,14 @@ public class SupplierImportExcelDTO implements Serializable {
 
     @ColumnWidth(20)
     @ExcelProperty(value = "资质有效期起", index = 23)
-    private LocalDate effectiveDate;
+    @FieldValid(fieldName = "资质有效期起",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    private String effectiveDate;
 
 
     @ColumnWidth(20)
     @ExcelProperty(value = "资质有效期止", index = 24)
-    private LocalDate expireDate;
+    @FieldValid(fieldName = "资质有效期止",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    private String expireDate;
 
     @ColumnWidth(30)
     @ExcelProperty(value = "资质备注", index = 25)

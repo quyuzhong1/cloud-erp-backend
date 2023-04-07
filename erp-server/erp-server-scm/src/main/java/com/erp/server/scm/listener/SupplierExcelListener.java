@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +85,7 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         this.bankList = bankList;
     }
 
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     /**
      * 每解析一行数据回调一遍
@@ -229,16 +231,19 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         credential.setName(credentialName);
         credential.setRemark(excelDTO.getCredentialRemark());
         //有效日期 起
-        LocalDate effectiveDate = excelDTO.getEffectiveDate();
+        String effectiveDate = excelDTO.getEffectiveDate();
         //有效日期 止
-        LocalDate expireDate = excelDTO.getExpireDate();
-        if (effectiveDate != null && expireDate != null) {
-            if (effectiveDate.compareTo(expireDate) > 0) {
+        String expireDate = excelDTO.getExpireDate();
+        LocalDate effective= StringUtils.isBlank(effectiveDate) ? null : LocalDate.parse(effectiveDate, dateTimeFormatter);
+        LocalDate expire= StringUtils.isBlank(expireDate) ? null : LocalDate.parse(expireDate, dateTimeFormatter);
+
+        if (effective!=null && expire!=null) {
+            if (effective.compareTo(expire) > 0) {
                 errorMsgList.add("资质有效起不能大于资质有效止");
             }
         }
-        credential.setExpireDate(expireDate);
-        credential.setEffectiveDate(effectiveDate);
+        credential.setExpireDate(expire);
+        credential.setEffectiveDate(effective);
 
         //当不为空的时候就要检查 资质名称是否为空
         if (!checkObjAllFieldsIsNull(credential)) {

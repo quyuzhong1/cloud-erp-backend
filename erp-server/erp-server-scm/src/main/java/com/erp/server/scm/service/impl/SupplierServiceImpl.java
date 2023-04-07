@@ -745,6 +745,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
             log.error("供应商导入错误！", e);
+            return Boolean.FALSE;
         }
         List<SupplierImportExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {

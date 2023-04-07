@@ -54,5 +54,8 @@
             </foreach>
         </if>
         )
+       <if test="purchasePriceId!=null and purchasePriceId !=''">
+           AND purchase_price_id !=#{purchasePriceId}
+       </if>
     </select>
 </mapper>

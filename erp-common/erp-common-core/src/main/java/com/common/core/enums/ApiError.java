@@ -351,6 +351,7 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_SUPPLIER_CHANGE_OVERLAP(98048,"与该供应商SKU变更区间存在重叠，不可提交"),
     ERROR_INTERVAL_EXIST(98047,"区间有误，不可提交"),
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
+    ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
 
     ERROR_98024(98024,"采购价目表不存在"),
     ERROR_98025(98025,"未找到采购订单"),

@@ -92,7 +92,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId,"");
 
         //根据供应商 获取到 对应 变更的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(supplierId);
@@ -220,7 +220,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
 
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId());
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(),id);
 
         //根据供应商 获取到 对应 变更的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(purchasePrice.getSupplierId());

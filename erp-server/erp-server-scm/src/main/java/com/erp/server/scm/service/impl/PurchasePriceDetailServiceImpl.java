@@ -112,6 +112,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     if (min.equals(max)) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_DIFFERENT);
                     }
+                    if (min>max) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_SIZE);
+                    }
                 }
 
             }
@@ -491,12 +494,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,String purchasePriceId) {
         List<String> statusList = new ArrayList<>(3);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList,purchasePriceId);
         return list;
     }
 

@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -96,6 +97,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 if (min != null && max != null) {
                     if (min.equals(max)) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_DIFFERENT);
+                    }
+                    if (min>max) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_SIZE);
                     }
                 }
 
@@ -277,8 +281,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
                 BeanMapper.copy(item, history);
                 history.setPriceDetailId(priceDetailId);
+                history.setId(IdWorker.getIdStr());
                 //失效时间
-                history.setExpireDate( changeDetail.getEffectiveDate().minusDays(1));
+                history.setExpireDate(changeDetail.getEffectiveDate().minusDays(1));
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
                 item.setExpireDate(changeDetail.getExpireDate());
