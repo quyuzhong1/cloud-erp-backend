@@ -165,6 +165,8 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String id;
 
 
+        private String code;
+
         /**
          * 供应商表id
          */
