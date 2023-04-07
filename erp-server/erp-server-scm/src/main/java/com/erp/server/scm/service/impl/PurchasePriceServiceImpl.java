@@ -218,7 +218,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
-
+        BeanMapper.copy(dto, purchasePrice);
         //根据供应商 获取到 对应 已有的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(),id);
 
@@ -231,7 +231,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         //编号
         String code = purchasePrice.getCode();
-        BeanMapper.copy(dto, purchasePrice);
         purchasePrice.setCode(code);
         purchasePrice.setApproveStatus(status);
 
