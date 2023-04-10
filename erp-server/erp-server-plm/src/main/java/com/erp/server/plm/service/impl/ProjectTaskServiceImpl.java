@@ -3990,7 +3990,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-21 10:01
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void approvalTaskPass(String processId) {
         LoginUser loginUser = commonService.getUserInfo();
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
