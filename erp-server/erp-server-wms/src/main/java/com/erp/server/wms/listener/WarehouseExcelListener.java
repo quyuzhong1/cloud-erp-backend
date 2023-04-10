@@ -125,12 +125,14 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         addEntity.setIsVirtual(isVirtual.equals("是"));
         //仓库负责人
         String chargeName = warehouseExcelDTO.getChargeName();
-        String chargeId = userList.stream().filter(d -> d.getUserName().equals(chargeName)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
-        if (StringUtils.isBlank(chargeId)) {
-            errorMsgList.add("仓库负责人有误");
+        if(StringUtils.isNotBlank(chargeName)){
+            String chargeId = userList.stream().filter(d -> d.getUserName().equals(chargeName)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
+            if (StringUtils.isBlank(chargeId)) {
+                errorMsgList.add("仓库负责人有误");
+            }
+            addEntity.setChargeId(chargeId);
         }
-        addEntity.setChargeId(chargeId);
         //联系人
         String contacts = warehouseExcelDTO.getContacts();
         addEntity.setContacts(contacts);
