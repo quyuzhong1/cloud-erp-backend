@@ -105,14 +105,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         CompanyPagingSearchDTO params = dto.getParams();
-        String searchType = params.getSearchType();
-        String searchTypeStr = "company_name,contact_name,contact_address,currency_id";
-        List<String> searchTypeList = Arrays.asList(searchTypeStr.split(","));
-//        if (!searchTypeList.contains(searchType)) {
-//            throw new ServiceException(ApiError.ERROR_9022);
-//        }
         IPage pageData = baseMapper.paging(query, params);
-
         return new PagingVO(pageData);
     }
 

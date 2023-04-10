@@ -8,13 +8,15 @@
         contact_address,currency,disabled,
         create_time,is_deleted
         FROM sys_accounting_company  sac WHERE is_deleted=false
-        <if test="params.state!=null">
-            AND sac.company_state =#{params.state}
+        <if test="params.state!=null and params.state==1 ">
+            AND sac.disabled =false
         </if>
-<!--        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
+        <if test="params.state!=null and params.state==0 ">
+            AND sac.disabled =true
+        </if>
+       <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
             AND sac.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
-        </if>-->
-
+        </if>
         ORDER BY update_time DESC
 
     </select>
