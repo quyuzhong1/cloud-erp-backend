@@ -82,8 +82,8 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         }
 
         if (StringUtils.isNotBlank(projectTaskExcelDTO.getType())) {
-            if (!projectTaskExcelDTO.getType().equals("一般任务") && !projectTaskExcelDTO.getType().equals("审核任务")) {
-                errorMsgList.add("[任务类型]请输入'一般任务'或'审核任务'");
+            if (!projectTaskExcelDTO.getType().equals("一般任务") && !projectTaskExcelDTO.getType().equals("评审任务")) {
+                errorMsgList.add("[任务类型]请输入'一般任务'或'评审任务'");
             }
 
             if (projectTaskExcelDTO.getType().equals("一般任务")){
