@@ -57,6 +57,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
     @Override
     public void invoke(ProjectTaskExcelDTO projectTaskExcelDTO, AnalysisContext analysisContext) {
+
         List<String> errorMsgList = new ArrayList<>();
         ProjectTaskDTO projectTaskDTO = new ProjectTaskDTO();
 
@@ -67,43 +68,54 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         List<String> msgList = FieldValidUtil.fieldValid(projectTaskExcelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+            projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            list.add(projectTaskExcelDTO);
+            return;
         }
 
         ProductInfoEntity productInfoEntity = productInfoService.getProductByName(projectTaskExcelDTO.getProductName());
         if (ObjectUtil.isEmpty(productInfoEntity)) {
             errorMsgList.add("[所属产品]在系统中未找到，请输入已有的产品名称");
+            projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            list.add(projectTaskExcelDTO);
+            return;
         }
 
-        if (!projectTaskExcelDTO.getType().equals("一般任务") && !projectTaskExcelDTO.getType().equals("审核任务")) {
-            errorMsgList.add("[任务类型]请输入'一般任务'或'审核任务'");
+        if (StringUtils.isNotBlank(projectTaskExcelDTO.getType())) {
+            if (!projectTaskExcelDTO.getType().equals("一般任务") && !projectTaskExcelDTO.getType().equals("审核任务")) {
+                errorMsgList.add("[任务类型]请输入'一般任务'或'审核任务'");
+            }
+
+            if (projectTaskExcelDTO.getType().equals("一般任务")){
+                projectTaskDTO.setType(0);
+            } else {
+                projectTaskDTO.setType(1);
+            }
         }
 
-        if (projectTaskExcelDTO.getType().equals("一般任务")){
-            projectTaskDTO.setType(0);
-        } else {
-            projectTaskDTO.setType(1);
-        }
+        if (ObjectUtil.isNotEmpty(productInfoEntity)) {
+
 
         ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
-        // 判断是修改还是新增 1：新增 2：修改
-        /**
-         * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
-         */
-        if (importType == 2) {
-            //不可编辑：待审核  审核通过  已完成
-            if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
-                errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
-            } else {
-                projectTaskDTO.setId(projectTaskEntity.getId());
-                projectTaskDTO.setType(projectTaskEntity.getType());
-            }
+            // 判断是修改还是新增 1：新增 2：修改
+            /**
+             * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
+             */
+            if (importType == 2) {
+                //不可编辑：待审核  审核通过  已完成
+                if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
+                    errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
+                } else {
+                    projectTaskDTO.setId(projectTaskEntity.getId());
+                    projectTaskDTO.setType(projectTaskEntity.getType());
+                }
 
-        } else {
-            if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
-                errorMsgList.add("[任务名称]在系统中已存在，不可重复");
+            } else {
+                if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
+                    errorMsgList.add("[任务名称]在系统中已存在，不可重复");
+                }
             }
         }
-
         List<String> chargeNameList = new ArrayList<>();
         String chargeName = projectTaskExcelDTO.getChargeName();
         String[] chargeNames = chargeName.split(",");
@@ -237,7 +249,6 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         } else {
             projectTaskService.save(projectTaskDTO);
         }
-
     }
 
     @Override
