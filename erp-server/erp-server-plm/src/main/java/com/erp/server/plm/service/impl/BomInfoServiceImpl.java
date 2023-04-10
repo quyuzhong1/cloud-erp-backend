@@ -352,7 +352,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
-
         SearchPagingDTO params = dto.getParams();
         params.setParam(dto.getParam());
         String searchKeyword = params.getSearchKeyword();
@@ -372,15 +371,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<Integer> stateList = new ArrayList<>();
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = commonService.getUserInfo().getUid();
+          /*  String userId = commonService.getUserInfo().getUid();
             //获取我的待办信息
             //TODO 2020330暂时取消审核流程，只修改状态
-            /*List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(bomIdList)) {
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }*/
+            stateList.add(1);
         }
 
         IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);

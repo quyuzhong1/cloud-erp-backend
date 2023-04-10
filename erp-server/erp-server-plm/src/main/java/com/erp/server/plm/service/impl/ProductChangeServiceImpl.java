@@ -668,7 +668,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         approveProcess.setParameterMap(parameterMap);
         this.updateById(changeEntity);
 
-        String operateContent = String.format("[变更审核通过]" + BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName() + "  审核意见：" + dto.getComment());
+        String operateContent = String.format("[变更审核]" + BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName() + "  审核意见：" + dto.getComment());
         //操作记录
         bomOperateLogService.saveOperate(changeEntity.getSourceId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
@@ -724,6 +724,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             //终止流程
             workflowFeign.taskNoPass(process);
         }
+
+        String operateContent = String.format("[变更审核]" + BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_NO_PASS.getName() + "  审核意见：" + dto.getComment());
+        //操作记录
+        bomOperateLogService.saveOperate(changeEntity.getSourceId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
     }
 
 
