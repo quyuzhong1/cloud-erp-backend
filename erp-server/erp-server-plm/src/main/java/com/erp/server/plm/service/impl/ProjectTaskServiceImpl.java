@@ -4679,9 +4679,46 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      **/
     @Transactional
     public Boolean removeBatch(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
+        List<ProjectTaskEntity> entity = this.getByTaskIds(ids);
+        if (CollectionUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
         }
-        return baseMapper.removeBatch(ids);
+        LoginUser loginUser = commonService.getUserInfo();
+
+        for (ProjectTaskEntity req : entity) {
+
+            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
+                if (!"admin".equals(loginUser.getUserAccount())) {
+                    throw new ServiceException(ApiError.ERROR_95137);
+                }
+            }
+            //如果是固定任务
+            if (IsConstant.YES.equals(req.getIsFixed())) {
+                throw new ServiceException(ApiError.ERROR_95014);
+            }
+
+            //检查是否是子任务
+            checkTaskIfExistPid(req.getId());
+
+            Boolean flag = this.removeById(req);
+            if (flag) {
+                taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.THREE, req.getId());
+                taskDeliveryService.removeByTaskId(req.getId());
+                taskDocsFinishService.removeByTaskId(req.getId());
+                taskRefSkuConfigService.deleteByTaskId(req.getId());
+                preTaskService.deleteByTaskId(req.getId());
+                //发送删除任务通知
+                noticeMessageService.deleteTaskNotice(loginUser.getUserName(), req, req.getProductId());
+                //新增操作日志
+                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("删除任务[%s]", req.getName()))
+                        .setBusinessId(req.getProductId())
+                        .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+                //添加日志
+                sysLogService.addSysLogByOther(sysLogEntity);
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

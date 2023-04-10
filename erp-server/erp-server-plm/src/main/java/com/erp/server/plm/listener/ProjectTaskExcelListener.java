@@ -201,18 +201,19 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         projectTaskDTO.setChargeIds(chargeNameList);
         projectTaskDTO.setPreTaskIdList(preTaskList);
         if (projectTaskExcelDTO.getPlanStartTime() != null) {
-
             projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanStartTime(), dateTimeFormatter));
         }
         if (projectTaskExcelDTO.getPlanEndTime() != null) {
             projectTaskDTO.setPlanEndTime(LocalDate.parse(projectTaskExcelDTO.getPlanEndTime(), dateTimeFormatter));
         }
-        if (projectTaskExcelDTO.getPriority().equals("高")) {
-            projectTaskDTO.setPriority(3);
-        } else if (projectTaskExcelDTO.getPriority().equals("中")) {
-            projectTaskDTO.setPriority(2);
-        } else {
-            projectTaskDTO.setPriority(1);
+        if (StringUtils.isNotBlank(projectTaskExcelDTO.getPriority())) {
+            if (projectTaskExcelDTO.getPriority().equals("高")) {
+                projectTaskDTO.setPriority(3);
+            } else if (projectTaskExcelDTO.getPriority().equals("中")) {
+                projectTaskDTO.setPriority(2);
+            } else {
+                projectTaskDTO.setPriority(1);
+            }
         }
         projectTaskDTO.setPhaseId(projectPhaseEntity.getId());
         projectTaskDTO.setPhaseName(projectPhaseEntity.getName());
@@ -220,11 +221,14 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         projectTaskDTO.setProcessId("");
         projectTaskDTO.setApprovalList(new ArrayList<>());
         projectTaskDTO.setDeliveryDocsList(docsNameList);
-        if (isMilepost.equals("是")) {
-            projectTaskDTO.setIsMilepost(1);
-        } else {
-            projectTaskDTO.setIsMilepost(0);
+        if (StringUtils.isNotBlank(isMilepost)) {
+            if (isMilepost.equals("是")) {
+                projectTaskDTO.setIsMilepost(1);
+            } else {
+                projectTaskDTO.setIsMilepost(0);
+            }
         }
+
         projectTaskDTO.setRefSkuIdList(new ArrayList<>());
         projectTaskDTO.setRelatedSkuType("3");
         projectTaskDTO.setWorkPeriod(projectTaskExcelDTO.getWorkPeriod());
