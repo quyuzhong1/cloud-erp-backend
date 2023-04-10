@@ -81,7 +81,7 @@
 
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
 
         ORDER BY
@@ -179,7 +179,7 @@
 
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
     </select>
 </mapper>
