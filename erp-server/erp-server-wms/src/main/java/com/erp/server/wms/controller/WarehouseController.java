@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -38,6 +40,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:paging",
+            tableAlias = "warehouse"
+    )
     public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
@@ -178,6 +185,11 @@ public class WarehouseController extends BaseController {
      * 仓库数据
      */
     @PostMapping("/exportWarehouse")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:paging",
+            tableAlias = "warehouse"
+    )
     public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto, HttpServletResponse response) {
         warehouseService.exportWarehouse(dto, response);
         return success();
