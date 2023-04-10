@@ -17,8 +17,11 @@ import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
+import com.google.gson.Gson;
+import com.kingdee.bos.webapi.entity.RepoRet;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -28,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.erp.model.dmp.dto.GoodcangDTO.ResultDTO.fail;
 
 /**
  * @author Will
@@ -51,20 +56,20 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
 
 
 
-    public static void main(String[] args) {
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "testtes"));
-        String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
-                "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
-                "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH," +
-                "FWIDTH,F_ulz_Qty1,F_PRVD_Assistant1.FNumber,F_PRVD_Assistant1.FDataValue,F_PRVD_Assistant1.FId,F_PRVD_Assistant.FId,SubHeadEntity_FErpClsID_FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
-        System.out.println(queryList);
-    }
+//    public static void main(String[] args) {
+//        Map<String, Object> resultMap = new LinkedHashMap<>();
+//        //读取配置，初始化SDK
+//        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
+//        LinkedList<String> queryFilters = new LinkedList<>();
+//        queryFilters.add(String.format("FNumber = '%s'", "testtes"));
+//        String filterStr = String.join(" and ", queryFilters);
+//        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
+//                "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
+//                "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH," +
+//                "FWIDTH,F_ulz_Qty1,F_PRVD_Assistant1.FNumber,F_PRVD_Assistant1.FDataValue,F_PRVD_Assistant1.FId,F_PRVD_Assistant.FId,SubHeadEntity_FErpClsID_FNumber";
+//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+//        System.out.println(queryList);
+//    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -173,6 +178,34 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             param.setNeedUpDateFields(needUpDateFields);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        }
+    }
+
+
+    public static void main(String[] args) {
+        //注意 1：此处不再使用参数形式传入用户名及密码等敏感信息，改为在登录配置文件中设置。
+        //注意 2：必须先配置第三方系统登录授权信息后，再进行业务操作，详情参考各语言版本SDK介绍中的登录配置文件说明。
+        //读取配置，初始化SDK
+        K3CloudApi client = new K3CloudApi();
+        //请求参数，要求为json字符串
+        String jsonData = "{\"Number\":\"ZJDB021077\"}";
+        try{
+            //业务对象标识
+            String formId = "STK_TransferDirect";
+            //调用接口
+            String resultJson = client.view(formId,jsonData);
+
+            //用于记录结果
+            Gson gson = new Gson();
+            //对返回结果进行解析和校验
+            RepoRet repoRet = gson.fromJson(resultJson, RepoRet.class);
+            if (repoRet.getResult().getResponseStatus().isIsSuccess()) {
+                System.out.printf("接口返回结果: %s%n", gson.toJson(repoRet.getResult()));
+            } else {
+                fail("接口返回结果: " + gson.toJson(repoRet.getResult().getResponseStatus()));
+            }
+        } catch (Exception e) {
+            fail(e.getMessage());
         }
     }
 }

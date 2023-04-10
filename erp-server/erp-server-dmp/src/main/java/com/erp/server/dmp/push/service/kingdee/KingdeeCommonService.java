@@ -104,4 +104,15 @@ public interface KingdeeCommonService {
      * @return String
      */
     String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
+
+    /**
+     * 保存到金蝶数据
+     * @param orderNo
+     * @param apiUtils
+     * @param modelType
+     * @param platformCode
+     * @param dataMap
+     * @return
+     */
+    String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap);
 }

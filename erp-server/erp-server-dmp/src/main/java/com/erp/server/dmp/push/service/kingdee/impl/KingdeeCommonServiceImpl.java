@@ -1,8 +1,14 @@
 package com.erp.server.dmp.push.service.kingdee.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
@@ -15,7 +21,9 @@ import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
+import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.CfgApiFieldMapValueService;
+import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -23,6 +31,7 @@ import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +60,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private PlatformService platformService;
+
+    @Resource
+    private CfgApiFieldMapService cfgApiFieldMapService;
 
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map,List<CfgApiFieldMapDTO> mapList) {
@@ -76,7 +90,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //给集合父项填充数据
             if (ApiGroupTypeEnum.PARENT.getCode().equals(cfgApiFieldMapDTO.getGroupType())) {
                 //业务系统传参
-                List<Map<String,Object>> listMap = (List<Map<String,Object>>)map.get(cfgApiFieldMapDTO.getSelfField());
+                JSONArray JsonArray = JSONArray.parseArray(JSONObject.toJSONString(map.get(cfgApiFieldMapDTO.getSelfField())));
+                List<Map<String, Object>> listMap = JsonArray.stream().map(BeanUtil::beanToMap).collect(Collectors.toList());
                 //集合子项参数配置
                 List<CfgApiFieldMapDTO> childList = mapList.stream().filter(obj -> ApiGroupTypeEnum.CHILD.getCode().equals(obj.getGroupType()) && obj.getParentId().equals(cfgApiFieldMapDTO.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(childList)) {
@@ -307,5 +322,40 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                     .orElse(null);
             KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",apiValue);
         }
+    }
+
+    /**
+     *
+     * @param orderNo 业务唯一键
+     * @param apiUtils  kingdee client
+     * @param modelType 业务类型
+     * @param platformCode 平台code
+     * @param dataMap 业务数据
+     * @return
+     */
+    @Override
+    public String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap) {
+        PlatformEntity platformEntity = platformService.getByName(platformCode);
+        if (ObjectUtils.isEmpty(platformEntity)) {
+            throw new ServiceException(ApiError.Default);
+        }
+        CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO(platformEntity.getId(), modelType);
+        List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
+        //未配置发送字段
+        if (CollectionUtil.isEmpty(mapList)) {
+            log.error(ApiError.ERROR_97025.msg);
+            //错误日志
+            kingdeeCommonService.insertSyncLog(platformEntity, orderNo, JSONUtil.toJsonStr(dataMap),"未配置同步字段", modelType, ApiSendStatusEnum.FAILURE.getCode());
+            throw new ServiceException(ApiError.ERROR_97025);
+        }
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, mapList);
+        SaveResult saveResult = apiUtils.save(new SaveParam<>(json));
+        boolean save = saveResult.isSuccessfully();
+        kingdeeCommonService.insertSyncLog(platformEntity, orderNo, JSONUtil.toJsonStr(dataMap),"保存直接调拨单到金蝶", modelType, save ? ApiSendStatusEnum.SUCCESS.getCode() : ApiSendStatusEnum.FAILURE.getCode());
+        if (!save) {
+            log.error("KingdeeCommonServiceImpl>>>addKingdeeRecord>>>调用金蝶保存接口失败saveResult:{}", saveResult);
+            throw new ServiceException(ApiError.ERROR_KINGDEE_SAVE);
+        }
+        return saveResult.getResult().getId();
     }
 }

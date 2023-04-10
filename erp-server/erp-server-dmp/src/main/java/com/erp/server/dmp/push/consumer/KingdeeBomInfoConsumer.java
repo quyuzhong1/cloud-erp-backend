@@ -93,7 +93,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
-        //根据录入值和字段配置生成JSONObject
+        // 根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, mapList);
 
         //判断金蝶系统是否已存在该数据

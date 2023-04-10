@@ -1,13 +1,14 @@
 package com.erp.model.dmp.dto;
 
+import com.common.business.enums.OmsPlatformEnum;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -130,8 +131,8 @@ public class GoodcangDTO {
             this.addTime = dto.getAddTime();
             this.updateTime = dto.getUpdateTime();
             this.receivingType = 0;
-            this.receivingDetail = ReceivingDetailDTO.createReceivingDetail(dto.getItems());
-            this.platformSign = "艾姆勒";
+            this.receivingDetail = ReceivingDetailDTO.createReceivingDetail(dto.getItems(), dto.getWarehouseCode());
+            this.platformSign = OmsPlatformEnum.OMS_IML.getName();
         }
 
     }
@@ -185,19 +186,35 @@ public class GoodcangDTO {
          */
         private Integer sellableQty;
 
-        public static List<ReceivingDetailDTO> createReceivingDetail(List<OmsImlDTO.ReceivingDetailDTO> receivingDetail) {
-            return receivingDetail.stream().map(ReceivingDetailDTO::new).collect(Collectors.toList());
+        /**
+         * 仓库编码
+         */
+        private String warehouseCode;
+
+        public static List<ReceivingDetailDTO> createReceivingDetail(List<OmsImlDTO.ReceivingDetailDTO> receivingDetail, String warehouseCode) {
+            return new ArrayList<>(receivingDetail.stream()
+                    .collect(Collectors.toMap(OmsImlDTO.ReceivingDetailDTO::getProductSku,
+                            x -> new ReceivingDetailDTO(x, warehouseCode),
+                            (p1, p2) -> {
+                                p1.setDeliveryQty(p1.getDeliveryQty() + p2.getDeliveryQty());
+                                p1.setReceiptQty(p1.getReceiptQty() + p2.getReceiptQty());
+                                p1.setPutAwayQty(p1.getPutAwayQty() + p2.getPutAwayQty());
+                                p1.setUnsellableQty(p1.getUnsellableQty() + p2.getUnsellableQty());
+                                p1.setSellableQty(p1.getSellableQty() + p2.getSellableQty());
+                                return p1;
+                            })).values());
         }
-        public ReceivingDetailDTO(OmsImlDTO.ReceivingDetailDTO dto){
+        public ReceivingDetailDTO(OmsImlDTO.ReceivingDetailDTO dto, String warehouseCode){
             this.productBarcode = dto.getProductBarcode();
             this.productSku = dto.getProductSku();
             this.boxNo = dto.getBoxNo().toString();
             this.referenceBoxNo = dto.getReferenceBoxNo();
             this.deliveryQty = dto.getQuantity();
-            this.receiptQty = dto.getReceiptQty();
-            this.putAwayQty = dto.getPutAwayQty();
+            this.receiptQty = dto.getQuantity();
+            this.putAwayQty = dto.getQuantity();
             this.unsellableQty = null != dto.getLoCountType() ? (dto.getLoCountType().size() > 1 ? dto.getLoCountType().get(1) : 0) : 0;
             this.sellableQty = null != dto.getLoCountType() ? dto.getLoCountType().get(0) : 0;
+            this.warehouseCode = warehouseCode;
         }
     }
 

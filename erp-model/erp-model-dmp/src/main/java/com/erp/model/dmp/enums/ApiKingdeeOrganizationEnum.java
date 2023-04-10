@@ -8,16 +8,27 @@ package com.erp.model.dmp.enums;
  */
 public enum ApiKingdeeOrganizationEnum {
 
-    ORGANIZATION_WEIJI("1", "100","唯迹集团", "唯迹集团"),
+    ORGANIZATION_WEIJI("1", "100","深圳市唯迹科技有限公司", "深圳市唯迹科技有限公司"),
     ORGANIZATION_YZS("100504", "101","优至胜", "优至胜"),
     ORGANIZATION_XX("173616", "105","小隼科技", "小隼"),
+    ORGANIZATION_HK("236226", "107","唯跡科技有限公司VIJIM LIMITED", "唯跡科技有限公司VIJIM LIMITED"),
     ;
+    /**
+     * 金蝶id
+     */
     private String code;
-
+    /**
+     * 金蝶编码
+     */
     private String number;
-
+    /**
+     * 金蝶名称
+     */
     private String name;
 
+    /**
+     * 描述
+     */
     private String desc;
 
     public String getCode() {

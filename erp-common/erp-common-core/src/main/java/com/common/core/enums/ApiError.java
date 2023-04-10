@@ -316,6 +316,7 @@ public enum ApiError implements Serializable {
     ERROR_97025(97025,"未设置字段映射，不支持推送"),
     ERROR_97026(97026,"模块名称最大30字符"),
     ERROR_97027(97027,"模块说明最大200字符"),
+    ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
 
 
 

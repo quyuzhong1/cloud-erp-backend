@@ -85,4 +85,9 @@ public class CfgApiFieldMapDTO {
      */
     @Valid
     private List<CfgApiFieldMapValueDTO>  valueList;
+
+    public CfgApiFieldMapDTO(String platformId, Integer code) {
+        this.apiPlatformId = platformId;
+        this.moduleType = code;
+    }
 }
