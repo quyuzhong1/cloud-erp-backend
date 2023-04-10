@@ -102,14 +102,17 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
              * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
              */
             if (importType == 2) {
-                //不可编辑：待审核  审核通过  已完成
-                if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
-                    errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
+                if (ObjectUtil.isEmpty(projectTaskEntity)) {
+                    errorMsgList.add("[任务名称]在系统中不存在，请确认产品名称存在");
                 } else {
-                    projectTaskDTO.setId(projectTaskEntity.getId());
-                    projectTaskDTO.setType(projectTaskEntity.getType());
+                    //不可编辑：待审核  审核通过  已完成
+                    if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
+                        errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
+                    } else {
+                        projectTaskDTO.setId(projectTaskEntity.getId());
+                        projectTaskDTO.setType(projectTaskEntity.getType());
+                    }
                 }
-
             } else {
                 if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
                     errorMsgList.add("[任务名称]在系统中已存在，不可重复");
