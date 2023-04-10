@@ -208,7 +208,8 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         String type = dto.getOperateType();
         checkPhase(currentPhase, targetPhase, type);
 
-        BeanMapper.copy(phase, dto);
+        phase.setTargetPhase(targetPhase);
+        phase.setDescription(dto.getDescription());
         Boolean result = this.updateById(phase);
         if (result) {
             Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;
