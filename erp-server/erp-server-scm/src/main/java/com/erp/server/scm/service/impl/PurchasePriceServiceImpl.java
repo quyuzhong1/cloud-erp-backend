@@ -92,7 +92,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId,"");
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, "");
 
         //根据供应商 获取到 对应 变更的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(supplierId);
@@ -220,7 +220,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         BeanMapper.copy(dto, purchasePrice);
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(),id);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), id);
 
         //根据供应商 获取到 对应 变更的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList = priceChangeDetailService.getBySupplierId(purchasePrice.getSupplierId());
@@ -540,6 +540,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 excelDTO.setQtySection(minQty + "-" + maxQty);
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 excelDTO.setApproveStatusName(approveStatusEnum.getName());
+
+                boolean disabled = item.getDisabled();
+                excelDTO.setEnabled(disabled?"停用":"启用用");
                 //含税单价
                 BigDecimal taxPrice = item.getTaxPrice();
                 //币种
