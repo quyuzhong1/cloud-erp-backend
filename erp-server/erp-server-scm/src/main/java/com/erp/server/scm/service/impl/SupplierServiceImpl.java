@@ -842,7 +842,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
             List<Pair<String, String>> pairList = addSupplierList.stream().
                     map(obj -> new Pair<>(obj.getId(), obj.getName())).collect(Collectors.toList());
-            String content = String.format("新增了一个{%s}-供应商信息");
+            String content = "导入一个供应商信息[%s]";
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "新增操作");
 
         }
