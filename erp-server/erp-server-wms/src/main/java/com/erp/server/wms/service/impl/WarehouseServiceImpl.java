@@ -423,7 +423,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 excelDTO.setOrgName(orgName);
-                excelDTO.setEnabled(item.getDisabled() ? "启用" : "未启用");
+                excelDTO.setEnabled(item.getDisabled() ? "启用" : "停用");
                 excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
                 resultList.add(excelDTO);
 
