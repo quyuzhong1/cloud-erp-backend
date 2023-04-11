@@ -146,7 +146,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private TaskChargeDistributionService taskChargeDistributionService;
 
 
-    @Resource
+    @Autowired
     private ProjectTaskTimeRecordService projectTaskTimeRecordService;
 
     /**

@@ -110,62 +110,6 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
             ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
 
-            //查询模板任务下审核人
-            List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId());
-            if (taskChargeDistributionList != null && taskChargeDistributionList.size() > 0) {
-                TaskChargeDistributionlist = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
-                TaskChargeDistributionlist.forEach(obj -> {
-                    if (org.apache.commons.lang3.StringUtils.isBlank(obj.getCharges())) {
-                        return;
-                    }
-                    List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
-                    //回显名称
-                    if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(obj.getDistributionType())) {
-                        //用户分配查询名称
-                        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
-                        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
-                            List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                            obj.setChargeNames(String.join(",", usrNameList));
-                        }
-                        obj.setChargeList(collect);
-                    }
-                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
-                        if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
-                            //角色分配直接取名称
-                            obj.setChargeNames(obj.getCharges());
-                            obj.setChargeList(collect);
-                        } else {
-                            List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
-                            //用户分配查询名称
-                            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
-                            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
-                                List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                obj.setChargeNames(String.join(",", usrNameList));
-                            }
-                            obj.setChargeList(collect1);
-                        }
-                    }
-                    if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
-                        if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
-                            //上级分配取枚举
-                            List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
-                            obj.setChargeNames(String.join(",", superiors));
-                            obj.setChargeList(superiors);
-                        } else {
-                            List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
-                            //用户分配查询名称
-                            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
-                            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
-                                List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                obj.setChargeNames(String.join(",", usrNameList));
-                            }
-                            obj.setChargeList(collect1);
-                        }
-                    }
-                });
-            }
-
-
             // 判断是修改还是新增 1：新增 2：修改
             /**
              * 任务状态 0:待发布 1:待开始
@@ -181,6 +125,61 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
                     } else {
                         errorMsgList.add("只有[任务状态]为待发布或待开始，进行中的任务可修改");
                     }
+                    //查询模板任务下审核人
+                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId());
+                    if (taskChargeDistributionList != null && taskChargeDistributionList.size() > 0) {
+                        TaskChargeDistributionlist = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
+                        TaskChargeDistributionlist.forEach(obj -> {
+                            if (org.apache.commons.lang3.StringUtils.isBlank(obj.getCharges())) {
+                                return;
+                            }
+                            List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
+                            //回显名称
+                            if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(obj.getDistributionType())) {
+                                //用户分配查询名称
+                                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
+                                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
+                                    List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                    obj.setChargeNames(String.join(",", usrNameList));
+                                }
+                                obj.setChargeList(collect);
+                            }
+                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
+                                if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
+                                    //角色分配直接取名称
+                                    obj.setChargeNames(obj.getCharges());
+                                    obj.setChargeList(collect);
+                                } else {
+                                    List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
+                                    //用户分配查询名称
+                                    List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
+                                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
+                                        List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                        obj.setChargeNames(String.join(",", usrNameList));
+                                    }
+                                    obj.setChargeList(collect1);
+                                }
+                            }
+                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
+                                if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
+                                    //上级分配取枚举
+                                    List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
+                                    obj.setChargeNames(String.join(",", superiors));
+                                    obj.setChargeList(superiors);
+                                } else {
+                                    List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
+                                    //用户分配查询名称
+                                    List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
+                                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
+                                        List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                        obj.setChargeNames(String.join(",", usrNameList));
+                                    }
+                                    obj.setChargeList(collect1);
+                                }
+                            }
+                        });
+                    }
+
                 }
             } else {
                 if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
