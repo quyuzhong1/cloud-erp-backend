@@ -36,7 +36,7 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
      * @date 2022-08-12 11:46
      */
     @Override
-    //@Transactional
+    @Transactional
     public void saveActivity(ActivityDTO activityDTO) {
         //当前流程id
         String nowActivityId = activityDTO.getNowActivityId();
