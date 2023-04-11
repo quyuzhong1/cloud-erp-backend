@@ -11,7 +11,11 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 public interface SyncKingdeeSysUserInfoService {
 
     /**
-     * 发送金蝶
+     * @description:
+     * @author Will
+     * @date: 2023/4/11 18:06
+     * @param entity
+     * @param operate
      */
-    void syncDataToKingdee(SysUserInfoEntity entity);
+    void syncDataToKingdee(SysUserInfoEntity entity,String operate);
 }

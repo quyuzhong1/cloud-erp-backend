@@ -136,4 +136,15 @@ public interface KingdeeCommonService {
 
     */
     void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,Boolean disable);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/4/11 18:56
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     */
+    void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number);
 }

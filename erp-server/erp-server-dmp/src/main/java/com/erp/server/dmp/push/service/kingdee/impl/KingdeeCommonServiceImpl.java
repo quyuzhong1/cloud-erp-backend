@@ -163,7 +163,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } else {
             viewMap.put("numbers",Arrays.asList(number));
         }
-        String operateNumber = disable ? "Forbid" : "Forbid";
+        String operateNumber = disable ? "Forbid" : "Enable";
 
         try {
             apiUtils.excuteOperation(operateNumber,JSONArray.toJSONString(viewMap));
@@ -175,6 +175,29 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //操作成功添加日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),disable ? "禁用" : "启动",type,ApiSendStatusEnum.SUCCESS.getCode());
     }
+
+    @Override
+    public void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number) {
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        //金蝶id
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+
+        if (ObjectUtils.isEmpty(syncKingdeeId)) {
+            viewMap.put("ids",Arrays.asList(syncKingdeeId));
+        } else {
+            viewMap.put("numbers",Arrays.asList(number));
+        }
+        try {
+            apiUtils.delete(JSONArray.toJSONString(viewMap));
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        //操作成功添加日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),"删除",type,ApiSendStatusEnum.SUCCESS.getCode());
+    }
+
 
 
     @Override
@@ -194,6 +217,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //数据id
         String id = save.getResult().getId();
+        //金蝶id
+        map.put("syncKingdeeId",id);
         //更新业务表中的金蝶id
         updateBusinessSyncKingdeeStatus(type,String.valueOf(map.get("id")),"",id);
         //新增成功操作日志

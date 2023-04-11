@@ -217,7 +217,7 @@ public class KingdeeApiUtils {
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
-                throw new RuntimeException("【查看单据】出错:"+ result.get("errors"));
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -435,7 +435,29 @@ public class KingdeeApiUtils {
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
-                throw new RuntimeException("【查看单据】出错:"+ result.get("errors"));
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return json;
+    }
+
+    /**
+     * @description: 删除
+     * @param jsonData
+     * @return JSONObject
+     */
+    public JSONObject delete(String jsonData){
+        JSONObject json;
+        try {
+            String view = client.delete(this.formId, jsonData);
+            JSONObject parse = (JSONObject) JSONObject.parse(view);
+            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
+            json = (JSONObject)result.get("Result");
+            if(!(Boolean) responseStatus.get("IsSuccess")){
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

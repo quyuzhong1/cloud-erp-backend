@@ -118,11 +118,18 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @description: 更新金蝶发送状态
      * @author Will
      * @date: 2023/4/10 14:24
-     * @param businessId
+     * @param businessIds
      * @param status
      * @param syncKingdeeId
      * @return
      */
-    boolean updateSyncKingdeeStatus(String businessId, String status, String syncKingdeeId);
+    boolean updateSyncKingdeeStatus(List<String> businessIds, String status, String syncKingdeeId);
+    /**
+     * @description: 批量删除
+     * @author Will
+     * @date: 2023/4/11 18:05
+     * @param uids
+     */
+    void deleteByIds(List<String> uids);
 }
 

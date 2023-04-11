@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -53,10 +54,11 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("numbers",Arrays.asList("23041000002"));
+        viewMap.put("numbers",Arrays.asList("23041100006","23041100007"));
         JSONObject viewJson = apiUtils.excuteOperation("Enable",JSONArray.toJSONString(viewMap));
         System.out.println(queryList);
         System.out.println(viewJson);
+
     }
 
     @Override
@@ -85,22 +87,46 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,"","未配置同步字段",type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
+
         //判断金蝶系统是否已存在该数据
-        JSONObject model;
         SaveParam param = new SaveParam(json);
+        JSONObject model;
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
+
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             //启用、禁用
             excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
+
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
+
+        //启用或禁用
+        String operate = (String) map.get("operate");
+        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
+            return;
+        }
+        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            //审核中或已审核则要先反审
+            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            }
+            if (flag) {
+                //删除
+                String code = (String) map.get("code");
+                kingdeeCommonService.delete(apiUtils,platformEntity,map,type,code);
+            }
+            return;
+        }
+
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
@@ -117,6 +143,12 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
             excuteOperation(apiUtils,platformEntity,map,type);
         }
     }
+
+    //查看
+    private void view () {
+
+    }
+
 
     /**
      * 启用、禁用

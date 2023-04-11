@@ -13,6 +13,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +38,7 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(SysUserInfoEntity entity) {
+    public void syncDataToKingdee(SysUserInfoEntity entity,String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
@@ -54,13 +55,15 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
         resultMap.put("mobile", entity.getMobile());
         //用户状态1：正常 0：禁用
         resultMap.put("userState", entity.getUserState());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return sysUserInfoService.updateSyncKingdeeStatus(entity.getUid(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
+                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
             }
             return Boolean.TRUE;
         });
