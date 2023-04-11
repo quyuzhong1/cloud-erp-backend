@@ -29,10 +29,9 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @date 2023-03-24 14:01
      * @param purchasePriceDetailList 参数的
      * @param  supplierPriceDetailList  供应商已有的
-     * @param  supplierPriceChangeDetailList 供应商变更的
      * @return void
      */
-    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList);
+    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList);
 
     
     /**
