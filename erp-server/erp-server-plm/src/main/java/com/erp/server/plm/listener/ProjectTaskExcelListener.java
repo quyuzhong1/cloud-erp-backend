@@ -28,6 +28,7 @@ import java.util.List;
 
 public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskExcelDTO> {
     private Integer importType;
+    private String productId;
     private ProjectTaskService projectTaskService;
 
     private ProductInfoService productInfoService;
@@ -44,9 +45,10 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public ProjectTaskExcelListener(Integer importType, ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
+    public ProjectTaskExcelListener(Integer importType, String productId, ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
                                     ProjectPhaseService projectPhaseService, TaskDocsNameService taskDocsNameService) {
         this.importType = importType;
+        this.productId = productId;
         this.projectTaskService = projectTaskService;
         this.productInfoService = productInfoService;
         this.sysUserFeign = sysUserFeign;
@@ -73,9 +75,10 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             return;
         }
 
-        ProductInfoEntity productInfoEntity = productInfoService.getProductByName(projectTaskExcelDTO.getProductName());
-        if (ObjectUtil.isEmpty(productInfoEntity)) {
-            errorMsgList.add("[所属产品]在系统中未找到，请输入已有的产品名称");
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+
+        if (!productInfoEntity.getName().equals(projectTaskExcelDTO.getProductName())) {
+            errorMsgList.add("[所属产品]名称不正确，请输入导入界面的产品名称");
             projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             list.add(projectTaskExcelDTO);
             return;
@@ -96,7 +99,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         if (ObjectUtil.isNotEmpty(productInfoEntity)) {
 
 
-        ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
+            ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
             // 判断是修改还是新增 1：新增 2：修改
             /**
              * 任务状态 0:待发布 1:待开始
@@ -109,6 +112,11 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
                     if (projectTaskEntity.getStatus() == 0 || projectTaskEntity.getStatus() == 1 || projectTaskEntity.getStatus() == 3 ) {
                         projectTaskDTO.setId(projectTaskEntity.getId());
                         projectTaskDTO.setType(projectTaskEntity.getType());
+
+                        if (!projectTaskEntity.getType().equals(projectTaskExcelDTO.getType())) {
+                            errorMsgList.add("[任务类型]字段不可修改");
+                        }
+
                     } else {
                         errorMsgList.add("只有[任务状态]为待发布或待开始，进行中的任务可修改");
                     }
