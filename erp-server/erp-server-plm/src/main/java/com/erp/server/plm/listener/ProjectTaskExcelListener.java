@@ -113,7 +113,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
                         projectTaskDTO.setId(projectTaskEntity.getId());
                         projectTaskDTO.setType(projectTaskEntity.getType());
 
-                        if (!projectTaskEntity.getType().equals(projectTaskExcelDTO.getType())) {
+                        if (!projectTaskEntity.getType().equals(projectTaskDTO.getType())) {
                             errorMsgList.add("[任务类型]字段不可修改");
                         }
 
