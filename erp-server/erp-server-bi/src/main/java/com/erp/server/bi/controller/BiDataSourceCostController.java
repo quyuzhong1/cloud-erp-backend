@@ -33,7 +33,7 @@ import java.util.List;
  * @date 2022/12/14 16:33
  */
 @RestController
-@RequestMapping("bi/dataSourceCost")
+@RequestMapping("dataSourceCost")
 public class BiDataSourceCostController extends BaseController {
 
     @Resource

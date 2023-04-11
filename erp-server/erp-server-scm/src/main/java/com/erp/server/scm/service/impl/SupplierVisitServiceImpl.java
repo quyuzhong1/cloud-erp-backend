@@ -107,7 +107,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
             List<String> urlList = dto.getAttachmentUrlList();
             List<String> nameList = dto.getAttachmentNameList();
             //附件
-            attachmentService.batchSave(urlList,nameList,type,id);
+            attachmentService.batchSave(urlList, nameList, type, id);
             List<String> skuIdList = dto.getSkuIdList();
             if (CollectionUtils.isNotEmpty(skuIdList)) {
                 List<SupplierVisitSkuEntity> addVisitSkuList = new ArrayList<>(skuIdList.size());
@@ -122,7 +122,7 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                 supplierVisitSkuService.saveBatch(addVisitSkuList);
             }
             //添加日志
-            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条拜访记录"), ModuleTypeEnum.SUPPLIER.getCode(),id,"新增拜访");
+            moduleOperateLogService.addModuleOperateLog(String.format("新增了一条拜访记录"), ModuleTypeEnum.SUPPLIER.getCode(), id, "新增拜访");
         }
 
         return result;
@@ -141,6 +141,10 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
     public PagingVO<SupplierVisitDTO.PagingViewDTO> paging(PagingDTO<BaseIdDTO> dto) {
         //供应商id
         String supplierId = dto.getParams().getId();
+        SupplierEntity supplier = supplierService.getById(supplierId);
+        if(Objects.isNull(supplier)){
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, supplierId);
         List<SupplierVisitDTO.PagingViewDTO> list = pageData.getRecords();
@@ -179,23 +183,24 @@ public class SupplierVisitServiceImpl extends SuperServiceImpl<SupplierVisitMapp
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
 
             item.setPeopleName(userName);
+            item.setSupplierName(supplier.getName());
 
 
             //附件地址
-            List<String> attachmentUrlList= attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
+            List<String> attachmentUrlList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
 
             //附件地址
-            List<String> attachmentNameList= attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
+            List<String> attachmentNameList = attachmentList.stream().filter(a -> a.getBusinessId().equals(item.getId())).map(AttachmentDTO.UpdateDTO::getAttachName).
                     collect(Collectors.toList());
             item.setAttachmentUrlList(attachmentUrlList);
             item.setAttachmentNameList(attachmentNameList);
-            List<String> skuIdList=visitSkuList.stream().filter(s->s.getSupplierVisitId().
+            List<String> skuIdList = visitSkuList.stream().filter(s -> s.getSupplierVisitId().
                     equals(item.getId())).map(SupplierVisitSkuEntity::getSkuId).collect(Collectors.toList());
             //获取到sku 信息
-            List<SkuVO>  skuInfoList= skuList.stream().filter(sku->skuIdList.contains(sku.getSkuId())).
+            List<SkuVO> skuInfoList = skuList.stream().filter(sku -> skuIdList.contains(sku.getSkuId())).
                     collect(Collectors.toList());
-            String skuInfo=skuInfoList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
+            String skuInfo = skuInfoList.stream().map(SkuVO::getSkuNo).collect(Collectors.joining(","));
             item.setSkuInfo(skuInfo);
 
         }

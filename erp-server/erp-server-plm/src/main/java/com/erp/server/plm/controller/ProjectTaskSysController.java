@@ -25,7 +25,7 @@ import java.util.Map;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("/plm/sys/task")
+@RequestMapping("sys/task")
 public class ProjectTaskSysController extends BaseController {
 
     @Autowired

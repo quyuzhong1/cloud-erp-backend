@@ -91,22 +91,24 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
     private BigDecimal amount;
 
     /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+    /**
      * 变更备注
      */
     @TableField("remark")
     private String remark;
 
-    /**
-     * 交货仓库id
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
 
-    /**
-     * 交货仓库名称
-     */
-    @TableField("delivery_warehouse_name")
-    private String deliveryWarehouseName;
 
 
     public static final String PURCHASE_CHANGE_ID = "purchase_change_id";
@@ -133,9 +135,9 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
 
     public static final String REMARK = "remark";
 
-    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
+    public static final String CURRENCY = "currency";
 
-    public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
+    public static final String CURRENCY_SYMBOL = "currency_symbol";
 
     @Override
     public Serializable pkVal() {

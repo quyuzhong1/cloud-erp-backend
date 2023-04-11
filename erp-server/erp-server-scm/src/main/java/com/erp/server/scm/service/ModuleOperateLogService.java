@@ -1,8 +1,8 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
 import org.apache.commons.math3.util.Pair;
@@ -62,4 +62,11 @@ public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEn
       * @return Boolean
       */
      Boolean batchAddModuleOperateLog(String content, String moduleType, List<Pair<String, String>> pairList, String operation);
+    /**
+     * @description: 删除操作日志
+     * @author Will
+     * @date: 2023/4/3 17:19
+     * @param businessIds
+     */
+    void removeByBusinessIds(List<String> businessIds);
 }

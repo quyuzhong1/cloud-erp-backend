@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PurchaseStorageMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.server.wms.entity.PurchaseStorageEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="code" property="code" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="storage_date" property="storageDate" />
+        <result column="storage_user_id" property="storageUserId" />
+        <result column="storage_user_name" property="storageUserName" />
+        <result column="purchase_user_id" property="purchaseUserId" />
+        <result column="purchase_user_name" property="purchaseUserName" />
+        <result column="receive_org_id" property="receiveOrgId" />
+        <result column="receive_org_name" property="receiveOrgName" />
+        <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
+        <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
+        <result column="storage_dept_id" property="storageDeptId" />
+        <result column="storage_dept_name" property="storageDeptName" />
+        <result column="purchase_dept_id" property="purchaseDeptId" />
+        <result column="purchase_dept_name" property="purchaseDeptName" />
+        <result column="is_first_mass_product" property="isFirstMassProduct" />
+        <result column="supplier_id" property="supplierId" />
+        <result column="supplier_name" property="supplierName" />
+        <result column="purchase_order_id" property="purchaseOrderId" />
+        <result column="receive_id" property="receiveId" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_time" property="invalidTime" />
+        <result column="invalid_remark" property="invalidRemark" />
+        <result column="approve_time" property="approveTime" />
+        <result column="approve_user_name" property="approveUserName" />
+        <result column="approve_user_id" property="approveUserId" />
+    </resultMap>
+
+</mapper>

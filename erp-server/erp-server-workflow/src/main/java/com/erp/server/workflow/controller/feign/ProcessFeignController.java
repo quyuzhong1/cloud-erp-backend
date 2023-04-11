@@ -27,7 +27,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("workflow/feign/process")
+@RequestMapping("feign/process")
 @Slf4j
 public class ProcessFeignController extends BaseController {
 

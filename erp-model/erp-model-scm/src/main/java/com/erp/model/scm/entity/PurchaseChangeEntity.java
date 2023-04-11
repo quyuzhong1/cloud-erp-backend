@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -46,7 +47,7 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
      * 变更日期
      */
     @TableField("change_date")
-    private Date changeDate;
+    private LocalDate changeDate;
 
     /**
      * 变更人id
@@ -85,6 +86,18 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     private String purchaseOrgName;
 
     /**
+     * 收料组织id
+     */
+    @TableField("receive_org_id")
+    private String receiveOrgId;
+
+    /**
+     * 收料组织名称
+     */
+    @TableField("receive_org_name")
+    private String receiveOrgName;
+
+    /**
      * 新品首批（false否,true是）
      */
     @TableField("is_first_mass_product")
@@ -118,7 +131,37 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
      * 作废时间
      */
     @TableField("invalid_time")
-    private Date invalidTime;
+    private LocalDate invalidTime;
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
+    /**
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
+
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
 
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -141,6 +184,10 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
 
     public static final String PURCHASE_ORG_NAME = "purchase_org_name";
 
+    public static final String RECEIVE_ORG_ID = "receive_org_id";
+
+    public static final String RECEIVE_ORG_NAME = "receive_org_name";
+
     public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
 
     public static final String APPROVE_TIME = "approve_time";
@@ -152,6 +199,16 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     public static final String INVALID_STATUS = "invalid_status";
 
     public static final String INVALID_TIME = "invalid_time";
+
+    public static final String APPROVE_USER_ID = "approve_user_id";
+
+    public static final String APPROVE_USER_NAME = "approve_user_name";
+
+    public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
+
+    public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
 
     @Override
     public Serializable pkVal() {

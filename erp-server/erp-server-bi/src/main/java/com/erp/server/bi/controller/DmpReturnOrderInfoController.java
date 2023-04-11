@@ -36,7 +36,7 @@ import java.io.OutputStream;
  * @date 2022/12/13 15:15
  */
 @RestController
-@RequestMapping("bi/dmpReturnOrderInfo")
+@RequestMapping("dmpReturnOrderInfo")
 public class DmpReturnOrderInfoController extends BaseController {
 
     @Resource

@@ -12,7 +12,8 @@
             result,
             visit_type,
             supplier_id
-        FROM supplier_visit  WHERE supplier_id=#{supplierId} AND is_deleted=false
-
+        FROM supplier_visit
+        WHERE supplier_id=#{supplierId} AND is_deleted=false
+        ORDER BY create_time DESC
     </select>
 </mapper>

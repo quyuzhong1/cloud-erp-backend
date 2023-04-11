@@ -1,15 +1,15 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
-import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
-import com.erp.server.scm.service.SupplierContactService;
 import com.erp.server.scm.service.SupplierService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -34,8 +34,6 @@ public class SupplierController extends BaseController {
     @Resource
     private SupplierService supplierService;
 
-    @Resource
-    private SupplierContactService supplierContactService;
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
@@ -47,6 +45,11 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:paging",
+            tableAlias = "supplier"
+    )
     public ApiResult<PagingVO<SupplierDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         PagingVO<SupplierDTO.PagingViewDTO> pagingVO = supplierService.paging(dto);
         return success(pagingVO);
@@ -60,6 +63,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:add",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         String supplierId = supplierService.addSupplier(dto);
         return StringUtils.isNotBlank(supplierId) ? success() : failure();
@@ -73,6 +82,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:add",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         Boolean result = supplierService.addAndSubmit(dto);
         return result == true ? success() : failure();
@@ -86,6 +101,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult update(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         String supplierId = supplierService.updateSupplier(dto);
         return StringUtils.isNotBlank(supplierId) ? success() : failure();
@@ -98,6 +119,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult updateAndSubmit(@RequestBody @Validated SupplierDTO.UpdateDTO dto) {
         Boolean result = supplierService.updateAndSubmit(dto);
         return result == true ? success() : failure();
@@ -111,8 +138,14 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<SupplierDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        SupplierDTO.UpdateDTO view = supplierService.view(dto.getId());
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<SupplierDTO.SupplierViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        SupplierDTO.SupplierViewDTO view = supplierService.view(dto.getId());
         return success(view);
     }
 
@@ -124,6 +157,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
@@ -137,6 +176,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult submit(@RequestBody BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierService.submit(dto.getIds());
         return result == true ? success() : failure();
@@ -161,6 +206,12 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = supplierService.approve(dto);
         return result == true ? success() : failure();
@@ -175,6 +226,12 @@ public class SupplierController extends BaseController {
      * @date 2023-03-22 11:56
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:update",
+            serviceClass = SupplierService.class,
+            keyIdName = "id"
+    )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = supplierService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -186,13 +243,19 @@ public class SupplierController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return success();
+        Boolean result = supplierService.importFile(excelFile, response);
+        return result == true ? success() : failure();
     }
 
     /**
      * 供应商导出
      */
     @PostMapping("/exportSupplier")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:supplier:paging",
+            tableAlias = "supplier"
+    )
     public ApiResult exportSupplier(@RequestBody @Valid SupplierDTO.ExportDTO dto, HttpServletResponse response) {
         supplierService.exportSupplier(dto, response);
         return success();
@@ -222,13 +285,13 @@ public class SupplierController extends BaseController {
 
 
     /**
-     * 获取供应商的默认联系人信息
+     * 获取供应商的信息
      *
      * @return
      */
-    @GetMapping("/getSupplierContact")
-    public ApiResult<SupplierContactDTO.ViewDTO> getSupplierContact(@RequestParam(value = "supplierId") String supplierId) {
-        SupplierContactDTO.ViewDTO viewDTO = supplierContactService.getDefaultBySupplierId(supplierId);
+    @GetMapping("/getSupplierInfo")
+    public ApiResult<SupplierDTO.ViewDTO> getSupplierContact(@RequestParam(value = "supplierId") String supplierId) {
+        SupplierDTO.ViewDTO viewDTO = supplierService.getBySupplierId(supplierId);
         return success(viewDTO);
     }
 

@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -28,7 +29,7 @@ public class PurchaseOrderProcessDTO implements Serializable {
     /**
      * 操作时间
      */
-    private String time;
+    private LocalDateTime time;
 
     /**
      * 是否到达节点

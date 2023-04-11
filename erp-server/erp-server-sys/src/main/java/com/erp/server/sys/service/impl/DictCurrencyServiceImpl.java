@@ -42,7 +42,7 @@ public class DictCurrencyServiceImpl extends SuperServiceImpl<DictCurrencyMapper
 
     @Override
     public List<CurrencyDTO.ViewDTO> listByCurrency(List<String> currencyList) {
-        List<DictCurrencyEntity> list = lambdaQuery().in(DictCurrencyEntity::getId,currencyList).list();
+        List<DictCurrencyEntity> list = lambdaQuery().in(CollectionUtils.isNotEmpty(currencyList),DictCurrencyEntity::getId,currencyList).list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }

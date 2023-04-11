@@ -1,9 +1,12 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -49,7 +52,11 @@ public class SalesDemandController extends BaseController {
     * @return ApiResult<PagingVO<SalesDemandDTO.listDTO>>
     */
    @PostMapping("/paging")
-    public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
+   @DataPermission(operationType = DataAttributeEnum.LIST,
+           tableField = "apply_user_id",
+           menuCode = "scm:salesDemand:paging",
+           tableAlias = "sd")
+   public ApiResult<PagingVO<SalesDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {
         PagingVO<SalesDemandDTO.ListDTO> pagingVO = salesDemandService.paging(dto);
         return success(pagingVO);
     }
@@ -60,9 +67,13 @@ public class SalesDemandController extends BaseController {
      * @date: 2023/3/15 17:34
      * @return ApiResult
      */
-    @GetMapping("/listCount")
-    public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount() {
-        List<ListStatusCountDTO.SalesDemandCountDTO> list = salesDemandService.listCount();
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:paging",
+            tableAlias = "sd")
+    public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<ListStatusCountDTO.SalesDemandCountDTO> list = salesDemandService.listCount(dto);
         return success(list);
     }
 
@@ -126,6 +137,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult<ScmSalesDemandDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:view",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "id")
     public ApiResult<SalesDemandDTO.ViewDTO> view(@Param("id") String id) {
         SalesDemandDTO.ViewDTO dto = salesDemandService.view(id);
         return success(dto);
@@ -219,7 +235,7 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<SalesDemandDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+    public ApiResult<SalesDemandDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
         SalesDemandDetailDTO.ImportDTO list = salesDemandService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),response);
         return success(list);
     }
@@ -264,6 +280,10 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:paging",
+            tableAlias = "sd")
     public ApiResult exportExcel(@RequestBody SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = salesDemandService.exportExcel(dto, response);
         return flag == true ? success() : failure();

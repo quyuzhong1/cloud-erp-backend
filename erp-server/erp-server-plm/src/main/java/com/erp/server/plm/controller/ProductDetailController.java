@@ -2,7 +2,6 @@ package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.RequestPermissions;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -47,7 +46,7 @@ import java.util.*;
  * @Date 2022/9/22 11:48
  **/
 @RestController
-@RequestMapping("plm/product/detail")
+@RequestMapping("product/detail")
 public class
 
 ProductDetailController extends BaseController {
@@ -670,8 +669,8 @@ ProductDetailController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 
     /**
@@ -820,6 +819,19 @@ ProductDetailController extends BaseController {
     @GetMapping("/search/sku")
     public ApiResult<List<SkuVO>> searchSku(String searchKeyword) {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
+        return success(skuList);
+    }
+
+    /**
+     * 搜索sku
+     *
+     * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2023-01-11 14:58
+     */
+    @PostMapping("/search/skuInfo")
+    public ApiResult<List<SkuVO>> skuInfo(@RequestBody  ProductDetailDTO.SearchDTO  dto) {
+        List<SkuVO> skuList = productDetailService.searchSkuInfo(dto);
         return success(skuList);
     }
 

@@ -35,7 +35,9 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private List<BaseIdDTO> orgList;
 
-    private List<WarehouseEntity> addWarehouseList;
+    private List<WarehouseEntity> existList;
+
+    private List<WarehouseEntity> addWarehouseList = new ArrayList<>();
 
 
     /**
@@ -44,11 +46,12 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     private List<WarehouseExcelDTO> errorList = new ArrayList<>();
 
 
-    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO> orgList) {
+    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO> orgList, List<WarehouseEntity> existList) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
         this.userList = userList;
         this.orgList = orgList;
+        this.existList = existList;
 
     }
 
@@ -79,6 +82,29 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (StringUtils.isBlank(typeId)) {
             errorMsgList.add("仓库类型不存在");
         }
+        String name = warehouseExcelDTO.getName();
+        long nameCount = existList.stream().filter(w -> name.equals(w.getName())).count();
+        if (nameCount > 0) {
+            errorMsgList.add("仓库名称已存在");
+        }
+
+
+        long addNameCount = addWarehouseList.stream().filter(w -> name.equals(w.getName())).count();
+        if (addNameCount > 0) {
+            errorMsgList.add("仓库名称已存在");
+        }
+
+        String kingdeeWarehouseCode = warehouseExcelDTO.getKingdeeWarehouseCode();
+        long codeCount = existList.stream().filter(w -> kingdeeWarehouseCode.equals(w.getKingdeeWarehouseCode())).count();
+        if (codeCount > 0) {
+            errorMsgList.add("金蝶仓库编号已存在");
+        }
+
+        long addCodeCount = addWarehouseList.stream().filter(w -> kingdeeWarehouseCode.equals(w.getKingdeeWarehouseCode())).count();
+        if (addCodeCount > 0) {
+            errorMsgList.add("金蝶仓库编号已存在");
+        }
+        addEntity.setKingdeeWarehouseCode(kingdeeWarehouseCode);
         addEntity.setName(warehouseExcelDTO.getName());
         addEntity.setTypeId(typeId);
         //组织
@@ -99,12 +125,14 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         addEntity.setIsVirtual(isVirtual.equals("是"));
         //仓库负责人
         String chargeName = warehouseExcelDTO.getChargeName();
-        String chargeId = userList.stream().filter(d -> d.getUserName().equals(chargeName)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
-        if (StringUtils.isBlank(chargeId)) {
-            errorMsgList.add("仓库负责人有误");
+        if(StringUtils.isNotBlank(chargeName)){
+            String chargeId = userList.stream().filter(d -> d.getUserName().equals(chargeName)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
+            if (StringUtils.isBlank(chargeId)) {
+                errorMsgList.add("仓库负责人有误");
+            }
+            addEntity.setChargeId(chargeId);
         }
-        addEntity.setChargeId(chargeId);
         //联系人
         String contacts = warehouseExcelDTO.getContacts();
         addEntity.setContacts(contacts);
@@ -116,22 +144,15 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         addEntity.setAddress(address);
         //状态
         String enabled = warehouseExcelDTO.getEnabled();
-        List enabledList = Arrays.asList("启用", "未启用");
-        if (!enabledList.contains(enabled)) {
-            errorMsgList.add("仓库状态有误");
-        }
-        addEntity.setDisabled(!enabled.equals("启用"));
-
-        //保存的数据
-        addWarehouseList.add(addEntity);
-
+        addEntity.setDisabled(!"启用".equals(enabled));
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             warehouseExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(warehouseExcelDTO);
             return;
         }
-
+        //保存的数据
+        addWarehouseList.add(addEntity);
     }
 
 
@@ -150,7 +171,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         }
     }
 
-    public List<WarehouseExcelDTO> getErrorList(){
+    public List<WarehouseExcelDTO> getErrorList() {
         return errorList;
     }
 }

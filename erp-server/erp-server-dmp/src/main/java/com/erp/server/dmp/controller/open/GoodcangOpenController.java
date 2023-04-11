@@ -21,7 +21,7 @@ import javax.annotation.Resource;
  **/
 @Slf4j
 @RestController
-@RequestMapping("/dmp/open/api")
+@RequestMapping("open/api")
 public class GoodcangOpenController {
 
     @Resource

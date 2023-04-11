@@ -32,14 +32,16 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
     private List<ScheduleTaskExportErrorExcelVO> errorList;
 
     private List<ScheduleTaskExportErrorExcelVO> dataList;
-    private List<ChangeScheduleExportVO> succeedList;
-    private List<FindUserDTO> sysUserList;
 
+    private List<ChangeScheduleExportVO> succeedList;
+
+    private List<FindUserDTO> sysUserList;
 
     private String productName;
 
-
     private String productId;
+
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public ChangeScheduleExcelListener(List<ProjectTaskEntity> projectTaskList, String productId, List<FindUserDTO> sysUserList, String productName) {
         this.projectTaskList = projectTaskList;
@@ -131,8 +133,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeStartTime(LocalDateTime.parse(vo.getPlanStartTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        changeVO.setChangeEndTime(LocalDateTime.parse(vo.getPlanEndTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        changeVO.setChangeStartTime(LocalDateTime.parse(vo.getPlanStartTime(), dateTimeFormatter));
+        changeVO.setChangeEndTime(LocalDateTime.parse(vo.getPlanEndTime(), dateTimeFormatter));
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());

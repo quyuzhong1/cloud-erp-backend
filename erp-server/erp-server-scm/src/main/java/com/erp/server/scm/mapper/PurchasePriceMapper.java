@@ -21,7 +21,7 @@ import java.util.List;
 @Mapper
 public interface PurchasePriceMapper extends BaseMapper<PurchasePriceEntity> {
 
-    IPage<PurchasePriceDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceDTO.PagingParamDTO params);
+    IPage<PurchasePriceDTO.PagingViewDTO> paging(Page query,@Param("params") PurchasePriceDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
 
     /**
      * 获取导出数据

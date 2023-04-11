@@ -33,7 +33,7 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      * @param purchaseOrderId
      * @return PurchaseOrderSupplierEntity
      */
-    PurchaseOrderSupplierEntity listByPurchaseOrderId(String purchaseOrderId);
+    PurchaseOrderSupplierEntity getByPurchaseOrderId(String purchaseOrderId);
 
     /**
      * @description: 根据订单主表ids查询供应商
@@ -50,14 +50,14 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      * @date: 2023/3/28 19:41
      * @param purchaseOrderSupplierDTO
      */
-    void add(PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO);
+    void add(PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO,String purchaseOrderId);
     /**
      * @description: 修改供应商
      * @author Will
      * @date: 2023/3/28 19:49
      * @param purchaseOrderSupplierDTO
      */
-    void update(PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO);
+    void update(PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO,String purchaseOrderId);
 
     /**
      * 获取供应商采购记录
@@ -68,4 +68,12 @@ public interface PurchaseOrderSupplierService extends SuperService<PurchaseOrder
      */
     PagingVO<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> supplierPurchasePaging(PagingDTO<BaseIdDTO> dto);
 
+    /**
+     * 根据供应商获取到 供应商订单信息
+     * @author yl
+     * @date 2023-04-03 17:11
+     * @param supplierIdList
+     * @return void
+     */
+    List<PurchaseOrderSupplierEntity>  getBySupplierIds(List<String> supplierIdList);
 }

@@ -2,25 +2,36 @@ package com.erp.server.scm.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceChangeDTO;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.PurchasePriceHistoryService;
+import com.erp.server.scm.service.PurchasePriceService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -35,9 +46,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +57,7 @@ import java.util.stream.Collectors;
  * @author admin
  * @since 2023-03-15
  */
+@Slf4j
 @Service
 public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePriceDetailMapper, PurchasePriceDetailEntity> implements PurchasePriceDetailService {
 
@@ -58,51 +68,141 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
+
+    @Resource
+    private PurchasePriceService priceService;
+
+    @Resource
+    private PurchasePriceHistoryService purchasePriceHistoryService;
+
+
     /**
      * 检查sku 区间报价
      *
-     * @param purchasePriceDetailList
+     * @param purchasePriceDetailList       参数的
+     * @param supplierPriceDetailList       供应商已有的
      * @return void
      * @author yl
      * @date 2023-03-24 14:01
      */
     @Override
-    public void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList) {
+    public void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList) {
+
         if (CollectionUtils.isNotEmpty(purchasePriceDetailList)) {
-            //以sku 分组
-            Map<String, List<PurchasePriceDetailDTO.AddDTO>> map = purchasePriceDetailList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+            //这个是要检查的
+            List<PurchasePriceDetailDTO.AddDTO> checkList = new ArrayList<>(10);
+            checkList.addAll(purchasePriceDetailList);
+
+            //检查区间
+            for (PurchasePriceDetailDTO.AddDTO item : checkList) {
+                Integer min = item.getMinQty();
+                Integer max = item.getMaxQty();
+                if (min != null) {
+                    if (max == null) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_EXIST);
+                    }
+                }
+                if (max != null) {
+                    if (min == null) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_EXIST);
+                    }
+                }
+                //当两个都不为空的时候
+                if (min != null && max != null) {
+                    if (min.equals(max)) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_DIFFERENT);
+                    }
+                    if (min > max) {
+                        throw new ServiceException(ApiError.ERROR_INTERVAL_SIZE);
+                    }
+                }
+
+            }
+
+            //参数 以sku 分组
+            Map<String, List<PurchasePriceDetailDTO.AddDTO>> map = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : map.entrySet()) {
-                //skuId
-                String skuId = item.getKey();
                 //对应的报价
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
                 //查询是否有无区间的
                 long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
                 //表示有无区间的
-                if (noInterval > 0) {
-                    if (skuPriceList.size() > 0) {
-                        throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
-                    }
+                if (noInterval > 1) {
+                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 } else {
                     //没有无区间 就要检查又没有不同区间的
                     List<Integer> intervalList = new ArrayList<>(10);
                     for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
-                        intervalList.add(interval.getMinQty());
-                        intervalList.add(interval.getMaxQty());
+                        if (interval.getMinQty() != null && interval.getMaxQty() != null) {
+                            intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        }
                     }
-                    //判断是否是按顺序的
-                    boolean isSortedResult = isSorted(intervalList);
-                    //当不是的时候
-                    if (!isSortedResult) {
-                        throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
-                    }
-                    long distCount = intervalList.stream().distinct().count();
-                    if (distCount != intervalList.size()) {
+                    //判断是否重复
+                    boolean isRepetition = isRepetition(intervalList);
+                    //当有重复的时候
+                    if (isRepetition) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
                 }
             }
+
+
+            checkList.addAll(supplierPriceDetailList);
+            //参数 以sku 分组 这个是添加了供应商的
+            Map<String, List<PurchasePriceDetailDTO.AddDTO>> supplierMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+            for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
+                //对应的报价
+                List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
+                long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
+                //表示有无区间的
+                if (noInterval > 1) {
+                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+                }
+
+                //没有无区间 就要检查又没有不同区间的
+                List<Integer> intervalList = new ArrayList<>(10);
+                for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
+                    if (interval.getMinQty() != null && interval.getMaxQty() != null) {
+                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                    }
+                }
+                //判断是否有重叠
+                boolean isSortedResult = isRepetition(intervalList);
+                //当有重叠的时候
+                if (isSortedResult) {
+                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                }
+
+            }
+
+
+
         }
+
+
+    }
+
+
+    /**
+     * 判断是否有重复
+     *
+     * @param intervalList
+     * @return boolean
+     * @author yl
+     * @date 2023-04-06 11:07
+     */
+    private boolean isRepetition(List<Integer> intervalList) {
+        if (CollectionUtils.isNotEmpty(intervalList)) {
+            Set<Integer> set = new HashSet<>(intervalList);
+            if (set.size() < intervalList.size()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**
@@ -136,8 +236,11 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-            item.setTaxRate(rate);
+            if(taxRate!=null){
+                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                item.setTaxRate(rate);
+            }
+
         }
         this.saveBatch(addList);
     }
@@ -152,9 +255,55 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-27 9:48
      */
     @Override
-    public List<PurchasePriceDetailDTO.UpdateDTO> getByPurchasePriceId(String purchasePriceId) {
+    public List<PurchasePriceDetailDTO.ViewDTO> getByPurchasePriceId(String purchasePriceId) {
         List<PurchasePriceDetailEntity> list = this.getListByPurchasePriceId(purchasePriceId);
-        return BeanMapper.copyList(list, PurchasePriceDetailDTO.UpdateDTO.class);
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
+        List<String> currencyIdList = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        BigDecimal hundred = new BigDecimal("100");
+
+        for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
+            //币种
+            String currency = item.getCurrency();
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+            item.setCurrencySymbol(currencySymbol);
+            BigDecimal taxRate = item.getTaxRate();
+            if(taxRate!=null){
+                item.setTaxRate(taxRate.multiply(hundred));
+            }
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            if (minQty == 0 && maxQty == 0) {
+                item.setMinQty(null);
+                item.setMaxQty(null);
+            }
+        }
+
+        return viewList;
+    }
+
+
+    /**
+     * 根据价目表id 和详情表id 集合获取对应数据
+     *
+     * @param purchasePriceId
+     * @param purchasePriceDetailIds 采购价目详情表id 集合
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.UpdateDTO>
+     * @author yl
+     * @date 2023-03-27 9:48
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.ViewDTO> getPriceDetail(String purchasePriceId, List<String> purchasePriceDetailIds) {
+        LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
+        if (CollectionUtils.isNotEmpty(purchasePriceDetailIds)) {
+            queryWrapper.notIn(PurchasePriceDetailEntity::getId, purchasePriceDetailIds);
+        }
+        List<PurchasePriceDetailEntity> list = this.list(queryWrapper);
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, PurchasePriceDetailDTO.ViewDTO.class);
+        return viewList;
     }
 
 
@@ -175,6 +324,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailEntity> dbList = this.getListByPurchasePriceId(purchasePriceId);
         //获取到删除id集合
         List<String> deleteIdList = getDeleteIds(purchasePriceDetailList, dbList);
+        List<PurchasePriceDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
+
+
         this.removeByIds(deleteIdList);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -194,9 +346,33 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             entity.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-            entity.setTaxRate(rate);
+            if(taxRate!=null){
+                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                entity.setTaxRate(rate);
+            }
             saveOrUpdateList.add(entity);
+        }
+
+        //这是要添加的
+        List<PurchasePriceDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+        //这是修改的
+        List<PurchasePriceDetailEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(purchasePriceId, obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchasePriceId, obj.getSkuNo())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE.getCode(), addPairList, "编辑操作");
+
+        //修改的
+        for (PurchasePriceDetailEntity update : updateList) {
+            String id = update.getId();
+            PurchasePriceDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.PURCHASE_PRICE.getCode(), purchasePriceId, "", "");
+            }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -243,7 +419,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-27 16:51
      */
     @Override
-    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile) {
+    public PurchasePriceDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         PurchasePriceDetailExcelListener excelListenerUtil = new PurchasePriceDetailExcelListener(skuList);
@@ -289,13 +465,101 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         List<PurchasePriceDetailEntity> detailList = this.listByIds(ids);
         Boolean disabled = dto.getDisabled();
-        long count= detailList.stream().filter(d->!d.getDisabled()==disabled).count();
-        if(count!=detailList.size()){
+        long count = detailList.stream().filter(d -> !d.getDisabled() == disabled).count();
+        if (count != detailList.size()) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        detailList.forEach(d->d.setDisabled(disabled));
+        detailList.forEach(d -> d.setDisabled(disabled));
 
         return this.updateBatchById(detailList);
+    }
+
+
+    /**
+     * 查询供应商的 已有的sku信息
+     *
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     * @author yl
+     * @date 2023-04-06 9:37
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds) {
+        List<String> statusList = new ArrayList<>(3);
+        statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        statusList.add(ApproveStatusEnum.APPROVE.getStatus());
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList,detailIds);
+        return list;
+    }
+
+
+    /**
+     * 采购价目表 点击变更报价 获取到详情
+     *
+     * @param purchasePriceId
+     * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
+     * @author yl
+     * @date 2023-04-06 12:03
+     */
+    @Override
+    public PurchasePriceChangeDTO.ViewDTO priceChangeDetail(String purchasePriceId) {
+        PurchasePriceChangeDTO.ViewDTO viewDTO = new PurchasePriceChangeDTO.ViewDTO();
+        PurchasePriceEntity priceEntity = priceService.getById(purchasePriceId);
+        if (Objects.isNull(priceEntity)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+        viewDTO.setPurchasePriceId(purchasePriceId);
+        viewDTO.setSupplierId(priceEntity.getSupplierId());
+        viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
+        viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        List<PurchasePriceDetailDTO.ViewDTO> viewList = this.getByPurchasePriceId(purchasePriceId);
+        List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
+        for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
+            PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
+            result.setOldCurrency(item.getCurrency());
+            result.setOldTaxPrice(item.getTaxPrice());
+            result.setOldTaxRate(item.getTaxRate());
+            result.setPurchasePriceDetailId(item.getId());
+            result.setMinQty(item.getMinQty());
+            result.setMaxQty(item.getMaxQty());
+            result.setProductName(item.getProductName());
+            result.setSkuNo(item.getSkuNo());
+            result.setSkuId(item.getSkuId());
+            resultList.add(result);
+        }
+        viewDTO.setPurchasePriceChangeDetailList(resultList);
+        return viewDTO;
+    }
+
+
+    /**
+     * 根据采购价目表id 获取到采购价目变更的明细
+     *
+     * @param purchasePriceId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-04-06 18:54
+     */
+    @Override
+    public List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId) {
+
+        List<PurchasePriceDetailDTO.ViewDTO> list = this.getByPurchasePriceId(purchasePriceId);
+        List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(list.size());
+        for (PurchasePriceDetailDTO.ViewDTO item : list) {
+            PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
+            result.setMaxQty(item.getMaxQty());
+            result.setMinQty(item.getMinQty());
+            result.setOldTaxRate(item.getTaxRate());
+            result.setOldTaxPrice(item.getTaxPrice());
+            result.setOldCurrency(item.getCurrency());
+            result.setSkuId(item.getSkuId());
+            result.setSkuNo(item.getSkuNo());
+            result.setProductName(item.getProductName());
+            result.setPurchasePriceDetailId(item.getId());
+            resultList.add(result);
+        }
+        return resultList;
     }
 
 
@@ -325,41 +589,68 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Override
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
-        if (CollectionUtils.isEmpty(list)) {
-            return list;
+        Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = listPurchaseTaxPriceView(dto);
+        String error = pair.getKey();
+        if (StringUtils.isNotBlank(error)) {
+            throw new ServiceException(new ApiResult(1, error));
         }
-        List<String> currencyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
+        return pair.getValue();
+    }
+
+    @Override
+    public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> resultList = new ArrayList<>();
+
+        //采购价目表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
+        if (CollectionUtils.isNotEmpty(list)) {
+            resultList.addAll(list);
+        }
+
+        //采购价目历史表
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> historyList = purchasePriceHistoryService.getHistoryTaxPrice(dto);
+        if (CollectionUtils.isNotEmpty(historyList)) {
+            resultList.addAll(historyList);
+        }
+
+        //未找到报价信息
+        if (CollectionUtils.isEmpty(resultList)) {
+            if (StringUtils.isNotBlank(dto.getSupplierId())) {
+                String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", dto.getSkuNo(), dto.getPurchaseQty());
+                log.error(error);
+                return new Pair<>(error, resultList);
+            }
+            return null;
+        }
+        List<String> currencyList = resultList.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
         if (CollectionUtils.isEmpty(viewList)) {
-            throw new ServiceException(ApiError.ERROR_9041);
+            String error = "未发现币种对应符号";
+            log.error(error);
+            return new Pair<>(error, resultList);
         }
-        for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : list) {
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO : resultList) {
             CurrencyDTO.ViewDTO currencyDTO = viewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(null);
             viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
         }
-        //存在供应商参数时，无返回数据则报错提示
-        if (StringUtils.isNotBlank(dto.getSupplierId()) && CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(1,String.format("SKU【%s】未找到数量【%s】的供应商报价信息",dto.getSkuNo(),dto.getPurchaseQty()));
-        }
-        return list;
+        return new Pair<>("", resultList);
     }
 
+
     /**
-     * 判断是否按顺序排序
+     * 获取到区间
      *
-     * @param list
-     * @return boolean
-     * @author yl
-     * @date 2023-03-24 14:28
+     * @param min
+     * @param max
+     * @return
      */
-    private boolean isSorted(List<Integer> list) {
-        for (int i = 0; i < list.size() - 1; i++) {
-            if (list.get(i) > list.get(i + 1)) {
-                return false;
-            }
+    public List<Integer> getInterval(Integer min, Integer max) {
+        List<Integer> resultList = new ArrayList<>(10);
+        for (int i = min + 1; i <= max; i++) {
+            resultList.add(i);
         }
-        return true;
+        return resultList;
     }
+
 
 }

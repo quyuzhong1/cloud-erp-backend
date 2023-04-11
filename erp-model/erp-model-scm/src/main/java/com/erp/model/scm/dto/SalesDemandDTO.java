@@ -59,6 +59,11 @@ public class SalesDemandDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 是否加急（false否，true是）
          */
         private Boolean isUrgent;
@@ -132,6 +137,12 @@ public class SalesDemandDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
+
         /**
          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */

@@ -14,6 +14,10 @@ public interface BusinessNoConstant {
 
     String PL = "PL";
 
+    String PO = "PO";
+
+    String POC = "POC";
+
     String GYS = "GYS";
 
     String CGJM = "CGJM";

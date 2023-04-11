@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,7 +53,17 @@ public class PurchaseChangeDTO implements Serializable {
         private String approveStatus;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态 （0未作废，1已作废）
+         */
+        private String invalidStatus;
+
+        /**
+         * 作废状态名称
          */
         private String invalidStatusName;
 
@@ -131,15 +141,26 @@ public class PurchaseChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
         /**
-         * sku编码
+         * 主键ids
          */
-        private List<String> skuNoList;
+        private List<String> ids;
+
+        /**
+         * 采购变更单号
+         */
+        private String code;
 
         /**
          * 产品名称
          */
         private String productName;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
 
         /**
          * 供应商id
@@ -166,7 +187,6 @@ public class PurchaseChangeDTO implements Serializable {
          */
         private List<LocalDate> createTimeList;
 
-
         /**
          * 审核时间开始
          */
@@ -184,12 +204,14 @@ public class PurchaseChangeDTO implements Serializable {
         /**
          * 采购订单id
          */
+        @NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
 
         /**
          * 变更日期
          */
-        private Date changeDate;
+        @NotNull(message = "变更日期不能为空")
+        private LocalDate changeDate;
 
         /**
          * 变更人id
@@ -201,20 +223,6 @@ public class PurchaseChangeDTO implements Serializable {
          */
         private String changeDeptId;
 
-        /**
-         * 采购组织id
-         */
-        private String purchaseOrgId;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
-         * 供应商id
-         */
-        private String supplierId;
     }
 
     @Data
@@ -258,6 +266,36 @@ public class PurchaseChangeDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商信息
+         */
+        private PurchaseOrderSupplierDTO.UpdateDTO supplierDTO;
 
     }
 

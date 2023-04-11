@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.RegularValid;
@@ -60,6 +61,115 @@ public class SupplierDTO implements Serializable {
 
 
     /**
+     * 供应商基础导入的dto
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class ImportAddDTO {
+
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        @Size(max = 50, message = "供应商名称最大50字符")
+        private String name;
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+
+        /**
+         * 分类名
+         */
+        private String categoryName;
+
+        /**
+         * 等级id
+         */
+        @NotBlank(message = "供应商等级不能为空")
+        private String gradeId;
+
+
+        /**
+         * 等级名
+         */
+        private String gradeName;
+
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+
+        /**
+         * 采购员
+         */
+        private String purchaseUserName;
+
+
+        /**
+         * 公司地址
+         */
+        @Size(max = 100, message = "公司地址最大100字符")
+        private String companyAddress;
+
+
+        /**
+         * 公司网址
+         */
+        @Size(max = 100, message = "公司网址最大100字符")
+        @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "公司网址有误")
+        private String companyWebsite;
+
+
+        /**
+         * 结算付款方式
+         */
+        //@NotBlank(message = "结算方式不能为空")
+        private String payMethodId;
+
+        /**
+         * 结算付款币种
+         */
+        //@NotBlank(message = "结算币种不能为空")
+        private String payCurrency;
+
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        @NotNull(message = "供应商状态不能为空")
+        private Boolean disabled;
+
+        /**
+         * 供应商联系信息
+         */
+        @Valid
+        private List<SupplierContactDTO.ImportAddDTO> contactList;
+
+        /**
+         * 供应商银行账户信息
+         */
+        @Valid
+        private List<SupplierAccountDTO.ImportAddDTO> bankAccountList;
+
+        /**
+         * 供应商资质信息
+         */
+        @Valid
+        private List<SupplierCredentialDTO.ImportAddDTO> credentialList;
+
+    }
+
+
+    /**
      * 供应商修改信息
      */
     @Data
@@ -89,12 +199,13 @@ public class SupplierDTO implements Serializable {
 
 
     /**
-     * 供应商基础信息
+     * 供应商详情
      */
     @Data
     @NoArgsConstructor
     @Valid
-    public static class SupplierBaseDTO {
+    public static class SupplierViewDTO {
+
 
         /**
          * 表id
@@ -105,8 +216,7 @@ public class SupplierDTO implements Serializable {
         /**
          * 名称
          */
-        @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 50, message = "最大50字符")
+
         private String name;
 
 
@@ -118,8 +228,24 @@ public class SupplierDTO implements Serializable {
         /**
          * 等级id
          */
-        @NotBlank(message = "等级id不能为空")
+
         private String gradeId;
+
+        /**
+         * 等级名称
+         * 日志会用到
+         */
+        private String gradeName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 阶段
+         */
+        private String phase;
 
 
         /**
@@ -131,14 +257,118 @@ public class SupplierDTO implements Serializable {
         /**
          * 公司地址
          */
-        @Size(max = 100, message = "最大50字符")
         private String companyAddress;
 
 
         /**
          * 公司网址
          */
-        @Size(max = 100, message = "最大50字符")
+
+        private String companyWebsite;
+
+
+        /**
+         * 结算付款方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算付款币种
+         */
+        private String payCurrency;
+
+        /**
+         * 结算付款币种名称
+         * 日志会到
+         */
+        private String payCurrencyName;
+
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+
+        /**
+         * 供应商联系信息
+         */
+        @Valid
+        private List<SupplierContactDTO.UpdateDTO> contactList;
+
+        /**
+         * 供应商银行账户信息
+         */
+        @Valid
+        private List<SupplierAccountDTO.UpdateDTO> bankAccountList;
+
+        /**
+         * 供应商资质信息
+         */
+        @Valid
+        private List<SupplierCredentialDTO.UpdateDTO> credentialList;
+
+    }
+
+
+    /**
+     * 供应商基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class SupplierBaseDTO extends PermissionsDTO {
+
+        /**
+         * 表id
+         */
+        private String id;
+
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "供应商名称不能为空")
+        @Size(max = 50, message = "供应商名称最大50字符")
+        private String name;
+
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
+
+        /**
+         * 等级id
+         */
+        @NotBlank(message = "供应商等级不能为空")
+        private String gradeId;
+
+        /**
+         * 等级名称
+         * 日志会用到
+         */
+        private String gradeName;
+
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+
+        /**
+         * 公司地址
+         */
+        @Size(max = 100, message = "公司地址最大100字符")
+        private String companyAddress;
+
+
+        /**
+         * 公司网址
+         */
+        @Size(max = 100, message = "公司网址最大100字符")
         @RegularValid(formatPattern = FieldFormatPatternTypeEnum.URL, message = "公司网址有误")
         private String companyWebsite;
 
@@ -155,12 +385,18 @@ public class SupplierDTO implements Serializable {
         //@NotBlank(message = "结算币种不能为空")
         private String payCurrency;
 
+        /**
+         * 结算付款币种名称
+         * 日志会到
+         */
+        private String payCurrencyName;
+
 
         /**
          * true 禁用
          * false 启用
          */
-        @NotNull(message = "启用状态不能为空")
+        @NotNull(message = "供应商状态不能为空")
         private Boolean disabled;
 
     }
@@ -422,10 +658,52 @@ public class SupplierDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportDTO  extends PagingParamDTO{
+    public static class ExportDTO extends PagingParamDTO {
         private List<String> ids;
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+        /**
+         * 联系表id
+         */
+        private String contactId;
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 是否默认 true  是
+         */
+        private Boolean isDefault;
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算币种
+         */
+        private String payCurrency;
+    }
 
 }

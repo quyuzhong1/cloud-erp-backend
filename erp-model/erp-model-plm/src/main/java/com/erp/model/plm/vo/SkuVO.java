@@ -58,4 +58,9 @@ public class SkuVO implements Serializable {
      * 报关名称
      */
     private String declareName;
+
+    /**
+     * 变体信息
+     */
+    private String variantProperty;
 }

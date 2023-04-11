@@ -1,8 +1,9 @@
 package com.erp.server.scm.service;
 
-import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 
 import java.util.List;
 
@@ -21,11 +22,12 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * 检查区间报价是否存在
      *
      * @param purchasePriceChangeDetailList
+     * @param purchasePriceId 采购价目表id
      * @return void
      * @author yl
      * @date 2023-03-28 12:07
      */
-    void checkSkuInterval(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList);
+    void checkSkuInterval(String purchasePriceId,List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList);
 
     /**
      * 根据变更表id 获取明细
@@ -66,4 +68,14 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @return void
      */
     void updatePriceChangeDetail(String id, List<PurchasePriceChangeDetailDTO.UpdateDTO> purchasePriceChangeDetailList);
+
+    
+    /**
+     * 根据供应商id获取到已变更区间数据
+     * @author yl
+     * @date 2023-04-06 10:01
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     */
+    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
 }

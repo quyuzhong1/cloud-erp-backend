@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -113,4 +114,14 @@ public interface SupplierPhaseService extends SuperService<SupplierPhaseEntity> 
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(SupplierPhaseDTO.UpdateDTO dto);
+
+    
+    /**
+     * 获取阶段变更的时候 获取阶段列表
+     * @author yl
+     * @date 2023-03-31 14:26
+     * @param dto
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     */
+    List<BaseDropDownDTO.CommonDTO> listByChange(SupplierPhaseDTO.ListDTO dto);
 }

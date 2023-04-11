@@ -11,10 +11,14 @@ import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
 import com.erp.model.scm.entity.AttachmentEntity;
 import com.erp.model.scm.entity.SupplierCredentialEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.scm.mapper.SupplierCredentialMapper;
 import com.erp.server.scm.service.AttachmentService;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SupplierCredentialService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +42,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
     @Resource
     private AttachmentService attachmentService;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     /**
      * 保存 供应商资质信息
@@ -133,6 +140,10 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         if (CollectionUtils.isEmpty(credentialList)) {
             return;
         }
+
+        //这是要添加的
+        List<SupplierCredentialDTO.UpdateDTO> addList = credentialList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
         List<SupplierCredentialEntity> saveOrUpdateList = new ArrayList<>(credentialList.size());
         Class<SupplierCredentialEntity> credentialClass = SupplierCredentialEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -140,10 +151,14 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         String type = tableName.value();
         List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         List<SupplierCredentialEntity> dbList = this.getList(supplierId);
-        //获取到业务表id 集合
-        List<String> businessIdList = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
-        attachmentService.deleteByBusinessIds(businessIdList);
 
+
+        List<String> deleteIdList = getDeleteIds(credentialList, dbList);
+        //这是要删除的
+        List<SupplierCredentialEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
         for (SupplierCredentialDTO.UpdateDTO item : credentialList) {
             SupplierCredentialEntity entity = new SupplierCredentialEntity();
             BeanMapper.copy(item, entity);
@@ -165,10 +180,48 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
             }
         }
+        //这是修改的
+        List<SupplierCredentialEntity> updateList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
 
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(supplierId, obj.getName())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个资质名称【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(supplierId, obj.getName())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个资质名称【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
+
+        //修改的
+        for (SupplierCredentialEntity update : updateList) {
+            String id = update.getId();
+            SupplierCredentialEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
+            }
+        }
         this.saveOrUpdateBatch(saveOrUpdateList);
-        attachmentService.saveBatch(batchAttachmentList);
+        if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+            attachmentService.saveBatch(batchAttachmentList);
+        }
 
+
+    }
+
+
+    /**
+     * 获取要删除的
+     *
+     * @param updateList
+     * @param dbList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-03-31 15:54
+     */
+    private List<String> getDeleteIds(List<SupplierCredentialDTO.UpdateDTO> updateList, List<SupplierCredentialEntity> dbList) {
+        List<String> ids = updateList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SupplierCredentialDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
 
 
@@ -187,10 +240,12 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
         }
         List<SupplierCredentialEntity> allList = this.getList(supplierIds);
         List<String> idList = allList.stream().map(SupplierCredentialEntity::getId).collect(Collectors.toList());
-        LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
-        this.remove(queryWrapper);
-        attachmentService.deleteByBusinessIds(idList);
+        if (CollectionUtils.isNotEmpty(idList)) {
+            LambdaQueryWrapper<SupplierCredentialEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(SupplierCredentialEntity::getSupplierId, idList);
+            this.remove(queryWrapper);
+            attachmentService.deleteByBusinessIds(idList);
+        }
     }
 
 
@@ -213,6 +268,31 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
 
         }
 
+    }
+
+
+    /**
+     * 转化 导入的数据
+     *
+     * @param supplierId
+     * @param credentialList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     * @author yl
+     * @date 2023-03-31 9:11
+     */
+    @Override
+    public List<SupplierCredentialEntity> transform(String supplierId, List<SupplierCredentialDTO.ImportAddDTO> credentialList) {
+        if (CollectionUtils.isEmpty(credentialList)) {
+            return Collections.emptyList();
+        }
+        List<SupplierCredentialEntity> addList = new ArrayList<>(credentialList.size());
+        for (SupplierCredentialDTO.ImportAddDTO item : credentialList) {
+            SupplierCredentialEntity credential = new SupplierCredentialEntity();
+            BeanMapper.copy(item, credential);
+            credential.setSupplierId(supplierId);
+            addList.add(credential);
+        }
+        return addList;
     }
 
 

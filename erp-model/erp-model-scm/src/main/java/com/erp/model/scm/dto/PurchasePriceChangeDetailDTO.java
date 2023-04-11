@@ -3,8 +3,7 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,16 +38,20 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
         /**
          * 最小数量
          */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer minQty;
 
 
         /**
          * 最大数量
          */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer maxQty;
 
 
@@ -105,16 +108,20 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
         /**
          * 最小数量
          */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer minQty;
 
 
         /**
          * 最大数量
          */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer maxQty;
 
 
@@ -166,12 +173,24 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * sku_no
+         */
+        private String skuNo;
+
+
         private String purchasePriceDetailId;
 
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
         /**
          * 最小数量
          */
@@ -188,6 +207,12 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * 币种
          */
         private String currency;
+
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
 
         /**
@@ -228,7 +253,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          * true 禁用
          * false 启用
          */
-        private Boolean disabled;
+        private Boolean disabled=false;
     }
 
 }

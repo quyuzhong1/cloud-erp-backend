@@ -6,15 +6,20 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.entity.SupplierAccountEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierAccountMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SupplierAccountService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,6 +38,9 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     /**
      * 批量保存供应商账户信息
@@ -91,14 +99,52 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         if (CollectionUtils.isEmpty(bankAccountList)) {
             return;
         }
+        //这是要添加的
+        List<SupplierAccountDTO.UpdateDTO> addList = bankAccountList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
         List<SupplierAccountEntity> saveOrUpdateList = BeanMapper.copyList(bankAccountList, SupplierAccountEntity.class);
+
+        List<String> bankIdList = addList.stream().map(SupplierAccountDTO.UpdateDTO::getBankId).collect(Collectors.toList());
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIdList);
+        for (SupplierAccountEntity item : saveOrUpdateList) {
+            String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setSupplierId(supplierId);
+            item.setBankName(bankName);
+        }
+
+
+        //这是要修改
+        List<SupplierAccountEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
 
         List<SupplierAccountEntity> dbList = this.getList(supplierId);
         //获取到删除的 账户id
         List<String> deleteIdList = getDeleteIds(bankAccountList, dbList);
+        //这是要删除的
+        List<SupplierAccountEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
+
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
+
+
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(supplierId, obj.getPayee())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个账户【%s】", ModuleTypeEnum.SUPPLIER.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(supplierId, obj.getPayee())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个账户【%s】", ModuleTypeEnum.SUPPLIER.getCode(), addPairList, "编辑操作");
+
+        //修改的
+        for (SupplierAccountEntity update : updateList) {
+            String id = update.getId();
+            SupplierAccountEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (old != null) {
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
+            }
+        }
+
         this.saveOrUpdateBatch(saveOrUpdateList);
 
     }
@@ -121,6 +167,31 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         queryWrapper.in(SupplierAccountEntity::getSupplierId, ids);
         this.remove(queryWrapper);
 
+    }
+
+
+    /**
+     * 转化 导入的数据
+     *
+     * @param supplierId
+     * @param accountList
+     * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
+     * @author yl
+     * @date 2023-03-31 9:11
+     */
+    @Override
+    public List<SupplierAccountEntity> transform(String supplierId, List<SupplierAccountDTO.ImportAddDTO> accountList) {
+        if (CollectionUtils.isEmpty(accountList)) {
+            return Collections.emptyList();
+        }
+        List<SupplierAccountEntity> addList = new ArrayList<>(accountList.size());
+        for (SupplierAccountDTO.ImportAddDTO item : accountList) {
+            SupplierAccountEntity account = new SupplierAccountEntity();
+            BeanMapper.copy(item, account);
+            account.setSupplierId(supplierId);
+            addList.add(account);
+        }
+        return addList;
     }
 
 

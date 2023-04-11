@@ -8,10 +8,10 @@ package com.erp.model.dmp.enums;
  */
 public enum PlatformEnum {
 
-    MABANG(0, "mabang", "马帮"),
-    GYY(1, "gyy", "管易云"),
-    KINGDEE(2, "kingdee", "金蝶云星空"),
-    KINGDEE_ECC(3, "kingdeeEcc", "金蝶云星空ECC");
+    MABANG(1, "mabang", "马帮"),
+    GYY(2, "gyy", "管易云"),
+    KINGDEE(3, "kingdee", "金蝶云星空"),
+    KINGDEE_ECC(4, "kingdeeEcc", "金蝶云星空ECC");
 
     private Integer code;
 

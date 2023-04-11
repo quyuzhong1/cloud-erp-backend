@@ -75,6 +75,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String currency;
 
     /**
+     * 币别符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+    /**
      * 采购数量
      */
     @TableField("purchase_qty")
@@ -91,30 +97,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      */
     @TableField("plan_delivery_date")
     private LocalDate planDeliveryDate;
-
-    /**
-     * 收料组织id
-     */
-    @TableField("receive_org_id")
-    private String receiveOrgId;
-
-    /**
-     * 收料组织名称
-     */
-    @TableField("receive_org_name")
-    private String receiveOrgName;
-
-    /**
-     * 交货仓库id
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
-
-    /**
-     * 交货仓库名称
-     */
-    @TableField("delivery_warehouse_name")
-    private String deliveryWarehouseName;
 
     /**
      * 是否是赠品（false否，true是）
@@ -177,6 +159,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("is_urgent")
     private Boolean isUrgent;
 
+    /**
+     * 变体信息
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+
    /** 采购申请明细id(无需传值，后端使用)
     *
     */
@@ -212,10 +200,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
 
     public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
 
-    public static final String RECEIVE_ORG_ID = "receive_org_id";
-
-    public static final String RECEIVE_ORG_NAME = "receive_org_name";
-
     public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
 
     public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
@@ -239,6 +223,8 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String RETURN_QTY = "return_qty";
 
     public static final String IS_URGENT = "is_urgent";
+
+    public static final String VARIANT_PROPERTY = "variant_property";
 
 
     @Override

@@ -20,7 +20,7 @@ import java.util.stream.Collector;
 @UtilityClass
 public class MathUtil {
 
-    public final int scale = 2;
+    public final int scale = 4;
     public final BigDecimal BigDecimal_100 = new BigDecimal("100");
     public final BigDecimal BigDecimal__1 = new BigDecimal("-1");
     public final BigDecimal BigDecimal_2 = new BigDecimal("2");

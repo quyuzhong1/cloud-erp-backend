@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
  * @date 2022/12/14 14:42
  */
 @RestController
-@RequestMapping("bi/dmpShopInfo")
+@RequestMapping("dmpShopInfo")
 public class DmpShopInfoController extends BaseController {
 
     @Resource

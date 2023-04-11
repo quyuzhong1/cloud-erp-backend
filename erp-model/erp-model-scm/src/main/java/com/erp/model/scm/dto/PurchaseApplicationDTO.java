@@ -82,6 +82,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 计划交期
          */
         private LocalDate planDeliveryDate;
@@ -135,6 +140,12 @@ public class PurchaseApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
 
         /**
          * 采购申请单号
@@ -307,6 +318,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 采购组织id
          */
         private String purchaseOrgId;
@@ -342,9 +358,9 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer moq;
 
         /**
-         * 采购交期
+         * 采购交期（天）
          */
-        private LocalDate planDeliveryDate;
+        private Integer deliveryDay;
 
         /**
          * 申请数量
@@ -378,6 +394,16 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotBlank(message = "供应商id不能为空")
         private String supplierId;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
         /**
          * 采购数量
@@ -423,9 +449,9 @@ public class PurchaseApplicationDTO implements Serializable {
         private String destWarehouseId;
 
         /**
-         * 采购交期
+         * 采购交期（天）
          */
-        private LocalDate planDeliveryDate;
+        private Integer deliveryDay;
 
     }
 

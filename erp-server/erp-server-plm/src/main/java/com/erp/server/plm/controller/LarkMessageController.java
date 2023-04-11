@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  * @Date 2023/3/9 10:01
  **/
 @RestController
-@RequestMapping("plm/lark/message")
+@RequestMapping("lark/message")
 public class LarkMessageController  extends BaseController {
 
     @Resource

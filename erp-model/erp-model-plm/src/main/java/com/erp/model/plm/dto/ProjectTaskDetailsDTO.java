@@ -26,6 +26,11 @@ public class ProjectTaskDetailsDTO implements Serializable {
     private String taskId;
 
     /**
+     * spu编码
+     */
+    private String spuNo;
+
+    /**
      * 产品id
      */
     private String productId;

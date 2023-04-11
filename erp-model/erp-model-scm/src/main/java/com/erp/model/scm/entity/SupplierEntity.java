@@ -57,6 +57,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     private String gradeId;
 
     /**
+     * 等级名
+     */
+    @TableField("grade_name")
+    private String gradeName;
+
+    /**
      * 采购员id
      */
     @TableField("purchase_user_id")

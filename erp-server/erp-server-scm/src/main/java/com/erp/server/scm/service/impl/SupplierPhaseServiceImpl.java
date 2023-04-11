@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -207,10 +208,10 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         String type = dto.getOperateType();
         checkPhase(currentPhase, targetPhase, type);
 
-        BeanMapper.copy(phase, dto);
+        phase.setTargetPhase(targetPhase);
+        phase.setDescription(dto.getDescription());
         Boolean result = this.updateById(phase);
         if (result) {
-            attachmentService.deleteByBusinessIds(Arrays.asList(id));
             Class<SupplierPhaseEntity> credentialClass = SupplierPhaseEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
@@ -246,6 +247,9 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             Boolean result = this.updateApproveStatus(list, approveStatus);
+            //通过后更改供应商的阶段
+            supplierService.updatePhase(list);
+
             return result;
         } else {
             //审核不通过
@@ -315,15 +319,13 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-
         String searchType = params.getSearchType();
-        List<String> supplierPhaseIdList = new ArrayList<>();
-
+        List<String> statusList = new ArrayList<>(4);
         //待我审核
         if (searchType.equals(SearchType.WAIT_APPROVE)) {
-
+            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
-        IPage pageData = baseMapper.paging(query, params, supplierPhaseIdList);
+        IPage pageData = baseMapper.paging(query, params, statusList);
         List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
@@ -365,6 +367,92 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
 
     /**
+     * 获取阶段变更的时候 获取阶段列表
+     *
+     * @param dto
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     * @author yl
+     * @date 2023-03-31 14:26
+     */
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> listByChange(SupplierPhaseDTO.ListDTO dto) {
+        //当前等级
+        String currentPhase = dto.getCurrentPhase();
+        //操作
+        String operateType = dto.getOperateType();
+        List<BaseDropDownDTO.CommonDTO> resultList = new ArrayList<>(4);
+        //潜在
+        String potential = SupplierPhaseEnum.POTENTIAL.getPhase();
+        //准入
+        String access = SupplierPhaseEnum.ACCESS.getPhase();
+        //合格
+        String conform = SupplierPhaseEnum.CONFORM.getPhase();
+        //淘汰
+        String eliminate = SupplierPhaseEnum.ELIMINATE.getPhase();
+        SupplierPhaseEnum[] phaseList = SupplierPhaseEnum.values();
+        List<SupplierPhaseEnum> list = Arrays.asList(phaseList);
+
+        //当 当前阶段为潜在
+        if (currentPhase.equals(potential)) {
+            //阶段降级
+            if (operateType.equals(ScmConstant.DEGRADE)) {
+                BaseDropDownDTO.CommonDTO common = new BaseDropDownDTO.CommonDTO();
+                common.setCode(eliminate);
+                common.setValue(SupplierPhaseEnum.getPhaseName(eliminate));
+                resultList.add(common);
+            } else {
+                //升级 【潜在】只能升级为【准入】【合格】
+                List<BaseDropDownDTO.CommonDTO> potentialList = list.stream().filter(p -> Arrays.asList(access, conform).contains(p.getPhase()))
+                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
+                        .collect(Collectors.toList());
+                resultList.addAll(potentialList);
+            }
+        }
+
+        //当 当前阶段为准入
+        if (currentPhase.equals(access)) {
+            //阶段降级 【准入】只能降级【潜在】【淘汰】
+            if (operateType.equals(ScmConstant.DEGRADE)) {
+                List<BaseDropDownDTO.CommonDTO> accessList = list.stream().filter(p -> Arrays.asList(eliminate, potential).contains(p.getPhase()))
+                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
+                        .collect(Collectors.toList());
+                resultList.addAll(accessList);
+            } else {
+                //升级 为合格
+                List<BaseDropDownDTO.CommonDTO> accessList = list.stream().filter(p -> p.getPhase().equals(conform))
+                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
+                        .collect(Collectors.toList());
+                resultList.addAll(accessList);
+
+            }
+        }
+
+        //当 当前阶段为 合格的时候
+        if (currentPhase.equals(conform)) {
+            //阶段降级 【合格】只能降级【准入】【潜在】
+            if (operateType.equals(ScmConstant.DEGRADE)) {
+                List<BaseDropDownDTO.CommonDTO> conformList = list.stream().filter(p -> Arrays.asList(access, potential).contains(p.getPhase()))
+                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
+                        .collect(Collectors.toList());
+                resultList.addAll(conformList);
+            }
+        }
+
+        //当 当前阶段为 淘汰的时候
+        if (currentPhase.equals(eliminate)) {
+            //阶段升级 【淘汰】升级只能选择【准入】【合格】
+            if (!operateType.equals(ScmConstant.DEGRADE)) {
+                List<BaseDropDownDTO.CommonDTO> eliminateList = list.stream().filter(p -> Arrays.asList(access, conform).contains(p.getPhase()))
+                        .map(x -> new BaseDropDownDTO.CommonDTO(x.getPhase(), x.getName()))
+                        .collect(Collectors.toList());
+                resultList.addAll(eliminateList);
+            }
+        }
+        return resultList;
+    }
+
+
+    /**
      * 更改状态
      *
      * @param list
@@ -379,20 +467,6 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
             return this.updateBatchById(list);
         }
         return false;
-    }
-
-
-    /**
-     * 启动一个流程
-     *
-     * @param
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-23 16:39
-     * TODO
-     */
-    private Boolean startProcess() {
-        return true;
     }
 
 

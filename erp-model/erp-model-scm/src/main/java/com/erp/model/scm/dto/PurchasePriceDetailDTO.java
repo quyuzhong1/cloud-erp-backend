@@ -1,13 +1,14 @@
 package com.erp.model.scm.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -32,18 +33,31 @@ public class PurchasePriceDetailDTO implements Serializable {
 
 
         /**
+         * sku id
+         */
+        private String skuNo;
+
+
+        private String productName;
+
+        /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
 
         /**
          * 最小数量
          */
+
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer minQty;
 
         /**
          * 最大数量
          */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer maxQty;
 
         /**
@@ -85,6 +99,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PurchaseTaxPriceSearchDTO {
 
         /**
@@ -115,7 +130,6 @@ public class PurchasePriceDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends AddDTO {
 
-        @NotBlank(message = "id 不能为空")
         private String id;
 
     }
@@ -164,6 +178,11 @@ public class PurchasePriceDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+
+        /**
+         * 采购交期（天）
+         */
+        private Integer deliveryDay;
     }
 
 
@@ -185,13 +204,12 @@ public class PurchasePriceDetailDTO implements Serializable {
     }
 
 
-    /**
-     * 历史数据
-     */
     @Data
     @NoArgsConstructor
-    public static class HistoryDTO {
+    public static class ViewDTO {
 
+
+        private String id;
 
         /**
          * sku id
@@ -211,11 +229,10 @@ public class PurchasePriceDetailDTO implements Serializable {
         private String skuNo;
 
 
-
         /**
          * 采购交期
          */
-        private Integer deliveryDate;
+        private Integer deliveryDay;
 
         /**
          * 最小数量
@@ -247,17 +264,115 @@ public class PurchasePriceDetailDTO implements Serializable {
         /**
          * 含税单价
          */
-        @NotNull(message = "含税单价不能为空")
         private BigDecimal taxPrice;
 
 
         /**
          * 税率
          */
-        @NotNull(message = "税率不能为空")
         private BigDecimal taxRate;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
 
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class HistoryDTO {
+
+
+        private String id;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * sku_no
+         */
+        private String skuNo;
+
+
+        /**
+         * 采购交期
+         */
+        private Integer deliveryDay;
+
+        /**
+         * 最小数量
+         */
+        private Integer minQty;
+
+        /**
+         * 最大数量
+         */
+        private Integer maxQty;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 禁用状态
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+
+        private LocalDateTime createTime;
+
+
+    }
+
 
 }

@@ -26,7 +26,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("bi/sales")
+@RequestMapping("sales")
 public class BiSalesModuleController extends BaseController {
 
 

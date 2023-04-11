@@ -31,12 +31,8 @@ import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -1596,7 +1592,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (flag) {
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
-                    .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
+                    .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + dto.getComment()));
         }
         //workflowFeign.taskPass(approveProcess);
         //审核通过后发送到金蝶系统
@@ -1982,6 +1978,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return baseMapper.getSkuInfoBySkuIds(skuIds);
 
+    }
+
+    @Override
+    public List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto) {
+        return baseMapper.searchSku(dto.getSearchKeyword(),dto.getStatus());
     }
 
 

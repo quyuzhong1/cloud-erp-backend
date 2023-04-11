@@ -5,27 +5,61 @@
 
     <select id="getTaxPrice" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$PurchaseTaxPriceViewDTO">
         select
-            pp.supplier_id,
-            s.name as supplierName,
-            ppd.currency,
-            ppd.tax_price as taxPrice,
-            ppd.tax_rate as taxRate,
-            ppd.min_qty as minQty,
-            ppd.max_qty as maxQty
+        pp.supplier_id,
+        s.name as supplierName,
+        ppd.currency,
+        ppd.tax_price as taxPrice,
+        ppd.tax_rate * 100 as taxRate,
+        ppd.min_qty as minQty,
+        ppd.max_qty as maxQty,
+        ppd.delivery_day as deliveryDay
         from purchase_price pp
         left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
         left join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
-            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >= ppd.effective_date
+            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >=
+            ppd.effective_date and ppd.expire_date >= now()
             <if test="params.skuId != null and params.skuId != ''">
                 and ppd.sku_id = #{params.skuId}
             </if>
             <if test="params.purchaseQty != null ">
-                and ppd.max_qty >= #{params.purchaseQty} and #{params.purchaseQty} >= ppd.min_qty
+                and ppd.max_qty >= #{params.purchaseQty} and #{params.purchaseQty} > ppd.min_qty
             </if>
             <if test="params.supplierId != null and params.supplierId != ''">
                 and pp.supplier_id = #{params.supplierId}
             </if>
         </where>
+    </select>
+
+    <select id="getBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$AddDTO">
+
+        SELECT
+        sku_id,
+        delivery_day,
+        min_qty,
+        max_qty,
+        currency,
+        tax_price,
+        tax_rate,
+        disabled
+        FROM purchase_price_detail WHERE
+        is_deleted=FALSE AND
+        purchase_price_id IN (
+        SELECT id FROM purchase_price
+        WHERE supplier_id=#{supplierId} AND is_deleted=FALSE
+        <if test="statusList!=null and statusList.size>0">
+            AND approve_status IN
+            <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        )
+        <if test="detailIds!=null and detailIds.size>0">
+            AND id NOT IN
+            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
     </select>
 </mapper>

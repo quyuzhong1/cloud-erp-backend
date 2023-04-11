@@ -1,16 +1,14 @@
 package com.erp.server.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import com.erp.model.dmp.dto.GoodcangDTO;
+import com.common.business.enums.SyncKingdeeOmsStatusEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -85,6 +83,19 @@ public class DmpWarehouseInboundRecordEntity extends BaseEntity<DmpWarehouseInbo
     @TableField("platform_sign")
     private String platformSign;
 
+    /**
+     * 平台类型
+     */
+    @TableField("sync_kingdee_status")
+    private SyncKingdeeOmsStatusEnum syncKingdeeStatus;
+
+
+    /**
+     * 平台类型
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
 
     public static final String RECEIVING_CODE = "receiving_code";
 
@@ -104,6 +115,10 @@ public class DmpWarehouseInboundRecordEntity extends BaseEntity<DmpWarehouseInbo
 
     public static final String PLATFORM_SIGN = "platform_sign";
 
+    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+
+    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+
     public DmpWarehouseInboundRecordEntity(GoodcangDTO.MessageDTO ext) {
         this.receivingCode = ext.getReceivingCode();
         this.referenceNo = ext.getReferenceNo();
@@ -114,6 +129,8 @@ public class DmpWarehouseInboundRecordEntity extends BaseEntity<DmpWarehouseInbo
         this.platformAddTime = ext.getAddTime();
         this.platformUpdateTime = ext.getUpdateTime();
         this.platformSign = ext.getPlatformSign();
+        this.syncKingdeeStatus = SyncKingdeeOmsStatusEnum.BE_SUBMIT;
+        this.syncKingdeeTime = LocalDateTime.now();
     }
 
     @Override

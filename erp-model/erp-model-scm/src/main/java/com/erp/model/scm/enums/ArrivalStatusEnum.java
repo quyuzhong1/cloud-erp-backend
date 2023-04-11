@@ -8,9 +8,9 @@ package com.erp.model.scm.enums;
  */
 public enum ArrivalStatusEnum {
 
-    NON_ARRIVAL("1", "未到货"),
-    ARRIVED("2", "已到货"),
-    PARTIAL_ARRIVAL("3", "部分到货");
+    NON_ARRIVAL("0", "未到货"),
+    ARRIVED("1", "已到货"),
+    PARTIAL_ARRIVAL("2", "部分到货");
 
     private String code;
     private String name;

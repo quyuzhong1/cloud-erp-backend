@@ -48,6 +48,13 @@ public enum SupplierPhaseEnum {
         }
         return "";
 
+    }
+
+
+    public static SupplierPhaseEnum getPhase(String phase) {
+        SupplierPhaseEnum phaseEnum = Arrays.stream(values()).filter(p -> p.getPhase().equals(phase))
+                .findFirst().orElse(null);
+        return phaseEnum;
 
     }
 }

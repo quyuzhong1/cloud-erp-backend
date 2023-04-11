@@ -25,7 +25,7 @@ import java.util.List;
  * @date 2022-07-07 18:28:29
  */
 @RestController
-@RequestMapping("sys/user")
+@RequestMapping("user")
 public class SysUserInfoController extends BaseController {
 
     @Autowired

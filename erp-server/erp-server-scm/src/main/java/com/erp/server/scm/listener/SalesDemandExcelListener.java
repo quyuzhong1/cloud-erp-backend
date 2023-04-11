@@ -98,6 +98,7 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
                         excelDTO.setSkuNo(skuEntity.getSkuNo());
                         excelDTO.setProductName(skuEntity.getSkuName());
                         excelDTO.setUnitQty(skuEntity.getUnitQty());
+                        excelDTO.setVariantProperty(skuEntity.getVariantProperty());
                     }
                 }
             }

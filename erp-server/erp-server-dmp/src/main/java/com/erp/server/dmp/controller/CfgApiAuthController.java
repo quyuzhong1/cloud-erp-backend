@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  * @date 2023/1/11 11:47
  */
 @RestController
-@RequestMapping("dmp/cfgApiAuth")
+@RequestMapping("cfgApiAuth")
 public class CfgApiAuthController extends BaseController {
 
     @Resource

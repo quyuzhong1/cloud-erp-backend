@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  * @date: 2023/1/11 17:46
  */
 @RestController
-@RequestMapping("dmp/feign")
+@RequestMapping("feign")
 public class DmpFeignController extends BaseController {
 
     @Resource

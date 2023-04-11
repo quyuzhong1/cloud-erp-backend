@@ -17,6 +17,6 @@ import java.util.Map;
 public interface DmpTaskFeign {
 
     //店铺id查询店铺
-    @PostMapping("dmp/feign/getShopById")
+    @PostMapping("feign/getShopById")
     DmpShopInfoDTO getShopById(@RequestBody String shopId);
 }

@@ -68,6 +68,18 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String purchaseOrgName;
 
     /**
+     * 收料组织id
+     */
+    @TableField("receive_org_id")
+    private String receiveOrgId;
+
+    /**
+     * 收料组织名称
+     */
+    @TableField("receive_org_name")
+    private String receiveOrgName;
+
+    /**
      * 采购部门id
      */
     @TableField("purchase_dept_id")
@@ -78,6 +90,19 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("purchase_dept_name")
     private String purchaseDeptName;
+
+
+    /**
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
+
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
 
     /**
      * 新品首批（false否,true是）
@@ -135,6 +160,10 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     public static final String PURCHASE_ORG_ID = "purchase_org_id";
 
     public static final String PURCHASE_ORG_NAME = "purchase_org_name";
+
+    public static final String RECEIVE_ORG_ID = "receive_org_id";
+
+    public static final String RECEIVE_ORG_NAME = "receive_org_name";
 
     public static final String PURCHASE_DEPT_ID = "purchase_dept_id";
 

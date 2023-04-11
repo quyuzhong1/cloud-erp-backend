@@ -22,7 +22,7 @@ import java.util.List;
  * @since 2023-03-21
  */
 @RestController
-@RequestMapping("/sys/bank")
+@RequestMapping("bank")
 public class DictBankController extends BaseController {
 
     @Resource

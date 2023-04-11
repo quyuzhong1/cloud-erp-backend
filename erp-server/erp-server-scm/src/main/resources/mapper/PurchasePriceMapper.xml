@@ -25,7 +25,7 @@
         ppd.id AS purchasePriceDetailId,
         ppd.disabled
         FROM purchase_price_detail ppd
-        LEFT JOIN purchase_price pp
+        INNER JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id
         WHERE pp.is_deleted=false AND ppd.is_deleted= false
         <if test="params.skuIdList!=null and params.skuIdList.size>0">
@@ -52,15 +52,15 @@
         </if>
 
         <if test="params.effectiveDateList!=null and params.effectiveDateList.size>0">
-            AND ppd.effective_date between #{params.effectiveDateList[0]} and #{params.effectiveDateList[1]}
+            AND ppd.effective_date >= #{params.effectiveDateList[0]} and (#{params.effectiveDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ppd.effective_date
         </if>
 
         <if test="params.expireDateList!=null and params.expireDateList.size>0">
-            AND ppd.expire_date between #{params.expireDateList[0]} and #{params.expireDateList[1]}
+            AND ppd.expire_date >= #{params.expireDateList[0]} and (#{params.expireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ppd.expire_date
         </if>
 
         <if test="params.createTimeList!=null and params.createTimeList.size>0">
-            AND pp.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+            AND pp.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pp.create_time
         </if>
         <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
             AND pp.create_user_id IN
@@ -72,6 +72,17 @@
             AND
             ppd.product_name LIKE concat('%', #{params.productName} ,'%')
         </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND pp.approve_status IN
+            <foreach collection="statusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
 
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -79,7 +90,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ppd.create_time DESC
+        pp.create_time DESC,ppd.id DESC
     </select>
 
     <select id="getExport" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
@@ -100,7 +111,8 @@
         ppd.effective_date,
         ppd.currency,
         pp.purchase_org_id,
-        pp.purchase_org_name
+        pp.purchase_org_name,
+        PPd.disabled
         FROM purchase_price_detail ppd
         LEFT JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id
@@ -159,5 +171,9 @@
                 </if>
             </otherwise>
         </choose>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
     </select>
 </mapper>

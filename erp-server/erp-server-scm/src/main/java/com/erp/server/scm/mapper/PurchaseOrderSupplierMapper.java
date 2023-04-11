@@ -19,5 +19,13 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PurchaseOrderSupplierMapper extends BaseMapper<PurchaseOrderSupplierEntity> {
 
+    /**
+     * 获取采购记录
+     * @author yl
+     * @date 2023-04-03 16:53
+     * @param query
+     * @param supplierId
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.scm.dto.PurchaseOrderSupplierDTO.SupplierPurchaseDTO>
+     */
     IPage<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> supplierPurchasePaging(Page query, @Param("supplierId") String supplierId);
 }

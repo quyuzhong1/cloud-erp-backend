@@ -19,7 +19,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/feign/bank")
+@RequestMapping("feign/bank")
 public class BankFeignController extends BaseController {
 
 

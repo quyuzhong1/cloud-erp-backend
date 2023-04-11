@@ -138,6 +138,12 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     @TableField("remark")
     private String remark;
 
+    /**
+     * 变体信息
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+
     public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
     public static final String SKU_ID = "sku_id";
@@ -175,6 +181,9 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     public static final String IS_CREATE_PO = "is_create_po";
 
     public static final String REMARK = "remark";
+
+    public static final String VARIANT_PROPERTY = "variant_property";
+
 
     @Override
     public Serializable pkVal() {

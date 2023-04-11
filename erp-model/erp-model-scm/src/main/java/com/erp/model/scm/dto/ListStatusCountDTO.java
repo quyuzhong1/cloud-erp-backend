@@ -59,4 +59,20 @@ public class ListStatusCountDTO implements Serializable {
         private Integer count;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseChangeCountDTO {
+
+        /**
+         * 类型(toBeApprove待审批，approve审核通过，reject不通过)
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
 }

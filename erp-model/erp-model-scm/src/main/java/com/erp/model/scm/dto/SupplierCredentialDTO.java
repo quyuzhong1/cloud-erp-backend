@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,54 @@ public class SupplierCredentialDTO  implements Serializable {
     @NoArgsConstructor
     public  static class AddDTO {
 
+
+        /**
+         * 名称
+         */
+        @Size(max = 50,message = "资质名称最大50字符")
+        @NotBlank(message = "资质名称不能为空")
+        private String name;
+
+
+        /**
+         * 有效时间
+         */
+        private LocalDate effectiveDate;
+
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+        /**
+         * 备注
+         */
+        @Size(max = 250,message = "资质备注最大250字符")
+        private String remark;
+
+
+        /**
+         * 资质附件url
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public  static class ImportAddDTO {
+
+
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        private String supplierName;
         /**
          * 名称
          */
@@ -49,16 +98,6 @@ public class SupplierCredentialDTO  implements Serializable {
         private String remark;
 
 
-        /**
-         * 资质附件url
-         */
-        private List<String> attachmentUrlList;
-
-        /**
-         * 附件名
-         */
-        private List<String> attachmentNameList;
-
     }
 
     @Data
@@ -75,7 +114,7 @@ public class SupplierCredentialDTO  implements Serializable {
          * 名称
          */
         @NotBlank(message = "资质名称不能为空")
-        @Size(max = 50,message = "最大50字符")
+        @Size(max = 50,message = "资质名称最大50字符")
         private String name;
 
 
@@ -93,7 +132,7 @@ public class SupplierCredentialDTO  implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 255,message = "最大255字符")
+        @Size(max = 255,message = "资质信息备注最大255字符")
         private String remark;
 
 

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/roleMenu")
+@RequestMapping("roleMenu")
 public class SysRoleMenuController extends BaseController {
 
     @Autowired

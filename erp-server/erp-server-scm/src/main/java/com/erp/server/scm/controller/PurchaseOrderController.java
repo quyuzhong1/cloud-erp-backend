@@ -1,18 +1,15 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.ListStatusCountDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -48,6 +45,10 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
         return success(pagingVO);
@@ -59,9 +60,13 @@ public class PurchaseOrderController extends BaseController {
      * @date: 2023/3/15 17:34
      * @return ApiResult
      */
-    @GetMapping("/listCount")
-    public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount() {
-        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = purchaseOrderService.listCount();
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<ListStatusCountDTO.PurchaseOrderCountDTO> list = purchaseOrderService.listCount(dto);
         return success(list);
     }
 
@@ -125,9 +130,31 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<PurchaseOrderDTO.viewDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:view",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseOrderDTO.ViewDTO> view(@Param("id") String id) {
         PurchaseOrderDTO.ViewDTO dto = purchaseOrderService.view(id);
         return success(dto);
+    }
+
+    /**
+     * 查询关联单据
+     * @author Will
+     * @date: 2023/4/3 14:32
+     * @param dto
+     * @return ApiResult<AssociatedDocumentDTO>
+     */
+    @PostMapping("/viewAssociatedDocuments")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:paging",
+            tableAlias = "pc")
+    public ApiResult<PurchaseOrderDTO.AssociatedDocumentDTO> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
+        PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = purchaseOrderService.viewAssociatedDocuments(dto);
+        return success(resultDTO);
     }
 
     /**
@@ -210,6 +237,20 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 采购变更数据显示
+     * @author Will
+     * @date: 2023/3/31 14:28
+     * @param id
+     * @return ApiResult<AddDTO>
+     */
+    @GetMapping("/viewPurchaseChange")
+    public ApiResult<PurchaseChangeDTO.ViewDTO> viewPurchaseChange(@RequestParam("id") String id) {
+        PurchaseChangeDTO.ViewDTO viewDTO = purchaseOrderService.viewPurchaseChange(id);
+        return success(viewDTO);
+    }
+
+
+    /**
      * 下推签收单弹框数据显示
      * @author Will
      * @date: 2023/3/15 18:26
@@ -250,20 +291,6 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 采购变更
-     * @author Will
-     * @date: 2023/3/15 17:59
-     * @param id
-     * @return ApiResult
-     */
-    @PostMapping("/purchaseChange")
-    public ApiResult purchaseChange(@RequestParam("id") String id) {
-        Boolean result = purchaseOrderService.purchaseChange(id);
-        return result == true ? success() : failure();
-    }
-
-
-    /**
      * 导出采购合同PDF
      * @author Will
      * @date: 2023/3/15 17:59
@@ -285,8 +312,8 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult<PurchaseOrderDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        PurchaseOrderDetailDTO.ImportDTO importDTO = purchaseOrderService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(), response);
+    public ApiResult<PurchaseOrderDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.purchaseOrderExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        PurchaseOrderDetailDTO.ImportDTO importDTO = purchaseOrderService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getSkuIds(),excelImportDTO.getSupplierId(), response);
         return success(importDTO);
     }
 
@@ -329,6 +356,10 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
     public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();

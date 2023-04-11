@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +34,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String id;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseDetailId;
+
+        /**
          * 采购单号
          */
         private String code;
@@ -46,6 +52,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+
         /**
          * 审核状态名称（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
          */
@@ -85,6 +92,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
 
         /**
          * 计划交期
@@ -160,15 +177,26 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
         /**
-         * sku编码
+         * 主键ids
          */
-        private List<String> skuNoList;
+        private List<String> ids;
+
+        /**
+         * 采购订单编号
+         */
+        private String code;
 
         /**
          * 产品名称
          */
         private String productName;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
 
         /**
          * 供应商id
@@ -232,6 +260,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 采购日期
          */
+        @NotNull(message = "采购日期不能为空")
         private LocalDate purchaseDate;
 
         /**
@@ -247,11 +276,25 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 采购组织id
          */
+        @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
+
+        /**
+         * 收料组织id
+         */
+        @NotBlank(message = "收料组织不能为空")
+        private String receiveOrgId;
+
+        /**
+         * 交货仓库id
+         */
+        @NotBlank(message = "交货仓库不能为空")
+        private String deliveryWarehouseId;
 
         /**
          * 新品首批（false否,true是）
          */
+        @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
     }
 
@@ -263,13 +306,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 供应商信息
          */
         @Valid
+        @NotNull(message = "供应商信息不能为空")
         private PurchaseOrderSupplierDTO.AddDTO purchaseOrderSupplierDTO;
 
         /**
          * 采购订单明细
          */
         @Valid
-        @NotEmpty(message = "采购订单明细数据不能为空")
+        @NotEmpty(message = "采购订单明细信息不能为空")
         private List<PurchaseOrderDetailDTO.AddDTO> details;
     }
 
@@ -287,12 +331,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 供应商信息
          */
         @Valid
+        @NotNull(message = "供应商信息不能为空")
         private PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO;
 
         /**
          * 采购订单明细
          */
         @Valid
+        @NotEmpty(message = "采购订单明细信息不能为空")
         private List<PurchaseOrderDetailDTO.UpdateDTO> details;
     }
 
@@ -336,6 +382,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String payMethodName;
 
         /**
+         * 合计
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
          * 甲方
          */
         private String purchaseOrgName;
@@ -343,7 +399,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 签订日期（甲方）
          */
-        private LocalDateTime createTime;
+        private LocalDate firstSignDate;
 
         /**
          * 收货地址（甲方）
@@ -364,6 +420,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 乙方
          */
         private String supplierName;
+
+        /**
+         * 签订日期（乙方）
+         */
+        private LocalDate  secondSignDate;
 
         /**
          * 供方地址（乙方）
@@ -493,5 +554,15 @@ public class PurchaseOrderDTO implements Serializable {
         @NotEmpty(message = "仓库签收单不能为空")
         @Valid
         List<GenerateReceiveDTO> list;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AssociatedDocumentDTO {
+
+        /**
+         * 采购变更单
+         */
+        private List<PurchaseChangeDTO.ListDTO> purchaseChangeList;
     }
 }

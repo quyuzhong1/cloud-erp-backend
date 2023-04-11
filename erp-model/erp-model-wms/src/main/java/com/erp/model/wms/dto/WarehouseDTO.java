@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
@@ -29,34 +30,33 @@ public class WarehouseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO  extends PermissionsDTO {
 
         @NotBlank(message = "金蝶仓库编号不能为空")
+        @Size(max = 30, message = "金蝶仓库编号最大30字符")
         private String kingdeeWarehouseCode;
 
         /**
          * 名称
          */
-        @NotBlank(message = "仓库名称不能为空")
         @Size(max = 200, message = "仓库名称最大200字符")
+        @NotBlank(message = "仓库名称不能为空")
         private String name;
 
         /**
          * 仓库类型 对应dict 表id
          */
-        @NotBlank(message = "仓库类型不能为空")
         private String typeId;
 
         /**
          * 负责人id
          */
-        @NotBlank(message = "仓库负责人不能为空")
         private String chargeId;
 
         /**
          * 联系人
          */
-        @NotBlank(message = "联系人不能为空")
+        @Size(max = 20, message = "联系人最大20字符")
         private String contacts;
 
 
@@ -72,7 +72,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 联系人电话
          */
-        @NotBlank(message = "联系人电话不能为空")
+        @Size(max = 20, message = "联系人电话最大20字符")
         private String contactTelNumber;
 
 
@@ -88,6 +88,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 地址
          */
+        @Size(max = 200, message = "仓库地址最大200字符")
         private String address;
 
         /**
@@ -264,6 +265,9 @@ public class WarehouseDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+
+
+
         /**
          * 仓库名
          */
@@ -298,6 +302,17 @@ public class WarehouseDTO implements Serializable {
          */
         private List<String> typeIdList;
 
+    }
+
+
+
+    /**
+     * 导出仓库
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        private List<String> ids;
     }
 
 

@@ -12,7 +12,6 @@ import com.erp.server.sys.service.DictBankService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,9 +63,9 @@ public class DictBankServiceImpl extends SuperServiceImpl<DictBankMapper, DictBa
     @Override
     public List<BaseIdDTO> getByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyList();
+            return BeanMapper.copyList(this.list(), BaseIdDTO.class);
         }
         List<DictBankEntity> list = this.listByIds(ids);
-        return BeanMapper.copyList(list,BaseIdDTO.class);
+        return BeanMapper.copyList(list, BaseIdDTO.class);
     }
 }

@@ -60,7 +60,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     @Transactional
     public Boolean insert(CfgApiFieldMapDTO dto) {
         //同一个平台、模块下相同字段对应关系只能存在一个
-        checkCfgApiFieldMap(dto);
+//        checkCfgApiFieldMap(dto);
         //查询平台名称
         PlatformEntity platformEntity = platformService.getById(Integer.valueOf(dto.getApiPlatformId()));
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -86,6 +86,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<CfgApiFieldMapDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.Default);
@@ -100,7 +101,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     @Override
     public void update(CfgApiFieldMapDTO dto) {
         //同一个平台、模块下相同字段对应关系只能存在一个
-        checkCfgApiFieldMap(dto);
+//        checkCfgApiFieldMap(dto);
         //查询平台名称
         PlatformEntity platformEntity = platformService.getById(Integer.valueOf(dto.getApiPlatformId()));
         if (ObjectUtils.isEmpty(platformEntity)) {

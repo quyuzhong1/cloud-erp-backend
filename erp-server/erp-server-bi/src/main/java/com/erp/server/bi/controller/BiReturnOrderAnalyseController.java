@@ -20,7 +20,7 @@ import java.util.List;
  * @Date 2022/12/16 11:07
  **/
 @RestController
-@RequestMapping("bi/return/order")
+@RequestMapping("return/order")
 public class BiReturnOrderAnalyseController extends BaseController {
 
     @Resource

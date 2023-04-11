@@ -26,25 +26,28 @@ public interface KingdeeCommonService {
      */
     JSONObject makeApiFieldJson(Map<String, Object> map, List<CfgApiFieldMapDTO> mapList);
     /**
-     * 操作失败添加日志
-     * @author Will
-     * @date: 2023/3/3 14:04
-     * @param platformEntity
-     * @param map
-     * @param jsonData
-     * @param msg
-     */
-    void insertFailureLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type);
-    /**
      * 操作成功添加日志
      * @author Will
      * @date: 2023/3/3 14:05
      * @param platformEntity
-     * @param map
+     * @param businessId
      * @param jsonData
      * @param msg
      */
-    void insertSuccessLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg,Integer type);
+    void insertSyncLog(PlatformEntity platformEntity,String businessId,String jsonData,String msg,Integer type,Integer status);
+    /**
+     * @description: 添加日志并且回写金蝶同步状态
+     * @author Will
+     * @date: 2023/3/30 10:06
+     * @param platformEntity
+     * @param businessId
+     * @param jsonData
+     * @param msg
+     * @param type
+     * @param status
+     */
+    void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity,String businessId,
+                                                    String jsonData,String msg,Integer type,Integer status);
     /**
      * @description: 更新业务模块同步状态
      * @author Will
@@ -79,6 +82,18 @@ public interface KingdeeCommonService {
     void submit(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,Integer type);
 
     /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/3/30 9:46
+     * @param platformEntity
+     * @param map
+     * @param apiUtils
+     * @param id
+     * @param type
+     */
+     void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
+
+    /**
      *  反审核
      * @author Will
      * @date: 2023/3/3 14:07
@@ -89,4 +104,15 @@ public interface KingdeeCommonService {
      * @return String
      */
     String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
+
+    /**
+     * 保存到金蝶数据
+     * @param orderNo
+     * @param apiUtils
+     * @param modelType
+     * @param platformCode
+     * @param dataMap
+     * @return
+     */
+    String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap);
 }

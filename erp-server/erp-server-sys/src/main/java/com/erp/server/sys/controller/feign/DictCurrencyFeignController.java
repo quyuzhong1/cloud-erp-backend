@@ -18,7 +18,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/feign/currency")
+@RequestMapping("feign/currency")
 public class DictCurrencyFeignController extends BaseController {
 
     @Resource

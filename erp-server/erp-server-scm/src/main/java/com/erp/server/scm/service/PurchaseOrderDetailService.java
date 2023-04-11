@@ -76,4 +76,12 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      */
     void updateArrivalStatusByIds(String arrivalStatus, List<String> ids);
 
+    /**
+     * @description: 更新生成PO类型
+     * @author Will
+     * @date: 2023/4/3 17:05
+     * @param purchaseOrderId
+     */
+    void updateCreatePoType (String purchaseOrderId);
+
 }

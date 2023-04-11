@@ -26,4 +26,14 @@ public interface PurchasePriceDetailMapper extends BaseMapper<PurchasePriceDetai
      * @return PurchaseTaxPriceViewDTO
      */
     List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto);
+
+    
+    /**
+     * 根据供应商id 获取到对应明细
+     * @author yl
+     * @date 2023-04-06 9:52
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     */
+    List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds);
 }

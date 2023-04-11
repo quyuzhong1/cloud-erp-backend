@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author Administrator
@@ -41,7 +41,7 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     private String contactAddress;
 
-    private String currencyId;
+    private String currency;
 
     /**
      * 是否禁用
@@ -50,18 +50,19 @@ public class SysAccountingCompanyEntity implements Serializable {
     private Boolean disabled;
 
     @TableLogic
+    @TableField("is_deleted")
     private Boolean isDeleted;
     /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
-    private LocalDate createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDate updateTime;
+    private LocalDateTime updateTime;
 
     @TableField(fill = FieldFill.INSERT)
     private String createUserId;

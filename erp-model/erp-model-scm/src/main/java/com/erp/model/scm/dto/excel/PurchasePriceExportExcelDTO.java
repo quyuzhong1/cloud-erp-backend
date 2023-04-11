@@ -77,7 +77,7 @@ public class PurchasePriceExportExcelDTO implements Serializable {
      * 含税单价
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "税率", index = 6)
+    @ExcelProperty(value = "税率(%)", index = 6)
     private BigDecimal taxRate;
 
 
@@ -88,30 +88,38 @@ public class PurchasePriceExportExcelDTO implements Serializable {
     @ExcelProperty(value = "生效时间", index = 7)
     private LocalDate effectiveDate;
 
+
+    /**
+     * 生效时间
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "启用状态", index = 8)
+    private String enabled;
+
     /**
      * 采购组织名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 8)
+    @ExcelProperty(value = "采购组织", index = 9)
     private String purchaseOrgName;
 
     /**
      * 单据状态
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "单据状态", index = 9)
+    @ExcelProperty(value = "单据状态", index = 10)
     private String approveStatusName;
 
 
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 10)
+    @ExcelProperty(value = "创建人", index = 11)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 11,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 12,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 

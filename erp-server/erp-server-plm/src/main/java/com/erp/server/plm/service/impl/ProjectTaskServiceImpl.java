@@ -2757,8 +2757,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         boolean deleteTaskShow = true;
         Integer IsFixed = taskEntity.getIsFixed();
+        LoginUser userInfo = CommonInterceptor.threadLocal.get();
+
         //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed)) {
+        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(userInfo.getUserAccount())) {
             deleteTaskShow = false;
         }
         //删除任务
@@ -3218,7 +3220,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             taskIdList.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.NOT_START.getName(), TaskStateEnum.ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
+                sysLogEntityList.add(
+                        new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.NOT_START.getName(), TaskStateEnum.ING.getName()))
+                                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc())
+                                .setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送开始任务通知
@@ -3792,6 +3797,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.WAIT_CONFIRM.getName(), TaskStateEnum.APPROVAL_ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
+
+        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+        for (String taskId : taskIds) {
+            //添加评论
+            TaskCommentEntity comment = new TaskCommentEntity();
+            comment.setComment("[审核结果-审核通过]" + dto.getComment());
+            comment.setTaskId(taskId);
+            comment.setCreateUserName(loginUser.getUserName());
+            comment.setCreateUserId(loginUser.getUid());
+            taskCommentList.add(comment);
+        }
+        taskCommentService.batchSaveTaskComment(taskCommentList);
 
         String comment = dto.getComment();
         if (StringUtils.isBlank(comment)) {
@@ -4472,14 +4489,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //一般任务
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
+        //TODO 2023-03-30 暂时取消审核流程
         //如果是一般任务 必须要有审核流程
-        if (needCheckFirst || needCheckSecond) {
+     /*   if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
-        }
+        }*/
     }
 
     //获取预警信息
@@ -4661,9 +4679,46 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      **/
     @Transactional
     public Boolean removeBatch(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
+        List<ProjectTaskEntity> entity = this.getByTaskIds(ids);
+        if (CollectionUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
         }
-        return baseMapper.removeBatch(ids);
+        LoginUser loginUser = commonService.getUserInfo();
+
+        for (ProjectTaskEntity req : entity) {
+
+            if (BaseStatusEnum.AUDIT_PASS.getStatus().equals(req.getScheduleStatus())) {
+                if (!"admin".equals(loginUser.getUserAccount())) {
+                    throw new ServiceException(ApiError.ERROR_95137);
+                }
+            }
+            //如果是固定任务
+            if (IsConstant.YES.equals(req.getIsFixed())) {
+                throw new ServiceException(ApiError.ERROR_95014);
+            }
+
+            //检查是否是子任务
+            checkTaskIfExistPid(req.getId());
+
+            Boolean flag = this.removeById(req);
+            if (flag) {
+                taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.THREE, req.getId());
+                taskDeliveryService.removeByTaskId(req.getId());
+                taskDocsFinishService.removeByTaskId(req.getId());
+                taskRefSkuConfigService.deleteByTaskId(req.getId());
+                preTaskService.deleteByTaskId(req.getId());
+                //发送删除任务通知
+                noticeMessageService.deleteTaskNotice(loginUser.getUserName(), req, req.getProductId());
+                //新增操作日志
+                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("删除任务[%s]", req.getName()))
+                        .setBusinessId(req.getProductId())
+                        .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+                //添加日志
+                sysLogService.addSysLogByOther(sysLogEntity);
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

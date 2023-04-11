@@ -51,6 +51,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     private String productName;
 
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+
     public ProjectPlanTaskExcelListener(List<ProjectTaskEntity>  projectTaskList, ProjectTaskService projectTaskService, String productId, List<FindUserDTO> sysUserList, String productName) {
         this.projectTaskService = projectTaskService;
         this.projectTaskList = projectTaskList;
@@ -163,8 +165,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
         taskIdList.add(task.getId());
         productId = task.getProductId();
-        task.setPlanStartTime(LocalDate.parse(vo.getPlanStartTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        task.setPlanEndTime(LocalDate.parse(vo.getPlanEndTime(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        task.setPlanStartTime(LocalDate.parse(vo.getPlanStartTime(), dateTimeFormatter));
+        task.setPlanEndTime(LocalDate.parse(vo.getPlanEndTime(), dateTimeFormatter));
         projectTaskService.updateById(task);
     }
 

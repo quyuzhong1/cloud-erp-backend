@@ -22,7 +22,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("/sys/common")
+@RequestMapping("common")
 public class CommonController extends BaseController {
 
 

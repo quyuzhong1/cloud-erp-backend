@@ -30,7 +30,7 @@ import java.util.*;
  * @since 2022-09-13
  */
 @RestController
-@RequestMapping("plm/product")
+@RequestMapping("product")
 public class ProductInfoController extends BaseController {
 
     @Autowired

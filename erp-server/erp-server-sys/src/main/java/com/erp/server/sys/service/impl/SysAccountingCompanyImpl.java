@@ -60,8 +60,16 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
 
     @Override
     public boolean updateCompany(SysAccountingCompanyDTO dto) {
-        SysAccountingCompanyEntity entity = new SysAccountingCompanyEntity();
-        BeanMapperUtils.copy(dto, entity);
+        SysAccountingCompanyEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+        entity.setCompanyAddress(dto.getCompanyAddress());
+        entity.setCompanyName(dto.getCompanyName());
+        entity.setContactAddress(dto.getContactAddress());
+        entity.setContactMobile(dto.getContactMobile());
+        entity.setCurrency(dto.getCurrency());
+        entity.setContactName(dto.getContactName());
         return this.updateById(entity);
     }
 
@@ -80,6 +88,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
+        entity.setDisabled(dto.getState());
         return this.updateById(entity);
     }
 
@@ -96,14 +105,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     public PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         CompanyPagingSearchDTO params = dto.getParams();
-        String searchType = params.getSearchType();
-        String searchTypeStr = "company_name,contact_name,contact_address,currency_id";
-        List<String> searchTypeList = Arrays.asList(searchTypeStr.split(","));
-//        if (!searchTypeList.contains(searchType)) {
-//            throw new ServiceException(ApiError.ERROR_9022);
-//        }
         IPage pageData = baseMapper.paging(query, params);
-
         return new PagingVO(pageData);
     }
 

@@ -46,8 +46,8 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     /**
      * 采购交期
      */
-    @TableField("delivery_date")
-    private Integer deliveryDate;
+    @TableField("delivery_day")
+    private Integer deliveryDay;
 
     /**
      * sku 名

@@ -2,6 +2,7 @@ package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -142,5 +143,5 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @date: 2023/3/27 11:12
      * @return List<SalesDemandCountDTO>
      */
-    List<ListStatusCountDTO.SalesDemandCountDTO> listCount();
+    List<ListStatusCountDTO.SalesDemandCountDTO> listCount(PermissionsDTO dto);
 }

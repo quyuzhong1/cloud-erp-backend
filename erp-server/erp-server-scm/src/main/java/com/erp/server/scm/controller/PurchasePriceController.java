@@ -1,10 +1,12 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -41,6 +43,10 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:paging",
+            tableAlias = "pp")
     public ApiResult<PagingVO<PurchasePriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PagingVO<PurchasePriceDTO.PagingViewDTO> pagingVO = purchasePriceService.paging(dto);
         return success(pagingVO);
@@ -53,11 +59,28 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:add",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
         String id = purchasePriceService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
+
+    /**
+     * 列表tab数据
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/tab/list")
+    public ApiResult tabList(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
+        String id = purchasePriceService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
 
     /**
      * 提交并审核
@@ -66,6 +89,11 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:addAndSubmit",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
         Boolean result = purchasePriceService.addAndSubmit(dto);
         return result == true ? success() : failure();
@@ -78,6 +106,11 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:view",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult<PurchasePriceDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         PurchasePriceDTO.ViewDTO view = purchasePriceService.view(dto.getId());
         return success(view);
@@ -90,7 +123,12 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:update",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
+    public ApiResult update(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
         String id = purchasePriceService.updatePurchasePrice(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -102,7 +140,12 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.ViewDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:updateAndSubmit",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
         Boolean result = purchasePriceService.updateAndSubmit(dto);
         return result == true ? success() : failure();
     }
@@ -115,6 +158,11 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:delete",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
@@ -127,6 +175,11 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:submit",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceService.submitApprove(dto.getIds());
         return result == true ? success() : failure();
@@ -140,6 +193,11 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:approve",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = purchasePriceService.approve(dto);
         return result == true ? success() : failure();
@@ -155,6 +213,11 @@ public class PurchasePriceController extends BaseController {
      * @date 2023-03-23 17:57
      */
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:cancelProcess",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "id")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
@@ -165,6 +228,10 @@ public class PurchasePriceController extends BaseController {
      * 采购价目数据导出
      */
     @PostMapping("/exportPurchasePrice")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:paging",
+            tableAlias = "pp")
     public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.ExportDTO dto, HttpServletResponse response) {
         purchasePriceService.exportPurchasePrice(dto, response);
         return success();

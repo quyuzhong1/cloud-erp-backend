@@ -110,6 +110,7 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
 
     public static final String APPROVE_TIME = "approve_time";
 
+
     @Override
     public Serializable pkVal() {
         return null;

@@ -36,6 +36,7 @@
             sd.shop_name as shopName,
             sdd.sku_no as skuNo,
             sdd.product_name as productName,
+            sdd.variant_property as variantProperty,
             sdd.is_urgent as isUrgent,
             sd.is_first_mass_product as isFirstMassProduct,
             sdd.plan_delivery_date as planDeliveryDate,
@@ -97,6 +98,9 @@
             <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
                 and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -141,50 +145,61 @@
         left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
         <where>
             sd.is_deleted = false
-            <if test="params.code != null and params.code != ''">
-                and sd.code like concat('%',#{params.code},'%')
-            </if>
-            <if test="params.productName != null and params.productName != ''">
-                and sdd.product_name like concat('%',#{params.productName},'%')
-            </if>
-            <if test="params.isUrgent != null ">
-                and sd.is_urgent = #{params.isUrgent}
-            </if>
-            <if test="params.invalidStatus != null and params.invalidStatus != ''">
-                and sd.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and sd.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+            <if test="params.ids != null and params.ids.size > 0">
+                and sd.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and sdd.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.code != null and params.code != ''">
+                    and sd.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.productName != null and params.productName != ''">
+                    and sdd.product_name like concat('%',#{params.productName},'%')
+                </if>
+                <if test="params.isUrgent != null ">
+                    and sd.is_urgent = #{params.isUrgent}
+                </if>
+                <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                    and sd.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and sd.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and sdd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
+                    and sdd.dest_warehouse_id in
+                    <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and sd.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and sd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.create_time
+                </if>
+                <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
+                    and sdd.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdd.plan_delivery_date
+                </if>
+                <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
+                    and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
+                </if>
             </if>
-            <if test="params.destWarehouseIdList != null and params.destWarehouseIdList.size > 0">
-                and sdd.dest_warehouse_id in
-                <foreach collection="params.destWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and sd.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and sd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.create_time
-            </if>
-            <if test="params.planDeliveryDateList != null and params.planDeliveryDateList.size > 0">
-                and sdd.plan_delivery_date >= #{params.planDeliveryDateList[0]} and  (#{params.planDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdd.plan_delivery_date
-            </if>
-            <if test="params.approvePassTimeList != null and params.approvePassTimeList.size > 0">
-                and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         ORDER BY
@@ -208,6 +223,9 @@
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>

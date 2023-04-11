@@ -6,6 +6,7 @@
     <select id="paging" resultType="com.erp.model.scm.dto.PurchasePriceChangeDTO$PagingViewDTO">
         SELECT
           pp.id,
+          ppd.id AS changeDetailId,
           pp.code,
           pp.create_user_id AS createUserId,
           pp.create_user_name AS createUserName,
@@ -24,7 +25,7 @@
           pp.purchase_org_name,
           ppd.disabled
         FROM purchase_price_change_detail ppd
-        LEFT JOIN purchase_price_change pp
+        INNER JOIN purchase_price_change pp
         ON ppd.purchase_price_change_id=PP.id
         WHERE pp.is_deleted=false AND ppd.is_deleted= false
         <if test="params.skuIdList!=null and params.skuIdList.size>0">
@@ -32,6 +33,11 @@
             <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
+        </if>
+
+        <if test="params.name !=null and params.name!=''">
+            AND pp.supplier_id IN
+            (SELECT id FROM supplier  WHERE is_deleted= false AND name LIKE '%${params.name}%')
         </if>
         <if test="params.purchaseOrgIdList!=null and params.purchaseOrgIdList.size>0">
             AND pp.purchase_org_id IN
@@ -47,15 +53,16 @@
         </if>
 
         <if test="params.effectiveDateList!=null and params.effectiveDateList.size>0">
-            AND ppd.effective_date between #{params.effectiveDateList[0]} and #{params.effectiveDateList[1]}
+            AND ppd.effective_date >= #{params.effectiveDateList[0]} and (#{params.effectiveDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ppd.effective_date
         </if>
 
         <if test="params.expireDateList!=null and params.expireDateList.size>0">
-            AND ppd.expire_date between #{params.expireDateList[0]} and #{params.expireDateList[1]}
+            AND ppd.expire_date >= #{params.expireDateList[0]} and (#{params.expireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ppd.expire_date
+
         </if>
 
         <if test="params.createTimeList!=null and params.createTimeList.size>0">
-            AND pp.create_time between #{params.createTimeList[0]} and #{params.createTimeList[1]}
+            AND pp.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pp.create_time
         </if>
         <if test="params.createUserIdList!=null and params.createUserIdList.size>0">
             AND pp.create_user_id IN
@@ -67,13 +74,24 @@
             AND
             ppd.product_name LIKE concat('%', #{params.productName} ,'%')
         </if>
+
+        <if test="statusList !=null and statusList.size>0">
+            AND pp.approve_status IN
+            <foreach collection="statusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ppd.create_time DESC
+        pp.create_time DESC,ppd.id DESC
 
 
     </select>

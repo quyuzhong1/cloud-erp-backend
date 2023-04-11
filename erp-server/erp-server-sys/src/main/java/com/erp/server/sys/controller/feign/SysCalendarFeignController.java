@@ -19,7 +19,7 @@ import java.util.List;
  **/
 
 @RestController
-@RequestMapping("sys/feign/calendar")
+@RequestMapping("feign/calendar")
 public class SysCalendarFeignController {
 
     @Resource

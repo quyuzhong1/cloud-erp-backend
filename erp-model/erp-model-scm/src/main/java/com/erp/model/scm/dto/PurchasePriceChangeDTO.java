@@ -1,7 +1,9 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,7 +32,7 @@ public class PurchasePriceChangeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends PermissionsDTO {
 
         /**
          * 供应商表id
@@ -54,6 +56,12 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 调价人id
          */
         private String adjustUserId;
+
+
+        /**
+         * 原因
+         */
+        private String reason;
 
 
         /**
@@ -87,7 +95,7 @@ public class PurchasePriceChangeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO  extends PermissionsDTO{
 
 
 
@@ -158,6 +166,8 @@ public class PurchasePriceChangeDTO implements Serializable {
         private String id;
 
 
+        private String code;
+
         /**
          * 供应商表id
          */
@@ -176,6 +186,11 @@ public class PurchasePriceChangeDTO implements Serializable {
         @NotNull(message = "调价日期不能为空")
         private LocalDate adjustDate;
 
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
         /**
          * 调价人id
          */
@@ -187,6 +202,11 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
+
+        /**
+         * 原因
+         */
+        private String reason;
 
 
         /**
@@ -218,6 +238,12 @@ public class PurchasePriceChangeDTO implements Serializable {
          * 表id
          */
         private String id;
+
+
+        /**
+         * 详情id
+         */
+        private String changeDetailId;
 
 
         /**
@@ -349,6 +375,16 @@ public class PurchasePriceChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO  extends SortDTO {
+
+
+
+        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
+        private String searchType;
+
+        /**
+         * 供应商名称
+         */
+        private String name;
 
         /**
          * 产品名称

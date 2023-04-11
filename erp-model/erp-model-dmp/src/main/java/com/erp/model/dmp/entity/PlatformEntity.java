@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -16,6 +18,7 @@ import java.io.Serializable;
  */
 @Data
 @TableName(value ="platform")
+@NoArgsConstructor
 public class PlatformEntity implements Serializable {
 
     @TableField(exist = false)
@@ -38,4 +41,9 @@ public class PlatformEntity implements Serializable {
      */
     @TableField(value = "task_name")
     private String taskName;
+
+    public PlatformEntity(PlatformEnum kingdee) {
+        this.id = kingdee.getCode().toString();
+        this.name = kingdee.getDesc();
+    }
 }

@@ -1,10 +1,13 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -95,14 +98,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     Boolean finishDelivery(List<String> ids);
 
     /**
-     * @description: 采购变更
-     * @author Will
-     * @date: 2023/3/16 11:37
-     * @param id
-     * @return Boolean
-     */
-    Boolean purchaseChange(String id);
-    /**
      * @description: 导出采购合同PDF
      * @author Will
      * @date: 2023/3/16 11:42
@@ -118,7 +113,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param response
      * @return PurchaseOrderDetailDTO.ImportDTO
      */
-    PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
+    PurchaseOrderDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds,String supplierId, HttpServletResponse response);
     /**
      * @description: 导出
      * @author Will
@@ -158,7 +153,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @date: 2023/3/29 9:59
      * @return List<PurchaseOrderCountDTO>
      */
-    List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount();
+    List<ListStatusCountDTO.PurchaseOrderCountDTO> listCount(PermissionsDTO dto);
     /**
      * @description: 批量作废
      * @author Will
@@ -184,4 +179,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
+    /**
+     * @description: 采购变更数据显示
+     * @author Will
+     * @date: 2023/3/31 14:29
+     * @param id
+     * @return ViewDTO
+     */
+    PurchaseChangeDTO.ViewDTO viewPurchaseChange(String id);
+    /**
+     * @description: 查询关联单据
+     * @author Will
+     * @date: 2023/4/3 14:34
+     * @param dto
+     * @return AssociatedDocumentDTO
+     */
+    PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto);
 }

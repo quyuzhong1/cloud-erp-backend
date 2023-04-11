@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -34,7 +33,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 产品sku名称
      */
-    @Size(max = 50,message = "产品名称最大50字符")
+    @Size(max = 50, message = "产品名称最大50字符")
     private String name;
 
     /**
@@ -114,4 +113,26 @@ public class ProductDetailDTO implements Serializable {
     private String businessProcessId;
 
     private static final long serialVersionUID = 1L;
+
+
+    /**
+     * 搜索sku
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+
+
+        /**
+         * 搜索关键字
+         */
+        private String searchKeyword;
+
+
+        /**
+         * 状态
+         */
+        private  Integer status;
+
+    }
 }

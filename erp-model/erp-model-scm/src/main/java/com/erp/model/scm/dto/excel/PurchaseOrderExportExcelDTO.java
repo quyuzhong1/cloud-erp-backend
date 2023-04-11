@@ -5,7 +5,6 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -60,87 +59,99 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     private String productName;
 
     /**
+     * 报关名称
+     */
+    @ExcelProperty(value = "报关名称", index = 7)
+    private String declareName;
+
+    /**
+     * 报关型号
+     */
+    @ExcelProperty(value = "报关型号", index = 8)
+    private String declareModel;
+
+    /**
      * 计划交期
      */
-    @ExcelProperty(value = "计划交期", index = 7)
+    @ExcelProperty(value = "计划交期", index = 9)
     private String planDeliveryDate;
 
     /**
      * 交货仓库名称
      */
-    @ExcelProperty(value = "交货仓库", index = 8)
+    @ExcelProperty(value = "交货仓库", index = 10)
     private String deliveryWarehouseName;
 
     /**
      * 含税单价
      */
-    @ExcelProperty(value = "含税单价", index = 9)
+    @ExcelProperty(value = "含税单价", index = 11)
     private BigDecimal taxPrice;
 
     /**
      * 采购数量
      */
-    @ExcelProperty(value = "采购数量", index = 10)
+    @ExcelProperty(value = "采购数量", index = 12)
     private Integer purchaseQty;
 
     /**
      * 采购金额
      */
-    @ExcelProperty(value = "采购金额", index = 11)
+    @ExcelProperty(value = "采购金额", index = 13)
     private BigDecimal purchaseAmount;
 
     /**
      * 待交货量
      */
-    @ExcelProperty(value = "待交货量", index = 12)
+    @ExcelProperty(value = "待交货量", index = 14)
     private Integer deliveryQty;
 
     /**
      * 签收数量
      */
-    @ExcelProperty(value = "签收数量", index = 13)
+    @ExcelProperty(value = "签收数量", index = 15)
     private Integer receiveQty;
 
     /**
      * 入库数量
      */
-    @ExcelProperty(value = "入库数量", index = 14)
+    @ExcelProperty(value = "入库数量", index = 16)
     private Integer stockInQty;
 
     /**
      * 退货数量
      */
-    @ExcelProperty(value = "退货数量", index = 15)
+    @ExcelProperty(value = "退货数量", index = 17)
     private Integer returnQty;
 
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 16)
+    @ExcelProperty(value = "备注", index = 18)
     private String remark;
 
     /**
      * 审核人（最新）
      */
-    @ExcelProperty(value = "审核人（最新）", index = 17)
+    @ExcelProperty(value = "审核人（最新）", index = 19)
     private String approveUserName;
 
     /**
      * 申请人
      */
-    @ExcelProperty(value = "申请人", index = 18)
+    @ExcelProperty(value = "申请人", index = 20)
     private String purchaseUserName;
 
     /**
      * 创建人
      */
-    @ExcelProperty(value = "创建人", index = 19)
+    @ExcelProperty(value = "创建人", index = 21)
     private String createUserName;
 
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 20)
-    private LocalDateTime createTime;
+    @ExcelProperty(value = "创建时间", index = 22)
+    private String createTime;
 
 }

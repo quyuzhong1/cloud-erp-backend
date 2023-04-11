@@ -22,7 +22,7 @@ import javax.annotation.Resource;
  * @since 2022-12-08 14:28:26
  */
 @RestController
-@RequestMapping("bi/layout")
+@RequestMapping("layout")
 public class BiLayoutController extends BaseController {
 
 

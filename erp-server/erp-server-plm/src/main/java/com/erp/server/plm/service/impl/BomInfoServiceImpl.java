@@ -322,8 +322,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public void checkAuditor(List<BomSkuDTO> skuList) {
-
-        //skuId
+        //TODO 暂时取消流程
+/*        //skuId
         List<String> skuIdList = getSkuIdList(skuList);
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
@@ -339,7 +339,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9032);
-        }
+        }*/
     }
 
     /**
@@ -352,7 +352,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
-
         SearchPagingDTO params = dto.getParams();
         params.setParam(dto.getParam());
         String searchKeyword = params.getSearchKeyword();
@@ -372,15 +371,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<Integer> stateList = new ArrayList<>();
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = commonService.getUserInfo().getUid();
+          /*  String userId = commonService.getUserInfo().getUid();
             //获取我的待办信息
             //TODO 2020330暂时取消审核流程，只修改状态
-            /*List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(bomIdList)) {
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }*/
+            stateList.add(1);
         }
 
         IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
@@ -981,7 +981,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);*/
 //        if (node != null) {
             if (result && isFirstAudit) {
-                String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName());
+                String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName() + "  审核意见：" + comment);
                 //操作记录
                 bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             }
@@ -1122,7 +1122,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (isFirstAudit) {
                 statusName = BomStateEnum.WAIT_AUDIT.getName();
             }
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, statusName, BomStateEnum.AUDIT_NO_PASS.getName());
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, statusName, BomStateEnum.AUDIT_NO_PASS.getName() + "  审核意见：" + dto.getComment());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
         }

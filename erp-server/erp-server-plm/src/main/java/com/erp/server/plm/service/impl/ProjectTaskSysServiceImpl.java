@@ -134,14 +134,15 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         Integer type = dto.getType();
         //如果配置表单 一般任务 一定要走流程
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //TODO 2023-03-30 暂时取消审核流程
         //如果是一般任务 必须要有审核流程
-        if (needCheckFirst || needCheckSecond) {
+/*        if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
-        }
+        }*/
         if (!Objects.isNull(loginUser)) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());

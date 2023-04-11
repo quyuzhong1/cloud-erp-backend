@@ -1,17 +1,21 @@
 package com.erp.server.scm.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.server.scm.service.PurchaseChangeService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -38,9 +42,29 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<PagingVO<List<ScmSalesDemandDTO>>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:paging",
+            tableAlias = "pc")
     public ApiResult<PagingVO<PurchaseChangeDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseChangeDTO.ListDTO> pagingVO = purchaseChangeService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 查询数量
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @return ApiResult
+     */
+    @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:paging",
+            tableAlias = "pc")
+    public ApiResult<List<ListStatusCountDTO.PurchaseChangeCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<ListStatusCountDTO.PurchaseChangeCountDTO> list = purchaseChangeService.listCount(dto);
+        return success(list);
     }
 
     /**
@@ -52,8 +76,8 @@ public class PurchaseChangeController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
-        Boolean flag = purchaseChangeService.add(dto);
-        return flag == true ? success() : failure();
+        purchaseChangeService.add(dto);
+        return success();
     }
 
     /**
@@ -83,6 +107,19 @@ public class PurchaseChangeController extends BaseController {
     }
 
     /**
+     * 修改并提交
+     * @author Will
+     * @date: 2023/3/15 17:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
+        Boolean flag = purchaseChangeService.updateAndSubmit(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 查询详情
      * @author Will
      * @date: 2023/3/15 17:44
@@ -90,35 +127,39 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult<ScmPurchaseChangeDTO>
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:view",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseChangeDTO.ViewDTO> view(@Param("id") String id) {
         PurchaseChangeDTO.ViewDTO dto = purchaseChangeService.view(id);
         return success(dto);
     }
 
     /**
-     * 批量删除
+     * 取消流程
      * @author Will
-     * @date: 2023/3/15 17:47
-     * @param ids
+     * @date: 2023/3/15 17:59
+     * @param dto
      * @return ApiResult
      */
-    @PostMapping("/delete")
-    public ApiResult delete(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.delete(ids);
-        return flag == true ? success() : failure();
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = purchaseChangeService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
     }
-
 
     /**
      * 批量作废
      * @author Will
      * @date: 2023/3/15 17:50
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/invalid")
-    public ApiResult invalid(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.invalid(ids);
+    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = purchaseChangeService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -127,12 +168,12 @@ public class PurchaseChangeController extends BaseController {
      * 批量提交
      * @author Will
      * @date: 2023/3/15 17:47
-     * @param ids
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestParam("ids") List<String> ids) {
-        Boolean flag = purchaseChangeService.submit(ids);
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseChangeService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -158,6 +199,10 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:exportExcel",
+            tableAlias = "pc")
     public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseChangeService.exportExcel(dto, response);
         return flag == true ? success() : failure();

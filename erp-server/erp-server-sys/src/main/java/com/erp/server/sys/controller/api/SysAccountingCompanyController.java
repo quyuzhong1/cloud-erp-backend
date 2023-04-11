@@ -27,7 +27,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/company")
+@RequestMapping("company")
 public class SysAccountingCompanyController extends BaseController {
 
     @Autowired

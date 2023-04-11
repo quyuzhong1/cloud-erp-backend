@@ -4,28 +4,32 @@
 
 
     <select id="paging" resultType="com.erp.model.scm.dto.SupplierPhaseDTO$PagingViewDTO">
-         SELECT
-           sp.id,
-           sp.create_user_name,
-           sp.create_time,
-           sp.supplier_id,
-           sp.operate_type,
-           sp.current_phase,
-           sp.target_phase,
-           sp.approve_status,
-           sp.description,
-           su.name AS supplierName,
-           su.id AS supplierId,
-           su.code AS supplierCode,
-           su.category_id,
-           su.category_name
-         FROM supplier_phase sp
-         INNER JOIN supplier su
-         ON su.id=sp.supplier_id
-         WHERE  sp.is_deleted=false
-         <if test="params.name!=null and params.name!=''">
+        SELECT
+        sp.id,
+        sp.create_user_name,
+        sp.create_time,
+        sp.supplier_id,
+        sp.operate_type,
+        sp.current_phase,
+        sp.target_phase,
+        sp.approve_status,
+        sp.description,
+        su.name AS supplierName,
+        su.id AS supplierId,
+        su.code AS supplierCode,
+        su.category_id,
+        su.category_name
+        FROM supplier_phase sp
+        INNER JOIN supplier su
+        ON su.id=sp.supplier_id
+        WHERE sp.is_deleted=false
+        <if test="params.operateType!=null and params.operateType!=''">
+            AND sp.operate_type=#{params.operateType}
+        </if>
+
+        <if test="params.name!=null and params.name !=''">
             AND su.name LIKE  concat('%', #{params.name} ,'%')
-         </if>
+        </if>
 
         <if test="params.categoryIdList!=null and params.categoryIdList.size>0">
             AND su.category_id IN
@@ -33,17 +37,24 @@
                 #{categoryId}
             </foreach>
         </if>
-        <if test="params.phaseList!=null and params.phaseList.size>0">
-            AND su.phase IN
-            <foreach collection="params.phaseList" item="phase" open="(" separator="," close=")">
-                #{phase}
-            </foreach>
-        </if>
+
         <if test="params.approveStatusList!=null and params.approveStatusList.size>0">
             AND sp.approve_status IN
             <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
                 #{approveStatus}
             </foreach>
         </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND sp.approve_status IN
+            <foreach collection="statusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+        ORDER BY sp.create_time DESC
     </select>
 </mapper>

@@ -8,13 +8,23 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.scm.mapper.PurchaseOrderSupplierMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.SupplierService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,13 +38,19 @@ import java.util.List;
 @Service
 public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseOrderSupplierMapper, PurchaseOrderSupplierEntity> implements PurchaseOrderSupplierService {
 
+    @Resource
+    private SupplierService supplierService;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
+
     @Override
     public void deleteByPurchaseOrderIds(List<String> purchaseOrderIds) {
         lambdaUpdate().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderIds).remove();
     }
 
     @Override
-    public PurchaseOrderSupplierEntity listByPurchaseOrderId(String purchaseOrderId) {
+    public PurchaseOrderSupplierEntity getByPurchaseOrderId(String purchaseOrderId) {
         return lambdaQuery().eq(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderId).one();
     }
 
@@ -44,23 +60,35 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
     }
 
     @Override
-    public void add(PurchaseOrderSupplierDTO.AddDTO dto) {
+    public void add(PurchaseOrderSupplierDTO.AddDTO dto, String purchaseOrderId) {
         if (ObjectUtils.isEmpty(dto)) {
             return;
         }
         PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(dto, entity);
+        entity.setPurchaseOrderId(purchaseOrderId);
+        doOpHandleDataId(dto.getSupplierId(), entity);
         this.save(entity);
     }
 
     @Override
-    public void update(PurchaseOrderSupplierDTO.UpdateDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public void update(PurchaseOrderSupplierDTO.UpdateDTO dto, String purchaseOrderId) {
         if (ObjectUtils.isEmpty(dto)) {
             return;
         }
         PurchaseOrderSupplierEntity entity = new PurchaseOrderSupplierEntity();
         BeanMapperUtils.copy(dto, entity);
-        this.updateById(entity);
+        entity.setPurchaseOrderId(purchaseOrderId);
+        doOpHandleDataId(dto.getSupplierId(), entity);
+
+        PurchaseOrderSupplierEntity old = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        //操作日志
+        moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderId, "", "");
+        this.saveOrUpdate(entity);
     }
 
 
@@ -86,4 +114,32 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         return new PagingVO(pageData);
     }
 
+
+    /**
+     * 根据供应商获取到 供应商订单信息
+     *
+     * @param supplierIdList
+     * @return void
+     * @author yl
+     * @date 2023-04-03 17:11
+     */
+    @Override
+    public List<PurchaseOrderSupplierEntity> getBySupplierIds(List<String> supplierIdList) {
+        if (CollectionUtils.isEmpty(supplierIdList)) {
+            return Collections.emptyList();
+        }
+        List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getSupplierId,supplierIdList).list();
+        return list;
+    }
+
+    /**
+     * 同步id对应名称
+     */
+    private void doOpHandleDataId(String supplierId, PurchaseOrderSupplierEntity entity) {
+        SupplierEntity supplierEntity = supplierService.getById(supplierId);
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98039);
+        }
+        entity.setSupplierName(supplierEntity.getName());
+    }
 }

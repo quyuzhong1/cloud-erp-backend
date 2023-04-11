@@ -95,8 +95,8 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
     /**
      * 交期
      */
-    @TableField("delivery_date")
-    private Integer deliveryDate;
+    @TableField("delivery_day")
+    private Integer deliveryDay;
 
     /**
      * 生效时间

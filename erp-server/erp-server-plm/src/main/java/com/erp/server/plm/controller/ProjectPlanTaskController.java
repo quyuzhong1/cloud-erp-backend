@@ -30,7 +30,7 @@ import java.util.List;
  * @since 2023-02-03 15:03:44
  */
 @RestController
-@RequestMapping("plm/schedule/task")
+@RequestMapping("schedule/task")
 public class ProjectPlanTaskController extends BaseController {
     /**
      * 服务对象

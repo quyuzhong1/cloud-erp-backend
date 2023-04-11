@@ -23,7 +23,7 @@ import java.util.List;
  * @date 2022/11/22 18:06
  */
 @RestController
-@RequestMapping("/plm/task/view")
+@RequestMapping("task/view")
 public class ProjectTaskViewController extends BaseController {
 
     @Autowired

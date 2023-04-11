@@ -7,6 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.SupplierPhaseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -49,7 +51,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param supplierId
      * @return com.erp.model.scm.dto.SupplierDTO.updateDTO
      */
-    SupplierDTO.UpdateDTO view(String supplierId);
+    SupplierDTO.SupplierViewDTO view(String supplierId);
 
     
     /**
@@ -157,4 +159,54 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return void
      */
     void exportSupplier(SupplierDTO.ExportDTO dto, HttpServletResponse response);
+
+
+    
+    /**
+     * 供应商导入
+     * @author yl
+     * @date 2023-03-30 9:44
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 获取供应商的一些信息
+     * @author yl
+     * @date 2023-03-30 10:48
+     * @param supplierId
+     * @return com.erp.model.scm.dto.SupplierDTO.ViewDTO
+     */
+    SupplierDTO.ViewDTO getBySupplierId(String supplierId);
+
+    
+    /**
+     * 批量保存 导入的供应商
+     * @author yl
+     * @date 2023-03-30 20:01
+     * @param addList
+     * @return void
+     */
+    void batchImportSupplier(List<SupplierDTO.ImportAddDTO> addList);
+
+    /**
+     *  查询是否 有供应商占用 要删除的id 如果有就不能删除
+     * @author yl
+     * @date 2023-03-31 11:07
+     * @param deleteIdList
+     * @return int
+     */
+    int occupiedGrade(List<String> deleteIdList);
+
+    
+    /**
+     * 阶段审核通过后 更改供应商的阶段
+     * @author yl
+     * @date 2023-03-31 16:45
+     * @param list
+     * @return void
+     */
+    void updatePhase(List<SupplierPhaseEntity> list);
 }

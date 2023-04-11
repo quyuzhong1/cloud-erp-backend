@@ -23,7 +23,7 @@ import java.util.List;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/departmentUser")
+@RequestMapping("departmentUser")
 public class SysDepartmentUserController extends BaseController {
 
     @Autowired

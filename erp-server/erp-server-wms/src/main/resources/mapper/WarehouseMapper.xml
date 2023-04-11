@@ -48,6 +48,11 @@
                 #{approveStatus}
             </foreach>
         </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
+
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -74,34 +79,50 @@
          is_virtual,
          approve_status
       FROM  warehouse  WHERE is_deleted=false
+      <choose>
+          <when test="params.ids!=null and params.ids.size>0">
+              AND id IN
+              <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                  #{id}
+              </foreach>
+          </when>
+          <otherwise>
+              <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+                  AND create_user_id IN
+                  <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                      #{createUserId}
+                  </foreach>
+              </if>
+              <if test="params.address !=null  and params.address!=''">
+                  AND  address LIKE concat('%', #{params.address} ,'%')
+              </if>
+              <if test="params.name !=null  and params.name!=''">
+                  AND  name LIKE concat('%', #{params.name} ,'%')
+              </if>
+              <if test="params.contacts !=null  and params.contacts!=''">
+                  AND  contacts LIKE concat('%', #{params.contacts} ,'%')
+              </if>
+              <if test="params.typeIdList !=null and params.typeIdList.size>0">
+                  AND type_id IN
+                  <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
+                      #{typeId}
+                  </foreach>
+              </if>
+              <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+                  AND approve_status IN
+                  <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                      #{approveStatus}
+                  </foreach>
+              </if>
+          </otherwise>
+      </choose>
 
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
         </if>
-        <if test="params.address !=null  and params.address!=''">
-            AND  address LIKE concat('%', #{params.address} ,'%')
-        </if>
-        <if test="params.name !=null  and params.name!=''">
-            AND  name LIKE concat('%', #{params.name} ,'%')
-        </if>
-        <if test="params.contacts !=null  and params.contacts!=''">
-            AND  contacts LIKE concat('%', #{params.contacts} ,'%')
-        </if>
-        <if test="params.typeIdList !=null and params.typeIdList.size>0">
-            AND type_id IN
-            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
-                #{typeId}
-            </foreach>
-        </if>
-        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
-            AND approve_status IN
-            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
-                #{approveStatus}
-            </foreach>
-        </if>
+
+
 
     </select>
 </mapper>

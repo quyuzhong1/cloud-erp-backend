@@ -1,7 +1,9 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -31,7 +33,7 @@ public class PurchasePriceDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO  extends PermissionsDTO {
         /**
          * 供应商表id
          */
@@ -85,6 +87,11 @@ public class PurchasePriceDTO implements Serializable {
          * 表id
          */
         private String id;
+
+        /**
+         * code
+         */
+        private String code;
         /**
          * 供应商表id
          */
@@ -96,6 +103,77 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
+
+
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+
+
+        /**
+         * 报价人id
+         */
+        private String pricingUserId;
+
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 附件地址
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名称
+         */
+        private List<String> attachmentNameList;
+
+
+        /**
+         * 报价明细
+         */
+        @Valid
+        private List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList;
+
+    }
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO   extends PermissionsDTO{
+
+        /**
+         * 表id
+         */
+        @NotBlank(message = "采购价目表id不能为空")
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 报价日期
+         */
+        @NotNull(message = "报价日期不能为空")
+        private LocalDate quotedDate;
+
+
 
 
         /**
@@ -275,7 +353,8 @@ public class PurchasePriceDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
-
+        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
+        private String searchType;
         /**
          * 供应商名称
          */

@@ -21,5 +21,5 @@ import java.util.List;
 @Mapper
 public interface SupplierPhaseMapper extends BaseMapper<SupplierPhaseEntity> {
 
-    IPage<SupplierPhaseDTO.PagingViewDTO> paging(Page query, @Param("params") SupplierPhaseDTO.PagingParamDTO params,@Param("supplierPhaseIdList") List<String> supplierPhaseIdList);
+    IPage<SupplierPhaseDTO.PagingViewDTO> paging(Page query, @Param("params") SupplierPhaseDTO.PagingParamDTO params,@Param("statusList") List<String> statusList);
 }

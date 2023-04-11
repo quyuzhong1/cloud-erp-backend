@@ -23,7 +23,7 @@ import java.util.List;
  * @date 2023/1/11 11:47
  */
 @RestController
-@RequestMapping("dmp/cfgApiFieldMap")
+@RequestMapping("cfgApiFieldMap")
 public class CfgApiFieldMapController extends BaseController {
 
     @Resource

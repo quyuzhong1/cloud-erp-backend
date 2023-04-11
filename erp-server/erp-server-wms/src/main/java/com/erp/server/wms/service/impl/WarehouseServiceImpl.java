@@ -80,7 +80,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         List<WarehouseEntity> list = lambdaQuery().
                 eq(WarehouseEntity::getApproveStatus, approveStatus).
-                eq(WarehouseEntity::getDisabled, Boolean.FALSE).
                 list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -263,8 +262,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public Boolean disApprove(List<String> warehouseIds) {
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
 
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
@@ -273,11 +271,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
 
         List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98014);
+            throw new ServiceException(ApiError.ERROR_99003);
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
         return result;
@@ -389,7 +386,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 16:08
      */
     @Override
-    public void exportWarehouse(WarehouseDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public void exportWarehouse(WarehouseDTO.ExportDTO dto, HttpServletResponse response) {
         //获取导出数据
         List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<WarehouseExportExcelDTO> resultList = new ArrayList<>(viewList.size());
@@ -426,7 +423,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 excelDTO.setOrgName(orgName);
-                excelDTO.setEnabled(item.getDisabled() ? "启用" : "未启用");
+                excelDTO.setEnabled(item.getDisabled() ? "停用" : "启用");
                 excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
                 resultList.add(excelDTO);
 
@@ -486,8 +483,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //获取到仓库类型
         List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(null);
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList);
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+        List<WarehouseEntity> warehouseList = this.list();
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList,warehouseList);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -538,9 +536,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return true;
     }
-
-
-
 
 
     /**

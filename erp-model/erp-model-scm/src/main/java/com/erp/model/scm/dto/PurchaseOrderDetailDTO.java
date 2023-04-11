@@ -50,6 +50,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
          * 报关型号
          */
         private String declareModel;
@@ -79,6 +84,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String currency;
 
         /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
          * 采购数量
          */
         @NotNull(message = "采购数量不能为空")
@@ -92,26 +102,18 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private BigDecimal purchaseAmount;
 
         /**
-         * 计划交期
+         * 预计交货日期
          */
         private LocalDate planDeliveryDate;
 
         /**
-         * 收料组织id
+         * 采购交期（天）
          */
-        @NotBlank(message = "收料组织不能为空")
-        private String receiveOrgId;
-
-        /**
-         * 交货仓库id
-         */
-        @NotBlank(message = "交货仓库不能为空")
-        private String deliveryWarehouseId;
+        private Integer deliveryDay;
 
         /**
          * 是否是赠品（false否，true是）
          */
-        @NotNull(message = "是否是赠品不能为空")
         private Boolean isGift;
 
         /**

@@ -24,7 +24,7 @@ import java.util.List;
  * @date 2022/12/16 19:20
  */
 @RestController
-@RequestMapping("bi/dataSource")
+@RequestMapping("dataSource")
 public class BiDataSourceController extends BaseController {
 
     @Resource

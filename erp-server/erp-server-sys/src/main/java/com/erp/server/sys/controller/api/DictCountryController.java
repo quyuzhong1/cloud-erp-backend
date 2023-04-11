@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2023-03-21
  */
 @RestController
-@RequestMapping("/sys/country")
+@RequestMapping("country")
 public class DictCountryController extends BaseController {
 
 }

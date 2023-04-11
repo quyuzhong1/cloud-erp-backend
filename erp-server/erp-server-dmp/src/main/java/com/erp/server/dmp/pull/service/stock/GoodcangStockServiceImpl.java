@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.stock;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 谷仓库存业务处理实现
@@ -36,7 +39,11 @@ public class GoodcangStockServiceImpl implements GoodcangStockService {
     @Transactional(transactionManager = "mongoTransactionManager", rollbackFor = Exception.class)
     public void receiveGoDownEntry(GoodcangDTO.MessageDTO message) {
         // 保存到mongo
-        message.setPlatformSign("谷仓");
+        // 处理数据
+        message.setPlatformSign(OmsPlatformEnum.OMS_GOOD_CANG.getName());
+        List<GoodcangDTO.ReceivingDetailDTO> receivingDetail = message.getReceivingDetail();
+        List<GoodcangDTO.ReceivingDetailDTO> detailList = receivingDetail.stream().peek(detail -> detail.setWarehouseCode(message.getWarehouseCode())).collect(Collectors.toList());
+        message.setReceivingDetail(detailList);
         mongoService.saveMongoData(message, MongoTableNameContant.ORIGINAL_GC_INBOUND_ORDER);
         // 同步推送到MQ
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.GC_STOCK_INBOUND_ORDER_TAG.getName(),

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -64,6 +65,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private PurchasePriceDetailService priceDetailService;
 
     @Resource
+    private PurchasePriceChangeDetailService priceChangeDetailService;
+
+    @Resource
     private AttachmentService attachmentService;
 
     @Resource
@@ -87,8 +91,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+        //根据供应商 获取到 对应 已有的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>());
+
         //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList());
+        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -97,8 +104,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         purchasePrice.setCode(code);
         purchasePrice.setId(id);
         String pricingUserId = dto.getPricingUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-        purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        if (StringUtils.isNotBlank(pricingUserId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+            purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        }
+
         String orgId = dto.getPurchaseOrgId();
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
@@ -160,6 +170,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         PurchasePriceDTO.ViewDTO viewDTO = new PurchasePriceDTO.ViewDTO();
         BeanMapper.copy(purchasePrice, viewDTO);
+        viewDTO.setApproveStatus(purchasePrice.getApproveStatus().getStatus());
         //附件信息
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
         List<String> attachmentUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
@@ -167,8 +178,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setAttachmentNameList(attachmentNameList);
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
-        List<PurchasePriceDetailDTO.UpdateDTO> purchasePriceDetailList = priceDetailService.getByPurchasePriceId(id);
+        List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList = priceDetailService.getByPurchasePriceId(id);
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
+
         return viewDTO;
     }
 
@@ -183,14 +195,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String updatePurchasePrice(PurchasePriceDTO.ViewDTO dto) {
+    public String updatePurchasePrice(PurchasePriceDTO.UpdateDTO dto) {
         String id = dto.getId();
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        ApproveStatusEnum status = purchasePrice.getApproveStatus();
 
-        String status = purchasePrice.getApproveStatus().getStatus();
+        PurchasePriceEntity old = new PurchasePriceEntity();
+        BeanMapper.copy(purchasePrice, old);
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -198,23 +212,28 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<String> statusList = new ArrayList<>(2);
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
-        if (!statusList.contains(status)) {
+        if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
+        BeanMapper.copy(dto, purchasePrice);
+        //根据供应商 获取到 对应 已有的区间
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), new ArrayList<>());
 
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList);
+        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList);
 
         //编号
         String code = purchasePrice.getCode();
-        BeanMapper.copy(dto, purchasePrice);
         purchasePrice.setCode(code);
-
+        purchasePrice.setApproveStatus(status);
 
         String pricingUserId = dto.getPricingUserId();
-        FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-        purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        if (StringUtils.isNotBlank(pricingUserId)) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
+            purchasePrice.setPricingUserName(user != null ? user.getUserName() : "");
+        }
+
         String orgId = dto.getPurchaseOrgId();
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
@@ -225,12 +244,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //修改成功
         Boolean result = this.updateById(purchasePrice);
         if (result) {
+            /**
+             * 添加修改日志
+             */
+            moduleOperateLogService.addModuleOperateLogByObj(old, purchasePrice, ModuleTypeEnum.PURCHASE_PRICE.getCode(), id, "", "");
+
             Class<PurchasePriceEntity> credentialClass = PurchasePriceEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
-            attachmentService.deleteByBusinessIds(Arrays.asList(dto.getId()));
-            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentUrlList(), type, id);
+            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细
             priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList());
             return id;
@@ -266,7 +289,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      * @date 2023-03-27 11:58
      */
     @Override
-    public Boolean updateAndSubmit(PurchasePriceDTO.ViewDTO dto) {
+    public Boolean updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
         String id = this.updatePurchasePrice(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
@@ -286,7 +309,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     public Boolean deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
-            return true;
+            return false;
         }
         List<PurchasePriceEntity> purchasePriceList = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -335,19 +358,19 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "状态变更");
 
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE.getCode(), rejectPairList, "状态变更");
         }
 
@@ -380,7 +403,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
-            content = String.format("状态由[%s]变更为[%s]", ingStatusName, ApproveStatusEnum.APPROVE.getName());
+            content = String.format("状态由[%s]变更为[%s],意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -409,7 +432,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public Boolean cancelProcess(List<String> ids) {
         List<PurchasePriceEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approveIngStatus)).count();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
@@ -441,14 +464,23 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
+        String searchType = params.getSearchType();
+        List<String> statusList = new ArrayList<>(1);
+        //待我审核
+        if (SearchType.WAIT_APPROVE.equals(searchType)) {
+            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
+        List<String> flagList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceDTO.PagingViewDTO item : list) {
+                boolean contains = flagList.contains(item.getId());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
@@ -457,6 +489,19 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 item.setCurrencySymbol(currencySymbol);
+
+
+                if (contains) {
+                    item.setCode("");
+                    item.setSupplierName("");
+                    item.setPurchaseOrgId("");
+                    item.setPurchaseOrgName("");
+                    item.setApproveStatus(null);
+                    item.setApproveStatusName("");
+                    item.setCreateUserName("");
+                    item.setCreateTime(null);
+                }
+                flagList.add(item.getId());
             }
         }
         return new PagingVO<>(pageData);
@@ -477,7 +522,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //获取导出数据
         List<PurchasePriceDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
         List<PurchasePriceExportExcelDTO> resultList = new ArrayList<>(viewList.size());
-
         if (CollectionUtils.isNotEmpty(viewList)) {
             List<String> currencyIdList = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
@@ -490,6 +534,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 excelDTO.setQtySection(minQty + "-" + maxQty);
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 excelDTO.setApproveStatusName(approveStatusEnum.getName());
+
+                Boolean disabled = item.getDisabled();
+                excelDTO.setEnabled((disabled!=null&&disabled)?"停用":"启用");
                 //含税单价
                 BigDecimal taxPrice = item.getTaxPrice();
                 //币种
@@ -502,10 +549,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         }
         String fileName = "采购价目数据";
-        String excelPath = "excel/PurchasePriceExport.xlsx";
         try {
-         //   new ExcelPrintUtils().patchExport(resultList, response,fileName, excelPath);
-            ExcelUtil.export(fileName,"采购价目数据",resultList,PurchasePriceExportExcelDTO.class,response);
+            ExcelUtil.export(fileName, "采购价目数据", resultList, PurchasePriceExportExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }

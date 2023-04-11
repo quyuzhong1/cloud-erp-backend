@@ -316,6 +316,7 @@ public enum ApiError implements Serializable {
     ERROR_97025(97025,"未设置字段映射，不支持推送"),
     ERROR_97026(97026,"模块名称最大30字符"),
     ERROR_97027(97027,"模块说明最大200字符"),
+    ERROR_KINGDEE_SAVE(97028,"调用金蝶保存接口失败"),
 
 
 
@@ -327,7 +328,7 @@ public enum ApiError implements Serializable {
     ERROR_98000(98000,"供应商等级名不能重复"),
     ERROR_98001(98001,"未找到备货申请单"),
     ERROR_98002(98002,"未找到备货申请单明细"),
-    ERROR_98003(98003,"供应商默认联系人不能超过两个"),
+    ERROR_98003(98003,"供应商默认联系人不能超过一个"),
     ERROR_98004(98004,"选择数据不能为空"),
     ERROR_98005(98005,"只有待提交和审核不通过数据支持作废"),
     ERROR_98006(98006,"只有审核中数据支持审核"),
@@ -335,7 +336,7 @@ public enum ApiError implements Serializable {
     ERROR_98009(98009,"只有待提交数据支持删除"),
     ERROR_98010(98010,"只有待提交或审核不通过并且未作废数据支持提交"),
     ERROR_SUPPLIER_ABSENCE(98011,"供应商不存在"),
-    ERROR_98012(98012,"已作废数据不不支持作废"),
+    ERROR_98012(98012,"已作废数据不支持作废"),
     ERROR_WAIT_SUBMIT_TO_APPROVE_ING(98013,"只有待提交和审核不通过才能提交审核"),
     ERROR_98014(98014,"只有审核中和已审核数据支持反审核"),
     ERROR_98015(98015,"未找到可生成采购订单的采购申请明细"),
@@ -347,6 +348,12 @@ public enum ApiError implements Serializable {
     ERROR_98021(98021,"只有审核不通过和待提交才能编辑"),
     ERROR_REPEAT_SKU(98022,"存在重复的SKU,不可提交"),
     ERROR_INTERVAL_OVERLAP(98023,"区间存在重叠，不可提交"),
+    ERROR_INTERVAL_SUPPLIER_OVERLAP(98047,"该供应商SKU区间存在重叠，不可提交"),
+    ERROR_INTERVAL_SUPPLIER_CHANGE_OVERLAP(98048,"与该供应商SKU变更区间存在重叠，不可提交"),
+    ERROR_INTERVAL_EXIST(98047,"区间有误，不可提交"),
+    ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
+    ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
+
     ERROR_98024(98024,"采购价目表不存在"),
     ERROR_98025(98025,"未找到采购订单"),
     ERROR_98026(98026,"未找到采购订单明细"),
@@ -360,7 +367,18 @@ public enum ApiError implements Serializable {
     ERROR_98034(98034,"供应商名称不能重复"),
     ERROR_98035(98035,"只有部分交货的采购订单能结束交货"),
     ERROR_98036(98036,"未找到采购订单供应商信息"),
-    ERROR_98037(98037,"资质有效期有误"),
+    ERROR_98037(98037,"资质有效起不能大于资质有效止"),
+    ERROR_98038(98038,"待提交和审核不通过采购订单不支持导出采购合同"),
+    ERROR_98039(98039,"未找到供应商联系人"),
+    ERROR_98040(98040,"只有已审核采购订单能下推签收单"),
+    ERROR_98041(98041,"待收获的采购订单明细不能下推签收单"),
+    ERROR_98042(98042,"未找到采购变更单"),
+    ERROR_98043(98043,"未找到采购变更明细单"),
+    ERROR_98044(98044,"存在已被供应商引用的等级"),
+    ERROR_98045(98045,"非已审核采购订单不支持变更"),
+    ERROR_98046(98046,"请输入采购报价查询条件"),
+    ERROR_98049(98049,"未找到采购价目明细"),
+
 
 
 
@@ -376,6 +394,7 @@ public enum ApiError implements Serializable {
     ERROR_99000(99000,"金蝶仓库编号不能重复"),
     ERROR_99001(99001,"仓库不能为空"),
     ERROR_99002(99002,"未找到仓库"),
+    ERROR_99003(99003,"只有已审核数据支持反审核"),
 
 
     ERROR_end(1000000, "系统错误");

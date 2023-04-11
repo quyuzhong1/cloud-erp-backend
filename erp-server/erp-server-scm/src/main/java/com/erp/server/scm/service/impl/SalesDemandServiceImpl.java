@@ -11,6 +11,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -19,13 +20,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
@@ -65,7 +64,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -282,7 +284,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         workflowFeign.cancelProcess(ids);
 
         //更新单据为待提交
-        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("备货申请单【%s】取消流程", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"取消流程操作");
@@ -291,16 +293,11 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public Boolean exportExcel(SalesDemandDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<SalesDemandExportExcelDTO> exportExcelList = baseMapper.listExportExcel(dto);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/salesDemandExport.xlsx";
-        String name = "备货申请单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
+        List<SalesDemandExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        String fileName = "备货申请单数据";
         try {
-            new ExcelPrintUtils().patchExport(exportExcelList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
+            ExcelUtil.export(fileName, "备货申请单数据", resultList, SalesDemandExportExcelDTO.class, response);
+        } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
@@ -321,7 +318,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个备货申请单【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"反审核操作");
@@ -341,6 +338,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         log.info("备货申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         salesDemandDetailService.removeBySalesDemandIds(ids);
+        //删除操作日志
+        moduleOperateLogService.removeByBusinessIds(ids);
         //删除主表数据
         return  this.removeByIds(ids);
     }
@@ -428,12 +427,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
-    public List<ListStatusCountDTO.SalesDemandCountDTO> listCount() {
-        SalesDemandDTO.SearchParamDTO dto = new SalesDemandDTO.SearchParamDTO();
+    public List<ListStatusCountDTO.SalesDemandCountDTO> listCount(PermissionsDTO dto) {
+        SalesDemandDTO.SearchParamDTO searchParamDTO = new SalesDemandDTO.SearchParamDTO();
+        searchParamDTO.setParam(dto.getParam());
         List<ListStatusCountDTO.SalesDemandCountDTO> list = new ArrayList<>();
         ListStatusCountDTO.SalesDemandCountDTO resultDTO = new ListStatusCountDTO.SalesDemandCountDTO();
-        dto.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-        Integer count = this.baseMapper.listCount(dto);
+        searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+        Integer count = this.baseMapper.listCount(searchParamDTO);
         resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
         resultDTO.setType(PurchaseListTypeEnum.TO_BE_APPROVE.getCode());
         list.add(resultDTO);
@@ -477,6 +477,19 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //更新审核状态
         lambdaUpdate().in(SalesDemandEntity::getId,ids)
                 .set(SalesDemandEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    /**
+     * 反审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids,String approveStatus) {
+
+        this.lambdaUpdate().in(SalesDemandEntity::getId,ids)
+                .set(SalesDemandEntity::getApproveStatus,approveStatus)
+                .set(SalesDemandEntity::getApproveUserId,"")
+                .set(SalesDemandEntity::getApproveUserName,"")
+                .set(SalesDemandEntity::getApproveTime,null)
                 .update();
     }
 

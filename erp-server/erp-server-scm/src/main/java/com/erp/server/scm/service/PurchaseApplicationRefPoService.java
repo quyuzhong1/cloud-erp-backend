@@ -38,4 +38,11 @@ public interface PurchaseApplicationRefPoService extends SuperService<PurchaseAp
      * @param purchaseOrderIds
      */
     void removeByPurchaseOrderIds(List<String> purchaseOrderIds);
+    /**
+     * @description: 根据采购订单明细ids删除
+     * @author Will
+     * @date: 2023/3/29 18:51
+     * @param purchaseOrderDetailIds
+     */
+    void removeByPurchaseOrderDetailIds(List<String> purchaseOrderDetailIds);
 }

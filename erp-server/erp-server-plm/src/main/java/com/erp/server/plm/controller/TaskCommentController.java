@@ -21,7 +21,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("plm/taskComment")
+@RequestMapping("taskComment")
 public class TaskCommentController extends BaseController {
 
     @Autowired
