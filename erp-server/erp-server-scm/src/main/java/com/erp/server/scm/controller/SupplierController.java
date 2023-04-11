@@ -84,7 +84,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:add",
+            menuCode = "scm:supplier:addAndSubmit",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
@@ -121,7 +121,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:update",
+            menuCode = "scm:supplier:updateAndSubmit",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
@@ -140,7 +140,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:update",
+            menuCode = "scm:supplier:view",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
@@ -159,7 +159,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:update",
+            menuCode = "scm:supplier:delete",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
@@ -178,7 +178,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:update",
+            menuCode = "scm:supplier:submit",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
@@ -208,7 +208,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:update",
+            menuCode = "scm:supplier:approve",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )
@@ -228,7 +228,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:update",
+            menuCode = "scm:supplier:disApprove",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )

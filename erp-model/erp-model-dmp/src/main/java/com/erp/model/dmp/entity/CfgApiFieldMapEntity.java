@@ -124,4 +124,8 @@ public class CfgApiFieldMapEntity implements Serializable {
      */
     @TableField(value = "parent_id")
     private String parentId;
+
+    @TableField(value = "is_deleted")
+    @TableLogic
+    private Boolean isDeleted;
 }

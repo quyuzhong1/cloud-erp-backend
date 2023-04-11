@@ -76,4 +76,8 @@ public class CfgApiFieldMapValueEntity implements Serializable {
      */
     @TableField(value = "api_value")
     private String apiValue;
+
+    @TableField(value = "is_deleted")
+    @TableLogic
+    private Boolean isDeleted;
 }

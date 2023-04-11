@@ -1,7 +1,10 @@
 package com.erp.model.dmp.dto;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.core.utils.date.DateUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,32 +39,32 @@ public class GoodcangDTO {
         /**
          * 用户令牌
          */
-        @JsonProperty("AppToken")
+        @SerializedName("AppToken")
         private String appToken;
         /**
          * 签名字符串
          */
-        @JsonProperty("Sign")
+        @SerializedName("Sign")
         private String sign;
         /**
          * 数据类型
          */
-        @JsonProperty("MessageType")
+        @SerializedName("MessageType")
         private String messageType;
         /**
          * 签名字符串
          */
-        @JsonProperty("Message")
+        @SerializedName("Message")
         private MessageDTO message;
         /**
          * 消息ID
          */
-        @JsonProperty("MessageID")
+        @SerializedName("MessageID")
         private String messageId;
         /**
          * 发送时间
          */
-        @JsonProperty("SendTime")
+        @SerializedName("SendTime")
         private LocalDateTime sendTime;
     }
 
@@ -72,27 +75,27 @@ public class GoodcangDTO {
         /**
          * 入库单号
          */
-        @JsonProperty("receiving_code")
+        @SerializedName("receiving_code")
         private String receivingCode;
         /**
          * 参考号
          */
-        @JsonProperty("reference_no")
+        @SerializedName("reference_no")
         private String referenceNo;
         /**
          * 状态
          */
-        @JsonProperty("receiving_status")
+        @SerializedName("receiving_status")
         private Integer receivingStatus;
         /**
          * 仓库编码
          */
-        @JsonProperty("warehouse_code")
+        @SerializedName("warehouse_code")
         private String warehouseCode;
         /**
          * 仓库id
          */
-        @JsonProperty("warehouse_id")
+        @SerializedName("warehouse_id")
         private Integer warehouseId;
         /**
          * 创建时间
@@ -108,7 +111,7 @@ public class GoodcangDTO {
          * 3中转(易渡代发)
          * 4原标 5FBA
          */
-        @JsonProperty("receiving_type")
+        @SerializedName("receiving_type")
         private Integer receivingType;
 
         private String platformSign;
@@ -128,8 +131,8 @@ public class GoodcangDTO {
             this.receivingStatus = 1;
             this.warehouseCode = dto.getWarehouseCode();
             this.warehouseId = 0;
-            this.addTime = dto.getAddTime();
-            this.updateTime = dto.getUpdateTime();
+            this.addTime = dto.getReceivingAddTime();
+            this.updateTime = dto.getReceivingModifyTime();
             this.receivingType = 0;
             this.receivingDetail = ReceivingDetailDTO.createReceivingDetail(dto.getItems(), dto.getWarehouseCode());
             this.platformSign = OmsPlatformEnum.OMS_IML.getName();
@@ -210,10 +213,10 @@ public class GoodcangDTO {
             this.boxNo = dto.getBoxNo().toString();
             this.referenceBoxNo = dto.getReferenceBoxNo();
             this.deliveryQty = dto.getQuantity();
-            this.receiptQty = dto.getQuantity();
-            this.putAwayQty = dto.getQuantity();
-            this.unsellableQty = null != dto.getLoCountType() ? (dto.getLoCountType().size() > 1 ? dto.getLoCountType().get(1) : 0) : 0;
-            this.sellableQty = null != dto.getLoCountType() ? dto.getLoCountType().get(0) : 0;
+            this.receiptQty = dto.getReceivedQuantity();
+            this.putAwayQty = dto.getPutawayQty();
+            this.unsellableQty = null != dto.getLoTypeCount() ? (dto.getLoTypeCount().size() > 1 ? dto.getLoTypeCount().get(1) : 0) : 0;
+            this.sellableQty = null != dto.getLoTypeCount() ? dto.getLoTypeCount().get(0) : 0;
             this.warehouseCode = warehouseCode;
         }
     }

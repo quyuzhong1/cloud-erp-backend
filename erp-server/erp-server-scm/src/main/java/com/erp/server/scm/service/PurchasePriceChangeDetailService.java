@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @author yl
      * @date 2023-03-28 12:07
      */
-    void checkSkuInterval(String purchasePriceId,List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList);
+    void checkSkuInterval(String purchasePriceId,List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyLis);
 
     /**
      * 根据变更表id 获取明细
@@ -53,10 +54,10 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * 审核通过后 需要修改采购价目详情表的数据
      * @author yl
      * @date 2023-03-28 19:06
-     * @param purchasePriceChangeIds
+     * @param purchasePriceChangeList
      * @return void
      */
-    void updatePurchasePriceDetail(List<String> purchasePriceChangeIds);
+    void updatePurchasePriceDetail(List<PurchasePriceChangeEntity> purchasePriceChangeList);
 
     
     /**

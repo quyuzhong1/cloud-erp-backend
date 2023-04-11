@@ -5,13 +5,17 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.GoodcangDTO;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -19,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -30,6 +34,9 @@ public class StockMQConsumerService {
 
     @Resource
     private ApiPlmSyncLogService apiPlmSyncLogService;
+
+    @Resource
+    private KingdeeCommonService kingdeeCommonService;
 
     /**
      * rocketmq 监听第三方仓库存变更
@@ -72,6 +79,13 @@ public class StockMQConsumerService {
             // 推送金蝶
             // 1. 金蝶接口调用 保存
             //读取配置，初始化SDK
+            KingdeeApiUtils orgApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PLM_CFG_PREFERRED_ORGANIZATION_CFG.getCode());
+            Map<String, Object> dataMap = new HashMap<>(2);
+            dataMap.put("orgId", ApiKingdeeOrganizationEnum.ORGANIZATION_HK.getNumber());
+            HashMap<String, Object> hashMap = new HashMap<>(2);
+            hashMap.put("list", Arrays.asList(dataMap));
+            String resultStr = kingdeeCommonService.addKingdeeRecord(ext.getReceivingCode(), orgApiUtils, ApiModuleTypeEnum.CHANGE_ORG.getCode(), PlatformEnum.KINGDEE.getDesc(), hashMap);
+            // 切换组织
             KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFER_DIRECT.getCode());
             String saveId = dmpWarehouseInboundRecordService.addKingdeeTransferRecord(ext, apiUtils);
             // 保存成功

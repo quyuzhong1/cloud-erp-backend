@@ -44,6 +44,14 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
     @TableField("price_detail_id")
     private String priceDetailId;
 
+
+
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+
     /**
      * sku no
      */

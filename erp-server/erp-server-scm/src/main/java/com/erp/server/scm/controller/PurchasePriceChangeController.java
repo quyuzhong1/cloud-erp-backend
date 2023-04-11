@@ -62,11 +62,11 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "pricing_user_id",
-//            menuCode = "scm:purchase:price:change:add",
-//            serviceClass = PurchasePriceChangeService.class,
-//            keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:change:add",
+            serviceClass = PurchasePriceChangeService.class,
+            keyIdName = "id")
     public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
         String id = purchasePriceChangeService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();

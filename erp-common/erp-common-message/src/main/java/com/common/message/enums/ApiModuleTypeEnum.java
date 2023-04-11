@@ -12,6 +12,8 @@ public enum ApiModuleTypeEnum {
     BOMMANAGE(1, "bomManage", "BOM管理"),
 
     STOCK_OVERSEAS(2, "stockOverseas", "海外仓库存"),
+
+    CHANGE_ORG(7, "changeOrg", "默认组织切换"),
     ;
 
 

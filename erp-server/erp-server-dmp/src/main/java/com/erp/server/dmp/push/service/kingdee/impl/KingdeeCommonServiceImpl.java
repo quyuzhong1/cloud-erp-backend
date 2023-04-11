@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -10,6 +11,7 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
@@ -26,6 +28,7 @@ import com.erp.server.dmp.service.CfgApiFieldMapValueService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -306,7 +313,22 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //直接复制值
         if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-            KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",map.get(cfgApiFieldMapDTO.getSelfField()));
+            Object value = map.get(cfgApiFieldMapDTO.getSelfField());
+            String format = "";
+            if (value instanceof LocalDateTime) {
+                LocalDateTime value1 = (LocalDateTime) value;
+                format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt));
+            }
+            if (value instanceof LocalDate) {
+                LocalDate value1 = (LocalDate) value;
+                format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt_day));
+            }
+            if (value instanceof LocalTime) {
+                LocalTime value1 = (LocalTime) value;
+                format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt_hms));
+            }
+
+            KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".", StrUtil.isNotBlank(format) ? format : value);
             return;
         }
         if (ApiFieldTypeEnum.FIELD_VALUE_MAP.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {

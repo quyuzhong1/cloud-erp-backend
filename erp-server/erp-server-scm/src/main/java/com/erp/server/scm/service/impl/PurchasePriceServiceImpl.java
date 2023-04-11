@@ -64,8 +64,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Resource
     private PurchasePriceDetailService priceDetailService;
 
+
+
+
     @Resource
-    private PurchasePriceChangeDetailService priceChangeDetailService;
+    private PurchasePriceHistoryService purchasePriceHistoryService;
 
     @Resource
     private AttachmentService attachmentService;
@@ -94,8 +97,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //根据供应商 获取到 对应 已有的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(supplierId, new ArrayList<>());
 
+        //历史报价
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId);
+
         //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList);
+        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList,historyList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -218,10 +224,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         BeanMapper.copy(dto, purchasePrice);
         //根据供应商 获取到 对应 已有的区间
         List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), new ArrayList<>());
-
+        //历史报价
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId());
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList);
+        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList,historyList);
 
         //编号
         String code = purchasePrice.getCode();
@@ -536,7 +543,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 excelDTO.setApproveStatusName(approveStatusEnum.getName());
 
                 Boolean disabled = item.getDisabled();
-                excelDTO.setEnabled((disabled!=null&&disabled)?"停用":"启用");
+                excelDTO.setEnabled((disabled != null && disabled) ? "停用" : "启用");
                 //含税单价
                 BigDecimal taxPrice = item.getTaxPrice();
                 //币种
