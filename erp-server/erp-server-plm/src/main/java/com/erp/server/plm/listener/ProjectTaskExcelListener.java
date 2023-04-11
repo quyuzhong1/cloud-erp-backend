@@ -112,11 +112,6 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
                     if (projectTaskEntity.getStatus() == 0 || projectTaskEntity.getStatus() == 1 || projectTaskEntity.getStatus() == 3 ) {
                         projectTaskDTO.setId(projectTaskEntity.getId());
                         projectTaskDTO.setType(projectTaskEntity.getType());
-
-                        if (!projectTaskEntity.getType().equals(projectTaskDTO.getType())) {
-                            errorMsgList.add("[任务类型]字段不可修改");
-                        }
-
                     } else {
                         errorMsgList.add("只有[任务状态]为待发布或待开始，进行中的任务可修改");
                     }
