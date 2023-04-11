@@ -45,5 +45,12 @@ public interface PurchasePriceHistoryService extends SuperService<PurchasePriceH
      */
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
 
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-04-11 17:47
+     * @param purchasePriceDetailIds
+     * @return java.util.List<com.erp.model.scm.entity.PurchasePriceHistoryEntity>
+     */
     List<PurchasePriceHistoryEntity> getHistoryByDetailIds(List<String> purchasePriceDetailIds);
 }

@@ -161,7 +161,7 @@ public class SupplierController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:supplier:delete",
             serviceClass = SupplierService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierService.deleteByIds(dto.getIds());
@@ -180,7 +180,7 @@ public class SupplierController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:supplier:submit",
             serviceClass = SupplierService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody BaseIdsDTO.IdsDTO dto) {
         Boolean result = supplierService.submit(dto.getIds());
@@ -210,7 +210,7 @@ public class SupplierController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:supplier:approve",
             serviceClass = SupplierService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = supplierService.approve(dto);
@@ -230,7 +230,7 @@ public class SupplierController extends BaseController {
             tableField = "purchase_user_id",
             menuCode = "scm:supplier:disApprove",
             serviceClass = SupplierService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = supplierService.disApprove(dto.getIds());
