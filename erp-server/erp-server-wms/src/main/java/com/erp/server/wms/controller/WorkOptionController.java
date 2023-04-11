@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 仓库签收明细单 前端控制器
+ *  工作台选项前端控制器
  * </p>
  *
- * @author will
- * @since 2023-03-16
+ * @author LUO_WG
+ * @since 2023-04-11
  */
 @RestController
-@RequestMapping("/wms-warehouse-receive-detail-entity")
-public class WarehouseReceiveDetailController extends BaseController {
+@RequestMapping("/work-option-entity")
+public class WorkOptionController extends BaseController {
 
 }

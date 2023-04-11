@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 
 /**
  * <p>
- * 仓库签收单 服务实现类
+ *  服务实现类
  * </p>
  *
- * @author will
- * @since 2023-03-16
+ * @author LUO_WG
+ * @since 2023-04-06
  */
 @Service
 public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseReceiveMapper, WarehouseReceiveEntity> implements WarehouseReceiveService {

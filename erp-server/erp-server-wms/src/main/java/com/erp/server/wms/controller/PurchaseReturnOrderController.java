@@ -1,13 +1,12 @@
 package com.erp.server.wms.controller;
 
-import com.common.business.annotation.DataPermission;
+
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
@@ -15,16 +14,17 @@ import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
 
-
 /**
- * 采购收货单
- * @Author Luo_WG
- * @Date 2023/4/6 18:56
- **/
+ * <p>
+ * 采购退货单 前端控制器
+ * </p>
+ *
+ * @author LUO_WG
+ * @since 2023-04-07
+ */
 @RestController
-@RequestMapping("/warehouseReceive")
-public class WarehouseReceiveController extends BaseController {
-
+@RequestMapping("/purchaseReturnOrder")
+public class PurchaseReturnOrderController extends BaseController {
     /**
      * 列表查询
      * @Author Luo_WG
@@ -33,8 +33,8 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>>
      **/
     @PostMapping("/paging")
-    public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
-        PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = null;
+    public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
+        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = null;
         return success(pagingVO);
     }
 
@@ -46,7 +46,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.AddDTO> dto) {
+    public ApiResult add(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.AddDTO> dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
@@ -59,7 +59,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.UpdateDTO> dto) {
+    public ApiResult update(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.UpdateDTO> dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
@@ -72,8 +72,8 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO>
      **/
     @GetMapping("/view")
-    public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@Param("id") String id) {
-        WarehouseReceiveDTO.ViewDTO dto = null;
+    public ApiResult<PurchaseReturnOrderDTO.ViewDTO> view(@Param("id") String id) {
+        PurchaseReturnOrderDTO.ViewDTO dto = null;
         return success(dto);
     }
 
@@ -98,7 +98,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
@@ -111,7 +111,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
