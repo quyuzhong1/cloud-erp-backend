@@ -129,7 +129,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-10 16:57
      */
     @Override
-    @Transactional
+    //@Transactional
     public ProcessNodeDTO taskNoPass(ApproveProcessDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         String taskId = dto.getTaskId();

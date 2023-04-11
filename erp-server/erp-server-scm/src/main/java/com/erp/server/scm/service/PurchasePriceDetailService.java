@@ -31,7 +31,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param  supplierPriceDetailList  供应商已有的
      * @return void
      */
-    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList);
+    void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList,List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList);
 
     
     /**

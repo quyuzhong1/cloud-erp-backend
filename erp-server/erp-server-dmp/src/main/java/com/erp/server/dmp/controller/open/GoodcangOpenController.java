@@ -9,9 +9,11 @@ import com.erp.server.dmp.pull.service.GoodcangStockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashMap;
 
 /**
  * 谷仓订阅
@@ -28,14 +30,14 @@ public class GoodcangOpenController {
     private GoodcangStockService goodcangStockService;
 
     @RequestMapping ("/goodcang/subscribe")
-    public GoodcangDTO.ResultDTO subscribe(@RequestBody(required = false) JSONObject dto){
+    public GoodcangDTO.ResultDTO subscribe(@RequestParam(required = false) LinkedHashMap dto){
         log.warn("GoodCangOpenController>>>subscribe>>>dto ={}", dto);
 
         // 类型校验
 
         // 签名校验
-        JSONObject message = dto.getJSONObject("Message");
-        GoodcangDTO.MessageDTO messageDTO = JSONUtil.toBean(message, GoodcangDTO.MessageDTO.class);
+        Object message = dto.get("Message");
+        GoodcangDTO.MessageDTO messageDTO = JSONUtil.toBean(message.toString(), GoodcangDTO.MessageDTO.class);
         if(StrUtil.isBlank(messageDTO.getReceivingCode())){
             return GoodcangDTO.ResultDTO.fail("receiving_code 为空");
         }

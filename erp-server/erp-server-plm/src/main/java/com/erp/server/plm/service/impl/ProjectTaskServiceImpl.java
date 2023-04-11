@@ -667,7 +667,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer IsFixed = entity.getIsFixed();
 
         //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed)) {
+        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(loginUser.getUserAccount()) ) {
             throw new ServiceException(ApiError.ERROR_95014);
         }
         //检查是否是子任务
@@ -4693,7 +4693,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
             }
             //如果是固定任务
-            if (IsConstant.YES.equals(req.getIsFixed())) {
+            if (IsConstant.YES.equals(req.getIsFixed()) && !"admin".equals(loginUser.getUserAccount())) {
                 throw new ServiceException(ApiError.ERROR_95014);
             }
 

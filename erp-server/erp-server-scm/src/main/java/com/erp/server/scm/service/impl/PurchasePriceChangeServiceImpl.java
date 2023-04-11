@@ -22,6 +22,7 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
+
+    @Resource
+    private PurchasePriceHistoryService purchasePriceHistoryService;
 
 
     @Resource
@@ -104,9 +109,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         }
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId,detailIds);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds);
+        //历史报价
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId());
+
         //检查区间报价是否重叠
-        purchasePriceChangeDetailService.checkSkuInterval(priceId, purchasePriceChangeDetailList, supplierPriceDetailList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceId, purchasePriceChangeDetailList, supplierPriceDetailList,historyList);
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
@@ -120,6 +128,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             changeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
         }
         String orgId = dto.getPurchaseOrgId();
+
+        //判断是否能通过
+        Boolean isPass = getIsPass(dto.getPurchasePriceChangeDetailList());
+        if (isPass) {
+            changeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(approveStatus));
+        }
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
@@ -128,6 +142,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //保存成功
         Boolean addResult = this.save(changeEntity);
         if (addResult) {
+
             Class<PurchasePriceChangeEntity> credentialClass = PurchasePriceChangeEntity.class;
             TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
@@ -138,6 +153,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //添加价格变更明细
             purchasePriceChangeDetailService.addPriceChangeDetail(id, dto.getPurchasePriceChangeDetailList());
 
+            if(isPass){
+                purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(changeEntity));
+            }
+
             //添加日志
             String content = String.format("新增了一个{%s}-采购调价-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), id, "新增操作");
@@ -147,6 +166,52 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
 
         return "";
+    }
+
+    /**
+     * 可以做自动审核的 就是判断他报价和税率全部都各自不大于原先值的情况  就给他自动审核通过
+     *
+     * @param purchasePriceChangeDetailList
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-11 12:27
+     */
+    private Boolean getIsPass(List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList) {
+        if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
+            List<Integer> flagList = new ArrayList<>();
+            List<String> detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.AddDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+
+            List<PurchasePriceDetailEntity> detailEntityList = purchasePriceDetailService.listByIds(detailIds);
+            int i = 0;
+            for (PurchasePriceChangeDetailDTO.AddDTO item : purchasePriceChangeDetailList) {
+                PurchasePriceDetailEntity entity = detailEntityList.stream().filter(d -> d.getId().equals(item.getPurchasePriceDetailId())).findFirst().orElse(null);
+                if (entity != null) {
+                    //新的报价
+                    BigDecimal newTaxPrice = item.getTaxPrice();
+                    //原有的报价
+                    BigDecimal oldTaxPrice = entity.getTaxPrice();
+
+                    //新的税率
+                    BigDecimal newTaxRate = item.getTaxRate();
+
+                    //原有的税率
+                    BigDecimal oldTaxRate = entity.getTaxRate();
+                    if (newTaxPrice != null && oldTaxPrice != null && newTaxRate != null && oldTaxRate != null) {
+                        if (newTaxPrice.compareTo(oldTaxPrice) <= 0 && newTaxRate.compareTo(oldTaxRate) <= 0) {
+                            i++;
+                            flagList.add(i);
+                        }
+
+                    }
+                }
+            }
+            if (flagList.size() == purchasePriceChangeDetailList.size()) {
+                return true;
+            }
+        }
+
+        return false;
+
     }
 
 
@@ -237,11 +302,21 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
             detailIds = purchasePriceChangeDetailList.stream().map(PurchasePriceChangeDetailDTO.UpdateDTO::getPurchasePriceDetailId).collect(Collectors.toList());
         }
+
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId,detailIds);
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = purchasePriceDetailService.getBySupplierId(supplierId, detailIds);
         //检查区间报价是否重叠
         List<PurchasePriceChangeDetailDTO.AddDTO> priceChangeDetailList = BeanMapper.copyList(dto.getPurchasePriceChangeDetailList(), PurchasePriceChangeDetailDTO.AddDTO.class);
-        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList);
+
+        //判断是否能通过
+        Boolean isPass = getIsPass(priceChangeDetailList);
+        if (isPass) {
+            priceChangeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(status));
+        }
+        //历史报价
+        List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId);
+
+        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList,historyList);
         //code
         String code = priceChangeEntity.getCode();
         BeanMapper.copy(dto, priceChangeEntity);
@@ -260,6 +335,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //修改成功
         Boolean result = this.updateById(priceChangeEntity);
         if (result) {
+
+            if(isPass){
+                purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(priceChangeEntity));
+            }
 
             /**
              * 添加修改日志
@@ -401,7 +480,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (result) {
             //当是审核通过的时候 就要去复写 且添加历史数据
             if (isPass) {
-                purchasePriceChangeDetailService.updatePurchasePriceDetail(ids);
+                purchasePriceChangeDetailService.updatePurchasePriceDetail(list);
             }
             //添加日志
             List<Pair<String, String>> pairList = list.stream().

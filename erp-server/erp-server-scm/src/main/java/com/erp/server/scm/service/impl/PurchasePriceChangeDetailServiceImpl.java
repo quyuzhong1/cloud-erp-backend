@@ -11,6 +11,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -72,7 +73,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @date 2023-03-28 12:07
      */
     @Override
-    public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList) {
+    public void checkSkuInterval(String purchasePriceId, List<PurchasePriceChangeDetailDTO.AddDTO> purchasePriceChangeDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
 
         if (CollectionUtils.isNotEmpty(purchasePriceChangeDetailList)) {
             //这个是检查的
@@ -162,7 +163,28 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 }
             }
 
+            List<PurchasePriceChangeDetailDTO.AddDTO> historyFlagList = BeanMapper.copyList(historyList, PurchasePriceChangeDetailDTO.AddDTO.class);
 
+            checkList.addAll(historyFlagList);
+            //以sku 分组
+            Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> historyMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
+            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
+                //对应的报价
+                List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
+                //没有无区间 就要检查又没有不同区间的
+                List<Integer> intervalList = new ArrayList<>(10);
+                for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
+                    if (interval.getMinQty() != null && interval.getMaxQty() != null) {
+                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                    }
+                }
+                //判断是否是按顺序的
+                boolean isRepetitionResult = isRepetition(intervalList);
+                //当不是的时候
+                if (isRepetitionResult) {
+                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                }
+            }
         }
 
     }
@@ -205,10 +227,10 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             if (priceDetailEntity != null) {
                 item.setOldCurrency(priceDetailEntity.getCurrency());
                 item.setOldTaxPrice(priceDetailEntity.getTaxPrice());
-                if(priceDetailEntity.getTaxRate()!=null){
+                if (priceDetailEntity.getTaxRate() != null) {
                     item.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(hundred));
                 }
-                if(item.getTaxRate()!=null){
+                if (item.getTaxRate() != null) {
                     item.setTaxRate(item.getTaxRate().multiply(hundred));
                 }
                 String currency = item.getCurrency();
@@ -272,13 +294,14 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     /**
      * 审核通过后 需要修改采购价目详情表的数据
      *
-     * @param purchasePriceChangeIds
+     * @param purchasePriceChangeList
      * @return void
      * @author yl
      * @date 2023-03-28 19:06
      */
     @Override
-    public void updatePurchasePriceDetail(List<String> purchasePriceChangeIds) {
+    public void updatePurchasePriceDetail(List<PurchasePriceChangeEntity> purchasePriceChangeList) {
+        List<String> purchasePriceChangeIds = purchasePriceChangeList.stream().map(PurchasePriceChangeEntity::getId).collect(Collectors.toList());
         //获取到对应数据
         List<PurchasePriceChangeDetailEntity> list = this.getEntityByPriceChangeIds(purchasePriceChangeIds);
         List<String> purchasePriceDetailIdList = list.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
@@ -292,6 +315,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             //更改的价目
             PurchasePriceChangeDetailEntity changeDetail = list.stream().filter(P -> P.getPurchasePriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
             if (changeDetail != null) {
+                String supplierId = purchasePriceChangeList.stream().filter(p -> p.getPurchasePriceId().equals(item.getPurchasePriceId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
                 //历史的
                 PurchasePriceHistoryEntity history = new PurchasePriceHistoryEntity();
                 BeanMapper.copy(item, history);
@@ -299,6 +324,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 history.setId(IdWorker.getIdStr());
                 //失效时间
                 history.setExpireDate(changeDetail.getEffectiveDate().minusDays(1));
+                history.setSupplierId(supplierId);
                 historyList.add(history);
                 item.setTaxRate(changeDetail.getTaxRate());
                 item.setExpireDate(changeDetail.getExpireDate());

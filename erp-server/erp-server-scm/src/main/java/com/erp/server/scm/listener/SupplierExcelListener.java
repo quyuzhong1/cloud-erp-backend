@@ -138,7 +138,10 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         addDTO.setCompanyWebsite(excelDTO.getCompanyWebsite());
         //启用状态
         String enabled = excelDTO.getEnabled();
-        addDTO.setDisabled(!enabled.equals("启用"));
+        if(StringUtils.isNotBlank(enabled)){
+            addDTO.setDisabled(!enabled.equals("启用"));
+        }
+
         //结算方式
         String payMethodName = excelDTO.getPayMethodName();
         if (StringUtils.isNotBlank(payMethodName)) {
