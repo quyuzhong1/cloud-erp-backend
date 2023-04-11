@@ -12,6 +12,7 @@ public enum KingdeePushModuleEnum {
     ENG_BOM("ENG_BOM","物料清单"),
 
     STK_TRANSFER_DIRECT("STK_TransferDirect","直接调拨单"),
+    PLM_CFG_PREFERRED_ORGANIZATION_CFG("PLM_CFG_PreferredOrganizationCFG","下推首选组织配置"),
     ;
 
     private String code;
