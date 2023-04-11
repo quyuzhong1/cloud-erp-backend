@@ -54,8 +54,12 @@
             </foreach>
         </if>
         )
-       <if test="purchasePriceId!=null and purchasePriceId !=''">
-           AND purchase_price_id !=#{purchasePriceId}
-       </if>
+        <if test="detailIds!=null and detailIds.size>0">
+            AND id NOT IN
+            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
     </select>
 </mapper>
