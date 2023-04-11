@@ -32,6 +32,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
@@ -70,6 +71,9 @@ public class ProjectTaskController extends BaseController {
 
     @Autowired
     private TaskDocsNameService taskDocsNameService;
+
+    @Resource
+    private TaskChargeDistributionService taskChargeDistributionService;
 
     /**
      * 项目任务-分页列表
@@ -720,7 +724,7 @@ public class ProjectTaskController extends BaseController {
      **/
     @PostMapping("/importProjectTaskFile")
     public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType,  @RequestParam(value = "productId")  String productId, HttpServletResponse response) {
-        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(importType, productId, taskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService);
+        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(importType, productId, taskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService, taskChargeDistributionService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
