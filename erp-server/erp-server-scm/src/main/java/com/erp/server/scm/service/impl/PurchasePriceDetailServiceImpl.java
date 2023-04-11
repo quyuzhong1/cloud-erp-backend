@@ -83,7 +83,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      *
      * @param purchasePriceDetailList       参数的
      * @param supplierPriceDetailList       供应商已有的
-     * @param supplierPriceChangeDetailList 供应商变更的
      * @return void
      * @author yl
      * @date 2023-03-24 14:01
@@ -557,6 +556,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setSkuId(item.getSkuId());
             result.setSkuNo(item.getSkuNo());
             result.setProductName(item.getProductName());
+            result.setPurchasePriceDetailId(item.getId());
             resultList.add(result);
         }
         return resultList;
