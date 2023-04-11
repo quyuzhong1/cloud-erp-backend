@@ -112,7 +112,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
             //查询模板任务下审核人
             List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId());
-            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+            if (taskChargeDistributionList != null && taskChargeDistributionList.size() > 0) {
                 TaskChargeDistributionlist = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
                 TaskChargeDistributionlist.forEach(obj -> {
                     if (org.apache.commons.lang3.StringUtils.isBlank(obj.getCharges())) {

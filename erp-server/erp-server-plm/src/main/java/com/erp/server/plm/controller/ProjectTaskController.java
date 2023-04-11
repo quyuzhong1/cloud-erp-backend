@@ -72,7 +72,7 @@ public class ProjectTaskController extends BaseController {
     @Autowired
     private TaskDocsNameService taskDocsNameService;
 
-    @Resource
+    @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
 
     /**
