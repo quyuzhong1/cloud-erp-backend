@@ -88,7 +88,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-24 14:01
      */
     @Override
-    public void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList) {
+    public void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> historyList) {
 
         if (CollectionUtils.isNotEmpty(purchasePriceDetailList)) {
             //这个是要检查的
@@ -153,6 +153,36 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             //参数 以sku 分组 这个是添加了供应商的
             Map<String, List<PurchasePriceDetailDTO.AddDTO>> supplierMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
             for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
+                //对应的报价
+                List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
+                long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
+                //表示有无区间的
+                if (noInterval > 1) {
+                    throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
+                }
+
+                //没有无区间 就要检查又没有不同区间的
+                List<Integer> intervalList = new ArrayList<>(10);
+                for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
+                    if (interval.getMinQty() != null && interval.getMaxQty() != null) {
+                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                    }
+                }
+                //判断是否有重叠
+                boolean isSortedResult = isRepetition(intervalList);
+                //当有重叠的时候
+                if (isSortedResult) {
+                    throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                }
+
+            }
+
+
+
+            checkList.addAll(historyList);
+            //参数 以sku 分组 这个是添加了供应商的
+            Map<String, List<PurchasePriceDetailDTO.AddDTO>> historyMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
+            for (Map.Entry<String, List<PurchasePriceDetailDTO.AddDTO>> item : historyMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
                 long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,6 +56,27 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
     public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getHistoryTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
 
         return baseMapper.getHistoryTaxPrice(dto);
+    }
+
+
+    /**
+     * 根据供应商id 获取到对应的合sku 价格
+     *
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
+     * @author yl
+     * @date 2023-04-11 14:55
+     */
+    @Override
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId) {
+        LambdaQueryWrapper<PurchasePriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PurchasePriceHistoryEntity::getSupplierId, supplierId);
+        LocalDate now = LocalDate.now();
+        queryWrapper.ge(PurchasePriceHistoryEntity::getEffectiveDate, now);
+        queryWrapper.le(PurchasePriceHistoryEntity::getExpireDate, now);
+        List<PurchasePriceHistoryEntity> list = this.list(queryWrapper);
+
+        return BeanMapper.copyList(list,PurchasePriceDetailDTO.AddDTO.class);
     }
 
 
