@@ -215,34 +215,47 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = BeanMapper.copyList(list, PurchasePriceChangeDetailDTO.ViewDTO.class);
         //采购价目详情表id
         List<String> purchasePriceDetailIds = resultList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getPurchasePriceDetailId).collect(Collectors.toList());
+        //历史的
+        List<PurchasePriceHistoryEntity> historyList = purchasePriceHistoryService.getHistoryByDetailIds(purchasePriceDetailIds);
         //获取到对应的价目明细
         List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(purchasePriceDetailIds);
+
         BigDecimal hundred = new BigDecimal("100");
         List<String> currencyIdList = resultList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
         //币种信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         for (PurchasePriceChangeDetailDTO.ViewDTO item : resultList) {
             String priceDetailId = item.getPurchasePriceDetailId();
-            PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
-            if (priceDetailEntity != null) {
-                item.setOldCurrency(priceDetailEntity.getCurrency());
-                item.setOldTaxPrice(priceDetailEntity.getTaxPrice());
-                if (priceDetailEntity.getTaxRate() != null) {
-                    item.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(hundred));
-                }
-                if (item.getTaxRate() != null) {
-                    item.setTaxRate(item.getTaxRate().multiply(hundred));
-                }
-                String currency = item.getCurrency();
-                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
-                item.setCurrencySymbol(currencySymbol);
+            PurchasePriceHistoryEntity  historyEntity=historyList.stream().filter(h->h.getPriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
 
-                Integer minQty = item.getMinQty();
-                Integer maxQty = item.getMaxQty();
-                if (minQty == 0 && maxQty == 0) {
-                    item.setMinQty(null);
-                    item.setMaxQty(null);
+            PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
+            if (item.getTaxRate() != null) {
+                item.setTaxRate(item.getTaxRate().multiply(hundred));
+            }
+            String currency = item.getCurrency();
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+            item.setCurrencySymbol(currencySymbol);
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            if (minQty == 0 && maxQty == 0) {
+                item.setMinQty(null);
+                item.setMaxQty(null);
+            }
+
+            if (historyEntity != null) {
+                item.setOldCurrency(historyEntity.getCurrency());
+                item.setOldTaxPrice(historyEntity.getTaxPrice());
+                if (historyEntity.getTaxRate() != null) {
+                    item.setOldTaxRate(historyEntity.getTaxRate().multiply(hundred));
+                }
+            }else{
+                if(priceDetailEntity!=null){
+                    item.setOldCurrency(priceDetailEntity.getCurrency());
+                    item.setOldTaxPrice(priceDetailEntity.getTaxPrice());
+                    if (priceDetailEntity.getTaxRate() != null) {
+                        item.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(hundred));
+                    }
                 }
             }
         }
@@ -341,11 +354,11 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             }
         }
 
+        //添加历史
+        purchasePriceHistoryService.saveBatch(historyList);
         //修改价目详情
         purchasePriceDetailService.updateBatchById(updateList);
 
-        //添加历史
-        purchasePriceHistoryService.saveBatch(historyList);
 
     }
 

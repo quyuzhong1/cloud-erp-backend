@@ -9,11 +9,13 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.PurchasePriceHistoryMapper;
 import com.erp.server.scm.service.PurchasePriceHistoryService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -72,11 +74,20 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
         LambdaQueryWrapper<PurchasePriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceHistoryEntity::getSupplierId, supplierId);
         LocalDate now = LocalDate.now();
-        queryWrapper.ge(PurchasePriceHistoryEntity::getEffectiveDate, now);
-        queryWrapper.le(PurchasePriceHistoryEntity::getExpireDate, now);
+        queryWrapper.le(PurchasePriceHistoryEntity::getEffectiveDate, now);
+        queryWrapper.ge(PurchasePriceHistoryEntity::getExpireDate, now);
         List<PurchasePriceHistoryEntity> list = this.list(queryWrapper);
 
-        return BeanMapper.copyList(list,PurchasePriceDetailDTO.AddDTO.class);
+        return BeanMapper.copyList(list, PurchasePriceDetailDTO.AddDTO.class);
+    }
+
+    @Override
+    public List<PurchasePriceHistoryEntity> getHistoryByDetailIds(List<String> purchasePriceDetailIds) {
+        if (CollectionUtils.isEmpty(purchasePriceDetailIds)) {
+            return Collections.emptyList();
+        }
+        List<PurchasePriceHistoryEntity> list = lambdaQuery().in(PurchasePriceHistoryEntity::getPriceDetailId, purchasePriceDetailIds).list();
+        return list;
     }
 
 

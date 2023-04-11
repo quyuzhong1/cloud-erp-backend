@@ -114,7 +114,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId());
 
         //检查区间报价是否重叠
-        purchasePriceChangeDetailService.checkSkuInterval(priceId, purchasePriceChangeDetailList, supplierPriceDetailList,historyList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceId, purchasePriceChangeDetailList, supplierPriceDetailList, historyList);
         PurchasePriceChangeEntity changeEntity = new PurchasePriceChangeEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
@@ -153,7 +153,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //添加价格变更明细
             purchasePriceChangeDetailService.addPriceChangeDetail(id, dto.getPurchasePriceChangeDetailList());
 
-            if(isPass){
+            if (isPass) {
                 purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(changeEntity));
             }
 
@@ -195,7 +195,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     BigDecimal newTaxRate = item.getTaxRate();
 
                     //原有的税率
-                    BigDecimal oldTaxRate = entity.getTaxRate();
+                    BigDecimal oldTaxRate = entity.getTaxRate().multiply(new BigDecimal("100"));
                     if (newTaxPrice != null && oldTaxPrice != null && newTaxRate != null && oldTaxRate != null) {
                         if (newTaxPrice.compareTo(oldTaxPrice) <= 0 && newTaxRate.compareTo(oldTaxRate) <= 0) {
                             i++;
@@ -316,7 +316,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //历史报价
         List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId);
 
-        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList,historyList);
+        purchasePriceChangeDetailService.checkSkuInterval(priceChangeEntity.getPurchasePriceId(), priceChangeDetailList, supplierPriceDetailList, historyList);
         //code
         String code = priceChangeEntity.getCode();
         BeanMapper.copy(dto, priceChangeEntity);
@@ -336,7 +336,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean result = this.updateById(priceChangeEntity);
         if (result) {
 
-            if(isPass){
+            if (isPass) {
                 purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(priceChangeEntity));
             }
 
