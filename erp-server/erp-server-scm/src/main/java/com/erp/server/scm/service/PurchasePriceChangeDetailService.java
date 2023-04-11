@@ -1,9 +1,9 @@
 package com.erp.server.scm.service;
 
+import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.common.business.service.SuperService;
 
 import java.util.List;
 

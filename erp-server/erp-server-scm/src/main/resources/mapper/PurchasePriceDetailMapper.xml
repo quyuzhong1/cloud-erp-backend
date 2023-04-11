@@ -18,7 +18,7 @@
         left join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
             pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >=
-            ppd.effective_date
+            ppd.effective_date and ppd.expire_date >= now()
             <if test="params.skuId != null and params.skuId != ''">
                 and ppd.sku_id = #{params.skuId}
             </if>

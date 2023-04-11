@@ -51,6 +51,12 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
         return resultList;
     }
 
+    @Override
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> getHistoryTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {
+
+        return baseMapper.getHistoryTaxPrice(dto);
+    }
+
 
     private List<PurchasePriceHistoryEntity> getByPriceDetailId(String priceDetailId) {
         LambdaQueryWrapper<PurchasePriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
