@@ -2,6 +2,34 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.scm.mapper.PurchasePriceHistoryMapper">
 
-
+    <select id="getHistoryTaxPrice"
+            resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$PurchaseTaxPriceViewDTO">
+        select
+        pp.supplier_id,
+        s.name as supplierName,
+        pph.currency,
+        pph.tax_price as taxPrice,
+        pph.tax_rate * 100 as taxRate,
+        pph.min_qty as minQty,
+        pph.max_qty as maxQty,
+        pph.delivery_day as deliveryDay
+        from purchase_price pp
+        left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        inner join purchase_price_history pph on pp.id = pph.purchase_price_id and pph.is_deleted = false
+        left join supplier s on pp.supplier_id = s.id and s.is_deleted = false
+        <where>
+            pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >=
+            pph.effective_date and pph.expire_date >= now()
+            <if test="params.skuId != null and params.skuId != ''">
+                and pph.sku_id = #{params.skuId}
+            </if>
+            <if test="params.purchaseQty != null ">
+                and pph.max_qty >= #{params.purchaseQty} and #{params.purchaseQty} > pph.min_qty
+            </if>
+            <if test="params.supplierId != null and params.supplierId != ''">
+                and pp.supplier_id = #{params.supplierId}
+            </if>
+        </where>
+    </select>
 
 </mapper>
