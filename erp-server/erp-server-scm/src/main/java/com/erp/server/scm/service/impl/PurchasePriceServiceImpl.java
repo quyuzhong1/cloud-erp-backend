@@ -541,8 +541,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 excelDTO.setApproveStatusName(approveStatusEnum.getName());
 
-                boolean disabled = item.getDisabled();
-                excelDTO.setEnabled(disabled?"停用":"启用用");
+                Boolean disabled = item.getDisabled();
+                excelDTO.setEnabled((disabled!=null&&disabled)?"停用":"启用");
                 //含税单价
                 BigDecimal taxPrice = item.getTaxPrice();
                 //币种

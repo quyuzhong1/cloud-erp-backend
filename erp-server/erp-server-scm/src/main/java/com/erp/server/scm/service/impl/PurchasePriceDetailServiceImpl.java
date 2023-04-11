@@ -87,7 +87,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public void checkSkuInterval(List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList, List<PurchasePriceDetailDTO.AddDTO> supplierPriceChangeDetailList) {
 
-
         if (CollectionUtils.isNotEmpty(purchasePriceDetailList)) {
             //这个是要检查的
             List<PurchasePriceDetailDTO.AddDTO> checkList = new ArrayList<>(10);

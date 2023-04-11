@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
@@ -29,7 +30,7 @@ public class WarehouseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO  extends PermissionsDTO {
 
         @NotBlank(message = "金蝶仓库编号不能为空")
         @Size(max = 30, message = "金蝶仓库编号最大30字符")

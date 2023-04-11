@@ -57,6 +57,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:add",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult add(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
         String id = warehouseService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -69,6 +74,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:addAndSubmit",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
         Boolean result = warehouseService.addAndSubmit(dto);
         return result == true ? success() : failure();
@@ -81,6 +91,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:submit",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = warehouseService.submit(dto.getIds());
         return result == true ? success() : failure();
@@ -107,6 +122,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:update",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
         String id  = warehouseService.updateWarehouse(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -122,6 +142,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:updateAndSubmit",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
         Boolean result = warehouseService.updateAndSubmit(dto);
         return result == true ? success() : failure();
@@ -135,6 +160,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:view",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult<WarehouseDTO.UpdateDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         WarehouseDTO.UpdateDTO view = warehouseService.view(dto.getId());
         return success(view);
@@ -147,6 +177,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:approve",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = warehouseService.approve(dto);
         return result == true ? success() : failure();
@@ -161,6 +196,11 @@ public class WarehouseController extends BaseController {
      * @date 2023-03-22 11:56
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:disApprove",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = warehouseService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -174,6 +214,11 @@ public class WarehouseController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouse:delete",
+            serviceClass = WarehouseService.class,
+            keyIdName = "id")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = warehouseService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();

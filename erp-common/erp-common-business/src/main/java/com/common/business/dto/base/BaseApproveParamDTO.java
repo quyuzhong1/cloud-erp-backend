@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class BaseApproveParamDTO {
+public class BaseApproveParamDTO extends PermissionsDTO {
 
     /**
      * 主键id集合

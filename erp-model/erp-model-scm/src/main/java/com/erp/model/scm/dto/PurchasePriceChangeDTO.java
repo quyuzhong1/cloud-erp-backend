@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -31,7 +32,7 @@ public class PurchasePriceChangeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends PermissionsDTO {
 
         /**
          * 供应商表id
@@ -94,7 +95,7 @@ public class PurchasePriceChangeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO  extends PermissionsDTO{
 
 
 

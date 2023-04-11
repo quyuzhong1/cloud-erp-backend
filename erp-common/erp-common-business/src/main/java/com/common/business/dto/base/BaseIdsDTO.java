@@ -22,7 +22,7 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class IdsDTO {
+    public static class IdsDTO extends   PermissionsDTO{
 
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;

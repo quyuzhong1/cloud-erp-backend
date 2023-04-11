@@ -4,8 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -49,11 +48,16 @@ public class PurchasePriceDetailDTO implements Serializable {
         /**
          * 最小数量
          */
+
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer minQty;
 
         /**
          * 最大数量
          */
+        @DecimalMax(value = "999999999",message ="最大值为999999999" )
+        @DecimalMin(value = "0",message ="最小值为0" )
         private Integer maxQty;
 
         /**

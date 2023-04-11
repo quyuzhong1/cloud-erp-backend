@@ -111,7 +111,8 @@
         ppd.effective_date,
         ppd.currency,
         pp.purchase_org_id,
-        pp.purchase_org_name
+        pp.purchase_org_name,
+        PPd.disabled
         FROM purchase_price_detail ppd
         LEFT JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id
