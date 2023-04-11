@@ -67,7 +67,7 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:add",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult saveOrUpdate(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
         String id = purchasePriceChangeService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }

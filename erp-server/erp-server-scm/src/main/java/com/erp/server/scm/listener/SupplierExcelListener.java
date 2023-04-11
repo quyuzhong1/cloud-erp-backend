@@ -159,8 +159,9 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
             CurrencyDTO.ViewDTO  currency = currencyList.stream().filter(c -> c.getName().equals(payCurrency)).findFirst().orElse(null);
             if (Objects.isNull(currency)) {
                 errorMsgList.add("结算币种不存在");
+            }else{
+                addDTO.setPayCurrency(currency.getId());
             }
-            addDTO.setPayCurrency(currency.getId());
         }
 
 

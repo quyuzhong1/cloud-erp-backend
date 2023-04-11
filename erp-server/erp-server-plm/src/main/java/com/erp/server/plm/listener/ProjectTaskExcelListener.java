@@ -99,18 +99,18 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
             // 判断是修改还是新增 1：新增 2：修改
             /**
-             * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
+             * 任务状态 0:待发布 1:待开始
+             * 2:待审核  3:进行中 4 已完成, 5 已关闭   6.完成待审核 7.审核中  8 审核通过  9 审核不通过 ,10 部分完成
              */
             if (importType == 2) {
                 if (ObjectUtil.isEmpty(projectTaskEntity)) {
                     errorMsgList.add("[任务名称]在系统中不存在，请确认产品名称存在");
-                } else {
-                    //不可编辑：待审核  审核通过  已完成
-                    if (projectTaskEntity.getStatus() == 3 || projectTaskEntity.getStatus() == 5 || projectTaskEntity.getStatus() == 6 ) {
-                        errorMsgList.add("[任务状态]已完成或审核中，审核通过的任务不可修改");
-                    } else {
+                } else { //可编辑：待审核  审核通过  已完成
+                    if (projectTaskEntity.getStatus() == 0 || projectTaskEntity.getStatus() == 1 || projectTaskEntity.getStatus() == 3 ) {
                         projectTaskDTO.setId(projectTaskEntity.getId());
                         projectTaskDTO.setType(projectTaskEntity.getType());
+                    } else {
+                        errorMsgList.add("只有[任务状态]为待发布或待开始，进行中的任务可修改");
                     }
                 }
             } else {

@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
@@ -11,6 +12,7 @@ import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
  * @author LUO_WG
  * @since 2023-04-07
  */
+@Mapper
 public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrderEntity> {
 
 }
