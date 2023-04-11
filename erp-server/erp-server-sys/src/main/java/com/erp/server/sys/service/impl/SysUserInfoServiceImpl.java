@@ -11,6 +11,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
@@ -34,6 +35,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -80,7 +82,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private SysDepartmentService sysDepartmentService;
 
     @Resource
-    private SysRoleService sysRoleService;
+    private SyncKingdeeSysUserInfoService syncKingdeeSysUserInfoService;
+
+    @Resource
+    private SysCodeService sysCodeService;
 
     @Resource
     private SysDepartmentMapper sysDepartmentMapper;
@@ -89,6 +94,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
         //验证用户信息
@@ -110,7 +116,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserInfoEntity entity = new SysUserInfoEntity();
         //复制属性
         BeanMapperUtils.copy(sysUserInfoDTO, entity);
-
+        //编号
+        String code = sysCodeService.getBusinessNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
+        entity.setCode(code);
         PassEntity passEntity = PassHandler.buildPassword(password);
         entity.setPassword(passEntity.getPassword());
         //账号
@@ -123,6 +131,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (CollectionUtils.isNotEmpty(roleIds)) {
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
+            //同步金蝶员工数据
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity);
         }
     }
 
@@ -143,6 +153,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         boolean updateResult = this.updateById(entity);
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
+            //同步金蝶员工数据
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity);
         }
 
     }
@@ -319,12 +331,20 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
 
     @Override
+    @Transactional
     public void updateState(UpdateUserStateDTO stateDTO) {
         LambdaUpdateWrapper<SysUserInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
 
+        List<SysUserInfoEntity> list = this.listByIds(stateDTO.getIds());
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (SysUserInfoEntity entity : list) {
+                //同步金蝶员工数据
+                syncKingdeeSysUserInfoService.syncDataToKingdee(entity);
+            }
+        }
     }
 
     /**
@@ -947,6 +967,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         vo.setBindingPlatform(bindingPlatform);
         vo.setBindingState(bindingState);
         return vo;
+    }
+
+    @Override
+    public boolean updateSyncKingdeeStatus(String businessId, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(SysUserInfoEntity::getUid,businessId)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysUserInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),SysUserInfoEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
 }

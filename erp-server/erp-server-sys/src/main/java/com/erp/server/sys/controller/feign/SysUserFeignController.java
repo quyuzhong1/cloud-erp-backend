@@ -11,12 +11,14 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.sys.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -43,6 +45,9 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SysRoleService sysRoleService;
+
+    @Autowired
+    private SyncKingdeeService syncKingdeeService;
 
 
 
@@ -257,5 +262,16 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/getSysUserById")
     public SysUserDTO getSysUserById(@RequestBody String userId) {
         return sysUserInfoService.getSysUserById(userId);
+    }
+
+    /**
+     * @param params
+     * @description: 更新业务状态
+     * @author Will
+     * @date: 2023/3/10 15:46
+     */
+    @PostMapping("/updateBusinessSyncKingdeeStatus")
+    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params) {
+        syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 }

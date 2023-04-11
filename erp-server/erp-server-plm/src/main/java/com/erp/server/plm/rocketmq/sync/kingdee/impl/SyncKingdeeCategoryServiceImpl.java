@@ -82,7 +82,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         resultMap.put("fNumber", fNumber);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CATEGORY_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_ASSISTANT_DATA_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
                 return basicCategoryService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");

@@ -4,14 +4,17 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.constant.SystemConstants;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
@@ -55,9 +58,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private PlatformService platformService;
 
-
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map,String apiPlatformId,Integer moduleType) {
@@ -147,6 +152,29 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return model;
     }
 
+    @Override
+    public void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,Boolean disable) {
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        //金蝶id
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+
+        if (ObjectUtils.isEmpty(syncKingdeeId)) {
+            viewMap.put("ids",Arrays.asList(syncKingdeeId));
+        } else {
+            viewMap.put("numbers",Arrays.asList(number));
+        }
+        String operateNumber = disable ? "Forbid" : "Forbid";
+
+        try {
+            apiUtils.excuteOperation(operateNumber,JSONArray.toJSONString(viewMap));
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        //操作成功添加日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),disable ? "禁用" : "启动",type,ApiSendStatusEnum.SUCCESS.getCode());
+    }
 
 
     @Override
@@ -167,7 +195,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //数据id
         String id = save.getResult().getId();
         //更新业务表中的金蝶id
-        updateBusinessSyncKingdeeStatus(type.toString(),String.valueOf(map.get("id")),"",id);
+        updateBusinessSyncKingdeeStatus(type,String.valueOf(map.get("id")),"",id);
         //新增成功操作日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg,type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交
@@ -240,7 +268,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             audit(platformEntity, map,apiUtils,id,type);
         }
         //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"");
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type,map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"");
     }
 
 
@@ -297,19 +325,32 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         insertSyncLog(platformEntity,businessId,jsonData,msg,type,status);
         //更新金蝶同步状态
         if (ApiSendStatusEnum.FAILURE.getCode().equals(status)) {
-            this.updateBusinessSyncKingdeeStatus(type.toString(),businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),"");
+            this.updateBusinessSyncKingdeeStatus(type,businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),"");
         }
     }
 
     @Override
-    public void updateBusinessSyncKingdeeStatus(String code,String businessId,String status,String kingdeeId){
+    public void updateBusinessSyncKingdeeStatus(Integer code,String businessId,String status,String kingdeeId){
         //更新业务单据状态
         Map<String,String> params = new HashMap<>(MathUtil.THREE);
-        params.put("code",code);
+        params.put("code",code.toString());
         params.put("businessId",businessId);
         params.put("status", status);
         params.put("kingdeeId", kingdeeId);
-        plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+
+        ApiModuleTypeEnum apiModuleTypeEnum = Arrays.stream(ApiModuleTypeEnum.values()).filter(obj -> obj.getCode().equals(code)).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(apiModuleTypeEnum)) {
+            return;
+        }
+        String system = apiModuleTypeEnum.getSystem();
+
+        if (SystemConstants.PLM.equals(system)) {
+            plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+        if (SystemConstants.SYS.equals(system)) {
+            sysUserFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+
     }
 
     /**

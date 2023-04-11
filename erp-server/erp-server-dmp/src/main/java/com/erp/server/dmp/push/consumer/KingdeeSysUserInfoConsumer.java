@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -29,34 +30,33 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: 金蝶辅助资料同步
- * @date 2023/3/13 14:45
+ * @description: TODO
+ * @date 2023/4/10 11:56
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_category_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CATEGORY)
-public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_sys_user_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SYS_USER_INFO)
+public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
-
     public static void main(String[] args) {
+
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_EMPINFO.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "SouthChina"));
+        queryFilters.add(String.format("FNumber = '%s'", "23041000002"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FEntryId,FNumber,FDataValue,FId,FId.FNumber,FId.FName,FParentId";
+        String fieldKeys = "FId,FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("number","SouthChina");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        viewMap.put("numbers",Arrays.asList("23041000002"));
+        JSONObject viewJson = apiUtils.excuteOperation("Enable",JSONArray.toJSONString(viewMap));
         System.out.println(queryList);
         System.out.println(viewJson);
-
     }
 
     @Override
@@ -64,7 +64,7 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
     public void onMessage(Map<String, Object> map) {
 
         //模块类型
-        Integer type = (Integer)map.get("moduleType");
+        Integer type = ApiModuleTypeEnum.SYS_USER_INFO.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
 
@@ -73,13 +73,10 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BOS_ASSISTANTDATA_DETAIL.getCode());
-
-        //map中设置父级id
-        setPid( platformEntity, apiUtils, map, businessId, type);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_EMPINFO.getCode());
 
         //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),ApiModuleTypeEnum.ASSISTANT_DATA.getCode());
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
 
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
@@ -96,49 +93,52 @@ public class KingdeeAuxiliaryDataConsumer implements RocketMQListener<Map<String
         } catch (Exception e) {
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
-        String id = (String) model.get("Id");
+        String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
-             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FEntryId",".", id);
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
             ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
         }
     }
 
     /**
-     * 设置父级id
+     * 启用、禁用
      */
-    private void setPid (PlatformEntity platformEntity,KingdeeApiUtils apiUtils,Map<String, Object> map,String businessId,Integer type) {
-        //判断是否存在上级
-        Boolean isExistParent = (Boolean)map.get("isExistParent");
-        if (isExistParent) {
-            //根据上级编码查询上级id
-            String parentCode = (String)map.get("parentCode");
-            LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-            viewMap.put("number",parentCode);
-            JSONObject model;
-            try {
-                model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-            } catch (Exception e) {
-                //更新数据
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONArray.toJSONString(viewMap),"未找到上级辅助资料",type, ApiSendStatusEnum.FAILURE.getCode());
-                return;
-            }
-            String id = (String) model.get("Id");
-            map.put("pid",id);
+    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //用户状态 1：正常 0：禁用
+        Object userState = map.get("userState");
+        if (ObjectUtils.isEmpty(userState)) {
+            return;
         }
-
+        String code = (String) map.get("code");
+        Boolean disable = null;
+        //启用
+        if (String.valueOf(MathUtil.ONE).equals(String.valueOf(userState))) {
+            disable = Boolean.FALSE;
+        }
+        //禁用
+        if (String.valueOf(MathUtil.ZERO).equals(String.valueOf(userState))) {
+            disable = Boolean.TRUE;
+        }
+        if (ObjectUtils.isNotEmpty(disable)) {
+             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,disable);
+        }
     }
 }

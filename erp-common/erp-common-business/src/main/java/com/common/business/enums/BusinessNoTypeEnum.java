@@ -18,6 +18,8 @@ public enum BusinessNoTypeEnum {
     CODE_CGTJ(8, "cgtj","采购价目调价编号"),
     CODE_PO(9, "po","采购订单"),
     CODE_POC(10, "poc","采购变更单"),
+    CODE_USER(999, "user_no","用户编号"),
+
     ;
 
 

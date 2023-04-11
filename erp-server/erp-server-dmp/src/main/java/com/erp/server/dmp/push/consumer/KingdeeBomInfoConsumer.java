@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -43,18 +42,15 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "A009CNA1_2"));
-        String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FBOMCATEGORY,FBOMUSE,FMATERIALID.FNumber,FMATERIALIDCHILD.FNumber,FId,FDENOMINATOR,FNUMERATOR";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
-        System.out.println(queryList);
-
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("id","324203");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        System.out.println(viewJson);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Empinfo");
+        JSONObject json = new JSONObject();
+        KingdeeUtils.makeFieldJson(json,"FName",".","王维");
+        KingdeeUtils.makeFieldJson(json,"FStaffNumber",".","123456");
+        KingdeeUtils.makeFieldJson(json,"FCreateOrgId.FNumber",".","100");
+        KingdeeUtils.makeFieldJson(json,"FUseOrgId.FNumber",".","100");
+        SaveParam param = new SaveParam(json);
+        SaveResult save = apiUtils.save(param);
+        System.out.println(JSONObject.toJSONString(save));
     }
 
     @Override

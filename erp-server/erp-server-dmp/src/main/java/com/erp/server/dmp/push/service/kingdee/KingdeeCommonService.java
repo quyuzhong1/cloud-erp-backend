@@ -55,7 +55,7 @@ public interface KingdeeCommonService {
      * @param businessId
      * @param status
      */
-    void updateBusinessSyncKingdeeStatus(String code,String businessId,String status,String kingdeeId);
+    void updateBusinessSyncKingdeeStatus(Integer code,String businessId,String status,String kingdeeId);
     /**
      * @description: 新增或修改
      * @author Will
@@ -122,4 +122,18 @@ public interface KingdeeCommonService {
      * @return PlatformEntity
      */
     PlatformEntity getPlatformEntity (Map<String, Object> map,Integer type);
+
+   /**
+    * @description: 禁用、反禁用
+    * @author Will
+    * @date: 2023/4/10 18:03
+    * @param apiUtils
+    * @param platformEntity
+    * @param map
+    * @param type
+    * @param number
+    * @param disable
+
+    */
+    void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,Boolean disable);
 }

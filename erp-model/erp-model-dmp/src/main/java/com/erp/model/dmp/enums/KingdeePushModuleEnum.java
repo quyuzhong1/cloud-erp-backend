@@ -11,7 +11,9 @@ public enum KingdeePushModuleEnum {
     BD_MATERIAL("BD_MATERIAL","物料"),
     ENG_BOM("ENG_BOM","物料清单"),
     STK_TRANSFER_DIRECT("STK_TRANSFER_DIRECT","直接调拨单"),
-    BOS_ASSISTANTDATA_DETAIL("BOS_ASSISTANTDATA_DETAIL","辅助资料列表");
+    BOS_ASSISTANTDATA_DETAIL("BOS_ASSISTANTDATA_DETAIL","辅助资料列表"),
+    BD_EMPINFO("BD_Empinfo","员工"),
+
     ;
     private String code;
 
