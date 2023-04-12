@@ -21,6 +21,7 @@ fdfs:
     - 172.16.100.10:22122
 sfs:
   nacos:
+    application: uat-seata-server
     server-addr: 172.16.100.10:8848
     namespace: uat-seata-server
     group: UAT_SEATA_GROUP

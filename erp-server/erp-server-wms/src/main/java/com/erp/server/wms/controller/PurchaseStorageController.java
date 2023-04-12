@@ -10,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseStorageDTO;
 import com.erp.server.wms.service.PurchaseStorageService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,9 +20,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 /**
- * <p>
- * 采购入库单 前端控制器
- * </p>
+ * 采购入库单
  *
  * @author will
  * @since 2023-04-10
@@ -43,7 +42,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<PurchaseStorageDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseStorageDTO.SearchParamDTO> dto) {
-        return null;
+        PagingVO<PurchaseStorageDTO.ListDTO> pagingVO = purchaseStorageService.paging(dto);
+        return success(pagingVO);
     }
 
     /**
@@ -55,7 +55,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/listCount")
     public ApiResult<List<PurchaseStorageDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        return null;
+        List<PurchaseStorageDTO.ListStatusCountDTO> list = purchaseStorageService.listCount(dto);
+        return success(list);
     }
 
    /**
@@ -67,7 +68,8 @@ public class PurchaseStorageController extends BaseController {
     */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseStorageDTO.AddDTO dto) {
-        return null;
+        String id = purchaseStorageService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
    /**
@@ -79,7 +81,8 @@ public class PurchaseStorageController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseStorageDTO.AddDTO dto) {
-        return null;
+        Boolean flag = purchaseStorageService.addAndSubmit(dto);
+        return flag == true ? success() : failure();
     }
     
     /**
@@ -91,7 +94,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated PurchaseStorageDTO.UpdateDTO dto) {
-        return null;
+        Boolean flag = purchaseStorageService.update(dto);
+        return flag == true ? success() : failure();
     }
     
     /**
@@ -103,7 +107,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseStorageDTO.UpdateDTO dto) {
-        return null;
+        Boolean flag = purchaseStorageService.updateAndSubmit(dto);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -115,7 +120,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return null;
+        Boolean flag = purchaseStorageService.submit(dto);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -126,8 +132,9 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseStorageDTO.viewDTO> view(@RequestParam("id") String id) {
-        return null;
+    public ApiResult<PurchaseStorageDTO.ViewDTO> view(@RequestParam("id") String id) {
+        PurchaseStorageDTO.ViewDTO dto = purchaseStorageService.view(id);
+        return success(dto);
     }
 
 
@@ -140,7 +147,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return null;
+        Boolean flag = purchaseStorageService.delete(dto.getIds());
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -152,8 +160,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/invalid")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-
-        return null;
+        Boolean flag = purchaseStorageService.invalid(dto.getIds(),dto.getRemark());
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -165,6 +173,7 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        purchaseStorageService.approve(baseApproveParamDTO);
         return success();
     }
 
@@ -176,8 +185,9 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/disApprove")
-    public ApiResult unAudit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return null;
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseStorageService.disApprove(dto.getIds());
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -189,7 +199,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return null;
+        Boolean result = purchaseStorageService.cancelProcess(dto.getIds());
+        return result == true ? success() : failure();
     }
 
     /**
@@ -202,7 +213,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     public ApiResult exportExcel(@RequestBody PurchaseStorageDTO.SearchParamDTO dto, HttpServletResponse response) {
-        return null;
+        Boolean flag = purchaseStorageService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -213,8 +225,9 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
      */
     @GetMapping("/viewGeneratePurchaseReturnOrder")
-    public ApiResult<PurchaseStorageDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@RequestParam("id") String id) {
-        return null;
+    public ApiResult<List<PurchaseStorageDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestParam("id") String id) {
+        List<PurchaseStorageDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(id);
+        return success(list);
     }
 
     /**
@@ -226,7 +239,8 @@ public class PurchaseStorageController extends BaseController {
      */
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStorageDTO.GeneratePurchaseReturnOrderDTO dto) {
-        return null;
+        Boolean flag = purchaseStorageService.generatePurchaseReturnOrder(dto);
+        return flag == true ? success() : failure();
     }
 
 }

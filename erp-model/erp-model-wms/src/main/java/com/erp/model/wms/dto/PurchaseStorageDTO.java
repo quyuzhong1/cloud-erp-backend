@@ -45,7 +45,7 @@ public class PurchaseStorageDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class viewDTO {
+    public static class ViewDTO {
 
     }
 

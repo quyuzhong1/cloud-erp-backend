@@ -30,7 +30,7 @@ seata:
     type: nacos
     nacos:
       # seata服务名称
-      application: seata-server
+      application: ${sfs.nacos.application}
       # nacos地址
       server-addr: ${sfs.nacos.server-addr}
       # namespace，默认为空
