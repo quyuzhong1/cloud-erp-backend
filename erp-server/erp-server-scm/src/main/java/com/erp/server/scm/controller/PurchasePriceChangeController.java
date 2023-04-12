@@ -179,7 +179,7 @@ public class PurchasePriceChangeController extends BaseController {
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:delete",
             serviceClass = PurchasePriceChangeService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceChangeService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
@@ -197,7 +197,7 @@ public class PurchasePriceChangeController extends BaseController {
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:submit",
             serviceClass = PurchasePriceChangeService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceChangeService.submitApprove(dto.getIds());
         return result == true ? success() : failure();
@@ -215,7 +215,7 @@ public class PurchasePriceChangeController extends BaseController {
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:approve",
             serviceClass = PurchasePriceChangeService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = purchasePriceChangeService.approve(dto);
         return result == true ? success() : failure();
@@ -235,7 +235,7 @@ public class PurchasePriceChangeController extends BaseController {
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:cancelProcess",
             serviceClass = PurchasePriceChangeService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceChangeService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();

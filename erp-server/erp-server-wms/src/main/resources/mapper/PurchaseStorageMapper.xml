@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.wms.mapper.PurchaseStorageMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.server.wms.entity.PurchaseStorageEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.PurchaseStorageEntity">
         <result column="id" property="id" />
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />

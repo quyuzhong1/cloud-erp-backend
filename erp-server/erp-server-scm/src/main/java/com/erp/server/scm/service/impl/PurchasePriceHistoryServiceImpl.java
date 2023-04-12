@@ -86,7 +86,7 @@ public class PurchasePriceHistoryServiceImpl extends SuperServiceImpl<PurchasePr
         if (CollectionUtils.isEmpty(purchasePriceDetailIds)) {
             return Collections.emptyList();
         }
-        List<PurchasePriceHistoryEntity> list = lambdaQuery().in(PurchasePriceHistoryEntity::getPriceDetailId, purchasePriceDetailIds).list();
+        List<PurchasePriceHistoryEntity> list = lambdaQuery().in(PurchasePriceHistoryEntity::getPriceDetailId, purchasePriceDetailIds).orderByDesc(PurchasePriceHistoryEntity::getCreateTime).list();
         return list;
     }
 

@@ -13,9 +13,9 @@ spring:
 
 sfs:
   nacos:
-    server-addr: 172.16.100.12:8848
-    namespace: seata-server
-    group: SEATA_GROUP
+    server-addr: 172.16.100.10:8848
+    namespace: uat-seata-server
+    group: UAT_SEATA_GROUP
 
 
 

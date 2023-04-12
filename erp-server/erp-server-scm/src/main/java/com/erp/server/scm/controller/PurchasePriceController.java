@@ -162,7 +162,7 @@ public class PurchasePriceController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:delete",
             serviceClass = PurchasePriceService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
@@ -179,7 +179,7 @@ public class PurchasePriceController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:submit",
             serviceClass = PurchasePriceService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceService.submitApprove(dto.getIds());
         return result == true ? success() : failure();
@@ -197,7 +197,7 @@ public class PurchasePriceController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:approve",
             serviceClass = PurchasePriceService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = purchasePriceService.approve(dto);
         return result == true ? success() : failure();
@@ -217,7 +217,7 @@ public class PurchasePriceController extends BaseController {
             tableField = "pricing_user_id",
             menuCode = "scm:purchase:price:cancelProcess",
             serviceClass = PurchasePriceService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchasePriceService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();

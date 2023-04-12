@@ -1,4 +1,4 @@
-package com.erp.server.wms.entity;
+package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -57,11 +57,6 @@ public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetai
     @TableField("storage_qty")
     private Integer storageQty;
 
-    /**
-     * 采购订单明细id
-     */
-    @TableField("purchase_order_detail_id")
-    private String purchaseOrderDetailId;
 
     /**
      * 采购数量
@@ -70,10 +65,10 @@ public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetai
     private Integer purchaseQty;
 
     /**
-     * 收货明细id
+     * 来源明细id
      */
-    @TableField("receive_detail_id")
-    private String receiveDetailId;
+    @TableField("source_detail_id")
+    private String sourceDetailId;
 
     /**
      * 收货数量
@@ -118,11 +113,9 @@ public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetai
 
     public static final String STORAGE_QTY = "storage_qty";
 
-    public static final String PURCHASE_ORDER_DETAIL_ID = "purchase_order_detail_id";
-
     public static final String PURCHASE_QTY = "purchase_qty";
 
-    public static final String RECEIVE_DETAIL_ID = "receive_detail_id";
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     public static final String RECEIVE_QTY = "receive_qty";
 
