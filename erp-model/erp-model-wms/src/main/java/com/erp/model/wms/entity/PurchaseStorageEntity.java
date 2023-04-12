@@ -1,4 +1,4 @@
-package com.erp.server.wms.entity;
+package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -132,16 +132,10 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
     private String supplierName;
 
     /**
-     * 采购订单id
-     */
-    @TableField("purchase_order_id")
-    private String purchaseOrderId;
-
-    /**
      * 收货主表id
      */
-    @TableField("receive_id")
-    private String receiveId;
+    @TableField("source_id")
+    private String sourceId;
 
     /**
      * 作废状态（0未作废，1已作废）
@@ -216,9 +210,9 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
 
     public static final String SUPPLIER_NAME = "supplier_name";
 
-    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
+    public static final String SOURCE = "source";
 
-    public static final String RECEIVE_ID = "receive_id";
+    public static final String SOURCE_ID = "source_id";
 
     public static final String INVALID_STATUS = "invalid_status";
 

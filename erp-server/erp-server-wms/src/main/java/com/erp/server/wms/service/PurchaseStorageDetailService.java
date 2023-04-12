@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
-import com.erp.server.wms.entity.PurchaseStorageDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.entity.PurchaseStorageDetailEntity;
 
 /**
  * <p>
