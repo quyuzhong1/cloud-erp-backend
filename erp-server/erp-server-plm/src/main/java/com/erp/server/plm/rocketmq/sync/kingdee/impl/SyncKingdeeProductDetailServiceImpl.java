@@ -72,7 +72,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(ProductDetailEntity entity) {
+    public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
@@ -92,6 +92,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
         //sku
         resultMap.put("id", entity.getId());
         //sku

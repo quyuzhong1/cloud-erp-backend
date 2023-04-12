@@ -420,9 +420,10 @@ public class KingdeeApiUtils {
         return result;
     }
 
+
     /**
-     * @description: 禁用、反禁用
-     * @param operateNumber Forbid禁用、Enable反禁用
+     * @description: 禁用、反禁用、作废、反作废
+     * @param operateNumber Forbid禁用、Enable反禁用、Cancel作废、Uncancel反作废
      * @param jsonData
      * @return JSONObject
      */

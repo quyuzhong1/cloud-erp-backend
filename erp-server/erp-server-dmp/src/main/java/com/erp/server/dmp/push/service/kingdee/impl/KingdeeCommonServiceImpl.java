@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.SystemConstants;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -153,7 +154,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,Boolean disable) {
+    @Transactional(rollbackFor = Exception.class)
+    public void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate) {
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         //金蝶id
         String syncKingdeeId = (String) map.get("syncKingdeeId");
@@ -163,7 +165,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } else {
             viewMap.put("numbers",Arrays.asList(number));
         }
-        String operateNumber = disable ? "Forbid" : "Enable";
+        //金蝶操作编码
+        String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
 
         try {
             apiUtils.excuteOperation(operateNumber,JSONArray.toJSONString(viewMap));
@@ -173,10 +176,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             return;
         }
         //操作成功添加日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),disable ? "禁用" : "启动",type,ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),SyncKingdeeOperateEnum.getDescByCode(operate),type,ApiSendStatusEnum.SUCCESS.getCode());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number) {
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         //金蝶id

@@ -15,5 +15,5 @@ public interface SyncKingdeeProductDetailService {
      * @date: 2023/3/8 18:22
      * @param entity
      */
-    void syncDataToKingdee(ProductDetailEntity entity);
+    void syncDataToKingdee(ProductDetailEntity entity,String operate);
 }

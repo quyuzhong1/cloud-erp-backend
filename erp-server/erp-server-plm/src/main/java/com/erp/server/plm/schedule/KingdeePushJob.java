@@ -1,6 +1,7 @@
 package com.erp.server.plm.schedule;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -53,7 +54,7 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeProductDetailService.syncDataToKingdee(obj);
+            syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
         });
 
     }
@@ -71,7 +72,7 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeBomInfoService.syncDataToKingdee(obj);
+            syncKingdeeBomInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
         });
     }
 }

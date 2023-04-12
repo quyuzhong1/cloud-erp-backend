@@ -3,6 +3,8 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -10,7 +12,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
@@ -63,7 +64,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setCode(dto.getCode());
         this.save(entity);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity);
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
     }
 
     /**
@@ -75,6 +76,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-13 14:08
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, dto.getId());
@@ -89,7 +91,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         this.updateById(entity);
         //组装数据发送到金蝶
-        syncKingdeeCategoryService.syncDataToKingdee(entity);
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode());
         return Boolean.TRUE;
     }
 
@@ -176,8 +178,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-16 15:11
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteById(String id) {
         checkId(id);
+        BasicCategoryEntity entity = this.getById(id);
+        //组装数据发送到金蝶
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
         return this.removeById(id);
     }
 

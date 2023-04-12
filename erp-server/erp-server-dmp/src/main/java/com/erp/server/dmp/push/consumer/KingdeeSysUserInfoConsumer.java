@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.MathUtil;
@@ -48,16 +49,16 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_EMPINFO.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "23041000002"));
+        queryFilters.add(String.format("FNumber = '%s'", "23041200001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FNumber";
+        String fieldKeys = "FId,FNumber,FForbidDate";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("numbers",Arrays.asList("23041100006","23041100007"));
-        JSONObject viewJson = apiUtils.excuteOperation("Enable",JSONArray.toJSONString(viewMap));
-        System.out.println(queryList);
-        System.out.println(viewJson);
+        viewMap.put("Number","23041200001");
+        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+       System.out.println(queryList);
+        //System.out.println(viewJson);
 
     }
 
@@ -69,6 +70,8 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         Integer type = ApiModuleTypeEnum.SYS_USER_INFO.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
+        //业务编码
+        String code = (String) map.get("code");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -104,35 +107,33 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
 
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
+        //禁用日期（用于判断是否禁用）
+        String FForbidDate = (String)model.get("ForbidDate");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
 
-        //启用或禁用
+        //操作项
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
             //启用、禁用
             excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
-        if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            //审核中或已审核则要先反审
-            if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-                flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            }
-            if (flag) {
-                //删除
-                String code = (String) map.get("code");
-                kingdeeCommonService.delete(apiUtils,platformEntity,map,type,code);
-            }
-            return;
+        //禁用的需要先反禁用
+        if (StringUtils.isNotBlank(FForbidDate)) {
+            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
         }
-
+        //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            //审核中或已审核则要先反审
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
         }
-        //创建状态则直接修改
+        //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
+            //删除
+            if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+                kingdeeCommonService.delete(apiUtils,platformEntity,map,type,code);
+                return;
+            }
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
             ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
@@ -144,12 +145,6 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         }
     }
 
-    //查看
-    private void view () {
-
-    }
-
-
     /**
      * 启用、禁用
      */
@@ -160,17 +155,17 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
             return;
         }
         String code = (String) map.get("code");
-        Boolean disable = null;
+        String operate = null;
         //启用
         if (String.valueOf(MathUtil.ONE).equals(String.valueOf(userState))) {
-            disable = Boolean.FALSE;
+            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
         if (String.valueOf(MathUtil.ZERO).equals(String.valueOf(userState))) {
-            disable = Boolean.TRUE;
+            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
-        if (ObjectUtils.isNotEmpty(disable)) {
-             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,disable);
+        if (StringUtils.isNotBlank(operate)) {
+             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
         }
     }
 }

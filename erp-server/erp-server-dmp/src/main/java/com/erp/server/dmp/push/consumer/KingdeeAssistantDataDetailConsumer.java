@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -102,12 +103,21 @@ public class KingdeeAssistantDataDetailConsumer implements RocketMQListener<Map<
         String documentStatus = (String)model.get("DocumentStatus");
         String id = (String) model.get("Id");
         Boolean flag = Boolean.FALSE;
+
+        //操作项
+        String operate = (String) map.get("operate");
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
              flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
+            //删除
+            if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+                String code = (String) map.get("code");
+                kingdeeCommonService.delete(apiUtils,platformEntity,map,type,code);
+                return;
+            }
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FEntryId",".", id);
             ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());

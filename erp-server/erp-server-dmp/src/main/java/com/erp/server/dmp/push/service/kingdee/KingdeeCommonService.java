@@ -132,10 +132,10 @@ public interface KingdeeCommonService {
     * @param map
     * @param type
     * @param number
-    * @param disable
+    * @param operate
 
     */
-    void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,Boolean disable);
+    void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
     /**
      * @description: 删除
      * @author Will

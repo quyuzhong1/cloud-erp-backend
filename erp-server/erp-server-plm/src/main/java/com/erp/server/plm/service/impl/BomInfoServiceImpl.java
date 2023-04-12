@@ -12,6 +12,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -986,7 +987,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
 //        }
         // 发送到金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bom);
+        syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -1013,7 +1014,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             // 发送到金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bom);
+            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
@@ -1048,7 +1049,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 String operateContent = getUpdateContent(oldBomList, bomSkuList);
                 bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
                 //再次发送到金蝶
-                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity);
+                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }

@@ -43,7 +43,7 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(BasicCategoryEntity entity) {
+    public void syncDataToKingdee(BasicCategoryEntity entity,String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //是否存在上级
@@ -57,6 +57,8 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         resultMap.put("name",entity.getName());
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
 
         //模块类型
         Integer moduleType = ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode();
