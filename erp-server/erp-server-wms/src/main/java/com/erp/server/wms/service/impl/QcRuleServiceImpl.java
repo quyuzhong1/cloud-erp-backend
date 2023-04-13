@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -26,6 +26,7 @@ import com.erp.server.wms.mapper.QcRuleMapper;
 import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +67,8 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     @Transactional(rollbackFor = Exception.class)
     public String add(QcRuleDTO.AddDTO dto) {
         //TODO 产品等级 校验
+
+        checkQcType("", dto.getQcType());
         //是否有质检报告
         Boolean existReport = dto.getExistReport();
         //质检报告
@@ -95,6 +98,28 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             return id;
         }
         return "";
+    }
+
+
+    /**
+     * 检查质检类型是否存在
+     *
+     * @param id
+     * @param qcType
+     * @return void
+     * @author yl
+     * @date 2023-04-13 19:28
+     */
+    private void checkQcType(String id, String qcType) {
+        LambdaQueryWrapper<QcRuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(QcRuleEntity::getId, id);
+        }
+        queryWrapper.eq(QcRuleEntity::getQcType, qcType);
+        long count = this.count(queryWrapper);
+        if(count>0){
+            throw new ServiceException(ApiError.ERROR_99007);
+        }
     }
 
 
@@ -202,6 +227,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         if (Objects.isNull(qcRule)) {
             throw new ServiceException(ApiError.ERROR_NO_EXIST_RULE);
         }
+        checkQcType(qcRuleId, dto.getQcType());
         String code = qcRule.getCode();
         List<String> gradeKeyList = dto.getProductGradeKeyList();
         BeanMapper.copy(dto, qcRule);

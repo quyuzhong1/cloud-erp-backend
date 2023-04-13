@@ -400,6 +400,7 @@ public enum ApiError implements Serializable {
     ERROR_NO_EXIST_REPORT(99004,"质检报告不存在"),
     ERROR_NO_EXIST_RULE(99005,"质检规则不存在"),
     ERROR_99006(99006,"采购单明细信息不存在"),
+    ERROR_99007(99007,"质检类型已存在"),
 
 
     ERROR_end(1000000, "系统错误");
