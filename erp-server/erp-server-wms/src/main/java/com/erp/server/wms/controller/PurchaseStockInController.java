@@ -8,8 +8,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.PurchaseStorageDTO;
-import com.erp.server.wms.service.PurchaseStorageService;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.server.wms.service.PurchaseStockInService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +27,10 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/purchaseStorage")
-public class PurchaseStorageController extends BaseController {
+public class PurchaseStockInController extends BaseController {
 
     @Resource
-    private PurchaseStorageService purchaseStorageService;
+    private PurchaseStockInService purchaseStorageService;
 
 
     /**
@@ -41,8 +41,8 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>> 
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchaseStorageDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseStorageDTO.SearchParamDTO> dto) {
-        PagingVO<PurchaseStorageDTO.ListDTO> pagingVO = purchaseStorageService.paging(dto);
+    public ApiResult<PagingVO<PurchaseStockInDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseStockInDTO.SearchParamDTO> dto) {
+        PagingVO<PurchaseStockInDTO.ListDTO> pagingVO = purchaseStorageService.paging(dto);
         return success(pagingVO);
     }
 
@@ -54,8 +54,8 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult<List<ListStatusCountDTO>>
      */
     @PostMapping("/listCount")
-    public ApiResult<List<PurchaseStorageDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<PurchaseStorageDTO.ListStatusCountDTO> list = purchaseStorageService.listCount(dto);
+    public ApiResult<List<PurchaseStockInDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<PurchaseStockInDTO.ListStatusCountDTO> list = purchaseStorageService.listCount(dto);
         return success(list);
     }
 
@@ -67,7 +67,7 @@ public class PurchaseStorageController extends BaseController {
     * @return ApiResult 
     */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseStorageDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated PurchaseStockInDTO.AddDTO dto) {
         String id = purchaseStorageService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -80,7 +80,7 @@ public class PurchaseStorageController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseStorageDTO.AddDTO dto) {
+    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseStockInDTO.AddDTO dto) {
         Boolean flag = purchaseStorageService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -93,7 +93,7 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult 
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseStorageDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated PurchaseStockInDTO.UpdateDTO dto) {
         Boolean flag = purchaseStorageService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -106,7 +106,7 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult 
      */
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseStorageDTO.UpdateDTO dto) {
+    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseStockInDTO.UpdateDTO dto) {
         Boolean flag = purchaseStorageService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -132,8 +132,8 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseStorageDTO.ViewDTO> view(@RequestParam("id") String id) {
-        PurchaseStorageDTO.ViewDTO dto = purchaseStorageService.view(id);
+    public ApiResult<PurchaseStockInDTO.ViewDTO> view(@RequestParam("id") String id) {
+        PurchaseStockInDTO.ViewDTO dto = purchaseStorageService.view(id);
         return success(dto);
     }
 
@@ -212,7 +212,7 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseStorageDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody PurchaseStockInDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseStorageService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
@@ -225,8 +225,8 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
      */
     @GetMapping("/viewGeneratePurchaseReturnOrder")
-    public ApiResult<List<PurchaseStorageDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestParam("id") String id) {
-        List<PurchaseStorageDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(id);
+    public ApiResult<List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestParam("id") String id) {
+        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(id);
         return success(list);
     }
 
@@ -238,7 +238,7 @@ public class PurchaseStorageController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStorageDTO.GeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = purchaseStorageService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
     }

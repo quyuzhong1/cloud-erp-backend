@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
-import com.erp.model.wms.entity.PurchaseStorageDetailEntity;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.server.wms.mapper.PurchaseStorageDetailMapper;
-import com.erp.server.wms.service.PurchaseStorageDetailService;
+import com.erp.server.wms.service.PurchaseStockInDetailService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-04-10
  */
 @Service
-public class PurchaseStorageDetailServiceImpl extends SuperServiceImpl<PurchaseStorageDetailMapper, PurchaseStorageDetailEntity> implements PurchaseStorageDetailService {
+public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseStorageDetailMapper, PurchaseStockInDetailEntity> implements PurchaseStockInDetailService {
 
 }

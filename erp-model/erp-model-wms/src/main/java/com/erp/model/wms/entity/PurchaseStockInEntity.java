@@ -20,8 +20,8 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_storage")
-public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
+@TableName("purchase_stock_in")
+public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
 
     /**
      * 采购入库单号
@@ -38,20 +38,20 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
     /**
      * 入库日期
      */
-    @TableField("storage_date")
-    private Date storageDate;
+    @TableField("stock_in_date")
+    private Date stockInDate;
 
     /**
      * 入库员id
      */
-    @TableField("storage_user_id")
-    private String storageUserId;
+    @TableField("stock_in_user_id")
+    private String stockInUserId;
 
     /**
      * 入库员名称
      */
     @TableField("storage_user_name")
-    private String storageUserName;
+    private String stockInUserName;
 
     /**
      * 采购员id
@@ -92,14 +92,14 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
     /**
      * 采购部门id
      */
-    @TableField("storage_dept_id")
-    private String storageDeptId;
+    @TableField("stock_in_dept_id")
+    private String stockInDeptId;
 
     /**
      * 采购部门名称
      */
-    @TableField("storage_dept_name")
-    private String storageDeptName;
+    @TableField("stock_in_dept_name")
+    private String stockInDeptName;
 
     /**
      * 采购部门id
@@ -132,16 +132,22 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
     private String supplierName;
 
     /**
-     * 收货主表id
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 来源id
      */
     @TableField("source_id")
     private String sourceId;
 
     /**
-     * 作废状态（0未作废，1已作废）
+     * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
 
     /**
      * 作废时间
@@ -178,11 +184,11 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String STORAGE_DATE = "storage_date";
+    public static final String STOCK_IN_DATE = "stock_in_date";
 
-    public static final String STORAGE_USER_ID = "storage_user_id";
+    public static final String STOCK_IN_USER_ID = "stock_in_user_id";
 
-    public static final String STORAGE_USER_NAME = "storage_user_name";
+    public static final String STOCK_IN_USER_NAME = "stock_in_user_name";
 
     public static final String PURCHASE_USER_ID = "purchase_user_id";
 
@@ -196,9 +202,9 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
 
     public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
 
-    public static final String STORAGE_DEPT_ID = "storage_dept_id";
+    public static final String STOCK_IN_DEPT_ID = "stock_in_dept_id";
 
-    public static final String STORAGE_DEPT_NAME = "storage_dept_name";
+    public static final String STOCK_IN_DEPT_NAME = "stock_in_dept_name";
 
     public static final String PURCHASE_DEPT_ID = "purchase_dept_id";
 
@@ -210,7 +216,7 @@ public class PurchaseStorageEntity extends BaseEntity<PurchaseStorageEntity> {
 
     public static final String SUPPLIER_NAME = "supplier_name";
 
-    public static final String SOURCE = "source";
+    public static final String SOURCE_TYPE = "source_type";
 
     public static final String SOURCE_ID = "source_id";
 

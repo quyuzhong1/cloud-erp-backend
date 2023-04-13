@@ -18,14 +18,14 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_storage_detail")
-public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetailEntity> {
+@TableName("purchase_stock_in_detail")
+public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetailEntity> {
 
     /**
      * 采购入库单id
      */
-    @TableField("purchase_storage_id")
-    private String purchaseStorageId;
+    @TableField("purchase_stock_in_id")
+    private String purchaseStockInId;
 
     /**
      * skuId
@@ -54,8 +54,8 @@ public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetai
     /**
      * 入库数量
      */
-    @TableField("storage_qty")
-    private Integer storageQty;
+    @TableField("stock_in_qty")
+    private Integer stockInQty;
 
     /**
      * 采购订单明细id
@@ -106,7 +106,7 @@ public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetai
     private String remark;
 
 
-    public static final String PURCHASE_STORAGE_ID = "purchase_storage_id";
+    public static final String PURCHASE_STOCK_IN_ID = "purchase_stock_in_id";
 
     public static final String SKU_ID = "sku_id";
 
@@ -116,7 +116,7 @@ public class PurchaseStorageDetailEntity extends BaseEntity<PurchaseStorageDetai
 
     public static final String VARIANT_PROPERTY = "variant_property";
 
-    public static final String STORAGE_QTY = "storage_qty";
+    public static final String STOCK_IN_QTY = "stock_in_qty";
 
     public static final String PURCHASE_ORDER_DETAIL_ID = "purchase_order_detail_id";
 

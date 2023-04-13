@@ -756,6 +756,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return resultDTO;
     }
 
+    @Override
+    public List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids) {
+        //TODO
+        return null;
+    }
+
+    @Override
+    public Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto) {
+        //TODO
+        return null;
+    }
+
     /**
      * 处理数据id
      */

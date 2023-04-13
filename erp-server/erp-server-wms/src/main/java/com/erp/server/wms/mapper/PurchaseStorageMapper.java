@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.PurchaseStorageEntity;
+import com.erp.model.wms.entity.PurchaseStockInEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-04-10
  */
 @Mapper
-public interface PurchaseStorageMapper extends BaseMapper<PurchaseStorageEntity> {
+public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity> {
 
 }

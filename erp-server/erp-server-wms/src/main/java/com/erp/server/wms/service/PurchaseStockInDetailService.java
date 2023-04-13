@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.entity.PurchaseStorageDetailEntity;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.erp.model.wms.entity.PurchaseStorageDetailEntity;
  * @author will
  * @since 2023-04-10
  */
-public interface PurchaseStorageDetailService extends SuperService<PurchaseStorageDetailEntity> {
+public interface PurchaseStockInDetailService extends SuperService<PurchaseStockInDetailEntity> {
 
 }
