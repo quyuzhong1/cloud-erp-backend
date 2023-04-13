@@ -9,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcRuleDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -35,10 +34,15 @@ public class QcRuleController extends BaseController {
     private QcRuleService qcRuleService;
 
 
-
-    public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
-
-        return success();
+    /**
+     * 分页列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
+        PagingVO<QcRuleDTO.PagingViewDTO> pagingVO=qcRuleService.paging(dto);
+        return success(pagingVO);
     }
 
 
