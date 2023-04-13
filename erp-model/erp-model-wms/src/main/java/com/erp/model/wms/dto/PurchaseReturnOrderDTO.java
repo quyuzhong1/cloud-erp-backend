@@ -64,7 +64,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货日期
          */
-        private LocalDate returnTime;
+        private LocalDate billTime;
 
         /**
          * 退货来源 （质检单，签收单，采购订单）
@@ -124,7 +124,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货日期
          */
-        private LocalDate returnTime;
+        private LocalDate billTime;
         /**
          * 签收单明细
          */
@@ -149,6 +149,11 @@ public class PurchaseReturnOrderDTO {
          * 审核状态 waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核
          */
         private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
         /**
          * 单据编号
@@ -189,11 +194,6 @@ public class PurchaseReturnOrderDTO {
          * 退货方式
          */
         private String returnMode;
-
-        /**
-         * 退货来源
-         */
-        private String returnSource;
 
         /**
          * 退货人组织id
@@ -241,13 +241,17 @@ public class PurchaseReturnOrderDTO {
         private LocalDateTime approveTime;
 
         /**
+         * 退货来源
+         */
+        private String sourceType;
+
+        /**
          * 报价明细
          */
         @Valid
         private List<PurchaseReturnOrderDetailDTO.ViewDTO> purchasePriceDetailList;
 
     }
-
 
     /**
      * 分页信息
@@ -277,6 +281,11 @@ public class PurchaseReturnOrderDTO {
         private String approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
          * 作废状态
          */
         private String invalidStatus;
@@ -294,7 +303,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货日期
          */
-        private LocalDate returnTime;
+        private LocalDate billTime;
 
         /**
          * 交货仓库
@@ -362,34 +371,17 @@ public class PurchaseReturnOrderDTO {
         /**
          * 创建开始时间
          */
-        private LocalDate createStartTime;
+        private List<LocalDate> createTime;
 
         /**
-         * 创建结束时间
+         * 计划交货时间
          */
-        private LocalDate createEndTime;
+        private List<LocalDate> planReceiveTime;
 
         /**
-         * 计划交货时间开始时间
+         * 审核时间
          */
-        private LocalDate planReceiveStartTime;
-
-        /**
-         * 计划交货时间结束时间
-         * @return
-         */
-        private LocalDate planReceiveEndTime;
-
-        /**
-         * 审核开始时间
-         */
-        private LocalDate approveStartTime;
-
-        /**
-         * 审核结束时间
-         * @return
-         */
-        private LocalDate approveEndTime;
+        private List<LocalDate> approveTime;
 
         /**
          * skuNo集合

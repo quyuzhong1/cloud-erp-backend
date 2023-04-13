@@ -253,6 +253,11 @@ public class WarehouseReceiveDTO {
         private String approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
          * 作废状态
          */
         private String invalidStatus;
@@ -352,15 +357,9 @@ public class WarehouseReceiveDTO {
         private String invalidStatus;
 
         /**
-         * 计划交货时间开始时间
+         * 计划交货时间
          */
-        private LocalDate planReceiveStartTime;
-
-        /**
-         * 计划交货时间结束时间
-         * @return
-         */
-        private LocalDate planReceiveEndTime;
+        private List<LocalDate> planReceiveTime;
 
         /**
          * 交货仓库id
@@ -372,16 +371,9 @@ public class WarehouseReceiveDTO {
          */
         private List<String> createUserIdList;
 
-
         /**
-         * 创建开始时间
+         * 创建时间
          */
-        private LocalDate createStartTime;
-
-        /**
-         * 创建结束时间
-         * @return
-         */
-        private LocalDate createEndTime;
+        private List<LocalDate> createTime;
     }
 }
