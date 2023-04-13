@@ -395,6 +395,7 @@ public enum ApiError implements Serializable {
     ERROR_99001(99001,"仓库不能为空"),
     ERROR_99002(99002,"未找到仓库"),
     ERROR_99003(99003,"只有已审核数据支持反审核"),
+    ERROR_EXIST_REPORT(99004,"质检报告不存在"),
 
 
     ERROR_end(1000000, "系统错误");
