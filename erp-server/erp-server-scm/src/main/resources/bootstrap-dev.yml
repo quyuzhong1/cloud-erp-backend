@@ -8,7 +8,7 @@ spring:
         server-addr: 172.16.100.12
         namespace: dev
         file-extension: yml
-        shared-configs: common.yml,db-scm.yml
+        shared-configs: common.yml,db-scm.yml,druid-common.yml
 sfs:
   nacos:
     application: seata-server
