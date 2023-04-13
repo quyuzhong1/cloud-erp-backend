@@ -1,20 +1,19 @@
-package com.erp.server.wms.service.impl;
+package com.erp.server.workflow.service.impl;
 
-import com.erp.model.wms.dto.WorkOptionDTO;
-import com.erp.model.wms.entity.WorkOptionEntity;
-import com.erp.model.wms.enums.ApproveSearchOptionEnum;
-import com.erp.model.workflow.vo.MyToDoTaskVO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.wms.mapper.WorkOptionMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.WorkOptionService;
 import com.common.business.service.SuperServiceImpl;
+import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.model.workflow.entity.WorkOptionEntity;
+import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.server.workflow.mapper.WorkOptionMapper;
+import com.erp.server.workflow.service.CommonService;
+import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkOptionService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
 public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, WorkOptionEntity> implements WorkOptionService {
 
     @Resource
-    private WorkflowFeign workflowFeign;
+    private ProcessTaskService workflowFeign;
 
     @Resource
     private CommonService commonService;
@@ -38,7 +37,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * 审批中心-下拉搜索选项
      * @Author Luo_WG
      * @Date 2023/4/12 11:58
-     * @return java.util.List<com.erp.model.wms.dto.WorkOptionDTO.ApproveSearchOptionDTO>
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveSearchOptionDTO>
      **/
     @Override
     public List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOption() {
@@ -57,9 +56,6 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveSearchOptionDTO.setModuleList(null);
             }
         }
-
-
-
         return null;
     }
 }

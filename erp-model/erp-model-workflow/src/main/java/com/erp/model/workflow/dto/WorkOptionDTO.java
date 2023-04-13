@@ -1,17 +1,10 @@
-package com.erp.model.wms.dto;
+package com.erp.model.workflow.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
-import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.List;
 
 /**

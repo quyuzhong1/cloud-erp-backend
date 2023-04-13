@@ -1,4 +1,4 @@
-package com.erp.model.wms.enums;
+package com.erp.model.workflow.enums;
 
 public enum SysClassifyEnum {
     PLM("PLM", "PLM系统"),

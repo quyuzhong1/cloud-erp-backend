@@ -1,9 +1,7 @@
-package com.erp.model.wms.enums;
+package com.erp.model.workflow.enums;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 工作台下拉查询选项

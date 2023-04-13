@@ -1,7 +1,7 @@
-package com.erp.server.wms.mapper;
+package com.erp.server.workflow.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.WorkOptionEntity;
+import com.erp.model.workflow.entity.WorkOptionEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

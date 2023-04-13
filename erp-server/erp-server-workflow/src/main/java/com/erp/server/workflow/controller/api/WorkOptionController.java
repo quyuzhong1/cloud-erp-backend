@@ -1,18 +1,15 @@
-package com.erp.server.wms.controller;
+package com.erp.server.workflow.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.WorkOptionDTO;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RestController;
-import com.common.core.controller.BaseController;
 
 import java.util.List;
 
@@ -22,7 +19,7 @@ import java.util.List;
  * @since 2023-04-11
  */
 @RestController
-@RequestMapping("/work-option-entity")
+@RequestMapping("/workOption")
 public class WorkOptionController extends BaseController {
 
     /**
@@ -41,7 +38,7 @@ public class WorkOptionController extends BaseController {
      * 常用列表
      * @Author Luo_WG
      * @Date 2023/4/11 18:50
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WorkOptionDTO.frequentlyViewDTO>>
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
      **/
     @PostMapping("/frequentlyView")
     public ApiResult<List<WorkOptionDTO.FrequentlyViewDTO>> frequentlyView() {
@@ -53,7 +50,7 @@ public class WorkOptionController extends BaseController {
      * 立项阶段列表
      * @Author Luo_WG
      * @Date 2023/4/12 9:33
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WorkOptionDTO.stageViewDTO>>
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.stageViewDTO>>
      **/
     @PostMapping("/stageView")
     public ApiResult<List<WorkOptionDTO.StageViewDTO>> stageView() {
@@ -65,7 +62,7 @@ public class WorkOptionController extends BaseController {
      * 审批中心
      * @Author Luo_WG
      * @Date 2023/4/12 9:35
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WorkOptionDTO.approveViewDTO>>
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.approveViewDTO>>
      **/
     @PostMapping("/approveView")
     public ApiResult<List<WorkOptionDTO.ApproveViewDTO>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
@@ -77,7 +74,7 @@ public class WorkOptionController extends BaseController {
      * 审批中心-下拉搜索选项
      * @Author Luo_WG
      * @Date 2023/4/12 9:35
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WorkOptionDTO.approveViewDTO>>
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.approveViewDTO>>
      **/
     @PostMapping("/approveSearchOption")
     public ApiResult<List<WorkOptionDTO.ApproveSearchOptionDTO>> approveSearchOption() {
