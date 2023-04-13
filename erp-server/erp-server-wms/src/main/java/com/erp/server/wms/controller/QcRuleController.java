@@ -76,6 +76,7 @@ public class QcRuleController extends BaseController {
      * @param dto
      * @return
      */
+    @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.submit(dto.getIds());
         return result == true ? success() : failure();
