@@ -1,4 +1,4 @@
-package com.erp.server.wms.entity;
+package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
