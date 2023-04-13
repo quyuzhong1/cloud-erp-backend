@@ -36,6 +36,7 @@ import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -62,6 +63,7 @@ import java.util.stream.Collectors;
  * @since 2023-03-15
  */
 @Service
+@Slf4j
 public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, SupplierEntity> implements SupplierService {
 
 
@@ -755,7 +757,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         try {
             EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
-            log.error("供应商导入错误！", e);
+            log.error("供应商导入错误！",e);
             return Boolean.FALSE;
         }
         List<SupplierImportExcelDTO> errorList = excelListener.getErrorList();
