@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -209,4 +210,14 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/currency/listByCurrency")
     List<CurrencyDTO.ViewDTO> listByCurrency(@RequestBody List<String> currencyList);
+
+    /**
+     * 根据主键id查询组织信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     * @param id id:组织id
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     **/
+    @PostMapping("feign/accountingCompany/getCompanyById")
+    SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
 }

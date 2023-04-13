@@ -44,11 +44,6 @@ public class WarehouseReceiveDetailDTO {
         private Integer exceedQty;
 
         /**
-         * 交货仓库id
-         */
-        private String deliveryWarehouseId;
-
-        /**
          * 备注
          */
         private String remark;
