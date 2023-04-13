@@ -1,12 +1,16 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -318,10 +322,11 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
 
     /**
      * 删除质检规则
-     * @author yl
-     * @date 2023-04-13 15:44
+     *
      * @param ids
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-13 15:44
      */
     @Override
     public Boolean deleteByIds(List<String> ids) {
@@ -333,6 +338,34 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             throw new ServiceException(ApiError.ERROR_98009);
         }
         return this.removeByIds(ids);
+    }
+
+
+    /**
+     * 分页信息
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcRuleDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-04-13 16:02
+     */
+    @Override
+    public PagingVO<QcRuleDTO.PagingViewDTO> paging(PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query);
+        List<QcRuleDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        for (QcRuleDTO.PagingViewDTO item : list) {
+            String qcType = item.getQcType();
+            String qcTypeName = QcTypeEnum.getTypeName(qcType);
+            item.setQcTypeName(qcTypeName);
+            String approveStatus = item.getApproveStatus();
+            String approveStatusName = ApproveStatusEnum.getName(approveStatus);
+            item.setApproveStatusName(approveStatusName);
+        }
+        return new PagingVO<>(pageData);
     }
 
 

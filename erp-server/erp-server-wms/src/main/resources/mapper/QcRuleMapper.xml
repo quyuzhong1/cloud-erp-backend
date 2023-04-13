@@ -2,4 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.QcRuleMapper">
 
+    <select id="paging" resultType="com.erp.model.wms.dto.QcRuleDTO$PagingViewDTO">
+         SELECT
+            id,code,
+            qc_type,
+            exist_report,
+            disabled,
+            approve_status,
+            create_user_name,
+            create_time,
+            update_user_name,
+            update_time
+         FROM qc_rule where is_deleted=false
+
+    </select>
 </mapper>

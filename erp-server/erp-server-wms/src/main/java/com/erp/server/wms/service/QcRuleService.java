@@ -1,7 +1,9 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcRuleDTO;
 import com.erp.model.wms.entity.QcRuleEntity;
 
@@ -108,4 +110,13 @@ public interface QcRuleService extends SuperService<QcRuleEntity> {
      * @return java.lang.Boolean
      */
     Boolean deleteByIds(List<String> ids);
+    
+    /**
+     * 分页信息
+     * @author yl
+     * @date 2023-04-13 16:02
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcRuleDTO.PagingViewDTO>
+     */
+    PagingVO<QcRuleDTO.PagingViewDTO> paging(PagingDTO<QcRuleDTO.PagingParamDTO> dto);
 }

@@ -130,6 +130,11 @@ public class QcRuleDTO implements Serializable {
          */
         private String approveStatusName;
 
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
 
     }
 
@@ -170,6 +175,20 @@ public class QcRuleDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+
+
+
+        /**
          * 创建人名称
          */
         private String createUserName;
@@ -189,6 +208,18 @@ public class QcRuleDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
+
+
+    }
+
+
+    /**
+     * 质检规则的分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO{
 
 
 
