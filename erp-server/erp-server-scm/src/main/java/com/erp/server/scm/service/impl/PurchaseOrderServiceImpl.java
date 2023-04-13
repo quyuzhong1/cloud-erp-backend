@@ -897,7 +897,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(new ApiResult(1,"录入sku编码【".concat(value.get(0).getSkuNo()).concat("】存在重复")));
             }
             PurchaseOrderDetailEntity entity = purchaseOrderDetailService.getByPurchaseOrderIdAndSkuId(purchaseOrderId, entry.getKey());
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
+            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
+                value.forEach(obj -> obj.setId(entity.getId()));
                 throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
             }
         }

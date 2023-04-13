@@ -27,4 +27,6 @@ public interface BusinessNoConstant {
     String QCGZ = "QCGZ";
 
     String CGSH = "CGSH";
+
+    String CGRK = "CGRK";
 }

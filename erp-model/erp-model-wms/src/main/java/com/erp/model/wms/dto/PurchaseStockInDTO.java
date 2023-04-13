@@ -336,7 +336,7 @@ public class PurchaseStockInDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "明细不能为空")
-        private List<PurchaseStockInDetailDTO.AddDTO> detail;
+        private List<PurchaseStockInDetailDTO.AddDTO> details;
     }
 
 

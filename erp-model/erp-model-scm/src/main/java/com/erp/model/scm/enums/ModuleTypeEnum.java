@@ -15,6 +15,8 @@ public enum ModuleTypeEnum {
     PURCHASE_PRICE("4", "采购价目申请单"),
     PURCHASE_PRICE_CHANGE("5", "采购价目变更单"),
     PURCHASE_CHANGE("6", "采购变更单"),
+    PURCHASE_STOCK_IN("7", "采购入库单"),
+
     ;
 
 

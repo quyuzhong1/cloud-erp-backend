@@ -19,7 +19,9 @@ public enum BusinessNoTypeEnum {
     CODE_PO(9, "po","采购订单"),
     CODE_POC(10, "poc","采购变更单"),
     CODE_ZJGZ(11, "zjgz","质检规则单"),
-    CODE_CGSH(12, "cgsh","采购收货单");
+    CODE_CGSH(12, "cgsh","采购收货单"),
+    CODE_CGRK(13, "cgrk","采购收货单"),
+    ;
 
 
 

@@ -27,4 +27,12 @@ public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity>
      * @return IPage<ListDTO>
      */
     IPage<PurchaseStockInDTO.ListDTO> paging(Page query,@Param("params") PurchaseStockInDTO.SearchParamDTO params);
+    /**
+     * @description: 列表查询数量
+     * @author Will
+     * @date: 2023/4/13 15:10
+     * @param searchParamDTO
+     * @return Integer
+     */
+    Integer listCount(@Param("params") PurchaseStockInDTO.SearchParamDTO searchParamDTO);
 }
