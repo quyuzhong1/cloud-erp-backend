@@ -48,6 +48,6 @@ public class PurchaseOrderFeignController {
      **/
     @GetMapping("/getOrderSupplierByOrderId")
     public PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id) {
-        return purchaseOrderSupplierService.getById(id);
+        return purchaseOrderSupplierService.getByPurchaseOrderId(id);
     }
 }
