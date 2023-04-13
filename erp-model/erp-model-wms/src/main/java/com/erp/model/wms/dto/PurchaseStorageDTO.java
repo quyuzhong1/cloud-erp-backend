@@ -24,13 +24,52 @@ public class PurchaseStorageDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class ListStatusCountDTO {
+
+        /**
+         * 类型(toBeApprove待审批，approve审核通过，reject不通过)
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+
+    @Data
+    @NoArgsConstructor
     public static class AddDTO {
 
     }
 
     @Data
     @NoArgsConstructor
+    public static class ViewDTO {
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseReturnOrderDTO {
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GeneratePurchaseReturnOrderDTO {
 
     }
 }
