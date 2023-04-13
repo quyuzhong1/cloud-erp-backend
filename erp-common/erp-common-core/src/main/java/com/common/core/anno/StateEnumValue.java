@@ -35,6 +35,12 @@ public @interface StateEnumValue {
 
     int[] intValues() default {};
 
+    /**
+     * 指定枚举类，为保证兼容，优先验证strValues和intValues的值
+     * @return
+     */
+    Class<?> clazz() default Object.class;
+
     // 分组
     Class<?>[] groups() default {};
 
