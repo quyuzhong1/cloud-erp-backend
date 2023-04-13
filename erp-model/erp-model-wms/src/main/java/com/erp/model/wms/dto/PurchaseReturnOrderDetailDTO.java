@@ -23,10 +23,6 @@ public class PurchaseReturnOrderDetailDTO {
     @Data
     @NoArgsConstructor
     public static class AddDTO {
-        /**
-         * 退货单主表id
-         */
-        private String returnOrderId;
 
         /**
          * skuId
@@ -37,11 +33,6 @@ public class PurchaseReturnOrderDetailDTO {
          * sku编码
          */
         private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
 
         /**
          * 实退数量
@@ -59,9 +50,9 @@ public class PurchaseReturnOrderDetailDTO {
         private Integer deductAmountQty;
 
         /**
-         * 含税单价
+         * 退货单价
          */
-        private String taxPrice;
+        private String returnPrice;
 
         /**
          * 总价
@@ -81,9 +72,14 @@ public class PurchaseReturnOrderDetailDTO {
     @NoArgsConstructor
     public static class UpdateDTO {
         /**
-         * 退货单信息表id
+         * 退货单详情表id
          */
         private String id;
+
+        /**
+         * 采购单详情表id
+         */
+        private String purchaseDetailId;
 
         /**
          * 实退数量
@@ -115,73 +111,66 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 退货单明细表id
          */
-        @TableField("id")
         private String id;
 
         /**
          * 退货单主表id
          */
-        @TableField("return_order_id")
-        private String returnOrderId;
+        private String mainId;
 
         /**
          * skuId
          */
-        @TableField("sku_id")
         private String skuId;
 
         /**
          * sku编码
          */
-        @TableField("sku_no")
         private String skuNo;
 
         /**
          * 产品名称
          */
-        @TableField("product_name")
         private String productName;
+
+        /**
+         * 已入库数量
+         */
+        private String stockInQty;
 
         /**
          * 采购数量
          */
-        @TableField("purchase_qty")
         private Integer purchaseQty;
 
         /**
          * 实退数量
          */
-        @TableField("reality_return_qty")
         private Integer realityReturnQty;
 
         /**
          * 补货数量
          */
-        @TableField("replenish_qty")
         private Integer replenishQty;
 
         /**
          * 扣款数量
          */
-        @TableField("deduct_amount_qty")
         private Integer deductAmountQty;
 
         /**
-         * 含税单价
+         * 退货单价
          */
-        @TableField("tax_price")
-        private String taxPrice;
+        private String returnPrice;
 
         /**
          * 总价
          */
-        @TableField("total_price")
         private String totalPrice;
 
         /**
          * 备注
          */
-        @TableField("remark")
         private String remark;
     }
 

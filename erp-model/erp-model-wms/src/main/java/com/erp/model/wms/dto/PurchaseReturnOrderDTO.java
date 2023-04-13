@@ -49,12 +49,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货方式
          */
-        private String returnWay;
-
-        /**
-         * 退货来源
-         */
-        private String returnSource;
+        private String returnMode;
 
         /**
          * 退货人组织id
@@ -64,27 +59,22 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货原因
          */
-        private String receiceReason;
-
-        /**
-         * 退货费用
-         */
-        private BigDecimal receiceCost;
-
-        /**
-         * 退货运费
-         */
-        private BigDecimal receiceShippingCost;
-
-        /**
-         * 其它费用
-         */
-        private BigDecimal otherCost;
+        private String receiceRemark;
 
         /**
          * 退货日期
          */
         private LocalDate returnTime;
+
+        /**
+         * 退货来源 （质检单，签收单，采购订单）
+         */
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
 
         /**
          * 报价明细
@@ -122,16 +112,6 @@ public class PurchaseReturnOrderDTO {
         private String returnUserId;
 
         /**
-         * 退货方式
-         */
-        private String returnWay;
-
-        /**
-         * 退货来源
-         */
-        private String returnSource;
-
-        /**
          * 退货人组织id
          */
         private String returnOrgId;
@@ -139,33 +119,12 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货原因
          */
-        private String receiceReason;
-
-        /**
-         * 退货费用
-         */
-        private BigDecimal receiceCost;
-
-        /**
-         * 退货运费
-         */
-        private BigDecimal receiceShippingCost;
-
-        /**
-         * 其它费用
-         */
-        private BigDecimal otherCost;
+        private String receiceRemark;
 
         /**
          * 退货日期
          */
         private LocalDate returnTime;
-
-        /**
-         * 审核状态
-         */
-        private ApproveStatusEnum approveStatus;
-
         /**
          * 签收单明细
          */
@@ -189,133 +148,96 @@ public class PurchaseReturnOrderDTO {
         /**
          * 审核状态 waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核
          */
-        @TableField("approve_status")
         private String approveStatus;
 
         /**
          * 单据编号
          */
-        @TableField("code")
         private String code;
 
         /**
          * 采购订单id
          */
-        @TableField("purchase_order_id")
         private String purchaseOrderId;
 
         /**
          * 采购订单编号
          */
-        @TableField("purchase_order_code")
         private String purchaseOrderCode;
 
         /**
          * 供应商id
          */
-        @TableField("supplier_id")
         private String supplierId;
 
         /**
          * 供应商名称
          */
-        @TableField("supplier_name")
         private String supplierName;
 
         /**
          * 退货人id
          */
-        @TableField("return_user_id")
         private String returnUserId;
 
         /**
          * 退货人名称
          */
-        @TableField("return_user_name")
         private String returnUserName;
 
         /**
          * 退货方式
          */
-        @TableField("return_way")
-        private String returnWay;
+        private String returnMode;
 
         /**
          * 退货来源
          */
-        @TableField("return_source")
         private String returnSource;
 
         /**
          * 退货人组织id
          */
-        @TableField("return_org_id")
         private String returnOrgId;
 
         /**
          * 退货人组织名称
          */
-        @TableField("return_org_name")
         private String returnOrgName;
 
         /**
          * 退货原因
          */
-        @TableField("receice_reason")
-        private String receiceReason;
-
-        /**
-         * 退货费用
-         */
-        @TableField("receice_cost")
-        private BigDecimal receiceCost;
-
-        /**
-         * 退货运费
-         */
-        @TableField("receice_shipping_cost")
-        private BigDecimal receiceShippingCost;
-
-        /**
-         * 其它费用
-         */
-        @TableField("other_cost")
-        private BigDecimal otherCost;
+        private String receiceRemark;
 
         /**
          * 退货日期
          */
-        @TableField("return_time")
-        private LocalDate returnTime;
+        private LocalDate billTime;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 作废状态（false未作废，true已作废）
          */
-        @TableField("invalid_status")
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 作废时间
          */
-        @TableField("invalid_time")
         private LocalDateTime invalidTime;
 
         /**
          * 审核人id
          */
-        @TableField("approve_user_id")
         private String approveUserId;
 
         /**
          * 审核人名称
          */
-        @TableField("approve_user_name")
         private String approveUserName;
 
         /**
          * 审核时间
          */
-        @TableField("approve_time")
         private LocalDateTime approveTime;
 
         /**
@@ -387,7 +309,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货原因
          */
-        private String receiceReason;
+        private String receiceRemark;
 
         /**
          * 供应商名称
@@ -397,7 +319,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货方式
          */
-        private String returnWay;
+        private String returnMode;
 
         /**
          * 采购员名称

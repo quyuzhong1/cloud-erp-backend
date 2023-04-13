@@ -104,12 +104,7 @@ public class WarehouseReceiveDTO {
          * 收货日期
          */
         @NotBlank(message = "收货日期不能为空")
-        private LocalDate receiveTime;
-
-        /**
-         * 审核状态
-         */
-        private ApproveStatusEnum approveStatus;
+        private LocalDate billTime;
 
         /**
          * 签收单明细
@@ -194,17 +189,27 @@ public class WarehouseReceiveDTO {
         /**
          * 收货日期
          */
-        private LocalDate receiveTime;
+        private LocalDate billTime;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 作废状态（false未作废，true已作废）
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 作废时间
          */
         private LocalDateTime invalidTime;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
 
         /**
          * 报价明细

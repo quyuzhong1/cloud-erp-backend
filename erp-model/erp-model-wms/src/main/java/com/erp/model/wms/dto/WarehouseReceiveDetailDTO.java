@@ -22,10 +22,6 @@ public class WarehouseReceiveDetailDTO {
     @Data
     @NoArgsConstructor
     public static class AddDTO {
-        /**
-         * 签收单主表id
-         */
-        private String warehouseReceiveId;
 
         /**
          * skuId
@@ -36,11 +32,6 @@ public class WarehouseReceiveDetailDTO {
          * sku编码
          */
         private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String skuName;
 
         /**
          * 收货数量
@@ -75,9 +66,14 @@ public class WarehouseReceiveDetailDTO {
     @NoArgsConstructor
     public static class UpdateDTO {
         /**
-         * 签收单明细id
+         * 收货单明细id
          */
         private String id;
+
+        /**
+         * 采购单详情表id
+         */
+        private String purchaseDetailId;
 
         /**
          * 收货数量
@@ -102,14 +98,14 @@ public class WarehouseReceiveDetailDTO {
     @NoArgsConstructor
     public static class ViewDTO {
         /**
-         * 签收单明细表id
+         * 收货单明细表id
          */
         private String id;
 
         /**
-         * 签收单主表id
+         * 收货单主表id
          */
-        private String warehouseReceiveId;
+        private String mainId;
 
         /**
          * skuId
@@ -124,7 +120,7 @@ public class WarehouseReceiveDetailDTO {
         /**
          * 产品名称
          */
-        private String skuName;
+        private String productName;
 
         /**
          * 计划交货时间
@@ -147,24 +143,9 @@ public class WarehouseReceiveDetailDTO {
         private Integer exceedQty;
 
         /**
-         * 交货仓库id
-         */
-        private String deliveryWarehouseId;
-
-        /**
-         * 交货仓库名称
-         */
-        private String deliveryWarehouseName;
-
-        /**
          * 备注
          */
         private String remark;
-
-        /**
-         * 采购订单明细表id
-         */
-        private String purchaseOrderDetailId;
     }
 
 }

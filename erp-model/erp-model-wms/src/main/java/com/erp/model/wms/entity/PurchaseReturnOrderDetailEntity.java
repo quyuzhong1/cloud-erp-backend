@@ -63,10 +63,10 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     private Integer deductAmountQty;
 
     /**
-     * 含税单价
+     * 退货单价
      */
-    @TableField("tax_price")
-    private String taxPrice;
+    @TableField("return_price")
+    private String returnPrice;
 
     /**
      * 总价
