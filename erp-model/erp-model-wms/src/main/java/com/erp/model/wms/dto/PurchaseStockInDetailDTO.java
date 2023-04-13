@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
 
 /**
@@ -22,6 +23,7 @@ public class PurchaseStockInDetailDTO implements Serializable {
         /**
          * skuId
          */
+        @NotBlank(message = "SKU不能为空")
         private String skuId;
 
         /**
@@ -30,7 +32,7 @@ public class PurchaseStockInDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 本次入库数量
+         * 入库数量
          */
         private String stockInQty;
 
@@ -42,17 +44,26 @@ public class PurchaseStockInDetailDTO implements Serializable {
         /**
          * 采购数量
          */
-        private String purchaseQty;
+        @NotNull(message = "采购数量不能为空")
+        @Min(value = 1,message = "采购数量最小值为1")
+        @Max(value = 99999999,message = "采购数量最大值为99999999")
+        private Integer purchaseQty;
 
         /**
-         * 收货数量
+         * 实收数量
          */
-        private String receiveQty;
+        @NotNull(message = "实收数量不能为空")
+        @Min(value = 1,message = "实收数量最小值为1")
+        @Max(value = 99999999,message = "实收数量最大值为99999999")
+        private Integer receiveQty;
 
         /**
          * 超收数量
          */
-        private String exceedQty;
+        @NotNull(message = "超收数量不能为空")
+        @Min(value = 0,message = "超收数量最小值为0")
+        @Max(value = 99999999,message = "超收数量最大值为99999999")
+        private Integer exceedQty;
 
         /**
          * 库位id
@@ -62,11 +73,13 @@ public class PurchaseStockInDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
         /**
          * 来源明细id
          */
+        @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
     }
 

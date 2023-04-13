@@ -4,6 +4,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -294,6 +296,7 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 采购订单id
          */
+        @NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
 
         /**
@@ -304,6 +307,7 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 交货仓库id
          */
+        @NotBlank(message = "交货仓库不能为空")
         private String deliveryWarehouseId;
 
         /**
@@ -319,16 +323,19 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 来源主键id
          */
+        @NotBlank(message = "来源id不能为空")
         private String sourceId;
 
         /**
          * 来源
          */
+        @NotBlank(message = "来源类型不能为空")
         private String sourceType;
 
         /**
          * 明细
          */
+        @NotEmpty(message = "明细不能为空")
         private List<PurchaseStockInDetailDTO.AddDTO> detail;
     }
 

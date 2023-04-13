@@ -60,9 +60,9 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/invalidStatus/list")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listInvalidStatusDropDown() {
-        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(InvalidStatusEnum.values())
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
+    public ApiResult<List<BaseDropDownDTO.CommonBooleanDTO>> listInvalidStatusDropDown() {
+        List<BaseDropDownDTO.CommonBooleanDTO> result = Arrays.stream(InvalidStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonBooleanDTO(x.getStatus(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

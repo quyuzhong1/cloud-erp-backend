@@ -3,5 +3,7 @@
 <mapper namespace="com.erp.server.wms.mapper.PurchaseStorageMapper">
 
 
+    <select id="paging" resultType="com.erp.model.wms.dto.PurchaseStockInDTO$ListDTO">
 
+    </select>
 </mapper>

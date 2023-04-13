@@ -15,6 +15,20 @@ import java.io.Serializable;
 @Data
 public class BaseDropDownDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommonBooleanDTO {
+        /**
+         * 编码
+         */
+        private Boolean code;
+
+        /**
+         * 值
+         */
+        private String value;
+    }
 
 
     @Data

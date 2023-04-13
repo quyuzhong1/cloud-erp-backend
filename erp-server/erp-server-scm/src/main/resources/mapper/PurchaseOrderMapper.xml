@@ -69,7 +69,7 @@
             <if test="params.isUrgent != null ">
                 and pod.is_urgent = #{params.isUrgent}
             </if>
-            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+            <if test="params.invalidStatus != null ">
                 and po.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.isFirstMassProduct != null ">
@@ -148,8 +148,8 @@
                 when 'approve' then '已审核'
             end as approveStatusName,
             case po.invalid_status
-                when '0' then '未作废'
-                when '1' then '已作废'
+                when false then '未作废'
+                when true then '已作废'
             end as invalidStatusName,
             case pod.arrival_status
                 when '0' then '未到货'
@@ -192,7 +192,7 @@
                 <if test="params.isUrgent != null ">
                     and pod.is_urgent = #{params.isUrgent}
                 </if>
-                <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                <if test="params.invalidStatus != null ">
                     and po.invalid_status = #{params.invalidStatus}
                 </if>
                 <if test="params.isFirstMassProduct != null ">

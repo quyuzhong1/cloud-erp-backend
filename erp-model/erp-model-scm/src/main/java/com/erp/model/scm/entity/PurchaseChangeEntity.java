@@ -122,10 +122,10 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     private String supplierName;
 
     /**
-     * 作废状态（0未作废，1已作废）
+     * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
 
     /**
      * 作废时间

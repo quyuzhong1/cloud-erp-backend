@@ -65,7 +65,7 @@
             <if test="params.code != null and params.code != ''">
                 and pc.code like concat('%',#{params.code},'%')
             </if>
-            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+            <if test="params.invalidStatus != null ">
                 and pc.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
@@ -130,8 +130,8 @@
             when 'approve' then '已审核'
         end as approveStatusName,
         case pc.invalid_status
-            when '0' then '未作废'
-            when '1' then '已作废'
+            when false then '未作废'
+            when true then '已作废'
         end as invalidStatusName,
         pcd.sku_no as skuNo,
         pcd.product_name as productName,
@@ -167,7 +167,7 @@
                 <if test="params.code != null and params.code != ''">
                     and pc.code like concat('%',#{params.code},'%')
                 </if>
-                <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                <if test="params.invalidStatus != null ">
                     and pc.invalid_status = #{params.invalidStatus}
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">

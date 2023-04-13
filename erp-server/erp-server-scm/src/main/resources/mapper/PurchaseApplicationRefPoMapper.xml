@@ -27,7 +27,7 @@
             parp.purchase_order_id,
             COALESCE(pod.purchase_qty,0) as purchaseQty
         from purchase_application_ref_po parp
-        left join purchase_order po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = '0'
+        left join purchase_order po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = false
         left join purchase_order_detail pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and pod.is_deleted = false
         <where>
             parp.is_deleted = false

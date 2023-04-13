@@ -64,7 +64,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 作废状态（0未作废，1已作废）
@@ -207,9 +207,9 @@ public class PurchaseOrderDTO implements Serializable {
         private List<String> approveStatusList;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 作废状态（false未作废，true已作废）
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 到货状态（0未到货，1部分到货，2已到货）
