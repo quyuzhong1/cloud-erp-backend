@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -73,10 +72,10 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @description: 提交
      * @author Will
      * @date: 2023/4/12 11:46
-     * @param dto
+     * @param ids
      * @return Boolean
      */
-    Boolean submit(BaseIdsDTO.IdsDTO dto);
+    Boolean submit(List<String> ids);
     /**
      * @description: 查看
      * @author Will

@@ -22,10 +22,10 @@ import lombok.experimental.Accessors;
 public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetailEntity> {
 
     /**
-     * 采购入库单id
+     * 主表id
      */
-    @TableField("purchase_stock_in_id")
-    private String purchaseStockInId;
+    @TableField("main_id")
+    private String mainId;
 
     /**
      * skuId
@@ -106,7 +106,7 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     private String remark;
 
 
-    public static final String PURCHASE_STOCK_IN_ID = "purchase_stock_in_id";
+    public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
 
