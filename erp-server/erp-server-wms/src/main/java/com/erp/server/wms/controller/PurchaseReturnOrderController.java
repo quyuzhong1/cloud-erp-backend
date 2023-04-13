@@ -43,7 +43,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.AddDTO> dto) {
+    public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
@@ -56,7 +56,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.UpdateDTO> dto) {
+    public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }

@@ -1,13 +1,10 @@
 package com.erp.server.wms.controller;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
@@ -46,7 +43,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.AddDTO> dto) {
+    public ApiResult add(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
@@ -59,7 +56,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.UpdateDTO> dto) {
+    public ApiResult update(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
