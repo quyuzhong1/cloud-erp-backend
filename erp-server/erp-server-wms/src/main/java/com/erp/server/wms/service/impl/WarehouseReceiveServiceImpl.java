@@ -38,6 +38,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
+    @Override
     public Boolean add(WarehouseReceiveDTO.AddDTO dto) {
         PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
         productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
