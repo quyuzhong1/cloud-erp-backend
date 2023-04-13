@@ -35,7 +35,7 @@ public class QcRuleController extends BaseController {
 
 
     /**
-     * 分页列表
+     * 分页
      * @param dto
      * @return
      */
@@ -47,7 +47,7 @@ public class QcRuleController extends BaseController {
 
 
     /**
-     * 添加质检规则
+     * 添加
      *
      * @param
      * @return
@@ -76,13 +76,14 @@ public class QcRuleController extends BaseController {
      * @param dto
      * @return
      */
+    @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.submit(dto.getIds());
         return result == true ? success() : failure();
     }
 
     /**
-     * 添加质检规则
+     * 详情
      *
      * @param
      * @return
@@ -94,7 +95,7 @@ public class QcRuleController extends BaseController {
     }
 
     /**
-     * 修改质检规则
+     * 修改
      * @param dto
      * @return
      */
@@ -154,6 +155,12 @@ public class QcRuleController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.deleteByIds(dto.getIds());

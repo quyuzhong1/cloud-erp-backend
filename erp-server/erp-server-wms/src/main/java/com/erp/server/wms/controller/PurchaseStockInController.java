@@ -120,7 +120,7 @@ public class PurchaseStockInController extends BaseController {
      */
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseStorageService.submit(dto);
+        Boolean flag = purchaseStorageService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 

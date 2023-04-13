@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -7,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -29,17 +29,22 @@ import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.PurchaseStorageMapper;
 import com.erp.server.wms.service.ModuleOperateLogService;
 import com.erp.server.wms.service.PurchaseStockInDetailService;
 import com.erp.server.wms.service.PurchaseStockInService;
 import com.erp.server.wms.service.WarehouseService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +63,10 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     @Resource
     private WarehouseService warehouseService;
@@ -130,6 +139,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(PurchaseStockInDTO.AddDTO dto) {
         PurchaseStockInEntity entity = new PurchaseStockInEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -153,23 +163,73 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
-    public Boolean addAndSubmit(PurchaseStockInDTO.AddDTO dto) {
-        return null;
-    }
-
-    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseStockInDTO.UpdateDTO dto) {
-        return null;
+        PurchaseStockInEntity entity = new PurchaseStockInEntity();
+        BeanMapperUtils.copy(dto,entity);
+        List<PurchaseStockInDetailDTO.UpdateDTO> details = dto.getDetails();
+        //校验明细是否有重复sku
+        checkUpdateDetailsRepeatSku(details);
+        //处理数据id
+        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),entity);
+
+        log.info("采购入库单修改，id=【{}】", dto.getId());
+
+        //添加日志
+        PurchaseStockInEntity old = this.getById(dto.getId());
+        moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),entity.getId(),"","");
+        //更新主表数据
+        this.updateById(entity);
+        //更新明细数据
+        purchaseStockInDetailService.update(details,entity.getId());
+        return Boolean.TRUE;
     }
 
+
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addAndSubmit(PurchaseStockInDTO.AddDTO dto) {
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        return this.submit(Arrays.asList(id));
+    }
+
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(PurchaseStockInDTO.UpdateDTO dto) {
-        return null;
+        //修改
+        this.update(dto);
+        //提交
+        return this.submit(Arrays.asList(dto.getId()));
     }
 
     @Override
-    public Boolean submit(BaseIdsDTO.IdsDTO dto) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean submit(List<String> ids) {
+        //根据ids查询
+        List<PurchaseStockInEntity> list = getList(ids);
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        log.info("采购入库单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //启动流程 TODO
+
+        //更新审核状态
+        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购入库单【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),pairList,"提交操作");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -178,13 +238,50 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<PurchaseStockInEntity> list = getList(ids);
+        //待提交允许删除
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        log.info("采购入库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除明细数据
+        purchaseStockInDetailService.removeByMainIds(ids);
+        //删除操作日志
+        moduleOperateLogService.removeByBusinessIds(ids);
+        //删除主表数据
+        return  this.removeByIds(ids);
     }
 
     @Override
-    public Boolean invalid(List<String> ids, String remark) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean invalid(List<String> ids, String reason) {
+        //根据ids查询
+        List<PurchaseStockInEntity> list = getList(ids);
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("采购入库单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新
+        lambdaUpdate().in(PurchaseStockInEntity::getId,ids)
+                .set(PurchaseStockInEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(PurchaseStockInEntity::getInvalidTime, LocalDateTime.now())
+                .set(PurchaseStockInEntity::getInvalidRemark,reason)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购入库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),pairList,"作废操作");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -199,7 +296,24 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
 
     @Override
     public Boolean cancelProcess(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<PurchaseStockInEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        log.info("采购入库单撤销流程，id=【{}】", ids);
+
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+
+        //更新单据为待提交
+        updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("备货申请单【%s】取消流程", ModuleTypeEnum.SALES_DEMAND.getCode(),pairList,"取消流程操作");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -218,10 +332,46 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     /**
+     * 反审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids,String approveStatus) {
+
+        this.lambdaUpdate().in(PurchaseStockInEntity::getId,ids)
+                .set(PurchaseStockInEntity::getApproveStatus,approveStatus)
+                .set(PurchaseStockInEntity::getApproveUserId,"")
+                .set(PurchaseStockInEntity::getApproveUserName,"")
+                .set(PurchaseStockInEntity::getApproveTime,null)
+                .update();
+    }
+
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(List<String> ids,String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(PurchaseStockInEntity::getId,ids)
+                .set(PurchaseStockInEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    /**
+     * 根据ids查询数据
+     */
+    private List<PurchaseStockInEntity>  getList(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<PurchaseStockInEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98050);
+        }
+        return list;
+    }
+
+    /**
      * 处理数据id
      */
     private void doOpHandleDataId (String stockInDeptId, String stockInUserId, String deliveryWarehouseId, PurchaseStockInEntity entity) {
-
 
         //入库员
         if (StringUtils.isNotBlank(stockInUserId)) {

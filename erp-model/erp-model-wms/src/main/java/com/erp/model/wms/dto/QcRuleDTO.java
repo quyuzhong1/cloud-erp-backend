@@ -33,6 +33,7 @@ public class QcRuleDTO implements Serializable {
 
         /**
          * 质检类型
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
          */
         @NotBlank(message = "质检类型不能为空")
         @StateEnumValue(strValues = {"stockIn", "outsideQc", "insideQc", "newProductStockIn", "b2bOutsideQc"}, message = "质检类型有误")
@@ -46,7 +47,8 @@ public class QcRuleDTO implements Serializable {
 
 
         /**
-         * 产品等级
+         * 产品等级 plm 系统
+         * 来源 http://172.16.100.11:3002/project/47/interface/api/4505  请传里面对应的 value
          */
         private List<String> productGradeKeyList;
 

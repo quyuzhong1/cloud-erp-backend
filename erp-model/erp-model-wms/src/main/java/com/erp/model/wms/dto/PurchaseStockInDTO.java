@@ -352,7 +352,7 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 明细
          */
-        private List<PurchaseStockInDetailDTO.UpdateDTO> detail;
+        private List<PurchaseStockInDetailDTO.UpdateDTO> details;
     }
 
     @Data

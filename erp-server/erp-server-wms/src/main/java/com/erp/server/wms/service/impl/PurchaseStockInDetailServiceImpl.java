@@ -24,4 +24,14 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     public void add(List<PurchaseStockInDetailDTO.AddDTO> details, String id) {
 
     }
+
+    @Override
+    public void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String purchaseStockInId) {
+
+    }
+
+    @Override
+    public void removeByMainIds(List<String> ids) {
+
+    }
 }

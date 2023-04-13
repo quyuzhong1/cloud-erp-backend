@@ -5,11 +5,14 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.entity.QcRuleEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.server.wms.service.QcRuleService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +27,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/drop/down")
 public class DropDownListController extends BaseController {
+
+    @Resource
+    private QcRuleService qcRuleService;
 
 
     /**
@@ -40,7 +46,6 @@ public class DropDownListController extends BaseController {
     }
 
 
-
     /**
      * 质检类型下拉列表
      *
@@ -48,7 +53,10 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/qcType/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcTypeDropDown() {
+        List<QcRuleEntity> list= qcRuleService.list();
+        List<String> qcTypes=list.stream().map(QcRuleEntity::getQcType).collect(Collectors.toList());
         List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcTypeEnum.values())
+                .filter(q->!qcTypes.contains(q.getType()))
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
