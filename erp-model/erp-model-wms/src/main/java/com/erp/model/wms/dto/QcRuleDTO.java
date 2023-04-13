@@ -1,12 +1,14 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,6 +35,7 @@ public class QcRuleDTO implements Serializable {
          * 质检类型
          */
         @NotBlank(message = "质检类型不能为空")
+        @StateEnumValue(strValues = {"stockIn", "outsideQc", "insideQc", "newProductStockIn", "b2bOutsideQc"}, message = "质检类型有误")
         private String qcType;
 
         /**
@@ -52,6 +55,142 @@ public class QcRuleDTO implements Serializable {
          * 质检报告集合
          */
         private List<QcReportDTO.AddDTO> qcReportLList;
+
+    }
+
+
+    /**
+     * 修改质检规则
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends PermissionsDTO {
+
+
+        private String id;
+
+
+        /**
+         * 质检类型
+         */
+        @NotBlank(message = "质检类型不能为空")
+        @StateEnumValue(strValues = {"stockIn", "outsideQc", "insideQc", "newProductStockIn", "b2bOutsideQc"}, message = "质检类型有误")
+        private String qcType;
+
+        /**
+         * 是否有报告
+         */
+        @NotNull(message = "是否含有质检报告不能为空")
+        private Boolean existReport;
+
+
+        /**
+         * 产品等级
+         */
+        private List<String> productGradeKeyList;
+
+
+        /**
+         * 质检报告集合
+         */
+        private List<QcReportDTO.UpdateDTO> qcReportLList;
+
+    }
+
+
+    /**
+     * 质检规则详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO extends UpdateDTO {
+
+
+        /**
+         * code
+         */
+        private String code;
+
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+
+        /**
+         * 质检类型
+         */
+        private String qcTypeName;
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+
+    }
+
+    /**
+     * 质检规则的分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+
+
+        /**
+         * 质检类型
+         */
+        private String qcTypeName;
+
+        private String qcType;
+
+        /**
+         * 是否有质检报告
+         */
+        private Boolean existReport;
+
+
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+
 
     }
 

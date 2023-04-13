@@ -1,9 +1,15 @@
 package com.erp.server.wms.controller;
 
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcRuleDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -13,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 
 /**
  * 质检规则
@@ -21,11 +28,18 @@ import javax.annotation.Resource;
  * @since 2023-04-13
  */
 @RestController
-@RequestMapping("/qcRule")
+@RequestMapping("qcRule")
 public class QcRuleController extends BaseController {
 
     @Resource
     private QcRuleService qcRuleService;
+
+
+
+    public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+
+        return success();
+    }
 
 
     /**
@@ -39,5 +53,108 @@ public class QcRuleController extends BaseController {
         String id = qcRuleService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
+
+    /**
+     * 添加并提交
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/addAndSubmit")
+    public ApiResult addAndSubmit(@RequestBody @Validated QcRuleDTO.AddDTO dto) {
+        Boolean result = qcRuleService.addAndSubmit(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 提交审核
+     *
+     * @param dto
+     * @return
+     */
+    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = qcRuleService.submit(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 添加质检规则
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/view")
+    public ApiResult<QcRuleDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        QcRuleDTO.ViewDTO view = qcRuleService.view(dto.getId());
+        return success(view);
+    }
+
+    /**
+     * 修改质检规则
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated QcRuleDTO.UpdateDTO dto) {
+        String id = qcRuleService.updateQcRule(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+    /**
+     * 修改并提交
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateAndSubmit")
+    public ApiResult updateAndSubmit(@RequestBody @Validated QcRuleDTO.UpdateDTO dto) {
+        Boolean result = qcRuleService.updateAndSubmit(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/approve")
+    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
+        Boolean result = qcRuleService.approve(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 反审核
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-22 11:56
+     */
+    @PostMapping("/disApprove")
+    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = qcRuleService.disApprove(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     *撤销流程
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-03-22 11:56
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = qcRuleService.cancelProcess(dto.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = qcRuleService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
 
 }

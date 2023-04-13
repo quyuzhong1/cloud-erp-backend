@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.stock;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
@@ -7,7 +8,9 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.CleanOrderMongoDTO;
 import com.erp.model.dmp.dto.GoodcangDTO;
+import com.erp.model.dmp.dto.OmsMongoDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.GoodcangStockService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,11 +43,21 @@ public class GoodcangStockServiceImpl implements GoodcangStockService {
     public void receiveGoDownEntry(GoodcangDTO.MessageDTO message) {
         // 保存到mongo
         // 处理数据
+        OmsMongoDTO omsMongoDTO = new OmsMongoDTO();
+        omsMongoDTO.setReceivingCode(message.getReceivingCode());
+        List<GoodcangDTO.MessageDTO> mongoData = mongoService.findMongoData(omsMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GC_INBOUND_ORDER, GoodcangDTO.MessageDTO.class);
+        if (CollectionUtil.isNotEmpty(mongoData)) {
+            log.error("入库单号：{}，已经存在", message.getReceivingCode());
+            return;
+        }
         message.setPlatformSign(OmsPlatformEnum.OMS_GOOD_CANG.getName());
         List<GoodcangDTO.ReceivingDetailDTO> receivingDetail = message.getReceivingDetail();
         List<GoodcangDTO.ReceivingDetailDTO> detailList = receivingDetail.stream().peek(detail -> detail.setWarehouseCode(message.getWarehouseCode())).collect(Collectors.toList());
         message.setReceivingDetail(detailList);
         mongoService.saveMongoData(message, MongoTableNameContant.ORIGINAL_GC_INBOUND_ORDER);
+        List<GoodcangDTO.ReceivingDetailDTO> detailDTOList = message.getReceivingDetail();
+        // 上级SKU去重数量叠加
+        message.setReceivingDetail(GoodcangDTO.ReceivingDetailDTO.initReceivingDetail(detailDTOList, message.getWarehouseCode()));
         // 同步推送到MQ
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.GC_STOCK_INBOUND_ORDER_TAG.getName(),
                 message, message.getReceivingCode());
