@@ -7,13 +7,13 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
@@ -112,8 +112,10 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public Boolean updateDmpShopInfo(DmpShopInfoDTO dto) {
         //验证店铺名称是否重复
         checkShopName(dto);
-        FindUserDTO user = sysUserFeign.getUserByUserId(dto.getChargeId());
-        dto.setChargeName(user.getUserName());
+        if (StringUtils.isNotBlank(dto.getChargeId())) {
+            FindUserDTO user = sysUserFeign.getUserByUserId(dto.getChargeId());
+            dto.setChargeName(user.getUserName());
+        }
         //编辑
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         BeanUtils.copyProperties(dto,dmpShopInfoEntity);
