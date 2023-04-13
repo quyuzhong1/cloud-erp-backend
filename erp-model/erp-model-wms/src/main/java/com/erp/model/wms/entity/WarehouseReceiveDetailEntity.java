@@ -1,21 +1,25 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
 
 /**
  * <p>
  * 仓库签收明细单
  * </p>
  *
- * @author will
- * @since 2023-03-16
+ * @author LUO_WG
+ * @since 2023-04-06
  */
 @Getter
 @Setter
@@ -24,16 +28,10 @@ import java.io.Serializable;
 public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDetailEntity> {
 
     /**
-     * 签收状态（0待签收，1签收中，2已完成）
+     * 签收单主表id
      */
-    @TableField("receive_status")
-    private String receiveStatus;
-
-    /**
-     * 签收单号
-     */
-    @TableField("code")
-    private String code;
+    @TableField("warehouse_receive_id")
+    private String warehouseReceiveId;
 
     /**
      * skuId
@@ -48,59 +46,57 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     private String skuNo;
 
     /**
-     * 单箱数量
+     * 计划交货时间
      */
-    @TableField("unit_qty")
-    private Integer unitQty;
+    @TableField("plan_receive_time")
+    private LocalDate planReceiveTime;
 
     /**
-     * 币别
+     * 收货数量
      */
-    @TableField("currency")
-    private String currency;
+    @TableField("receive_qty")
+    private Integer receiveQty;
 
     /**
-     * 采购数量
+     * 超收数量
      */
-    @TableField("purchase_qty")
-    private Integer purchaseQty;
+    @TableField("exceed_qty")
+    private Integer exceedQty;
 
     /**
-     * 预计交货数量
+     * 备注
      */
-    @TableField("plan_receive_qty")
-    private Integer planReceiveQty;
+    @TableField("remark")
+    private String remark;
 
     /**
-     * 实际交货数量
-     */
-    @TableField("real_receive_qty")
-    private Integer realReceiveQty;
-
-    /**
-     * 采购订单明细id
+     * 采购订单明细表id
      */
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
 
 
-    public static final String RECEIVE_STATUS = "receive_status";
-
-    public static final String CODE = "code";
+    public static final String WAREHOUSE_RECEIVE_ID = "warehouse_receive_id";
 
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String UNIT_QTY = "unit_qty";
+    public static final String SKU_NAME = "sku_name";
 
-    public static final String CURRENCY = "currency";
+    public static final String PLAN_RECEIVE_TIME = "plan_receive_time";
 
     public static final String PURCHASE_QTY = "purchase_qty";
 
-    public static final String PLAN_RECEIVE_QTY = "plan_receive_qty";
+    public static final String RECEIVE_QTY = "receive_qty";
 
-    public static final String REAL_RECEIVE_QTY = "real_receive_qty";
+    public static final String GIFT_QTY = "gift_qty";
+
+    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
+
+    public static final String DELIVERY_WAREHOUSE_NAME = "delivery_warehouse_name";
+
+    public static final String REMARK = "remark";
 
     public static final String PURCHASE_ORDER_DETAIL_ID = "purchase_order_detail_id";
 
