@@ -63,8 +63,8 @@ public class PurchaseOrderFeignController {
      * @param id id：采购订单id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("/listPurchaseOrdeDetailrById")
-    public List<PurchaseOrderDetailEntity> listPurchaseOrdeDetailrById(@RequestBody List<String> id) {
+    @GetMapping("/listPurchaseOrderDetailById")
+    public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailById(@RequestBody List<String> id) {
         return purchaseOrderDetailService.listDetailByIds(id);
     }
 }
