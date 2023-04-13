@@ -37,8 +37,8 @@ public class QcRuleController extends BaseController {
 
 
     public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
-        PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
-        return success(pagingVO);
+
+        return success();
     }
 
 
