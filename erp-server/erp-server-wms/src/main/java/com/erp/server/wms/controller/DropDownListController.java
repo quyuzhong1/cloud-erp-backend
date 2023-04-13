@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.enums.QcTypeEnum;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +35,21 @@ public class DropDownListController extends BaseController {
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listApproveStatusDropDown() {
         List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(ApproveStatusEnum.values())
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
+
+    /**
+     * 质检类型下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/qcType/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcTypeDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcTypeEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

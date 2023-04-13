@@ -270,7 +270,6 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             }
         }
 
-
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -278,19 +277,21 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             return;
         }
 
-
         projectTaskDTO.setProjectId(productInfoEntity.getId());
         projectTaskDTO.setProductId(productInfoEntity.getId());
         projectTaskDTO.setName(projectTaskExcelDTO.getName());
 
         projectTaskDTO.setChargeIds(chargeNameList);
         projectTaskDTO.setPreTaskIdList(preTaskList);
-        if (projectTaskExcelDTO.getPlanStartTime() != null) {
+
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(projectTaskExcelDTO.getPlanStartTime())) {
             projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanStartTime(), dateTimeFormatter));
         }
-        if (projectTaskExcelDTO.getPlanEndTime() != null) {
+
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(projectTaskExcelDTO.getPlanEndTime())) {
             projectTaskDTO.setPlanEndTime(LocalDate.parse(projectTaskExcelDTO.getPlanEndTime(), dateTimeFormatter));
         }
+
         if (StringUtils.isNotBlank(projectTaskExcelDTO.getPriority())) {
             if (projectTaskExcelDTO.getPriority().equals("高")) {
                 projectTaskDTO.setPriority(3);

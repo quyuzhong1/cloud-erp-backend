@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.controller.BaseController;
 
 /**
- * <p>
- * 采购退货单 前端控制器
- * </p>
- *
+ * 采购退货单
  * @author LUO_WG
  * @since 2023-04-07
  */
@@ -46,7 +43,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.AddDTO> dto) {
+    public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }
@@ -59,7 +56,7 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.UpdateDTO> dto) {
+    public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = false;
         return flag == true ? success() : failure();
     }

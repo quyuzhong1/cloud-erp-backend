@@ -62,7 +62,7 @@
             <if test="params.isUrgent != null ">
                 and sdd.is_urgent = #{params.isUrgent}
             </if>
-            <if test="params.invalidStatus != null and params.invalidStatus != ''">
+            <if test="params.invalidStatus != null ">
                 and sd.invalid_status = #{params.invalidStatus}
             </if>
             <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
@@ -135,8 +135,8 @@
             when 'approve' then '已审核'
         end as approveStatusName,
         case sd.invalid_status
-            when '0' then '未作废'
-            when '1' then '已作废'
+            when false then '未作废'
+            when true then '已作废'
         end as invalidStatusName,
         sd.approve_user_name as approveUserName,
         sd.create_user_name as createUserName,
@@ -161,7 +161,7 @@
                 <if test="params.isUrgent != null ">
                     and sd.is_urgent = #{params.isUrgent}
                 </if>
-                <if test="params.invalidStatus != null and params.invalidStatus != ''">
+                <if test="params.invalidStatus != null ">
                     and sd.invalid_status = #{params.invalidStatus}
                 </if>
                 <if test="params.approveStatusList != null and params.approveStatusList.size > 0">

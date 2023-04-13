@@ -1,8 +1,6 @@
 package com.erp.server.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.GoodcangDTO;
@@ -117,7 +115,7 @@ public class DmpWarehouseInboundItemEntity extends BaseEntity<DmpWarehouseInboun
         this.referenceBoxNo = detail.getReferenceBoxNo();
         this.deliveryQty = detail.getDeliveryQty();
         this.receiptQty = detail.getReceiptQty();
-        this.putAwayQty = detail.getPutAwayQty();
+        this.putAwayQty = detail.getPutawayQty();
         this.unsellableQty = detail.getUnsellableQty();
         this.sellableQty = detail.getSellableQty();
     }

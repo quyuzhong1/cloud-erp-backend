@@ -1,8 +1,6 @@
 package com.erp.model.dmp.dto;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.core.utils.date.DateUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
@@ -150,22 +148,22 @@ public class GoodcangDTO {
         /**
          * 商品编码 唯一
          */
-        @JsonProperty("product_barcode")
+        @SerializedName("product_barcode")
         private String productBarcode;
         /**
          * 客户商品编码
          */
-        @JsonProperty("product_sku")
+        @SerializedName("product_sku")
         private String productSku;
         /**
          * 箱号编码
          */
-        @JsonProperty("box_no")
+        @SerializedName("box_no")
         private String boxNo;
         /**
          * 参考箱号
          */
-        @JsonProperty("reference_box_no")
+        @SerializedName("reference_box_no")
         private String referenceBoxNo;
         /**
          * 送货数量
@@ -178,8 +176,8 @@ public class GoodcangDTO {
         /**
          * 上架数量
          */
-        @JsonProperty("putawayQty")
-        private Integer putAwayQty;
+        @SerializedName("putawayQty")
+        private Integer putawayQty;
         /**
          * 不良品数量
          */
@@ -194,6 +192,19 @@ public class GoodcangDTO {
          */
         private String warehouseCode;
 
+        public ReceivingDetailDTO(ReceivingDetailDTO dto, String warehouseCode) {
+            this.productBarcode = dto.getProductBarcode();
+            this.productSku = dto.getProductSku();
+            this.boxNo = dto.getBoxNo().toString();
+            this.referenceBoxNo = dto.getReferenceBoxNo();
+            this.deliveryQty = dto.getDeliveryQty();
+            this.receiptQty = dto.getReceiptQty();
+            this.putawayQty = dto.getPutawayQty();
+            this.unsellableQty = dto.getUnsellableQty();
+            this.sellableQty = dto.getSellableQty();
+            this.warehouseCode = warehouseCode;
+        }
+
         public static List<ReceivingDetailDTO> createReceivingDetail(List<OmsImlDTO.ReceivingDetailDTO> receivingDetail, String warehouseCode) {
             return new ArrayList<>(receivingDetail.stream()
                     .collect(Collectors.toMap(OmsImlDTO.ReceivingDetailDTO::getProductSku,
@@ -201,7 +212,21 @@ public class GoodcangDTO {
                             (p1, p2) -> {
                                 p1.setDeliveryQty(p1.getDeliveryQty() + p2.getDeliveryQty());
                                 p1.setReceiptQty(p1.getReceiptQty() + p2.getReceiptQty());
-                                p1.setPutAwayQty(p1.getPutAwayQty() + p2.getPutAwayQty());
+                                p1.setPutawayQty(p1.getPutawayQty() + p2.getPutawayQty());
+                                p1.setUnsellableQty(p1.getUnsellableQty() + p2.getUnsellableQty());
+                                p1.setSellableQty(p1.getSellableQty() + p2.getSellableQty());
+                                return p1;
+                            })).values());
+        }
+
+        public static List<ReceivingDetailDTO> initReceivingDetail(List<ReceivingDetailDTO> receivingDetail, String warehouseCode) {
+            return new ArrayList<>(receivingDetail.stream()
+                    .collect(Collectors.toMap(ReceivingDetailDTO::getProductSku,
+                            x -> new ReceivingDetailDTO(x, warehouseCode),
+                            (p1, p2) -> {
+                                p1.setDeliveryQty(p1.getDeliveryQty() + p2.getDeliveryQty());
+                                p1.setReceiptQty(p1.getReceiptQty() + p2.getReceiptQty());
+                                p1.setPutawayQty(p1.getPutawayQty() + p2.getPutawayQty());
                                 p1.setUnsellableQty(p1.getUnsellableQty() + p2.getUnsellableQty());
                                 p1.setSellableQty(p1.getSellableQty() + p2.getSellableQty());
                                 return p1;
@@ -214,7 +239,7 @@ public class GoodcangDTO {
             this.referenceBoxNo = dto.getReferenceBoxNo();
             this.deliveryQty = dto.getQuantity();
             this.receiptQty = dto.getReceivedQuantity();
-            this.putAwayQty = dto.getPutawayQty();
+            this.putawayQty = dto.getPutawayQty();
             this.unsellableQty = null != dto.getLoTypeCount() ? (dto.getLoTypeCount().size() > 1 ? dto.getLoTypeCount().get(1) : 0) : 0;
             this.sellableQty = null != dto.getLoTypeCount() ? dto.getLoTypeCount().get(0) : 0;
             this.warehouseCode = warehouseCode;

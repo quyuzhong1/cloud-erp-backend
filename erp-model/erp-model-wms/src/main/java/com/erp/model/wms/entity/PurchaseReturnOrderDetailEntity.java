@@ -29,8 +29,8 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     /**
      * 退货单主表id
      */
-    @TableField("return_order_id")
-    private String returnOrderId;
+    @TableField("main_id")
+    private String mainId;
 
     /**
      * skuId
@@ -43,12 +43,6 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
      */
     @TableField("sku_no")
     private String skuNo;
-
-    /**
-     * 产品名称
-     */
-    @TableField("product_name")
-    private String productName;
 
     /**
      * 实退数量
@@ -69,10 +63,10 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     private Integer deductAmountQty;
 
     /**
-     * 含税单价
+     * 退货单价
      */
-    @TableField("tax_price")
-    private String taxPrice;
+    @TableField("return_price")
+    private String returnPrice;
 
     /**
      * 总价
@@ -81,33 +75,22 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     private String totalPrice;
 
     /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
      * 备注
      */
     @TableField("remark")
     private String remark;
 
-
-    public static final String RETURN_ORDER_ID = "return_order_id";
-
-    public static final String SKU_ID = "sku_id";
-
-    public static final String SKU_NO = "sku_no";
-
-    public static final String PRODUCT_NAME = "product_name";
-
-    public static final String PLAN_RECEIVE_TIME = "plan_receive_time";
-
-    public static final String PURCHASE_QTY = "purchase_qty";
-
-    public static final String REALITY_RETURN_QTY = "reality_return_qty";
-
-    public static final String REPLENISH_QTY = "replenish_qty";
-
-    public static final String PRICE = "price";
-
-    public static final String TOTAL_PRICE = "total_price";
-
-    public static final String DELIVERY_WAREHOUSE_ID = "delivery_warehouse_id";
+    /**
+     * 单据来源详情表id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
 
     @Override
     public Serializable pkVal() {

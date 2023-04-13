@@ -133,8 +133,13 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeStartTime(LocalDateTime.parse(vo.getPlanStartTime(), dateTimeFormatter));
-        changeVO.setChangeEndTime(LocalDateTime.parse(vo.getPlanEndTime(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(vo.getPlanStartTime())) {
+            changeVO.setChangeStartTime(LocalDateTime.parse(vo.getPlanStartTime(), dateTimeFormatter));
+        }
+        if (StringUtils.isNotBlank(vo.getPlanEndTime())) {
+            changeVO.setChangeEndTime(LocalDateTime.parse(vo.getPlanEndTime(), dateTimeFormatter));
+        }
+
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());

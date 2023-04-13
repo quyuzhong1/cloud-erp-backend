@@ -165,8 +165,12 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
         taskIdList.add(task.getId());
         productId = task.getProductId();
-        task.setPlanStartTime(LocalDate.parse(vo.getPlanStartTime(), dateTimeFormatter));
-        task.setPlanEndTime(LocalDate.parse(vo.getPlanEndTime(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(vo.getPlanStartTime())) {
+            task.setPlanStartTime(LocalDate.parse(vo.getPlanStartTime(), dateTimeFormatter));
+        }
+        if (StringUtils.isNotBlank(vo.getPlanEndTime())) {
+            task.setPlanEndTime(LocalDate.parse(vo.getPlanEndTime(), dateTimeFormatter));
+        }
         projectTaskService.updateById(task);
     }
 

@@ -1,7 +1,6 @@
 package com.erp.model.scm.enums;
 
-import com.common.business.enums.ApproveStatusEnum;
-import org.apache.commons.lang3.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 
 /**
  * @author Will
@@ -11,18 +10,18 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum InvalidStatusEnum {
 
-    NOT_VOIDED("0", "未作废"),
-    VOIDED("1", "已作废");
+    NOT_VOIDED(false, "未作废"),
+    VOIDED(true, "已作废");
 
-    private String status;
+    private Boolean status;
     private String name;
 
-    InvalidStatusEnum(String status, String name) {
+    InvalidStatusEnum(Boolean status, String name) {
         this.status = status;
         this.name = name;
     }
 
-    public String getStatus() {
+    public Boolean getStatus() {
         return status;
     }
 
@@ -30,10 +29,10 @@ public enum InvalidStatusEnum {
         return name;
     }
 
-    public static String getName(String state) {
-        if (StringUtils.isNotBlank(state)) {
+    public static String getName(Boolean status) {
+        if (ObjectUtils.isNotEmpty(status)) {
             for (InvalidStatusEnum item : InvalidStatusEnum.values()) {
-                if (state.equals(item.getStatus())) {
+                if (status.equals(item.getStatus())) {
                     return item.getName();
                 }
             }

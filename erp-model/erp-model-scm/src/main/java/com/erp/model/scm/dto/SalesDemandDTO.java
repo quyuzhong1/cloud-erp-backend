@@ -109,12 +109,12 @@ public class SalesDemandDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * 作废状态编码
+         * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 作废状态（false未作废，true已作废）
          */
         private String invalidStatusName;
 
@@ -174,9 +174,9 @@ public class SalesDemandDTO implements Serializable {
         private String productName;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 作废状态（false未作废，true已作废）
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 创建人

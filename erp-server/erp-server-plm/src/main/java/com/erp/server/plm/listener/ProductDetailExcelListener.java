@@ -257,14 +257,17 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setPropertyId(productProperty.getId());
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        productSkuBaseInfoDTO.setPlanListingTime(LocalDateTime.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-        productSkuBaseInfoDTO.setProductState(2);
+        if (StringUtils.isNotBlank(dto.getPlanListingTimeStr())) {
+            productSkuBaseInfoDTO.setPlanListingTime(LocalDateTime.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        }
+         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
-        productSkuBaseInfoDTO.setFirstMassProductDate(LocalDateTime.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
-
+        if (StringUtils.isNotBlank(dto.getFirstMassProductDateStr())) {
+            productSkuBaseInfoDTO.setFirstMassProductDate(LocalDateTime.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+        }
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);

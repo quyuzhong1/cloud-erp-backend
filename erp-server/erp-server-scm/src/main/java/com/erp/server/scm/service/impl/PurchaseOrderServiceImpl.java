@@ -756,6 +756,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return resultDTO;
     }
 
+    @Override
+    public List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids) {
+        //TODO
+        return null;
+    }
+
+    @Override
+    public Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto) {
+        //TODO
+        return null;
+    }
+
     /**
      * 处理数据id
      */
@@ -885,7 +897,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(new ApiResult(1,"录入sku编码【".concat(value.get(0).getSkuNo()).concat("】存在重复")));
             }
             PurchaseOrderDetailEntity entity = purchaseOrderDetailService.getByPurchaseOrderIdAndSkuId(purchaseOrderId, entry.getKey());
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
+            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(value.get(0).getId())) {
+                value.forEach(obj -> obj.setId(entity.getId()));
                 throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】已存在")));
             }
         }

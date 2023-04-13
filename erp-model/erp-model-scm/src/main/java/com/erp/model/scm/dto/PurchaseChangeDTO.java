@@ -58,9 +58,9 @@ public class PurchaseChangeDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * 作废状态 （0未作废，1已作废）
+         * 作废状态 （false未作废，true已作废）
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 作废状态名称
@@ -175,7 +175,7 @@ public class PurchaseChangeDTO implements Serializable {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 交货仓库id

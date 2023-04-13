@@ -80,14 +80,8 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     /**
      * 退货方式
      */
-    @TableField("return_way")
-    private String returnWay;
-
-    /**
-     * 退货来源
-     */
-    @TableField("return_source")
-    private String returnSource;
+    @TableField("return_mode")
+    private String returnMode;
 
     /**
      * 退货人组织id
@@ -104,38 +98,20 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     /**
      * 退货原因
      */
-    @TableField("receice_reason")
-    private String receiceReason;
-
-    /**
-     * 退货费用
-     */
-    @TableField("receice_cost")
-    private BigDecimal receiceCost;
-
-    /**
-     * 退货运费
-     */
-    @TableField("receice_shipping_cost")
-    private BigDecimal receiceShippingCost;
-
-    /**
-     * 其它费用
-     */
-    @TableField("other_cost")
-    private BigDecimal otherCost;
+    @TableField("receice_remark")
+    private String receiceRemark;
 
     /**
      * 退货日期
      */
-    @TableField("return_time")
-    private LocalDate returnTime;
+    @TableField("bill_date")
+    private LocalDate billDate;
 
     /**
-     * 作废状态（0未作废，1已作废）
+     * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
 
     /**
      * 作废时间
@@ -160,6 +136,18 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
      */
     @TableField("approve_time")
     private LocalDateTime approveTime;
+
+    /**
+     * 退货来源 （质检单，签收单，采购订单）
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
 
 
     public static final String APPROVE_STATUS = "approve_status";
