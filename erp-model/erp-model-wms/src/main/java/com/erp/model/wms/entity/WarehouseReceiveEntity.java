@@ -1,22 +1,26 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
-import java.util.Date;
-
 /**
  * <p>
- * 仓库签收单
+ * 采购退货单
  * </p>
  *
- * @author will
- * @since 2023-03-16
+ * @author LUO_WG
+ * @since 2023-04-06
  */
 @Getter
 @Setter
@@ -25,10 +29,10 @@ import java.util.Date;
 public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
 
     /**
-     * 签收状态（0待签收，1签收中，2已完成
+     * 审核状态 waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核
      */
-    @TableField("receive_status")
-    private String receiveStatus;
+    @TableField("approve_status")
+    private String approveStatus;
 
     /**
      * 单据编号
@@ -61,65 +65,88 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
     private String supplierName;
 
     /**
-     * 产品名称
+     * 收货人id
      */
-    @TableField("product_name")
-    private String productName;
+    @TableField("receive_user_id")
+    private String receiveUserId;
 
     /**
-     * 计划交期
+     * 收货人名称
      */
-    @TableField("plan_delivery_date")
-    private Date planDeliveryDate;
+    @TableField("receive_user_name")
+    private String receiveUserName;
 
     /**
-     * 目的仓库id
+     * 收货人部门id
      */
-    @TableField("dest_warehouse_id")
-    private String destWarehouseId;
+    @TableField("receive_dept_id")
+    private String receiveDeptId;
 
     /**
-     * 目的仓库名称
+     * 收货人部门名称
      */
-    @TableField("dest_warehouse_name")
-    private String destWarehouseName;
+    @TableField("receive_dept_name")
+    private String receiveDeptName;
 
     /**
-     * 采购员id
+     * 收货人组织id
      */
-    @TableField("purchase_user_id")
-    private String purchaseUserId;
+    @TableField("receive_org_id")
+    private String receiveOrgId;
 
     /**
-     * 采购员名称
+     * 收货人组织名称
      */
-    @TableField("purch_aseuser_name")
-    private String purchAseuserName;
+    @TableField("receive_org_name")
+    private String receiveOrgName;
 
+    /**
+     * 收货日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
-    public static final String RECEIVE_STATUS = "receive_status";
+    /**
+     * 作废状态（false未作废，true已作废）
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
 
-    public static final String CODE = "code";
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
 
-    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
 
-    public static final String PURCHASE_ORDER_CODE = "purchase_order_code";
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
 
-    public static final String SUPPLIER_ID = "supplier_id";
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
 
-    public static final String SUPPLIER_NAME = "supplier_name";
+    /**
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
 
-    public static final String PRODUCT_NAME = "product_name";
-
-    public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
-
-    public static final String DEST_WAREHOUSE_ID = "dest_warehouse_id";
-
-    public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
-
-    public static final String PURCHASE_USER_ID = "purchase_user_id";
-
-    public static final String PURCH_ASEUSER_NAME = "purch_aseuser_name";
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
 
     @Override
     public Serializable pkVal() {

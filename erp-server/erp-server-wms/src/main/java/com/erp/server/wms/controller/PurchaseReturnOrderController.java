@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.controller.BaseController;
 
 /**
- * <p>
- * 采购退货单 前端控制器
- * </p>
- *
+ * 采购退货单
  * @author LUO_WG
  * @since 2023-04-07
  */
