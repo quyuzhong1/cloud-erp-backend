@@ -650,7 +650,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 log.error(error);
                 return new Pair<>(error, resultList);
             }
-            return null;
+            return new Pair<>("",new ArrayList<>());
         }
         List<String> currencyList = resultList.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
