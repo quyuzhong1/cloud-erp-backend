@@ -23,17 +23,17 @@ public class StateEnumValueValidator  implements ConstraintValidator<StateEnumVa
 
     private static final String DEFAULT_CLAZZ_NAME = "Object";// 默认枚举类名称
 
-    private static final String ENUM_VALUE_FIELD = "code";// 枚举类值属性
-
     private String[] strValues;
     private int[] intValues;
     private Class clazz;
+    private String enumCheckField;
 
     @Override
     public void initialize(StateEnumValue constraintAnnotation) {
         strValues = constraintAnnotation.strValues();
         intValues = constraintAnnotation.intValues();
         this.clazz = constraintAnnotation.clazz();
+        this.enumCheckField = constraintAnnotation.enumCheckField();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class StateEnumValueValidator  implements ConstraintValidator<StateEnumVa
                 return false;
             }
             //枚举类统一用code
-            Map<String, Object> enumMap = EnumUtil.getNameFieldMap(clazz, ENUM_VALUE_FIELD);
+            Map<String, Object> enumMap = EnumUtil.getNameFieldMap(clazz, this.enumCheckField);
             if(CollectionUtil.isNotEmpty(enumMap)) {
                 List<Object> valueList = new ArrayList<>(enumMap.values());
                 return valueList.contains(value);
