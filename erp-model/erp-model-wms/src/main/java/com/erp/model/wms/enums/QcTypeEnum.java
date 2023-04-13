@@ -1,6 +1,10 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.BaseEnum;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.util.Arrays;
 
 /**
  * 质检类型枚举
@@ -10,7 +14,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
  * @Date 2023-04-13 10:34
  * @Created by yl
  */
-public enum QcTypeEnum {
+public enum QcTypeEnum implements BaseEnum {
     STOCK_IN("stockIn", "入库质检"),
     OUTSIDE_QC("outsideQc", "外检质检"),
     INSIDE_QC("insideQc", "在库质检"),
@@ -18,10 +22,12 @@ public enum QcTypeEnum {
     B2B_OUTSIDE_QC("b2bOutsideQc", "B2B外检");
 
 
-    @EnumValue
+
     /**
      * 类型
      */
+    @EnumValue
+    @JsonValue
     private String type;
     /**
      * 名称
@@ -39,5 +45,21 @@ public enum QcTypeEnum {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public Object getCode() {
+        return type;
+    }
+
+
+    public static String getTypeName(String type) {
+        QcTypeEnum qcTypeEnum = Arrays.stream(values()).filter(p -> p.getType().equals(type))
+                .findFirst().orElse(null);
+        if (qcTypeEnum != null) {
+            return qcTypeEnum.getName();
+        }
+        return "";
+
     }
 }

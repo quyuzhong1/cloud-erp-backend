@@ -38,7 +38,7 @@ public class QcReportEntity extends BaseEntity<QcReportEntity> {
     /**
      * 质检规则id
      */
-    @TableField("qcRuleId")
+    @TableField("qc_rule_id")
     private String qcRuleId;
 
 
