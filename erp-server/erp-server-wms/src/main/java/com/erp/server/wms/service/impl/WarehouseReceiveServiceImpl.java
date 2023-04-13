@@ -40,13 +40,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     public Boolean add(WarehouseReceiveDTO.AddDTO dto) {
         PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
+        productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
 
         WarehouseReceiveEntity warehouseReceiveEntity = new WarehouseReceiveEntity();
         warehouseReceiveEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         warehouseReceiveEntity.setCode("");
         warehouseReceiveEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
         warehouseReceiveEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
-        warehouseReceiveEntity.setSupplierId(purchaseOrderEntity.getSu)
+       // warehouseReceiveEntity.setSupplierId(purchaseOrderEntity.getSu);
 
 
         return true;
