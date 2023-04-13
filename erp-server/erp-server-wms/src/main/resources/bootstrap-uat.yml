@@ -8,7 +8,7 @@ spring:
         server-addr: 172.16.100.10
         namespace: uat
         file-extension: yml
-        shared-configs: common.yml,db-sys.yml,druid-common.yml,erp-third-party.yml
+        shared-configs: common.yml,db-wms.yml,druid-common.yml
 sfs:
   nacos:
     application: uat-seata-server

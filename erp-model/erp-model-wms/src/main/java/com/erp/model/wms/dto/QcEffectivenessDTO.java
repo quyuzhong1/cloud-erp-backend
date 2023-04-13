@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -28,7 +29,32 @@ public class QcEffectivenessDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class ViewQcOverviewDetailDTO {
+        /**
+         * 类型（总计、已质检、待质检、免检）
+         */
+        private String type;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ViewQcOverviewDTO {
+
+        /**
+         * 完成率（%）
+         */
+        private String completionRate;
+
+        /**
+         * 质检数量集合
+         */
+        private List<ViewQcOverviewDetailDTO> list;
 
     }
 
@@ -45,11 +71,75 @@ public class QcEffectivenessDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewQcTrendDTO {
 
+        /**
+         * 日期集合
+         */
+        private List<LocalDate> dateList;
+
+        /**
+         * 待质检数量集合
+         */
+        private List<Integer> waitQcQtyList;
+
+         /**
+          * 质检中数量集合
+          */
+         private List<Integer> inQcQtyList;
+
+         /**
+          * 质检（已质检、免检）数量集合
+          */
+         private List<Integer> qcQtyList;
+
+         /**
+          * 已取消数量集合
+          */
+         private List<Integer> cancelQtyList;
+
     }
 
     @Data
     @NoArgsConstructor
     public static class ViewQcForPersonnelDTO {
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+        /**
+         * 质检总数量
+         */
+        private Integer   qcTotalQty;
+
+        /**
+         * 完成质检数量
+         */
+        private Integer   qcFinishQty;
+
+        /**
+         * 待质检数量
+         */
+        private Integer    qcWaitQty;
+
+        /**
+         * 免检数量
+         */
+        private Integer    qcFreeQty;
+
+        /**
+         * 质检及时
+         */
+        private Integer   qcTimelyQty;
+
+        /**
+         * 质检超时（已完成）
+         */
+        private Integer   qcTimeOutQty;
+
+        /**
+         * 质检超时（未完成）
+         */
+        private Integer  unQcTimeOutQty;
 
     }
 
@@ -65,13 +155,67 @@ public class QcEffectivenessDTO implements Serializable {
         /**
          * 是否超时（true是，false否）
          */
-        private Boolean isOverTime;
+        private Boolean isTimeOut;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class ViewQcForDocumentDTO {
+        /**
+         * 质检时间
+         */
+        private LocalDate qcDate;
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+        /**
+         * 质检单号
+         */
+        private String qcCode;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 质检数量
+         */
+        private Integer qcQty;
+
+        /**
+         * 质检状态
+         */
+        private String qcStatusName;
+
+        /**
+         * 质检结束时间
+         */
+        private LocalDateTime qcEndTime;
+
+        /**
+         * 质检耗时
+         */
+        private String qcUseTime;
+
+        /**
+         * 质检预警
+         */
+        private String warnRemark;
 
     }
 
