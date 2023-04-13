@@ -30,7 +30,7 @@ public class PurchaseOrderFeignController {
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
     @GetMapping("/getPurchaseOrderById")
-    public PurchaseOrderEntity getPurchaseOrderById(@RequestParam("id") String id) {
+    public PurchaseOrderEntity getPurchaseOrderById(@RequestBody String id) {
         return purchaseOrderService.getById(id);
     }
 }

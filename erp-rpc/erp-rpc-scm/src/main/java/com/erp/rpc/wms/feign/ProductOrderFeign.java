@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -21,5 +22,5 @@ public interface ProductOrderFeign {
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
     @GetMapping("feign/purchaseOrder/getPurchaseOrderById")
-    PurchaseOrderEntity getPurchaseOrderById(@RequestParam("id") String id);
+    PurchaseOrderEntity getPurchaseOrderById(@RequestBody String id);
 }
