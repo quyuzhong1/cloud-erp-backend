@@ -41,6 +41,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     private ModuleOperateLogService moduleOperateLogService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<SalesDemandDetailDTO.AddDTO> details, String salesDemandId) {
         if (CollectionUtils.isEmpty(details)) {
             return;
