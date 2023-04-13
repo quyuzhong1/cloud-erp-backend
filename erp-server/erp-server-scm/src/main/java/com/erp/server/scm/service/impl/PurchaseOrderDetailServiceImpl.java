@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
@@ -303,5 +304,19 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
 
 
+    }
+
+    /**
+     * 根据主键查询id查询明细
+     * @Author Luo_WG
+     * @Date 2023/4/13 14:00
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderDetailEntity>
+     **/
+    @Override
+    public List<PurchaseOrderDetailEntity> listDetailByIds(List<String> ids){
+        LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(PurchaseOrderDetailEntity::getId, ids);
+        return this.list(queryWrapper);
     }
 }

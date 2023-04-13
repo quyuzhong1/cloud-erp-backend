@@ -13,6 +13,7 @@ import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -26,6 +27,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
+import java.util.List;
 
 /**
  * <p>
@@ -73,7 +76,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //设置收货单主表
         WarehouseReceiveEntity warehouseReceiveEntity = new WarehouseReceiveEntity();
         warehouseReceiveEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        warehouseReceiveEntity.setCode("");
+        warehouseReceiveEntity.setCode(code);
         warehouseReceiveEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
         warehouseReceiveEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
         warehouseReceiveEntity.setSupplierId(orderSupplierByOrderId.getSupplierId());
@@ -87,6 +90,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         warehouseReceiveEntity.setBillDate(dto.getBillTime());
         warehouseReceiveEntity.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
         warehouseReceiveEntity.setDeliveryWarehouseName(warehouseEntity.getName());
+
+        List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
 
         return true;
     }
