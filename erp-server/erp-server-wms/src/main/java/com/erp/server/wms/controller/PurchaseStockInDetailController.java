@@ -15,6 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/purchaseStorageDetail")
-public class PurchaseStorageDetailController extends BaseController {
+public class PurchaseStockInDetailController extends BaseController {
 
 }

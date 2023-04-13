@@ -6,8 +6,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PurchaseStorageDTO;
-import com.erp.model.wms.entity.PurchaseStorageEntity;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.model.wms.entity.PurchaseStockInEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.List;
  * @author will
  * @since 2023-04-10
  */
-public interface PurchaseStorageService extends SuperService<PurchaseStorageEntity> {
+public interface PurchaseStockInService extends SuperService<PurchaseStockInEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -28,7 +28,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return PagingVO<ListDTO>
      */
-    PagingVO<PurchaseStorageDTO.ListDTO> paging(PagingDTO<PurchaseStorageDTO.SearchParamDTO> dto);
+    PagingVO<PurchaseStockInDTO.ListDTO> paging(PagingDTO<PurchaseStockInDTO.SearchParamDTO> dto);
     /**
      * @description: 查询数量
      * @author Will
@@ -36,7 +36,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return List<ListStatusCountDTO>
      */
-    List<PurchaseStorageDTO.ListStatusCountDTO> listCount(PermissionsDTO dto);
+    List<PurchaseStockInDTO.ListStatusCountDTO> listCount(PermissionsDTO dto);
     /**
      * @description: 新增
      * @author Will
@@ -44,7 +44,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return String
      */
-    String add(PurchaseStorageDTO.AddDTO dto);
+    String add(PurchaseStockInDTO.AddDTO dto);
     /**
      * @description: 新增并提交
      * @author Will
@@ -52,7 +52,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseStorageDTO.AddDTO dto);
+    Boolean addAndSubmit(PurchaseStockInDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -60,7 +60,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return Boolean
      */
-    Boolean update(PurchaseStorageDTO.UpdateDTO dto);
+    Boolean update(PurchaseStockInDTO.UpdateDTO dto);
     /**
      * @description: 修改并提交
      * @author Will
@@ -68,7 +68,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return Boolean
      */
-    Boolean updateAndSubmit(PurchaseStorageDTO.UpdateDTO dto);
+    Boolean updateAndSubmit(PurchaseStockInDTO.UpdateDTO dto);
     /**
      * @description: 提交
      * @author Will
@@ -84,7 +84,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param id
      * @return ViewDTO
      */
-    PurchaseStorageDTO.ViewDTO view(String id);
+    PurchaseStockInDTO.ViewDTO view(String id);
     /**
      * @description: 删除
      * @author Will
@@ -133,7 +133,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param response
      * @return Boolean
      */
-    Boolean exportExcel(PurchaseStorageDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseStockInDTO.SearchParamDTO dto, HttpServletResponse response);
     /**
      * @description: 下推退货单数据显示
      * @author Will
@@ -141,7 +141,7 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param id
      * @return List<ViewGeneratePurchaseReturnOrderDTO>
      */
-    List<PurchaseStorageDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(String id);
+    List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(String id);
     /**
      * @description: 下推退货单数据保存
      * @author Will
@@ -149,5 +149,5 @@ public interface PurchaseStorageService extends SuperService<PurchaseStorageEnti
      * @param dto
      * @return Boolean
      */
-    Boolean generatePurchaseReturnOrder(PurchaseStorageDTO.GeneratePurchaseReturnOrderDTO dto);
+    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO dto);
 }

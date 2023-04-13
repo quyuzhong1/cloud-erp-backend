@@ -5,9 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -452,6 +450,9 @@ public class PurchaseOrderDTO implements Serializable {
         private List<PurchaseOrderDetailDTO.ExportPdfDTO> details;
     }
 
+    /**
+     * 生成入库单数据显示DTO
+     */
     @Data
     @NoArgsConstructor
     public static class ViewGenerateReceiveDTO {
@@ -531,6 +532,9 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer receiveQty;
     }
 
+    /**
+     * 生成入库单数据保存DTO
+     */
     @Data
     @NoArgsConstructor
     public static class GenerateReceiveDTO {
@@ -549,11 +553,112 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class ViewGenerateStockInDTO {
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 已签收数量
+         */
+        private String  receiveQty;
+
+        /**
+         * 未入库数量
+         */
+        private String unStockInQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateStockInDTO {
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 入库日期
+         */
+        private LocalDate stockInDate;
+
+        /**
+         * 入库员id
+         */
+        private String stockInUserId;
+
+        /**
+         * 实收数量
+         */
+        @NotNull(message = "实收数量不能为空")
+        @Min(value = 0,message = "实收数量最小值为0")
+        @Max(value = 999999999,message = "实收数量最大值为999999999")
+        private Integer stockInQty;
+
+        /**
+         * 超收数量
+         */
+        @NotNull(message = "超收数量不能为空")
+        @Min(value = 0,message = "超收数量最小值为0")
+        @Max(value = 999999999,message = "超收数量最大值为999999999")
+        private Integer exceedQty;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ListGenerateReceiveDTO {
 
         @NotEmpty(message = "仓库签收单不能为空")
         @Valid
         List<GenerateReceiveDTO> list;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListGenerateStockInDTO {
+
+        @NotEmpty(message = "采购入库单不能为空")
+        @Valid
+        List<GenerateStockInDTO> list;
     }
 
     @Data

@@ -195,4 +195,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return AssociatedDocumentDTO
      */
     PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto);
+    /**
+     * @description: 下推采购入库单显示
+     * @author Will
+     * @date: 2023/4/13 11:38
+     * @param ids
+     * @return List<ViewGenerateStockInDTO>
+     */
+    List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids);
+    /**
+     * @description: 生成采购入库单
+     * @author Will
+     * @date: 2023/4/13 11:39
+     * @param dto
+     * @return Boolean
+     */
+    Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto);
 }

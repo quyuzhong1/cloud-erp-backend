@@ -251,7 +251,7 @@ public class PurchaseOrderController extends BaseController {
 
 
     /**
-     * 下推签收单弹框数据显示
+     * 下推收货单弹框数据显示
      * @author Will
      * @date: 2023/3/15 18:26
      * @param dto
@@ -265,7 +265,7 @@ public class PurchaseOrderController extends BaseController {
 
 
     /**
-     * 下推签收单保存
+     * 下推收货单保存
      * @author Will
      * @date: 2023/3/15 18:26
      * @param dto
@@ -274,6 +274,31 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/generateReceive")
     public ApiResult generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
         Boolean flag = purchaseOrderService.generateReceive(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推采购入库单弹窗显示
+     * @author Will
+     * @date: 2023/4/13 11:20
+     * @param dto
+     * @return ApiResult<List<ViewGenerateReceiveDTO>>
+     */
+    @PostMapping("/viewGenerateStockIn")
+    public ApiResult<List<PurchaseOrderDTO.ViewGenerateStockInDTO>> viewGenerateStockIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseOrderDTO.ViewGenerateStockInDTO> list = purchaseOrderService.viewGenerateStockIn(dto.getIds());
+        return success(list);
+    }
+    /**
+     * 下推采购入库单保存
+     * @author Will
+     * @date: 2023/4/13 11:37
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generateStockIn")
+    public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
+        Boolean flag = purchaseOrderService.generateStockIn(dto);
         return flag == true ? success() : failure();
     }
 
