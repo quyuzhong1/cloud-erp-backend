@@ -379,6 +379,7 @@ public enum ApiError implements Serializable {
     ERROR_98046(98046,"请输入采购报价查询条件"),
     ERROR_98049(98049,"未找到采购价目明细"),
     ERROR_98050(98050,"未找到采购入库单"),
+    ERROR_98051(98051,"未找到采购入库单明细"),
 
 
 

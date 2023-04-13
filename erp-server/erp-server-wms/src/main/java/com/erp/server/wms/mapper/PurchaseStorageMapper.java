@@ -3,10 +3,13 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -35,4 +38,12 @@ public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity>
      * @return Integer
      */
     Integer listCount(@Param("params") PurchaseStockInDTO.SearchParamDTO searchParamDTO);
+    /**
+     * @description: 导出数据查询
+     * @author Will
+     * @date: 2023/4/13 17:30
+     * @param dto
+     * @return List<PurchaseStockExportExcelDTO>
+     */
+    List<PurchaseStockExportExcelDTO> listExportExcel(@Param("params") PurchaseStockInDTO.SearchParamDTO dto);
 }

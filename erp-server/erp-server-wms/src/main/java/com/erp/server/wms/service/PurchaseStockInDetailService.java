@@ -20,22 +20,30 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @author Will
      * @date: 2023/4/13 15:49
      * @param details
-     * @param purchaseStockInId
+     * @param mainId
      */
-    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String purchaseStockInId);
+    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId);
     /**
      * @description: 修改明细
      * @author Will
      * @date: 2023/4/13 15:58
      * @param details
-     * @param purchaseStockInId
+     * @param mainId
      */
-    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String purchaseStockInId);
+    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId);
     /**
      * @description: 根据主表ids删除
      * @author Will
      * @date: 2023/4/13 16:05
-     * @param ids
+     * @param mainIds
      */
-    void removeByMainIds(List<String> ids);
+    void removeByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/4/13 17:35
+     * @param id
+     * @return List<PurchaseStockInDetailEntity>
+     */
+    List<PurchaseStockInDetailEntity> listByMainId(String mainId);
 }
