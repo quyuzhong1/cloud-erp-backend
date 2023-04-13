@@ -69,7 +69,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         //是否有质检报告
         Boolean existReport = dto.getExistReport();
         //质检报告
-        List<QcReportDTO.AddDTO> reportList = dto.getQcReportLList();
+        List<QcReportDTO.AddDTO> reportList = dto.getQcReportList();
         //如果有 报告不能为空
         if (existReport) {
             if (CollectionUtils.isEmpty(reportList)) {
@@ -128,7 +128,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         String approveStatusName = ApproveStatusEnum.getName(approveStatus);
         view.setApproveStatusName(approveStatusName);
         List<QcReportDTO.UpdateDTO> qcReportLList = qcReportService.getByQcRuleId(id);
-        view.setQcReportLList(qcReportLList);
+        view.setQcReportList(qcReportLList);
         return view;
     }
 
@@ -211,7 +211,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         qcRule.setCode(code);
         Boolean result = this.updateById(qcRule);
         if (result) {
-            qcReportService.updateQcReport(qcRuleId, dto.getQcReportLList());
+            qcReportService.updateQcReport(qcRuleId, dto.getQcReportList());
             return qcRuleId;
         }
         return "";

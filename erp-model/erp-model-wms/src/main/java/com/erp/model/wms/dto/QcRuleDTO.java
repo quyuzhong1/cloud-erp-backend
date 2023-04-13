@@ -57,7 +57,7 @@ public class QcRuleDTO implements Serializable {
         /**
          * 质检报告集合
          */
-        private List<QcReportDTO.AddDTO> qcReportLList;
+        private List<QcReportDTO.AddDTO> qcReportList;
 
     }
 
@@ -96,7 +96,7 @@ public class QcRuleDTO implements Serializable {
         /**
          * 质检报告集合
          */
-        private List<QcReportDTO.UpdateDTO> qcReportLList;
+        private List<QcReportDTO.UpdateDTO> qcReportList;
 
     }
 
