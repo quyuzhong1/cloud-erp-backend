@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -366,6 +367,26 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             item.setApproveStatusName(approveStatusName);
         }
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 更改启用禁用状态
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-13 17:10
+     */
+    @Override
+    public Boolean updateDisabledState(UpdateStateDTO dto) {
+        String id = dto.getId();
+        QcRuleEntity rule = this.getById(id);
+        if (Objects.isNull(rule)) {
+            throw new ServiceException(ApiError.ERROR_NO_EXIST_RULE);
+        }
+        rule.setDisabled(dto.getState());
+        return this.updateById(rule);
     }
 
 
