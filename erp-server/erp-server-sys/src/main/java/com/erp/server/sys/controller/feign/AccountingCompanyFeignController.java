@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +38,19 @@ public class AccountingCompanyFeignController extends BaseController {
     public List<BaseIdDTO> listAccountingCompany() {
         List<BaseIdDTO> list = sysAccountingCompanyService.listAccountingCompany();
         return list;
+    }
+
+    /**
+     * 根据主键id查询组织信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
+     * @param id id:组织id
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     **/
+    @PostMapping("/getCompanyById")
+    public SysAccountingCompanyEntity getCompanyById(@RequestBody String id) {
+        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getById(id);
+        return sysAccountingCompanyEntity;
     }
 
 }

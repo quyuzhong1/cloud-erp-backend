@@ -50,10 +50,21 @@ public class WarehouseReceiveDTO {
         private String receiveDeptId;
 
         /**
+         * 收货人组织id
+         */
+        @NotBlank(message = "收货人组织不能为空")
+        private String receiveOrgId;
+
+        /**
          * 收货日期
          */
         @NotBlank(message = "收货日期不能为空")
-        private LocalDate receiveTime;
+        private LocalDate billTime;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
 
         /**
          * 报价明细
@@ -275,7 +286,7 @@ public class WarehouseReceiveDTO {
         /**
          * 收货日期
          */
-        private LocalDate receiveTime;
+        private LocalDate billTime;
 
         /**
          * 签收数量
@@ -359,7 +370,7 @@ public class WarehouseReceiveDTO {
         /**
          * 计划交货时间
          */
-        private List<LocalDate> planReceiveTime;
+        private List<LocalDate> planbillTime;
 
         /**
          * 交货仓库id
