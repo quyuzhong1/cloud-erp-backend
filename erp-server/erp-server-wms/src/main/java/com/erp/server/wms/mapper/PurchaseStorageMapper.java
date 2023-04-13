@@ -1,7 +1,5 @@
 package com.erp.server.wms.mapper;
 
-import com.erp.server.wms.entity.PurchaseStorageEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

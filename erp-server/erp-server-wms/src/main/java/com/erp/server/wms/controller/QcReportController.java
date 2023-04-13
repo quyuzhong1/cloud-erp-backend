@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- *  前端控制器
+ * 质检报告 前端控制器
  * </p>
  *
- * @author LUO_WG
- * @since 2023-04-11
+ * @author lambda
+ * @since 2023-04-13
  */
 @RestController
-@RequestMapping("/work-option-entity")
-public class WorkOptionController extends BaseController {
+@RequestMapping("/qc-report-entity")
+public class QcReportController extends BaseController {
 
 }

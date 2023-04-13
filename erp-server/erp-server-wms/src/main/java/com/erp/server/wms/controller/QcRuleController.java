@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 采购退货单 前端控制器
+ * 质检规则 前端控制器
  * </p>
  *
- * @author LUO_WG
- * @since 2023-04-07
+ * @author lambda
+ * @since 2023-04-13
  */
 @RestController
-@RequestMapping("/purchase-return-order-entity")
-public class PurchaseReturnOrderController extends BaseController {
+@RequestMapping("/qc-rule-entity")
+public class QcRuleController extends BaseController {
 
 }
