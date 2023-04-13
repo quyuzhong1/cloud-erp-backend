@@ -158,7 +158,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public void cleanOrder(Integer pageSize) {
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
-                .in(DmpOrderInfoEntity::getPlatformSign, new ArrayList<>(Arrays.asList(PlatformEnum.KINGDEE.getDesc(), PlatformEnum.GYY.getDesc())))
                 .and(wrapper ->
                         wrapper.eq(DmpOrderInfoEntity::getChargeId, "")
                                 .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
