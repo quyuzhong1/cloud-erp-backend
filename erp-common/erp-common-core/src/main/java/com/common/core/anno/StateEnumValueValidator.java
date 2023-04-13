@@ -57,6 +57,10 @@ public class StateEnumValueValidator  implements ConstraintValidator<StateEnumVa
                 log.error("未定义枚举类类型，无法验证");
                 return false;
             }
+            if(!EnumUtil.isEnum(this.clazz)) {
+                log.error("枚举类类型配置错误，无法验证");
+                return false;
+            }
             //枚举类统一用code
             Map<String, Object> enumMap = EnumUtil.getNameFieldMap(clazz, this.enumCheckField);
             if(CollectionUtil.isNotEmpty(enumMap)) {
