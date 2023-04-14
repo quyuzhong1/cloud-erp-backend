@@ -142,7 +142,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> getList() {
-        List<SysAccountingCompanyEntity> list = this.list();
+        List<SysAccountingCompanyEntity> list = this.lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled,false).list();
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 

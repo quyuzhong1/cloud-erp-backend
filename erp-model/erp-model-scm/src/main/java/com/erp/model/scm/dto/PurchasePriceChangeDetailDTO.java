@@ -30,6 +30,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         @NotBlank(message = "采购价目详情表id 不能为空")
@@ -44,6 +45,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @DecimalMax(value = "999999999",message ="最大值为999999999" )
         @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间从 不能为空")
         private Integer minQty;
 
 
@@ -52,12 +54,14 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @DecimalMax(value = "999999999",message ="最大值为999999999" )
         @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
         private Integer maxQty;
 
 
         /**
          * 币种
          */
+        @NotBlank(message = "币种不能为空")
         private String currency;
 
         /**
@@ -75,6 +79,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 税率
          */
+        @NotNull(message = "税率不能为空")
         private BigDecimal taxRate;
 
         /**
@@ -100,6 +105,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         @NotBlank(message = "采购价目详情表id 不能为空")
@@ -114,6 +120,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @DecimalMax(value = "999999999",message ="最大值为999999999" )
         @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
         private Integer minQty;
 
 
@@ -122,12 +129,14 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
          */
         @DecimalMax(value = "999999999",message ="最大值为999999999" )
         @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
         private Integer maxQty;
 
 
         /**
          * 币种
          */
+        @NotBlank(message = "币种不能为空")
         private String currency;
 
         /**
@@ -145,6 +154,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
         /**
          * 税率
          */
+        @NotNull(message = "税率不能为空")
         private BigDecimal taxRate;
 
 
