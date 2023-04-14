@@ -260,7 +260,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         if (StringUtils.isNotBlank(dto.getPlanListingTimeStr())) {
             productSkuBaseInfoDTO.setPlanListingTime(LocalDateTime.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
         }
-         productSkuBaseInfoDTO.setProductState(2);
+        productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
@@ -283,11 +283,20 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
         productPurchaseDTO.setEan(dto.getEan());
         productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQtyStr()));
-        productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), dateTimeFormatter));
-        productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), dateTimeFormatter));
+
+        if (StringUtils.isNotBlank(dto.getPlaceOrderTimeStr())) {
+            productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), dateTimeFormatter));
+        }
+        if (StringUtils.isNotBlank(dto.getPlanArrivalTimeStr())) {
+            productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), dateTimeFormatter));
+        }
+
         productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoqStr()));
         productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycleStr()));
-        productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(dto.getActualArrivalTimeStr())) {
+            productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), dateTimeFormatter));
+        }
+
         productPurchaseDTO.setArrivalState(purchaseState);
         if (purchaseUserList.size() > 0) {
             productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
@@ -303,8 +312,14 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmountStr()));
         productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQtyStr()));
         productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmountStr()));
-        productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), dateTimeFormatter));
-        productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(dto.getDelistingTimeStr())) {
+            productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), dateTimeFormatter));
+        }
+
+        if (StringUtils.isNotBlank(dto.getListingTimeStr())) {
+            productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), dateTimeFormatter));
+        }
+
         if (StringUtils.isNotBlank(saleCountryStr)) {
             productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
         }
