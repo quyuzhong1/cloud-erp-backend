@@ -256,6 +256,15 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
         String credentialName = excelDTO.getCredentialName();
         credential.setName(credentialName);
         credential.setRemark(excelDTO.getCredentialRemark());
+
+
+        //存在错误数据则直接返回 因为 这里可能给一个错误的 日期格式
+        if (errorMsgList.size() > 0) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
+            return;
+        }
+
         //有效日期 起
         String effectiveDate = excelDTO.getEffectiveDate();
         //有效日期 止
