@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -164,6 +161,19 @@ public class QcRuleController extends BaseController {
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.deleteByIds(dto.getIds());
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 启用或者禁用
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = qcRuleService.updateDisabledState(dto);
         return result == true ? success() : failure();
     }
 

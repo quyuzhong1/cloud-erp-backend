@@ -34,6 +34,7 @@ public class QcRuleDTO implements Serializable {
         /**
          * 质检类型
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
+         * stockIn 入库质检  outsideQc 外检质检 insideQc 在库质检 newProductStockIn 新品入库质检 b2bOutsideQc B2B外检
          */
         @NotBlank(message = "质检类型不能为空")
         @StateEnumValue(strValues = {"stockIn", "outsideQc", "insideQc", "newProductStockIn", "b2bOutsideQc"}, message = "质检类型有误")
@@ -56,7 +57,7 @@ public class QcRuleDTO implements Serializable {
         /**
          * 质检报告集合
          */
-        private List<QcReportDTO.AddDTO> qcReportLList;
+        private List<QcReportDTO.AddDTO> qcReportList;
 
     }
 
@@ -95,7 +96,7 @@ public class QcRuleDTO implements Serializable {
         /**
          * 质检报告集合
          */
-        private List<QcReportDTO.UpdateDTO> qcReportLList;
+        private List<QcReportDTO.UpdateDTO> qcReportList;
 
     }
 

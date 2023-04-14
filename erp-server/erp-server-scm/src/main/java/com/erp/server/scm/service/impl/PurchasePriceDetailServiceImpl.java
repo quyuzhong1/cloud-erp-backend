@@ -81,8 +81,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 检查sku 区间报价
      *
-     * @param purchasePriceDetailList       参数的
-     * @param supplierPriceDetailList       供应商已有的
+     * @param purchasePriceDetailList 参数的
+     * @param supplierPriceDetailList 供应商已有的
      * @return void
      * @author yl
      * @date 2023-03-24 14:01
@@ -128,21 +128,27 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 List<PurchasePriceDetailDTO.AddDTO> skuPriceList = item.getValue();
                 //查询是否有无区间的
                 long noInterval = skuPriceList.stream().filter(s -> (s.getMaxQty() == null || s.getMaxQty() == 0) && (s.getMinQty() == null || s.getMinQty() == 0)).count();
+                //已最小值排序
+                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
                 //表示有无区间的
                 if (noInterval > 1) {
                     throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 } else {
                     //没有无区间 就要检查又没有不同区间的
                     List<Integer> intervalList = new ArrayList<>(10);
+
                     for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
-                        if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                            intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        Integer minQty = interval.getMinQty();
+                        Integer maxQty = interval.getMaxQty();
+                        if (minQty != null && maxQty != null) {
+                            intervalList.add(minQty);
+                            intervalList.add(maxQty);
                         }
                     }
                     //判断是否重复
-                    boolean isRepetition = isRepetition(intervalList);
+                    boolean isSortedResult = isSorted(intervalList);
                     //当有重复的时候
-                    if (isRepetition) {
+                    if (!isSortedResult) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
                 }
@@ -160,23 +166,24 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 if (noInterval > 1) {
                     throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 }
+                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
 
                 //没有无区间 就要检查又没有不同区间的
                 List<Integer> intervalList = new ArrayList<>(10);
                 for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
                     if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        intervalList.add(interval.getMinQty());
+                        intervalList.add(interval.getMaxQty());
                     }
                 }
                 //判断是否有重叠
-                boolean isSortedResult = isRepetition(intervalList);
+                boolean isSortedResult = isSorted(intervalList);
                 //当有重叠的时候
-                if (isSortedResult) {
+                if (!isSortedResult) {
                     throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
 
             }
-
 
 
             checkList.addAll(historyList);
@@ -190,23 +197,24 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 if (noInterval > 1) {
                     throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 }
+                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
 
                 //没有无区间 就要检查又没有不同区间的
                 List<Integer> intervalList = new ArrayList<>(10);
                 for (PurchasePriceDetailDTO.AddDTO interval : skuPriceList) {
                     if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        intervalList.add(interval.getMinQty());
+                        intervalList.add(interval.getMaxQty());
                     }
                 }
                 //判断是否有重叠
-                boolean isSortedResult = isRepetition(intervalList);
+                boolean isSortedResult = isSorted(intervalList);
                 //当有重叠的时候
-                if (isSortedResult) {
+                if (!isSortedResult) {
                     throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
 
             }
-
 
 
         }
@@ -216,23 +224,20 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
     /**
-     * 判断是否有重复
+     * 判断是否按顺序排序
      *
-     * @param intervalList
+     * @param list
      * @return boolean
      * @author yl
-     * @date 2023-04-06 11:07
+     * @date 2023-03-24 14:28
      */
-    private boolean isRepetition(List<Integer> intervalList) {
-        if (CollectionUtils.isNotEmpty(intervalList)) {
-            Set<Integer> set = new HashSet<>(intervalList);
-            if (set.size() < intervalList.size()) {
-                return true;
-            } else {
+    private boolean isSorted(List<Integer> list) {
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i) > list.get(i + 1)) {
                 return false;
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -266,7 +271,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             item.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            if(taxRate!=null){
+            if (taxRate != null) {
                 BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
                 item.setTaxRate(rate);
             }
@@ -300,7 +305,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
             item.setCurrencySymbol(currencySymbol);
             BigDecimal taxRate = item.getTaxRate();
-            if(taxRate!=null){
+            if (taxRate != null) {
                 item.setTaxRate(taxRate.multiply(hundred));
             }
             Integer minQty = item.getMinQty();
@@ -376,7 +381,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             entity.setExpireDate(localDate.plusYears(100));
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            if(taxRate!=null){
+            if (taxRate != null) {
                 BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
                 entity.setTaxRate(rate);
             }
@@ -514,12 +519,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId,List<String> detailIds) {
+    public List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> detailIds) {
         List<String> statusList = new ArrayList<>(3);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
-        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList,detailIds);
+        List<PurchasePriceDetailDTO.AddDTO> list = baseMapper.getBySupplierId(supplierId, statusList, detailIds);
         return list;
     }
 
@@ -650,7 +655,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                 log.error(error);
                 return new Pair<>(error, resultList);
             }
-            return new Pair<>("",new ArrayList<>());
+            return new Pair<>("", new ArrayList<>());
         }
         List<String> currencyList = resultList.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
@@ -664,22 +669,6 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             viewDTO.setCurrencySymbol(currencyDTO.getSymbol());
         }
         return new Pair<>("", resultList);
-    }
-
-
-    /**
-     * 获取到区间
-     *
-     * @param min
-     * @param max
-     * @return
-     */
-    public List<Integer> getInterval(Integer min, Integer max) {
-        List<Integer> resultList = new ArrayList<>(10);
-        for (int i = min + 1; i <= max; i++) {
-            resultList.add(i);
-        }
-        return resultList;
     }
 
 

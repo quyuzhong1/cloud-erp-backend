@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,6 +57,23 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
             this.removeByIds(deleteIdList);
         }
         return this.saveOrUpdateBatch(batchGradeList);
+    }
+
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-04-13 19:12
+     * @param id
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean checkDelete(String id) {
+        int occupiedCount = supplierService.occupiedGrade(Arrays.asList(id));
+        if (occupiedCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98044);
+        }
+        return true;
     }
 
 

@@ -6,7 +6,12 @@
     <select id="paging" resultType="com.erp.model.wms.dto.PurchaseStockInDTO$ListDTO">
 
     </select>
+
     <select id="listCount" resultType="java.lang.Integer">
+
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO">
 
     </select>
 </mapper>

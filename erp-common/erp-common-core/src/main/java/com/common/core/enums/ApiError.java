@@ -379,6 +379,7 @@ public enum ApiError implements Serializable {
     ERROR_98046(98046,"请输入采购报价查询条件"),
     ERROR_98049(98049,"未找到采购价目明细"),
     ERROR_98050(98050,"未找到采购入库单"),
+    ERROR_98051(98051,"未找到采购入库单明细"),
 
 
 
@@ -399,6 +400,7 @@ public enum ApiError implements Serializable {
     ERROR_NO_EXIST_REPORT(99004,"质检报告不存在"),
     ERROR_NO_EXIST_RULE(99005,"质检规则不存在"),
     ERROR_99006(99006,"采购单明细信息不存在"),
+    ERROR_99007(99007,"质检类型已存在"),
 
 
     ERROR_end(1000000, "系统错误");

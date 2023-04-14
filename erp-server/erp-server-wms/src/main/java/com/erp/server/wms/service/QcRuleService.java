@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcRuleDTO;
@@ -119,4 +120,13 @@ public interface QcRuleService extends SuperService<QcRuleEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcRuleDTO.PagingViewDTO>
      */
     PagingVO<QcRuleDTO.PagingViewDTO> paging(PagingDTO<QcRuleDTO.PagingParamDTO> dto);
+
+    /**
+     * 更改启用禁用状态
+     * @author yl
+     * @date 2023-04-13 17:10
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateDisabledState(UpdateStateDTO dto);
 }
