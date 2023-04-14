@@ -18,7 +18,7 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(10000000, "操作失败！"),
+    Default(10000000, "操作失败，请稍后再试"),
     ERROR_5000(5000, "存在越权访问URL"),
     ERROR_5001(5001, "未授权访问!"),
 
@@ -30,7 +30,10 @@ public enum ApiError implements Serializable {
     /**
      * 通用错误
      */
+    ERROR_405(405, "方法不被允许"),
     ERROR_500(500, "系统异常"),
+    ERROR_600(600, "缺少参数"),
+    ERROR_400(400, "参数错误"),
     ERROR_DUPLICATION_NAME(501,"名称不能重复"),
     ERROR_1000(1000, "参数不全或类型错误！"),
     ERROR_1001(1001, "两次密码不一致"),
@@ -53,6 +56,11 @@ public enum ApiError implements Serializable {
     ERROR_1018(1018, "导入名称不能大于200字符"),
     ERROR_1019(1019, "数据新增失败"),
     ERROR_1020(1020, "数据修改失败"),
+    ERROR_1021(1021, "文件过大"),
+    ERROR_1022(1022, "服务拥挤，请稍后再试"),
+    ERROR_1023(1023, "系统升级中，马上就好，请您稍后再试"),
+    ERROR_1024(1024, "数据重复，请修改后再提交"),
+    ERROR_1025(1025, "内容过长，请仔细检查修改后再提交"),
     /**
      * 警告信息 从800 开始
      */

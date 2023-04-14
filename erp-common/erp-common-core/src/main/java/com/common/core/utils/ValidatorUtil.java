@@ -1,7 +1,12 @@
 package com.common.core.utils;
 
+import com.google.common.collect.Maps;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class ValidatorUtil {
@@ -151,6 +156,30 @@ public class ValidatorUtil {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public static ObjectError getPermanentError(List<ObjectError> allErrors) {
+		//此处按字段排序，以免每次报出来的错误不一致
+		ObjectError objectError = allErrors.get(0);
+		long fieldErrorCnt = allErrors.stream().filter(r->r instanceof FieldError).count();
+		if(allErrors.size() == fieldErrorCnt) {
+			Map<String,ObjectError> fieldErrorMap = Maps.newLinkedHashMap();
+			allErrors.stream().forEach(objError -> {
+				if(objError instanceof FieldError) {
+					fieldErrorMap.put(((FieldError) objError).getField(),objError);
+				}
+			});
+			Collection<String> fieldKeySet = fieldErrorMap.keySet();
+			List<String> fieldKeys = new ArrayList<>(fieldKeySet);
+			Collections.sort(fieldKeys);
+
+			objectError = fieldErrorMap.get(fieldKeys.get(0));
+		}
+		return objectError;
 	}
 
 }
