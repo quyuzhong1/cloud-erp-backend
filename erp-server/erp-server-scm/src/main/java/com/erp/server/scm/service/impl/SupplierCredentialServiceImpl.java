@@ -234,6 +234,7 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
      * @date 2023-03-20 18:56
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeBySupplierIds(List<String> supplierIds) {
         if (CollectionUtils.isEmpty(supplierIds)) {
             return;

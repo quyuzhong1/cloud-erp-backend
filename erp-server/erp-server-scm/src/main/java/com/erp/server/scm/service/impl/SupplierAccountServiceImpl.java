@@ -159,6 +159,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
      * @date 2023-03-20 18:51
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeBySupplierIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return;

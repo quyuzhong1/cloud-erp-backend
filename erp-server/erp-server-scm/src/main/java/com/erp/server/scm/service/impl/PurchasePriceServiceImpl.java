@@ -65,8 +65,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private PurchasePriceDetailService priceDetailService;
 
 
-
-
     @Resource
     private PurchasePriceHistoryService purchasePriceHistoryService;
 
@@ -101,7 +99,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(supplierId);
 
         //检查sku 区间报价
-        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList,historyList);
+        priceDetailService.checkSkuInterval(dto.getPurchasePriceDetailList(), supplierPriceDetailList, historyList);
         PurchasePriceEntity purchasePrice = new PurchasePriceEntity();
         String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, purchasePrice);
@@ -228,7 +226,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId());
         //检查sku 区间报价
         List<PurchasePriceDetailDTO.AddDTO> purchasePriceDetailList = BeanMapper.copyList(dto.getPurchasePriceDetailList(), PurchasePriceDetailDTO.AddDTO.class);
-        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList,historyList);
+        priceDetailService.checkSkuInterval(purchasePriceDetailList, supplierPriceDetailList, historyList);
 
         //编号
         String code = purchasePrice.getCode();
@@ -561,6 +559,26 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+
+    /**
+     * 删除供应商的时候后 看是否有关联 如果有就不能删除
+     *
+     * @param supplierIds
+     * @return void
+     * @author yl
+     * @date 2023-04-14 11:00
+     */
+    @Override
+    public void checkIsRefSupplier(List<String> supplierIds) {
+        if (CollectionUtils.isNotEmpty(supplierIds)) {
+            long count = lambdaQuery().in(PurchasePriceEntity::getSupplierId, supplierIds).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_98052);
+            }
+        }
+
     }
 
 

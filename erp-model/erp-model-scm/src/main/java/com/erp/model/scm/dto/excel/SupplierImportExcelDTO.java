@@ -26,7 +26,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(25)
     @ExcelProperty(value = "供应商名称", index = 0)
-    @FieldValid(fieldName = "供应商名称",isNotBlank = true)
+    @FieldValid(fieldName = "供应商名称",isNotBlank = true,maxLength =50 )
     private String name;
 
 
@@ -71,7 +71,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "供应商状态", index = 5)
-    @FieldValid(fieldName = "供应商状态",isNotBlank = true,fieldValues ="启用,未启用" )
+    @FieldValid(fieldName = "供应商状态",isNotBlank = true,fieldValues ="启用,停用" )
     private String enabled;
 
 
@@ -105,6 +105,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "联系人", index = 9)
+    @FieldValid(fieldName = "联系人",maxLength = 30)
     private String person;
 
 
@@ -113,6 +114,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "职务", index = 10)
+    @FieldValid(fieldName = "职务",maxLength = 50)
     private String position;
 
 
@@ -121,6 +123,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "联系人电话", index = 11)
+    @FieldValid(fieldName = "联系人电话",maxLength = 20)
     private String telNumber;
 
 
@@ -147,7 +150,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "联系人状态", index = 14)
-    @FieldValid(fieldName = "联系人状态",fieldValues = "启用,未启用")
+    @FieldValid(fieldName = "联系人状态",fieldValues = "启用,停用")
     private String contactEnabled;
 
 

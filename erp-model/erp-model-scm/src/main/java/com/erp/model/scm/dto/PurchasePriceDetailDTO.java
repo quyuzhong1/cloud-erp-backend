@@ -51,6 +51,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
         @DecimalMax(value = "999999999",message ="最大值为999999999" )
         @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
         private Integer minQty;
 
         /**
@@ -58,17 +59,20 @@ public class PurchasePriceDetailDTO implements Serializable {
          */
         @DecimalMax(value = "999999999",message ="最大值为999999999" )
         @DecimalMin(value = "0",message ="最小值为0" )
+        @NotNull(message = "区间到 不能为空")
         private Integer maxQty;
 
         /**
          * 币种
          */
+        @NotBlank(message = "币种不能为空")
         private String currency;
 
 
         /**
          * 生效时间
          */
+        @NotNull(message = "生效时间不能为空")
         private LocalDate effectiveDate;
 
 

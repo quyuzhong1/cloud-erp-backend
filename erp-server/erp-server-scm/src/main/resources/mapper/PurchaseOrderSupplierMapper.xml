@@ -15,9 +15,20 @@
            	WHERE pos.supplier_id = #{supplierId}
            		AND pos.is_deleted = FALSE  AND po.is_deleted = FALSE
         ORDER BY pos.create_time DESC
+    </select>
 
-
-
+    <select id="getRefSupplierCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM purchase_order_supplier pos
+        INNER JOIN purchase_order po
+        ON po.ID = pos.purchase_order_id
+        WHERE
+        pos.is_deleted = FALSE AND po.is_deleted = FALSE
+        AND pos.supplier_id IN
+        <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+            #{supplierId}
+        </foreach>
     </select>
 
 </mapper>

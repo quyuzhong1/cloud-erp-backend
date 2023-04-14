@@ -128,8 +128,31 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         if (CollectionUtils.isEmpty(supplierIdList)) {
             return Collections.emptyList();
         }
-        List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getSupplierId,supplierIdList).list();
+        List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getSupplierId, supplierIdList).list();
         return list;
+    }
+
+
+    /**
+     * 检查采购订单是否有关联到供应商id
+     * 如果有就不能删除
+     *
+     * @param supplierIds
+     * @return void
+     * @author yl
+     * @date 2023-04-14 11:55
+     */
+    @Override
+    public void checkIsRefSupplier(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)) {
+            return;
+        }
+        int count = baseMapper.getRefSupplierCount(supplierIds);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98053);
+        }
+
+
     }
 
     /**
