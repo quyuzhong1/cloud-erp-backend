@@ -230,9 +230,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         //汇率
         dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
         //商品总售价
-        dmpOrderInfoEntity.setItemTotal(gyyOrderEntity.getPaymentAmount());
+        dmpOrderInfoEntity.setItemTotal(gyyOrderEntity.getAmount());
         //订单金额
-        dmpOrderInfoEntity.setOrderFee(gyyOrderEntity.getAmount());
+        dmpOrderInfoEntity.setOrderFee(gyyOrderEntity.getPaymentAmount());
         //运费收入
         dmpOrderInfoEntity.setShippingFee(gyyOrderEntity.getPostFee());
         //平台费
