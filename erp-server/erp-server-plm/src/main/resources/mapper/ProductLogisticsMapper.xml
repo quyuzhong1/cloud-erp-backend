@@ -26,7 +26,7 @@
 
     <sql id="Base_Column_List">
         product_property,
-        product_property_id,declare_chinese_name,declare_english_name,declare_model
+        product_property_id,declare_chinese_name,declare_english_name,declare_model,
         declare_price,customs_code,declare_element,
         english_material,english_usage,pl.create_time,
         pl.create_user_id,pl.update_time,pl.update_user_id
