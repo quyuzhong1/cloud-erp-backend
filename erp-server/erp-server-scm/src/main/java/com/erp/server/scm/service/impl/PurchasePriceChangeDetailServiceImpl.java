@@ -119,17 +119,20 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 if (noInterval > 1) {
                     throw new ServiceException(ApiError.ERROR_REPEAT_SKU);
                 } else {
+                    //已最小值排序
+                    skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
                     //没有无区间 就要检查又没有不同区间的
                     List<Integer> intervalList = new ArrayList<>(10);
                     for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
                         if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                            intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                            intervalList.add(interval.getMinQty());
+                            intervalList.add(interval.getMaxQty());
                         }
                     }
                     //判断是否是按顺序的
-                    boolean isRepetitionResult = isRepetition(intervalList);
+                    boolean isSortedResult = isSorted(intervalList);
                     //当不是的时候
-                    if (isRepetitionResult) {
+                    if (!isSortedResult) {
                         throw new ServiceException(ApiError.ERROR_INTERVAL_OVERLAP);
                     }
                 }
@@ -148,17 +151,20 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
+                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
+
                 //没有无区间 就要检查又没有不同区间的
                 List<Integer> intervalList = new ArrayList<>(10);
                 for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
                     if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        intervalList.add(interval.getMinQty());
+                        intervalList.add(interval.getMaxQty());
                     }
                 }
                 //判断是否是按顺序的
-                boolean isRepetitionResult = isRepetition(intervalList);
+                boolean isSortedResult = isSorted(intervalList);
                 //当不是的时候
-                if (isRepetitionResult) {
+                if (!isSortedResult) {
                     throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
             }
@@ -171,30 +177,25 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
+                skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
+
                 //没有无区间 就要检查又没有不同区间的
                 List<Integer> intervalList = new ArrayList<>(10);
                 for (PurchasePriceChangeDetailDTO.AddDTO interval : skuPriceList) {
                     if (interval.getMinQty() != null && interval.getMaxQty() != null) {
-                        intervalList.addAll(getInterval(interval.getMinQty(), interval.getMaxQty()));
+                        intervalList.add(interval.getMinQty());
+                        intervalList.add(interval.getMaxQty());
                     }
                 }
                 //判断是否是按顺序的
-                boolean isRepetitionResult = isRepetition(intervalList);
+                boolean isSortedResult = isSorted(intervalList);
                 //当不是的时候
-                if (isRepetitionResult) {
+                if (!isSortedResult) {
                     throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
                 }
             }
         }
 
-    }
-
-    private List<Integer> getInterval(Integer min, Integer max) {
-        List<Integer> resultList = new ArrayList<>(10);
-        for (int i = min + 1; i <= max; i++) {
-            resultList.add(i);
-        }
-        return resultList;
     }
 
 
@@ -226,7 +227,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
         for (PurchasePriceChangeDetailDTO.ViewDTO item : resultList) {
             String priceDetailId = item.getPurchasePriceDetailId();
-            PurchasePriceHistoryEntity  historyEntity=historyList.stream().filter(h->h.getPriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
+            PurchasePriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getPriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
 
             PurchasePriceDetailEntity priceDetailEntity = purchasePriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
             if (item.getTaxRate() != null) {
@@ -249,8 +250,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
                 if (historyEntity.getTaxRate() != null) {
                     item.setOldTaxRate(historyEntity.getTaxRate().multiply(hundred));
                 }
-            }else{
-                if(priceDetailEntity!=null){
+            } else {
+                if (priceDetailEntity != null) {
                     item.setOldCurrency(priceDetailEntity.getCurrency());
                     item.setOldTaxPrice(priceDetailEntity.getTaxPrice());
                     if (priceDetailEntity.getTaxRate() != null) {
@@ -491,16 +492,15 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @author yl
      * @date 2023-03-24 14:28
      */
-    private boolean isRepetition(List<Integer> list) {
+    private boolean isSorted(List<Integer> list) {
         if (CollectionUtils.isNotEmpty(list)) {
-            Set<Integer> set = new HashSet<>(list);
-            if (set.size() < list.size()) {
-                return true;
-            } else {
+            for (int i = 0; i < list.size() - 1; i++) {
+                if (list.get(i) > list.get(i + 1)) {
                 return false;
             }
         }
-        return false;
+        }
+        return true;
     }
 
 }
