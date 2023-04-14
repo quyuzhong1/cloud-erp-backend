@@ -69,7 +69,7 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
      */
     @Override
     public Boolean checkDelete(String id) {
-        int occupiedCount = supplierService.occupiedGrade(Arrays.asList("id"));
+        int occupiedCount = supplierService.occupiedGrade(Arrays.asList(id));
         if (occupiedCount > 0) {
             throw new ServiceException(ApiError.ERROR_98044);
         }
