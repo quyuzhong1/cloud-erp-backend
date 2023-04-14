@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -134,6 +135,16 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean delete(List<String> ids);
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @param response response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
      * 下推入库单列表查询

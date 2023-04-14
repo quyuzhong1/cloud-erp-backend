@@ -197,7 +197,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping(value = "/exportExcel")
     public ApiResult exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 

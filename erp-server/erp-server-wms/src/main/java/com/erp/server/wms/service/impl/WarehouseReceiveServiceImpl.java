@@ -16,7 +16,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -29,6 +31,7 @@ import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
+import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
@@ -48,6 +51,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -501,6 +505,41 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //删除主表
         return this.removeByIds(ids);
+    }
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @param response response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @Override
+    public Boolean exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = baseMapper.warehouseReceiveExportExcel(dto);
+
+        //获取sku的id集合
+        List<String> skuIdList = warehouseReceiveExportExcelDTOS.stream().map(WarehouseReceiveExportExcelDTO::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        warehouseReceiveExportExcelDTOS.forEach(obj -> {
+
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            obj.setProductName(productDetailEntity.getName());
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+        });
+        String fileName = "仓库入库单";
+        try {
+            ExcelUtil.export(fileName, "仓库入库单", warehouseReceiveExportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
     /**
