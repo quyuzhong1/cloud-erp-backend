@@ -8,13 +8,11 @@ public enum SourceTypeEnum {
     /**
      * 类型
      */
-
     private String type;
     /**
      * 名称
      */
     private String name;
-
 
     SourceTypeEnum(String type, String name) {
         this.type = type;
