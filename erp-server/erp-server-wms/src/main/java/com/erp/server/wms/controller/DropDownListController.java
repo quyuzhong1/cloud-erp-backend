@@ -52,12 +52,11 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/qcType/list")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcTypeDropDown() {
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listQcTypeDropDown() {
         List<QcRuleEntity> list= qcRuleService.list();
         List<String> qcTypes=list.stream().map(QcRuleEntity::getQcType).collect(Collectors.toList());
-        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcTypeEnum.values())
-                .filter(q->!qcTypes.contains(q.getType()))
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
+        List<BaseDropDownDTO.DisabledDTO> result = Arrays.stream(QcTypeEnum.values())
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getType(), x.getName(),qcTypes.contains(x.getType())))
                 .collect(Collectors.toList());
         return success(result);
     }
