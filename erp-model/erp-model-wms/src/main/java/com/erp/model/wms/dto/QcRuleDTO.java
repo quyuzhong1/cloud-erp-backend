@@ -163,7 +163,7 @@ public class QcRuleDTO implements Serializable {
          */
         private String qcTypeName;
 
-        private String qcType;
+        private QcTypeEnum qcType;
 
         /**
          * 是否有质检报告

@@ -146,8 +146,8 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             gradeKeyList = Arrays.asList(gradeKey.split(","));
         }
         view.setProductGradeKeyList(gradeKeyList);
-        String qcType = rule.getQcType().getType();
-        String qcTypeName = QcTypeEnum.getTypeName(qcType);
+        String qcType = rule.getQcType().getCode();
+        String qcTypeName = QcTypeEnum.getByCode(qcType);
         view.setQcTypeName(qcTypeName);
         String approveStatus = rule.getApproveStatus();
         String approveStatusName = ApproveStatusEnum.getName(approveStatus);
@@ -386,9 +386,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             return new PagingVO(pageData);
         }
         for (QcRuleDTO.PagingViewDTO item : list) {
-            String qcType = item.getQcType();
-            String qcTypeName = QcTypeEnum.getTypeName(qcType);
-            item.setQcTypeName(qcTypeName);
+            item.setQcTypeName(item.getQcType().getName());
             String approveStatus = item.getApproveStatus();
             String approveStatusName = ApproveStatusEnum.getName(approveStatus);
             item.setApproveStatusName(approveStatusName);
