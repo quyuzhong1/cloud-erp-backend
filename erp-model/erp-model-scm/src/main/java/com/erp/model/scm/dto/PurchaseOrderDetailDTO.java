@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 采购订单明细DTO
  * @date 2023/3/16 14:43
  */
 @Data
@@ -214,5 +214,83 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductSearchParamDTO {
+
+        /**
+         * 采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String purchaseOrderId;
+
+        /**
+         * sku编号集合
+         */
+        private List<String>  skuNoList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewProductDTO {
+
+        /**
+         * sku编码
+         */
+        private String  skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 本次入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 实退数量
+         */
+        private Integer realityReturnQty;
+
+        /**
+         * 收料组织名称
+         */
+        private String  receiveOrgName;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 订单明细id
+         */
+        private String purchaseOrderDetailId;
+
     }
 }

@@ -1,15 +1,18 @@
 package com.erp.server.scm.controller.feign;
 
 
-import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
-import org.springframework.web.bind.annotation.*;
+import com.erp.server.scm.service.SupplierService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -22,6 +25,10 @@ import java.util.List;
 @RestController
 @RequestMapping("feign/purchaseOrder")
 public class PurchaseOrderFeignController {
+
+
+    @Resource
+    private SupplierService supplierService;
 
     @Resource
     private PurchaseOrderService purchaseOrderService;
@@ -66,5 +73,17 @@ public class PurchaseOrderFeignController {
     @GetMapping("/listPurchaseOrderDetailById")
     public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailById(@RequestBody List<String> id) {
         return purchaseOrderDetailService.listDetailByIds(id);
+    }
+
+    /**
+     * @description: 查询供应商信息
+     * @author Will
+     * @date: 2023/4/14 10:10
+     * @param supplierId
+     * @return SupplierEntity
+     */
+    @GetMapping("/getSupplierById")
+    public SupplierEntity getSupplierById(@RequestBody String supplierId) {
+        return supplierService.getById(supplierId);
     }
 }

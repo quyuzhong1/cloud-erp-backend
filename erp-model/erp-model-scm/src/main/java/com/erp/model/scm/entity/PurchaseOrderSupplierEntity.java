@@ -10,10 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 
 /**
- * <p>
- * 
- * </p>
- *
+ * 采购供应商信息
  * @author will
  * @since 2023-03-16
  */

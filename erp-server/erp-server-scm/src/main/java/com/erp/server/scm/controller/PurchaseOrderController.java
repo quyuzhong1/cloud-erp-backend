@@ -10,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -36,6 +37,9 @@ public class PurchaseOrderController extends BaseController {
 
     @Resource
     private PurchaseOrderService purchaseOrderService;
+
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
      * 分页查询
@@ -388,6 +392,19 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 添加产品数据显示
+     * @author Will
+     * @date: 2023/4/14 10:21
+     * @param dto
+     * @return ApiResult<ViewProductDTO>
+     */
+    @PostMapping(value = "/viewProduct")
+    public ApiResult<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO = purchaseOrderDetailService.viewProduct(dto);
+        return success(viewProductDTO);
     }
 
 }

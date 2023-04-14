@@ -23,6 +23,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
@@ -34,6 +36,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ProductOrderFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.PurchaseStorageMapper;
 import com.erp.server.wms.service.*;
@@ -66,6 +69,8 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ProductOrderFeign productOrderFeign;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -255,7 +260,22 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         }
         List<PurchaseStockInDetailDTO.ViewDTO> details = BeanMapperUtils.copyList(PurchaseStockInDetailDTO.ViewDTO.class, entityDetails);
         dto.setDetails(details);
-        //查询供应商信息 TODO
+
+        //查询采购供应商信息
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = productOrderFeign.getOrderSupplierByOrderId(entity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        PurchaseStockInDTO.SupplierDTO supplierDTO = new PurchaseStockInDTO.SupplierDTO();
+        supplierDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+        supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
+
+        //查询供应商信息
+        SupplierEntity supplierEntity = productOrderFeign.getSupplierById(purchaseOrderSupplierEntity.getSupplierId());
+        if (ObjectUtils.isNotEmpty(supplierEntity)) {
+            supplierDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
+        }
+        dto.setSupplierDTO(supplierDTO);
         return dto;
     }
 
@@ -307,6 +327,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -338,6 +359,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<PurchaseStockInEntity> list = getList(ids);
@@ -359,6 +381,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         //根据ids查询
         List<PurchaseStockInEntity> list = getList(ids);

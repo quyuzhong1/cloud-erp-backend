@@ -319,4 +319,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         queryWrapper.in(PurchaseOrderDetailEntity::getId, ids);
         return this.list(queryWrapper);
     }
+
+    @Override
+    public PurchaseOrderDetailDTO.ViewProductDTO viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        baseMapper.viewProduct(dto);
+
+        return null;
+    }
 }

@@ -42,7 +42,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @description: 根据主表id查询
      * @author Will
      * @date: 2023/4/13 17:35
-     * @param id
+     * @param mainId
      * @return List<PurchaseStockInDetailEntity>
      */
     List<PurchaseStockInDetailEntity> listByMainId(String mainId);

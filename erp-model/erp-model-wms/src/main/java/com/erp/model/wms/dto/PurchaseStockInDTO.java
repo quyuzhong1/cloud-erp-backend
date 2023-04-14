@@ -114,7 +114,7 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 入库员名称
          */
-        private String storageUserName;
+        private String stockInUserName;
 
         /**
          * 备注
@@ -141,6 +141,12 @@ public class PurchaseStockInDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 入库单号
+         */
+        private String code;
+
         /**
          * sku编码
          */
@@ -212,82 +218,6 @@ public class PurchaseStockInDTO implements Serializable {
         private Integer count;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class ProductSearchParamDTO {
-
-        /**
-         * 采购订单id
-         */
-        private String purchaseOrderId;
-
-        /**
-         * sku编号集合
-         */
-        private List<String>  skuNoList;
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class ViewProductDTO {
-
-        /**
-         * sku编码
-         */
-        private String  skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 采购数量
-         */
-        private Integer purchaseQty;
-
-        /**
-         * 收货数量
-         */
-        private Integer receiveQty;
-
-        /**
-         * 本次入库数量
-         */
-        private Integer stockInQty;
-
-        /**
-         * 实退数量
-         */
-        private Integer realityReturnQty;
-
-        /**
-         * 收料组织名称
-         */
-        private String  receiveOrgName;
-
-        /**
-         * 是否赠品
-         */
-        private Boolean isGift;
-
-        /**
-         * 是否加急
-         */
-        private Boolean isUrgent;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 订单明细id
-         */
-        private String purchaseOrderDetailId;
-
-    }
 
     @Data
     @NoArgsConstructor

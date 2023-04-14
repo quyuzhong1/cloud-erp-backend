@@ -179,6 +179,17 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
+    /**
+     * 采购订单id
+     */
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
+
+    /**
+     * 采购订单编码
+     */
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
 
     public static final String CODE = "code";
 

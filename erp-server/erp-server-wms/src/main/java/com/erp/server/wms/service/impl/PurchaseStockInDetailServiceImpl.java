@@ -13,11 +13,14 @@ import com.erp.server.wms.service.ModuleOperateLogService;
 import com.erp.server.wms.service.PurchaseStockInDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -40,44 +43,73 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             return;
         }
         List<PurchaseStockInDetailEntity> list = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
-
-        doOpHandleDataId(list,mainId);
+        doOpHandleDetails(list,mainId);
         this.saveBatch(list);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String purchaseStockInId) {
+    public void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId) {
+        if (details == null) {
+            details = new ArrayList<>();
+        }
+        //原明细数据
+        List<PurchaseStockInDetailEntity> oldList = this.listByMainId(mainId);
+        List<String> deleteIds = getDeleteIds(details, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<PurchaseStockInDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+        List<PurchaseStockInDetailEntity> newList = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
 
+        //处理明细id及操作日志
+        doOpHandleDetails(newList,mainId);
+
+        //新增或修改明细
+        this.saveOrUpdateBatch(newList);
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<PurchaseStockInDetailDTO.UpdateDTO> newList, List<PurchaseStockInDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PurchaseStockInDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PurchaseStockInDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     @Override
     public void removeByMainIds(List<String> mainIds) {
-
+        lambdaUpdate().in(PurchaseStockInDetailEntity::getMainId,mainIds).remove();
     }
 
     @Override
     public List<PurchaseStockInDetailEntity> listByMainId(String mainId) {
-        return null;
+        return lambdaQuery().eq(PurchaseStockInDetailEntity::getMainId,mainId).list();
     }
 
 
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDataId (List<PurchaseStockInDetailEntity> newList, String salesDemandId) {
+    private void doOpHandleDetails (List<PurchaseStockInDetailEntity> newList, String mainId) {
 
         //仓库信息
         for (PurchaseStockInDetailEntity entity : newList) {
             //操作日志
             if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),salesDemandId,"编辑操作");
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),mainId,"编辑操作");
             } else {
                 PurchaseStockInDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);
                 }
-                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),salesDemandId,"",String.format("【%s】",old.getSkuNo()));
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
     }
