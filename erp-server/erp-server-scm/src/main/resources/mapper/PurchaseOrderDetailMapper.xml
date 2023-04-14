@@ -44,7 +44,7 @@
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         <where>
-            po.is_deleted = false
+            po.is_deleted = false and po.approve_status = 'approve' and po.invalid_status = false
             <if test="params.purchaseOrderId != null and params.purchaseOrderId != ''">
                 and po.purchase_order_id = #{params.purchaseOrderId}
             </if>
