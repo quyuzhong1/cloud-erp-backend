@@ -117,7 +117,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         }
         queryWrapper.eq(QcRuleEntity::getQcType, qcType);
         long count = this.count(queryWrapper);
-        if(count>0){
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99007);
         }
     }
@@ -379,7 +379,8 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     @Override
     public PagingVO<QcRuleDTO.PagingViewDTO> paging(PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query);
+        QcRuleDTO.PagingParamDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query,params);
         List<QcRuleDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);

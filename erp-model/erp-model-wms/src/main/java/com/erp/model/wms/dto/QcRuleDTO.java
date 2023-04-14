@@ -189,8 +189,6 @@ public class QcRuleDTO implements Serializable {
         private String approveStatus;
 
 
-
-
         /**
          * 创建人名称
          */
@@ -213,7 +211,6 @@ public class QcRuleDTO implements Serializable {
         private LocalDateTime updateTime;
 
 
-
     }
 
 
@@ -222,9 +219,10 @@ public class QcRuleDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO{
+    public static class PagingParamDTO {
 
 
+        private String searchKeyword;
 
     }
 

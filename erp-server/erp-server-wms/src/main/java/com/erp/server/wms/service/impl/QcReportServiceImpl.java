@@ -79,6 +79,7 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
         List<QcReportEntity> dbList = this.findByRuleId(qcRuleId);
 
         List<QcReportEntity> saveOrUpdateList = BeanMapper.copyList(qcReportLList, QcReportEntity.class);
+        saveOrUpdateList.stream().forEach(s->s.setQcRuleId(qcRuleId));
         //获取到删除的id
         List<String> deleteIdList = getDeleteIds(addList, dbList);
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
