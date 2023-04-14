@@ -100,5 +100,5 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @param dto
      * @return ViewProductDTO
      */
-    PurchaseOrderDetailDTO.ViewProductDTO viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto);
+    List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto);
 }

@@ -1,6 +1,9 @@
 package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,4 +31,22 @@ public interface WmsTaskFeign {
      */
     @GetMapping("feign/warehouse/listApproveWarehouse")
     List<WarehouseDTO.UpdateDTO> listApproveWarehouse();
+
+    /**
+     * 根据采购订单明细ids查询收货明细
+     */
+    @PostMapping("feign/warehouseReceive/listWarehouseReceiveByPodIds")
+    List<WarehouseReceiveDetailEntity> listWarehouseReceiveDetailByPodIds(@RequestBody List<String> purchaseDetailIds);
+
+    /**
+     * 根据来源明细ids查询退货明细
+     */
+    @PostMapping("feign/warehouseReceive/listDetailBySourceDetailIds")
+    List<PurchaseReturnOrderDetailEntity> listPurchaseReturnOrderDetailBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * 根据来源明细ids查询入库明细
+     */
+    @PostMapping("feign/purchaseStockIn/listDetailBySourceDetailIds")
+    List<PurchaseStockInDetailEntity> listPurchaseStockInDetailBySourceDetailIds(List<String> sourceDetailIds);
 }

@@ -1,10 +1,12 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
-import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<PurchaseReturnOrderDetailMapper, PurchaseReturnOrderDetailEntity> implements PurchaseReturnOrderDetailService {
 
+    @Override
+    public List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getSourceDetailId,sourceDetailIds).list();
+    }
 }

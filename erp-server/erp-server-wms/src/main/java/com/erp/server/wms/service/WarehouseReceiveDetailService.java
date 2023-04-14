@@ -16,7 +16,14 @@ import java.util.List;
  * @since 2023-04-06
  */
 public interface WarehouseReceiveDetailService extends SuperService<WarehouseReceiveDetailEntity> {
-
+    /**
+     * @description: 根据采购订单明细ids查询
+     * @author Will
+     * @date: 2023/4/14 11:31
+     * @param purchaseDetailIds
+     * @return List<WarehouseReceiveDetailEntity>
+     */
+    List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds);
     /**
      * 新增
      * @Author Luo_WG

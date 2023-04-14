@@ -58,22 +58,10 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     private Integer stockInQty;
 
     /**
-     * 采购订单明细id
-     */
-    @TableField("purchase_order_detail_id")
-    private String purchaseOrderDetailId;
-
-    /**
      * 采购数量
      */
     @TableField("purchase_qty")
     private Integer purchaseQty;
-
-    /**
-     * 收货明细id
-     */
-    @TableField("receive_detail_id")
-    private String receiveDetailId;
 
     /**
      * 收货数量
@@ -105,6 +93,12 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     @TableField("remark")
     private String remark;
 
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -118,11 +112,9 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
 
     public static final String STOCK_IN_QTY = "stock_in_qty";
 
-    public static final String PURCHASE_ORDER_DETAIL_ID = "purchase_order_detail_id";
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     public static final String PURCHASE_QTY = "purchase_qty";
-
-    public static final String RECEIVE_DETAIL_ID = "receive_detail_id";
 
     public static final String RECEIVE_QTY = "receive_qty";
 

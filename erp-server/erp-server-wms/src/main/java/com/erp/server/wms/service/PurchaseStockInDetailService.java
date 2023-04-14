@@ -46,4 +46,12 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @return List<PurchaseStockInDetailEntity>
      */
     List<PurchaseStockInDetailEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据来源ids查询明细
+     * @author Will
+     * @date: 2023/4/14 12:17
+     * @param sourceDetailIds
+     * @return List<PurchaseStockInDetailEntity>
+     */
+    List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
 }

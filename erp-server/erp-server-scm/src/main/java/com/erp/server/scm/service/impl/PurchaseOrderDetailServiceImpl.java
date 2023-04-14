@@ -14,7 +14,11 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -26,10 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +49,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Resource
     private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
@@ -321,9 +325,39 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
-    public PurchaseOrderDetailDTO.ViewProductDTO viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
-        baseMapper.viewProduct(dto);
+    public List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ViewProductDTO> list = baseMapper.viewProduct(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> purchaseDetailIds = list.stream().map(PurchaseOrderDetailDTO.ViewProductDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //查询收货数据
+        List<WarehouseReceiveDetailEntity> receiveDetails = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(purchaseDetailIds);
 
-        return null;
+        //查询退货数据
+        List<PurchaseReturnOrderDetailEntity> returnOrderDetails = wmsTaskFeign.listPurchaseReturnOrderDetailBySourceDetailIds(purchaseDetailIds);
+
+        //查询入库数据
+        List<PurchaseStockInDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailBySourceDetailIds(purchaseDetailIds);
+
+        for (PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO : list) {
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveDetails)) {
+                Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                viewProductDTO.setReceiveQty(receiveQty);
+            }
+            //退货数量
+            if (CollectionUtils.isNotEmpty(returnOrderDetails)) {
+                Integer realityReturnQty = returnOrderDetails.stream().filter(obj -> obj.getSourceDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getRealityReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                viewProductDTO.setRealityReturnQty(realityReturnQty);
+            }
+
+            //入库数量
+            if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                Integer stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                viewProductDTO.setStockInQty(stockInQty);
+            }
+        }
+        return list;
     }
 }

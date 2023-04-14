@@ -6,6 +6,8 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -21,8 +23,8 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @description: 添加产品数据显示
      * @author Will
      * @date: 2023/4/14 10:33
-     * @param dto
+     * @param params
      * @return ViewProductDTO
      */
-    PurchaseOrderDetailDTO.ViewProductDTO viewProduct(@Param("params") PurchaseOrderDetailDTO.ProductSearchParamDTO params);
+    List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(@Param("params") PurchaseOrderDetailDTO.ProductSearchParamDTO params);
 }

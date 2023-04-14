@@ -258,7 +258,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer receiveQty;
 
         /**
-         * 本次入库数量
+         * 入库数量
          */
         private Integer stockInQty;
 

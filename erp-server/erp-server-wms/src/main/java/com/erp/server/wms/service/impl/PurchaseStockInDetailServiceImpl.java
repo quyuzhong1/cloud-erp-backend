@@ -93,6 +93,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         return lambdaQuery().eq(PurchaseStockInDetailEntity::getMainId,mainId).list();
     }
 
+    @Override
+    public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
+        return lambdaQuery().in(PurchaseStockInDetailEntity::getSourceDetailId,sourceDetailIds).list();
+    }
+
 
     /**
      * 处理明细中的数据id

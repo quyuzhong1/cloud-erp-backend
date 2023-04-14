@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务实现类
@@ -151,5 +153,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         LambdaQueryWrapper<WarehouseReceiveDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WarehouseReceiveDetailEntity::getMain_id, mainId);
         return this.list(queryWrapper);
+    }
+    @Override
+    public List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
+        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).list();
     }
 }

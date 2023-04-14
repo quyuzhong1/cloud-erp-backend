@@ -402,9 +402,9 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<ViewProductDTO>
      */
     @PostMapping(value = "/viewProduct")
-    public ApiResult<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
-        PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO = purchaseOrderDetailService.viewProduct(dto);
-        return success(viewProductDTO);
+    public ApiResult<List<PurchaseOrderDetailDTO.ViewProductDTO>> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ViewProductDTO> list = purchaseOrderDetailService.viewProduct(dto);
+        return success(list);
     }
 
 }
