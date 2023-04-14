@@ -68,7 +68,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public String add(QcRuleDTO.AddDTO dto) {
         //TODO 产品等级 校验
 
-        checkQcType("", dto.getQcType());
+        checkQcType("", dto.getQcType().getCode());
         //是否有质检报告
         Boolean existReport = dto.getExistReport();
         //质检报告
@@ -146,7 +146,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
             gradeKeyList = Arrays.asList(gradeKey.split(","));
         }
         view.setProductGradeKeyList(gradeKeyList);
-        String qcType = rule.getQcType();
+        String qcType = rule.getQcType().getType();
         String qcTypeName = QcTypeEnum.getTypeName(qcType);
         view.setQcTypeName(qcTypeName);
         String approveStatus = rule.getApproveStatus();

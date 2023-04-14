@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -36,9 +37,9 @@ public class QcRuleDTO implements Serializable {
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
          * stockIn 入库质检  outsideQc 外检质检 insideQc 在库质检 newProductStockIn 新品入库质检 b2bOutsideQc B2B外检
          */
-        @NotBlank(message = "质检类型不能为空")
-        @StateEnumValue(strValues = {"stockIn", "outsideQc", "insideQc", "newProductStockIn", "b2bOutsideQc"}, message = "质检类型有误")
-        private String qcType;
+        @NotNull(message = "质检类型不能为空")
+        @StateEnumValue(clazz = QcTypeEnum.class,enumCheckField="type", message = "质检类型有误")
+        private QcTypeEnum qcType;
 
         /**
          * 是否有报告

@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
  * @since 2023-04-14
  */
 @RestController
-@RequestMapping("/qc-bill-entity")
+@RequestMapping("/qcBill")
 public class QcBillController extends BaseController {
 
 }

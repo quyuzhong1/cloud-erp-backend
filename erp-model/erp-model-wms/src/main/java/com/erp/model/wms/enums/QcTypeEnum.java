@@ -48,7 +48,7 @@ public enum QcTypeEnum implements BaseEnum {
     }
 
     @Override
-    public Object getCode() {
+    public String getCode() {
         return type;
     }
 
