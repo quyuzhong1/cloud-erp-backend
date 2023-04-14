@@ -46,7 +46,6 @@ public enum ApproveStatusEnum {
         return "";
     }
 
-
     public static ApproveStatusEnum getByStatus(String status){
         return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
                 .findFirst().orElse(null);

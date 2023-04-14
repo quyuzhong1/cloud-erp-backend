@@ -2,6 +2,124 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.WarehouseReceiveMapper">
 
+    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">
+        SELECT
+            wr.id,
+            wr.code,
+            wr.purchase_order_id,
+            wr.purchase_order_code,
+            wr.supplier_name,
+            wr.approve_status,
+            wr.invalid_status,
+            wrd.sku_no,
+            wr.bill_date,
+            wrd.receive_qty,
+            wr.delivery_warehouse_name,
+            wr.receive_user_name,
+            wr.purchase_user_name,
+            wrd.purchase_qty,
+            wrd.exceed_qty,
+            wr.approve_user_name,
+            wr.create_user_name,
+            wrd.purchase_order_detail_id
+        FROM warehouse_receive_detail wrd
+        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wrd.is_deleted = FALSE
+        <if test="params.skuNo != null and params.skuNo.size != ''">
+            and wrd.sku_no = #{params.skuNo}
+        </if>
 
+        <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+            and wr.supplier_id in
+            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
 
+        <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
+            and wr.purchaseOrderCode = #{params.purchaseOrderCode}
+        </if>
+
+        <if test="params.invalidStatus != null and params.invalidStatus != ''">
+            and wr.invalidStatus = #{params.invalidStatus}
+        </if>
+
+        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
+            and po.delivery_warehouse_id in
+            <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
+            and wr.purchase_user_id in
+            <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and wr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+            and wr.create_user_id in
+            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.planDeliveryDate != null and params.planDeliveryDate.size > 0">
+            and wr.plan_delivery_date >= #{params.planDeliveryDate[0]} and  (#{params.planDeliveryDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
+        </if>
+
+        <if test="params.createTime != null and params.createTime.size > 0">
+            and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wr.create_time,wr.id desc
+
+    </select>
+
+    <select id="getReceiveQty" resultType="integer">
+        SELECT
+            SUM(wrd.receive_qty) receive_qty
+        FROM warehouse_receive_detail wrd
+        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wrd.is_deleted = FALSE
+        AND wr.purchase_order_id = #{PurchaseOrderId}
+        AND wrd.skuId = #{skuId}
+    </select>
+
+    <select id="purchaseOrderRefReceive" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$OrderRefReceiveDTO">
+        SELECT
+            wr.id,
+            wr.code,
+            wr.supplier_name,
+            wr.approve_status,
+            wrd.sku_no,
+            wr.bill_date,
+            wrd.receive_qty,
+            wrd.exceed_qty,
+            wr.delivery_warehouse_name,
+            wr.receive_user_name,
+            wr.purchase_user_name,
+            wrd.remark,
+            wrd.purchase_order_detail_id
+        FROM warehouse_receive_detail wrd
+        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wrd.is_deleted = FALSE
+        AND wr.purchase_order_id = #{purchaseOrderId}
+    </select>
 </mapper>

@@ -6,11 +6,17 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.server.wms.service.WarehouseReceiveService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 
 /**
@@ -22,6 +28,9 @@ import com.common.core.controller.BaseController;
 @RequestMapping("/warehouseReceive")
 public class WarehouseReceiveController extends BaseController {
 
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
     /**
      * 列表查询
      * @Author Luo_WG
@@ -31,7 +40,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/paging")
     public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
-        PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = null;
+        PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = warehouseReceiveService.paging(dto);
         return success(pagingVO);
     }
 
@@ -44,8 +53,8 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
-        Boolean flag = false;
-        return flag == true ? success() : failure();
+        String id = warehouseReceiveService.add(dto);
+        return StringUtils.isNotBlank(id) == true ? success() : failure();
     }
 
     /**
@@ -57,7 +66,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.update(dto);
         return flag == true ? success() : failure();
     }
 
@@ -70,7 +79,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @GetMapping("/view")
     public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@Param("id") String id) {
-        WarehouseReceiveDTO.ViewDTO dto = null;
+        WarehouseReceiveDTO.ViewDTO dto = warehouseReceiveService.view(id);
         return success(dto);
     }
 
@@ -83,7 +92,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -96,7 +105,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -109,7 +118,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/updateAndSubmit")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -122,12 +131,12 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
     }
 
     /**
-     * 批量反审核审核
+     * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param baseApproveParamDTO baseApproveParamDTO
@@ -135,20 +144,20 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.disApprove(baseApproveParamDTO);
         return flag == true ? success() : failure();
     }
 
     /**
-     * 批量撤销
+     * 取消流程
      * @Author Luo_WG
-     * @Date 2023/4/6 19:29
-     * @param idsDTO idsDTO
+     * @Date 2023/4/13 18:58
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/withDraw")
-    public ApiResult withDraw(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = false;
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = warehouseReceiveService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -161,7 +170,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/invalid")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
-        Boolean flag = false;
+        Boolean flag = warehouseReceiveService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -174,8 +183,61 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        Boolean flag = warehouseReceiveService.delete(idsDTO.getIds());
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @param response response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = false;
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推质检单
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/generateQCBill")
+    public ApiResult generateQCBill(@RequestBody @RequestParam("id") String id) {
+        Boolean flag = false;
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推入库单
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/generateStockIn")
+    public ApiResult generateStockIn(@RequestBody @RequestParam("id") String id) {
+        Boolean flag = false;
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 采购订单-关联的收货单据
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param purchaseOrderId purchaseOrderId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/purchaseOrderRefReceive")
+    public ApiResult<List<WarehouseReceiveDTO.OrderRefReceiveDTO>> purchaseOrderRefReceive(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
+        List<WarehouseReceiveDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = warehouseReceiveService.purchaseOrderRefReceive(purchaseOrderId);
+        return success(orderRefReceiveDTOS);
     }
 
 }

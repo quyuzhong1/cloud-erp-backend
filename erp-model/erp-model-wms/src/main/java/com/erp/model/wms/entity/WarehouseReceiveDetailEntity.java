@@ -30,8 +30,8 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     /**
      * 签收单主表id
      */
-    @TableField("warehouse_receive_id")
-    private String warehouseReceiveId;
+    @TableField("main_id")
+    private String main_id;
 
     /**
      * skuId
@@ -48,8 +48,8 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     /**
      * 计划交货时间
      */
-    @TableField("plan_receive_time")
-    private LocalDate planReceiveTime;
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
 
     /**
      * 收货数量

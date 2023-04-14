@@ -59,7 +59,7 @@ public class WarehouseReceiveDTO {
          * 收货日期
          */
         @NotBlank(message = "收货日期不能为空")
-        private LocalDate billTime;
+        private LocalDate billDate;
 
         /**
          * 交货仓库id
@@ -89,17 +89,6 @@ public class WarehouseReceiveDTO {
         private String id;
 
         /**
-         * 采购订单id
-         */
-        private String purchaseOrderId;
-
-        /**
-         * 采购订单编号
-         */
-        @NotBlank(message = "采购订单编号不能为空")
-        private String purchaseOrderCode;
-
-        /**
          * 收货人id
          */
         @NotBlank(message = "收货人不能为空")
@@ -115,14 +104,18 @@ public class WarehouseReceiveDTO {
          * 收货日期
          */
         @NotBlank(message = "收货日期不能为空")
-        private LocalDate billTime;
+        private LocalDate billDate;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
 
         /**
          * 签收单明细
          */
         @Valid
         private List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList;
-
     }
 
 
@@ -141,6 +134,11 @@ public class WarehouseReceiveDTO {
          * 审核状态 waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核
          */
         private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
 
         /**
          * 单据编号
@@ -166,6 +164,11 @@ public class WarehouseReceiveDTO {
          * 供应商名称
          */
         private String supplierName;
+
+        /**
+         * 供应商地址
+         */
+        private String supplierAddress;
 
         /**
          * 收货人id
@@ -200,7 +203,7 @@ public class WarehouseReceiveDTO {
         /**
          * 收货日期
          */
-        private LocalDate billTime;
+        private LocalDate billDate;
 
         /**
          * 作废状态（false未作废，true已作废）
@@ -221,6 +224,11 @@ public class WarehouseReceiveDTO {
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
 
         /**
          * 报价明细
@@ -271,7 +279,12 @@ public class WarehouseReceiveDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
 
         /**
          * sku
@@ -286,7 +299,7 @@ public class WarehouseReceiveDTO {
         /**
          * 收货日期
          */
-        private LocalDate billTime;
+        private LocalDate billDate;
 
         /**
          * 签收数量
@@ -314,6 +327,11 @@ public class WarehouseReceiveDTO {
         private Integer purchaseQty;
 
         /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
          * 审核人
          */
         private String approveUserName;
@@ -322,6 +340,16 @@ public class WarehouseReceiveDTO {
          * 创建人
          */
         private String createUserName;
+
+        /**
+         * 采购单主表id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购单详情表id
+         */
+        private String purchaseOrderDetailId;
     }
 
 
@@ -363,14 +391,14 @@ public class WarehouseReceiveDTO {
         private List<String> approveStatusList;
 
         /**
-         * 作废状态（0未作废，1已作废）
+         * 作废状态（false未作废，true已作废）
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
 
         /**
          * 计划交货时间
          */
-        private List<LocalDate> planbillTime;
+        private List<LocalDate> planDeliveryDate;
 
         /**
          * 交货仓库id
@@ -386,5 +414,83 @@ public class WarehouseReceiveDTO {
          * 创建时间
          */
         private List<LocalDate> createTime;
+    }
+
+
+    /**
+     * 采购订单关联收货单的查询实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OrderRefReceiveDTO {
+        /**
+         * 收货单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 收货日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 收货人名称
+         */
+        private String receiveUserName;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 收货备注
+         */
+        private String remark;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
     }
 }
