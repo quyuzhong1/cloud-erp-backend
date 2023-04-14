@@ -623,8 +623,6 @@
         </if>
 
         GROUP BY o.shop_no,o.${findTime}
-
-
     </select>
     <select id="byTopShop" resultType="java.util.Map">
         SELECT a.shop_no,a.sales,a.salesQuantity,s.name AS "shopName"
@@ -678,7 +676,7 @@
         </where>
         GROUP BY o.shop_no ORDER BY sales desc limit 20
         ) a LEFT JOIN dmp_shop_info s
-        ON a.shop_no = s.plarform_shop_no ORDER BY sales desc limit 20
+        ON a.shop_no = s.plarform_shop_no ORDER BY sales asc limit 20
     </select>
 
 
