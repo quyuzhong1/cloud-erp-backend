@@ -148,7 +148,7 @@ public class SysLoginAuthController extends BaseController {
         result.setHeadIcon(sysUser.getHeadIcon());
         result.setBindingPlatform(sysUser.getBindingPlatform());
         result.setBindingState(sysUser.getBindingState());
-
+        result.setUserId(sysUser.getUid());
         return success(result);
     }
 
