@@ -129,8 +129,8 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * 删除供应商的时候后 看是否有关联 如果有就不能删除
      * @author yl
      * @date 2023-04-14 11:00
-     * @param ids
+     * @param supplierIds
      * @return void
      */
-    void checkIsRefSupplier(List<String> ids);
+    void checkIsRefSupplier(List<String> supplierIds);
 }

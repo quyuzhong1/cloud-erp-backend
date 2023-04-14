@@ -8,6 +8,8 @@ import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -28,4 +30,13 @@ public interface PurchaseOrderSupplierMapper extends BaseMapper<PurchaseOrderSup
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.scm.dto.PurchaseOrderSupplierDTO.SupplierPurchaseDTO>
      */
     IPage<PurchaseOrderSupplierDTO.SupplierPurchaseDTO> supplierPurchasePaging(Page query, @Param("supplierId") String supplierId);
+
+    /**
+     * 根据供应商id  查出是否有关联的订单
+     * @author yl
+     * @date 2023-04-14 12:01
+     * @param supplierIds
+     * @return int
+     */
+    int getRefSupplierCount(@Param("supplierIds") List<String> supplierIds);
 }

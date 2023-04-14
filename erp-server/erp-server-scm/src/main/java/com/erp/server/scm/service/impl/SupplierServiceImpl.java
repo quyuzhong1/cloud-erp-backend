@@ -400,6 +400,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         //检查是否关联供应商 如果有就不能删除
         purchasePriceService.checkIsRefSupplier(ids);
+        //检查采购订单是否有关联到供应商id  如果有就不能删除
+        purchaseOrderSupplierService.checkIsRefSupplier(ids);
         //删除供应商
         Boolean result = this.removeByIds(ids);
         if (result) {
