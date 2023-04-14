@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -132,6 +133,19 @@ public class ProductSkuFeignController {
     public List<SkuVO> listApproveSku() {
         List<SkuVO> skuList = productDetailService.searchSku(null);
         return skuList;
+    }
+
+    /**
+     * 根据id查询sku信息
+     * @Author Luo_WG
+     * @Date 2023/4/14 15:07
+     * @param ids ids
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @GetMapping("/getByIdList")
+    public List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids) {
+        List<ProductDetailEntity> byIdList = productDetailService.getByIdList(ids);
+        return byIdList;
     }
 
 }

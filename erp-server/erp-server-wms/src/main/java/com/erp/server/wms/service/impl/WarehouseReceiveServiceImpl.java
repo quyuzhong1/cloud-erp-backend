@@ -16,6 +16,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -24,19 +25,20 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.model.wms.enums.SourceTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ProductOrderFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
-import com.erp.server.wms.service.WarehouseReceiveService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +48,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,6 +71,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private ProductOrderFeign productOrderFeign;
 
     @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
     private SysUserFeign sysUserFeign;
 
     @Resource
@@ -81,6 +87,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
+    @Resource
+    private PurchaseStockInService purchaseStockInService;
 
     /**
      * 主页分页查询
@@ -96,10 +105,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         IPage<WarehouseReceiveDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         //明细数据
         List<WarehouseReceiveDTO.PagingViewDTO> records = pageData.getRecords();
-        //获取采购单详情表id集合
-        List<String> orderDetailIds = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        //获取sku的id集合
+        List<String> skuIdList = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -114,11 +123,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_99006);
+                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_95107);
                 }
-                obj.setProductName(purchaseOrderDetailEntity.getProductName());
+                obj.setProductName(productDetailEntity.getName());
                 list.add(obj.getId());
             });
         }
@@ -229,20 +238,29 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<WarehouseReceiveDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
         List<WarehouseReceiveDetailEntity> detail = warehouseReceiveDetailService.getDetailByMainId(id);
-        //获取采购单详情表id集合
-        List<String> orderDetailIds = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-        //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        //获取sku的id集合
+        List<String> skuIdList = detail.stream().map(WarehouseReceiveDetailEntity::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取采购单详情的id集合
+        List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
             BeanMapperUtils.copy(warehouseReceiveDetailEntity,detailView);
+            //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-            detailView.setProductName(purchaseOrderDetailEntity.getProductName());
             Integer receiveQty = getReceiveQty(warehouseReceiveEntity.getPurchaseOrderId(), detailView.getSkuId());
             detailView.setNotReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receiveQty);
+            //获取sku信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            detailView.setProductName(productDetailEntity.getName());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setWarehouseReceiveDetailList(detailViewDTOS);
@@ -483,6 +501,72 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //删除主表
         return this.removeByIds(ids);
+    }
+
+    /**
+     * 下推入库单列表查询
+     * @Author Luo_WG
+     * @Date 2023/4/14 14:24
+     * @param id id
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.GenerateStockInViewDTO>
+     **/
+    @Override
+    public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(String id) {
+        List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = baseMapper.generateStockInView(id);
+        LoginUser userInfo = commonService.getUserInfo();
+        //获取sku的id集合
+        List<String> skuIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getSkuId).collect(Collectors.toList());
+        //根据ids查询采购单详情
+        List<ProductDetailEntity> byIdList = plmTaskFeign.getByIdList(skuIdList);
+
+        generateStockInViewDTOS.forEach(req -> {
+            ProductDetailEntity productDetailEntity = byIdList.stream().filter(obj -> req.getSkuId().equals(obj.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            req.setProductName(productDetailEntity.getName());
+            req.setStockInDate(LocalDate.now());
+            req.setStockInUserName(userInfo.getUid());
+            req.setReceiveQty(getReceiveQty(req.getPurchaseOrderId(), req.getSkuId()));
+            req.setUnStockInQty(0);
+            req.setStockInQty(0);
+            req.setExceedQty(0);
+
+        });
+        return null;
+    }
+
+    /**
+     * 下推入库单
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param id id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean generateStockIn(String id) {
+        PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
+        addDTO.setSourceId(id);
+        addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
+        WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
+
+        addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
+        addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
+        addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
+        addDTO.setStockInDeptId(warehouseReceiveEntity.getDeliveryWarehouseId());
+
+        //设置明细
+        List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
+        List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(id);
+        detailByMainId.forEach(req -> {
+            PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
+            BeanMapperUtils.copy(req,detailDTO);
+
+        });
+        addDTO.setDetails(detailDTOList);
+        purchaseStockInService.add(addDTO);
+
+        return null;
     }
 
     /**

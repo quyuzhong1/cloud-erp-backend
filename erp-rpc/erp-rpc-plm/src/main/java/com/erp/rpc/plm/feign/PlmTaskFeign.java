@@ -4,6 +4,7 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -80,4 +81,14 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/listApproveSku")
     List<SkuVO> listApproveSku();
+
+    /**
+     * 根据id查询sku信息
+     * @Author Luo_WG
+     * @Date 2023/4/14 15:10
+     * @param ids ids
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    @GetMapping("feign/product/getByIdList")
+    List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids);
 }

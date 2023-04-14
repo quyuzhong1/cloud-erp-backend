@@ -1,13 +1,16 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -289,6 +292,11 @@ public class WarehouseReceiveDTO {
         /**
          * sku
          */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
         private String skuNo;
 
         /**
@@ -363,7 +371,7 @@ public class WarehouseReceiveDTO {
         /**
          * skuNo集合
          */
-        private String skuNo;
+        private List<String> skuNoList;
 
         /**
          * 产品名称
@@ -493,4 +501,87 @@ public class WarehouseReceiveDTO {
          */
         private String purchaseOrderDetailId;
     }
+
+    /**
+     * 下推单据列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateStockInViewDTO {
+        /**
+         * 采购单Id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 入库日期
+         */
+        private LocalDate stockInDate;
+
+        /**
+         * 入库员名称
+         */
+        private String stockInUserName;
+
+        /**
+         * 已签收数量
+         */
+        private Integer  receiveQty;
+
+        /**
+         * 未入库数量
+         */
+        private Integer unStockInQty;
+
+        /**
+         * 实收数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+    }
+
 }

@@ -11,6 +11,7 @@
             wr.supplier_name,
             wr.approve_status,
             wr.invalid_status,
+            wrd.sku_id,
             wrd.sku_no,
             wr.bill_date,
             wrd.receive_qty,
@@ -25,8 +26,11 @@
         FROM warehouse_receive_detail wrd
         LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wrd.is_deleted = FALSE
-        <if test="params.skuNo != null and params.skuNo.size != ''">
-            and wrd.sku_no = #{params.skuNo}
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and wrd.sku_no in
+            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
 
         <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
@@ -122,4 +126,21 @@
         WHERE wrd.is_deleted = FALSE
         AND wr.purchase_order_id = #{purchaseOrderId}
     </select>
+
+    <select id="generateStockInView" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GenerateStockInViewDTO">
+        SELECT
+            wr.id,
+            wr.purchase_order_id,
+            wr.purchase_order_code,
+            wr.supplier_name,
+            wrd.sku_id,
+            wrd.sku_no,
+            wr.delivery_warehouse_name,
+            wrd.purchase_order_detail_id
+        FROM warehouse_receive_detail wrd
+        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        WHERE wrd.is_deleted = FALSE
+        AND wr.id = #{id}
+    </select>
+
 </mapper>

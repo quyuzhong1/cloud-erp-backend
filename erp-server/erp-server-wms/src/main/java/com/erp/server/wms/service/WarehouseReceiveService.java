@@ -13,6 +13,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -133,6 +134,24 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean delete(List<String> ids);
+
+    /**
+     * 下推入库单列表查询
+     * @Author Luo_WG
+     * @Date 2023/4/14 14:24
+     * @param id id
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.GenerateStockInViewDTO>
+     **/
+    List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(String id);
+
+    /**
+     * 下推入库单
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param id id
+     * @return java.lang.Boolean
+     **/
+    Boolean generateStockIn(String id);
 
     /**
      * 采购订单-关联的收货单据
