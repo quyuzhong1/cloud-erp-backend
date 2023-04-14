@@ -316,7 +316,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), dateTimeFormatter));
         }
 
-        if (StringUtils.isNotBlank(dto.getDelistingTimeStr())) {
+        if (StringUtils.isNotBlank(dto.getListingTimeStr())) {
             productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), dateTimeFormatter));
         }
 
