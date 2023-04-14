@@ -59,8 +59,8 @@ public class SupplierGradeController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/checkDelete")
-    public ApiResult checkDelete(BaseIdDTO dto) {
+    @PostMapping("/checkDelete")
+    public ApiResult checkDelete(@RequestBody @Valid BaseIdDTO dto) {
         Boolean result = supplierGradeService.checkDelete(dto.getId());
         return result?success():failure();
     }
