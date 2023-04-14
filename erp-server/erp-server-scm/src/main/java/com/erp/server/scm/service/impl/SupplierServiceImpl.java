@@ -91,6 +91,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
 
+    //采购价目表
+    @Resource
+    private PurchasePriceService purchasePriceService;
+
     /**
      * 保存供应商信息
      *
@@ -383,6 +387,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
      * @date 2023-03-20 18:38
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return true;
@@ -393,7 +398,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-
+        //检查是否关联供应商 如果有就不能删除
+        purchasePriceService.checkIsRefSupplier(ids);
         //删除供应商
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -405,6 +411,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
             //根据 供应商id 删除资质信息
             supplierCredentialService.removeBySupplierIds(ids);
+
+
             //添加日志
             String content = "删除供应商[%s]";
             List<Pair<String, String>> pairList = supplierList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -757,7 +765,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         try {
             EasyExcel.read(excelFile.getInputStream(), SupplierImportExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
-            log.error("供应商导入错误！",e);
+            log.error("供应商导入错误！", e);
             return Boolean.FALSE;
         }
         List<SupplierImportExcelDTO> errorList = excelListener.getErrorList();

@@ -388,6 +388,7 @@ public enum ApiError implements Serializable {
     ERROR_98049(98049,"未找到采购价目明细"),
     ERROR_98050(98050,"未找到采购入库单"),
     ERROR_98051(98051,"未找到采购入库单明细"),
+    ERROR_98052(98052,"采购价目存在对应供应商,不能删除"),
 
 
 
