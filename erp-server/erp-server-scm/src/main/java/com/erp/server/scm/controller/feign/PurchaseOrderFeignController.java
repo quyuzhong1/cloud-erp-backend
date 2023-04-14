@@ -64,7 +64,7 @@ public class PurchaseOrderFeignController {
     }
 
     /**
-     * 根据采购订单id查询供应商
+     * 根据采购订单id查询详情信息
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
      * @param id id：采购订单id
