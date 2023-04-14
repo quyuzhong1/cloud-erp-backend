@@ -85,8 +85,9 @@ public class DmpWarehouseInboundRecordServiceImpl extends SuperServiceImpl<DmpWa
     public String addKingdeeTransferRecord(GoodcangDTO.MessageDTO paramExt, KingdeeApiUtils apiUtils) {
         // 修改本地状态
         // 根据录入值和字段配置生成JSONObject
+        List<GoodcangDTO.ReceivingDetailDTO> collect = paramExt.getReceivingDetail().stream().peek(x -> x.setUpdateTime(paramExt.getUpdateTime())).collect(Collectors.toList());
+        paramExt.setReceivingDetail(collect);
         Map<String, Object> beanToMap = BeanUtil.beanToMap(paramExt);
-
         saveOrder(paramExt);
         // 保存金碟记录
         String dataId = kingdeeCommonService.addKingdeeRecord(paramExt.getReceivingCode(), apiUtils, ApiModuleTypeEnum.STOCK_OVERSEAS.getCode(), PlatformEnum.KINGDEE.getDesc(), beanToMap);
