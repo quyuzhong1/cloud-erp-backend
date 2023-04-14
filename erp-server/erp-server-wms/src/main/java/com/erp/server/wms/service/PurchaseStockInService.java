@@ -137,10 +137,10 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @description: 下推退货单数据显示
      * @author Will
      * @date: 2023/4/12 12:02
-     * @param id
+     * @param ids
      * @return List<ViewGeneratePurchaseReturnOrderDTO>
      */
-    List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(String id);
+    List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
     /**
      * @description: 下推退货单数据保存
      * @author Will
@@ -148,5 +148,5 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @param dto
      * @return Boolean
      */
-    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO dto);
+    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
 }

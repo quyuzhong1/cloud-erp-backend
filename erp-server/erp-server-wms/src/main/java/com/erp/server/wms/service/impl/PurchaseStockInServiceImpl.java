@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -35,6 +36,8 @@ import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
+import com.erp.model.wms.enums.SourceTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ProductOrderFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -68,6 +71,9 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private ProductOrderFeign productOrderFeign;
@@ -416,12 +422,33 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
-    public List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(String id) {
-        return null;
+    public List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids) {
+        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> skuIds = list.stream().map(PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            return list;
+        }
+        for (PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
+            //来源类型
+            dto.setSourceType(SourceTypeEnum.PURCHASE_RETURN_ORDER.getType());
+            String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
+            dto.setProductName(productName);
+        }
+        return list;
     }
 
     @Override
-    public Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO dto) {
+    public Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
+        for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO generateDto : list) {
+            //退货人
+
+        }
+
         return null;
     }
 

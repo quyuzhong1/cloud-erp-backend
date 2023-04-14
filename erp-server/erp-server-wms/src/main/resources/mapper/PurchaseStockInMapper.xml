@@ -206,4 +206,31 @@
         psi.create_time desc
     </select>
 
+    <select id="viewGeneratePurchaseReturnOrder"
+            resultType="com.erp.model.wms.dto.PurchaseStockInDTO$ViewGeneratePurchaseReturnOrderDTO">
+        select
+               psi.id as sourceId,
+               psid.id as sourceDetailId,
+               psi.purchase_order_id as purchaseOrderId,
+               psi.purchase_order_code as purchaseOrderCode,
+               psi.supplier_name as supplierName,
+               psid.sku_id as skuId,
+               psid.sku_no as skuNo,
+               psi.delivery_warehouse_name as deliveryWarehouseName,
+               psid.stock_in_qty as stockInQty,
+               psid.warehouse_location_name as warehouseLocationName
+        from purchase_stock_in psi
+        inner join purchase_stock_in_detail psid on psid.is_deleted = false
+        <where>
+            psid.is_deleted = false
+            <if test="ids != null and ids.size > 0">
+                and psi.id in
+                <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by psi.purchase_order_code desc
+    </select>
+
 </mapper>

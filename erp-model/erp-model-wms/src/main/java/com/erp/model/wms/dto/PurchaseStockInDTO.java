@@ -4,8 +4,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -366,17 +366,27 @@ public class PurchaseStockInDTO implements Serializable {
     public static class ViewGeneratePurchaseReturnOrderDTO {
 
         /**
-         * 采购入库id
+         * 来源类型
          */
-        private String purchaseStockInId;
+        private String sourceType;
 
         /**
-         * 采购入库明细id
+         * 来源id
          */
-        private String purchaseStockInDetailId;
+        private String sourceId;
 
         /**
-         * 采购单号
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单单号
          */
         private String purchaseOrderCode;
 
@@ -389,6 +399,11 @@ public class PurchaseStockInDTO implements Serializable {
          * sku编码
          */
         private String skuNo;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * 产品名称
@@ -414,17 +429,34 @@ public class PurchaseStockInDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class ListGeneratePurchaseReturnOrderDTO {
+
+        @NotEmpty(message = "新增采购退货单数据不不能为空")
+        @Valid
+        private List<GeneratePurchaseReturnOrderDTO> list;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class GeneratePurchaseReturnOrderDTO {
 
         /**
-         * 采购入库id
+         * 来源类型
          */
-        private String purchaseStockInId;
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
 
         /**
-         * 采购入库明细id
+         * 来源id
          */
-        private String purchaseStockInDetailId;
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
 
         /**
          * 退货人id
@@ -439,26 +471,37 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 实退数量
          */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 1,message = "实退数量最小值为1")
+        @Max(value = 99999999,message = "实退数量最大值为99999999")
         private Integer realityReturnQty;
 
         /**
          * 补货数量
          */
+        @NotNull(message = "补货数量不能为空")
+        @Min(value = 1,message = "补货数量最小值为1")
+        @Max(value = 99999999,message = "补货数量最大值为99999999")
         private Integer replenishQty;
 
         /**
          * 扣款数量
          */
+        @NotNull(message = "扣款数量不能为空")
+        @Min(value = 1,message = "扣款数量最小值为1")
+        @Max(value = 99999999,message = "扣款数量最大值为99999999")
         private Integer deductAmountQty;
 
         /**
          * 含税单价
          */
+        @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal taxPrice;
 
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
         /**

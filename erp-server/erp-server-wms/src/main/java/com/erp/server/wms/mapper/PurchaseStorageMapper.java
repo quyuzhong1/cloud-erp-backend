@@ -46,4 +46,12 @@ public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity>
      * @return List<PurchaseStockExportExcelDTO>
      */
     List<PurchaseStockExportExcelDTO> listExportExcel(@Param("params") PurchaseStockInDTO.SearchParamDTO dto);
+    /**
+     * @description: 查询退货单
+     * @author Will
+     * @date: 2023/4/14 14:23
+     * @param ids
+     * @return List<ViewGeneratePurchaseReturnOrderDTO>
+     */
+    List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("ids") List<String> ids);
 }

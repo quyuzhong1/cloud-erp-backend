@@ -221,12 +221,12 @@ public class PurchaseStockInController extends BaseController {
      * 下推退货单数据显示
      * @author Will
      * @date: 2023/4/11 20:30
-     * @param id
+     * @param dto
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
      */
-    @GetMapping("/viewGeneratePurchaseReturnOrder")
-    public ApiResult<List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestParam("id") String id) {
-        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(id);
+    @PostMapping("/viewGeneratePurchaseReturnOrder")
+    public ApiResult<List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
     }
 
@@ -238,7 +238,7 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = purchaseStorageService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
     }
