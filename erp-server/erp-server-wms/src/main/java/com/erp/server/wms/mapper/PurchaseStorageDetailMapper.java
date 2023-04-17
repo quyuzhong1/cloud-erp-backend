@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -14,5 +15,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface PurchaseStorageDetailMapper extends BaseMapper<PurchaseStockInDetailEntity> {
-
+    Integer getStockInQty(@Param("purchaseOrderDetailId") String purchaseOrderDetailId);
 }

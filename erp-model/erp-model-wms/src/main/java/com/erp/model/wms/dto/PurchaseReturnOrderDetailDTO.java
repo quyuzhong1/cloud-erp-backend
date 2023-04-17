@@ -177,7 +177,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 已入库数量
          */
-        private String stockInQty;
+        private Integer stockInQty;
 
         /**
          * 采购数量

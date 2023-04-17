@@ -256,8 +256,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         viewDTO.setPurchaseUserDeptId(purchaseUserDept.getId());
         viewDTO.setPurchaseUserDeptName(purchaseUserDept.getName());
 
-
-
         if (SourceTypeEnum.QC_BILL.getType().equals(PurchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getCode());
         } else {
@@ -275,10 +273,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> detailId = detail.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(detailId);
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
-
-            List<PurchaseStockInDetailEntity> purchaseStockInDetailEntities = purchaseStockInDetailService.listDetailBySourceDetailIds(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId());
-            //purchaseStockInDetailEntities.stream().filter()
-
+            Integer stockInQty = purchaseStockInDetailService.getStockInQty(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId());
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
             BeanMapperUtils.copy(purchaseReturnOrderDetailEntity,detailView);
             //获取采购单详情
@@ -286,6 +281,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
+            detailView.setStockInQty(stockInQty);
             detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getRealityReturnQty()))));
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);

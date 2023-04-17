@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PurchaseStorageDetailMapper">
+
+    <select id="getStockInQty" resultType="int">
+        SELECT
+        SUM(psid.stock_in_qty) stockInQty
+        FROM purchase_stock_in_detail psid
+        LEFT JOIN purchase_stock_in psi ON psid.main_id = psi.id
+        WHERE psi.approve_status = 'approve' AND psid.purchase_order_detail_id = #{purchaseOrderDetailId}
+    </select>
+</mapper>
