@@ -611,4 +611,41 @@ public class WarehouseReceiveDTO {
         private String purchaseOrderDetailId;
     }
 
+    /**
+     * 下推单据列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateStockInDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 入库日期
+         */
+        private LocalDate stockInDate;
+
+        /**
+         * 入库员名称
+         */
+        private String stockInUserName;
+
+        /**
+         * 实收数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
 }
