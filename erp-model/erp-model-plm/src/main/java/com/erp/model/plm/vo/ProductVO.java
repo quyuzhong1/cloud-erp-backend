@@ -33,6 +33,11 @@ public class ProductVO implements Serializable {
         private String skuId;
 
         /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
          * 产品等级
          */
         private String productGrade;

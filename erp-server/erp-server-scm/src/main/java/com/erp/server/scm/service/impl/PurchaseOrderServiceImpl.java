@@ -26,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
@@ -56,10 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -790,26 +788,42 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             getOneDTO.setCompanyAddress(supplier.getCompanyAddress());
             getOneDTO.setSupplierName(supplier.getName());
         }
-        List<PurchaseOrderDetailEntity>  orderDetailList =purchaseOrderDetailService.listByPurchaseOrderId(id);
-        List<String> skuIdList=orderDetailList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
 
         return getOneDTO;
     }
 
 
-
     /**
      * 根据采购订单id 获取对应产品信息
-     * @author yl
-     * @date 2023-04-17 18:27
+     *
      * @param purchaseOrderId
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     * @author yl
+     * @date 2023-04-17 18:27
      */
     @Override
     public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
-        return null;
+        PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
+        PurchaseOrderEntity entity = this.getById(purchaseOrderId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        result.setSupplierId(result.getSupplierId());
+        result.setSupplierName(result.getSupplierName());
+        result.setWarehouseId(result.getWarehouseId());
+        result.setWarehouseName(result.getWarehouseName());
+        
+        //采购订单详情
+        List<PurchaseOrderDetailEntity> orderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
+        List<String> skuIdList = orderDetailList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
+        for(ProductVO.ProductPackVO item:skuList){
+           Integer qty=orderDetailList.stream().filter(o->o.getSkuId().equals(item.getSkuId())).findFirst().
+                   flatMap(obj-> Optional.ofNullable(obj.getPurchaseQty())).orElse(0);
+            item.setQty(qty);
+        }
+        return result;
     }
-
 
 
     /**
