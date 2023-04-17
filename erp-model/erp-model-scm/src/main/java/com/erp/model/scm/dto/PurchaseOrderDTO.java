@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.plm.vo.ProductVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -418,6 +419,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 仓库名
          */
         private String warehouseName;
+
+        /**
+         * 产品信息
+         */
+        private List<ProductVO.ProductPackVO>  ProductList;
 
     }
 

@@ -1,10 +1,13 @@
 package com.erp.server.wms.service.impl;
 
 import com.erp.model.wms.dto.QcEffectivenessDTO;
+import com.erp.server.wms.mapper.QcBillMapper;
 import com.erp.server.wms.service.QcEffectivenessService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,8 +19,16 @@ import java.util.List;
 @Service
 public class QcEffectivenessServiceImpl implements QcEffectivenessService {
 
+    @Resource
+    private QcBillMapper qcBillMapper;
+
     @Override
     public List<QcEffectivenessDTO.ViewQcOverviewDTO> viewQcOverview(QcEffectivenessDTO.CommonSearchParamDTO dto) {
+        List<QcEffectivenessDTO.ViewQcOverviewDTO> resultList = new ArrayList<>();
+        //质检总览
+        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcBillMapper.listQcBillGroupQcStatus(dto);
+
+
         return null;
     }
 
