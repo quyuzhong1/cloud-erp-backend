@@ -3,6 +3,7 @@ package com.erp.server.wms.controller;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
@@ -52,7 +53,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
      **/
     @PostMapping("/listCount")
-    public ApiResult<List<WarehouseReceiveDTO.WarehouseReceiveCountDTO>> listCount(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
+    public ApiResult<List<WarehouseReceiveDTO.WarehouseReceiveCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> warehouseReceiveCountDTOS = warehouseReceiveService.listCount(dto);
         return success(warehouseReceiveCountDTOS);
     }

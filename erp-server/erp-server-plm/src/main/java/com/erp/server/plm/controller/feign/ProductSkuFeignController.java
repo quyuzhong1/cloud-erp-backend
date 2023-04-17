@@ -147,7 +147,7 @@ public class ProductSkuFeignController {
      * @param ids ids
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
-    @GetMapping("/getByIdList")
+    @PostMapping("/getByIdList")
     public List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids) {
         List<ProductDetailEntity> byIdList = productDetailService.getByIdList(ids);
         return byIdList;

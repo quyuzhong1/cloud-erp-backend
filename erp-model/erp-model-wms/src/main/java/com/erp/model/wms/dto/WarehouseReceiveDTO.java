@@ -3,10 +3,13 @@ package com.erp.model.wms.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,7 +40,6 @@ public class WarehouseReceiveDTO {
         /**
          * 采购订单编号
          */
-        @NotBlank(message = "采购订单编号不能为空")
         private String purchaseOrderCode;
 
         /**
@@ -55,13 +57,12 @@ public class WarehouseReceiveDTO {
         /**
          * 收货人组织id
          */
-        @NotBlank(message = "收货人组织不能为空")
         private String receiveOrgId;
 
         /**
          * 收货日期
          */
-        @NotBlank(message = "收货日期不能为空")
+        @NotNull(message = "质检日期不能为空")
         private LocalDate billDate;
 
         /**
@@ -106,7 +107,7 @@ public class WarehouseReceiveDTO {
         /**
          * 收货日期
          */
-        @NotBlank(message = "收货日期不能为空")
+        @NotNull(message = "收货日期不能为空")
         private LocalDate billDate;
 
         /**

@@ -122,7 +122,7 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
      * 作废描述
      */
     @TableField("invalid_remark")
-    private LocalDateTime invalidRemark;
+    private String invalidRemark;
 
     /**
      * 审核人id

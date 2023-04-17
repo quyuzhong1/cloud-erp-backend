@@ -98,7 +98,7 @@
 
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct po.id)
+        count(distinct wr.id)
         FROM warehouse_receive_detail wrd
         LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
@@ -120,7 +120,7 @@
         LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         AND wr.purchase_order_id = #{PurchaseOrderId}
-        AND wrd.skuId = #{skuId}
+        AND wrd.sku_id = #{skuId}
     </select>
 
     <select id="purchaseOrderRefReceive" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$OrderRefReceiveDTO">

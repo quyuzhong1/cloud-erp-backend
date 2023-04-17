@@ -90,7 +90,7 @@ public interface PlmTaskFeign {
      * @param ids ids
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
-    @GetMapping("feign/product/getByIdList")
+    @PostMapping("feign/product/getByIdList")
     List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids);
 
     /**

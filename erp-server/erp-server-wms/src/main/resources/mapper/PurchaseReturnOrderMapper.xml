@@ -151,86 +151,96 @@
         AND wr.id = #{id}
     </select>
 
-    <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO">
+    <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO">
         SELECT
-        wr.id,
-        wr.code,
-        wr.purchase_order_id,
-        wr.purchase_order_code,
-        wr.supplier_name,
-        wr.approve_status,
-        wr.invalid_status,
-        wrd.sku_id,
-        wrd.sku_no,
-        wr.bill_date,
-        wrd.receive_qty,
-        wr.delivery_warehouse_name,
-        wr.receive_user_name,
-        wr.purchase_user_name,
-        wrd.purchase_qty,
-        wrd.exceed_qty,
-        wr.approve_user_name,
-        wr.create_user_name,
-        wrd.purchase_order_detail_id
-        FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
-        WHERE wrd.is_deleted = FALSE
+        pro.id,
+        pro.code,
+        pro.purchase_order_code,
+        pro.supplier_name,
+        pro.approve_status,
+        pro.invalid_status,
+        prod.sku_id,
+        prod.sku_no,
+        pro.bill_date,
+        pro.return_warehouse_name,
+        prod.reality_return_qty,
+        pro.return_remark,
+        pro.return_mode,
+        pro.purchase_user_id,
+        pro.return_user_name,
+        prod.remark,
+        pro.approve_user_name,
+        pro.create_user_name,
+        pro.create_time
+        FROM purchase_return_order_detail prod
+        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size != ''">
+            and wr.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
-            and wrd.sku_no in
-            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+            and prod.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
 
         <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
-            and wr.supplier_id in
+            and pro.supplier_id in
             <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
 
         <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-            and wr.purchaseOrderCode = #{params.purchaseOrderCode}
-        </if>
-
-        <if test="params.invalidStatus != null and params.invalidStatus != ''">
-            and wr.invalidStatus = #{params.invalidStatus}
-        </if>
-
-        <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            and po.delivery_warehouse_id in
-            <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
+            and pro.purchaseOrderCode = #{params.purchaseOrderCode}
         </if>
 
         <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-            and wr.purchase_user_id in
+            and pro.purchase_user_id in
             <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
 
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and wr.approve_status in
+            and pro.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
 
+        <if test="params.invalidStatus != null and params.invalidStatus != ''">
+            and pro.invalidStatus = #{params.invalidStatus}
+        </if>
+
+        <if test="params.returnMode != null and params.returnMode != ''">
+            and pro.return_mode = #{params.returnMode}
+        </if>
+
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and pro.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
+        </if>
+
+        <if test="params.returnWarehouseIdList != null and params.returnWarehouseIdList.size > 0">
+            and pro.return_warehouse_id in
+            <foreach collection="params.returnWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
         <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-            and wr.create_user_id in
+            and pro.create_user_id in
             <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
 
-        <if test="params.planDeliveryDate != null and params.planDeliveryDate.size > 0">
-            and wr.plan_delivery_date >= #{params.planDeliveryDate[0]} and  (#{params.planDeliveryDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
-        </if>
-
-        <if test="params.createTime != null and params.createTime.size > 0">
-            and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            and pro.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -241,7 +251,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wr.create_time,wr.id desc
+        pro.create_time,pro.id desc
     </select>
 
 </mapper>

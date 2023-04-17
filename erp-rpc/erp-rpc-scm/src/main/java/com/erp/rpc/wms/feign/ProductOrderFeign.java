@@ -23,7 +23,7 @@ public interface ProductOrderFeign {
      * @param id id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("feign/purchaseOrder/getPurchaseOrderById")
+    @PostMapping("feign/purchaseOrder/getPurchaseOrderById")
     PurchaseOrderEntity getPurchaseOrderById(@RequestBody String id);
 
     /**
@@ -33,7 +33,7 @@ public interface ProductOrderFeign {
      * @param id id：采购订单id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("feign/purchaseOrder/getOrderSupplierByOrderId")
+    @PostMapping("feign/purchaseOrder/getOrderSupplierByOrderId")
     PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id);
 
     /**
@@ -43,7 +43,7 @@ public interface ProductOrderFeign {
      * @param id id：采购订单id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("/listPurchaseOrderDetailById")
+    @PostMapping("feign/purchaseOrder/listPurchaseOrderDetailById")
     List<PurchaseOrderDetailEntity> listPurchaseOrderDetailById(@RequestBody List<String> id);
     /**
      * @description: 根据id查询供应商

@@ -3,10 +3,7 @@ package com.erp.server.scm.controller.feign;
 
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -43,7 +40,7 @@ public class PurchaseOrderFeignController {
      * @param id id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("/getPurchaseOrderById")
+    @PostMapping("/getPurchaseOrderById")
     public PurchaseOrderEntity getPurchaseOrderById(@RequestBody String id) {
         return purchaseOrderService.getById(id);
     }
@@ -55,7 +52,7 @@ public class PurchaseOrderFeignController {
      * @param id id：采购订单id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("/getOrderSupplierByOrderId")
+    @PostMapping("/getOrderSupplierByOrderId")
     public PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id) {
         return purchaseOrderSupplierService.getByPurchaseOrderId(id);
     }
@@ -67,7 +64,7 @@ public class PurchaseOrderFeignController {
      * @param id id：采购订单id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    @GetMapping("/listPurchaseOrderDetailById")
+    @PostMapping("/listPurchaseOrderDetailById")
     public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailById(@RequestBody List<String> id) {
         return purchaseOrderDetailService.listDetailByIds(id);
     }
@@ -91,7 +88,7 @@ public class PurchaseOrderFeignController {
      * @param supplierContactId supplierContactId
      * @return com.erp.model.scm.entity.SupplierEntity
      **/
-    @GetMapping("/getSupplierContactById")
+    @PostMapping("/getSupplierContactById")
     public SupplierContactEntity getSupplierContactById(@RequestBody String supplierContactId) {
         return supplierContactService.getById(supplierContactId);
     }
