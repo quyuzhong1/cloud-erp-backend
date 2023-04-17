@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * @author Lambda
@@ -25,6 +26,26 @@ public class QcBillDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends PermissionsDTO {
 
+        /**
+         * 质检日期
+         */
+        private LocalDate qcDate;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+
+        /**
+         * 质检部门id
+         */
+        private String qcDeptId;
+
+        /**
+         * 产品信息
+         */
+        private QcProductDTO.AddDTO qcProduct;
 
 
     }
