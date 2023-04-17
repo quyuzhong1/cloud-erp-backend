@@ -170,10 +170,10 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * 下推入库单
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param id id
+     * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean generateStockIn(String id);
+    Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInViewDTO dto);
 
     /**
      * 采购订单-关联的收货单据

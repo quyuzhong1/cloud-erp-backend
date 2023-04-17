@@ -531,6 +531,11 @@ public class WarehouseReceiveDTO {
     @NoArgsConstructor
     public static class GenerateStockInViewDTO {
         /**
+         * id
+         */
+        private String id;
+
+        /**
          * 采购单Id
          */
         private String purchaseOrderId;

@@ -583,8 +583,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> skuIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<ProductDetailEntity> byIdList = plmTaskFeign.getByIdList(skuIdList);
-
+        List<String> list = new ArrayList<>();
         generateStockInViewDTOS.forEach(req -> {
+            boolean contains = list.contains(req.getId());
+            if (contains) {
+                req.setPurchaseOrderCode(null);
+                req.setSupplierName(null);
+                return;
+            }
             ProductDetailEntity productDetailEntity = byIdList.stream().filter(obj -> req.getSkuId().equals(obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
@@ -605,15 +611,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 下推入库单
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param id id
+     * @param dto dto
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean generateStockIn(String id) {
+    public Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInViewDTO dto) {
         PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
-        addDTO.setSourceId(id);
+        addDTO.setSourceId(dto.getId());
         addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
-        WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
+        WarehouseReceiveEntity warehouseReceiveEntity = this.getById(dto.getId());
 
         addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
         addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
@@ -622,7 +628,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //设置明细
         List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
-        List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(id);
+        List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getId());
         detailByMainId.forEach(req -> {
             PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
             BeanMapperUtils.copy(req,detailDTO);
