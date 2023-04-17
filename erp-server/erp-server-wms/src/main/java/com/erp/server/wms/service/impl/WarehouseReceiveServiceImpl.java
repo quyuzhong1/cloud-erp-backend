@@ -3,10 +3,12 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -17,8 +19,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -136,6 +138,30 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             });
         }
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:12
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     **/
+    @Override
+    public List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> listCount(PermissionsDTO dto) {
+        ApproveStatusEnum[] values = ApproveStatusEnum.values();
+        List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> list = new ArrayList<>();
+        for (ApproveStatusEnum item: values) {
+            WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
+            pagingParamDTO.setParam(dto.getParam());
+            WarehouseReceiveDTO.WarehouseReceiveCountDTO resultDTO = new WarehouseReceiveDTO.WarehouseReceiveCountDTO();
+            pagingParamDTO.setApproveStatusList(Arrays.asList(item.getStatus()));
+            Integer count = this.baseMapper.listCount(pagingParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setType(item.getStatus());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**

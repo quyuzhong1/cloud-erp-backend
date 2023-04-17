@@ -26,6 +26,8 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
 
     IPage<WarehouseReceiveDTO.PagingViewDTO> paging(Page query, @Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 
+    Integer listCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
     Integer getReceiveQty(@Param("PurchaseOrderId") String PurchaseOrderId, @Param("skuId") String skuId);
 
     List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(@Param("purchaseOrderId") String purchaseOrderId);

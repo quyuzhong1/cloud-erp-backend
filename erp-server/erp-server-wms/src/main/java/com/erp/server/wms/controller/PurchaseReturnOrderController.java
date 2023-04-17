@@ -8,11 +8,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.server.wms.service.PurchaseReturnOrderService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
+
+import javax.annotation.Resource;
 
 /**
  * 采购退货单
@@ -22,6 +25,9 @@ import com.common.core.controller.BaseController;
 @RestController
 @RequestMapping("/purchaseReturnOrder")
 public class PurchaseReturnOrderController extends BaseController {
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
     /**
      * 列表查询
      * @Author Luo_WG
@@ -31,7 +37,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/paging")
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = null;
+        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = purchaseReturnOrderService.paging(dto);
         return success(pagingVO);
     }
 

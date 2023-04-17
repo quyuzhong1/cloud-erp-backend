@@ -68,7 +68,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
-            warehouseReceiveDetailEntity.setMain_id(id);
+            warehouseReceiveDetailEntity.setMainId(id);
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                 warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
@@ -109,7 +109,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             if (StringUtils.isNotBlank(updateDTO.getId())) {
                 warehouseReceiveDetailEntity.setId(updateDTO.getId());
             }
-            warehouseReceiveDetailEntity.setMain_id(updateDTO.getMain_id());
+            warehouseReceiveDetailEntity.setMainId(updateDTO.getMain_id());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                 warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
@@ -136,7 +136,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
      **/
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(WarehouseReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
-                .in(WarehouseReceiveDetailEntity::getMain_id, mainIds)
+                .in(WarehouseReceiveDetailEntity::getMainId, mainIds)
                 .remove();
     }
 
@@ -149,7 +149,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
      **/
     public List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId) {
         LambdaQueryWrapper<WarehouseReceiveDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(WarehouseReceiveDetailEntity::getMain_id, mainId);
+        queryWrapper.eq(WarehouseReceiveDetailEntity::getMainId, mainId);
         return this.list(queryWrapper);
     }
     @Override

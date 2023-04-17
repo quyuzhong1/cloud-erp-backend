@@ -31,7 +31,7 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
      * 签收单主表id
      */
     @TableField("main_id")
-    private String main_id;
+    private String mainId;
 
     /**
      * skuId

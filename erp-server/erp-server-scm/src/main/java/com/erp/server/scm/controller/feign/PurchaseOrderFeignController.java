@@ -1,14 +1,8 @@
 package com.erp.server.scm.controller.feign;
 
 
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.server.scm.service.PurchaseOrderDetailService;
-import com.erp.server.scm.service.PurchaseOrderService;
-import com.erp.server.scm.service.PurchaseOrderSupplierService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.model.scm.entity.*;
+import com.erp.server.scm.service.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +32,9 @@ public class PurchaseOrderFeignController {
 
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
+
+    @Resource
+    private SupplierContactService supplierContactService;
 
     /**
      * 根据id查询采购订单
@@ -86,4 +83,17 @@ public class PurchaseOrderFeignController {
     public SupplierEntity getSupplierById(@RequestBody String supplierId) {
         return supplierService.getById(supplierId);
     }
+
+    /**
+     * 根据联系人id查询供应商联系人信息
+     * @Author Luo_WG
+     * @Date 2023/4/17 11:00
+     * @param supplierContactId supplierContactId
+     * @return com.erp.model.scm.entity.SupplierEntity
+     **/
+    @GetMapping("/getSupplierContactById")
+    public SupplierContactEntity getSupplierContactById(@RequestBody String supplierContactId) {
+        return supplierContactService.getById(supplierContactId);
+    }
+
 }

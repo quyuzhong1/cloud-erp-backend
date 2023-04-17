@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,13 +67,7 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
      * 退货单价
      */
     @TableField("return_price")
-    private String returnPrice;
-
-    /**
-     * 总价
-     */
-    @TableField("total_price")
-    private String totalPrice;
+    private BigDecimal returnPrice;
 
     /**
      * 币别
@@ -91,6 +86,12 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
+
+    /**
+     * 采购订单详情表id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
 
     @Override
     public Serializable pkVal() {

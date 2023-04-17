@@ -358,8 +358,26 @@ public class WarehouseReceiveDTO {
          * 采购单详情表id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 收货备注
+         */
+        private String remark;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseReceiveCountDTO {
+
+        /**
+         * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 
     /**
      * 分页参数
@@ -367,6 +385,10 @@ public class WarehouseReceiveDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+        /**
+         * 主键集合
+         */
+        private List<String> ids;
 
         /**
          * skuNo集合

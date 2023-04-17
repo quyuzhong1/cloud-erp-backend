@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
 
@@ -52,17 +53,27 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 退货单价
          */
-        private String returnPrice;
-
-        /**
-         * 总价
-         */
-        private String totalPrice;
+        private BigDecimal returnPrice;
 
         /**
          * 备注
          */
         private String remark;
+
+        /**
+         * 单据来源详情表id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 采购订单详情表Id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 币别
+         */
+        private String currency;
     }
 
     /**
@@ -77,9 +88,19 @@ public class PurchaseReturnOrderDetailDTO {
         private String id;
 
         /**
-         * 采购单详情表id
+         * 退货单主表id
          */
-        private String purchaseDetailId;
+        private String mainId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
 
         /**
          * 实退数量
@@ -97,9 +118,29 @@ public class PurchaseReturnOrderDetailDTO {
         private Integer deductAmountQty;
 
         /**
+         * 退货单价
+         */
+        private BigDecimal returnPrice;
+
+        /**
          * 备注
          */
         private String remark;
+
+        /**
+         * 单据来源详情表id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 采购订单详情表Id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 币别
+         */
+        private String currency;
     }
 
     /**
@@ -166,12 +207,17 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 总价
          */
-        private String totalPrice;
+        private BigDecimal totalPrice;
 
         /**
          * 备注
          */
         private String remark;
+
+        /**
+         * 采购订单详情表id
+         */
+        private String purchaseOrderDetailId;
     }
 
 }

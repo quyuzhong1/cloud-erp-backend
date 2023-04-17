@@ -45,6 +45,19 @@ public class WarehouseReceiveController extends BaseController {
     }
 
     /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:14
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
+     **/
+    @PostMapping("/listCount")
+    public ApiResult<List<WarehouseReceiveDTO.WarehouseReceiveCountDTO>> listCount(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
+        List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> warehouseReceiveCountDTOS = warehouseReceiveService.listCount(dto);
+        return success(warehouseReceiveCountDTOS);
+    }
+
+    /**
      * 新增
      * @Author Luo_WG
      * @Date 2023/4/6 18:46
@@ -228,7 +241,7 @@ public class WarehouseReceiveController extends BaseController {
     }
 
     /**
-     * 下推入库单
+     * 下推入库单保存
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param id id

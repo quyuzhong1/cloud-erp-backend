@@ -78,7 +78,7 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     private String returnUserName;
 
     /**
-     * 退货方式
+     * 退货方式 退货扣款 退货补货
      */
     @TableField("return_mode")
     private String returnMode;
@@ -112,6 +112,12 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
      */
     @TableField("invalid_status")
     private Boolean invalidStatus;
+
+    /**
+     * 作废描述
+     */
+    @TableField("invalid_remark")
+    private Boolean invalidRemark;
 
     /**
      * 作废时间
@@ -148,6 +154,42 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
      */
     @TableField("source_id")
     private String sourceId;
+
+    /**
+     * 退货仓库id
+     */
+    @TableField("return_warehouse_id")
+    private String returnWarehouseId;
+
+    /**
+     * 退货仓库名称
+     */
+    @TableField("return_warehouse_name")
+    private String returnWarehouseName;
+
+    /**
+     * 采购员id
+     */
+    @TableField("purchase_user_id")
+    private String purchaseUserId;
+
+    /**
+     * 采购员名称
+     */
+    @TableField("purchase_user_name")
+    private String purchaseUserName;
+
+    /**
+     * 退货仓库联系人id
+     */
+    @TableField("supplier_contact_id")
+    private String supplierContactId;
+
+    /**
+     * 退货仓库联系人id
+     */
+    @TableField("supplier_contact_name")
+    private String supplierContactName;
 
 
     public static final String APPROVE_STATUS = "approve_status";

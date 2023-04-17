@@ -1,9 +1,6 @@
 package com.erp.rpc.wms.feign;
 
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,4 +54,14 @@ public interface ProductOrderFeign {
      */
     @PostMapping("/getSupplierById")
     SupplierEntity getSupplierById(@RequestBody String supplierId);
+
+    /**
+     * 根据联系人id查询供应商联系人信息
+     * @Author Luo_WG
+     * @Date 2023/4/17 11:00
+     * @param supplierContactId supplierContactId
+     * @return com.erp.model.scm.entity.SupplierEntity
+     **/
+    @PostMapping("feign/purchaseOrder/getSupplierContactById")
+    SupplierContactEntity getSupplierContactById(@RequestBody String supplierContactId);
 }
