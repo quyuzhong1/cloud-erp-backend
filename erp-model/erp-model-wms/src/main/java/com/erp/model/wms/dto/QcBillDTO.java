@@ -1,10 +1,14 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,12 +30,26 @@ public class QcBillDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends PermissionsDTO {
+    public static class SaveOrUpdateDTO extends PermissionsDTO {
+
+        /**
+         * 质检单id
+         */
+        @NotBlank(message = "质检单id不能为空", groups = {UpdateGroup.class})
+        private String id;
 
         /**
          * 质检日期
          */
+        @NotNull(message = "质检日期不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private LocalDate qcDate;
+
+
+        /**
+         *采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String purchaseOrderId;
 
         /**
          * 质检员id

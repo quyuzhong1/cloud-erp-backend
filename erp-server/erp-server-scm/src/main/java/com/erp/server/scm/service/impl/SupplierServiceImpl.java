@@ -121,7 +121,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(dto, addEntity);
 
         List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         String categoryId = dto.getCategoryId();
@@ -268,7 +268,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
         }
         List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         String categoryId = dto.getCategoryId();
@@ -326,9 +326,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return new PagingVO(pageData);
         }
         List<String> keyList = new ArrayList<>(3);
-        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
@@ -669,9 +669,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierExportExcelDTO> resultList = new ArrayList<>(list.size());
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> keyList = new ArrayList<>(3);
-            keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
-            keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
-            keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+            keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+            keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+            keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
             //获取供应商等级
             List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
             //根据 key list 获取到对应数据
@@ -750,9 +750,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         List<String> keyList = new ArrayList<>(3);
-        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.entity.QcBillEntity;
 
 /**
@@ -13,4 +14,11 @@ import com.erp.model.wms.entity.QcBillEntity;
  */
 public interface QcBillService extends SuperService<QcBillEntity> {
 
+
+    /**
+     * 暂存质检单
+     * @param dto
+     * @return
+     */
+    String draft(QcBillDTO.SaveOrUpdateDTO dto);
 }

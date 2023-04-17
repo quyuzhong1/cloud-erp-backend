@@ -380,6 +380,17 @@ public class PurchaseOrderDTO implements Serializable {
          * 公司地址
          */
         private String companyAddress;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
     }
 
 
