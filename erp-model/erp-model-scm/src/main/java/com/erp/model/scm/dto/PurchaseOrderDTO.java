@@ -398,18 +398,22 @@ public class PurchaseOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class GetQcProductDTO extends CommonDTO{
 
+        /**
+         * 供应商id
+         */
         private String supplierId;
 
-        /**
-         * 公司地址
-         */
-        private String companyAddress;
 
         /**
          * 供应商名
          */
         private String supplierName;
 
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 仓库名
          */

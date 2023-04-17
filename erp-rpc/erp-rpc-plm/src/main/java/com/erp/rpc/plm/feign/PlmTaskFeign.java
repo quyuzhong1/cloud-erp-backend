@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -91,4 +92,14 @@ public interface PlmTaskFeign {
      **/
     @GetMapping("feign/product/getByIdList")
     List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids);
+
+    /**
+     * 根据sku id 集合获取到产品包装信息
+     * @author yl
+     * @date 2023-04-17 18:37
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.ProductVO.ProductPackVO>
+     */
+    @GetMapping("feign/product/getProductPackBySkuIds")
+    List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds);
 }

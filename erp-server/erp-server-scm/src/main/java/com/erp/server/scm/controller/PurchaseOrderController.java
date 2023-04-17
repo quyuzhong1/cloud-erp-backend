@@ -417,7 +417,7 @@ public class PurchaseOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
      */
     @GetMapping(value = "/getQcProductInfo")
-    public ApiResult<PurchaseOrderDTO.GetQcProductDTO> getPurchaseOrder(@RequestParam("id") String id) {
+    public ApiResult<PurchaseOrderDTO.GetQcProductDTO> getQcProductInfo(@RequestParam("id") String id) {
         PurchaseOrderDTO.GetQcProductDTO result = purchaseOrderService.getQcProductInfo(id);
         return success(result);
     }
