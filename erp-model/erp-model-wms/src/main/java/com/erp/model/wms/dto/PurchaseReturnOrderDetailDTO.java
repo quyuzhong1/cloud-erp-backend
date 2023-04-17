@@ -202,7 +202,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 退货单价
          */
-        private String returnPrice;
+        private BigDecimal returnPrice;
 
         /**
          * 总价
