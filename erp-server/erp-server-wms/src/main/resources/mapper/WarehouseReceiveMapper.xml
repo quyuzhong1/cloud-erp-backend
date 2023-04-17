@@ -146,7 +146,8 @@
 
     <select id="generateStockInView" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GenerateStockInViewDTO">
         SELECT
-            wr.id,
+            wrd.id,
+            wrd.main_id,
             wr.purchase_order_id,
             wr.purchase_order_code,
             wr.supplier_name,

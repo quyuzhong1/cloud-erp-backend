@@ -531,9 +531,14 @@ public class WarehouseReceiveDTO {
     @NoArgsConstructor
     public static class GenerateStockInViewDTO {
         /**
-         * id
+         * 详情表id
          */
         private String id;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
 
         /**
          * 采购单Id
@@ -618,9 +623,14 @@ public class WarehouseReceiveDTO {
     @NoArgsConstructor
     public static class GenerateStockInDTO {
         /**
-         * id
+         * 详情表id
          */
         private String id;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
 
         /**
          * 入库日期
