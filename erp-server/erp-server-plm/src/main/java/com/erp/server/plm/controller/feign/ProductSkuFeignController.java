@@ -7,12 +7,10 @@ import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
-import com.erp.server.plm.service.BasicCategoryService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProductSaleService;
+import com.erp.server.plm.service.*;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -41,6 +39,13 @@ public class ProductSkuFeignController {
 
     @Resource
     private SyncKingdeeService syncKingdeeService;
+
+
+    /**
+     *产品包装信息
+     */
+    @Resource
+    private ProductPackService  productPackService;
 
     /**
      * 根据sku查询sku表信息
@@ -146,6 +151,19 @@ public class ProductSkuFeignController {
     public List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids) {
         List<ProductDetailEntity> byIdList = productDetailService.getByIdList(ids);
         return byIdList;
+    }
+
+
+    /**
+     * 根据sku id 集合获取对应产品信息
+     * @param skuIds
+     * @return
+     */
+
+    @GetMapping("/getProductPackBySkuIds")
+    public List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds) {
+        List<ProductVO.ProductPackVO> list = productPackService.getBySkuIds(skuIds);
+        return list;
     }
 
 }

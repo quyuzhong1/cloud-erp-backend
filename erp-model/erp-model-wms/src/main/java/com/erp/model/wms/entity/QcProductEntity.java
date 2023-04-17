@@ -45,8 +45,8 @@ public class QcProductEntity extends BaseEntity<QcProductEntity> {
     /**
      * 产品等级信息
      */
-    @TableField("product_grade_key")
-    private String productGradeKey;
+    @TableField("product_grade")
+    private String productGrade;
 
     /**
      * 产品长度

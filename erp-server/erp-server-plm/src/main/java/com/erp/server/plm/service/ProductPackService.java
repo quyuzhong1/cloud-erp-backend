@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
+import com.erp.model.plm.vo.ProductVO;
 
 import java.util.List;
 
@@ -56,4 +57,13 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @return ProductPackEntity
      */
     ProductPackEntity getBySkuId(String skuId);
+
+    /**
+     * 根据sku id 集合 获取到产品包装信息
+     * @author yl
+     * @date 2023-04-17 17:43
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.ProductVO.ProductPackVO>
+     */
+    List<ProductVO.ProductPackVO> getBySkuIds(List<String> skuIds);
 }

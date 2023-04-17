@@ -220,4 +220,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     PurchaseOrderDTO.GetOneDTO getPurchaseOrder(String id);
 
+    /**
+     * 根据采购订单id 获取对应产品信息
+     * @author yl
+     * @date 2023-04-17 18:27
+     * @param purchaseOrderId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     */
+    PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId);
 }

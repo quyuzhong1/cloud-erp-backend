@@ -791,7 +791,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             getOneDTO.setSupplierName(supplier.getName());
         }
         List<PurchaseOrderDetailEntity>  orderDetailList =purchaseOrderDetailService.listByPurchaseOrderId(id);
+        List<String> skuIdList=orderDetailList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+
         return getOneDTO;
+    }
+
+
+
+    /**
+     * 根据采购订单id 获取对应产品信息
+     * @author yl
+     * @date 2023-04-17 18:27
+     * @param purchaseOrderId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     */
+    @Override
+    public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
+        return null;
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.DropDownListDTO> listPurchaseOrder(PermissionsDTO dto) {
+        return baseMapper.listPurchaseOrder(dto);
     }
 
     /**
