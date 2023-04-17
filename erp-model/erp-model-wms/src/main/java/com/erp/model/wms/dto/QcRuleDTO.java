@@ -78,8 +78,8 @@ public class QcRuleDTO implements Serializable {
          * 质检类型
          */
         @NotBlank(message = "质检类型不能为空")
-        @StateEnumValue(strValues = {"stockIn", "outsideQc", "insideQc", "newProductStockIn", "b2bOutsideQc"}, message = "质检类型有误")
-        private String qcType;
+        @StateEnumValue(clazz = QcTypeEnum.class,enumCheckField="type", message = "质检类型有误")
+        private QcTypeEnum qcType;
 
         /**
          * 是否有报告

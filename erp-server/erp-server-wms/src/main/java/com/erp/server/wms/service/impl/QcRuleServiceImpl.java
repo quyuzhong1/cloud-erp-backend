@@ -68,7 +68,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public String add(QcRuleDTO.AddDTO dto) {
         //TODO 产品等级 校验
 
-        checkQcType("", dto.getQcType().getCode());
+        checkQcType("", dto.getQcType());
         //是否有质检报告
         Boolean existReport = dto.getExistReport();
         //质检报告
@@ -110,7 +110,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
      * @author yl
      * @date 2023-04-13 19:28
      */
-    private void checkQcType(String id, String qcType) {
+    private void checkQcType(String id, QcTypeEnum qcType) {
         LambdaQueryWrapper<QcRuleEntity> queryWrapper = new LambdaQueryWrapper<>();
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(QcRuleEntity::getId, id);

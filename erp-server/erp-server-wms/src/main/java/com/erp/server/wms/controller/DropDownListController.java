@@ -56,7 +56,7 @@ public class DropDownListController extends BaseController {
         List<QcRuleEntity> list= qcRuleService.list();
         List<String> qcTypes=list.stream().map(x -> x.getQcType().getCode()).collect(Collectors.toList());
         List<BaseDropDownDTO.DisabledDTO> result = Arrays.stream(QcTypeEnum.values())
-                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getType(), x.getName(),qcTypes.contains(x.getType())))
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getCode(), x.getName(),qcTypes.contains(x.getCode())))
                 .collect(Collectors.toList());
         return success(result);
     }
