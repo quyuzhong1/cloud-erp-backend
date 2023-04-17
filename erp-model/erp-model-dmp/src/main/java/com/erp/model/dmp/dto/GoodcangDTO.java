@@ -192,6 +192,11 @@ public class GoodcangDTO {
          */
         private String warehouseCode;
 
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
         public ReceivingDetailDTO(ReceivingDetailDTO dto, String warehouseCode) {
             this.productBarcode = dto.getProductBarcode();
             this.productSku = dto.getProductSku();
