@@ -350,6 +350,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             if (CollectionUtils.isNotEmpty(receiveDetails)) {
                 Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 viewProductDTO.setReceiveQty(receiveQty);
+                //未收货数量
+                viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() - receiveQty);
             }
             //退货数量
             if (CollectionUtils.isNotEmpty(returnOrderDetails)) {
@@ -359,8 +361,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
             //入库数量
             if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                Integer stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer stockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 viewProductDTO.setStockInQty(stockInQty);
+                //未入库数量
+                viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - stockInQty);
             }
         }
         return list;

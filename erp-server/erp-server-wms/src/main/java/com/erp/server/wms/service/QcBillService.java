@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.entity.QcBillEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 质检单表 服务类
@@ -21,4 +23,8 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return
      */
     String draft(QcBillDTO.SaveOrUpdateDTO dto);
+    /**
+     * 根据采购id查询
+     */
+    List<QcBillEntity> listByPoIds(List<String> poIds);
 }

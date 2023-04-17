@@ -248,6 +248,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
          * 采购数量
          */
         private Integer purchaseQty;
@@ -256,6 +261,16 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 收货数量
          */
         private Integer receiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer unReceiveQty;
+
+        /**
+         * 未入库数量
+         */
+        private Integer unStockInQty;
 
         /**
          * 入库数量

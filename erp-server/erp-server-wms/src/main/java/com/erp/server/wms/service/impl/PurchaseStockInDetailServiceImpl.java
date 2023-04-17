@@ -11,13 +11,14 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.PurchaseStockInEntity;
+import com.erp.model.wms.entity.QcBillEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.wms.feign.ProductOrderFeign;
 import com.erp.server.wms.mapper.PurchaseStorageDetailMapper;
-import com.erp.server.wms.service.ModuleOperateLogService;
-import com.erp.server.wms.service.PurchaseStockInDetailService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +51,12 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
+    @Resource
+    private QcBillService qcBillService;
+
+    @Resource
+    private PurchaseStockInService purchaseStockInService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId,String sourceType) {
@@ -59,73 +67,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         List<PurchaseStockInDetailEntity> list = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
 
         //验证关联数量
-        checkStockInQty(list,sourceType);
+        checkStockInQty(list,sourceType,mainId);
 
         //处理明细数据
         doOpHandleDetails(list,mainId);
         this.saveBatch(list);
-    }
-
-    private void checkStockInQty (List<PurchaseStockInDetailEntity> list ,String sourceType) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        List<String> ids = list.stream().map(PurchaseStockInDetailEntity::getSourceDetailId).collect(Collectors.toList());
-
-        //下推单据明细id查询
-        List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailBySourceDetailIds(ids);
-        //来源采购订单
-        if (SourceTypeEnum.PURCHASE_ORDER.getType().equals(sourceType)) {
-            List<PurchaseOrderDetailEntity> details = productOrderFeign.listPurchaseOrderDetailById(ids);
-            if (CollectionUtils.isEmpty(details)) {
-                throw new ServiceException(ApiError.ERROR_98026);
-            }
-           //下推收货单
-            List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listDetailByPodIds(ids);
-
-            for (PurchaseStockInDetailEntity detailEntity : list) {
-                //采购订单数量
-              Integer purchaseQty = details.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseQty()).findFirst().orElse(MathUtil.ZERO);
-
-                //本次入库数量
-                Integer thisStockInQty = detailEntity.getStockInQty();
-
-                //下推收货单数量
-                Integer receiveQty = MathUtil.ZERO;
-                if (CollectionUtils.isNotEmpty(receiveDetails)) {
-                     receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-                //下推入库单数量
-                Integer stockInQty = MathUtil.ZERO;
-                if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                    stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-
-                if (thisStockInQty > purchaseQty - receiveQty - stockInQty) {
-                    throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("%s入库数量不能大于",detailEntity.getSkuNo()) + (receiveQty - stockInQty)));
-                }
-            }
-        }
-        //来源收货单
-        if (SourceTypeEnum.WAREHOUSE_RECEIVE.getType().equals(sourceType)) {
-            //查收货单明细
-            List<WarehouseReceiveDetailEntity> details = warehouseReceiveDetailService.listByIds(ids);
-            if (CollectionUtils.isEmpty(details)) {
-                throw new ServiceException(ApiError.ERROR_98026);
-            }
-            for (PurchaseStockInDetailEntity detailEntity : list) {
-                //收货单下推入库单数量
-                Integer stockInQty = MathUtil.ZERO;
-                if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                    stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-
-            }
-
-
-        }
-
-
     }
 
     @Override
@@ -145,6 +91,9 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             this.removeByIds(deleteIds);
         }
         List<PurchaseStockInDetailEntity> newList = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
+
+        //验证关联数量
+        checkStockInQty(newList,sourceType,mainId);
 
         //处理明细id及操作日志
         doOpHandleDetails(newList,mainId);
@@ -191,6 +140,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         return baseMapper.getStockInQty(purchaseOrderDetailId);
     }
 
+
+    private List<PurchaseStockInDetailEntity> listDetailByPodIds(List<String> podIds) {
+        return lambdaQuery().in(PurchaseStockInDetailEntity::getPurchaseOrderDetailId,podIds).list();
+    }
+
     /**
      * 处理明细中的数据id
      */
@@ -211,6 +165,78 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
+        }
+    }
+
+    /**
+     * @description: 验证数量
+     * @author Will
+     * @date: 2023/4/17 16:04
+     * @param list
+     * @param sourceType
+     */
+    private void checkStockInQty (List<PurchaseStockInDetailEntity> list ,String sourceType,String mainId) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> ids = list.stream().map(PurchaseStockInDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
+        PurchaseStockInEntity entity = purchaseStockInService.getById(mainId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98050);
+        }
+
+        //判断是否存在质检单、存在且未质检完成则不支持入库
+        List<QcBillEntity> qcList =  qcBillService.listByPoIds(Arrays.asList(entity.getId()));
+        if (CollectionUtils.isNotEmpty(qcList)) {
+           Long count = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.getCode().equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.getCode().equals(obj.getQcStatus())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_99010);
+            }
+        }
+
+        //下推单据明细id查询
+        List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
+        //来源采购订单
+            List<PurchaseOrderDetailEntity> details = productOrderFeign.listPurchaseOrderDetailById(ids);
+            if (CollectionUtils.isEmpty(details)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+
+            //查收货单明细
+            List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
+            if (CollectionUtils.isEmpty(details)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+
+            for (PurchaseStockInDetailEntity detailEntity : list) {
+
+                //采购订单数量
+                Integer purchaseQty = details.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseQty()).findFirst().orElse(MathUtil.ZERO);
+
+                //本次入库数量
+                Integer thisStockInQty = detailEntity.getStockInQty();
+
+                //下推入库单数量
+                Integer stockInQty = MathUtil.ZERO;
+
+                if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                    stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+
+                if (thisStockInQty > purchaseQty - stockInQty) {
+                    throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty)));
+                }
+                //来源收货单
+                if (SourceTypeEnum.WAREHOUSE_RECEIVE.getType().equals(sourceType)) {
+                    //收货数量
+                    Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).findFirst().orElse(MathUtil.ZERO);
+
+                    //数量验证
+                    if (thisStockInQty > receiveQty) {
+                        throw new ServiceException(new ApiResult(1,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
+                    }
+                }
         }
     }
 }

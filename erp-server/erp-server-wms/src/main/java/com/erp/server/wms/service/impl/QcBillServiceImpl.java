@@ -7,6 +7,8 @@ import com.erp.server.wms.mapper.QcBillMapper;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * <p>
  * 质检单表 服务实现类
@@ -27,5 +29,10 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
     @Override
     public String draft(QcBillDTO.SaveOrUpdateDTO dto) {
         return null;
+    }
+
+    @Override
+    public List<QcBillEntity> listByPoIds(List<String> poIds) {
+        return lambdaQuery().in(QcBillEntity::getPurchaseOrderId,poIds).list();
     }
 }

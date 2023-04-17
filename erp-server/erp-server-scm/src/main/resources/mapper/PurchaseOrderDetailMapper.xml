@@ -36,6 +36,7 @@
             pod.sku_no as skuNo,
             pod.product_name as productName,
             pod.purchase_qty as purchaseQty,
+            pod.plan_delivery_date as planDeliveryDate,
             po.receive_org_name as receiveOrgName,
             pod.is_gift as isGift,
             pod.is_urgent as isUrgent,

@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum QcBillStatusEnum {
 
     DRAFT("draft","暂存"),
-    wait_qc("waitQc","待质检"),
+    WAIT_QC("waitQc","待质检"),
     EXEMPTION("exemption","免检"),
-    finish_qc("finishQc","已质检"),
+    FINISH_QC("finishQc","已质检"),
     CANCEL("cancel","取消");
 
     /**

@@ -794,11 +794,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return getOneDTO;
     }
 
-    @Override
-    public List<PurchaseOrderDTO.DropDownListDTO> listPurchaseOrder(PermissionsDTO dto) {
-        return baseMapper.listPurchaseOrder(dto);
-    }
-
     /**
      * 处理数据id
      */
