@@ -28,6 +28,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -567,7 +568,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return Boolean.TRUE;
     }
 
-
     /**
      * 采购订单-关联的退货订单
      * @Author Luo_WG
@@ -577,7 +577,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     public List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(String purchaseOrderId) {
-        List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = baseMapper.purchaseOrderRefReceive(purchaseOrderId);
+        List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = baseMapper.purchaseOrderRefReturn(purchaseOrderId);
         //获取采购单详情表id集合
         List<String> orderDetailIds = orderRefReceiveDTOS.stream().map(PurchaseReturnOrderDTO.OrderRefReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
@@ -588,20 +588,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
+            orderRefReceiveDTO.setReturnModeName(ReturnModeEnum.getName(orderRefReceiveDTO.getCode()));
             orderRefReceiveDTO.setProductName(purchaseOrderDetailEntity.getProductName());
         }
         return orderRefReceiveDTOS;
-    }
-
-    /**
-     * 获取产品签收数量
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:47
-     * @param PurchaseOrderId PurchaseOrderId
-     * @param skuId skuId
-     * @return java.lang.Integer
-     **/
-    private Integer getReceiveQty(String PurchaseOrderId, String skuId) {
-        return baseMapper.getReceiveQty(PurchaseOrderId, skuId);
     }
 }

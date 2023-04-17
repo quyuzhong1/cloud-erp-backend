@@ -27,7 +27,7 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
 
     Integer getReceiveQty(@Param("PurchaseOrderId") String PurchaseOrderId, @Param("skuId") String skuId);
 
-    List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(@Param("purchaseOrderId") String purchaseOrderId);
+    List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
 
     List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(@Param("id") String id);
 

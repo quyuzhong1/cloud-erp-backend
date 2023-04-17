@@ -599,6 +599,11 @@ public class PurchaseReturnOrderDTO {
         private String returnMode;
 
         /**
+         * 退货方式名称
+         */
+        private String returnModeName;
+
+        /**
          * 采购员名称
          */
         private String purchaseUserName;

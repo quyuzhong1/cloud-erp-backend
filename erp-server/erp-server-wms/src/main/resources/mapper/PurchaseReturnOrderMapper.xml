@@ -109,7 +109,7 @@
         AND wrd.skuId = #{skuId}
     </select>
 
-    <select id="purchaseOrderRefReceive" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$OrderRefReceiveDTO">
+    <select id="purchaseOrderRefReturn" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$OrderRefReceiveDTO">
         SELECT
         pro.id,
         pro.code,
