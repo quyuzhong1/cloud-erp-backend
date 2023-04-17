@@ -179,6 +179,17 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         return lambdaQuery().in(PurchaseStockInDetailEntity::getSourceDetailId,sourceDetailIds).list();
     }
 
+    /**
+     * 根据采购订单详情表Id查询入库详情
+     * @Author Luo_WG
+     * @Date 2023/4/17 15:58
+     * @param purchaseOrderDetailId purchaseOrderDetailId
+     * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
+     **/
+    @Override
+    public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(String purchaseOrderDetailId) {
+        return lambdaQuery().eq(PurchaseStockInDetailEntity::getPurchaseOrderDetailId, purchaseOrderDetailId).list();
+    }
 
     /**
      * 处理明细中的数据id

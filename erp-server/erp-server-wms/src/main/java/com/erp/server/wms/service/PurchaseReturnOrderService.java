@@ -142,11 +142,11 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
 
 
     /**
-     * 采购订单-关联的收货单据
+     * 采购订单-关联的退货订单
      * @Author Luo_WG
      * @Date 2023/4/13 18:47
      * @param purchaseOrderId purchaseOrderId
      * @return java.lang.Integer
      **/
-    List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId);
+    List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(String purchaseOrderId);
 }

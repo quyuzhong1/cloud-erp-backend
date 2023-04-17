@@ -30,6 +30,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -151,8 +152,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取用户信息
         SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
-        //获取用户部门
-        SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(dto.getReturnUserId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
         //获取仓库信息
@@ -178,6 +177,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
         purchaseReturnOrderEntity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         purchaseReturnOrderEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
+        purchaseReturnOrderEntity.setSourceId(dto.getSourceId());
+        purchaseReturnOrderEntity.setSourceType(dto.getSourceType());
         //保存主表信息
         this.save(purchaseReturnOrderEntity);
 
@@ -253,6 +254,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         viewDTO.setPurchaseUserDeptId(purchaseUserDept.getId());
         viewDTO.setPurchaseUserDeptName(purchaseUserDept.getName());
 
+        if (SourceTypeEnum.QC_BILL.getType().equals(PurchaseReturnOrderEntity.getSourceType())) {
+            viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getCode());
+        } else {
+            viewDTO.setSourceTypeName(ReturnOrderSourceEnum.OTHER.getCode());
+        }
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
@@ -558,14 +564,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
 
     /**
-     * 采购订单-关联的收货单据
+     * 采购订单-关联的退货订单
      * @Author Luo_WG
      * @Date 2023/4/13 18:47
      * @param purchaseOrderId purchaseOrderId
      * @return java.lang.Integer
      **/
     @Override
-    public List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId) {
+    public List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(String purchaseOrderId) {
         List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = baseMapper.purchaseOrderRefReceive(purchaseOrderId);
         //获取采购单详情表id集合
         List<String> orderDetailIds = orderRefReceiveDTOS.stream().map(PurchaseReturnOrderDTO.OrderRefReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());

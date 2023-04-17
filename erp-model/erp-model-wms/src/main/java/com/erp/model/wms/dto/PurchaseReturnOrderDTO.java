@@ -293,6 +293,11 @@ public class PurchaseReturnOrderDTO {
         private String sourceType;
 
         /**
+         * 退货来源名称
+         */
+        private String sourceTypeName;
+
+        /**
          * 退货仓库id
          */
         private String returnWarehouseId;
