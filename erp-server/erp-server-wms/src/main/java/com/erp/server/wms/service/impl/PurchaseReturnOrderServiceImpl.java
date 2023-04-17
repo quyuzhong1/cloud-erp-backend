@@ -15,7 +15,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -27,7 +26,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -40,6 +38,7 @@ import com.erp.server.wms.mapper.PurchaseReturnOrderMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -65,7 +64,7 @@ import java.util.stream.Collectors;
  * @author LUO_WG
  * @since 2023-04-07
  */
-@Log4j
+@Slf4j
 @Service
 public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseReturnOrderMapper, PurchaseReturnOrderEntity> implements PurchaseReturnOrderService {
 
@@ -92,6 +91,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     @Resource
     private PurchaseStockInService purchaseStockInService;
+
+    @Resource
+    private PurchaseStockInDetailService purchaseStockInDetailService;
 
     /**
      * 主页分页查询
@@ -254,6 +256,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         viewDTO.setPurchaseUserDeptId(purchaseUserDept.getId());
         viewDTO.setPurchaseUserDeptName(purchaseUserDept.getName());
 
+
+
         if (SourceTypeEnum.QC_BILL.getType().equals(PurchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getCode());
         } else {
@@ -271,6 +275,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> detailId = detail.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(detailId);
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
+
+            List<PurchaseStockInDetailEntity> purchaseStockInDetailEntities = purchaseStockInDetailService.listDetailBySourceDetailIds(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId());
+            //purchaseStockInDetailEntities.stream().filter()
+
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
             BeanMapperUtils.copy(purchaseReturnOrderDetailEntity,detailView);
             //获取采购单详情
