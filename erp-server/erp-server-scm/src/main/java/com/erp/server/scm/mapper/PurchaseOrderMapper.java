@@ -3,6 +3,7 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -46,4 +47,12 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+    /**
+     * @description: 查询采购订单列表
+     * @author Will
+     * @date: 2023/4/17 9:35
+     * @param params
+     * @return List<DropDownListDTO>
+     */
+    List<PurchaseOrderDTO.DropDownListDTO> listPurchaseOrder(@Param("params") PermissionsDTO params);
 }

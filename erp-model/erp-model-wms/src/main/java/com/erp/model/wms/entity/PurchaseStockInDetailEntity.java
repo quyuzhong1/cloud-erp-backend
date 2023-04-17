@@ -40,12 +40,6 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     private String skuNo;
 
     /**
-     * 产品名称
-     */
-    @TableField("product_name")
-    private String productName;
-
-    /**
      * 变体信息
      */
     @TableField("variant_property")

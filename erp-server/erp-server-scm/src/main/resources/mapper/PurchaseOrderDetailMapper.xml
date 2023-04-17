@@ -46,7 +46,7 @@
         <where>
             po.is_deleted = false and po.approve_status = 'approve' and po.invalid_status = false
             <if test="params.purchaseOrderId != null and params.purchaseOrderId != ''">
-                and po.purchase_order_id = #{params.purchaseOrderId}
+                and po.id = #{params.purchaseOrderId}
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and pod.sku_no in

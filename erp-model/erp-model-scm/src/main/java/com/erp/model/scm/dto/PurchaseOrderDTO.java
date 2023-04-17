@@ -366,6 +366,23 @@ public class PurchaseOrderDTO implements Serializable {
         private PurchaseOrderRefOtherDTO  purchaseOrderRefOtherDTO;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class GetOneDTO extends CommonDTO{
+
+        /**
+         * 采购供应商信息
+         */
+        private PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO;
+
+        /**
+         * 公司地址
+         */
+        private String companyAddress;
+    }
+
+
     @Data
     @NoArgsConstructor
     public static class ExportPdfDTO {
@@ -669,5 +686,18 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购变更单
          */
         private List<PurchaseChangeDTO.ListDTO> purchaseChangeList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownListDTO {
+        /**
+         * 采购id
+         */
+        String id;
+        /**
+         * 采购单号
+         */
+        private String code;
     }
 }

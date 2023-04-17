@@ -459,6 +459,26 @@ public class PurchaseStockInDTO implements Serializable {
         private String sourceDetailId;
 
         /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * 退货人id
          */
         private String returnUserId;

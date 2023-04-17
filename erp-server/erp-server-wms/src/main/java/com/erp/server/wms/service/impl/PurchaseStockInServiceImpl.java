@@ -24,6 +24,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -31,9 +32,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
-import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -92,6 +91,11 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
 
     @Resource
     private PurchaseStockInDetailService purchaseStockInDetailService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
+
 
     @Override
     public PagingVO<PurchaseStockInDTO.ListDTO> paging(PagingDTO<PurchaseStockInDTO.SearchParamDTO> pagingDTO) {
@@ -162,7 +166,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //校验明细是否有重复sku
         checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
-        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),entity);
+        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),dto.getPurchaseOrderId(),entity);
         log.info("采购入库单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
@@ -187,7 +191,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //校验明细是否有重复sku
         checkUpdateDetailsRepeatSku(details);
         //处理数据id
-        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),entity);
+        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),dto.getPurchaseOrderId(),entity);
 
         log.info("采购入库单修改，id=【{}】", dto.getId());
 
@@ -432,11 +436,21 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         if (CollectionUtils.isEmpty(skuList)) {
             return list;
         }
+        List<String> resultIds = new ArrayList<>();
         for (PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
             dto.setSourceType(SourceTypeEnum.PURCHASE_RETURN_ORDER.getType());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
+
+            //相同采购单号清空后面数据的采购单号和供应商
+            boolean contains = list.contains(dto.getPurchaseOrderId());
+            if (contains) {
+                dto.setPurchaseOrderCode(null);
+                dto.setSupplierName(null);
+                continue;
+            }
+            resultIds.add(dto.getPurchaseOrderId());
         }
         return list;
     }
@@ -444,12 +458,55 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     @Override
     public Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
-        for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO generateDto : list) {
-            //退货人
+        //查询实退数量
+        List<String> sourceIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
+        List<String> sourceDetailIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceDetailId).collect(Collectors.toList());
+        //来源单据为采购入库单
+        List<PurchaseStockInEntity> sourceList = this.listByIds(sourceIds);
+        if (CollectionUtils.isEmpty(sourceList)) {
+            throw new ServiceException(ApiError.ERROR_98050);
+        }
+        List<PurchaseStockInDetailEntity> sourceDetailList = purchaseStockInDetailService.listByIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(sourceDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98051);
+        }
+        List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
+        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
+        for ( Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
+            String sourceId = entry.getKey();
+            List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
+            PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
+            //采购单
+            PurchaseStockInEntity purchaseStockInEntity = sourceList.stream().filter(obj -> obj.getSourceId().equals(sourceId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseStockInEntity)) {
+                throw new ServiceException(ApiError.ERROR_98050);
+            }
+            BeanMapperUtils.copy(purchaseStockInEntity,addDTO);
+            addDTO.setSourceType(value.get(0).getSourceType());
+            addDTO.setSourceId(sourceId);
+            List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO detail: value) {
+                PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                //验证退货数量
+                Integer stockInQty = sourceDetailList.stream().filter(obj -> obj.getId().equals(detail.getSourceDetailId())).map(e -> e.getStockInQty()).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(stockInQty)) {
+                    throw new ServiceException(1,String.format("SKU【%s】未找到对应数量",detail.getSkuNo()));
+                }
+                if (MathUtil.compareTo(detail.getRealityReturnQty(),stockInQty) > 0) {
+                    throw new ServiceException(1,String.format("SKU【%s】实退数量不能大于【%s】",detail.getSkuNo(),stockInQty));
+                }
+                BeanMapperUtils.copy(detail,addDetailDTO);
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setPurchasePriceDetailList(addDetailList);
+            addList.add(addDTO);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            // TODO
         }
 
-        return null;
+        return Boolean.TRUE;
     }
 
     /**
@@ -507,7 +564,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId (String stockInDeptId, String stockInUserId, String deliveryWarehouseId, PurchaseStockInEntity entity) {
+    private void doOpHandleDataId (String stockInDeptId, String stockInUserId, String deliveryWarehouseId,String purchaseOrderId, PurchaseStockInEntity entity) {
 
         //入库员
         if (StringUtils.isNotBlank(stockInUserId)) {
@@ -534,6 +591,12 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             }
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDeliveryWarehouseName(warehouseName);
+        }
+
+        //查询采购订单信息
+        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(purchaseOrderId);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
         }
     }
 

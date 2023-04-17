@@ -768,6 +768,36 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return null;
     }
 
+    @Override
+    public PurchaseOrderDTO.GetOneDTO getPurchaseOrder(String id) {
+        PurchaseOrderDTO.GetOneDTO getOneDTO = new PurchaseOrderDTO.GetOneDTO();
+        PurchaseOrderEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        BeanMapperUtils.copy(entity,getOneDTO);
+
+        //采购供应商信息
+        PurchaseOrderSupplierDTO.UpdateDTO updateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        BeanMapperUtils.copy(purchaseOrderSupplierEntity,updateDTO);
+        getOneDTO.setPurchaseOrderSupplierDTO(updateDTO);
+        //供应商地址
+        SupplierEntity supplier = supplierService.getById(purchaseOrderSupplierEntity.getSupplierId());
+        if (ObjectUtils.isNotEmpty(supplier)) {
+            getOneDTO.setCompanyAddress(supplier.getCompanyAddress());
+        }
+        return getOneDTO;
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.DropDownListDTO> listPurchaseOrder(PermissionsDTO dto) {
+        return  baseMapper.listPurchaseOrder(dto);
+    }
+
     /**
      * 处理数据id
      */
