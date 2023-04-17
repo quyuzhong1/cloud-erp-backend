@@ -251,14 +251,19 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      */
     private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
 
+        //添加操作日志
+        List<PurchaseOrderDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchaseOrderId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), addPairList, "编辑操作");
+        }
+
         for (PurchaseOrderDetailEntity entity : newList) {
             entity.setPurchaseOrderId(purchaseOrderId);
             entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
             entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
             //操作日志
-            if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"编辑操作");
-            } else {
+            if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseOrderDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98026);

@@ -219,13 +219,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return UpdateDTO
      */
     PurchaseOrderDTO.GetOneDTO getPurchaseOrder(String id);
-    /**
-     * @description: 根据id查询采购订单
-     * @author Will
-     * @date: 2023/4/17 9:20
-     * @param dto
-     * @return List<PurchaseOrderDTO.DropDownListDTO>
-     */
-    List<PurchaseOrderDTO.DropDownListDTO> listPurchaseOrder(PermissionsDTO dto);
 
 }

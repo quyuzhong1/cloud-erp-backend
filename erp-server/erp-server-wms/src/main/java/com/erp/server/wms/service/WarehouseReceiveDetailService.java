@@ -2,7 +2,6 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 
 import java.util.List;
@@ -60,4 +59,12 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * @return java.lang.Boolean
      **/
     List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId);
+    /**
+     * 根据订单明细ids查询
+     * @author Will
+     * @date: 2023/4/17 12:10
+     * @param podIds
+     * @return List<WarehouseReceiveDetailEntity>
+     */
+    List<WarehouseReceiveDetailEntity> listDetailByPodIds(List<String> podIds);
 }

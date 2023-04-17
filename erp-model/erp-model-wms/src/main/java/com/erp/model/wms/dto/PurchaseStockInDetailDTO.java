@@ -32,9 +32,9 @@ public class PurchaseStockInDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 入库数量
+         * 已入库数量
          */
-        private String stockInQty;
+        private String hasStockInQty;
 
         /**
          * 产品名称
@@ -55,7 +55,7 @@ public class PurchaseStockInDetailDTO implements Serializable {
         @NotNull(message = "实收数量不能为空")
         @Min(value = 1,message = "实收数量最小值为1")
         @Max(value = 99999999,message = "实收数量最大值为99999999")
-        private Integer receiveQty;
+        private Integer stockInQty;
 
         /**
          * 超收数量

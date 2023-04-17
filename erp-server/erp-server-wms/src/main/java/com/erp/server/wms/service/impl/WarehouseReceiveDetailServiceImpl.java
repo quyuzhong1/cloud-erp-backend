@@ -152,6 +152,12 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         queryWrapper.eq(WarehouseReceiveDetailEntity::getMainId, mainId);
         return this.list(queryWrapper);
     }
+
+    @Override
+    public List<WarehouseReceiveDetailEntity> listDetailByPodIds(List<String> podIds) {
+        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId,podIds).list();
+    }
+
     @Override
     public List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
         return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId,purchaseDetailIds).list();

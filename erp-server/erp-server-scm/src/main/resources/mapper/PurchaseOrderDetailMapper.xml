@@ -40,7 +40,8 @@
             pod.is_gift as isGift,
             pod.is_urgent as isUrgent,
             pod.remark as remark,
-            pod.id as purchaseOrderDetailId
+            pod.id as purchaseOrderDetailId,
+            pod.variant_property
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         <where>

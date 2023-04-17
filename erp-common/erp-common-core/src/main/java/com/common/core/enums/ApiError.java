@@ -412,6 +412,7 @@ public enum ApiError implements Serializable {
     ERROR_99006(99006,"采购单明细信息不存在"),
     ERROR_99007(99007,"质检类型已存在"),
     ERROR_99008(98008,"未找到对应退货数据"),
+    ERROR_99009(98009,"收货单未找到"),
 
 
     ERROR_end(1000000, "系统错误");

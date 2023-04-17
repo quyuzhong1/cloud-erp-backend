@@ -285,18 +285,4 @@
         </where>
     </select>
 
-    <select id="listPurchaseOrder" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$DropDownListDTO">
-        select
-               po.id,
-               po.code
-        from purchase_order po
-        <where>
-            po.is_deleted = false and po.approve_status = 'approve' and po.invalid_status = false
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
-            </if>
-        </where>
-        order by po.create_time desc
-    </select>
-
 </mapper>

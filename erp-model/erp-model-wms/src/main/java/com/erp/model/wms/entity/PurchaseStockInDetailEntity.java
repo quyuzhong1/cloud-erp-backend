@@ -93,6 +93,11 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 采购订单明细id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
 
     public static final String MAIN_ID = "main_id";
 

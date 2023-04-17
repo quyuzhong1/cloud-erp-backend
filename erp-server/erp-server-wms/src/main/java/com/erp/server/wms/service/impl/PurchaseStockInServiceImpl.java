@@ -165,8 +165,10 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         BeanMapperUtils.copy(dto,entity);
         //校验明细是否有重复sku
         checkAddDetailsRepeatSku(dto.getDetails());
+        //添加采购订单默认值
+        addDefaultPurchaseData(dto.getPurchaseOrderId(),entity);
         //处理数据id
-        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),dto.getPurchaseOrderId(),entity);
+        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),entity);
         log.info("采购入库单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
@@ -177,7 +179,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             //操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购入库单【%s】",code), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),entity.getId(),"新增操作");
             //新增明细
-            purchaseStockInDetailService.add(dto.getDetails(),entity.getId());
+            purchaseStockInDetailService.add(dto.getDetails(),entity.getId(),dto.getSourceType());
         }
         return entity.getId();
     }
@@ -191,7 +193,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //校验明细是否有重复sku
         checkUpdateDetailsRepeatSku(details);
         //处理数据id
-        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),dto.getPurchaseOrderId(),entity);
+        doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),entity);
 
         log.info("采购入库单修改，id=【{}】", dto.getId());
 
@@ -201,7 +203,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //更新主表数据
         this.updateById(entity);
         //更新明细数据
-        purchaseStockInDetailService.update(details,entity.getId());
+        purchaseStockInDetailService.update(details,entity.getId(),old.getSourceType());
         return Boolean.TRUE;
     }
 
@@ -560,11 +562,34 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         }
         return list;
     }
+    /**
+     * 新增添加默认值
+     */
+    private void addDefaultPurchaseData(String purchaseOrderId, PurchaseStockInEntity entity) {
+        //查询采购订单信息
+        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(purchaseOrderId);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        entity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
+        entity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
+        entity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
+        entity.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
+        entity.setPurchaseDeptName(purchaseOrderEntity.getPurchaseDeptName());
+
+        //查询采购供应商
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        entity.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+        entity.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
+    }
 
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId (String stockInDeptId, String stockInUserId, String deliveryWarehouseId,String purchaseOrderId, PurchaseStockInEntity entity) {
+    private void doOpHandleDataId (String stockInDeptId, String stockInUserId, String deliveryWarehouseId, PurchaseStockInEntity entity) {
 
         //入库员
         if (StringUtils.isNotBlank(stockInUserId)) {
@@ -591,12 +616,6 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             }
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDeliveryWarehouseName(warehouseName);
-        }
-
-        //查询采购订单信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(purchaseOrderId);
-        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-            throw new ServiceException(ApiError.ERROR_98025);
         }
     }
 

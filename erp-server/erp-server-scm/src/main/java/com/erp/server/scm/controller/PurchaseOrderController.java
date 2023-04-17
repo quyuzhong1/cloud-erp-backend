@@ -396,7 +396,7 @@ public class PurchaseOrderController extends BaseController {
 
 
     /**
-     * 根据采购订单id查询
+     * 查询单个采购订单
      * @author Will
      * @date: 2023/4/17 9:14
      * @param id
@@ -406,18 +406,6 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult<PurchaseOrderDTO.GetOneDTO> getPurchaseOrder(@RequestParam("id") String id) {
         PurchaseOrderDTO.GetOneDTO getOneDTO = purchaseOrderService.getPurchaseOrder(id);
         return success(getOneDTO);
-    }
-
-    /**
-     * 查询采购订单下拉框
-     * @author Will
-     * @date: 2023/4/17 9:14
-     * @return ApiResult<List<DropDownListDTO>>
-     */
-    @PostMapping(value = "/listPurchaseOrder")
-    public ApiResult<List<PurchaseOrderDTO.DropDownListDTO>> listPurchaseOrder(@RequestBody PermissionsDTO dto) {
-        List<PurchaseOrderDTO.DropDownListDTO> list = purchaseOrderService.listPurchaseOrder(dto);
-        return success(list);
     }
 
     /**

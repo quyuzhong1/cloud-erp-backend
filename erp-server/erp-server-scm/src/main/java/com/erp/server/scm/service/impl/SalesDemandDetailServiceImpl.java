@@ -111,16 +111,21 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         //仓库信息
         List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
+
+        //添加操作日志
+        List<SalesDemandDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(salesDemandId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.SALES_DEMAND.getCode(), addPairList, "编辑操作");
+        }
         for (SalesDemandDetailEntity entity : newList) {
             entity.setSalesDemandId(salesDemandId);
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
                 entity.setDestWarehouseName(warehouseName);
             }
-            //操作日志
-            if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】明细",entity.getSkuNo()), ModuleTypeEnum.SALES_DEMAND.getCode(),salesDemandId,"编辑操作");
-            } else {
+            //修改操作日志
+            if (StringUtils.isNotBlank(entity.getId())) {
                 SalesDemandDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);

@@ -22,7 +22,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param details
      * @param mainId
      */
-    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId);
+    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId ,String sourceType);
     /**
      * @description: 修改明细
      * @author Will
@@ -30,7 +30,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param details
      * @param mainId
      */
-    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId);
+    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId,String sourceType);
     /**
      * @description: 根据主表ids删除
      * @author Will

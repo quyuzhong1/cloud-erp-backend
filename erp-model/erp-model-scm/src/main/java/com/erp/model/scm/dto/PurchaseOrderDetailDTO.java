@@ -292,5 +292,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private String purchaseOrderDetailId;
 
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
     }
 }
