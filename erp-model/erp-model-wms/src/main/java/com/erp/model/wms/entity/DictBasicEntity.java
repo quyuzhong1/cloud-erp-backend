@@ -23,11 +23,12 @@ import java.io.Serializable;
 @TableName("dict_basic")
 public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
 
+
     /**
-     * key 查询依据
+     * 备注 用到需要 用到的地方
      */
-    @TableField("key")
-    private String key;
+    @TableField("remark")
+    private String remark;
 
     /**
      * value 使用值
@@ -36,7 +37,7 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
     private String value;
 
     /**
-     * type 分组
+     * type
      */
     @TableField("type")
     private String type;

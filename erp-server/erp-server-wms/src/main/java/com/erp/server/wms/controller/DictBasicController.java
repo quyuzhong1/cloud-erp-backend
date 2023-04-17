@@ -41,6 +41,10 @@ public class DictBasicController extends BaseController {
 
     /**
      * 获取对应字典数据
+     * warehouseType 仓库类型
+     * qcProblemType 质检单 问题属性
+     * handleModeType 质检单 处理措施
+     * qcReportResult 质检单 质检报告结果
      *
      * @return
      */

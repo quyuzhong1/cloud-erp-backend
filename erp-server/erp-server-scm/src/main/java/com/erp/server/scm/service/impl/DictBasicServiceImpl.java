@@ -74,14 +74,14 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             return new ArrayList<>();
         }
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DictBasicEntity::getKey, keyList);
+        queryWrapper.in(DictBasicEntity::getType, keyList);
         return this.list(queryWrapper);
     }
 
 
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DictBasicEntity::getKey, key);
+        queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);
     }
 }

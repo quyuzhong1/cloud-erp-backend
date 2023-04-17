@@ -51,6 +51,12 @@ public class QcBillDTO implements Serializable {
 
 
         /**
+         * 质检信息
+         */
+        private QcInfoDTO.AddDTO qcInfo;
+
+
+        /**
          * 质检报告明细
          */
         @Valid

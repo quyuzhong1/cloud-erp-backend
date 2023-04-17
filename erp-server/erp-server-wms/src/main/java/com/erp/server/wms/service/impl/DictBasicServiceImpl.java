@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.service.RedisService;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -10,6 +12,7 @@ import com.erp.server.wms.service.DictBasicService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +28,9 @@ import java.util.List;
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
 
+    @Resource
+    private RedisService redisService;
+
     /**
      * 保存或者修改字典信息
      *
@@ -38,9 +44,14 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        List<DictBasicEntity> addList = new ArrayList<>(list.size());
-        addList = BeanMapper.copyList(list, DictBasicEntity.class);
-        return this.saveOrUpdateBatch(addList);
+        List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        Boolean result = this.saveOrUpdateBatch(addList);
+        //当保存成功
+        if (result) {
+            String redisKey = RedisCacheConstants.WMS_DICT_KEY;
+            redisService.deleteObject(redisKey);
+        }
+        return result;
     }
 
 
@@ -74,15 +85,25 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             return new ArrayList<>();
         }
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DictBasicEntity::getKey, keyList);
+        queryWrapper.in(DictBasicEntity::getType, keyList);
         return this.list(queryWrapper);
     }
 
 
     private List<DictBasicEntity> listByKey(String key) {
+        String redisKey = RedisCacheConstants.WMS_DICT_KEY;
+        List<DictBasicEntity> dictList = redisService.getCacheList(redisKey);
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            return dictList;
+        }
+
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DictBasicEntity::getKey, key);
+        queryWrapper.eq(DictBasicEntity::getType, key);
         queryWrapper.orderByAsc(DictBasicEntity::getSort);
-        return this.list(queryWrapper);
+        List<DictBasicEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(list)) {
+            redisService.setCacheList(redisKey, list);
+        }
+        return list;
     }
 }

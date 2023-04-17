@@ -30,4 +30,10 @@ public interface RedisCacheConstants {
      */
     String PERMISSIONS_CODE_KEY = "permissions_code:";
 
+    /**
+     * wms dic 的 key
+     */
+    String WMS_DICT_KEY = "wms_dict";
+
+
 }
