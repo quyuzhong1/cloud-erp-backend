@@ -248,7 +248,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.GenerateStockInViewDTO dto) {
+    public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.GenerateStockInDTO dto) {
         Boolean flag = warehouseReceiveService.generateStockIn(dto);
         return flag == true ? success() : failure();
     }

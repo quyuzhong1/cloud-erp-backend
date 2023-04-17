@@ -615,7 +615,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInViewDTO dto) {
+    public Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInDTO dto) {
         PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
         addDTO.setSourceId(dto.getId());
         addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());

@@ -173,7 +173,7 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInViewDTO dto);
+    Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInDTO dto);
 
     /**
      * 采购订单-关联的收货单据
