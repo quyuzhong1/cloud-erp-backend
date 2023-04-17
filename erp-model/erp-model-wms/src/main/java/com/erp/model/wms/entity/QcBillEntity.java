@@ -3,6 +3,7 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -70,7 +71,7 @@ public class QcBillEntity extends BaseEntity<QcBillEntity> {
      * 质检状态
      */
     @TableField("qc_status")
-    private String qcStatus;
+    private QcBillStatusEnum qcStatus;
 
     /**
      * 质检日期

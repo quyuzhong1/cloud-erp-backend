@@ -18,4 +18,8 @@ import com.common.core.controller.BaseController;
 @RequestMapping("/qcBill")
 public class QcBillController extends BaseController {
 
+
+
+
+
 }

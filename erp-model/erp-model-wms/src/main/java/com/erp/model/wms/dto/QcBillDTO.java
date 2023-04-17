@@ -4,8 +4,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -46,6 +48,18 @@ public class QcBillDTO implements Serializable {
          * 产品信息
          */
         private QcProductDTO.AddDTO qcProduct;
+
+
+        /**
+         * 质检报告明细
+         */
+        @Valid
+        private List<QcReportDetailDTO.AddDTO> reportDetailList;
+
+        /**
+         * 质检单备注 集合
+         */
+        private List<String> remarkList;
 
 
     }
