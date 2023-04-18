@@ -6,7 +6,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.SystemConstants;
@@ -31,12 +30,10 @@ import com.erp.server.dmp.service.CfgApiFieldMapValueService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -464,7 +461,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             kingdeeCommonService.insertSyncLog(platformEntity, orderNo, JSONUtil.toJsonStr(dataMap),"未配置同步字段", modelType, ApiSendStatusEnum.FAILURE.getCode());
             throw new ServiceException(ApiError.ERROR_97025);
         }
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, mapList);
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, platformEntity.getId(),modelType);
         SaveResult saveResult = apiUtils.save(new SaveParam<>(json));
         boolean save = saveResult.isSuccessfully();
         kingdeeCommonService.insertSyncLog(platformEntity, orderNo, JSONUtil.toJsonStr(dataMap),"保存直接调拨单到金蝶", modelType, save ? ApiSendStatusEnum.SUCCESS.getCode() : ApiSendStatusEnum.FAILURE.getCode());

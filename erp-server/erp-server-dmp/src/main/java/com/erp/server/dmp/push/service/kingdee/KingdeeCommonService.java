@@ -147,8 +147,6 @@ public interface KingdeeCommonService {
      * @param number
      */
     void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number);
-    String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
-
     /**
      * 保存到金蝶数据
      * @param orderNo
