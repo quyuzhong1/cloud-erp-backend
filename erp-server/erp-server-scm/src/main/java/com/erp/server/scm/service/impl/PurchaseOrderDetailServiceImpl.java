@@ -352,6 +352,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //未收货数量
             viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() - receiveQty);
 
+            //超收数量
+            Integer exceedQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(receiveDetails)) {
+                exceedQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            viewProductDTO.setExceedQty(exceedQty);
+
             //退货数量
             Integer realityReturnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetails)) {

@@ -283,6 +283,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer realityReturnQty;
 
         /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
          * 收料组织名称
          */
         private String  receiveOrgName;
