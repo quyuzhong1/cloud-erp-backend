@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -26,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
@@ -59,9 +61,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -152,18 +159,24 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
 
+
                 //获取签收数量
-                WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = new WarehouseReceiveDTO.GetReceiveDTO();
-                getReceiveDTO.setPurchaseOrderId(obj.getId());
-                getReceiveDTO.setSkuId(obj.getSkuId());
-                getReceiveDTO.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-                obj.setReceiveQty(wmsTaskFeign.getReceiveQty(getReceiveDTO));
+                List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(obj.getId());
+                WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(getReceiveDTO)) {
+                    obj.setReceiveQty(0);
+                } else {
+                    obj.setReceiveQty(getReceiveDTO.getReceiveQty());
+                }
 
                 //获取待交货数量
-                WarehouseReceiveDTO.GetReceiveDTO deliveryQty = new WarehouseReceiveDTO.GetReceiveDTO();
-                deliveryQty.setPurchaseOrderId(obj.getId());
-                deliveryQty.setSkuId(obj.getSkuId());
-                obj.setDeliveryQty(obj.getPurchaseQty() - wmsTaskFeign.getReceiveQty(deliveryQty));
+                WarehouseReceiveDTO.GetReceiveDTO getDeliveryQty = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(getReceiveDTO)) {
+                    obj.setDeliveryQty(0);
+                } else {
+                    obj.setDeliveryQty(obj.getPurchaseQty() - getDeliveryQty.getReceiveQty());
+                }
+
                 list.add(obj.getId());
             });
         }
@@ -661,32 +674,29 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(purchaseOrderSupplierList)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
-
-        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewList = new ArrayList<>();
-        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : detailList) {
-            PurchaseOrderDTO.ViewGenerateReceiveDTO viewDTO = new PurchaseOrderDTO.ViewGenerateReceiveDTO();
-            BeanMapperUtils.copy(purchaseOrderDetailEntity, viewDTO);
-            PurchaseOrderEntity purchaseOrderEntity = list.stream().filter(obj -> obj.getId().equals(purchaseOrderDetailEntity.getPurchaseOrderId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                log.error("下推签收单，未找到对应采购明细");
-                throw new ServiceException(ApiError.ERROR_98025);
+        LoginUser userInfo = commonService.getUserInfo();
+        List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceiveDTOS = baseMapper.viewGenerateReceive(ids);
+        //获取sku的id集合
+        List<String> skuIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (PurchaseOrderDTO.ViewGenerateReceiveDTO viewGenerateReceiveDTO : viewGenerateReceiveDTOS) {
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(viewGenerateReceiveDTO.getSkuId())).findFirst().orElse(null);
+            viewGenerateReceiveDTO.setProductName(productDetailEntity.getName());
+            viewGenerateReceiveDTO.setPlanDeliveryDate(LocalDate.now());
+            viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
+            viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
+            //获取签收数量
+            List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(viewGenerateReceiveDTO.getId());
+            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderId().equals(viewGenerateReceiveDTO.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(getReceiveDTO)) {
+                viewGenerateReceiveDTO.setReceiveQty(0);
+            } else {
+                viewGenerateReceiveDTO.setReceiveQty(getReceiveDTO.getReceiveQty());
             }
-            viewDTO.setId(purchaseOrderEntity.getId());
-            viewDTO.setPurchaseOrderDetailId(purchaseOrderDetailEntity.getId());
-            viewDTO.setCode(purchaseOrderEntity.getCode());
-            //供应商信息
-            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
-                log.error("下推签收单，未找到对应供应商信息");
-                throw new ServiceException(ApiError.ERROR_98036);
-            }
-            viewDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
-            viewDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
-            //交货数量 TODO
-
-            viewList.add(viewDTO);
         }
-        return viewList;
+
+        return viewGenerateReceiveDTOS;
     }
 
     @Override
@@ -714,8 +724,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (approveStatusCount > 0) {
             throw new ServiceException(ApiError.ERROR_98040);
         }
+        List<WarehouseReceiveDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(WarehouseReceiveDTO.AddDTO.class, list);
+        for (WarehouseReceiveDTO.AddDTO addDTO : addDTOS) {
+            list.get(0).getPurchaseOrderDetailId();
 
+        }
 
+        //wmsTaskFeign.addWarehouseReceive(addDTOS);
 
         return Boolean.TRUE;
     }

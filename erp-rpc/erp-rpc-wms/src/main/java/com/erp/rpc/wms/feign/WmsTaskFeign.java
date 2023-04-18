@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,5 +69,5 @@ public interface WmsTaskFeign {
      * 获取签收数量
      */
     @PostMapping("feign/warehouseReceive/getReceiveQty")
-    Integer getReceiveQty(WarehouseReceiveDTO.GetReceiveDTO dto);
+    List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(@RequestBody String purchaseOrderId);
 }

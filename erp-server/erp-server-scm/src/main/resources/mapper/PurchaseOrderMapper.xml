@@ -286,4 +286,35 @@
         </where>
     </select>
 
+    <select id="viewGenerateReceive" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ViewGenerateReceiveDTO">
+        SELECT
+            po.id AS id,
+            pod.id as purchaseOrderDetailId,
+            po.code AS code,
+            pos.supplier_id as supplierId,
+            pos.supplier_name AS supplierName,
+            po.delivery_warehouse_id as deliveryWarehouseId,
+            po.delivery_warehouse_name AS deliveryWarehouseName,
+            pod.sku_id AS skuId,
+            pod.sku_no AS skuNo,
+            '' AS productName,
+            pod.plan_delivery_date AS planDeliveryDate,
+            '' AS receiveUserId,
+            '' AS receiveUserName,
+            pod.purchase_qty AS purchaseQty,
+            0 as unReceiveQty,
+            0 as receiveQty,
+            0 as exceedQty
+        FROM purchase_order po
+        INNER JOIN purchase_order_detail pod ON pod.purchase_order_id = po.id AND po.is_deleted = FALSE
+        LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po."id" AND pod.is_deleted = FALSE
+        WHERE pos.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND po.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
 </mapper>

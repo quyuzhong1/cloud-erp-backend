@@ -716,6 +716,13 @@ public class WarehouseReceiveDTO {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+
     }
 
 

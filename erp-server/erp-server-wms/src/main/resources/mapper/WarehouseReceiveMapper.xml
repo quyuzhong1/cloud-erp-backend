@@ -118,21 +118,22 @@
         </if>
     </select>
 
-    <select id="getReceiveQty" resultType="integer">
+    <select id="getReceiveQty" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GetReceiveDTO">
         SELECT
-            SUM(wrd.receive_qty) receive_qty
+            wrd.sku_id,
+            wrd.sku_no,
+            wr.purchase_order_id,
+            SUM(wrd.receive_qty) AS receiveQty
         FROM warehouse_receive_detail wrd
         INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE and wr.invalid_status = FALSE
         <if test="purchaseOrderId != null and purchaseOrderId != ''">
             AND wr.purchase_order_id = #{purchaseOrderId}
         </if>
-        <if test="skuId != null and skuId != ''">
-            AND wrd.sku_id = #{skuId}
-        </if>
-        <if test="approveStatus != null and approveStatus != ''">
-            AND wr.approve_status = #{approveStatus}
-        </if>
+        GROUP BY
+        wrd.sku_id,
+        wrd.sku_no,
+        wr.purchase_order_id
     </select>
 
     <select id="purchaseOrderRefReceive" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$OrderRefReceiveDTO">
