@@ -23,7 +23,8 @@
             wr.approve_user_name,
             wr.create_user_name,
             wrd.purchase_order_detail_id,
-            wrd.remark
+            wrd.remark,
+            wr.create_time
         FROM warehouse_receive_detail wrd
         LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
@@ -97,7 +98,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wr.create_time,wr.id desc
+        wr.create_time desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -171,7 +172,7 @@
 
     </select>
 
-    <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO">
+    <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.ReturnOrderExcelDTO">
         SELECT
         wr.id,
         wr.code,

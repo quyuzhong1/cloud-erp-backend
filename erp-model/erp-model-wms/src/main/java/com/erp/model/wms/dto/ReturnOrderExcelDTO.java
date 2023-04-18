@@ -1,8 +1,7 @@
-package com.erp.model.wms.dto.excel;
+package com.erp.model.wms.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +14,7 @@ import java.time.LocalDate;
  **/
 @Data
 @NoArgsConstructor
-public class ReturnOrderExportExcelDTO {
+public class ReturnOrderExcelDTO {
     /**
      * 退货单号
      */
@@ -38,6 +37,11 @@ public class ReturnOrderExportExcelDTO {
     private String supplierName;
 
     /**
+     * 单据状态
+     */
+    private String approveStatus;
+
+    /**
      * 审核状态名称
      */
     @ColumnWidth(30)
@@ -45,11 +49,21 @@ public class ReturnOrderExportExcelDTO {
     private String approveStatusName;
 
     /**
+     * 作废状态
+     */
+    private Boolean invalidStatus;
+
+    /**
      * 作废状态名称
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "作废状态名称", index = 4)
     private String invalidStatusName;
+
+    /**
+     * skuId
+     */
+    private String skuId;
 
     /**
      * skuNo

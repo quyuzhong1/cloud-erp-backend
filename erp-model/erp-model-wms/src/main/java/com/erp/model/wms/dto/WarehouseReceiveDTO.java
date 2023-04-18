@@ -379,6 +379,11 @@ public class WarehouseReceiveDTO {
          * 收货备注
          */
         private String remark;
+
+        /**
+         * 创建时间
+         */
+        private String createTime;
     }
 
     @Data
