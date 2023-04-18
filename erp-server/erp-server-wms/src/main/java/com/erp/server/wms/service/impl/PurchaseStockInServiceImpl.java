@@ -507,6 +507,18 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     /**
+     * 根据来源Id查询入库单
+     * @Author Luo_WG
+     * @Date 2023/4/18 10:30
+     * @param sourceId sourceId
+     * @return com.erp.model.wms.entity.PurchaseStockInEntity
+     **/
+    @Override
+    public List<PurchaseStockInEntity> getStockInBySourceId(String sourceId) {
+        return lambdaQuery().eq(PurchaseStockInEntity::getSourceId, sourceId).list();
+    }
+
+    /**
      * 审核后更新审核状态、审核人、审核时间
      */
     private void updateApproveStatusForApprove(List<String> ids,String approveStatus) {
@@ -613,4 +625,5 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             entity.setDeliveryWarehouseName(warehouseName);
         }
     }
+
 }

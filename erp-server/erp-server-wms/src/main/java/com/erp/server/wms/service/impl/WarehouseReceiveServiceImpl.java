@@ -35,6 +35,7 @@ import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
+import com.erp.model.wms.entity.PurchaseStockInEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
@@ -189,7 +190,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getDeliveryWarehouseId());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PO, BusinessNoTypeEnum.CODE_PO.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGSH, BusinessNoTypeEnum.CODE_CGSH.getCode()));
         //设置收货单主表
         WarehouseReceiveEntity warehouseReceiveEntity = new WarehouseReceiveEntity();
         warehouseReceiveEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -433,6 +434,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             throw new ServiceException(ApiError.ERROR_99003);
         }
         //TODO 待加审核流程
+
+        //下推入库单不能反审核
+        warehouseReceiveList.forEach(req -> {
+            List<PurchaseStockInEntity> stockInBySourceId = purchaseStockInService.getStockInBySourceId(req.getId());
+            if (CollectionUtils.isNotEmpty(stockInBySourceId)) {
+                throw new ServiceException(ApiError.ERROR_99011);
+            }
+        });
+
         //修改状态为待提交
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(WarehouseReceiveEntity::getId, ids)

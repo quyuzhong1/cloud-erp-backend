@@ -387,6 +387,11 @@ public class WarehouseReceiveDTO {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
          * 主键集合
          */
         private List<String> ids;

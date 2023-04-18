@@ -149,4 +149,13 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @return Boolean
      */
     Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
+
+    /**
+     * 根据来源Id查询入库单
+     * @Author Luo_WG
+     * @Date 2023/4/18 10:30
+     * @param sourceId sourceId
+     * @return com.erp.model.wms.entity.PurchaseStockInEntity
+     **/
+    List<PurchaseStockInEntity> getStockInBySourceId(String sourceId);
 }

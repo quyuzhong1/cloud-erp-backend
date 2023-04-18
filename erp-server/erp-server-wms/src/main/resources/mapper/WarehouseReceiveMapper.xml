@@ -27,6 +27,10 @@
         FROM warehouse_receive_detail wrd
         LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
+        <if test="params.code != null and params.code != ''">
+            and wr.code = #{params.code}
+        </if>
+
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and wrd.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
