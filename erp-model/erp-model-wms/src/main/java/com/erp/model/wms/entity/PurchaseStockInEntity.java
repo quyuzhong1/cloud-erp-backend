@@ -50,7 +50,7 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
     /**
      * 入库员名称
      */
-    @TableField("storage_user_name")
+    @TableField("stock_in_user_name")
     private String stockInUserName;
 
     /**
