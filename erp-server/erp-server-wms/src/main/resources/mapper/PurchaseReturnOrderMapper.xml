@@ -155,7 +155,7 @@
     </select>
 
 
-    <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO">
+    <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.ReturnOrderExcelDTO">
         SELECT
         pro.id,
         pro.code,

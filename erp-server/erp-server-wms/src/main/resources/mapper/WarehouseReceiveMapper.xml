@@ -172,7 +172,7 @@
 
     </select>
 
-    <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.ReturnOrderExcelDTO">
+    <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.WarehouseReceiveExcelDTO">
         SELECT
         wr.id,
         wr.code,

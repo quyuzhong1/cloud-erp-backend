@@ -32,6 +32,7 @@ import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
+import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -102,6 +103,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     @Resource
     private PurchaseStockInDetailService purchaseStockInDetailService;
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
 
     /**
      * 主页分页查询
@@ -550,13 +554,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     public Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
-       List<ReturnOrderExportExcelDTO> returnOrderExportExcelDTOS = baseMapper.returnOrderExportExcel(dto);
-
+        List<ReturnOrderExcelDTO> returnOrderExcelDTOS = baseMapper.returnOrderExportExcel(dto);
         //获取sku的id集合
-         List<String> skuIdList = returnOrderExportExcelDTOS.stream().map(ReturnOrderExportExcelDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = returnOrderExcelDTOS.stream().map(ReturnOrderExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        returnOrderExportExcelDTOS.forEach(obj -> {
+        returnOrderExcelDTOS.forEach(obj -> {
+
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
@@ -565,9 +569,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
         });
+
+        List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = BeanMapperUtils.copyList(WarehouseReceiveExportExcelDTO.class, returnOrderExcelDTOS);
+
         String fileName = "退货单";
         try {
-            ExcelUtil.export(fileName, "退货单", returnOrderExportExcelDTOS, ReturnOrderExportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "退货单", warehouseReceiveExportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }

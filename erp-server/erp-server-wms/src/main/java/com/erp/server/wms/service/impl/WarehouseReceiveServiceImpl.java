@@ -595,13 +595,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @return com.common.core.controller.vo.ApiResult
      **/
     @Override
-    public Boolean exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<ReturnOrderExcelDTO> returnOrderExcelDTOS = baseMapper.warehouseReceiveExportExcel(dto);
+    public Boolean exportExcel(WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<WarehouseReceiveExcelDTO> warehouseReceiveExcelDTOS = baseMapper.warehouseReceiveExportExcel(dto);
          //获取sku的id集合
-        List<String> skuIdList = returnOrderExcelDTOS.stream().map(ReturnOrderExcelDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = warehouseReceiveExcelDTOS.stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        returnOrderExcelDTOS.forEach(obj -> {
+        warehouseReceiveExcelDTOS.forEach(obj -> {
 
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
@@ -612,7 +612,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
         });
 
-        List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = BeanMapperUtils.copyList(WarehouseReceiveExportExcelDTO.class, returnOrderExcelDTOS);
+        List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = BeanMapperUtils.copyList(WarehouseReceiveExportExcelDTO.class, warehouseReceiveExcelDTOS);
 
         String fileName = "仓库入库单";
         try {

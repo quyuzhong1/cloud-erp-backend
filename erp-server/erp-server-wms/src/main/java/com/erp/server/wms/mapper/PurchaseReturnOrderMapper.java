@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.ReturnOrderExcelDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
@@ -30,7 +31,7 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
 
     List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
 
-    List<ReturnOrderExportExcelDTO> returnOrderExportExcel(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+    List<ReturnOrderExcelDTO> returnOrderExportExcel(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 }
