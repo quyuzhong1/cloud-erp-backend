@@ -26,6 +26,7 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
@@ -49,6 +50,7 @@ import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -193,8 +195,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         purchaseReturnOrderEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
         purchaseReturnOrderEntity.setSourceId(dto.getSourceId());
         purchaseReturnOrderEntity.setSourceType(dto.getSourceType());
+
         //保存主表信息
         this.save(purchaseReturnOrderEntity);
+
+        //操作日志
+        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】",code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),purchaseReturnOrderEntity.getId(),"新增操作");
 
         //保存详情信息
         purchaseReturnOrderDetailService.add(dto, purchaseReturnOrderEntity.getId());
@@ -223,26 +229,25 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取供应商联系人信息
         SupplierContactEntity supplierContactEntity = productOrderFeign.getSupplierContactById(dto.getSupplierContactId());
-        LambdaUpdateWrapper<PurchaseReturnOrderEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(PurchaseReturnOrderEntity::getPurchaseOrderId, dto.getPurchaseOrderId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnMode, dto.getReturnMode());
-        updateWrapper.set(PurchaseReturnOrderEntity::getPurchaseOrderCode, dto.getPurchaseOrderCode());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnUserId, dto.getReturnUserId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnUserName, sysUserDTO.getUserName());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnOrgId, dto.getReturnOrgId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnOrgName, sysAccountingCompanyEntity.getCompanyName());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnWarehouseId, dto.getReturnWarehouseId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReturnWarehouseName, warehouseEntity.getName());
-        updateWrapper.set(PurchaseReturnOrderEntity::getReceiceRemark, dto.getReturnRemark());
-        updateWrapper.set(PurchaseReturnOrderEntity::getPurchaseUserId, purchaseOrderEntity.getPurchaseUserId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getPurchaseUserName, purchaseOrderEntity.getPurchaseUserName());
-        updateWrapper.set(PurchaseReturnOrderEntity::getSupplierId, orderSupplierByOrderId.getSupplierId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getSupplierName, orderSupplierByOrderId.getSupplierName());
-        updateWrapper.set(PurchaseReturnOrderEntity::getSupplierContactId, dto.getSupplierContactId());
-        updateWrapper.set(PurchaseReturnOrderEntity::getSupplierContactName, supplierContactEntity.getPerson());
-        updateWrapper.eq(PurchaseReturnOrderEntity::getId, dto.getId());
+
+        PurchaseReturnOrderEntity entity = new PurchaseReturnOrderEntity();
+        BeanMapperUtils.copy(dto,entity);
+        entity.setReturnUserName(sysUserDTO.getUserName());
+        entity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
+        entity.setReturnWarehouseName(warehouseEntity.getName());
+        entity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
+        entity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
+        entity.setSupplierId(orderSupplierByOrderId.getSupplierId());
+        entity.setSupplierName(orderSupplierByOrderId.getSupplierName());
+        entity.setSupplierContactId(dto.getSupplierContactId());
+        entity.setSupplierContactName(supplierContactEntity.getPerson());
         //更新收货单主表信息
-        this.update(updateWrapper);
+        this.updateById(entity);
+        
+        //操作日志
+        PurchaseReturnOrderEntity byId = this.getById(dto.getId());
+        moduleOperateLogService.addModuleOperateLogByObj(byId,entity,ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),entity.getId(),"","");
+
         //更新收货单详情表信息
         return purchaseReturnOrderDetailService.update(dto);
     }
@@ -339,6 +344,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = purchaseReturnOrderEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"提交操作");
+
         return Boolean.TRUE;
     }
 
@@ -387,12 +397,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
-        List<PurchaseReturnOrderEntity> warehouseReceiveList = this.listByIds(ids);
+        List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //判断是否是审核中的状态
-        long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
+        long count = purchaseReturnOrderEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
@@ -415,6 +425,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     .in(PurchaseReturnOrderEntity::getId, ids)
                     .update();
         }
+        //操作日志
+        List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单",ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"审核操作");
+
         return Boolean.TRUE;
     }
 
@@ -429,12 +443,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
-        List<PurchaseReturnOrderEntity> warehouseReceiveList = this.listByIds(ids);
+        List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //已审核支持反审核
-        long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
+        long count = purchaseReturnOrderEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
         ).count();
 
@@ -446,6 +460,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"反审核操作");
+
         return Boolean.TRUE;
     }
 
@@ -459,12 +478,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(@RequestBody @Validated List<String> ids) {
-        List<PurchaseReturnOrderEntity> warehouseReceiveList = this.listByIds(ids);
+        List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //审核中可以撤销
-        long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
+        long count = purchaseReturnOrderEntityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
@@ -478,6 +497,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"取消流程操作");
+
         return Boolean.TRUE;
     }
 
