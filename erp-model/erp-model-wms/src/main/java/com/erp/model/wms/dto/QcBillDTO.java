@@ -64,6 +64,7 @@ public class QcBillDTO implements Serializable {
 
         /**
          * 产品信息
+         *  从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
          */
         private QcProductDTO.AddDTO qcProduct;
 

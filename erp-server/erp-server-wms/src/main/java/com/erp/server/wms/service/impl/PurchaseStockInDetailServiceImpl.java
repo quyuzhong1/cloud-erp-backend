@@ -156,7 +156,22 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), addPairList, "编辑操作");
         }
+        //采购明细信息
+        List<String> podIds = newList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
         for (PurchaseStockInDetailEntity entity : newList) {
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+            entity.setSkuId(detailEntity.getSkuId());
+            entity.setSkuNo(detailEntity.getSkuNo());
+            entity.setPurchaseQty(detailEntity.getPurchaseQty());
+            entity.setVariantProperty(detailEntity.getVariantProperty());
+
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseStockInDetailEntity old = this.getById(entity.getId());

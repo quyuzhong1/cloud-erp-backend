@@ -35,7 +35,12 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -755,13 +760,97 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids) {
-        //TODO
-        return null;
+        List<PurchaseOrderDTO.ViewGenerateStockInDTO> resultList = new ArrayList<>();
+        List<PurchaseOrderDetailEntity> list = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        //订单供应商
+        List<PurchaseOrderSupplierEntity> supplierList = purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(supplierList)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+
+        List<String> podIds = list.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+
+        //入库信息
+        List<PurchaseStockInDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailBySourceDetailIds(podIds);
+
+        for (PurchaseOrderDetailEntity detailEntity : list) {
+            PurchaseOrderDTO.ViewGenerateStockInDTO viewGenerateStockInDTO = new PurchaseOrderDTO.ViewGenerateStockInDTO();
+            BeanMapperUtils.copy(detailEntity,viewGenerateStockInDTO);
+            viewGenerateStockInDTO.setPurchaseOrderDetailId(detailEntity.getId());
+            //供应商信息
+            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = supplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+                throw new ServiceException(ApiError.ERROR_98036);
+            }
+            viewGenerateStockInDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
+            //收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                receiveQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            viewGenerateStockInDTO.setReceiveQty(receiveQty);
+            //未入库数量
+            Integer unStockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+                unStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            viewGenerateStockInDTO.setUnStockInQty(detailEntity.getPurchaseQty() - unStockInQty);
+            resultList.add(viewGenerateStockInDTO);
+        }
+        return resultList;
     }
 
     @Override
     public Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto) {
-        //TODO
+        //保存信息
+        List<PurchaseOrderDTO.GenerateStockInDTO> list = dto.getList();
+        List<String> ids = list.stream().map(PurchaseOrderDTO.GenerateStockInDTO::getPurchaseOrderId).collect(Collectors.toList());
+
+        //订单信息集合
+        List<PurchaseOrderEntity> purchaseOrderList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderList)) {
+            log.error("未找到订单信息，ids={}",JSONUtil.toJsonStr(ids));
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        //订单明细信息集合
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            log.error("未找到订单明细信息，ids={}",JSONUtil.toJsonStr(ids));
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        Map<String, List<PurchaseOrderDTO.GenerateStockInDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDTO.GenerateStockInDTO::getPurchaseOrderId));
+        List<PurchaseStockInDTO.AddDTO> resultList = new ArrayList<>();
+        for (Map.Entry<String, List<PurchaseOrderDTO.GenerateStockInDTO>> entry : map.entrySet()) {
+            PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
+            String purchaseOrderId = entry.getKey();
+            List<PurchaseOrderDTO.GenerateStockInDTO> value = entry.getValue();
+
+            //订单信息
+            PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(purchaseOrderId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                log.error("未找到订单明细信息，id={}",purchaseOrderId);
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            addDTO.setPurchaseOrderId(purchaseOrderId);
+            addDTO.setSourceId(purchaseOrderId);
+            addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getType());
+            addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
+            addDTO.setStockInDeptId(entity.getPurchaseDeptId());
+            addDTO.setStockInUserId(entity.getPurchaseUserId());
+            List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>();
+            for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
+
+            }
+
+
+        }
+
         return null;
     }
 

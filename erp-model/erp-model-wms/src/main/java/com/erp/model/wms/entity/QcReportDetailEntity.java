@@ -44,8 +44,8 @@ public class QcReportDetailEntity extends BaseEntity<QcReportDetailEntity> {
     /**
      * 结果
      */
-    @TableField("result_key")
-    private String resultKey;
+    @TableField("result_dict")
+    private String resultDict;
 
 
     public static final String MAIN_ID = "main_id";

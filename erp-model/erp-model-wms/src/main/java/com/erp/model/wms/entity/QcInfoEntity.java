@@ -81,9 +81,10 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
 
     /**
      * 质检问题属性
+     * type=qcProblemType
      */
-    @TableField("qc_problem_key")
-    private String qcProblemKey;
+    @TableField("qc_problem_dict")
+    private String qcProblemDict;
 
     /**
      * 不良描述
@@ -99,9 +100,10 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
 
     /**
      * 处理方式
+     * type=handleModeType
      */
-    @TableField("handle_mode_key")
-    private String handleModeKey;
+    @TableField("handle_mode_dict")
+    private String handleModeDict;
 
 
     public static final String MAIN_ID = "main_id";

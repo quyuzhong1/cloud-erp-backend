@@ -397,7 +397,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class GetQcProductDTO extends CommonDTO{
+    public static class GetQcProductDTO {
 
         /**
          * 供应商id
@@ -423,7 +423,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 产品信息
          */
-        private List<ProductVO.ProductPackVO>  ProductList;
+        private List<ProductVO.ProductPackVO>  productList;
 
     }
 
@@ -655,12 +655,12 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 已签收数量
          */
-        private String  receiveQty;
+        private Integer  receiveQty;
 
         /**
          * 未入库数量
          */
-        private String unStockInQty;
+        private Integer unStockInQty;
 
     }
 
