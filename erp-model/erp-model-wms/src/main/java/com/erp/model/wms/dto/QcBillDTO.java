@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -35,7 +34,6 @@ public class QcBillDTO implements Serializable {
         /**
          * 质检单id
          */
-        @NotBlank(message = "质检单id不能为空", groups = {UpdateGroup.class})
         private String id;
 
         /**
@@ -48,7 +46,7 @@ public class QcBillDTO implements Serializable {
         /**
          *采购订单id
          */
-        @NotBlank(message = "采购订单id不能为空")
+        //@NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
 
         /**
@@ -66,12 +64,14 @@ public class QcBillDTO implements Serializable {
          * 产品信息
          *  从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
          */
+        @Valid
         private QcProductDTO.AddDTO qcProduct;
 
 
         /**
          * 质检信息
          */
+        @Valid
         private QcInfoDTO.AddDTO qcInfo;
 
 
