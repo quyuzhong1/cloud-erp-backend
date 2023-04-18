@@ -622,12 +622,24 @@ public class WarehouseReceiveDTO {
         private String purchaseOrderDetailId;
     }
 
+
+
+    /**
+     * 下推单据列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListGenerateStockInDTO {
+        private List<WarehouseReceiveDTO.GenerateStockInDTO> list;
+    }
+
     /**
      * 下推单据列表
      */
     @Data
     @NoArgsConstructor
     public static class GenerateStockInDTO {
+
         /**
          * 详情表id
          */

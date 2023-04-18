@@ -219,7 +219,7 @@ public class WarehouseReceiveController extends BaseController {
      * 下推入库单列表查询
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param id id
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockInView")
@@ -236,8 +236,8 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody List<WarehouseReceiveDTO.GenerateStockInDTO> dtos) {
-        Boolean flag = warehouseReceiveService.generateStockIn(dtos);
+    public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.ListGenerateStockInDTO dtos) {
+        Boolean flag = warehouseReceiveService.generateStockIn(dtos.getList());
         return flag == true ? success() : failure();
     }
 
