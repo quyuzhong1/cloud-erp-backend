@@ -51,15 +51,15 @@ public class GoodcangOpenController {
         }
         // 签名校验
         String message = dto.getOrDefault("Message", "").toString();
-//        String sign = dto.get("Sign").toString();
-//        String sendTime = dto.getOrDefault("SendTime", "").toString();
-//        String signStr = message + appToken + sendTime;
-        //使用hutool工具进行md5解密
-//        String signStrMd5 = Md5Util.getMd5(signStr);
-//        if (!signStrMd5.equals(sign)) {
-//            log.error("签名校验失败 signStrMd5 ={} sign ={} ", signStrMd5, sign);
+        String sign = dto.get("Sign").toString();
+        String sendTime = dto.getOrDefault("SendTime", "").toString();
+        String signStr = message + appToken + sendTime;
+//        使用hutool工具进行md5解密
+        String signStrMd5 = Md5Util.getMd5(signStr);
+        if (!signStrMd5.equals(sign)) {
+            log.error("签名校验失败 signStrMd5 ={} sign ={} ", signStrMd5, sign);
 //            return GoodcangDTO.ResultDTO.fail(StrUtil.format("签名校验失败 signStrMd5 ={} sign ={} ", signStrMd5, sign));
-//        }
+        }
 
         GoodcangDTO.MessageDTO messageDTO = JSONUtil.toBean(message, GoodcangDTO.MessageDTO.class);
         if(StrUtil.isBlank(messageDTO.getReceivingCode())){
