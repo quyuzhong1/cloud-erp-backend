@@ -67,6 +67,12 @@ public class QcReportDTO implements Serializable {
 
 
         /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+
+
+        /**
          * 质检报告id
          */
         private String qcReportId;

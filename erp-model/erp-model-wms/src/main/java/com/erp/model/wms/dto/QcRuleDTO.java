@@ -6,7 +6,6 @@ import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -77,7 +76,7 @@ public class QcRuleDTO implements Serializable {
         /**
          * 质检类型
          */
-        @NotBlank(message = "质检类型不能为空")
+        @NotNull(message = "质检类型不能为空")
         @StateEnumValue(clazz = QcTypeEnum.class, message = "质检类型有误")
         private QcTypeEnum qcType;
 

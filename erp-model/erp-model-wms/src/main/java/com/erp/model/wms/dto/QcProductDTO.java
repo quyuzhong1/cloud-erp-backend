@@ -1,9 +1,12 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -30,48 +33,56 @@ public class QcProductDTO {
         /**
          * sku
          */
-        @NotBlank(message = "sku不能为空")
+        @NotBlank(message = "sku不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String skuId;
 
 
         /**
          * 产品长
          */
+        @NotNull(message = "产品尺寸长不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal productLength;
 
         /**
          * 产品宽
          */
+        @NotNull(message = "产品尺寸宽不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal productWidth;
 
         /**
          * 产品高
          */
+        @NotNull(message = "产品尺寸高不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal productHeight;
 
         /**
          * 箱长
          */
+        @NotNull(message = "外箱尺寸长不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal boxLength;
 
         /**
          * 箱宽
          */
+        @NotNull(message = "外箱尺寸宽不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal boxWidth;
 
         /**
          * 箱高
          */
+        @NotNull(message = "外箱尺寸高不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal boxHeight;
 
         /**
          * 产品净重
          */
+        @NotNull(message = "产品净重不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal productNetWeight;
 
         /**
          * 外箱重量
          */
+        @NotNull(message = "外箱重量不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private BigDecimal boxWeight;
 
         /**

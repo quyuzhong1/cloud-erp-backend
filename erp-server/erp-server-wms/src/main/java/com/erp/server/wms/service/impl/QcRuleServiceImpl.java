@@ -356,6 +356,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
      * @date 2023-04-13 15:44
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<QcRuleEntity> list = this.listByIds(ids);
         //待提交
@@ -364,7 +365,12 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        return this.removeByIds(ids);
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //删除质检报告
+            qcReportService.removeByRuleIds(ids);
+        }
+        return result;
     }
 
 
@@ -380,7 +386,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public PagingVO<QcRuleDTO.PagingViewDTO> paging(PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         QcRuleDTO.PagingParamDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query,params);
+        IPage pageData = baseMapper.paging(query, params);
         List<QcRuleDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
