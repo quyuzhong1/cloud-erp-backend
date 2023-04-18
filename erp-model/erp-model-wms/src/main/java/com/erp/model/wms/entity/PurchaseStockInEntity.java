@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -39,7 +41,7 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
      * 入库日期
      */
     @TableField("stock_in_date")
-    private Date stockInDate;
+    private LocalDate stockInDate;
 
     /**
      * 入库员id
@@ -165,7 +167,7 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
     /**
      * 审核人名称
