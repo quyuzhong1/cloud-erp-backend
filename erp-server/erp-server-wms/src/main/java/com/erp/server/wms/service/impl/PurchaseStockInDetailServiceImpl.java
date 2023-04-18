@@ -67,11 +67,13 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
 
         List<PurchaseStockInDetailEntity> list = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
 
+        //处理明细数据
+        doOpHandleDetails(list,mainId);
+
         //验证关联数量
         checkStockInQty(list,sourceType,mainId);
 
-        //处理明细数据
-        doOpHandleDetails(list,mainId);
+
         this.saveBatch(list);
     }
 
@@ -93,11 +95,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         }
         List<PurchaseStockInDetailEntity> newList = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
 
-        //验证关联数量
-        checkStockInQty(newList,sourceType,mainId);
-
         //处理明细id及操作日志
         doOpHandleDetails(newList,mainId);
+
+        //验证关联数量
+        checkStockInQty(newList,sourceType,mainId);
 
         //新增或修改明细
         this.saveOrUpdateBatch(newList);
@@ -172,7 +174,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             entity.setSkuNo(detailEntity.getSkuNo());
             entity.setPurchaseQty(detailEntity.getPurchaseQty());
             entity.setVariantProperty(detailEntity.getVariantProperty());
-
+            entity.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseStockInDetailEntity old = this.getById(entity.getId());

@@ -262,7 +262,7 @@ public class PurchaseStockInDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 来源
+         * 来源 purchaseOrder采购订单
          */
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;
@@ -271,6 +271,7 @@ public class PurchaseStockInDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "明细不能为空")
+        @Valid
         private List<PurchaseStockInDetailDTO.AddDTO> details;
     }
 
@@ -282,11 +283,14 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 主键id
          */
+        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
          * 明细
          */
+        @NotEmpty(message = "明细不能为空")
+        @Valid
         private List<PurchaseStockInDetailDTO.UpdateDTO> details;
     }
 

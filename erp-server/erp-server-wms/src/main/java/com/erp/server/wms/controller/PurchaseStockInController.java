@@ -26,7 +26,7 @@ import java.util.List;
  * @since 2023-04-10
  */
 @RestController
-@RequestMapping("/purchaseStorage")
+@RequestMapping("/purchaseStockIn")
 public class PurchaseStockInController extends BaseController {
 
     @Resource
