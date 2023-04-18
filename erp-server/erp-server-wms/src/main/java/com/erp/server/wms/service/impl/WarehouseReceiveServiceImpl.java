@@ -287,7 +287,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 throw new ServiceException(ApiError.ERROR_99006);
             }
             Integer receiveQty = getReceiveQty(warehouseReceiveEntity.getPurchaseOrderId(), detailView.getSkuId());
-            detailView.setNotReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receiveQty);
+            detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receiveQty);
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {

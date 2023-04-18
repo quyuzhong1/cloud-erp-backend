@@ -125,7 +125,7 @@ public class WarehouseReceiveDetailDTO {
         /**
          * 未签收数量
          */
-        private Integer notReceiveQty;
+        private Integer unReceiveQty;
 
         /**
          * 收货数量
