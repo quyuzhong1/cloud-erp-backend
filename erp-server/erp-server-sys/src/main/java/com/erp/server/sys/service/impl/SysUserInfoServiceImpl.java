@@ -119,7 +119,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //复制属性
         BeanMapperUtils.copy(sysUserInfoDTO, entity);
         //编号
-        String code = sysCodeService.getBusinessNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
+        String code = sysCodeService.getSeqNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
         entity.setCode(code);
         PassEntity passEntity = PassHandler.buildPassword(password);
         entity.setPassword(passEntity.getPassword());

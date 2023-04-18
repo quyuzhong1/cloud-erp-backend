@@ -52,12 +52,12 @@ public class KingdeeUtils {
         }
 
         String[] fieldArr = pathStr.replace(splitStr,"||").split("\\|\\|");
-        JSONObject curNode=jsonRoot;
-        for(int i=0;i<fieldArr.length;i++){
-            String field=fieldArr[i];
-            if(i<fieldArr.length-1){
+        JSONObject curNode = jsonRoot;
+        for(int i=0; i < fieldArr.length; i++){
+            String field = fieldArr[i];
+            if(i < fieldArr.length-1){
                 curNode.putIfAbsent(field,new JSONObject());
-                curNode=curNode.getJSONObject(field);
+                curNode = curNode.getJSONObject(field);
             }else{
                 curNode.putIfAbsent(fieldArr[fieldArr.length-1],value);
             }

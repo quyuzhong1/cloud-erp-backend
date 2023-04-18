@@ -81,6 +81,11 @@ public class CfgApiFieldMapDTO {
     private String parentId;
 
     /**
+     * 排序序号
+     */
+    private Integer index;
+
+    /**
      * 选项值集合
      */
     @Valid
