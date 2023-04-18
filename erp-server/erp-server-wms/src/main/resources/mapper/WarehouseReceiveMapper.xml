@@ -26,7 +26,7 @@
             wrd.remark,
             wr.create_time
         FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         <if test="params.code != null and params.code != ''">
             and wr.code = #{params.code}
@@ -47,15 +47,15 @@
         </if>
 
         <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-            and wr.purchaseOrderCode = #{params.purchaseOrderCode}
+            and wr.purchase_order_code = #{params.purchaseOrderCode}
         </if>
 
         <if test="params.invalidStatus != null and params.invalidStatus != ''">
-            and wr.invalidStatus = #{params.invalidStatus}
+            and wr.invalid_status = #{params.invalidStatus}
         </if>
 
         <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            and po.delivery_warehouse_id in
+            and wr.delivery_warehouse_id in
             <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -105,7 +105,7 @@
         select
         count(distinct wr.id)
         FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wr.approve_status in
@@ -122,7 +122,7 @@
         SELECT
             SUM(wrd.receive_qty) receive_qty
         FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         AND wr.purchase_order_id = #{PurchaseOrderId}
         AND wrd.sku_id = #{skuId}
@@ -144,7 +144,7 @@
             wrd.remark,
             wrd.purchase_order_detail_id
         FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         AND wr.purchase_order_id = #{purchaseOrderId}
     </select>
@@ -161,7 +161,7 @@
             wr.delivery_warehouse_name,
             wrd.purchase_order_detail_id
         FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wrd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND wr.id in
@@ -194,7 +194,7 @@
         wr.create_user_name,
         wrd.purchase_order_detail_id
         FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size != ''">
             and wr.id in
@@ -218,15 +218,15 @@
         </if>
 
         <if test="params.purchaseOrderCode != null and params.purchaseOrderCode != ''">
-            and wr.purchaseOrderCode = #{params.purchaseOrderCode}
+            and wr.purchase_order_code = #{params.purchaseOrderCode}
         </if>
 
         <if test="params.invalidStatus != null and params.invalidStatus != ''">
-            and wr.invalidStatus = #{params.invalidStatus}
+            and wr.invalid_status = #{params.invalidStatus}
         </if>
 
         <if test="params.deliveryWarehouseIdList != null and params.deliveryWarehouseIdList.size > 0">
-            and po.delivery_warehouse_id in
+            and wr.delivery_warehouse_id in
             <foreach collection="params.deliveryWarehouseIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -253,8 +253,8 @@
             </foreach>
         </if>
 
-        <if test="params.planDeliveryDate != null and params.planDeliveryDate.size > 0">
-            and wr.plan_delivery_date >= #{params.planDeliveryDate[0]} and  (#{params.planDeliveryDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
+        <if test="params.billDate != null and params.billDate.size > 0">
+            and wr.billDate >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
         </if>
 
         <if test="params.createTime != null and params.createTime.size > 0">
@@ -262,12 +262,6 @@
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
         </if>
         wr.create_time,wr.id desc
     </select>

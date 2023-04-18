@@ -92,7 +92,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO>
      **/
     @GetMapping("/view")
-    public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@Param("id") String id) {
+    public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@RequestParam("id") String id) {
         WarehouseReceiveDTO.ViewDTO dto = warehouseReceiveService.view(id);
         return success(dto);
     }
