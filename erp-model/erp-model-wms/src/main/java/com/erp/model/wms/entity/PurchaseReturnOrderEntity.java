@@ -98,8 +98,8 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     /**
      * 退货原因
      */
-    @TableField("receice_remark")
-    private String receiceRemark;
+    @TableField("return_remark")
+    private String returnRemark;
 
     /**
      * 退货日期

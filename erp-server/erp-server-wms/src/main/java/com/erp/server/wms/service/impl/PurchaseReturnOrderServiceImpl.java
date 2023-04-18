@@ -176,6 +176,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
         //设置收货单主表
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = new PurchaseReturnOrderEntity();
+        BeanMapperUtils.copy(dto,purchaseReturnOrderEntity);
         purchaseReturnOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         purchaseReturnOrderEntity.setCode(code);
         purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
@@ -184,17 +185,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         purchaseReturnOrderEntity.setSupplierName(orderSupplierByOrderId.getSupplierName());
         purchaseReturnOrderEntity.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
         purchaseReturnOrderEntity.setSupplierContactName(orderSupplierByOrderId.getContactName());
-        purchaseReturnOrderEntity.setReturnUserId(dto.getReturnUserId());
         purchaseReturnOrderEntity.setReturnUserName(userDTO.getUserName());
-        purchaseReturnOrderEntity.setReturnOrgId(dto.getReturnOrgId());
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         purchaseReturnOrderEntity.setBillDate(LocalDate.now());
-        purchaseReturnOrderEntity.setReturnWarehouseId(dto.getReturnWarehouseId());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
         purchaseReturnOrderEntity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         purchaseReturnOrderEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
-        purchaseReturnOrderEntity.setSourceId(dto.getSourceId());
-        purchaseReturnOrderEntity.setSourceType(dto.getSourceType());
 
         //保存主表信息
         this.save(purchaseReturnOrderEntity);
