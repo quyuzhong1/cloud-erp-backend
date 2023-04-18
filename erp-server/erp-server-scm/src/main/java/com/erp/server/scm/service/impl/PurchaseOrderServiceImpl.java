@@ -806,6 +806,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto) {
         //保存信息
         List<PurchaseOrderDTO.GenerateStockInDTO> list = dto.getList();
@@ -845,13 +846,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setStockInUserId(entity.getPurchaseUserId());
             List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>();
             for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
-
+                PurchaseStockInDetailDTO.AddDTO addDetailDTO = new PurchaseStockInDetailDTO.AddDTO();
+                addDetailDTO.setSourceDetailId(generateStockInDTO.getPurchaseOrderDetailId());
+                addDetailDTO.setPurchaseOrderDetailId(generateStockInDTO.getPurchaseOrderDetailId());
+                addDetailDTO.setStockInQty(generateStockInDTO.getStockInQty());
+                addDetailDTO.setExceedQty(generateStockInDTO.getExceedQty());
+                details.add(addDetailDTO);
             }
-
-
+            addDTO.setDetails(details);
+            resultList.add(addDTO);
         }
-
-        return null;
+        Boolean add = wmsTaskFeign.batchAddPurchaseStockIn(resultList);
+        return add;
     }
 
     @Override

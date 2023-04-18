@@ -17,7 +17,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
@@ -46,9 +45,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private PurchaseOrderService purchaseOrderService;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;

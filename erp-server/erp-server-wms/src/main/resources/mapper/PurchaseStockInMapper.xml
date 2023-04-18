@@ -11,6 +11,7 @@
             psi.supplier_name,
             psi.approve_status,
             psi.invalid_status,
+            psid.sku_id,
             psid.sku_no,
             psi.stock_in_date,
             psi.purchase_user_name,
