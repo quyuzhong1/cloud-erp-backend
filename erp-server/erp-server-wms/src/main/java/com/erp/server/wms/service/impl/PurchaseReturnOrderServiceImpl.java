@@ -254,18 +254,19 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     public PurchaseReturnOrderDTO.ViewDTO view(String id) {
+
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity,viewDTO);
+        //获取采购订单主表信息
+        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
 
-        //获取采购用户部门
-        SysDepartmentDTO purchaseUserDept = sysUserFeign.getUserDeptById(purchaseReturnOrderEntity.getPurchaseUserId());
         //查询供应商信息
         SupplierEntity supplierEntity = productOrderFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
-        viewDTO.setPurchaseUserDeptId(purchaseUserDept.getId());
-        viewDTO.setPurchaseUserDeptName(purchaseUserDept.getName());
+        viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
+        viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
 
         if (SourceTypeEnum.QC_BILL.getType().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getCode());
@@ -300,6 +301,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
             }
+            detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setProductName(productDetailEntity.getName());
             detailViewDTOS.add(detailView);
         }
