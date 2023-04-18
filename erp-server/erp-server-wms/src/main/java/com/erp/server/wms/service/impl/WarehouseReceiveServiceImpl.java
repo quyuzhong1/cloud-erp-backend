@@ -113,6 +113,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<WarehouseReceiveDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
         //明细数据
         List<WarehouseReceiveDTO.PagingViewDTO> records = pageData.getRecords();
         //获取sku的id集合

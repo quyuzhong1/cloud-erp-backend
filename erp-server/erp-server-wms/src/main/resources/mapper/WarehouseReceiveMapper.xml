@@ -83,7 +83,7 @@
         </if>
 
         <if test="params.billDate != null and params.billDate.size > 0">
-            and wr.billDate >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
+            and wr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
         </if>
 
         <if test="params.createTime != null and params.createTime.size > 0">
@@ -261,7 +261,7 @@
         </if>
 
         <if test="params.billDate != null and params.billDate.size > 0">
-            and wr.billDate >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
+            and wr.bill_date >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
         </if>
 
         <if test="params.createTime != null and params.createTime.size > 0">
