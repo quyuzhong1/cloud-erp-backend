@@ -9,6 +9,7 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
@@ -80,7 +81,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //去年
         dto.setStartTime(LocalDateUtil.getLastYearStart(now));
         dto.setEndTime(LocalDateUtil.getLastYearEnd(now));
-        List<SalesFlagVO> lastYearList=baseMapper.byLastYear(dto,timeFlag, settleRate);
+        List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate);
 
         int initSize = 12;
         List<String> xAxisList = new ArrayList<>(initSize);
@@ -492,10 +493,27 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (StringUtils.isBlank(settleRate)) {
             settleRate = "1";
         }
+        String shopNo = "shopNo";
         StatisticalDataVO result = new StatisticalDataVO();
         result.setName("销售额TOP20店铺");
         result.setChartType(ChartType.BAR);
         List<Map<String, Object>> resultList = baseMapper.byTopShop(dto, settleRate);
+        List<String> shopNoList = resultList.stream().map(obj -> obj.get(shopNo).toString()).collect(Collectors.toList());
+        List<DmpShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
+        for (Map<String, Object> item : resultList) {
+            if (item.containsKey(shopNo)) {
+                String shopNoFlag = item.get(shopNo).toString();
+                String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(shopNoFlag)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                item.put("shopName", shopName);
+            }else{
+                item.put("shopName", "");
+            }
+
+
+        }
+
+
         ChartVO chartVO = new ChartVO();
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
         List<Object> xAxisList = new ArrayList<>(initSize);
