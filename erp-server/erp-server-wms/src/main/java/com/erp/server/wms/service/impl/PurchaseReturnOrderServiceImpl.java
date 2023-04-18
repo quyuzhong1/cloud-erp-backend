@@ -331,7 +331,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
 
-        if (count == 0) {
+        if (count != purchaseReturnOrderEntities.size()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
 
@@ -403,7 +403,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != purchaseReturnOrderEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //TODO 待加审核流程
@@ -449,7 +449,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != purchaseReturnOrderEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_99003);
         }
         //TODO 待加审核流程
@@ -484,7 +484,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != purchaseReturnOrderEntityList.size()) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
 
@@ -523,7 +523,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 ||entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
 
@@ -555,7 +555,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
         //删除详情表

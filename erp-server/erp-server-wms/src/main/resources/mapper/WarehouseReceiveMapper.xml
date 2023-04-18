@@ -128,7 +128,7 @@
             AND wr.purchase_order_id = #{purchaseOrderId}
         </if>
         <if test="skuId != null and skuId != ''">
-            AND wr.sku_id = #{skuId}
+            AND wrd.sku_id = #{skuId}
         </if>
         <if test="approveStatus != null and approveStatus != ''">
             AND wr.approve_status = #{approveStatus}
