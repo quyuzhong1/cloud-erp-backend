@@ -79,20 +79,26 @@ public class StockMQConsumerService {
             // 推送金蝶
             // 1. 金蝶接口调用 保存
             //读取配置，初始化SDK
-            KingdeeApiUtils orgApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PLM_CFG_PREFERRED_ORGANIZATION_CFG.getCode());
-            Map<String, Object> dataMap = new HashMap<>(2);
-            dataMap.put("orgId", ApiKingdeeOrganizationEnum.ORGANIZATION_HK.getNumber());
-            HashMap<String, Object> hashMap = new HashMap<>(2);
-            hashMap.put("list", Arrays.asList(dataMap));
-            String resultStr = kingdeeCommonService.addKingdeeRecord(ext.getReceivingCode(), orgApiUtils, ApiModuleTypeEnum.CHANGE_ORG.getCode(), PlatformEnum.KINGDEE.getDesc(), hashMap);
-            // 切换组织
             KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFER_DIRECT.getCode());
             String saveId = dmpWarehouseInboundRecordService.addKingdeeTransferRecord(ext, apiUtils);
-            // 保存成功
-            // 3. 金蝶接口调用 提交
-            Boolean submitResult = dmpWarehouseInboundRecordService.submitKingdeeTransferRecord(saveId, ext.getReceivingCode(), apiUtils);
-            // 4. 金蝶接口调用 审核
-            Boolean auditResult = dmpWarehouseInboundRecordService.auditKingdeeTransferRecord(saveId, ext.getReceivingCode(), apiUtils);
+            // 保存成功后不影响消费，如果后续操作失败使用定时任务补偿
+            try {
+                // 3. 金蝶接口调用 提交
+                Boolean submitResult = dmpWarehouseInboundRecordService.submitKingdeeTransferRecord(saveId, ext.getReceivingCode(), apiUtils);
+                if(!submitResult){
+                    log.error("调拨单提交失败：entity={}", JSONUtil.toJsonStr(ext));
+                    return Boolean.FALSE;
+                }
+                // 4. 金蝶接口调用 审核
+                Boolean auditResult = dmpWarehouseInboundRecordService.auditKingdeeTransferRecord(saveId, ext.getReceivingCode(), apiUtils);
+                if(!auditResult){
+                    log.error("调拨单审核失败：entity={}", JSONUtil.toJsonStr(ext));
+                    return Boolean.FALSE;
+                }
+            } catch (Exception e){
+                log.error("调拨单提交或审核失败：entity={}", JSONUtil.toJsonStr(ext));
+                return Boolean.FALSE;
+            }
             return Boolean.TRUE;
         }
     }
