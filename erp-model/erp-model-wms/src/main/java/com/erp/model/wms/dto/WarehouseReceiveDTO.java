@@ -170,6 +170,11 @@ public class WarehouseReceiveDTO {
         private String supplierName;
 
         /**
+         * 供应商联系人
+         */
+        private String supplierContactId;
+
+        /**
          * 供应商地址
          */
         private String supplierAddress;
@@ -233,6 +238,16 @@ public class WarehouseReceiveDTO {
          * 新品首批（false否,true是）
          */
         private Boolean isFirstMassProduct;
+
+        /**
+         * 采购员Id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
 
         /**
          * 报价明细

@@ -26,6 +26,9 @@
         FROM purchase_return_order_detail prod
         LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
+        <if test="params.code != null and params.code != ''">
+            and pro.code = #{params.code}
+        </if>
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and prod.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">

@@ -456,6 +456,11 @@ public class PurchaseReturnOrderDTO {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
+         * 订单编号
+         */
+        private String code;
+
+        /**
          * ids
          */
         private List<String> ids;

@@ -24,6 +24,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -99,6 +100,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private PurchaseStockInService purchaseStockInService;
+
 
     /**
      * 主页分页查询
@@ -260,13 +262,21 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         WarehouseReceiveDTO.ViewDTO viewDTO = new WarehouseReceiveDTO.ViewDTO();
         WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
         BeanMapperUtils.copy(warehouseReceiveEntity,viewDTO);
-        //获取仓库信息
-        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseReceiveEntity.getDeliveryWarehouseId());
         //获取采购订单主表信息
         PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
-        viewDTO.setSupplierAddress(warehouseEntity.getAddress());
+        //获取采购单供应商信息
+        PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+
+        //查询供应商信息
+        SupplierEntity supplierEntity = productOrderFeign.getSupplierById(warehouseReceiveEntity.getSupplierId());
+        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
+        viewDTO.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
+        viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
+        viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
+        viewDTO.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
+
         //创库保存详情表的集合
         List<WarehouseReceiveDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
