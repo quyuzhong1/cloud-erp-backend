@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcRuleDTO;
+import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 质检规则
@@ -27,6 +29,9 @@ public class QcRuleController extends BaseController {
 
     @Resource
     private QcRuleService qcRuleService;
+
+    @Resource
+    private QcReportService qcReportService;
 
 
     /**
@@ -187,9 +192,9 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @GetMapping("/getByQcType")
-    public ApiResult<QcReportDTO.ListDTO> getByQcType(@RequestParam("qcType") String qcType) {
-
-        return success();
+    public ApiResult<List<QcReportDTO.ListDTO>> getByQcType(@RequestParam("qcType") String qcType) {
+        List<QcReportDTO.ListDTO> list = qcReportService.getByQcType(qcType);
+        return success(list);
     }
 
 

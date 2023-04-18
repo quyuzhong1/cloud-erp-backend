@@ -44,4 +44,23 @@ public interface QcReportService extends SuperService<QcReportEntity> {
      * @return void
      */
     void updateQcReport(String qcRuleId, List<QcReportDTO.UpdateDTO> qcReportLList);
+
+    
+    /**
+     * 根据质检类型 获取待 报告明细
+     * @author yl
+     * @date 2023-04-18 16:01
+     * @param qcType
+     * @return java.util.List<com.erp.model.wms.dto.QcReportDTO.ListDTO>
+     */
+    List<QcReportDTO.ListDTO> getByQcType(String qcType);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-04-18 16:27
+     * @param ruleIds
+     * @return void
+     */
+    void removeByRuleIds(List<String> ruleIds);
 }
