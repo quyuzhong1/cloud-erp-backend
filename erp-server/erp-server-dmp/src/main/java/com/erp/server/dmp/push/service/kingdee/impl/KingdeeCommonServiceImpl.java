@@ -78,7 +78,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map,String apiPlatformId,Integer moduleType) {
 
-        JSONObject json = new JSONObject();
+        JSONObject json = new JSONObject(new LinkedHashMap());
         //查询配置字段
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
         dto.setApiPlatformId(apiPlatformId);
@@ -117,7 +117,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 List<JSONObject> detailList = new ArrayList<>();
                 if (CollectionUtils.isNotEmpty(listMap)) {
                     for (Map<String,Object> fieldMap: listMap) {
-                        JSONObject detailJson = new JSONObject();
+                        JSONObject detailJson = new JSONObject(new LinkedHashMap());
                         //给集合填充数据
                         childList.forEach(obj-> formatJsonObject(obj, detailJson, fieldMap, cfgApiFieldMapValueList));
                         detailList.add(detailJson);

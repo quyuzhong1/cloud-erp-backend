@@ -103,6 +103,33 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public String getSeqNo(SysCodeDTO dto) {
+        //加锁
+        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
+        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
+            throw new ServiceException(ApiError.ERROR_9026);
+        }
+        try {
+            //生成单号
+            getOrSaveSysCode(dto);
+            StringBuffer sysCode = new StringBuffer();
+            sysCode.append(dto.getCategory())
+                    .append(String.format("%05d",dto.getNum()));
+            if (StringUtils.isBlank(sysCode)) {
+                throw new ServiceException(ApiError.ERROR_9027);
+            }
+            //更新当前顺序码
+            updateNumByCode(dto.getId(),dto.getNum());
+            return sysCode.toString();
+        } finally {
+            //解锁
+            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+        }
+    }
+
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String getBusinessNo(SysCodeDTO dto) {
         //加锁
         long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;

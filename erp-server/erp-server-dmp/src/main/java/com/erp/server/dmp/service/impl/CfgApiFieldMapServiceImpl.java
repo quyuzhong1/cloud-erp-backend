@@ -205,6 +205,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
         LambdaQueryWrapper<CfgApiFieldMapEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CfgApiFieldMapEntity::getApiPlatformId,dto.getApiPlatformId());
         queryWrapper.eq(CfgApiFieldMapEntity::getModuleType,dto.getModuleType());
+        queryWrapper.orderByAsc(CfgApiFieldMapEntity::getIndex);
         List<CfgApiFieldMapEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return  new ArrayList<>();

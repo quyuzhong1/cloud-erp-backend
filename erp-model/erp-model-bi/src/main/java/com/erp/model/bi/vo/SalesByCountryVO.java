@@ -32,6 +32,11 @@ public class SalesByCountryVO implements Serializable {
 
 
     /**
+     * 订单id
+     */
+    private String orderId;
+
+    /**
      * 销售额
      */
     private BigDecimal sales=BigDecimal.ZERO;
