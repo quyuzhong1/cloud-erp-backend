@@ -173,12 +173,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
-        ;
-
-        dto.setStartTime(beforeSevenDays);
-        dto.setEndTime(nowTime);
-        //查询近七天信息
-        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastSevenDays =lastThirtyDays.stream().filter(
+                l->(l.getFlagDate().isAfter(beforeSevenDays))&&(nowTime.isAfter(l.getFlagDate()))
+                ).collect(Collectors.toList());
 
         for (SalesVO item : resultList) {
             List<BigDecimal> salesTrend = new ArrayList<>(7);
@@ -187,7 +184,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
             Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
-                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
+                            b.getFlagNo().equals(item.getName())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
             item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
@@ -248,11 +246,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (StringUtils.isBlank(settleRate)) {
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
-
+        //获取到数据
         List<SalesByCountryVO> list = baseMapper.getByCountry(dto, settleRate);
+        //国家
+        List<String> countryList = list.stream().map(SalesByCountryVO::getCountry).distinct().collect(Collectors.toList());
 
+        //sku
+        List<String> skuList = list.stream().map(SalesByCountryVO::getSku).distinct().collect(Collectors.toList());
+
+
+        //国家分组
         Map<String, List<SalesByCountryVO>> countryMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesByCountryVO::getCountry));
+
+
+        //sku 分组
         Map<String, List<SalesByCountryVO>> skuMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesByCountryVO::getSku));
 
@@ -270,38 +278,31 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         columnList.add(productNameAxes);
 
         //国家
-        List<String> countryList = new LinkedList<>();
-        for (Map.Entry<String, List<SalesByCountryVO>> item : countryMap.entrySet()) {
-            String country = item.getKey();
-            countryList.add(country);
+        for (String country : countryList) {
             XAxesVO axes = new XAxesVO();
             axes.setProp(country);
             axes.setLabel(country);
             columnList.add(axes);
         }
-        //sku
-        List<String> skuList = new LinkedList<>();
-        for (Map.Entry<String, List<SalesByCountryVO>> item : skuMap.entrySet()) {
-            skuList.add(item.getKey());
-        }
-        List<Map<String, Object>> rowAxesList = new LinkedList<>();
 
+        List<Map<String, Object>> rowAxesList = new LinkedList<>();
         for (String sku : skuList) {
             Map<String, Object> rowMap = new LinkedHashMap<>();
             rowMap.put("sku", sku);
+            //产品名称
+            String productName = skuMap.containsKey(sku) ? skuMap.get(sku).get(0).getProductName() : "";
+            rowMap.put("productName", productName);
             for (String country : countryList) {
-                String productName = "";
-                SalesByCountryVO product = list.stream().filter(s -> s.getSku().equals(sku)).findFirst().orElse(null);
-                if (product != null) {
-                    productName = product.getProductName();
-                }
-                rowMap.put("productName", productName);
-                SalesByCountryVO salesInfo = list.stream().filter(s -> sku.equals(s.getSku()) && country.equals(s.getCountry())).findFirst().orElse(null);
-                if (salesInfo != null) {
-                    rowMap.put(country, salesInfo.getSales());
+                if (countryMap.containsKey(country)) {
+                    //国家sku
+                    List<SalesByCountryVO> countrySalesList = countryMap.get(country);
+                    BigDecimal countrySales = countrySalesList.stream().filter(c->c.getSku().equals(sku)).
+                            map(SalesByCountryVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    rowMap.put(country, countrySales);
                 } else {
-                    rowMap.put(country, BigDecimal.ZERO);
+                    rowMap.put(country, 0);
                 }
+
             }
             rowAxesList.add(rowMap);
         }
@@ -506,7 +507,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(shopNoFlag)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 item.put("shopName", shopName);
-            }else{
+            } else {
                 item.put("shopName", "");
             }
 
@@ -937,8 +938,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (StringUtils.isBlank(settleRate)) {
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
-
         List<ShopSalesVO> shopSalesList = baseMapper.byShopNewAndOld(dto, settleRate);
+
+        List<String> shopNoList = shopSalesList.stream().map(ShopSalesVO::getShopNo).collect(Collectors.toList());
+
+        List<DmpShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
+
         int initSize = shopSalesList.size();
         List<ShopNewAndOldSalesVO> resultList = new ArrayList<>(initSize);
         Map<String, List<ShopSalesVO>> groupMap = shopSalesList.parallelStream().
@@ -954,8 +959,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     equals(newFlag)).findFirst().orElse(null);
             ShopSalesVO oldItem = salesList.stream().filter(s -> s.getFlag().
                     equals(oldFlag)).findFirst().orElse(null);
-            ShopSalesVO salesVO = salesList.get(0);
-            vo.setShopName(salesVO.getShopName());
             if (newItem != null) {
                 vo.setNewSales(newItem.getSales());
                 vo.setNewSalesQuantity(newItem.getSalesQuantity());
@@ -964,9 +967,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setOldSales(oldItem.getSales());
                 vo.setOldSalesQuantity(oldItem.getSalesQuantity());
             }
+            String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(item.getKey())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            vo.setShopName(shopName);
             resultList.add(vo);
         }
+        resultList.sort(Comparator.comparing(ShopNewAndOldSalesVO::getOldSales, Comparator.reverseOrder()));
         return resultList;
+
     }
 
 

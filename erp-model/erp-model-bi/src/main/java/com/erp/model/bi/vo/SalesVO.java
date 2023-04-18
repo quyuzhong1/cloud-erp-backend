@@ -45,7 +45,7 @@ public class SalesVO implements Serializable {
 
 
     /**
-     * 客单假
+     * 客单价
      */
     private BigDecimal perCustomerTransaction=BigDecimal.ZERO;
 
