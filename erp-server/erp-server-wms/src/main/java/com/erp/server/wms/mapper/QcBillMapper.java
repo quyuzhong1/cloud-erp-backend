@@ -6,6 +6,7 @@ import com.erp.model.wms.entity.QcBillEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -26,4 +27,14 @@ public interface QcBillMapper extends BaseMapper<QcBillEntity> {
      * @return List<ViewQcOverviewDetailDTO>
      */
     List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> listQcBillGroupQcStatus(@Param("params") QcEffectivenessDTO.CommonSearchParamDTO params);
+    /**
+     * @description: 按日期查询质检趋势
+     * @author Will
+     * @date: 2023/4/18 12:31
+     * @param beginDate
+     * @param endDate 
+     * @return List<GroupQcTrendDTO> 
+     */
+    List<QcEffectivenessDTO.GroupQcTrendDTO> listQcBillGroupQcTrend(@Param("type")String type, @Param("beginDate")LocalDate beginDate,@Param("endDate") LocalDate endDate);
+
 }
