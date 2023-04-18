@@ -16,7 +16,6 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -163,8 +162,6 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     public String add(PurchaseStockInDTO.AddDTO dto) {
         PurchaseStockInEntity entity = new PurchaseStockInEntity();
         BeanMapperUtils.copy(dto,entity);
-        //校验明细是否有重复sku
-        checkAddDetailsRepeatSku(dto.getDetails());
         //添加采购订单默认值
         addDefaultPurchaseData(dto.getPurchaseOrderId(),entity);
         //处理数据id
@@ -190,8 +187,6 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         PurchaseStockInEntity entity = new PurchaseStockInEntity();
         BeanMapperUtils.copy(dto,entity);
         List<PurchaseStockInDetailDTO.UpdateDTO> details = dto.getDetails();
-        //校验明细是否有重复sku
-        checkUpdateDetailsRepeatSku(details);
         //处理数据id
         doOpHandleDataId(dto.getStockInDeptId(),dto.getStockInUserId(),dto.getDeliveryWarehouseId(),entity);
 
@@ -618,32 +613,4 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             entity.setDeliveryWarehouseName(warehouseName);
         }
     }
-
-
-    /**
-     * 新增验证sku是否重复
-     */
-    private void checkAddDetailsRepeatSku(List<PurchaseStockInDetailDTO.AddDTO> list) {
-        Map<String, List<PurchaseStockInDetailDTO.AddDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDetailDTO.AddDTO::getSkuId));
-        for (Map.Entry<String, List<PurchaseStockInDetailDTO.AddDTO>> entry: map.entrySet()) {
-            List<PurchaseStockInDetailDTO.AddDTO> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
-            }
-        }
-    }
-    /**
-     * 编辑验证sku是否重复
-     */
-    private void checkUpdateDetailsRepeatSku(List<PurchaseStockInDetailDTO.UpdateDTO> list) {
-        Map<String, List<PurchaseStockInDetailDTO.UpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDetailDTO.UpdateDTO::getSkuId));
-        for (Map.Entry<String, List<PurchaseStockInDetailDTO.UpdateDTO>> entry: map.entrySet()) {
-            List<PurchaseStockInDetailDTO.UpdateDTO> value = entry.getValue();
-            if (value.size() > MathUtil.ONE) {
-                throw new ServiceException(new ApiResult(1,"录入sku编码【".concat(value.get(0).getSkuNo()).concat("】存在重复")));
-            }
-        }
-    }
-
-
 }

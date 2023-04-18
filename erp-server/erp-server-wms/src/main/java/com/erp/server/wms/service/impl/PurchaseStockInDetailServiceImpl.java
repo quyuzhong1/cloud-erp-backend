@@ -29,6 +29,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -200,6 +201,14 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98050);
         }
+        //验证SKU是否重复
+        Map<String, List<PurchaseStockInDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDetailEntity::getSkuId));
+        for (Map.Entry<String, List<PurchaseStockInDetailEntity>> entry: map.entrySet()) {
+            List<PurchaseStockInDetailEntity> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+            }
+        }
 
         //判断是否存在质检单、存在且未质检完成则不支持入库
         List<QcBillEntity> qcList =  qcBillService.listByPoIds(Arrays.asList(entity.getId()));
@@ -213,45 +222,45 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         //下推单据明细id查询
         List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
         //来源采购订单
-            List<PurchaseOrderDetailEntity> details = productOrderFeign.listPurchaseOrderDetailById(ids);
-            if (CollectionUtils.isEmpty(details)) {
-                throw new ServiceException(ApiError.ERROR_98026);
+        List<PurchaseOrderDetailEntity> details = productOrderFeign.listPurchaseOrderDetailById(ids);
+        if (CollectionUtils.isEmpty(details)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        //查收货单明细
+        List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(details)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        for (PurchaseStockInDetailEntity detailEntity : list) {
+
+            //采购订单数量
+            Integer purchaseQty = details.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseQty()).findFirst().orElse(MathUtil.ZERO);
+
+            //本次入库数量
+            Integer thisStockInQty = detailEntity.getStockInQty();
+
+            //下推入库单数量
+            Integer stockInQty = MathUtil.ZERO;
+
+            if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
-            //查收货单明细
-            List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
-            if (CollectionUtils.isEmpty(details)) {
-                throw new ServiceException(ApiError.ERROR_98026);
+            if (thisStockInQty > purchaseQty - stockInQty) {
+                throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty)));
             }
+            //来源收货单
+            if (SourceTypeEnum.WAREHOUSE_RECEIVE.getType().equals(sourceType)) {
+                //收货数量
+                Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).findFirst().orElse(MathUtil.ZERO);
 
-            for (PurchaseStockInDetailEntity detailEntity : list) {
-
-                //采购订单数量
-                Integer purchaseQty = details.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseQty()).findFirst().orElse(MathUtil.ZERO);
-
-                //本次入库数量
-                Integer thisStockInQty = detailEntity.getStockInQty();
-
-                //下推入库单数量
-                Integer stockInQty = MathUtil.ZERO;
-
-                if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                    stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                //数量验证
+                if (thisStockInQty > receiveQty) {
+                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
                 }
-
-                if (thisStockInQty > purchaseQty - stockInQty) {
-                    throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty)));
-                }
-                //来源收货单
-                if (SourceTypeEnum.WAREHOUSE_RECEIVE.getType().equals(sourceType)) {
-                    //收货数量
-                    Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).findFirst().orElse(MathUtil.ZERO);
-
-                    //数量验证
-                    if (thisStockInQty > receiveQty) {
-                        throw new ServiceException(new ApiResult(1,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
-                    }
-                }
+            }
         }
     }
 }
