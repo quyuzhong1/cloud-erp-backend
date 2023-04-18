@@ -12,8 +12,29 @@
             qc_bill qb
             <where>
                 qb.is_deleted = false
+                <if test="params.dateList != null and params.dateList.size > 0">
+                    and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+                </if>
             </where>
             group by qb.qc_status
+    </select>
+
+    <select id="listQcBillGroupQcTrend" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$GroupQcTrendDTO">
+        select
+               case when #{type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
+                    when #{type} = 'week' then to_char(date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval, 'YYYY-mm-dd')
+                    when #{type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
+                as dateStr,
+               qb.qc_status as status,
+               count (0) as count
+        from  qc_bill qb
+        <where>
+            qb.is_deleted = false
+            <if test="beginDate != null and endDate != null">
+                and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            </if>
+        </where>
+        group by dateStr, qb.qc_status
     </select>
 
 </mapper>

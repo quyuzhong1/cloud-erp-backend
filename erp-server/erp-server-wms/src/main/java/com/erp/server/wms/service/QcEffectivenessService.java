@@ -25,9 +25,9 @@ public interface QcEffectivenessService {
      * @author Will
      * @date: 2023/4/12 12:07
      * @param dto 
-     * @return List<ViewQcTrendDTO> 
+     * @return ViewQcTrendDTO
      */
-    List<QcEffectivenessDTO.ViewQcTrendDTO> viewQcTrend(QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto);
+    QcEffectivenessDTO.ViewQcTrendDTO viewQcTrend(QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto);
     /**
      * @description: 按人员查询
      * @author Will

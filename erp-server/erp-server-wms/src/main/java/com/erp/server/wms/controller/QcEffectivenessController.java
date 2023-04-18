@@ -48,9 +48,9 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcTrend")
-    public ApiResult<List<QcEffectivenessDTO.ViewQcTrendDTO>> viewQcTrend(@RequestBody @Validated QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
-        List<QcEffectivenessDTO.ViewQcTrendDTO> list = qcEffectivenessService.viewQcTrend(dto);
-        return success(list);
+    public ApiResult<QcEffectivenessDTO.ViewQcTrendDTO> viewQcTrend(@RequestBody @Validated QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
+        QcEffectivenessDTO.ViewQcTrendDTO result = qcEffectivenessService.viewQcTrend(dto);
+        return success(result);
     }
 
     /**

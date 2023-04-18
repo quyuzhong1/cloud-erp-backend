@@ -3,6 +3,8 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -64,7 +66,14 @@ public class QcEffectivenessDTO implements Serializable {
         /**
          * 类型（day日、week周、month月）
          */
+        @NotBlank(message = "类型不能为空")
         private String type;
+
+        /**
+         * 是否是时间段，true,false
+         */
+        @NotNull(message = "是否时间段不能为空")
+        private Boolean isTimeSlot;
     }
 
     @Data
@@ -74,17 +83,17 @@ public class QcEffectivenessDTO implements Serializable {
         /**
          * 日期集合
          */
-        private List<LocalDate> dateList;
+        private List<String> dateList;
+
+        /**
+         * 暂存数量集合
+         */
+        private List<Integer> waitSubmitQtyList;
 
         /**
          * 待质检数量集合
          */
         private List<Integer> waitQcQtyList;
-
-         /**
-          * 质检中数量集合
-          */
-         private List<Integer> inQcQtyList;
 
          /**
           * 质检（已质检、免检）数量集合
@@ -95,8 +104,25 @@ public class QcEffectivenessDTO implements Serializable {
           * 已取消数量集合
           */
          private List<Integer> cancelQtyList;
-
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class GroupQcTrendDTO {
+        /**
+         * 时间
+         */
+        private String dateStr;
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
 
     @Data
     @NoArgsConstructor
