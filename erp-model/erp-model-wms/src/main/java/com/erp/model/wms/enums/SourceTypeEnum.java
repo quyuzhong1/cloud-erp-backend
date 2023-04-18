@@ -5,7 +5,7 @@ public enum SourceTypeEnum {
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     QC_BILL("qcBill", "质检单"),
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
-    WAREHOUSE_RECEIVE("WAREHOUSE_RECEIVE", "仓库收货单"),
+    WAREHOUSE_RECEIVE("warehouseReceive", "仓库收货单"),
     ;
 
     /**
