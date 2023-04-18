@@ -378,7 +378,7 @@ public class WarehouseReceiveDTO {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
     }
 
     @Data
