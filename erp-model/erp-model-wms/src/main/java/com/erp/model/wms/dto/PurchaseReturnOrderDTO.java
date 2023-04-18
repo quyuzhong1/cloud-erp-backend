@@ -456,6 +456,11 @@ public class PurchaseReturnOrderDTO {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
+         * ids
+         */
+        private List<String> ids;
+
+        /**
          * skuNo集合
          */
         private List<String> skuNoList;
@@ -632,5 +637,19 @@ public class PurchaseReturnOrderDTO {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ReturnOrderCountDTO {
+
+        /**
+         * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

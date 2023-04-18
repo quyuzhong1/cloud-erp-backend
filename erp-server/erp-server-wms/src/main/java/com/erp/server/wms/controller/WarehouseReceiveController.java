@@ -216,19 +216,6 @@ public class WarehouseReceiveController extends BaseController {
     }
 
     /**
-     * 下推质检单
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
-     * @param id id
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping(value = "/generateQCBill")
-    public ApiResult generateQCBill(@RequestBody @RequestParam("id") String id) {
-        Boolean flag = false;
-        return flag == true ? success() : failure();
-    }
-
-    /**
      * 下推入库单列表查询
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
@@ -236,8 +223,8 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockInView")
-    public ApiResult<List<WarehouseReceiveDTO.GenerateStockInViewDTO>> generateStockInView(@RequestBody @RequestParam("id") String id) {
-        List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = warehouseReceiveService.generateStockInView(id);
+    public ApiResult<List<WarehouseReceiveDTO.GenerateStockInViewDTO>> generateStockInView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = warehouseReceiveService.generateStockInView(dto.getIds());
         return success(generateStockInViewDTOS);
     }
 
@@ -245,12 +232,12 @@ public class WarehouseReceiveController extends BaseController {
      * 下推入库单保存
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
+     * @param dtos dtos
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.GenerateStockInDTO dto) {
-        Boolean flag = warehouseReceiveService.generateStockIn(dto);
+    public ApiResult generateStockIn(@RequestBody List<WarehouseReceiveDTO.GenerateStockInDTO> dtos) {
+        Boolean flag = warehouseReceiveService.generateStockIn(dtos);
         return flag == true ? success() : failure();
     }
 

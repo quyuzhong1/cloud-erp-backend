@@ -151,7 +151,8 @@
         AND wr.id = #{id}
     </select>
 
-    <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO">
+
+    <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO">
         SELECT
         pro.id,
         pro.code,
@@ -254,4 +255,20 @@
         pro.create_time,pro.id desc
     </select>
 
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct pro.id)
+        FROM purchase_return_order_detail prod
+        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        WHERE pro.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and pro.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+    </select>
 </mapper>

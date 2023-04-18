@@ -32,7 +32,7 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
 
     List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(@Param("purchaseOrderId") String purchaseOrderId);
 
-    List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(@Param("id") String id);
+    List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(@Param("ids") List<String> ids);
 
     List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcel(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 }

@@ -220,4 +220,14 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/accountingCompany/getCompanyById")
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
+
+    /**
+     * 根据用户Id获取部门
+     * @Author Luo_WG
+     * @Date 2023/4/18 9:53
+     * @param userId userId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("feign/dept/getDeptByUserId")
+    SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId);
 }

@@ -27,6 +27,7 @@ import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
@@ -54,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -572,12 +574,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 下推入库单列表查询
      * @Author Luo_WG
      * @Date 2023/4/14 14:24
-     * @param id id
+     * @param ids ids
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.GenerateStockInViewDTO>
      **/
     @Override
-    public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(String id) {
-        List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = baseMapper.generateStockInView(id);
+    public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(List<String> ids) {
+        List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = baseMapper.generateStockInView(ids);
         LoginUser userInfo = commonService.getUserInfo();
         //获取sku的id集合
         List<String> skuIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getSkuId).collect(Collectors.toList());
@@ -598,6 +600,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setProductName(productDetailEntity.getName());
             req.setStockInDate(LocalDate.now());
             req.setStockInUserName(userInfo.getUid());
+            req.setStockInUserName(userInfo.getUserName());
             req.setReceiveQty(getReceiveQty(req.getPurchaseOrderId(), req.getSkuId()));
             req.setUnStockInQty(0);
             req.setStockInQty(0);
@@ -611,33 +614,43 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 下推入库单
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
+     * @param dtos dtos
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInDTO dto) {
-        PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
-        addDTO.setSourceId(dto.getId());
-        addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
-        WarehouseReceiveEntity warehouseReceiveEntity = this.getById(dto.getId());
+    public Boolean generateStockIn(List<WarehouseReceiveDTO.GenerateStockInDTO> dtos) {
+        dtos.forEach(dto -> {
+            //获取用户信息
+            SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getStockInUserId());
+            //获取用户部门
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userDTO.getUid());
 
-        addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
-        addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
-        addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
-        addDTO.setStockInDeptId(warehouseReceiveEntity.getDeliveryWarehouseId());
+            PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
+            addDTO.setSourceId(dto.getMainId());
+            addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
+            WarehouseReceiveEntity warehouseReceiveEntity = this.getById(dto.getId());
 
-        //设置明细
-        List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
-        List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getId());
-        detailByMainId.forEach(req -> {
-            PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
-            BeanMapperUtils.copy(req,detailDTO);
-
+            addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
+            addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
+            addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
+            addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
+            //设置明细
+            List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
+            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getId());
+            detailByMainId.forEach(req -> {
+                PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
+                BeanMapperUtils.copy(req,detailDTO);
+                detailDTO.setStockInQty(dto.getStockInQty());
+                detailDTO.setExceedQty(dto.getExceedQty());
+                detailDTO.setWarehouseLocationId("");
+                detailDTO.setRemark(req.getRemark());
+                detailDTO.setSourceDetailId(req.getId());
+                detailDTOList.add(detailDTO);
+            });
+            addDTO.setDetails(detailDTOList);
+            purchaseStockInService.add(addDTO);
         });
-        addDTO.setDetails(detailDTOList);
-        purchaseStockInService.add(addDTO);
-
-        return null;
+        return true;
     }
 
     /**

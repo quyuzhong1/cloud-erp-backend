@@ -3,18 +3,23 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -26,6 +31,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -45,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
@@ -543,14 +550,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     public Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
-      /*  List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = baseMapper.warehouseReceiveExportExcel(dto);
+       List<ReturnOrderExportExcelDTO> returnOrderExportExcelDTOS = baseMapper.returnOrderExportExcel(dto);
 
         //获取sku的id集合
-        List<String> skuIdList = warehouseReceiveExportExcelDTOS.stream().map(WarehouseReceiveExportExcelDTO::getSkuId).collect(Collectors.toList());
+         List<String> skuIdList = returnOrderExportExcelDTOS.stream().map(ReturnOrderExportExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        warehouseReceiveExportExcelDTOS.forEach(obj -> {
-
+        returnOrderExportExcelDTOS.forEach(obj -> {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
@@ -559,12 +565,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
         });
-        String fileName = "仓库入库单";
+        String fileName = "退货单";
         try {
-            ExcelUtil.export(fileName, "仓库入库单", warehouseReceiveExportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "退货单", returnOrderExportExcelDTOS, ReturnOrderExportExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
-        }*/
+        }
         return Boolean.TRUE;
     }
 
@@ -592,5 +598,29 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             orderRefReceiveDTO.setProductName(purchaseOrderDetailEntity.getProductName());
         }
         return orderRefReceiveDTOS;
+    }
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:12
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     **/
+    @Override
+    public List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> listCount(PermissionsDTO dto) {
+        ApproveStatusEnum[] values = ApproveStatusEnum.values();
+        List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> list = new ArrayList<>();
+        for (ApproveStatusEnum item: values) {
+            PurchaseReturnOrderDTO.PagingParamDTO pagingParamDTO = new PurchaseReturnOrderDTO.PagingParamDTO();
+            pagingParamDTO.setParam(dto.getParam());
+            PurchaseReturnOrderDTO.ReturnOrderCountDTO resultDTO = new PurchaseReturnOrderDTO.ReturnOrderCountDTO();
+            pagingParamDTO.setApproveStatusList(Arrays.asList(item.getStatus()));
+            Integer count = this.baseMapper.listCount(pagingParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setType(item.getStatus());
+            list.add(resultDTO);
+        }
+        return list;
     }
 }

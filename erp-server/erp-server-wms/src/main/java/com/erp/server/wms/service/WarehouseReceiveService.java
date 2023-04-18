@@ -161,19 +161,19 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * 下推入库单列表查询
      * @Author Luo_WG
      * @Date 2023/4/14 14:24
-     * @param id id
+     * @param ids ids
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.GenerateStockInViewDTO>
      **/
-    List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(String id);
+    List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(List<String> ids);
 
     /**
      * 下推入库单
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
+     * @param dtos dtos
      * @return java.lang.Boolean
      **/
-    Boolean generateStockIn(WarehouseReceiveDTO.GenerateStockInDTO dto);
+    Boolean generateStockIn(List<WarehouseReceiveDTO.GenerateStockInDTO> dtos);
 
     /**
      * 采购订单-关联的收货单据

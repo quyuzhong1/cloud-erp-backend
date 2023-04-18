@@ -2,6 +2,7 @@ package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -114,5 +115,46 @@ public class ReturnOrderExportExcelDTO {
     @ExcelProperty(value = "退货方式", index = 11)
     private String returnMode;
 
+    /**
+     * 采购员
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "采购员", index = 12)
+    private String purchaseUserName;
+
+    /**
+     * 退货员
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "退货员", index = 13)
+    private String returnUserName;
+
+    /**
+     * 退货备注
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "退货备注", index = 14)
+    private String remark;
+
+    /**
+     * 审核人
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "审核人", index = 15)
+    private String approveUserName;
+
+    /**
+     * 创建人
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "创建人", index = 16)
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "创建时间", index = 17)
+    private String createTime;
 
 }

@@ -2,8 +2,10 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
@@ -149,4 +151,13 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.lang.Integer
      **/
     List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(String purchaseOrderId);
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:14
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
+     **/
+    List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> listCount(@RequestBody PermissionsDTO dto);
 }

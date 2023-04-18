@@ -158,7 +158,13 @@
         FROM warehouse_receive_detail wrd
         LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wrd.is_deleted = FALSE
-        AND wr.id = #{id}
+        <if test="ids != null and ids.size > 0">
+            AND wr.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
     </select>
 
     <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO">

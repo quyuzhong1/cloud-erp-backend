@@ -582,6 +582,11 @@ public class WarehouseReceiveDTO {
         private LocalDate stockInDate;
 
         /**
+         * 入库员id
+         */
+        private String stockInUserId;
+
+        /**
          * 入库员名称
          */
         private String stockInUserName;
@@ -639,9 +644,9 @@ public class WarehouseReceiveDTO {
         private LocalDate stockInDate;
 
         /**
-         * 入库员名称
+         * 入库员Id
          */
-        private String stockInUserName;
+        private String stockInUserId;
 
         /**
          * 实收数量
