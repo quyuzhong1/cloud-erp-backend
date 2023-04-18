@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -28,24 +30,74 @@ public class QcReportDetailDTO {
     public static class AddDTO {
 
 
+        private String id;
+
         /**
          * 质检项
          */
-        @NotBlank(message = "质检报告不能为空")
+        @NotBlank(message = "质检报告不能为空",groups = {UpdateGroup.class, AddGroup.class})
         private String qcReportId;
 
         /**
          * 质检说明
          */
         @NotBlank(message = "质检说明不能为空")
-        @Size(max = 250,message = "质检说明不能超过250个字符")
+        @Size(max = 250,message = "质检说明不能超过250个字符",groups = {UpdateGroup.class, AddGroup.class})
         private String description;
 
         /**
          * 质检结果
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/7186
          */
-        @NotBlank(message = "质检结果不能为空")
-        private String resultKey;
+        @NotBlank(message = "质检结果不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String resultDict;
+
+    }
+
+
+    /**
+     * 添加的质检报告
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+
+        private String id;
+
+        /**
+         * 质检报告id
+         */
+        private String qcReportId;
+
+
+        /**
+         * 质检项
+         */
+        private String qcReportName;
+
+
+        /**
+         * 质检内容
+         */
+        private String qcReportContent;
+
+        /**
+         * 质检说明
+         */
+        private String description;
+
+        /**
+         * 质检结果
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/7186
+         */
+        private String resultDict;
+
+        /**
+         * 质检结果 名
+         *
+         */
+        private String resultName;
 
     }
 }

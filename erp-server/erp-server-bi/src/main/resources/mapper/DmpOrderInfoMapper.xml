@@ -27,9 +27,11 @@
             doi.platform_order_id,
             doi.source_platform,
             doi.shop_name,
-            round(doi.order_fee/doi.currency_rate,4) as itemTotal,
+            case when doi.currency_rate != 0 then round(doi.order_fee/doi.currency_rate,4)
+                else 0 end as itemTotal,
             doi.order_fee as cnyRealTimeAmount,
-            round(doi.order_fee/doi.currency_rate * doi.cny_settle_rate,4) as cny_settle_amount,
+            case when doi.currency_rate != 0 then  round(doi.order_fee/doi.currency_rate * doi.cny_settle_rate,4)
+                else 0 end as cny_settle_amount,
             doi.buyer_name,
             doi.man_phone,
             doi.second_phone,

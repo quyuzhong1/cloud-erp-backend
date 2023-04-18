@@ -7,12 +7,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.RedisService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -40,7 +44,9 @@ import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -997,28 +1003,108 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
-        //系统中已存在的订单
-        List<DmpOrderInfoEntity> orderList = this.list();
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,orderList,deptList,plmTaskFeign,dmpOrderItemService, this, dmpShopInfoService, sysUserFeign);
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,deptList,plmTaskFeign, dmpShopInfoService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
+
+            //验证导入数据是否为空
+            List<DmpOrderInfoImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.ERROR_95123);
+            }
+
+            //成功数据
+            List<DmpOrderInfoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+
+            //错误数据
+            List<DmpOrderInfoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+            //处理重复SKU
+            doOpHandleOrderInfo(successList, errorList);
+
+            if (errorList.size() > 0) {
                 StringBuffer sb = new StringBuffer();
                 String excelPath = "excel/dmpOrderInfo.xlsx";
                 String name = "dmpOrderInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);
                 sb.append(name);
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 return false;
             }
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }
         return  true;
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public void doOpHandleOrderInfo (List<DmpOrderInfoImportExcelDTO> successList, List<DmpOrderInfoImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<DmpOrderInfoImportExcelDTO> removeList = new ArrayList<>();
+        List<String> platformOrderIds = successList.stream().map(DmpOrderInfoImportExcelDTO::getPlatformOrderId).collect(Collectors.toList());
+
+        List<DmpOrderInfoEntity> list = this.lambdaQuery().in(DmpOrderInfoEntity::getPlatformOrderId, platformOrderIds).list();
+
+        for (DmpOrderInfoImportExcelDTO addDTO : successList) {
+
+            DmpOrderInfoEntity dmpOrderInfoEntity = list.stream().filter(obj -> obj.getPlatformOrderId().equals(addDTO.getPlatformOrderId())).findFirst().orElse(null);
+
+            //存在错误信息则
+            if (ObjectUtils.isNotEmpty(dmpOrderInfoEntity)) {
+                addDTO.setErrorMsg("1、订单号已存在，不能重复添加");
+                errorList.add(addDTO);
+                removeList.add(addDTO);
+                continue;
+            }
+        }
+        if (CollectionUtils.isNotEmpty(removeList)) {
+            successList.removeAll(removeList);
+        }
+        if (CollectionUtils.isNotEmpty(successList)) {
+            Map<String, List<DmpOrderInfoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(DmpOrderInfoImportExcelDTO::getPlatformOrderId));
+            //主表信息
+            List<DmpOrderInfoEntity> infoList = new ArrayList<>();
+            //明细信息
+            List<DmpOrderItemEntity> itemList = new ArrayList<>();
+
+            for (Map.Entry<String, List<DmpOrderInfoImportExcelDTO>> entry :  map.entrySet()) {
+                DmpOrderInfoEntity info = new DmpOrderInfoEntity();
+                List<DmpOrderInfoImportExcelDTO> value = entry.getValue();
+                BeanUtils.copyProperties(value.get(0),info);
+                info.setOrderStatus(OrderStateEnum.getCodeByName(value.get(0).getOrderStateName()));
+                BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
+                baseSearchDTO.setSearchKeyword(value.get(0).getChargeName());
+                ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
+                List<FindUserDTO> chargeNameList = listApiResult.getData();
+                info.setChargeId(chargeNameList.get(0).getUserId());
+                info.setId(IdWorker.getIdStr());
+                infoList.add(info);
+                for (DmpOrderInfoImportExcelDTO excelDTO : value) {
+                    DmpOrderItemEntity item = new DmpOrderItemEntity();
+                    item.setOrderId(info.getId());
+                    item.setSkuNo(excelDTO.getSkuNo());
+                    item.setItemName(excelDTO.getItemName());
+                    item.setSellPrice(excelDTO.getSellPrice());
+                    item.setQuantity(excelDTO.getQuantity());
+                    itemList.add(item);
+                }
+            }
+            //新增主表信息
+            if (CollectionUtils.isNotEmpty(infoList)) {
+                this.saveBatch(infoList);
+            }
+            //新增明细信息
+            if (CollectionUtils.isNotEmpty(itemList)) {
+                dmpOrderItemService.saveBatch(itemList);
+            }
+        }
     }
 
     @Override
