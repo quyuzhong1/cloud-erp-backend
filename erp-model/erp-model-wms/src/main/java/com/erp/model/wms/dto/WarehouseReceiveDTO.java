@@ -642,8 +642,6 @@ public class WarehouseReceiveDTO {
         private String purchaseOrderDetailId;
     }
 
-
-
     /**
      * 下推单据列表
      */
@@ -673,11 +671,13 @@ public class WarehouseReceiveDTO {
         /**
          * 入库日期
          */
+        @NotNull(message = "入库日期不能为空")
         private LocalDate stockInDate;
 
         /**
          * 入库员Id
          */
+        @NotBlank(message = "入库员不能为空")
         private String stockInUserId;
 
         /**
@@ -721,7 +721,6 @@ public class WarehouseReceiveDTO {
          * 签收数量
          */
         private Integer receiveQty;
-
 
     }
 

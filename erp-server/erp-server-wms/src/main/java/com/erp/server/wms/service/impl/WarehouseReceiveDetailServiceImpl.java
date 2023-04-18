@@ -14,6 +14,7 @@ import com.erp.rpc.wms.feign.ProductOrderFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
+import com.erp.server.wms.service.WarehouseReceiveService;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
     /**
      * 新增
      * @Author Luo_WG
@@ -64,6 +68,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = warehouseReceiveService.getReceiveQty(dto.getPurchaseOrderId());
+
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
@@ -80,6 +86,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 warehouseReceiveDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
             } else {
                 throw new ServiceException(ApiError.ERROR_99006);
+            }
+
+            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(dto.getPurchaseOrderId())).findFirst().orElse(null);
+            if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - getReceiveDTO.getReceiveQty())) {
+                throw new ServiceException(ApiError.ERROR_99013);
             }
             listDetail.add(warehouseReceiveDetailEntity);
         }

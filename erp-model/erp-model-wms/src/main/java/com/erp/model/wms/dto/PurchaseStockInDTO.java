@@ -549,4 +549,32 @@ public class PurchaseStockInDTO implements Serializable {
         private String currency;
 
     }
+
+    /**
+     * 获取签收数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GetStockInQty {
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+    }
 }

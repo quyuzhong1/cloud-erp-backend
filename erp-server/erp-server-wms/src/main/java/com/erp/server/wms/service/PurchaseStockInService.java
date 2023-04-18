@@ -166,4 +166,13 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @return Boolean
      */
     Boolean batchAddPurchaseStockIn(List<PurchaseStockInDTO.AddDTO> resultList);
+
+    /**
+     * 根据采购单获取入库数量
+     * @Author Luo_WG
+     * @Date 2023/4/18 19:36
+     * @param ids ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseStockInDTO.GetStockInQty>
+     **/
+    List<PurchaseStockInDTO.GetStockInQty> getStockInQty(List<String> ids);
 }

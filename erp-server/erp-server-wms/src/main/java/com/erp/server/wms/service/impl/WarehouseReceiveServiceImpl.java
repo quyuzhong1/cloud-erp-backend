@@ -663,10 +663,18 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(List<String> ids) {
         List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = baseMapper.generateStockInView(ids);
         LoginUser userInfo = commonService.getUserInfo();
+        List<String> purchaseOrderIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<PurchaseStockInDTO.GetStockInQty> stockInQtyList = purchaseStockInService.getStockInQty(purchaseOrderIdList);
         //获取sku的id集合
         List<String> skuIdList = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<ProductDetailEntity> byIdList = plmTaskFeign.getByIdList(skuIdList);
+
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //根据ids查询采购单详情
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+
         List<String> list = new ArrayList<>();
         generateStockInViewDTOS.forEach(req -> {
             boolean contains = list.contains(req.getId());
@@ -683,7 +691,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setStockInDate(LocalDate.now());
             req.setStockInUserName(userInfo.getUid());
             req.setStockInUserName(userInfo.getUserName());
-
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(req.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_99006);
+            }
             List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(req.getPurchaseOrderId());
             WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId()) && obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(getReceiveDTO)) {
@@ -691,8 +702,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             } else {
                 req.setReceiveQty(getReceiveDTO.getReceiveQty());
             }
-
-            req.setUnStockInQty(0);
+            PurchaseStockInDTO.GetStockInQty getStockInQty = stockInQtyList.stream().filter(obj -> obj.getPurchaseOrderId().equals(req.getPurchaseOrderId()) && obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(getStockInQty)) {
+                req.setUnStockInQty(0);
+            } else {
+                req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - getStockInQty.getStockInQty());
+            }
             req.setStockInQty(0);
             req.setExceedQty(0);
 

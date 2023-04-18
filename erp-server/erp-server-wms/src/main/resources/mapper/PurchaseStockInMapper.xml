@@ -235,4 +235,27 @@
         order by psi.purchase_order_code desc
     </select>
 
+    <select id="getStockInQty" resultType="com.erp.model.wms.dto.PurchaseStockInDTO$GetStockInQty">
+        SELECT
+        psi.purchase_order_id,
+        psid.sku_id,
+        psid.sku_no,
+        psi.approve_status,
+        SUM(psid.stock_in_qty) AS stockInQty
+        FROM purchase_stock_in psi
+        INNER JOIN purchase_stock_in_detail psid ON psi.id = psid.main_id AND psi.is_deleted = FALSE
+        WHERE psid.is_deleted = FALSE AND psi.invalid_status = FALSE
+        <if test="ids != null and ids.size > 0">
+            and psi.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+        psi.purchase_order_id,
+        psid.sku_id,
+        psid.sku_no,
+        psi.approve_status
+    </select>
+
 </mapper>
