@@ -30,7 +30,7 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
 
     Integer listCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 
-    Integer getReceiveQty(WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO);
+    List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(@Param("purchaseOrderId") String purchaseOrderId);
 
     List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(@Param("purchaseOrderId") String purchaseOrderId);
 

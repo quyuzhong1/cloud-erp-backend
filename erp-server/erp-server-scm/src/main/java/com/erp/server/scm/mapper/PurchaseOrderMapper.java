@@ -46,4 +46,15 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+
+    /**
+     * 下推收货单列表
+     * @Author Luo_WG
+     * @Date 2023/4/18 18:06
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.ViewGenerateReceiveDTO>
+     **/
+    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(@Param("ids") List<String> ids);
+
+
 }

@@ -549,6 +549,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String supplierName;
 
         /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
          * skuId
          */
         private String skuId;
@@ -566,22 +576,17 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 计划交期
          */
-        private String planDeliveryDate;
+        private LocalDate planDeliveryDate;
 
         /**
-         * 交货仓库id
+         * 收货人id
          */
-        private String deliveryWarehouseId;
+        private String receiveUserId;
 
         /**
-         * 交货仓库
+         * 收货人名称
          */
-        private String deliveryWarehouseName;
-
-        /**
-         * 含税单价
-         */
-        private BigDecimal taxPrice;
+        private String receiveUserName;
 
         /**
          * 采购数量
@@ -589,14 +594,24 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer purchaseQty;
 
         /**
-         * 采购金额
+         * 未交货数量
          */
-        private BigDecimal purchaseAmount;
+        private Integer unReceiveQty;
 
         /**
-         * 已交货数量
+         * 收货数量
          */
         private Integer receiveQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        private Integer remark;
     }
 
     /**

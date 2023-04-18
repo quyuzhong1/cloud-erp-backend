@@ -318,6 +318,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         //获取采购单详情的id集合
         List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //获取收货数量
+        List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(warehouseReceiveEntity.getPurchaseOrderId());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
@@ -327,11 +329,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = new WarehouseReceiveDTO.GetReceiveDTO();
-            getReceiveDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
-            getReceiveDTO.setSkuId(detailView.getSkuId());
-            Integer receiveQty = getReceiveQty(getReceiveDTO);
-            detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receiveQty);
+            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(warehouseReceiveEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(getReceiveDTO)) {
+                detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - 0);
+            } else {
+                detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - getReceiveDTO.getReceiveQty());
+            }
+
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
@@ -679,10 +683,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setStockInDate(LocalDate.now());
             req.setStockInUserName(userInfo.getUid());
             req.setStockInUserName(userInfo.getUserName());
-            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = new WarehouseReceiveDTO.GetReceiveDTO();
-            getReceiveDTO.setPurchaseOrderId(req.getPurchaseOrderId());
-            getReceiveDTO.setSkuId(req.getSkuId());
-            req.setReceiveQty(getReceiveQty(getReceiveDTO));
+
+            List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(req.getPurchaseOrderId());
+            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId()) && obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(getReceiveDTO)) {
+                req.setReceiveQty(0);
+            } else {
+                req.setReceiveQty(getReceiveDTO.getReceiveQty());
+            }
+
             req.setUnStockInQty(0);
             req.setStockInQty(0);
             req.setExceedQty(0);
@@ -766,12 +775,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 获取产品签收数量
      * @Author Luo_WG
      * @Date 2023/4/13 18:47
-     * @param getReceiveDTO getReceiveDTO
+     * @param purchaseOrderId purchaseOrderId
      * @return java.lang.Integer
      **/
     @Override
-    public Integer getReceiveQty(WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO) {
-        return baseMapper.getReceiveQty(getReceiveDTO);
+    public List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(String purchaseOrderId) {
+        return baseMapper.getReceiveQty(purchaseOrderId);
     }
 
 }
