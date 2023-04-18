@@ -67,6 +67,11 @@ public class PurchaseStockInDTO implements Serializable {
         private String invalidStatusName;
 
         /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
          * sku编码
          */
         private String skuNo;

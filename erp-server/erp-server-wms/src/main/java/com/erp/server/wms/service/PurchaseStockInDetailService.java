@@ -63,6 +63,4 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
      **/
     Integer getStockInQty(String purchaseOrderDetailId);
-
-
 }

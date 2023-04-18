@@ -21,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -104,8 +105,9 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //清空明细数据
         List<PurchaseStockInDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> ids = records.stream().map(PurchaseStockInDTO.ListDTO::getId).collect(Collectors.toList());
-            //查询流程id判断是否存在流程 TODO
+            List<String> ids = records.stream().map(PurchaseStockInDTO.ListDTO::getSkuId).collect(Collectors.toList());
+            //产品信息
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -120,6 +122,10 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
                     obj.setInvalidStatusName(null);
                     obj.setCreateUserName(null);
                     return;
+                }
+                if (CollectionUtils.isNotEmpty(productDetailList)) {
+                    String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                    obj.setProductName(productName);
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
@@ -463,6 +469,11 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         if (CollectionUtils.isEmpty(sourceList)) {
             throw new ServiceException(ApiError.ERROR_98050);
         }
+        long count = sourceList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99012);
+        }
+
         List<PurchaseStockInDetailEntity> sourceDetailList = purchaseStockInDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.ERROR_98051);
@@ -500,9 +511,19 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             addList.add(addDTO);
         }
         if (CollectionUtils.isNotEmpty(addList)) {
-            // TODO
+            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
         }
 
+        return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAddPurchaseStockIn(List<PurchaseStockInDTO.AddDTO> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Boolean.FALSE;
+        }
+        resultList.forEach(obj -> add(obj));
         return Boolean.TRUE;
     }
 

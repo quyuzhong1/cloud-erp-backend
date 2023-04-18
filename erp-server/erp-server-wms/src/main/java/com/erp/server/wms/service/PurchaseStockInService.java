@@ -158,4 +158,12 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @return com.erp.model.wms.entity.PurchaseStockInEntity
      **/
     List<PurchaseStockInEntity> getStockInBySourceId(String sourceId);
+    /**
+     * @description: 批量新增入库单
+     * @author Will
+     * @date: 2023/4/18 10:48
+     * @param resultList
+     * @return Boolean
+     */
+    Boolean batchAddPurchaseStockIn(List<PurchaseStockInDTO.AddDTO> resultList);
 }
