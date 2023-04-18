@@ -414,7 +414,7 @@ public enum ApiError implements Serializable {
     ERROR_99008(99008,"未找到对应退货数据"),
     ERROR_99009(99009,"收货单未找到"),
     ERROR_99010(99010,"采购订单存在未完成质检单，不支持下推入库单"),
-
+    ERROR_99011(99011,"已下推入库单，不能反审核"),
 
     ERROR_end(1000000, "系统错误");
 
