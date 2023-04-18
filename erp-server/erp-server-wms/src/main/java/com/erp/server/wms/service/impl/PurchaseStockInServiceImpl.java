@@ -24,6 +24,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -272,6 +273,15 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             throw new ServiceException(ApiError.ERROR_98002);
         }
         List<PurchaseStockInDetailDTO.ViewDTO> details = BeanMapperUtils.copyList(PurchaseStockInDetailDTO.ViewDTO.class, entityDetails);
+        List<String> ids = entityDetails.stream().map(PurchaseStockInDetailEntity::getSkuId).collect(Collectors.toList());
+        //产品信息
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        details.forEach(obj -> {
+            if (CollectionUtils.isNotEmpty(productDetailList)) {
+                String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                obj.setProductName(productName);
+            }
+        });
         dto.setDetails(details);
 
         //查询采购供应商信息
@@ -439,6 +449,12 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         if (CollectionUtils.isEmpty(skuList)) {
             return list;
         }
+        List<String> podIds = list.stream().map(PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
         List<String> resultIds = new ArrayList<>();
         for (PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
@@ -446,6 +462,9 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
 
+            //币种符号
+            String currencySymbol = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getCurrencySymbol).findFirst().orElse(null);
+            dto.setCurrencySymbol(currencySymbol);
             //相同采购单号清空后面数据的采购单号和供应商
             boolean contains = list.contains(dto.getPurchaseOrderId());
             if (contains) {

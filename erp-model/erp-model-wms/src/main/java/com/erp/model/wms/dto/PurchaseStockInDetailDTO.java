@@ -72,6 +72,27 @@ public class PurchaseStockInDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO extends  UpdateDTO{
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
         /**
          * 未入库数量
          */

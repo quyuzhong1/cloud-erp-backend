@@ -214,6 +214,7 @@
                psid.id as sourceDetailId,
                psi.purchase_order_id as purchaseOrderId,
                psi.purchase_order_code as purchaseOrderCode,
+               psid.purchase_order_detail_id as purchaseOrderDetailId,
                psi.supplier_name as supplierName,
                psid.sku_id as skuId,
                psid.sku_no as skuNo,

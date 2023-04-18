@@ -400,6 +400,11 @@ public class PurchaseStockInDTO implements Serializable {
         private String purchaseOrderCode;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
          * 供应商名称
          */
         private String supplierName;
@@ -433,6 +438,11 @@ public class PurchaseStockInDTO implements Serializable {
          * 库位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
     }
 
