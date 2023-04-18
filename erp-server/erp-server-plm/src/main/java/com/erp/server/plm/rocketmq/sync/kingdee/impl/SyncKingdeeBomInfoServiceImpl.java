@@ -46,7 +46,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(BomInfoEntity entity) {
+    public void syncDataToKingdee(BomInfoEntity entity,String operate) {
 
 
         Map<String, Object> resultMap = new HashMap<>();
@@ -57,6 +57,10 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         if (CollectionUtils.isEmpty(bomList)) {
             return;
         }
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
         //父级物料
         BomSkuDTO parent = bomList.get(0);
         //父级sku编码
@@ -65,6 +69,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         resultMap.put("parentSkuNo",parent.getSkuNo());
         //版本
         resultMap.put("version",parent.getSkuNo().concat("_").concat(entity.getVersion().toString()));
+
         //子级物料
         List<BomChildrenSkuDTO> childrenList = parent.getChildren();
         if (CollectionUtils.isEmpty(childrenList)) {
@@ -83,7 +88,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_BOM_INFO_TAG.getName(), resultMap, entity.getId());
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                return bomInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
             }
             return Boolean.TRUE;
         });

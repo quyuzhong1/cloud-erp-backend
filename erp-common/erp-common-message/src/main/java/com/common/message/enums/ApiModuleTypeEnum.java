@@ -8,20 +8,22 @@ package com.common.message.enums;
  */
 public enum ApiModuleTypeEnum {
 
-    PRODUCTDETAIL(0, "productDetail", "产品信息"),
-    BOMMANAGE(1, "bomManage", "BOM管理"),
-
-    STOCK_OVERSEAS(2, "stockOverseas", "海外仓库存"),
-
+    PRODUCT_DETAIL(0, "productDetail", "产品信息","plm"),
+    BOM_INFO(1, "bomManage", "BOM管理","plm"),
+    STOCK_OVERSEAS(2, "stockOverseas", "海外仓库存",""),
+    ASSISTANT_DATA(3, "assistantData", "辅助资料",""),
+    ONE_LEVEL_CATEGORY(4, "oneLevelCategory", "一级分类","plm"),
+    SECOND_LEVEL_CATEGORY(5, "secondLevelCategory", "二级分类","plm"),
+    SYS_USER_INFO(6, "sys_user_info", "员工","sys"),
     CHANGE_ORG(7, "changeOrg", "默认组织切换"),
     ;
-
-
     private Integer code;
 
     private String name;
 
     private String desc;
+
+    private String system;
 
     public Integer getCode() {
         return code;
@@ -35,10 +37,15 @@ public enum ApiModuleTypeEnum {
         return desc;
     }
 
-    ApiModuleTypeEnum(Integer code, String name, String desc) {
+    public String getSystem() {
+        return system;
+    }
+
+    ApiModuleTypeEnum(Integer code, String name, String desc,String system) {
         this.code = code;
         this.name = name;
         this.desc = desc;
+        this.system = system;
     }
 
     public static ApiModuleTypeEnum getByCode(Integer code) {

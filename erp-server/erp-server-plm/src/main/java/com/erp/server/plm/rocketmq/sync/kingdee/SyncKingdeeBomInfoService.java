@@ -15,5 +15,5 @@ public interface SyncKingdeeBomInfoService {
      * @date: 2023/3/8 18:22
      * @param entity
      */
-    void syncDataToKingdee(BomInfoEntity entity);
+    void syncDataToKingdee(BomInfoEntity entity,String operate);
 }

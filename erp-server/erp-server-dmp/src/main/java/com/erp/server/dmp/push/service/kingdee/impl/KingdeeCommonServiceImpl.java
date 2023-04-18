@@ -7,20 +7,23 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.constant.SystemConstants;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiFieldTypeEnum;
-import com.erp.model.dmp.enums.ApiGroupTypeEnum;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
@@ -32,7 +35,6 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
@@ -73,15 +75,25 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private CfgApiFieldMapService cfgApiFieldMapService;
 
-    @Override
-    public JSONObject makeApiFieldJson(Map<String, Object> map,List<CfgApiFieldMapDTO> mapList) {
-        JSONObject json = new JSONObject();
+    @Resource
+    private SysUserFeign sysUserFeign;
 
-        List<String> fieldMapIds = mapList.stream().map(CfgApiFieldMapDTO::getId).collect(Collectors.toList());
-        //无值直接返回
-        if (CollectionUtils.isEmpty(fieldMapIds)) {
+    @Override
+    public JSONObject makeApiFieldJson(Map<String, Object> map,String apiPlatformId,Integer moduleType) {
+
+        JSONObject json = new JSONObject();
+        //查询配置字段
+        CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO();
+        dto.setApiPlatformId(apiPlatformId);
+        dto.setModuleType(moduleType);
+        List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
+
+        //未配置发送字段
+        if (CollectionUtils.isEmpty(mapList)) {
             return json;
         }
+
+        List<String> fieldMapIds = mapList.stream().map(CfgApiFieldMapDTO::getId).collect(Collectors.toList());
         //查询配置的值映射
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
@@ -124,6 +136,85 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return json;
     }
 
+    @Override
+    public PlatformEntity getPlatformEntity (Map<String, Object> map,Integer type) {
+        //传入map数据不能为空
+        if (CollectionUtils.isEmpty(map)) {
+            log.error("同步数据不存在！");
+            return null;
+        }
+        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
+        if (ObjectUtils.isEmpty(platformEntity)) {
+            log.error("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc());
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),"",String.format("第三方平台【{}】未找到！",PlatformEnum.KINGDEE.getDesc()),type, ApiSendStatusEnum.FAILURE.getCode());
+        }
+        return platformEntity;
+    }
+
+
+    @Override
+    public JSONObject view (KingdeeApiUtils apiUtils,String id,String number) {
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+
+        if (StringUtils.isNotBlank(id)) {
+            viewMap.put("id",id);
+        } else {
+            viewMap.put("number",number);
+            //现默认唯迹科技
+            viewMap.put("CreateOrgId",1);
+        }
+        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        return model;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate) {
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        //金蝶id
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+
+        if (ObjectUtils.isEmpty(syncKingdeeId)) {
+            viewMap.put("ids",Arrays.asList(syncKingdeeId));
+        } else {
+            viewMap.put("numbers",Arrays.asList(number));
+        }
+        //金蝶操作编码
+        String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
+
+        try {
+            apiUtils.excuteOperation(operateNumber,JSONArray.toJSONString(viewMap));
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        //操作成功添加日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),SyncKingdeeOperateEnum.getDescByCode(operate),type,ApiSendStatusEnum.SUCCESS.getCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number) {
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        //金蝶id
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+
+        if (ObjectUtils.isEmpty(syncKingdeeId)) {
+            viewMap.put("ids",Arrays.asList(syncKingdeeId));
+        } else {
+            viewMap.put("numbers",Arrays.asList(number));
+        }
+        try {
+            apiUtils.delete(JSONArray.toJSONString(viewMap));
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        //操作成功添加日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),"删除",type,ApiSendStatusEnum.SUCCESS.getCode());
+    }
 
 
 
@@ -144,6 +235,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         //数据id
         String id = save.getResult().getId();
+        //金蝶id
+        map.put("syncKingdeeId",id);
+        //更新业务表中的金蝶id
+        updateBusinessSyncKingdeeStatus(type,String.valueOf(map.get("id")),"",id);
         //新增成功操作日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg,type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交
@@ -216,42 +311,28 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             audit(platformEntity, map,apiUtils,id,type);
         }
         //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type.toString(),map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type,map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"");
     }
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Id",id);
-        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        //单据状态
-        String documentStatus = (String) model.get("DocumentStatus");
-        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            //审核中或已审核则要先反审
-            ArrayList<String> ids = new ArrayList<>();
-            ids.add(id);
-            try {
-                apiUtils.unAuditById(ids);
-            } catch (Exception e) {
-                //反审核失败操作日志及定时任务
-                log.error("反审核失败",e);
-                insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
-                return "";
-            }
-            //反审核成功操作日志
-            log.info("反审核成功,数据【{}】", id);
-            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"反审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
-            //当审核是已审核或者审核中时继续反审核
-            String status = unAudit(platformEntity, map,apiUtils, id,type);
-            //当状态为空时直接返回
-            if (StringUtils.isBlank(status)) {
-                return status;
-            }
-            documentStatus = status;
+    public Boolean unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
+        //审核中或已审核则要先反审
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add(id);
+        try {
+            apiUtils.unAuditById(ids);
+        } catch (Exception e) {
+            //反审核失败操作日志及定时任务
+            log.error("反审核失败",e);
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),"反审核失败",e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return Boolean.FALSE;
         }
-        return  documentStatus;
+        //反审核成功操作日志
+        log.info("反审核成功,数据【{}】", id);
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),id,"反审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
+        return Boolean.TRUE;
     }
 
 
@@ -287,20 +368,33 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         insertSyncLog(platformEntity,businessId,jsonData,msg,type,status);
         //更新金蝶同步状态
         if (ApiSendStatusEnum.FAILURE.getCode().equals(status)) {
-            this.updateBusinessSyncKingdeeStatus(type.toString(),businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+            this.updateBusinessSyncKingdeeStatus(type,businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),"");
         }
     }
 
     @Override
-    public void updateBusinessSyncKingdeeStatus(String code,String businessId,String status){
+    public void updateBusinessSyncKingdeeStatus(Integer code,String businessId,String status,String kingdeeId){
         //更新业务单据状态
         Map<String,String> params = new HashMap<>(MathUtil.THREE);
-        params.put("code",code);
+        params.put("code",code.toString());
         params.put("businessId",businessId);
         params.put("status", status);
-        plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
-    }
+        params.put("kingdeeId", kingdeeId);
 
+        ApiModuleTypeEnum apiModuleTypeEnum = Arrays.stream(ApiModuleTypeEnum.values()).filter(obj -> obj.getCode().equals(code)).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(apiModuleTypeEnum)) {
+            return;
+        }
+        String system = apiModuleTypeEnum.getSystem();
+
+        if (SystemConstants.PLM.equals(system)) {
+            plmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+        if (SystemConstants.SYS.equals(system)) {
+            sysUserFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+
+    }
 
     /**
      * 填充数据

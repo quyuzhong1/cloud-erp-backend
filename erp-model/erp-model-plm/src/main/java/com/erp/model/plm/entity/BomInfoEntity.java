@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * bom 信息表(BomInfo)实体类
@@ -50,5 +50,11 @@ public class BomInfoEntity extends BaseEntity implements Serializable {
      */
     @TableField("sync_kingdee_time")
     private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 }
 

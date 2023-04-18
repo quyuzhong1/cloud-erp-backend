@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname 系统管理 服务
@@ -230,4 +231,10 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/dept/getDeptByUserId")
     SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId);
+
+    /**
+     * 更新业务单据状态
+     */
+    @PostMapping("feign/user/updateBusinessSyncKingdeeStatus")
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
 }

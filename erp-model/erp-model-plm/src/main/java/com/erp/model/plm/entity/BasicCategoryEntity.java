@@ -44,4 +44,23 @@ public class BasicCategoryEntity extends BaseEntity implements Serializable{
      */
     @TableField("pid")
     private String pid;
+
+
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步金蝶时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 }

@@ -1,12 +1,10 @@
 package com.erp.server.dmp.push.service.kingdee;
 
 import com.alibaba.fastjson.JSONObject;
-import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,10 +19,11 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/3/3 12:05
      * @param map
-     * @param mapList
+     * @param apiPlatformId
+     * @param moduleType
      * @return JSONObject
      */
-    JSONObject makeApiFieldJson(Map<String, Object> map, List<CfgApiFieldMapDTO> mapList);
+    JSONObject makeApiFieldJson(Map<String, Object> map,String apiPlatformId,Integer moduleType);
     /**
      * 操作成功添加日志
      * @author Will
@@ -56,8 +55,7 @@ public interface KingdeeCommonService {
      * @param businessId
      * @param status
      */
-    void updateBusinessSyncKingdeeStatus(String code,String businessId,String status);
-
+    void updateBusinessSyncKingdeeStatus(Integer code,String businessId,String status,String kingdeeId);
     /**
      * @description: 新增或修改
      * @author Will
@@ -103,6 +101,52 @@ public interface KingdeeCommonService {
      * @param id
      * @return String
      */
+    Boolean unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
+    /**
+     * @description: 根据id、编码查询，优先根据id查没有就根据编码
+     * @author Will
+     * @date: 2023/4/7 11:29
+     * @param apiUtils
+     * @param id
+     * @param number
+     * @return JSONObject
+     */
+    JSONObject view (KingdeeApiUtils apiUtils,String id,String number);
+
+    /**
+     * @description: 查询平台
+     * @author Will
+     * @date: 2023/4/7 11:39
+     * @param map
+     * @param type
+     * @return PlatformEntity
+     */
+    PlatformEntity getPlatformEntity (Map<String, Object> map,Integer type);
+
+   /**
+    * @description: 禁用、反禁用
+    * @author Will
+    * @date: 2023/4/10 18:03
+    * @param apiUtils
+    * @param platformEntity
+    * @param map
+    * @param type
+    * @param number
+    * @param operate
+
+    */
+    void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/4/11 18:56
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param number
+     */
+    void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number);
     String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type);
 
     /**
