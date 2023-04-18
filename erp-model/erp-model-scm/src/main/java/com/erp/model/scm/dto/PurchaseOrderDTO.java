@@ -655,12 +655,12 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 已签收数量
          */
-        private String  receiveQty;
+        private Integer  receiveQty;
 
         /**
          * 未入库数量
          */
-        private String unStockInQty;
+        private Integer unStockInQty;
 
     }
 
