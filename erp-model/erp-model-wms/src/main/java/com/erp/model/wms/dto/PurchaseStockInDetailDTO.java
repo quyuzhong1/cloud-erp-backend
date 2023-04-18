@@ -21,16 +21,6 @@ public class PurchaseStockInDetailDTO implements Serializable {
     public static class AddDTO {
 
         /**
-         * skuId
-         */
-        private String skuId;
-
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
          * 实收数量
          */
         @NotNull(message = "实收数量不能为空")
