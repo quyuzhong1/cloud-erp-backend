@@ -325,6 +325,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
             }
+            detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
+            detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
             detailView.setProductName(productDetailEntity.getName());
             detailViewDTOS.add(detailView);
         }
