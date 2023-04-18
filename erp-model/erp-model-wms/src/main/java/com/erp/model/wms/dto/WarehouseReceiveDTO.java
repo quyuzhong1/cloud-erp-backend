@@ -432,9 +432,9 @@ public class WarehouseReceiveDTO {
         private Boolean invalidStatus;
 
         /**
-         * 计划交货时间
+         * 收货日期
          */
-        private List<LocalDate> planDeliveryDate;
+        private List<LocalDate> billDate;
 
         /**
          * 交货仓库id

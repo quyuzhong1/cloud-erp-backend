@@ -81,8 +81,8 @@
             </foreach>
         </if>
 
-        <if test="params.planDeliveryDate != null and params.planDeliveryDate.size > 0">
-            and wr.plan_delivery_date >= #{params.planDeliveryDate[0]} and  (#{params.planDeliveryDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
+        <if test="params.billDate != null and params.billDate.size > 0">
+            and wr.billDate >= #{params.billDate[0]} and  (#{params.billDate[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.plan_delivery_date
         </if>
 
         <if test="params.createTime != null and params.createTime.size > 0">
