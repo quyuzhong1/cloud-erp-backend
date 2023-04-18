@@ -54,7 +54,7 @@ public class QcReportDetailEntity extends BaseEntity<QcReportDetailEntity> {
 
     public static final String DESCRIPTION = "description";
 
-    public static final String RESULT_KEY = "result_key";
+    public static final String RESULT_KEY = "result_dict";
 
     @Override
     public Serializable pkVal() {

@@ -124,13 +124,13 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
 
     public static final String QC_BAD_RATE = "qc_bad_rate";
 
-    public static final String QC_PROBLEM_KEY = "qc_problem_key";
+    public static final String QC_PROBLEM_KEY = "qc_problem_dict";
 
     public static final String BAD_DESCRIPTION  = "bad_description ";
 
     public static final String QC_RESULT = "qc_result";
 
-    public static final String HANDLE_MODE_KEY = "handle_mode_key";
+    public static final String HANDLE_MODE_KEY = "handle_mode_dict";
 
     @Override
     public Serializable pkVal() {
