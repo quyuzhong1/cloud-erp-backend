@@ -8,8 +8,21 @@ package com.common.message.constant;
  */
 public class RocketMqConsumerGroup {
 
+    /**
+     * 金蝶物料（产品信息）
+     */
     public static final String SYNC_KINGDEE_PRODUCT_DETAIL = "${spring.profiles.active}-sync_kingdee_product_detail";
-
+    /**
+     * 金蝶物料清单（BOM管理）
+     */
     public static final String SYNC_KINGDEE_BOM_INFO = "${spring.profiles.active}-sync_kingdee_bom_info";
+    /**
+     * 金蝶辅助资料（产品分类、）
+     */
+    public static final String SYNC_KINGDEE_ASSISTANT_DATA = "${spring.profiles.active}-sync_kingdee_assistant_data";
+    /**
+     * 金蝶员工（用户管理）
+     */
+    public static final String SYNC_KINGDEE_SYS_USER_INFO = "${spring.profiles.active}-sync_kingdee_sys_user_info";
 
 }

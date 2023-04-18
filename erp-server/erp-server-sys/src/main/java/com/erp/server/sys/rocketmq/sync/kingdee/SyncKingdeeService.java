@@ -1,4 +1,4 @@
-package com.erp.server.plm.rocketmq.sync.kingdee;
+package com.erp.server.sys.rocketmq.sync.kingdee;
 
 import java.util.Map;
 

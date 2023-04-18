@@ -109,15 +109,26 @@ public enum RocketMqTagEnum {
     /**
      * 产品信息同步金蝶
      */
-    KINGDEE_PRODUCT_DETAIL_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+    KINGDEE_PRODUCT_DETAIL_TAG(21, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+
     /**
      * BOM管理同步金蝶
      */
-    KINGDEE_BOM_INFO_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
+    KINGDEE_BOM_INFO_TAG(22, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
 
-    GC_STOCK_INBOUND_ORDER_TAG(21,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
+    /**
+     * 辅助资料同步金蝶（产品分类、）
+     */
+    KINGDEE_ASSISTANT_DATA_TAG(23, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_assistant_data_tag"),
 
-    IML_STOCK_INBOUND_ORDER_TAG(22,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
+    /**
+     * 系统用户同步金蝶
+     */
+    KINGDEE_SYS_USER_INFO_TAG(22, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
+
+    GC_STOCK_INBOUND_ORDER_TAG(24,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
+
+    IML_STOCK_INBOUND_ORDER_TAG(25,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
 
     ;
     

@@ -13,8 +13,11 @@ public enum KingdeePushModuleEnum {
 
     STK_TRANSFER_DIRECT("STK_TransferDirect","直接调拨单"),
     PLM_CFG_PREFERRED_ORGANIZATION_CFG("PLM_CFG_PreferredOrganizationCFG","下推首选组织配置"),
-    ;
 
+    BOS_ASSISTANTDATA_DETAIL("BOS_ASSISTANTDATA_DETAIL","辅助资料列表"),
+    BD_EMPINFO("BD_Empinfo","员工"),
+
+    ;
     private String code;
 
     private String name;

@@ -71,4 +71,8 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     List<BasicCategoryTreeDTO> getDbTree();
 
     List<String> getChildrenCategoryIds(String categoryId);
+    /**
+     * 更新金蝶同步状态
+     */
+    Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus,String syncKingdeeId);
 }

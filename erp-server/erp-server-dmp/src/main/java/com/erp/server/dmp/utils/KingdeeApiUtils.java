@@ -206,21 +206,19 @@ public class KingdeeApiUtils {
 
     /**
      * 查看单据数据（按单据编号）
-     * @param number    单据编号
+     * @param jsonData    json字符串
      * @return  返回操作结果
      */
-    public JSONObject getViewJson(String number){
+    public JSONObject getViewJson(String jsonData){
         JSONObject json;
-        OperateParam param = new OperateParam();
-        param.setNumber(number);
         try {
-            String view = client.view(this.formId, number);
+            String view = client.view(this.formId, jsonData);
             JSONObject parse = (JSONObject) JSONObject.parse(view);
             JSONObject result = (JSONObject)parse.get("Result");
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
-                throw new RuntimeException("【查看单据】出错:"+ result.get("errors"));
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -422,6 +420,53 @@ public class KingdeeApiUtils {
         }
         return result;
     }
+
+
+    /**
+     * @description: 禁用、反禁用、作废、反作废
+     * @param operateNumber Forbid禁用、Enable反禁用、Cancel作废、Uncancel反作废
+     * @param jsonData
+     * @return JSONObject
+     */
+    public JSONObject excuteOperation(String operateNumber ,String jsonData){
+        JSONObject json;
+        try {
+            String view = client.excuteOperation(this.formId,operateNumber, jsonData);
+            JSONObject parse = (JSONObject) JSONObject.parse(view);
+            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
+            json = (JSONObject)result.get("Result");
+            if(!(Boolean) responseStatus.get("IsSuccess")){
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return json;
+    }
+
+    /**
+     * @description: 删除
+     * @param jsonData
+     * @return JSONObject
+     */
+    public JSONObject delete(String jsonData){
+        JSONObject json;
+        try {
+            String view = client.delete(this.formId, jsonData);
+            JSONObject parse = (JSONObject) JSONObject.parse(view);
+            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
+            json = (JSONObject)result.get("Result");
+            if(!(Boolean) responseStatus.get("IsSuccess")){
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return json;
+    }
+
 
     private String joinErrors(String joinStr, ArrayList<RepoError> errors) {
         StringBuffer result=new StringBuffer();
