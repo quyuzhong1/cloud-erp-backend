@@ -696,4 +696,27 @@ public class WarehouseReceiveDTO {
         private String remark;
     }
 
+    /**
+     * 获取签收数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GetReceiveDTO {
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+    }
+
+
 }

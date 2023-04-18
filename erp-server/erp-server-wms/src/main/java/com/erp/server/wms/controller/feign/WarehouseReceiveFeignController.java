@@ -41,4 +41,17 @@ public class WarehouseReceiveFeignController {
         String id = warehouseReceiveService.add(dto);
         return id;
     }
+
+    /**
+     * 获取签收数量
+     * @Author Luo_WG
+     * @Date 2023/4/18 16:41
+     * @param dto dto
+     * @return java.lang.String
+     **/
+    @PostMapping("/getReceiveQty")
+    public Integer getReceiveQty(@RequestBody WarehouseReceiveDTO.GetReceiveDTO dto) {
+        Integer receiveQty = warehouseReceiveService.getReceiveQty(dto);
+        return receiveQty;
+    }
 }

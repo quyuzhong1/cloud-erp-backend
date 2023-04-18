@@ -63,4 +63,10 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/warehouseReceive/addWarehouseReceive")
     String addWarehouseReceive(WarehouseReceiveDTO.AddDTO dto);
+
+    /**
+     * 获取签收数量
+     */
+    @PostMapping("feign/warehouseReceive/getReceiveQty")
+    Integer getReceiveQty(WarehouseReceiveDTO.GetReceiveDTO dto);
 }

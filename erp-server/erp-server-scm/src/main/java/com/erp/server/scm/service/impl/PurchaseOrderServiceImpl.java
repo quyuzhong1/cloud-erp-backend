@@ -38,6 +38,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -150,6 +151,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+
+                //获取签收数量
+                WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = new WarehouseReceiveDTO.GetReceiveDTO();
+                getReceiveDTO.setPurchaseOrderId(obj.getId());
+                getReceiveDTO.setSkuId(obj.getSkuId());
+                getReceiveDTO.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+                obj.setReceiveQty(wmsTaskFeign.getReceiveQty(getReceiveDTO));
+
+                //获取待交货数量
+                WarehouseReceiveDTO.GetReceiveDTO deliveryQty = new WarehouseReceiveDTO.GetReceiveDTO();
+                deliveryQty.setPurchaseOrderId(obj.getId());
+                deliveryQty.setSkuId(obj.getSkuId());
+                obj.setDeliveryQty(obj.getPurchaseQty() - wmsTaskFeign.getReceiveQty(deliveryQty));
                 list.add(obj.getId());
             });
         }

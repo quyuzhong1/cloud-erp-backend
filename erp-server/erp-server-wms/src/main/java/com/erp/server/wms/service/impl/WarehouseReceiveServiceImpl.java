@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -325,7 +324,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-            Integer receiveQty = getReceiveQty(warehouseReceiveEntity.getPurchaseOrderId(), detailView.getSkuId());
+            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = new WarehouseReceiveDTO.GetReceiveDTO();
+            getReceiveDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
+            getReceiveDTO.setSkuId(detailView.getSkuId());
+            Integer receiveQty = getReceiveQty(getReceiveDTO);
             detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receiveQty);
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
@@ -674,7 +676,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setStockInDate(LocalDate.now());
             req.setStockInUserName(userInfo.getUid());
             req.setStockInUserName(userInfo.getUserName());
-            req.setReceiveQty(getReceiveQty(req.getPurchaseOrderId(), req.getSkuId()));
+            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = new WarehouseReceiveDTO.GetReceiveDTO();
+            getReceiveDTO.setPurchaseOrderId(req.getPurchaseOrderId());
+            getReceiveDTO.setSkuId(req.getSkuId());
+            req.setReceiveQty(getReceiveQty(getReceiveDTO));
             req.setUnStockInQty(0);
             req.setStockInQty(0);
             req.setExceedQty(0);
@@ -758,12 +763,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 获取产品签收数量
      * @Author Luo_WG
      * @Date 2023/4/13 18:47
-     * @param PurchaseOrderId PurchaseOrderId
-     * @param skuId skuId
+     * @param getReceiveDTO getReceiveDTO
      * @return java.lang.Integer
      **/
-    private Integer getReceiveQty(String PurchaseOrderId, String skuId) {
-        return baseMapper.getReceiveQty(PurchaseOrderId, skuId);
+    @Override
+    public Integer getReceiveQty(WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO) {
+        return baseMapper.getReceiveQty(getReceiveDTO);
     }
 
 }

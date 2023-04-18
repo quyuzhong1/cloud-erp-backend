@@ -83,6 +83,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String arrivalStatusName;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * sku编码
          */
         private String skuNo;

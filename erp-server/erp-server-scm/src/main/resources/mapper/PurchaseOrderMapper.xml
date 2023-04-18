@@ -37,6 +37,7 @@
             po.approve_status as approveStatus,
             po.invalid_status as invalidStatus,
             pod.arrival_status as arrivalStatus,
+            pod.sku_id as skuId,
             pod.sku_no as skuNo,
             pod.product_name as productName,
             pod.variant_property as variantProperty,
