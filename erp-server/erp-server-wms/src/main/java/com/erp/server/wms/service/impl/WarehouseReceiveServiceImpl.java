@@ -208,7 +208,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         warehouseReceiveEntity.setReceiveUserName(userDTO.getUserName());
         warehouseReceiveEntity.setReceiveDeptId(dto.getReceiveDeptId());
         warehouseReceiveEntity.setReceiveDeptName(departmentDTO.getName());
-        warehouseReceiveEntity.setReceiveOrgId(dto.getReceiveOrgId());
+        warehouseReceiveEntity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         warehouseReceiveEntity.setReceiveOrgName(sysAccountingCompanyEntity.getCompanyName());
         warehouseReceiveEntity.setBillDate(dto.getBillDate());
         warehouseReceiveEntity.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());

@@ -52,7 +52,7 @@ public interface ProductOrderFeign {
      * @param supplierId
      * @return SupplierEntity
      */
-    @PostMapping("/getSupplierById")
+    @PostMapping("feign/purchaseOrder/getSupplierById")
     SupplierEntity getSupplierById(@RequestBody String supplierId);
 
     /**

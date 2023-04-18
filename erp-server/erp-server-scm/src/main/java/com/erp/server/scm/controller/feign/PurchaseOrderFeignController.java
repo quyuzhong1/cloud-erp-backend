@@ -76,7 +76,7 @@ public class PurchaseOrderFeignController {
      * @param supplierId
      * @return SupplierEntity
      */
-    @GetMapping("/getSupplierById")
+    @PostMapping("/getSupplierById")
     public SupplierEntity getSupplierById(@RequestBody String supplierId) {
         return supplierService.getById(supplierId);
     }

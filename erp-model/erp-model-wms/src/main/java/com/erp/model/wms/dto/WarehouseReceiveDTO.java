@@ -55,11 +55,6 @@ public class WarehouseReceiveDTO {
         private String receiveDeptId;
 
         /**
-         * 收货人组织id
-         */
-        private String receiveOrgId;
-
-        /**
          * 收货日期
          */
         @NotNull(message = "质检日期不能为空")
