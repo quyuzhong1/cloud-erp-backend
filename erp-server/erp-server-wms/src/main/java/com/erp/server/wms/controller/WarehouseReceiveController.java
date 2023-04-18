@@ -153,12 +153,12 @@ public class WarehouseReceiveController extends BaseController {
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = warehouseReceiveService.disApprove(baseApproveParamDTO);
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = warehouseReceiveService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 

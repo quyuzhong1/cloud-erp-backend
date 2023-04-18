@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -56,4 +57,10 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseStockIn/batchAddPurchaseStockIn")
     Boolean batchAddPurchaseStockIn(List<PurchaseStockInDTO.AddDTO> resultList);
+
+    /**
+     * 批量新增入库单
+     */
+    @PostMapping("feign/warehouseReceive/addWarehouseReceive")
+    String addWarehouseReceive(WarehouseReceiveDTO.AddDTO dto);
 }

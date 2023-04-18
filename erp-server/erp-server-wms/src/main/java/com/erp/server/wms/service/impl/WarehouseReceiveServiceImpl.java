@@ -52,8 +52,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -122,6 +120,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> skuIdList = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //根据ids查询采购单详情
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -134,7 +137,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     obj.setApproveStatus(null);
                     obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
-                    return;
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
@@ -142,6 +144,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 if (ObjectUtil.isEmpty(productDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_95107);
                 }
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_99006);
+                }
+                obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
                 obj.setProductName(productDetailEntity.getName());
                 list.add(obj.getId());
             });
@@ -355,7 +362,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
 
@@ -425,7 +432,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //TODO 待加审核流程
@@ -455,13 +462,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param ids ids
      * @return com.common.core.controller.vo.ApiResult
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
+    public Boolean disApprove(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -471,7 +477,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_99003);
         }
         //TODO 待加审核流程
@@ -505,7 +511,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(@RequestBody @Validated List<String> ids) {
+    public Boolean cancelProcess(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -515,7 +521,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
 
@@ -554,7 +560,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 ||entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
 
@@ -590,7 +596,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
         ).count();
 
-        if (count == 0) {
+        if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
         //删除详情表
@@ -674,7 +680,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setExceedQty(0);
 
         });
-        return null;
+        return generateStockInViewDTOS;
     }
 
     /**
@@ -689,13 +695,16 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         dtos.forEach(dto -> {
             //获取用户信息
             SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getStockInUserId());
+            if (ObjectUtil.isEmpty(userDTO)) {
+                throw new ServiceException(ApiError.ERROR_9011);
+            }
             //获取用户部门
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userDTO.getUid());
 
             PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
             addDTO.setSourceId(dto.getMainId());
             addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
-            WarehouseReceiveEntity warehouseReceiveEntity = this.getById(dto.getId());
+            WarehouseReceiveEntity warehouseReceiveEntity = this.getById(dto.getMainId());
 
             addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
             addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
