@@ -17,9 +17,9 @@ public interface QcEffectivenessService {
      * @author Will
      * @date: 2023/4/12 12:04
      * @param dto
-     * @return List<ViewQcOverviewDTO>
+     * @return ViewQcOverviewDTO
      */
-    List<QcEffectivenessDTO.ViewQcOverviewDTO> viewQcOverview(QcEffectivenessDTO.CommonSearchParamDTO dto);
+    QcEffectivenessDTO.ViewQcOverviewDTO viewQcOverview(QcEffectivenessDTO.CommonSearchParamDTO dto);
     /**
      * @description: 质检趋势查询
      * @author Will

@@ -32,12 +32,12 @@ public class QcEffectivenessController extends BaseController {
      * @author Will
      * @date: 2023/4/12 11:26
      * @param dto
-     * @return ApiResult<List<ViewQcOverviewDTO>>
+     * @return ApiResult<ViewQcOverviewDTO>
      */
     @PostMapping("/viewQcOverview")
-    public ApiResult<List<QcEffectivenessDTO.ViewQcOverviewDTO>> viewQcOverview(@RequestBody @Validated QcEffectivenessDTO.CommonSearchParamDTO dto) {
-        List<QcEffectivenessDTO.ViewQcOverviewDTO> list = qcEffectivenessService.viewQcOverview(dto);
-        return success(list);
+    public ApiResult<QcEffectivenessDTO.ViewQcOverviewDTO> viewQcOverview(@RequestBody @Validated QcEffectivenessDTO.CommonSearchParamDTO dto) {
+        QcEffectivenessDTO.ViewQcOverviewDTO result = qcEffectivenessService.viewQcOverview(dto);
+        return success(result);
     }
 
     /**
