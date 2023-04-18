@@ -272,6 +272,11 @@ public class PurchaseReturnOrderDTO {
         private LocalDateTime invalidTime;
 
         /**
+         * 作废备注
+         */
+        private String invalidRemark;
+
+        /**
          * 审核人id
          */
         private String approveUserId;

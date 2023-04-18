@@ -21,10 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -260,11 +257,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity,viewDTO);
-        //获取仓库信息
-        WarehouseEntity warehouseEntity = warehouseService.getById(purchaseReturnOrderEntity.getReturnWarehouseId());
+
         //获取采购用户部门
         SysDepartmentDTO purchaseUserDept = sysUserFeign.getUserDeptById(purchaseReturnOrderEntity.getPurchaseUserId());
-        viewDTO.setSupplierAddress(warehouseEntity.getAddress());
+        //查询供应商信息
+        SupplierEntity supplierEntity = productOrderFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
+        viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setPurchaseUserDeptId(purchaseUserDept.getId());
         viewDTO.setPurchaseUserDeptName(purchaseUserDept.getName());

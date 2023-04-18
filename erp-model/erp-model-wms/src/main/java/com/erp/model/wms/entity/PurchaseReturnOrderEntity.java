@@ -117,7 +117,7 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
      * 作废描述
      */
     @TableField("invalid_remark")
-    private Boolean invalidRemark;
+    private String invalidRemark;
 
     /**
      * 作废时间
