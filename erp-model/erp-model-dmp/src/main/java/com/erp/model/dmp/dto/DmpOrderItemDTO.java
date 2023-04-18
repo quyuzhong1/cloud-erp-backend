@@ -33,7 +33,7 @@ public class DmpOrderItemDTO {
     /**
      * 单价
      */
-    private BigDecimal sellPrice;
+    private BigDecimal sellPriceOrigin;
 
     /**
      * 数量
@@ -43,5 +43,5 @@ public class DmpOrderItemDTO {
     /**
      * 销售额（原币种）
      */
-    private BigDecimal sellAmount;
+    private BigDecimal sellAmountOrigin;
 }

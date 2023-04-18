@@ -358,12 +358,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                  realityReturnQty = returnOrderDetails.stream().filter(obj -> obj.getSourceDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getRealityReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             viewProductDTO.setRealityReturnQty(realityReturnQty);
-            //入库数量
+            //已入库数量
             Integer stockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetails)) {
                 stockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            viewProductDTO.setStockInQty(stockInQty);
+            viewProductDTO.setHasStockInQty(stockInQty);
             //未入库数量
             viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - stockInQty);
         }

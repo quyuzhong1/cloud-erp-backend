@@ -27,9 +27,9 @@
             doi.platform_order_id,
             doi.source_platform,
             doi.shop_name,
-            doi.order_fee,
-            round(doi.order_fee * doi.currency_rate,2) as cnyRealTimeAmount,
-            round(doi.order_fee * doi.cny_settle_rate,2) as cny_settle_amount,
+            round(doi.order_fee/doi.currency_rate,4) as itemTotal,
+            doi.order_fee as cnyRealTimeAmount,
+            round(doi.order_fee/doi.currency_rate * doi.cny_settle_rate,4) as cny_settle_amount,
             doi.buyer_name,
             doi.man_phone,
             doi.second_phone,
@@ -47,13 +47,13 @@
         from dmp_order_info doi
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
-                and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
+                and doi.platform_order_id = #{params.platformOrderId}
             </if>
             <if test="params.shopName != null and params.shopName != ''">
-                and doi.shop_name like concat('%',#{params.shopName},'%')
+                and doi.shop_name = #{params.shopName}
             </if>
             <if test="params.platformName != null and params.platformName != ''">
-                and doi.source_platform like concat('%',#{params.platformName},'%')
+                and doi.source_platform = #{params.platformName}
             </if>
             <if test="params.orderState != null and params.orderState != ''">
                 and doi.order_state = #{params.orderState}

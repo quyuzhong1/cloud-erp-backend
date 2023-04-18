@@ -10,17 +10,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.RedisService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.business.service.RedisService;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
@@ -1221,7 +1221,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             List<DmpOrderItemEntity> itemList = dmpOrderItemList.stream().filter(e -> obj.getId().equals(e.getOrderId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(itemList)) {
                 List<DmpOrderItemDTO> itemResultList = BeanMapperUtils.copyList(DmpOrderItemDTO.class, itemList);
-                itemResultList.stream().forEach(e -> e.setSellAmount(MathUtil.multiply(e.getSellPrice(),e.getQuantity())));
+                itemResultList.stream().forEach(e -> e.setSellAmountOrigin(MathUtil.multiply(e.getSellPriceOrigin(),e.getQuantity())));
                 obj.setChildren(itemResultList);
             }
             obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState()));

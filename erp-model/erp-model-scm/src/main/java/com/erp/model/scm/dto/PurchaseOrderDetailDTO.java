@@ -273,9 +273,9 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Integer unStockInQty;
 
         /**
-         * 入库数量
+         * 已入库数量
          */
-        private Integer stockInQty;
+        private Integer hasStockInQty;
 
         /**
          * 实退数量
