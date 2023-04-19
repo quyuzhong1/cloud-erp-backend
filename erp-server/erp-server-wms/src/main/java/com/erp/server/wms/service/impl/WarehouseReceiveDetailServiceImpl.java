@@ -171,6 +171,6 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Override
     public List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
-        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId,purchaseDetailIds).list();
+        return baseMapper.listWarehouseReceiveByPodIds(purchaseDetailIds);
     }
 }

@@ -94,6 +94,21 @@ public class PurchaseStockInDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 入库数量
+         */
+        private Integer hasStockInQty;
+
+        /**
          * 未入库数量
          */
        private Integer unStockInQty;

@@ -34,8 +34,10 @@ import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -96,7 +98,8 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
-
+    @Resource
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Override
     public PagingVO<PurchaseStockInDTO.ListDTO> paging(PagingDTO<PurchaseStockInDTO.SearchParamDTO> pagingDTO) {
@@ -273,14 +276,40 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             throw new ServiceException(ApiError.ERROR_98002);
         }
         List<PurchaseStockInDetailDTO.ViewDTO> details = BeanMapperUtils.copyList(PurchaseStockInDetailDTO.ViewDTO.class, entityDetails);
-        List<String> ids = entityDetails.stream().map(PurchaseStockInDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = entityDetails.stream().map(PurchaseStockInDetailEntity::getSkuId).collect(Collectors.toList());
         //产品信息
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+
+        //采购订单明细
+        List<String> podIds = entityDetails.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //收货单明细
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+
         details.forEach(obj -> {
             if (CollectionUtils.isNotEmpty(productDetailList)) {
                 String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 obj.setProductName(productName);
             }
+            if (CollectionUtils.isNotEmpty(purchaseOrderDetailList)) {
+                Integer purchaseQty = purchaseOrderDetailList.stream().filter(e -> e.getId().equals(obj.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setPurchaseQty(purchaseQty);
+            }
+
+            if (CollectionUtils.isNotEmpty(entityDetails)) {
+                Integer hasStockQty = entityDetails.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && !obj.getId().equals(e.getId()) ).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setHasStockInQty(hasStockQty);
+                obj.setUnStockInQty(obj.getPurchaseQty() - hasStockQty);
+            }
+
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                Integer receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setReceiveQty(receiveQty);
+            }
+
         });
         dto.setDetails(details);
 
@@ -360,6 +389,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+
         String type = baseApproveParamDTO.getType();
 
         log.info("采购入库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
@@ -391,6 +421,12 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        //判断是否已经下推退货单
+        List<PurchaseReturnOrderEntity> purchaseReturnOrderList = purchaseReturnOrderService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(purchaseReturnOrderList)) {
+            throw new ServiceException(ApiError.ERROR_99014);
+        }
+
         log.info("采购入库单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //取回流程 TODO

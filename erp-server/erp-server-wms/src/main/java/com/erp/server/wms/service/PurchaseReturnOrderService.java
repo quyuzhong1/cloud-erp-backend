@@ -5,8 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -160,4 +158,12 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
      **/
     List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> listCount(@RequestBody PermissionsDTO dto);
+    /**
+     * @description: 根据来源id查询
+     * @author Will
+     * @date: 2023/4/19 9:27
+     * @param sourceIds
+     * @return List<PurchaseReturnOrderEntity>
+     */
+    List<PurchaseReturnOrderEntity> listBySourceIds(List<String> sourceIds);
 }
