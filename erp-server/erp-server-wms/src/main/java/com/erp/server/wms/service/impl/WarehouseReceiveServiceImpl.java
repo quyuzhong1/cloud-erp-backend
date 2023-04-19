@@ -207,9 +207,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取采购单供应商信息
         PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取用户信息
-        SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
+        SysUserDTO userDTO = null;
+        if (StringUtils.isNotBlank(dto.getReceiveDeptId())) {
+            userDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
+        }
         //获取用户部门
-        SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(dto.getReceiveDeptId());
+        SysDepartmentDTO departmentDTO = null;
+        if (StringUtils.isNotBlank(dto.getReceiveDeptId())) {
+            departmentDTO = sysUserFeign.getUserDeptById(dto.getReceiveDeptId());
+        }
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(purchaseOrderEntity.getReceiveOrgId());
         //获取仓库信息
@@ -225,9 +231,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         warehouseReceiveEntity.setSupplierId(orderSupplierByOrderId.getSupplierId());
         warehouseReceiveEntity.setSupplierName(orderSupplierByOrderId.getSupplierName());
         warehouseReceiveEntity.setReceiveUserId(dto.getReceiveUserId());
-        warehouseReceiveEntity.setReceiveUserName(userDTO.getUserName());
+        if (userDTO != null) {
+            warehouseReceiveEntity.setReceiveUserName(userDTO.getUserName());
+        }
         warehouseReceiveEntity.setReceiveDeptId(dto.getReceiveDeptId());
-        warehouseReceiveEntity.setReceiveDeptName(departmentDTO.getName());
+        if (departmentDTO != null) {
+            warehouseReceiveEntity.setReceiveDeptName(departmentDTO.getName());
+        }
         warehouseReceiveEntity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         warehouseReceiveEntity.setReceiveOrgName(sysAccountingCompanyEntity.getCompanyName());
         warehouseReceiveEntity.setBillDate(dto.getBillDate());

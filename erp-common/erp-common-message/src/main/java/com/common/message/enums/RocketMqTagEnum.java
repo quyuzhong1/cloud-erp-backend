@@ -138,6 +138,10 @@ public enum RocketMqTagEnum {
      * 同步产品sku到中台dmp
      */
     SYNC_DMP_PRODUCT_SKU_TAG(27,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
+    /**
+     * 同步产品sku变更新老品
+     */
+    SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
 
     ;
     

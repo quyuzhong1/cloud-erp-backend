@@ -6,16 +6,25 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.plm.mapper.ProductSaleMapper;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description 产品销售信息服务类
@@ -27,6 +36,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
 
     @Resource
     private ProductSaleMapper productSaleMapper;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+
+    @Resource
+    private MQProducerService mQProducerService;
 
     /**
      * @Description 产品销售信息查询列表
@@ -61,7 +77,20 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 saleEntity.setUpdateUserName(loginUser.getUserName());
             }
         }
-        return this.saveOrUpdate(saleEntity);
+
+        ProductSaleEntity productSaleEntity = this.getById(saleEntity.getId());
+        boolean flag = this.saveOrUpdate(saleEntity);
+        if (flag) {
+            if (!productSaleEntity.getListingTime().equals(productSaleDTO.getListingTime())) {
+                ProductDetailEntity productDetailEntity = productDetailService.getById(saleEntity.getSkuId());
+                Map<String,Object> map = new HashMap<>();
+                map.put("skuNo",productDetailEntity.getSkuNo());
+                map.put("pastListingTime",productSaleEntity.getListingTime());
+                map.put("newListingTime",saleEntity.getListingTime());
+                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, productSaleDTO.getId());
+            }
+        }
+        return flag;
     }
 
     /**

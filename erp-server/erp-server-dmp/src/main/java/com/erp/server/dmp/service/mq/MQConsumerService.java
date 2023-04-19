@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -39,6 +41,9 @@ public class MQConsumerService {
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
     // selectorExpression的意思指的就是tag，默认为“*”，不设置的话会监听所有消息
@@ -163,4 +168,14 @@ public class MQConsumerService {
         }
     }
 
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+            selectorExpression = "sync_dmp_product_listing_tag",
+            consumerGroup = "${spring.profiles.active}-plm_product_listing_consumer")
+    public class ConsumerPlmProductListing implements RocketMQListener<Map<String, Object>>  {
+        @Override
+        public void onMessage(Map<String, Object> ext) {
+            dmpOrderItemService.updateNewSign(ext);
+        }
+    }
 }

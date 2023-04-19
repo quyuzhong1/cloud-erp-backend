@@ -666,6 +666,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 仓库id
+         */
+        private String deliveryWarehouseId;
     }
 
     @Data

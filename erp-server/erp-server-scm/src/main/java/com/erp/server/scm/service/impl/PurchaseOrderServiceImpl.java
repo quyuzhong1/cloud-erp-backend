@@ -726,7 +726,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(generateReceiveDTO.getReceiveUserId());
                 addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
                 addDTO.setBillDate(generateReceiveDTO.getBillDate());
-                addDTO.setDeliveryWarehouseId(addDTO.getDeliveryWarehouseId());
+                addDTO.setDeliveryWarehouseId(generateReceiveDTO.getDeliveryWarehouseId());
 
                 List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = new ArrayList<>();
                 for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
