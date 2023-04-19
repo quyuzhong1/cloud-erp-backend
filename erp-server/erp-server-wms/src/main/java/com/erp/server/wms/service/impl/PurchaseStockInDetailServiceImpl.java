@@ -128,7 +128,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
 
     @Override
     public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
-        return lambdaQuery().in(PurchaseStockInDetailEntity::getSourceDetailId,sourceDetailIds).list();
+        return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
     }
 
     /**
@@ -143,9 +143,9 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         return baseMapper.getStockInQty(purchaseOrderDetailId);
     }
 
-
-    private List<PurchaseStockInDetailEntity> listDetailByPodIds(List<String> podIds) {
-        return lambdaQuery().in(PurchaseStockInDetailEntity::getPurchaseOrderDetailId,podIds).list();
+    @Override
+    public  List<PurchaseStockInDetailEntity> listDetailByPodIds(List<String> podIds) {
+        return baseMapper.listDetailByPodIds(podIds);
     }
 
     /**

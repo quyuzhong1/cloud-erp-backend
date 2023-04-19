@@ -9,4 +9,62 @@
         LEFT JOIN purchase_stock_in psi ON psid.main_id = psi.id
         WHERE psi.approve_status = 'approve' AND psid.purchase_order_detail_id = #{purchaseOrderDetailId}
     </select>
+
+    <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.PurchaseStockInDetailEntity">
+        select
+            psi.approve_status,
+            psid.main_id,
+            psid.sku_id,
+            psid.sku_no,
+            psid.variant_property,
+            psid.purchase_qty,
+            psid.receive_qty,
+            psid.exceed_qty,
+            psid.warehouse_location_id,
+            psid.warehouse_location_name,
+            psid.remark,
+            psid.source_detail_id,
+            psid.purchase_order_detail_id
+        from
+        purchase_stock_in psi
+        inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        <where>
+            psi.is_deleted and psi.invalid_status = false
+            <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+                and psid.source_detail_id in
+                <foreach collection="sourceDetailIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="listDetailByPodIds" resultType="com.erp.model.wms.entity.PurchaseStockInDetailEntity">
+        select
+            psi.approve_status,
+            psid.main_id,
+            psid.sku_id,
+            psid.sku_no,
+            psid.variant_property,
+            psid.purchase_qty,
+            psid.receive_qty,
+            psid.exceed_qty,
+            psid.warehouse_location_id,
+            psid.warehouse_location_name,
+            psid.remark,
+            psid.source_detail_id,
+            psid.purchase_order_detail_id
+        from
+        purchase_stock_in psi
+        inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        <where>
+            psi.is_deleted and psi.invalid_status = false
+            <if test="podIds != null and podIds.size > 0">
+                and psid.purchase_order_detail_id in
+                <foreach collection="podIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>

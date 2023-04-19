@@ -33,13 +33,26 @@ public class PurchaseStockInFeignController {
      * @description: 根据来源明细id查询
      * @author Will
      * @date: 2023/4/18 10:47
-     * @param SourceDetailIds
+     * @param sourceDetailIds
      * @return List<PurchaseStockInDetailEntity>
      */
     @PostMapping("/listDetailBySourceDetailIds")
-    public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> SourceDetailIds) {
-        return purchaseStockInDetailService.listDetailBySourceDetailIds(SourceDetailIds);
+    public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
+        return purchaseStockInDetailService.listDetailBySourceDetailIds(sourceDetailIds);
     }
+
+    /**
+     * @description: 根据podIds查询
+     * @author Will
+     * @date: 2023/4/18 10:47
+     * @param podIds
+     * @return List<PurchaseStockInDetailEntity>
+     */
+    @PostMapping("/listDetailByPodIds")
+    public List<PurchaseStockInDetailEntity> listDetailByPodIds(@RequestBody List<String> podIds) {
+        return purchaseStockInDetailService.listDetailByPodIds(podIds);
+    }
+
 
     /**
      * @description: 批量新增入库单

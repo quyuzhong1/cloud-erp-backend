@@ -59,10 +59,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -136,8 +132,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //清空明细数据
         List<PurchaseOrderDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> ids = records.stream().map(PurchaseOrderDTO.ListDTO::getId).collect(Collectors.toList());
-            //查询流程id判断是否存在流程 TODO
+            List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+            //入库数量
+            List<PurchaseStockInDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -160,7 +157,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
                 //获取签收数量
                 List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(obj.getId());
-                WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).findFirst().orElse(null);
+                WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(getReceiveDTO)) {
                     obj.setReceiveQty(0);
                 } else {
@@ -175,6 +172,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     obj.setDeliveryQty(obj.getPurchaseQty() - getDeliveryQty.getReceiveQty());
                 }
 
+                //入库数量
+                Integer stockInQty = MathUtil.ZERO;
+                if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                    stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()) ).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO,Integer::sum);
+                }
+                obj.setStockInQty(stockInQty);
                 list.add(obj.getId());
             });
         }

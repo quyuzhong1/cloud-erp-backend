@@ -6,7 +6,6 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +51,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseStockIn/listDetailBySourceDetailIds")
     List<PurchaseStockInDetailEntity> listPurchaseStockInDetailBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * 根据来采购订单明细ids查询入库明细
+     */
+    @PostMapping("feign/purchaseStockIn/listDetailByPodIds")
+    List<PurchaseStockInDetailEntity> listPurchaseStockInDetailByPodIds(List<String> PodIds);
 
     /**
      * 批量新增入库单

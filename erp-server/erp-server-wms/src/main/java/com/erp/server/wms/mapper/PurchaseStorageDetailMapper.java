@@ -5,6 +5,8 @@ import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 采购入库明细表 Mapper 接口
@@ -16,4 +18,12 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface PurchaseStorageDetailMapper extends BaseMapper<PurchaseStockInDetailEntity> {
     Integer getStockInQty(@Param("purchaseOrderDetailId") String purchaseOrderDetailId);
+    /**
+     * 根据来源明细ids查询
+     */
+    List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+    /**
+     * 根据采购明细ids查询
+     */
+    List<PurchaseStockInDetailEntity> listDetailByPodIds(@Param("podIds") List<String> podIds);
 }

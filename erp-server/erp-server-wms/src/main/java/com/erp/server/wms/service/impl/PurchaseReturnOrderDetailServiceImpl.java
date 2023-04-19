@@ -8,8 +8,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ProductOrderFeign;
@@ -59,7 +57,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
      */
     @Override
     public List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
-        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getSourceDetailId,sourceDetailIds).list();
+        return baseMapper.listBySourceDetailIds(sourceDetailIds);
     }
 
     /**

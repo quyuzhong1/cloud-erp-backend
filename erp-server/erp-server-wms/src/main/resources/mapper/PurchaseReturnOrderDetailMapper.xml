@@ -2,4 +2,31 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper">
 
+    <select id="listBySourceDetailIds" resultType="com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity">
+        select
+            pro.approve_status,
+            prod.main_id,
+            prod.sku_id,
+            prod.sku_no,
+            prod.reality_return_qty,
+            prod.replenish_qty,
+            prod.deduct_amount_qty,
+            prod.return_price,
+            prod.currency,
+            prod.remark,
+            prod.source_detail_id,
+            prod.purchase_order_detail_id
+        from
+        purchase_return_order pro
+        inner join purchase_return_order_detail prod on pro.id = prod.main_id and prod.is_deleted = false
+        <where>
+            pro.is_deleted and pro.invalid_status = false
+            <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+                and prod.source_detail_id in
+                <foreach collection="sourceDetailIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>

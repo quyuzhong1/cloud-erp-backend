@@ -99,6 +99,9 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
 
+    @TableField(exist = false)
+    private String approveStatus;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
