@@ -709,8 +709,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             } else {
                 req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - getStockInQty.getStockInQty());
             }
-            req.setStockInQty(0);
-            req.setExceedQty(0);
+            req.setStockInQty(req.getUnStockInQty());
+            req.setExceedQty(req.getExceedQty());
 
         });
         return generateStockInViewDTOS;
