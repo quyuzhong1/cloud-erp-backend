@@ -225,7 +225,7 @@ public class QcBillDTO implements Serializable {
         /**
          * SKU no
          */
-        private String skuNo;
+        private List<String> skuNoList;
 
 
         /**
@@ -342,7 +342,7 @@ public class QcBillDTO implements Serializable {
         /**
          * 质检状态
          */
-        private String qcStatus;
+        private QcBillStatusEnum qcStatus;
 
         /**
          * 质检状态名

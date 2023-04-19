@@ -97,6 +97,19 @@ public class QcBillEntity extends BaseEntity<QcBillEntity> {
     @TableField("source_id")
     private String sourceId;
 
+    /**
+     * 供应商id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+
 
     public static final String CODE = "code";
 
