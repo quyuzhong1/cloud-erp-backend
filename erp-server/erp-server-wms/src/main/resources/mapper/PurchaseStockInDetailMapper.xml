@@ -7,7 +7,7 @@
         SUM(psid.stock_in_qty) stockInQty
         FROM purchase_stock_in_detail psid
         LEFT JOIN purchase_stock_in psi ON psid.main_id = psi.id AND psid.is_deleted = FALSE
-        WHERE psi.approve_status = 'approve' AND psi..is_deleted = FALSE
+        WHERE psi.approve_status = 'approve' AND psi..is_deleted = FALSE AND psi.invalid_status = FALSE
         AND psid.purchase_order_detail_id = #{purchaseOrderDetailId}
     </select>
 
