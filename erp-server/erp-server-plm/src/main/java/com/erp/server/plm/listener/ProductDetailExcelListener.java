@@ -73,6 +73,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
      **/
     @Override
     public void invoke(ProductDetailExcelDTO dto, AnalysisContext analysisContext) {
+        String errStr = "";
+
         List<String> errorMsgList = new ArrayList<>();
         //添加数据用于判断是否为空
         dataList.add(dto);
@@ -89,10 +91,19 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         // 判断是修改还是新增 1：新增 2：修改
         if (importType == 2) {
-            productSkuBaseInfoDTO.setId(productBy.getSkuId());
             if (ObjectUtils.isEmpty(productBy)) {
                 errorMsgList.add("sku不存在，请选择导入新增");
             }
+            if (errorMsgList.size() > 0) {
+                for (int i = 0; i < errorMsgList.size(); i++) {
+                    Integer indexTemp = i + 1;
+                    errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                }
+                dto.setErrorMsg(errStr);
+                list.add(dto);
+                return;
+            }
+            productSkuBaseInfoDTO.setId(productBy.getSkuId());
             productInfoDTO.setId(productBy.getId());
 //            if (!ObjectUtils.isEmpty(productDetailShow)) {
 //                if (!productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
@@ -216,7 +227,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             productInfoDTO.setCategoryId(basicCategoryEntity.getId());
         }
 
-        String errStr = "";
+
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
