@@ -6,8 +6,9 @@
         SELECT
         SUM(psid.stock_in_qty) stockInQty
         FROM purchase_stock_in_detail psid
-        LEFT JOIN purchase_stock_in psi ON psid.main_id = psi.id
-        WHERE psi.approve_status = 'approve' AND psid.purchase_order_detail_id = #{purchaseOrderDetailId}
+        LEFT JOIN purchase_stock_in psi ON psid.main_id = psi.id AND psid.is_deleted = FALSE
+        WHERE psi.approve_status = 'approve' AND psi..is_deleted = FALSE
+        AND psid.purchase_order_detail_id = #{purchaseOrderDetailId}
     </select>
 
     <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.PurchaseStockInDetailEntity">

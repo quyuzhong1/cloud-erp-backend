@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
@@ -88,8 +89,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 throw new ServiceException(ApiError.ERROR_99006);
             }
 
-            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(dto.getPurchaseOrderId())).findFirst().orElse(null);
-            if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - getReceiveDTO.getReceiveQty())) {
+            Integer receive = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(dto.getPurchaseOrderId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - receive)) {
                 throw new ServiceException(ApiError.ERROR_99013);
             }
             listDetail.add(warehouseReceiveDetailEntity);

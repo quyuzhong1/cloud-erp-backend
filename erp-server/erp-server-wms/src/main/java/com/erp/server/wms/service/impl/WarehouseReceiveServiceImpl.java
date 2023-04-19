@@ -330,12 +330,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(warehouseReceiveEntity.getPurchaseOrderId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(getReceiveDTO)) {
-                detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - 0);
-            } else {
-                detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - getReceiveDTO.getReceiveQty());
-            }
+            Integer receive = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(warehouseReceiveEntity.getPurchaseOrderId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receive);
 
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);

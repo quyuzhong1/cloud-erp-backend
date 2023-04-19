@@ -157,20 +157,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
                 //获取签收数量
                 List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(obj.getId());
-                WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(getReceiveDTO)) {
-                    obj.setReceiveQty(0);
-                } else {
-                    obj.setReceiveQty(getReceiveDTO.getReceiveQty());
-                }
+                Integer receive = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setReceiveQty(receive);
 
                 //获取待交货数量
-                WarehouseReceiveDTO.GetReceiveDTO getDeliveryQty = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(getReceiveDTO)) {
-                    obj.setDeliveryQty(0);
-                } else {
-                    obj.setDeliveryQty(obj.getPurchaseQty() - getDeliveryQty.getReceiveQty());
-                }
+                Integer getReceiveDTO = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setDeliveryQty(obj.getPurchaseQty() - getReceiveDTO);
 
                 //入库数量
                 Integer stockInQty = MathUtil.ZERO;
@@ -691,7 +683,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
             //获取签收数量
             List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(viewGenerateReceiveDTO.getId());
-            int receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderId().equals(viewGenerateReceiveDTO.getId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderId().equals(viewGenerateReceiveDTO.getId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() - viewGenerateReceiveDTO.getReceiveQty());
             viewGenerateReceiveDTO.setExceedQty(0);
