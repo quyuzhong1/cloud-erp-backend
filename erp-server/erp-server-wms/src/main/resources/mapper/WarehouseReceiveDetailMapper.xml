@@ -6,6 +6,7 @@
     <select id="listWarehouseReceiveByPodIds"
             resultType="com.erp.model.wms.entity.WarehouseReceiveDetailEntity">
         select
+            wr.approve_status,
             wrd.main_id,
             wrd.sku_id,
             wrd.sku_no,

@@ -7,6 +7,7 @@
         select
             psi.id,
             psi.code,
+            psid.purchase_order_detail_id,
             psi.purchase_order_code,
             psi.supplier_name,
             psi.approve_status,
@@ -20,7 +21,6 @@
             psi.create_user_name,
             psi.create_time,
             psid.purchase_qty,
-            psid.receive_qty,
             psid.stock_in_qty,
             psid.exceed_qty,
             psi.delivery_warehouse_name,
@@ -115,14 +115,16 @@
         </where>
     </select>
 
-    <select id="listExportExcel" resultType="com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO">
+    <select id="listExportExcel" resultType="com.erp.model.wms.dto.PurchaseStockInDTO$ListDTO">
         select
             psi.id,
             psi.code,
+            psid.purchase_order_detail_id,
             psi.purchase_order_code,
             psi.supplier_name,
             psi.approve_status,
             psi.invalid_status,
+            psid.sku_id,
             psid.sku_no,
             psi.stock_in_date,
             psi.purchase_user_name,
@@ -131,7 +133,6 @@
             psi.create_user_name,
             psi.create_time,
             psid.purchase_qty,
-            psid.receive_qty,
             psid.stock_in_qty,
             psid.exceed_qty,
             psi.delivery_warehouse_name,

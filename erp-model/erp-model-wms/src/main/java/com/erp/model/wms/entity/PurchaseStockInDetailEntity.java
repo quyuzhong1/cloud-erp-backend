@@ -64,12 +64,6 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     private Integer receiveQty;
 
     /**
-     * 超出数量
-     */
-    @TableField("exceed_qty")
-    private Integer exceedQty;
-
-    /**
      * 库位id
      */
     @TableField("warehouse_location_id")
@@ -117,8 +111,6 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     public static final String PURCHASE_QTY = "purchase_qty";
-
-    public static final String RECEIVE_QTY = "receive_qty";
 
     public static final String EXCEED_QTY = "exceed_qty";
 

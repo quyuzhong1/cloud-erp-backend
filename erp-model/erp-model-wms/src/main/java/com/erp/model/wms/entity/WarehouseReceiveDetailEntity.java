@@ -1,17 +1,14 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -74,6 +71,9 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
      */
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
+
+    @TableField(exist = false)
+    private String approveStatus;
 
 
     public static final String WAREHOUSE_RECEIVE_ID = "warehouse_receive_id";
