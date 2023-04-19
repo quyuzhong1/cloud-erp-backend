@@ -410,8 +410,8 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<PurchaseStockInEntity> list = getList(ids);
-        //审核中和已审核允许反审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        //已审核允许反审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }

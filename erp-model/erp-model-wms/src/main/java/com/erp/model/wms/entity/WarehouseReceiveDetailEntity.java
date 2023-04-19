@@ -73,6 +73,12 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     private String purchaseOrderDetailId;
 
     @TableField(exist = false)
+    private String receiveUserName;
+
+    @TableField(exist = false)
+    private LocalDate billDate;
+
+    @TableField(exist = false)
     private String approveStatus;
 
 

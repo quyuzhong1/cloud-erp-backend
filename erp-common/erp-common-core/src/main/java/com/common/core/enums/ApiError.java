@@ -346,7 +346,7 @@ public enum ApiError implements Serializable {
     ERROR_SUPPLIER_ABSENCE(98011,"供应商不存在"),
     ERROR_98012(98012,"已作废数据不支持作废"),
     ERROR_WAIT_SUBMIT_TO_APPROVE_ING(98013,"只有待提交和审核不通过才能提交审核"),
-    ERROR_98014(98014,"只有审核中和已审核数据支持反审核"),
+    ERROR_98014(98014,"只有已审核数据支持反审核"),
     ERROR_98015(98015,"未找到可生成采购订单的采购申请明细"),
     ERROR_98016(98016,"未找到采购申请单"),
     ERROR_98017(98017,"未找到采购申请单明细"),
