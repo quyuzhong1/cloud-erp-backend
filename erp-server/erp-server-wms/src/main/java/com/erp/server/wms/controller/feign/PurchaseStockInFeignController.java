@@ -52,4 +52,17 @@ public class PurchaseStockInFeignController {
     public Boolean batchAddPurchaseStockIn(@RequestBody @Validated List<PurchaseStockInDTO.AddDTO> resultList) {
         return purchaseStockInService.batchAddPurchaseStockIn(resultList);
     }
+
+    /**
+     * 获取入库数量
+     * @Author Luo_WG
+     * @Date 2023/4/19 10:52
+     * @param ids ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseStockInDTO.GetStockInQty>
+     **/
+    @PostMapping("/getStockInQty")
+    public List<PurchaseStockInDTO.GetStockInQty> getStockInQty(@RequestBody  List<String> ids) {
+        return purchaseStockInService.getStockInQty(ids);
+    }
+
 }

@@ -70,4 +70,10 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/warehouseReceive/getReceiveQty")
     List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(@RequestBody String purchaseOrderId);
+
+    /**
+     * 获取入库数量
+     **/
+    @PostMapping("feign/purchaseStockIn/getStockInQty")
+    List<PurchaseStockInDTO.GetStockInQty> getStockInQty(@RequestBody List<String> ids);
 }

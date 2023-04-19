@@ -672,8 +672,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(purchaseOrderSupplierList)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
+
         LoginUser userInfo = commonService.getUserInfo();
         List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceiveDTOS = baseMapper.viewGenerateReceive(ids);
+
+        List<String> purchaseOrderIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getId).collect(Collectors.toList());
+
+        List<PurchaseStockInDTO.GetStockInQty> stockInQtyList = wmsTaskFeign.getStockInQty(purchaseOrderIdList);
+
         //获取sku的id集合
         List<String> skuIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -692,6 +698,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             } else {
                 viewGenerateReceiveDTO.setReceiveQty(getReceiveDTO.getReceiveQty());
             }
+            viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() - viewGenerateReceiveDTO.getReceiveQty());
+            viewGenerateReceiveDTO.setExceedQty(0);
         }
 
         return viewGenerateReceiveDTOS;
