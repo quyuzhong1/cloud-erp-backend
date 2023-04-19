@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.QcRemarkDTO;
 import com.erp.model.wms.entity.QcBillRemarkEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,5 @@ import com.erp.model.wms.entity.QcBillRemarkEntity;
  */
 public interface QcBillRemarkService extends SuperService<QcBillRemarkEntity> {
 
+    void draft(String billId, List<QcRemarkDTO.AddDTO> remarkList);
 }

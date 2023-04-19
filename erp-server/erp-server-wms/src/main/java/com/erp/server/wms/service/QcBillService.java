@@ -22,7 +22,7 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @param dto
      * @return
      */
-    String draft(QcBillDTO.SaveOrUpdateDTO dto);
+    Boolean draft(QcBillDTO.SaveOrUpdateDTO dto);
     /**
      * 根据采购id查询
      */

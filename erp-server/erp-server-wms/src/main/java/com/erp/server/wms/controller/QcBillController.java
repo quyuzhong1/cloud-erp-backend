@@ -7,7 +7,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.server.wms.service.QcBillService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,9 +39,9 @@ public class QcBillController extends BaseController {
      * @return
      */
     @PostMapping("/draft")
-    public ApiResult add(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
-        String id = qcBillService.draft(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult add(@RequestBody  QcBillDTO.SaveOrUpdateDTO dto) {
+        Boolean result = qcBillService.draft(dto);
+        return result?success() : failure();
     }
 
 
@@ -65,8 +64,8 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/finish")
     public ApiResult finish(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
-        String id = qcBillService.draft(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        Boolean result = qcBillService.draft(dto);
+        return result?success() : failure();
     }
 
 
@@ -91,8 +90,7 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/exemption")
     public ApiResult exemption(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
-        String id = qcBillService.draft(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return success();
     }
 
 
@@ -108,18 +106,6 @@ public class QcBillController extends BaseController {
         return success();
     }
 
-
-    /**
-     * 取消
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/cancel")
-    public ApiResult cancel(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
-        String id = qcBillService.draft(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
-    }
 
     /**
      * 操作 取消质检

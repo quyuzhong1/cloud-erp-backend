@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum QcResultEnum {
 
-    CONFORMITY ("conformity ", "合格"),
+    CONFORMITY ("conformity", "合格"),
     NON_CONFORMITY("nonConformity", "不合格");
 
     /**

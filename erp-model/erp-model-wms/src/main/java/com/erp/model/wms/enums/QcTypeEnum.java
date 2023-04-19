@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 /**
  * 质检类型枚举
+ *
  * @author Lambda
  * @Classname QcTypeEnum
  * @Description TODO
@@ -14,12 +15,12 @@ import java.util.Arrays;
  * @Created by yl
  */
 public enum QcTypeEnum {
-    STOCK_IN("stockIn", "入库质检"),
-    OUTSIDE_QC("outsideQc", "外检质检"),
-    INSIDE_QC("insideQc", "在库质检"),
-    NEW_PRODUCT_STOCK_IN("newProductStockIn", "新品入库质检"),
-    B2B_OUTSIDE_QC("b2bOutsideQc", "B2B外检");
-
+    STOCK_IN("stockIn", "入库质检",true),
+    STOCK_OUT("stockOut", "出库质检",true),
+    OUTSIDE_QC("outsideQc", "外检质检",false),
+    INSIDE_QC("insideQc", "在库质检",true),
+    NEW_PRODUCT_STOCK_IN("newProductStockIn", "新品入库质检",true),
+    B2B_OUTSIDE_QC("b2bOutsideQc", "B2B外检",false);
 
 
     /**
@@ -33,9 +34,15 @@ public enum QcTypeEnum {
      */
     private String name;
 
-    QcTypeEnum(String code, String name) {
+    /**
+     * 是否内检
+     */
+    private Boolean isInside;
+
+    QcTypeEnum(String code, String name, Boolean isInside) {
         this.code = code;
         this.name = name;
+        this.isInside = isInside;
     }
 
     public String getCode() {
@@ -46,7 +53,9 @@ public enum QcTypeEnum {
         return name;
     }
 
-
+    public Boolean getIsInside() {
+        return isInside;
+    }
 
 
     public static String getByCode(String code) {

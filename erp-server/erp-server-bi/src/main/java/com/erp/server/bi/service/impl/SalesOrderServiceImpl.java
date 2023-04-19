@@ -169,9 +169,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (dto.getTimeType() != null && dto.getTimeType() == 0) {
             findTime = "platform_create_time";
         }
+        //sku no 集合
+        List<String> skuNoList=resultList.stream().map(SalesVO::getName).collect(Collectors.toList());
 
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime,skuNoList);
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
         List<SalesBaseVO> lastSevenDays =lastThirtyDays.stream().filter(
                 l->(l.getFlagDate().isAfter(beforeSevenDays))&&(nowTime.isAfter(l.getFlagDate()))
