@@ -759,6 +759,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     public List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId) {
         List<WarehouseReceiveDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = baseMapper.purchaseOrderRefReceive(purchaseOrderId);
+        if (CollectionUtils.isEmpty(orderRefReceiveDTOS)) {
+            return new ArrayList<>();
+        }
         //获取采购单详情表id集合
         List<String> orderDetailIds = orderRefReceiveDTOS.stream().map(WarehouseReceiveDTO.OrderRefReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
