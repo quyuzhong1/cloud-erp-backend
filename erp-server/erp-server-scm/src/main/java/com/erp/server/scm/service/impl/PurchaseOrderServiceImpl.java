@@ -678,7 +678,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderDTO.ViewGenerateReceiveDTO viewGenerateReceiveDTO : viewGenerateReceiveDTOS) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(viewGenerateReceiveDTO.getSkuId())).findFirst().orElse(null);
             viewGenerateReceiveDTO.setProductName(productDetailEntity.getName());
-            viewGenerateReceiveDTO.setPlanDeliveryDate(LocalDate.now());
+            viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
             //获取签收数量
@@ -725,7 +725,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setReceiveUserId(generateReceiveDTO.getReceiveUserId());
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(generateReceiveDTO.getReceiveUserId());
             addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
-            addDTO.setBillDate(LocalDate.now());
+            addDTO.setBillDate(generateReceiveDTO.getBillDate());
             addDTO.setDeliveryWarehouseId(addDTO.getDeliveryWarehouseId());
             List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = addDTO.getWarehouseReceiveDetailList();
             for (WarehouseReceiveDetailDTO.AddDTO detailAddDTO : warehouseReceiveDetailList) {

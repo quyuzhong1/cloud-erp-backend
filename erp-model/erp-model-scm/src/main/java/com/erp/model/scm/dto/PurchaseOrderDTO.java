@@ -574,9 +574,9 @@ public class PurchaseOrderDTO implements Serializable {
         private String productName;
 
         /**
-         * 计划交期
+         * 收货时间
          */
-        private LocalDate planDeliveryDate;
+        private LocalDate billDate;
 
         /**
          * 收货人id
@@ -637,9 +637,9 @@ public class PurchaseOrderDTO implements Serializable {
         private String code;
 
         /**
-         * 计划交期
+         * 收货日期
          */
-        private LocalDate planDeliveryDate;
+        private LocalDate billDate;
 
         /**
          * 收货人id
