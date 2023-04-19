@@ -1,5 +1,7 @@
 package com.erp.model.wms.dto;
 
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.QcReportExportExcelType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -127,6 +129,9 @@ public class QcEffectivenessDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewQcForPersonnelDTO {
+
+        private LocalDate qcDate;
+
         /**
          * 质检员
          */
@@ -226,6 +231,11 @@ public class QcEffectivenessDTO implements Serializable {
         /**
          * 质检状态
          */
+        private String qcStatus;
+
+        /**
+         * 质检状态名称
+         */
         private String qcStatusName;
 
         /**
@@ -252,6 +262,8 @@ public class QcEffectivenessDTO implements Serializable {
         /**
          * 导出类型（personnel按人员、document按单据）
          */
+        @NotBlank(message = "导出类型不能为空")
+        @StateEnumValue(clazz = QcReportExportExcelType.class, message = "质检类型有误")
         private String type;
 
         /**

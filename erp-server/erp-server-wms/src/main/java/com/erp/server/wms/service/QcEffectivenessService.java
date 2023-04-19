@@ -1,9 +1,10 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * @author Will
@@ -35,7 +36,7 @@ public interface QcEffectivenessService {
      * @param dto 
      * @return List<ViewQcForPersonnelDTO> 
      */
-    List<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(QcEffectivenessDTO.CommonSearchParamDTO dto);
+    PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> dto);
     /**
      * @description: 按单据查询
      * @author Will
@@ -43,7 +44,7 @@ public interface QcEffectivenessService {
      * @param dto
      * @return List<ViewQcForDocumentDTO> 
      */
-    List<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO dto);
+    PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> dto);
     /**
      * @description: 导出
      * @author Will

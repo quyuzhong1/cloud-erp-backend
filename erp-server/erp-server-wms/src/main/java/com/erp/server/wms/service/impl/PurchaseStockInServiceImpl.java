@@ -623,6 +623,8 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         entity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
         entity.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
         entity.setPurchaseDeptName(purchaseOrderEntity.getPurchaseDeptName());
+        entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
+        entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderId);

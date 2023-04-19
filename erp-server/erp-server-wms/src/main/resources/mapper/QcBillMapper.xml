@@ -37,4 +37,51 @@
         group by dateStr, qb.qc_status
     </select>
 
+    <select id="viewQcForPersonnel"
+            resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForPersonnelDTO">
+        select
+            qb.qc_user_id,
+            qb.qc_status,
+            count (0) as count
+        from qc_bill qb
+        <where>
+            qb.is_deleted = false
+            <if test="beginDate != null and endDate != null">
+                and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            </if>
+        </where>
+        group by qb.qc_user_id, qb.qc_status
+    </select>
+
+    <select id="viewQcForDocument" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
+        select
+            qb.qc_date as qcDate,
+            qb.qc_user_name as qcUserName,
+            qb.code as qcCode,
+            qb.purchase_order_code as purchaseOrderCode,
+            qp.sku_no as skuNo,
+            qi.qc_qty as qcQty,
+            qb.qc_status as qcStatus,
+            qb.qc_finish_time as qcEndTime
+        from qc_bill qb
+        inner join qc_info qi on qb.id = qi.main_id and qi.is_deleted = false
+        inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
+        <where>
+            qb.is_deleted = false
+            <if test="beginDate != null and endDate != null">
+                and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            </if>
+        </where>
+    </select>
+
+    <select id="viewExportQcForPersonnel"
+            resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForPersonnelDTO">
+
+    </select>
+
+    <select id="viewExportQcForDocument"
+            resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
+
+    </select>
+
 </mapper>
