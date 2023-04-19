@@ -510,7 +510,6 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 实退数量
          */
-        @NotNull(message = "实退数量不能为空")
         @Min(value = 1,message = "实退数量最小值为1")
         @Max(value = 99999999,message = "实退数量最大值为99999999")
         private Integer realityReturnQty;
@@ -518,7 +517,6 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 补货数量
          */
-        @NotNull(message = "补货数量不能为空")
         @Min(value = 1,message = "补货数量最小值为1")
         @Max(value = 99999999,message = "补货数量最大值为99999999")
         private Integer replenishQty;

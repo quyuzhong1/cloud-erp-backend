@@ -18,7 +18,7 @@
         warehouse_receive wr
         inner join warehouse_receive_detail wrd on wr.id = wrd.main_id and wrd.is_deleted = false
         <where>
-            wr.is_deleted and wr.invalid_status = false
+            wr.is_deleted = false and wr.invalid_status = false
             <if test="purchaseDetailIds != null and purchaseDetailIds.size > 0">
                and wrd.purchase_order_detail_id in
                 <foreach collection="purchaseDetailIds" separator="," item="item" open="(" close=")">

@@ -30,7 +30,7 @@
         purchase_stock_in psi
         inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         <where>
-            psi.is_deleted and psi.invalid_status = false
+            psi.is_deleted = false and psi.invalid_status = false
             <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
                 and psid.source_detail_id in
                 <foreach collection="sourceDetailIds" separator="," item="item" open="(" close=")">
@@ -59,7 +59,7 @@
         purchase_stock_in psi
         inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         <where>
-            psi.is_deleted and psi.invalid_status = false
+            psi.is_deleted = false and psi.invalid_status = false
             <if test="podIds != null and podIds.size > 0">
                 and psid.purchase_order_detail_id in
                 <foreach collection="podIds" separator="," item="item" open="(" close=")">
