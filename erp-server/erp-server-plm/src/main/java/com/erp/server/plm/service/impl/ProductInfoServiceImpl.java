@@ -1500,4 +1500,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
+
+    /**
+     * 获取所有产品信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:22
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     **/
+    public List<ProductInfoEntity> getProductInfoAll() {
+        return baseMapper.getProductInfoAll();
+    }
 }

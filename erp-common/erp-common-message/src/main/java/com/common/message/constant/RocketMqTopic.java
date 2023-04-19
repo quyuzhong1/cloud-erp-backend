@@ -18,4 +18,9 @@ public class RocketMqTopic {
      * 推送数据到金蝶
      */
     public static final String SYNC_KINGDEE_ERP_TOPIC = "${spring.profiles.active}-sync_kingdee_erp_topic";
+
+    /**
+     * 推送Plm产品信息到dmp
+     */
+    public static final String SYNC_PLM_PRODUCT_TOPIC = "${spring.profiles.active}-sync_plm_product_topic";
 }

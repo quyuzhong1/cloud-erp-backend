@@ -173,4 +173,12 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      **/
     ProductInfoEntity getProductByName(String name);
 
+    /**
+     * 获取所有产品信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/3/29 14:26
+     * @return com.erp.model.plm.entity.ProductInfoEntity
+     **/
+    List<ProductInfoEntity> getProductInfoAll();
+
 }

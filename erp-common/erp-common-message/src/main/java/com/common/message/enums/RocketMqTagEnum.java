@@ -130,6 +130,15 @@ public enum RocketMqTagEnum {
 
     IML_STOCK_INBOUND_ORDER_TAG(25,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
 
+    /**
+     * 同步产品信息到中台dmp
+     */
+    SYNC_DMP_PRODUCT_INFO_TAG(26,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_info_tag"),
+    /**
+     * 同步产品sku到中台dmp
+     */
+    SYNC_DMP_PRODUCT_SKU_TAG(27,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
+
     ;
     
     
@@ -144,6 +153,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_KINGDEE = "sync_kingdee";
 
     public static final String STOCK = "stock";
+
+    public static final String SYNC_DMP = "sync_dmp";
 
     private Integer code;
 

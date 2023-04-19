@@ -100,6 +100,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @date 2023-03-21 12:06
      */
     List<SkuVO> getSkuInfoBySkuIds(@Param("skuIds") List<String> skuIds);
+
+    /**
+     * 获取所有产品明细包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    List<ProductDetailEntity> getProductDetailAll();
 }
 
 

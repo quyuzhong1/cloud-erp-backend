@@ -444,4 +444,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      */
     List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto);
+
+    /**
+     * 获取所有明细信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    List<ProductDetailEntity> getProductDetailAll();
 }

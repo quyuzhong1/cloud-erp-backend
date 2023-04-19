@@ -2602,5 +2602,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
     }
 
-
+    /**
+     * 获取所有明细信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    public List<ProductDetailEntity> getProductDetailAll() {
+        return baseMapper.getProductDetailAll();
+    }
 }
