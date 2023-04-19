@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"qc_bill","qc_bill_remark","qc_info","qc_product","qc_report_detail","qc_report_detail"};
+        String[] tables = new String[]{"attachment"};
         autoGenerator(prefix, tables);
 
 
