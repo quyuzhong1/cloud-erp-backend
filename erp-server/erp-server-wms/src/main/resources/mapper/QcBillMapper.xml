@@ -45,14 +45,14 @@
             sum (case when qb.qc_status = 'finishQc' then  1 else 0 end) as qcFinishQty,
             sum (case when qb.qc_status = 'waitQc' then  1 else 0 end) as qcWaitQty,
             sum (case when qb.qc_status = 'exemption' then  1 else 0 end) as qcFreeQty,
-            sum (case when qb.qc_date::timestamp + '1 day' > qb.qc_finish_time then  1 else 0 end) as qcTimelyQty,
+            sum (case when qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time then  1 else 0 end) as qcTimelyQty,
             sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status in ('finishQc','exemption')  then  1 else 0 end) as qcTimeOutQty,
             sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then  1 else 0 end) as unQcTimeOutQty
         from qc_bill qb
         <where>
             qb.is_deleted = false
-            <if test="beginDate != null and endDate != null">
-                and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -64,6 +64,7 @@
             qb.qc_user_name as qcUserName,
             qb.code as qcCode,
             qb.purchase_order_code as purchaseOrderCode,
+            qp.sku_id as skuId,
             qp.sku_no as skuNo,
             qi.qc_qty as qcQty,
             qb.qc_status as qcStatus,
@@ -73,8 +74,22 @@
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         <where>
             qb.is_deleted = false
-            <if test="beginDate != null and endDate != null">
-                and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            </if>
+            <if test="params.statusList != null and params.statusList.size > 0">
+                and qb.qc_status in
+                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.isTimeOut != null">
+                <if test="params.isTimeOut == false">
+                   and qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time
+                </if>
+                <if test="params.isTimeOut == true">
+                    and qb.qc_finish_time > qb.qc_date::timestamp + '1 day'
+                </if>
             </if>
         </where>
     </select>

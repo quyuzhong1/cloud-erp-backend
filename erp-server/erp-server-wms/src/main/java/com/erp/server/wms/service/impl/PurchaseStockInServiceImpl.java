@@ -717,4 +717,24 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         return baseMapper.getStockInQty(ids);
     }
 
+    @Override
+    public List<PurchaseStockInDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(String purchaseOrderId) {
+        List<PurchaseStockInDTO.OrderRefStockInDTO> list =  baseMapper.purchaseOrderRefStockIn(purchaseOrderId);
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        //获取采购单详情表id集合
+        List<String> orderDetailIds = list.stream().map(PurchaseStockInDTO.OrderRefStockInDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //根据ids查询采购单详情
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(orderDetailIds);
+        for (PurchaseStockInDTO.OrderRefStockInDTO dto : list) {
+            dto.setApproveStatusName(ApproveStatusEnum.getName(dto.getApproveStatus()));
+            dto.setInvalidStatusName(InvalidStatusEnum.getName(dto.getInvalidStatus()));
+            //产品名称
+            String productName = productDetailList.stream().filter(e -> e.getId().equals(dto.getPurchaseOrderDetailId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+            dto.setProductName(productName);
+        }
+        return list;
+    }
+
 }

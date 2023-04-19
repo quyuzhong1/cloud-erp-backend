@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -243,4 +240,16 @@ public class PurchaseStockInController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+   /**
+    * 采购订单-关联入库单
+    * @author Will
+    * @date: 2023/4/19 16:28
+    * @param dto
+    * @return ApiResult<List<OrderRefStockInDTO>>
+    */
+    @PostMapping(value = "/purchaseOrderRefStockIn")
+    public ApiResult<List<PurchaseStockInDTO.OrderRefStockInDTO>> purchaseOrderRefStockIn(@RequestBody @Validated BaseIdDTO dto) {
+        List<PurchaseStockInDTO.OrderRefStockInDTO> list = purchaseStorageService.purchaseOrderRefStockIn(dto.getId());
+        return success(list);
+    }
 }

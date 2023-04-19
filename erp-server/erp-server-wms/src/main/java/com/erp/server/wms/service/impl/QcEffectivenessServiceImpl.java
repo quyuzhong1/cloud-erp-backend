@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -9,12 +10,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.dto.excel.ExportQcDocumentExcelDTO;
 import com.erp.model.wms.dto.excel.ExportQcPersonnelExcelDTO;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReportExportExcelType;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcBillMapper;
 import com.erp.server.wms.service.QcEffectivenessService;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +43,10 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
 
     @Resource
     private QcBillMapper qcBillMapper;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Override
     public QcEffectivenessDTO.ViewQcOverviewDTO viewQcOverview(QcEffectivenessDTO.CommonSearchParamDTO dto) {
@@ -153,7 +161,6 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcBillMapper.viewQcForPersonnel(query, pagingDTO.getParams());
-        List<QcEffectivenessDTO.ViewQcForPersonnelDTO> records = pageData.getRecords();
         return new PagingVO(pageData);
     }
 
@@ -161,6 +168,26 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     public PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<QcEffectivenessDTO.ViewQcForDocumentDTO> pageData = this.qcBillMapper.viewQcForDocument(query, pagingDTO.getParams());
+        List<QcEffectivenessDTO.ViewQcForDocumentDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        List<String> skuIds = records.stream().map(QcEffectivenessDTO.ViewQcForDocumentDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+        for (QcEffectivenessDTO.ViewQcForDocumentDTO documentDTO : records) {
+            //产品名称
+            if (CollectionUtils.isNotEmpty(productDetailList)) {
+                String productName = productDetailList.stream().filter(obj -> obj.getId().equals(documentDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                documentDTO.setProductName(productName);
+            }
+            //质检耗时
+            if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
+                LocalDate qcDate = documentDTO.getQcDate();
+                LocalDateTime qcEndTime = documentDTO.getQcEndTime();
+            }
+        }
+
+
         return new PagingVO(pageData);
     }
 

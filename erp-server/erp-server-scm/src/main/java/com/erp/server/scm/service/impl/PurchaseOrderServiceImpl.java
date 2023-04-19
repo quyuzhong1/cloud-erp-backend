@@ -793,21 +793,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto) {
-        PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = new PurchaseOrderDTO.AssociatedDocumentDTO();
-        //采购变更单
-        List<PurchaseChangeDTO.ListDTO> purchaseChangeList = purchaseChangeService.list(dto);
-        resultDTO.setPurchaseChangeList(purchaseChangeList);
-        return resultDTO;
-    }
-
-    @Override
     public List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids) {
         List<PurchaseOrderDTO.ViewGenerateStockInDTO> resultList = new ArrayList<>();
         List<PurchaseOrderDetailEntity> list = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
+        //采购订单
+        List<PurchaseOrderEntity> purchaseOrderList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderList)) {
+            return resultList;
+        }
+
         //订单供应商
         List<PurchaseOrderSupplierEntity> supplierList = purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
         if (CollectionUtils.isEmpty(supplierList)) {
@@ -825,6 +822,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             PurchaseOrderDTO.ViewGenerateStockInDTO viewGenerateStockInDTO = new PurchaseOrderDTO.ViewGenerateStockInDTO();
             BeanMapperUtils.copy(detailEntity,viewGenerateStockInDTO);
             viewGenerateStockInDTO.setPurchaseOrderDetailId(detailEntity.getId());
+
+            PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            viewGenerateStockInDTO.setPurchaseOrderCode(entity.getCode());
+            viewGenerateStockInDTO.setDeliveryWarehouseName(entity.getDeliveryWarehouseName());
             //供应商信息
             PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = supplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {

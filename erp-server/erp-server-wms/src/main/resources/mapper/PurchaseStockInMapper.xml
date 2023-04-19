@@ -258,4 +258,30 @@
         psi.approve_status
     </select>
 
+    <select id="purchaseOrderRefStockIn"
+            resultType="com.erp.model.wms.dto.PurchaseStockInDTO$OrderRefStockInDTO">
+        select
+            psi.code,
+            psi.supplier_name,
+            psi.approve_status,
+            psi.invalid_status,
+            psid.sku_no,
+            psi.stock_in_date,
+            psid.stock_in_qty,
+            psid.exceed_qty,
+            psi.delivery_warehouse_name,
+            psi.purchase_user_name,
+            psi.stock_in_user_name,
+            psid.remark,
+            psid.purchase_order_detail_id
+        from purchase_stock_in psi
+        INNER JOIN purchase_stock_in_detail psid ON psi.id = psid.main_id AND psi.is_deleted = FALSE
+        <where>
+            psi.is_deleted = false
+            <if test="purchaseOrderId != null and purchaseOrderId != ''">
+                and psi.purchase_order_id = #{purchaseOrderId}
+            </if>
+        </where>
+    </select>
+
 </mapper>

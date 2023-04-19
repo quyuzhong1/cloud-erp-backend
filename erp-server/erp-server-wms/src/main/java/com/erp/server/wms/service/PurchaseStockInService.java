@@ -175,4 +175,12 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @return java.util.List<com.erp.model.wms.dto.PurchaseStockInDTO.GetStockInQty>
      **/
     List<PurchaseStockInDTO.GetStockInQty> getStockInQty(List<String> ids);
+    /**
+     * @description: 采购订单查询关联入库单
+     * @author Will
+     * @date: 2023/4/19 16:14
+     * @param purchaseOrderId
+     * @return List<OrderRefStockInDTO>
+     */
+    List<PurchaseStockInDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(String purchaseOrderId);
 }

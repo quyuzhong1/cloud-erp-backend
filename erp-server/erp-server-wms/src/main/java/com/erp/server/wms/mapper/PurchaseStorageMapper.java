@@ -63,4 +63,12 @@ public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity>
      * @return java.util.List<com.erp.model.wms.dto.PurchaseStockInDTO.GetStockInQty>
      **/
     List<PurchaseStockInDTO.GetStockInQty> getStockInQty(@Param("ids") List<String> ids);
+    /**
+     * @description: 查询关联单据
+     * @author Will
+     * @date: 2023/4/19 16:15
+     * @param purchaseOrderId
+     * @return List<OrderRefStockInDTO>
+     */
+    List<PurchaseStockInDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(@Param("purchaseOrderId") String purchaseOrderId);
 }

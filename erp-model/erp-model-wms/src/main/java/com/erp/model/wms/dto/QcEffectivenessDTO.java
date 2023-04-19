@@ -212,6 +212,11 @@ public class QcEffectivenessDTO implements Serializable {
         private String purchaseOrderCode;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * sku编码
          */
         private String skuNo;

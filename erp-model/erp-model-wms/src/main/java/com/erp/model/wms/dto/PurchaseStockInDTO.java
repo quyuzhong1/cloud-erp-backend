@@ -575,4 +575,88 @@ public class PurchaseStockInDTO implements Serializable {
         private Integer stockInQty;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class OrderRefStockInDTO {
+        /**
+         * 收货单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态
+         */
+        private String invalidStatusName;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 入库日期
+         */
+        private LocalDate stockInDate;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 入库员名称
+         */
+        private String stockInUserName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+    }
 }
