@@ -1,20 +1,24 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.QcProductDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
-import com.erp.server.wms.service.WmsAttachmentService;
 import com.erp.server.wms.service.QcProductService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -59,6 +63,46 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         List<String> boxImageUrlList = qcProduct.getBoxImageUrlList();
         wmsAttachmentService.batchSave(boxImageUrlList, boxImageNameList, WmsConstant.QC_BOX, id);
         this.saveOrUpdate(qcProductEntity);
+    }
+
+
+    /**
+     * 根据质检单 获取 质检产品信息
+     *
+     * @param billId
+     * @return com.erp.model.wms.dto.QcProductDTO.ViewDTO
+     * @author yl
+     * @date 2023-04-19 12:01
+     */
+    @Override
+    public QcProductDTO.ViewDTO getByMainId(String billId) {
+        QcProductEntity product = this.getByBillId(billId);
+        QcProductDTO.ViewDTO productView = new QcProductDTO.ViewDTO();
+        if (product != null) {
+            BeanMapper.copy(product, productView);
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(product.getId()));
+            List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+
+            List<String> productImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_PRODUCT)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> productNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_PRODUCT)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+            productView.setBoxImageNameList(boxNameList);
+            productView.setBoxImageUrlList(boxImageUrlList);
+
+            productView.setProductImageNameList(productNameList);
+            productView.setProductImageUrlList(productImageUrlList);
+        }
+
+        return productView;
+    }
+
+
+    private QcProductEntity getByBillId(String billId) {
+        LambdaQueryWrapper<QcProductEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QcProductEntity::getMainId,billId);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+
     }
 }
 

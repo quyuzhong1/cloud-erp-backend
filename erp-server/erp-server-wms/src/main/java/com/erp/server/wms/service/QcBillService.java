@@ -27,4 +27,13 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * 根据采购id查询
      */
     List<QcBillEntity> listByPoIds(List<String> poIds);
+
+    /**
+     * 质检单详情
+     * @author yl
+     * @date 2023-04-19 11:53
+     * @param id
+     * @return com.erp.model.wms.dto.QcBillDTO.ViewDTO
+     */
+    QcBillDTO.ViewDTO view(String id);
 }

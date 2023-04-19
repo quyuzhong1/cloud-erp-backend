@@ -24,4 +24,14 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return void
      */
     void draft(String billId, QcInfoDTO.AddDTO qcInfo);
+
+    
+    /**
+     * 获取到质检信息
+     * @author yl
+     * @date 2023-04-19 12:24
+     * @param id
+     * @return com.erp.model.wms.dto.QcInfoDTO.ViewDTO
+     */
+    QcInfoDTO.ViewDTO getByMainId(String id);
 }

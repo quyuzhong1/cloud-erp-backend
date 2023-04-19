@@ -39,9 +39,9 @@ public class QcBillController extends BaseController {
      * @return
      */
     @PostMapping("/draft")
-    public ApiResult add(@RequestBody  QcBillDTO.SaveOrUpdateDTO dto) {
+    public ApiResult add(@RequestBody QcBillDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcBillService.draft(dto);
-        return result?success() : failure();
+        return result ? success() : failure();
     }
 
 
@@ -53,7 +53,8 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/view")
     public ApiResult<QcBillDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success();
+        QcBillDTO.ViewDTO view = qcBillService.view(dto.getId());
+        return success(view);
     }
 
     /**
@@ -65,7 +66,7 @@ public class QcBillController extends BaseController {
     @PostMapping("/finish")
     public ApiResult finish(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcBillService.draft(dto);
-        return result?success() : failure();
+        return result ? success() : failure();
     }
 
 
