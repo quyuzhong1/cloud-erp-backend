@@ -40,9 +40,14 @@
     <select id="viewQcForPersonnel"
             resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForPersonnelDTO">
         select
-            qb.qc_user_id,
-            qb.qc_status,
-            count (0) as count
+            case when qb.qc_user_name = '' then '尚未分配' else qb.qc_user_name end as qcUserName,
+            count(0) as qcTotalQty,
+            sum (case when qb.qc_status = 'finishQc' then  1 else 0 end) as qcFinishQty,
+            sum (case when qb.qc_status = 'waitQc' then  1 else 0 end) as qcWaitQty,
+            sum (case when qb.qc_status = 'exemption' then  1 else 0 end) as qcFreeQty,
+            sum (case when qb.qc_date::timestamp + '1 day' > qb.qc_finish_time then  1 else 0 end) as qcTimelyQty,
+            sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status in ('finishQc','exemption')  then  1 else 0 end) as qcTimeOutQty,
+            sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then  1 else 0 end) as unQcTimeOutQty
         from qc_bill qb
         <where>
             qb.is_deleted = false
@@ -50,7 +55,7 @@
                 and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
         </where>
-        group by qb.qc_user_id, qb.qc_status
+        group by qb.qc_user_id,qc_user_name
     </select>
 
     <select id="viewQcForDocument" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">

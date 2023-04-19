@@ -153,6 +153,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcBillMapper.viewQcForPersonnel(query, pagingDTO.getParams());
+        List<QcEffectivenessDTO.ViewQcForPersonnelDTO> records = pageData.getRecords();
         return new PagingVO(pageData);
     }
 

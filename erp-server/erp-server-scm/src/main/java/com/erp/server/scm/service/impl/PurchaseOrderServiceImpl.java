@@ -1,6 +1,5 @@
 package com.erp.server.scm.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -823,10 +822,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
             //收货数量
             Integer receiveQty = MathUtil.ZERO;
+            //超收数量
+            Integer exceedQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                 receiveQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                exceedQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             viewGenerateStockInDTO.setReceiveQty(receiveQty);
+            viewGenerateStockInDTO.setExceedQty(exceedQty);
             //未入库数量
             Integer unStockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetailList)) {
@@ -884,6 +887,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 addDetailDTO.setPurchaseOrderDetailId(generateStockInDTO.getPurchaseOrderDetailId());
                 addDetailDTO.setStockInQty(generateStockInDTO.getStockInQty());
                 addDetailDTO.setExceedQty(generateStockInDTO.getExceedQty());
+                addDetailDTO.setRemark(generateStockInDTO.getRemark());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);

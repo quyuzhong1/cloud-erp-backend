@@ -154,11 +154,6 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     private void doOpHandleDetails (List<PurchaseStockInDetailEntity> newList, String mainId) {
 
         List<PurchaseStockInDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        //添加操作日志
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), addPairList, "编辑操作");
-        }
         //采购明细信息
         List<String> podIds = newList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
@@ -183,6 +178,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
                 }
                 moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
+        }
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), addPairList, "编辑操作");
         }
     }
 

@@ -26,69 +26,69 @@ public class ExportQcDocumentExcelDTO {
      * 质检员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检员", index = 0)
+    @ExcelProperty(value = "质检员", index = 1)
     private String qcUserName;
 
     /**
      * 质检单号
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检单号", index = 0)
+    @ExcelProperty(value = "质检单号", index = 2)
     private String qcCode;
 
     /**
      * 采购单号
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "采购单号", index = 0)
+    @ExcelProperty(value = "采购单号", index = 3)
     private String purchaseOrderCode;
 
     /**
      * SKU
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "SKU", index = 0)
+    @ExcelProperty(value = "SKU", index = 4)
     private String skuNo;
 
     /**
      * SKU名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "SKU名称", index = 0)
+    @ExcelProperty(value = "SKU名称", index = 5)
     private String productName;
 
     /**
      * 质检数量
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检数量", index = 0)
+    @ExcelProperty(value = "质检数量", index = 6)
     private String qcQty;
 
     /**
      * 质检状态
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检状态", index = 0)
+    @ExcelProperty(value = "质检状态", index = 7)
     private String qcStatusName;
 
     /**
      * 质检结束时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检结束时间", index = 0)
+    @ExcelProperty(value = "质检结束时间", index = 8)
     private String qcEndTime;
 
     /**
      * 质检耗时
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检耗时", index = 0)
+    @ExcelProperty(value = "质检耗时", index = 9)
     private String qcUseTime;
 
     /**
      * 质检预警
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "质检预警", index = 0)
+    @ExcelProperty(value = "质检预警", index = 10)
     private String warnRemark;
 }

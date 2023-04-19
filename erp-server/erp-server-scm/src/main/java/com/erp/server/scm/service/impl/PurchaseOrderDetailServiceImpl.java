@@ -339,7 +339,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PurchaseReturnOrderDetailEntity> returnOrderDetails = wmsTaskFeign.listPurchaseReturnOrderDetailBySourceDetailIds(purchaseDetailIds);
 
         //查询入库数据
-        List<PurchaseStockInDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailBySourceDetailIds(purchaseDetailIds);
+        List<PurchaseStockInDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(purchaseDetailIds);
 
         for (PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO : list) {
 

@@ -92,13 +92,13 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
     private String deliveryWarehouseName;
 
     /**
-     * 采购部门id
+     * 入库部门id
      */
     @TableField("stock_in_dept_id")
     private String stockInDeptId;
 
     /**
-     * 采购部门名称
+     * 采入库部门名称
      */
     @TableField("stock_in_dept_name")
     private String stockInDeptName;

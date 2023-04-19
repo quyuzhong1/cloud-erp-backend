@@ -717,6 +717,11 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private Integer unStockInQty;
 
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
     }
 
     @Data
@@ -758,6 +763,12 @@ public class PurchaseOrderDTO implements Serializable {
         @Min(value = 0,message = "超收数量最小值为0")
         @Max(value = 999999999,message = "超收数量最大值为999999999")
         private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大255个字符")
+        private String remark;
     }
 
     @Data

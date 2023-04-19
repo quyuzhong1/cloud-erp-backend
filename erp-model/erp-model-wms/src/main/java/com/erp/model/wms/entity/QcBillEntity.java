@@ -80,6 +80,12 @@ public class QcBillEntity extends BaseEntity<QcBillEntity> {
     private Date qcDate;
 
     /**
+     * 质检结束时间
+     */
+    @TableField("qc_finish_time")
+    private Date qcFinishTime;
+
+    /**
      * 质检来源
      */
     @TableField("source_type")
