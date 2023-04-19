@@ -133,7 +133,9 @@ public class FieldValidUtil {
             }
             if (messages != null) {
                 List<String> nameList = Arrays.stream(messages).map(EnumMessage::getName).collect(Collectors.toList());
-                if (!nameList.contains(fieldValue)) {
+                String[] split = fieldValue.split(",");
+                List<String> list = Arrays.asList(split);
+                if (!nameList.containsAll(list)) {
                     msg.append(fieldName.concat("输入值不匹配"));
                 }
             }

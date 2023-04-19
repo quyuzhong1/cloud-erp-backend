@@ -73,6 +73,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
      **/
     @Override
     public void invoke(ProductDetailExcelDTO dto, AnalysisContext analysisContext) {
+        String errStr = "";
+
         List<String> errorMsgList = new ArrayList<>();
         //添加数据用于判断是否为空
         dataList.add(dto);
@@ -89,16 +91,25 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         // 判断是修改还是新增 1：新增 2：修改
         if (importType == 2) {
-            productSkuBaseInfoDTO.setId(productBy.getSkuId());
             if (ObjectUtils.isEmpty(productBy)) {
                 errorMsgList.add("sku不存在，请选择导入新增");
             }
-            productInfoDTO.setId(productBy.getId());
-            if (!ObjectUtils.isEmpty(productDetailShow)) {
-                if (!productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
-                    errorMsgList.add(ApiError.ERROR_95015.msg);
+            if (errorMsgList.size() > 0) {
+                for (int i = 0; i < errorMsgList.size(); i++) {
+                    Integer indexTemp = i + 1;
+                    errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
                 }
+                dto.setErrorMsg(errStr);
+                list.add(dto);
+                return;
             }
+            productSkuBaseInfoDTO.setId(productBy.getSkuId());
+            productInfoDTO.setId(productBy.getId());
+//            if (!ObjectUtils.isEmpty(productDetailShow)) {
+//                if (!productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
+//                    errorMsgList.add(ApiError.ERROR_95015.msg);
+//                }
+//            }
         } else {
             //sku重复
             if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
@@ -216,7 +227,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             productInfoDTO.setCategoryId(basicCategoryEntity.getId());
         }
 
-        String errStr = "";
+
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
@@ -258,15 +269,15 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
         if (StringUtils.isNotBlank(dto.getPlanListingTimeStr())) {
-            productSkuBaseInfoDTO.setPlanListingTime(LocalDateTime.parse(dto.getPlanListingTimeStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+            productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTimeStr(), dateTimeFormatter).atStartOfDay());
         }
-         productSkuBaseInfoDTO.setProductState(2);
+        productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
         if (StringUtils.isNotBlank(dto.getFirstMassProductDateStr())) {
-            productSkuBaseInfoDTO.setFirstMassProductDate(LocalDateTime.parse(dto.getFirstMassProductDateStr(), DateTimeFormatter.ofPattern(DateUtil.fmt_year_month)));
+            productSkuBaseInfoDTO.setFirstMassProductDate(LocalDate.parse(dto.getFirstMassProductDateStr(), dateTimeFormatter).atStartOfDay());
         }
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
