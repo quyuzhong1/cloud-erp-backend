@@ -5,33 +5,35 @@
 
     <select id="listQcBillGroupQcStatus"
             resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcOverviewDetailDTO">
-            select
-                qb.qc_status as type,
-                count(0) as count
-            from
-            qc_bill qb
-            <where>
-                qb.is_deleted = false
-                <if test="params.dateList != null and params.dateList.size > 0">
-                    and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
-                </if>
-            </where>
-            group by qb.qc_status
+        select
+        qb.qc_status as type,
+        count(0) as count
+        from
+        qc_bill qb
+        <where>
+            qb.is_deleted = false
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
+                qb.qc_date
+            </if>
+        </where>
+        group by qb.qc_status
     </select>
 
     <select id="listQcBillGroupQcTrend" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$GroupQcTrendDTO">
         select
-               case when #{type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
-                    when #{type} = 'week' then to_char(date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval, 'YYYY-mm-dd')
-                    when #{type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
-                as dateStr,
-               qb.qc_status as status,
-               count (0) as count
-        from  qc_bill qb
+        case when #{type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
+        when #{type} = 'week' then to_char(date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,
+        'YYYY-mm-dd')
+        when #{type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
+        as dateStr,
+        qb.qc_status as status,
+        count (0) as count
+        from qc_bill qb
         <where>
             qb.is_deleted = false
             <if test="beginDate != null and endDate != null">
-                and qb.qc_date >= #{beginDate} and  (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+                and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
         </where>
         group by dateStr, qb.qc_status
@@ -40,19 +42,22 @@
     <select id="viewQcForPersonnel"
             resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForPersonnelDTO">
         select
-            case when qb.qc_user_name = '' then '尚未分配' else qb.qc_user_name end as qcUserName,
-            count(0) as qcTotalQty,
-            sum (case when qb.qc_status = 'finishQc' then  1 else 0 end) as qcFinishQty,
-            sum (case when qb.qc_status = 'waitQc' then  1 else 0 end) as qcWaitQty,
-            sum (case when qb.qc_status = 'exemption' then  1 else 0 end) as qcFreeQty,
-            sum (case when qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time then  1 else 0 end) as qcTimelyQty,
-            sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status in ('finishQc','exemption')  then  1 else 0 end) as qcTimeOutQty,
-            sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then  1 else 0 end) as unQcTimeOutQty
+        case when qb.qc_user_name = '' then '尚未分配' else qb.qc_user_name end as qcUserName,
+        count(0) as qcTotalQty,
+        sum (case when qb.qc_status = 'finishQc' then 1 else 0 end) as qcFinishQty,
+        sum (case when qb.qc_status = 'waitQc' then 1 else 0 end) as qcWaitQty,
+        sum (case when qb.qc_status = 'exemption' then 1 else 0 end) as qcFreeQty,
+        sum (case when qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time then 1 else 0 end) as qcTimelyQty,
+        sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status in ('finishQc','exemption')
+        then 1 else 0 end) as qcTimeOutQty,
+        sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then 1 else 0
+        end) as unQcTimeOutQty
         from qc_bill qb
         <where>
             qb.is_deleted = false
             <if test="params.dateList != null and params.dateList.size > 0">
-                and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+                and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
+                qb.qc_date
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -60,22 +65,23 @@
 
     <select id="viewQcForDocument" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
         select
-            qb.qc_date as qcDate,
-            qb.qc_user_name as qcUserName,
-            qb.code as qcCode,
-            qb.purchase_order_code as purchaseOrderCode,
-            qp.sku_id as skuId,
-            qp.sku_no as skuNo,
-            qi.qc_qty as qcQty,
-            qb.qc_status as qcStatus,
-            qb.qc_finish_time as qcEndTime
+        qb.qc_date as qcDate,
+        qb.qc_user_name as qcUserName,
+        qb.code as qcCode,
+        qb.purchase_order_code as purchaseOrderCode,
+        qp.sku_id as skuId,
+        qp.sku_no as skuNo,
+        qi.qc_qty as qcQty,
+        qb.qc_status as qcStatus,
+        qb.qc_finish_time as qcEndTime
         from qc_bill qb
         inner join qc_info qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         <where>
             qb.is_deleted = false
             <if test="params.dateList != null and params.dateList.size > 0">
-                and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+                and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
+                qb.qc_date
             </if>
             <if test="params.statusList != null and params.statusList.size > 0">
                 and qb.qc_status in
@@ -85,7 +91,7 @@
             </if>
             <if test="params.isTimeOut != null">
                 <if test="params.isTimeOut == false">
-                   and qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time
+                    and qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time
                 </if>
                 <if test="params.isTimeOut == true">
                     and qb.qc_finish_time > qb.qc_date::timestamp + '1 day'
@@ -159,6 +165,7 @@
         qb.qc_user_name, qb.purchase_order_id,
         qb.purchase_order_code,qb.qc_status,
         qb.qc_date,qb.supplier_id,qb.warehouse_id,
+        qb.create_user_name,qb.create_time,
         qi.qc_type,qi.is_inside,
         qp.sku_id,qi.total_qty,
         qi.qc_qty,qi.qc_good_qty,
@@ -227,8 +234,101 @@
             </foreach>
         </if>
         <if test="params.createTimeList!=null and params.createTimeList.size>0">
-            AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.create_time
+            AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > qb.create_time
         </if>
+
+    </select>
+
+    <select id="getExport" resultType="com.erp.model.wms.dto.QcBillDTO$PagingViewDTO">
+        SELECT
+        qb.id, qb.code, qb.qc_dept_id,
+        qb.qc_dept_name, qb.qc_user_id,
+        qb.qc_user_name, qb.purchase_order_id,
+        qb.purchase_order_code,qb.qc_status,
+        qb.qc_date,qb.supplier_id,qb.warehouse_id,
+        qi.qc_type,qi.is_inside,
+        qp.sku_id,qi.total_qty,
+        qi.qc_qty,qi.qc_good_qty,
+        qi.qc_bad_qty,qi.qc_result,
+        qi.handle_mode_dict,
+        qi.bad_description,
+        qi.qc_good_rate,qi.qc_bad_rate
+        FROM qc_bill qb
+        LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        WHERE qb.is_deleted=FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND qb.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="params.searchType !=null and params.searchType!=''">
+                    AND qb.qc_status=#{params.searchType}
+                </if>
+                <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
+                    AND qb.purchase_order_code LIKE concat('%', #{params.purchaseOrderCode} ,'%')
+                </if>
+                <if test="params.skuNoList !=null and params.skuNoList.size>0">
+                    AND qp.sku_no IN
+                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                        #{skuNo}
+                    </foreach>
+                </if>
+                <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
+                    AND qb.qc_status IN
+                    <foreach collection="params.qcStatusList" item="qcStatus" open="(" separator="," close=")">
+                        #{qcStatus}
+                    </foreach>
+                </if>
+                <if test="params.qcType !=null and params.qcType!=''">
+                    AND qi.qc_type =#{params.qcType}
+                </if>
+                <if test="params.isInside !=null ">
+                    AND qi.is_inside =#{params.isInside}
+                </if>
+                <if test="params.supplierIdList !=null and params.supplierIdList.size>0">
+                    AND qb.supplier_id IN
+                    <foreach collection="params.supplierIdList" item="supplierId" open="(" separator="," close=")">
+                        #{supplierId}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+                    AND qb.warehouse_id IN
+                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                        #{warehouseId}
+                    </foreach>
+                </if>
+
+                <if test="params.qcResultList !=null and params.qcResultList.size>0">
+                    AND bd.result_dict IN
+                    <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
+                        #{qcResult}
+                    </foreach>
+                </if>
+
+                <if test="params.handleModeDictList !=null and params.handleModeDictList.size>0">
+                    AND qi.handle_mode_dict IN
+                    <foreach collection="params.handleModeDictList" item="handleMode" open="(" separator="," close=")">
+                        #{handleMode}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+                    AND qb.create_user_id IN
+                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                        #{createUserId}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList!=null and params.createTimeList.size>0">
+                    AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > qb.create_time
+                </if>
+            </otherwise>
+        </choose>
 
     </select>
 

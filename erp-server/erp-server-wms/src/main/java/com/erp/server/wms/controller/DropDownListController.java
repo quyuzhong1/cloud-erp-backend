@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.QcRuleEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.server.wms.service.QcRuleService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +72,19 @@ public class DropDownListController extends BaseController {
     @GetMapping("/qcStatus/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcStatusDropDown() {
         List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcBillStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 质检结果下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/qcResult/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcResultDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcResultEnum.values())
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);

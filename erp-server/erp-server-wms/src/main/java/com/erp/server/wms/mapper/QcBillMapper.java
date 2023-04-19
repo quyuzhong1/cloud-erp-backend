@@ -81,4 +81,14 @@ public interface QcBillMapper extends BaseMapper<QcBillEntity> {
      * @return
      */
     IPage<QcBillDTO.PagingViewDTO> paging(Page query, @Param("params") QcBillDTO.PagingParamDTO params);
+
+    
+    /**
+     * 获取导出信息
+     * @author yl
+     * @date 2023-04-19 18:44
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
+     */
+    List<QcBillDTO.PagingViewDTO> getExport(@Param("params") QcBillDTO.ExportDTO dto);
 }

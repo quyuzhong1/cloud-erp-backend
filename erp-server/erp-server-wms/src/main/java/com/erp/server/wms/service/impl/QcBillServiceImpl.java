@@ -17,6 +17,8 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcBillEntity;
+import com.erp.model.wms.entity.QcBillRemarkEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
@@ -54,6 +56,10 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
 
     @Resource
     private QcInfoService qcInfoService;
+
+
+    @Resource
+    private WarehouseService warehouseService;
 
     @Resource
     private QcReportDetailService qcReportDetailService;
@@ -182,6 +188,11 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         List<String> supplierIdList = list.stream().map(QcBillDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
         List<String> skuIdList = list.stream().map(QcBillDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+        List<String> warehouseIdList = list.stream().map(QcBillDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        List<String> billIdList = list.stream().map(QcBillDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<QcBillRemarkEntity> billRemarkList = qcBillRemarkService.getByMainIdList(billIdList);
+
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (QcBillDTO.PagingViewDTO item : list) {
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
@@ -202,13 +213,32 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setSupplierName(supplierName);
+            String warehouseId = item.getWarehouseId();
+            String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(warehouseId)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setWarehouseName(warehouseName);
+            String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
+            item.setRemark(remark);
 
         }
         return new PagingVO<>(pageData);
     }
 
+
+    /**
+     * 导出质检单信息
+     *
+     * @param dto
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-04-19 18:38
+     */
     @Override
     public void exportQcBill(QcBillDTO.ExportDTO dto, HttpServletResponse response) {
+        List<QcBillDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
+
 
     }
 }

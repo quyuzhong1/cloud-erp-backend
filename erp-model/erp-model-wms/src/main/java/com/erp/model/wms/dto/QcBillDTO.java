@@ -18,6 +18,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -257,6 +258,7 @@ public class QcBillDTO implements Serializable {
 
         /**
          *质检结果集合
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/10024
          */
         private List<String> qcResultList;
 
@@ -450,6 +452,34 @@ public class QcBillDTO implements Serializable {
          * 质检不良率
          */
         private BigDecimal qcBadRate;
+
+
+        /**
+         *仓库 id
+         */
+        private String warehouseId;
+
+
+        /**
+         *仓库名
+         */
+        private String warehouseName;
+
+        /**
+         *备注
+         */
+        private String remark;
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 

@@ -26,4 +26,17 @@ public class QcRemarkDTO implements Serializable {
         private String remark;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        private String id;
+
+        private String remark;
+
+        private String mainId;
+
+    }
 }
