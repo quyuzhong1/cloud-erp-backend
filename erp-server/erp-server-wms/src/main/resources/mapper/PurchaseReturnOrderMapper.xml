@@ -124,36 +124,20 @@
         pro.bill_date,
         pro.return_warehouse_name,
         prod.reality_return_qty,
-        pro.receice_remark,
+        pro.return_remark,
         pro.return_mode,
         pro.purchase_user_id,
         pro.return_user_name,
         prod.remark,
         pro.approve_user_name,
         pro.create_user_name,
-        pro.create_time
+        pro.create_time,
+        prod.purchase_order_detail_id
         FROM purchase_return_order_detail prod
         LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
-        AND wr.purchase_order_id = #{purchaseOrderId}
+        AND pro.purchase_order_id = #{purchaseOrderId}
     </select>
-
-    <select id="generateStockInView" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GenerateStockInViewDTO">
-        SELECT
-        wr.id,
-        wr.purchase_order_id,
-        wr.purchase_order_code,
-        wr.supplier_name,
-        wrd.sku_id,
-        wrd.sku_no,
-        wr.delivery_warehouse_name,
-        wrd.purchase_order_detail_id
-        FROM warehouse_receive_detail wrd
-        LEFT JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
-        WHERE wrd.is_deleted = FALSE
-        AND wr.id = #{id}
-    </select>
-
 
     <select id="returnOrderExportExcel" resultType="com.erp.model.wms.dto.ReturnOrderExcelDTO">
         SELECT

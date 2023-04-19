@@ -609,6 +609,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     public List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(String purchaseOrderId) {
         List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = baseMapper.purchaseOrderRefReturn(purchaseOrderId);
+        if (CollectionUtils.isEmpty(orderRefReceiveDTOS)) {
+            return new ArrayList<>();
+        }
         //获取采购单详情表id集合
         List<String> orderDetailIds = orderRefReceiveDTOS.stream().map(PurchaseReturnOrderDTO.OrderRefReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情

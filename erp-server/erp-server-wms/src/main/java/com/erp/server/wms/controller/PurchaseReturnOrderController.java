@@ -201,7 +201,7 @@ public class PurchaseReturnOrderController extends BaseController {
     }
 
     /**
-     * 采购订单-关联的收货单据
+     * 采购订单-关联的退货单据
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param purchaseOrderId purchaseOrderId
