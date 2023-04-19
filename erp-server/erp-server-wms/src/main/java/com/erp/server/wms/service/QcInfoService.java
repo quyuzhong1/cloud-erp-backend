@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
 
 /**
@@ -13,4 +14,14 @@ import com.erp.model.wms.entity.QcInfoEntity;
  */
 public interface QcInfoService extends SuperService<QcInfoEntity> {
 
+
+    /**
+     * 质检信息 暂存
+     * @author yl
+     * @date 2023-04-19 10:11
+     * @param billId
+     * @param qcInfo
+     * @return void
+     */
+    void draft(String billId, QcInfoDTO.AddDTO qcInfo);
 }

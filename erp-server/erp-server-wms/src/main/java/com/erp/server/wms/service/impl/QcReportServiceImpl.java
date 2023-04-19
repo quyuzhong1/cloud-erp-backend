@@ -5,6 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.QcReportDTO;
+import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.entity.QcReportEntity;
 import com.erp.server.wms.mapper.QcReportMapper;
 import com.erp.server.wms.service.QcReportService;
@@ -121,6 +122,11 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
             queryWrapper.in(QcReportEntity::getQcRuleId, ruleIds);
             this.remove(queryWrapper);
         }
+
+    }
+
+    @Override
+    public void draft(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList) {
 
     }
 

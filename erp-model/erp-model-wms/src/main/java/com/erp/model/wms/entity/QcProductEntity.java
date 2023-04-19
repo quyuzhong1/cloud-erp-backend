@@ -27,8 +27,8 @@ public class QcProductEntity extends BaseEntity<QcProductEntity> {
     /**
      * 质检单id
      */
-    @TableField("mian_id")
-    private String mianId;
+    @TableField("main_id")
+    private String mainId;
 
     /**
      * sku id
