@@ -222,7 +222,7 @@
                psid.stock_in_qty as stockInQty,
                psid.warehouse_location_name as warehouseLocationName
         from purchase_stock_in psi
-        inner join purchase_stock_in_detail psid on psid.is_deleted = false
+        inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         <where>
             psid.is_deleted = false
             <if test="ids != null and ids.size > 0">
