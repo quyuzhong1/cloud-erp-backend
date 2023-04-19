@@ -139,22 +139,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
                 obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
-                boolean contains = list.contains(obj.getId());
-                if (contains) {
-                    obj.setCode(null);
-                    obj.setSupplierName(null);
-                    obj.setDeliveryWarehouseName(null);
-                    obj.setApproveStatus(null);
-                    obj.setApproveStatusName(null);
-                    obj.setInvalidStatus(null);
-                    obj.setInvalidStatusName(null);
-                    obj.setCreateUserName(null);
-                    return;
-                }
-                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
-                obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-
-
                 //获取签收数量
                 List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(obj.getId());
                 Integer receive = receiveQtyList.stream().filter(req -> req.getSkuId().equals(obj.getSkuId()) && req.getPurchaseOrderId().equals(obj.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -170,6 +154,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()) ).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO,Integer::sum);
                 }
                 obj.setStockInQty(stockInQty);
+                boolean contains = list.contains(obj.getId());
+                if (contains) {
+                    obj.setCode(null);
+                    obj.setSupplierName(null);
+                    obj.setDeliveryWarehouseName(null);
+                    obj.setApproveStatus(null);
+                    obj.setApproveStatusName(null);
+                    obj.setInvalidStatus(null);
+                    obj.setInvalidStatusName(null);
+                    obj.setCreateUserName(null);
+                    return;
+                }
+                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+                obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 list.add(obj.getId());
             });
         }
