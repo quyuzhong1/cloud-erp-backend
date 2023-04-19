@@ -46,6 +46,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.cglib.core.Local;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -689,7 +690,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             req.setProductName(productDetailEntity.getName());
             req.setStockInDate(LocalDate.now());
-            req.setStockInUserName(userInfo.getUid());
+            req.setStockInUserId(userInfo.getUid());
             req.setStockInUserName(userInfo.getUserName());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(req.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {

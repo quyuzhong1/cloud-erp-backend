@@ -622,15 +622,50 @@ public class PurchaseOrderDTO implements Serializable {
     public static class GenerateReceiveDTO {
 
         /**
-         * 采购订单明细id
+         * 采购订单主表id
          */
-        @NotBlank(message = "采购订单明细id不能为空")
+        private String id;
+
+        /**
+         * 采购订单明细Id
+         */
         private String purchaseOrderDetailId;
 
         /**
-         * 本次交货数量
+         * 采购单号
          */
-        private Integer thisReceiveQty;
+        private String code;
+
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 收货人id
+         */
+        private String receiveUserId;
+
+        /**
+         * 收货数量
+         */
+        @NotNull(message = "收货数量不能为空")
+        @Min(value = 1,message = "收货数量最小值为1")
+        @Max(value = 99999999,message = "收货数量最大值为99999999")
+        private Integer receiveQty;
+
+        /**
+         * 超收数量
+         */
+        @NotNull(message = "超收数量不能为空")
+        @Min(value = 0,message = "超收数量最小值为1")
+        @Max(value = 99999999,message = "超收数量最大值为99999999")
+        private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     @Data

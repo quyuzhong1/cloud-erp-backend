@@ -37,10 +37,8 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
-import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -702,7 +700,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
-        //生成下推签收单  TODO
+        //生成下推签收单
         List<PurchaseOrderDTO.GenerateReceiveDTO> list = dto.getList();
         //采购订单明细Ids
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseOrderDTO.GenerateReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -726,12 +724,23 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<WarehouseReceiveDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(WarehouseReceiveDTO.AddDTO.class, list);
         for (WarehouseReceiveDTO.AddDTO addDTO : addDTOS) {
-            list.get(0).getPurchaseOrderDetailId();
-
+            PurchaseOrderDTO.GenerateReceiveDTO generateReceiveDTO = list.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderId())).findFirst().orElse(null);
+            addDTO.setPurchaseOrderId(generateReceiveDTO.getId());
+            addDTO.setPurchaseOrderCode(generateReceiveDTO.getCode());
+            addDTO.setReceiveUserId(generateReceiveDTO.getReceiveUserId());
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(generateReceiveDTO.getReceiveUserId());
+            addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
+            addDTO.setBillDate(LocalDate.now());
+            addDTO.setDeliveryWarehouseId(addDTO.getDeliveryWarehouseId());
+            List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = addDTO.getWarehouseReceiveDetailList();
+            for (WarehouseReceiveDetailDTO.AddDTO detailAddDTO : warehouseReceiveDetailList) {
+                detailAddDTO.setReceiveQty(generateReceiveDTO.getReceiveQty());
+                detailAddDTO.setExceedQty(generateReceiveDTO.getExceedQty());
+                detailAddDTO.setRemark(generateReceiveDTO.getRemark());
+                detailAddDTO.setPurchaseOrderDetailId(generateReceiveDTO.getPurchaseOrderDetailId());
+            }
+            wmsTaskFeign.addWarehouseReceive(addDTO);
         }
-
-        //wmsTaskFeign.addWarehouseReceive(addDTOS);
-
         return Boolean.TRUE;
     }
 
