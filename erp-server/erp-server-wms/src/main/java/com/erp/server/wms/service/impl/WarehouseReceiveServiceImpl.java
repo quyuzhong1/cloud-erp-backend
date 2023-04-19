@@ -697,18 +697,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 throw new ServiceException(ApiError.ERROR_99006);
             }
             List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(req.getPurchaseOrderId());
-            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId()) && obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(getReceiveDTO)) {
-                req.setReceiveQty(0);
-            } else {
-                req.setReceiveQty(getReceiveDTO.getReceiveQty());
-            }
-            PurchaseStockInDTO.GetStockInQty getStockInQty = stockInQtyList.stream().filter(obj -> obj.getPurchaseOrderId().equals(req.getPurchaseOrderId()) && obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(getStockInQty)) {
-                req.setUnStockInQty(0);
-            } else {
-                req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - getStockInQty.getStockInQty());
-            }
+            Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId()) && obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            req.setReceiveQty(receiveQty);
+
+            Integer stockInQty = stockInQtyList.stream().filter(obj -> obj.getPurchaseOrderId().equals(req.getPurchaseOrderId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDTO.GetStockInQty::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - stockInQty);
             req.setStockInQty(req.getUnStockInQty());
             req.setExceedQty(req.getExceedQty());
 

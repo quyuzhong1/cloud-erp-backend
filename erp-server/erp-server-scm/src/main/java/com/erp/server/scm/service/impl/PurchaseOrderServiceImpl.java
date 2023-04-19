@@ -679,10 +679,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         LoginUser userInfo = commonService.getUserInfo();
         List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceiveDTOS = baseMapper.viewGenerateReceive(ids);
 
-        List<String> purchaseOrderIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getId).collect(Collectors.toList());
-
-        List<PurchaseStockInDTO.GetStockInQty> stockInQtyList = wmsTaskFeign.getStockInQty(purchaseOrderIdList);
-
         //获取sku的id集合
         List<String> skuIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -695,12 +691,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
             //获取签收数量
             List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(viewGenerateReceiveDTO.getId());
-            WarehouseReceiveDTO.GetReceiveDTO getReceiveDTO = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderId().equals(viewGenerateReceiveDTO.getId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(getReceiveDTO)) {
-                viewGenerateReceiveDTO.setReceiveQty(0);
-            } else {
-                viewGenerateReceiveDTO.setReceiveQty(getReceiveDTO.getReceiveQty());
-            }
+            int receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderId().equals(viewGenerateReceiveDTO.getId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() - viewGenerateReceiveDTO.getReceiveQty());
             viewGenerateReceiveDTO.setExceedQty(0);
         }
