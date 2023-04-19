@@ -1,9 +1,19 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
+import com.erp.model.wms.dto.excel.ExportQcDocumentExcelDTO;
+import com.erp.model.wms.dto.excel.ExportQcPersonnelExcelDTO;
 import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.enums.QcReportExportExcelType;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
 import com.erp.server.wms.mapper.QcBillMapper;
 import com.erp.server.wms.service.QcEffectivenessService;
@@ -140,18 +150,45 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     }
 
     @Override
-    public List<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(QcEffectivenessDTO.CommonSearchParamDTO dto) {
-
-        return null;
+    public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcBillMapper.viewQcForPersonnel(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
     }
 
     @Override
-    public List<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO dto) {
-        return null;
+    public PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<QcEffectivenessDTO.ViewQcForDocumentDTO> pageData = this.qcBillMapper.viewQcForDocument(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
     }
 
     @Override
     public Boolean exportExcel(QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response) {
-        return null;
+        //导出类型
+        String type = dto.getType();
+        String fileName = "";
+        
+        Class<?> clazz = null;
+        List<?> list = null;
+        if (QcReportExportExcelType.PERSONNEL.getCode().equals(type)) {
+             list =  this.qcBillMapper.viewExportQcForPersonnel(dto);
+             fileName = "采购入库单数据";
+             clazz = ExportQcPersonnelExcelDTO.class;
+        }
+        if (QcReportExportExcelType.DOCUMENT.getCode().equals(type)) {
+             list =  this.qcBillMapper.viewExportQcForDocument(dto);
+             fileName = "采购入库单数据";
+             clazz = ExportQcDocumentExcelDTO.class;
+        }
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        try {
+            ExcelUtil.export(fileName, fileName, list, clazz, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 }
