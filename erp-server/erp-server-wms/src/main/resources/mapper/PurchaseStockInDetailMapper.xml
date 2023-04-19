@@ -47,6 +47,7 @@
             psid.sku_id,
             psid.sku_no,
             psid.variant_property,
+            psid.stock_in_qty,
             psid.purchase_qty,
             psid.receive_qty,
             psid.exceed_qty,

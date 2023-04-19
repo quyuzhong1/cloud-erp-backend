@@ -115,6 +115,11 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
+                //产品名称
+                if (CollectionUtils.isNotEmpty(productDetailList)) {
+                    String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                    obj.setProductName(productName);
+                }
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
@@ -126,10 +131,6 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
                     obj.setInvalidStatusName(null);
                     obj.setCreateUserName(null);
                     return;
-                }
-                if (CollectionUtils.isNotEmpty(productDetailList)) {
-                    String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-                    obj.setProductName(productName);
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
