@@ -30,4 +30,10 @@ public interface WmsConstant {
      */
     String QC_BOX="box";
 
+
+    /**
+     * 质检信息不良
+     */
+    String BAD="bad";
+
 }

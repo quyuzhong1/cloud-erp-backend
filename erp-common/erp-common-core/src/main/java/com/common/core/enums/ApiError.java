@@ -418,6 +418,7 @@ public enum ApiError implements Serializable {
     ERROR_99012(99012,"只有已审核采购入库单允许下推退货单"),
     ERROR_99013(99013,"收货数量不能大于已入库数量"),
     ERROR_99014(99014,"已存在下推退货单，不支持反审"),
+    ERROR_99015(99015,"质检单不存在"),
 
 
     ERROR_end(1000000, "系统错误");

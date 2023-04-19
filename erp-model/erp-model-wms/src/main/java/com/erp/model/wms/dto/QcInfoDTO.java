@@ -234,31 +234,6 @@ public class QcInfoDTO {
 
 
 
-        /**
-         *仓库id
-         */
-        private String warehouseId;
-
-        /**
-         *仓库名
-         */
-        private String warehouseName;
-
-
-        /**
-         *备注
-         */
-        private String remark;
-
-        /**
-         *创建人id
-         */
-        private String createUserId;
-
-        /**
-         *创建人名
-         */
-        private String createUserName;
     }
 
 }

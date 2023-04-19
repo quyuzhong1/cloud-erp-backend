@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 
@@ -40,4 +41,13 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
      */
     List<WmsAttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds);
 
+    
+    /**
+     * 删除附件信息
+     * @author yl
+     * @date 2023-04-19 11:11
+     * @param dto
+     * @return void
+     */
+    void removeAttachment(AttachmentDTO.DeleteDTO dto);
 }

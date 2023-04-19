@@ -2,7 +2,6 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcReportDTO;
-import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.entity.QcReportEntity;
 
 import java.util.List;
@@ -65,5 +64,5 @@ public interface QcReportService extends SuperService<QcReportEntity> {
      */
     void removeByRuleIds(List<String> ruleIds);
 
-    void draft(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList);
+
 }

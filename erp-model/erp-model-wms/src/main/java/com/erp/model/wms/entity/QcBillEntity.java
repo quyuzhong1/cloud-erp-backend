@@ -9,7 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -77,7 +77,7 @@ public class QcBillEntity extends BaseEntity<QcBillEntity> {
      * 质检日期
      */
     @TableField("qc_date")
-    private Date qcDate;
+    private LocalDate qcDate;
 
     /**
      * 质检结束时间

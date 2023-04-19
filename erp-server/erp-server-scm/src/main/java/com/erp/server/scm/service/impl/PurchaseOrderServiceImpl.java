@@ -675,7 +675,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderDTO.ViewGenerateReceiveDTO viewGenerateReceiveDTO : viewGenerateReceiveDTOS) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(viewGenerateReceiveDTO.getSkuId())).findFirst().orElse(null);
             viewGenerateReceiveDTO.setProductName(productDetailEntity.getName());
-            viewGenerateReceiveDTO.setPlanDeliveryDate(LocalDate.now());
+            viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
             //获取签收数量
@@ -714,24 +714,35 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (approveStatusCount > 0) {
             throw new ServiceException(ApiError.ERROR_98040);
         }
-        List<WarehouseReceiveDTO.AddDTO> addDTOS = BeanMapperUtils.copyList(WarehouseReceiveDTO.AddDTO.class, list);
-        for (WarehouseReceiveDTO.AddDTO addDTO : addDTOS) {
-            PurchaseOrderDTO.GenerateReceiveDTO generateReceiveDTO = list.stream().filter(req -> req.getId().equals(addDTO.getPurchaseOrderId())).findFirst().orElse(null);
-            addDTO.setPurchaseOrderId(generateReceiveDTO.getId());
-            addDTO.setPurchaseOrderCode(generateReceiveDTO.getCode());
-            addDTO.setReceiveUserId(generateReceiveDTO.getReceiveUserId());
-            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(generateReceiveDTO.getReceiveUserId());
-            addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
-            addDTO.setBillDate(LocalDate.now());
-            addDTO.setDeliveryWarehouseId(addDTO.getDeliveryWarehouseId());
-            List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = addDTO.getWarehouseReceiveDetailList();
-            for (WarehouseReceiveDetailDTO.AddDTO detailAddDTO : warehouseReceiveDetailList) {
-                detailAddDTO.setReceiveQty(generateReceiveDTO.getReceiveQty());
-                detailAddDTO.setExceedQty(generateReceiveDTO.getExceedQty());
-                detailAddDTO.setRemark(generateReceiveDTO.getRemark());
-                detailAddDTO.setPurchaseOrderDetailId(generateReceiveDTO.getPurchaseOrderDetailId());
+        List<String> listSign = new ArrayList<>();
+
+        for (PurchaseOrderDTO.GenerateReceiveDTO generateReceiveDTO : list) {
+            boolean contains = listSign.contains(generateReceiveDTO.getId());
+            if (!contains) {
+                WarehouseReceiveDTO.AddDTO addDTO = new WarehouseReceiveDTO.AddDTO();
+                addDTO.setPurchaseOrderId(generateReceiveDTO.getId());
+                addDTO.setPurchaseOrderCode(generateReceiveDTO.getCode());
+                addDTO.setReceiveUserId(generateReceiveDTO.getReceiveUserId());
+                SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(generateReceiveDTO.getReceiveUserId());
+                addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
+                addDTO.setBillDate(generateReceiveDTO.getBillDate());
+                addDTO.setDeliveryWarehouseId(addDTO.getDeliveryWarehouseId());
+
+                List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = new ArrayList<>();
+                for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
+                    if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {
+                        WarehouseReceiveDetailDTO.AddDTO detailAddDTO = new WarehouseReceiveDetailDTO.AddDTO();
+                        detailAddDTO.setReceiveQty(receiveDTO.getReceiveQty());
+                        detailAddDTO.setExceedQty(receiveDTO.getExceedQty());
+                        detailAddDTO.setRemark(receiveDTO.getRemark());
+                        detailAddDTO.setPurchaseOrderDetailId(receiveDTO.getPurchaseOrderDetailId());
+                        warehouseReceiveDetailList.add(detailAddDTO);
+                    }
+                }
+                addDTO.setWarehouseReceiveDetailList(warehouseReceiveDetailList);
+                wmsTaskFeign.addWarehouseReceive(addDTO);
+                listSign.add(generateReceiveDTO.getId());
             }
-            wmsTaskFeign.addWarehouseReceive(addDTO);
         }
         return Boolean.TRUE;
     }
