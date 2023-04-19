@@ -110,8 +110,8 @@
         qb.qc_dept_name, qb.qc_user_id,
         qb.qc_user_name, qb.purchase_order_id,
         qb.purchase_order_code,qb.qc_status,
-        qb.qc_date,qi.qc_type,
-        qi.is_inside,qb.supplier_id,
+        qb.qc_date,qb.supplier_id,qb.warehouse_id,
+        qi.qc_type,qi.is_inside,
         qp.sku_id,qi.total_qty,
         qi.qc_qty,qi.qc_good_qty,
         qi.qc_bad_qty,qi.qc_result,
@@ -119,8 +119,8 @@
         qi.bad_description,
         qi.qc_good_rate,qi.qc_bad_rate
         FROM qc_bill qb
-        LEFT JOIN qc_info qi ON qb.id=qc.main_id AND qi.is_deleted=FALSE
-        LEFT JOIN qc_product qp qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <if test="params.searchType !=null and params.searchType!=''">
             AND qb.qc_status=#{params.searchType}
@@ -128,8 +128,11 @@
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
             AND qb.purchase_order_code LIKE concat('%', #{params.purchaseOrderCode} ,'%')
         </if>
-        <if test="params.skuNo !=null and params.skuNo!=''">
-            AND qp.sku_no LIKE concat('%', #{params.skuNo} ,'%')
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND qp.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
         </if>
         <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
             AND qb.qc_status IN
@@ -157,7 +160,7 @@
         </if>
 
         <if test="params.qcResultList !=null and params.qcResultList.size>0">
-            AND qi.qc_result IN
+            AND bd.result_dict IN
             <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
                 #{qcResult}
             </foreach>

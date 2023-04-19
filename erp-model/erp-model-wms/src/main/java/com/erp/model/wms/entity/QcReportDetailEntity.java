@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("qc_report_detail")
+@TableName("qc_bill_detail")
 public class QcReportDetailEntity extends BaseEntity<QcReportDetailEntity> {
 
     /**

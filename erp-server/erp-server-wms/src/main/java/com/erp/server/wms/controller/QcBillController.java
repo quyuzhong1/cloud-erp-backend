@@ -1,16 +1,13 @@
 package com.erp.server.wms.controller;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcBillDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -154,6 +151,7 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/exportQcBill")
     public ApiResult exportWarehouse(@RequestBody @Valid QcBillDTO.ExportDTO dto, HttpServletResponse response) {
+        qcBillService.exportQcBill(dto,response);
         return success();
     }
 
@@ -164,7 +162,6 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/assign")
     public ApiResult assign(@RequestBody @Valid QcBillDTO.AssignDTO dto) {
-
         return success();
 
     }

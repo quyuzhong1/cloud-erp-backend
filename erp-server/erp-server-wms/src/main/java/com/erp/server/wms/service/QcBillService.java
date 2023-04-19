@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.entity.QcBillEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -47,4 +48,14 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
      */
     PagingVO<QcBillDTO.PagingViewDTO> paging(PagingDTO<QcBillDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出
+     * @author yl
+     * @date 2023-04-19 17:39
+     * @param dto
+     * @param response
+     * @return void
+     */
+    void exportQcBill(QcBillDTO.ExportDTO dto, HttpServletResponse response);
 }

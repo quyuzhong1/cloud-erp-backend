@@ -10,9 +10,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcBillEntity;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -25,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -81,6 +87,20 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
+        //采购订单
+        String purchaseOrderId = dto.getPurchaseOrderId();
+        if (StringUtils.isNotBlank(purchaseOrderId)) {
+            PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
+            if (purchaseOrder != null) {
+                PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
+                if (supplierInfo != null) {
+                    bill.setSupplierId(supplierInfo.getSupplierId());
+                }
+                bill.setWarehouseId(purchaseOrder.getDeliveryWarehouseId());
+                bill.setPurchaseOrderCode(purchaseOrder.getCode());
+            }
+        }
+
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
@@ -159,12 +179,13 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             return new PagingVO<>(pageData);
         }
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
-
-        List<String> supplierIdList=list.stream().map(QcBillDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
-        List<String> skuIdList=list.stream().map(QcBillDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-
-
+        List<String> supplierIdList = list.stream().map(QcBillDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(QcBillDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (QcBillDTO.PagingViewDTO item : list) {
+            QcBillStatusEnum billStatusEnum = item.getQcStatus();
+            item.setQcStatusName(billStatusEnum.getName());
             QcTypeEnum qcTypeEnum = item.getQcType();
             item.setQcTypeName(qcTypeEnum.getName());
             String handleModeDict = item.getHandleModeDict();
@@ -173,8 +194,21 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             item.setHandleModeName(handleModeName);
             QcResultEnum qcResultEnum = item.getQcResult();
             item.setQcResultName(qcResultEnum.getName());
-        }
+            String skuId = item.getSkuId();
+            String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            item.setSkuName(skuName);
+            String supplierId = item.getSupplierId();
+            String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setSupplierName(supplierName);
 
-        return null;
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public void exportQcBill(QcBillDTO.ExportDTO dto, HttpServletResponse response) {
+
     }
 }

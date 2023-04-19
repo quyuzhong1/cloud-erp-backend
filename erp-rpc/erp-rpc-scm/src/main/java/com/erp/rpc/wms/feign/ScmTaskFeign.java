@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +56,17 @@ public interface ScmTaskFeign {
     SupplierEntity getSupplierById(@RequestBody String supplierId);
 
     /**
+     * 根据ids查询供应商
+     * @description:
+     * @author Will
+     * @date: 2023/4/14 10:07
+     * @param supplierIds
+     * @return SupplierEntity
+     */
+    @PostMapping("feign/purchaseOrder/getSupplierByIdList")
+    List<SupplierEntity> getSupplierByIdList(@RequestBody List<String> supplierIds);
+
+    /**
      * 根据联系人id查询供应商联系人信息
      * @Author Luo_WG
      * @Date 2023/4/17 11:00
@@ -63,4 +75,16 @@ public interface ScmTaskFeign {
      **/
     @PostMapping("feign/purchaseOrder/getSupplierContactById")
     SupplierContactEntity getSupplierContactById(@RequestBody String supplierContactId);
+
+
+    /**
+     * 根据采购订单id获取到
+     * 采购对应的信息
+     * @author yl
+     * @date 2023-04-19 17:23
+     * @param purchaseOrderId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO
+     */
+    @PostMapping("feign/purchaseOrder/getByOrderId")
+    PurchaseOrderDTO.GetOneDTO getByOrderId(@RequestBody String purchaseOrderId);
 }
