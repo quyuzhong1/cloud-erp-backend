@@ -129,19 +129,15 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             LocalDate date = LocalDate.parse(String.valueOf(map.get("newListingTime")), fmt);
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
-        } else {
-            if (map.get("pastListingTime") != null) {
-                LocalDate date = LocalDate.parse(String.valueOf(map.get("pastListingTime")), fmt);
-                year = String.valueOf(date.getYear());
-                updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
-            }
-
+        } else if (map.get("pastListingTime") != null) {
+            LocalDate date = LocalDate.parse(String.valueOf(map.get("pastListingTime")), fmt);
+            year = String.valueOf(date.getYear());
+            updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
         }
         if (StringUtils.isBlank(year)) {
             return;
         }
         List<String> ids = baseMapper.getItemIdBySkuAndYear(year, skuNo);
-        updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
         updateWrapper.in(DmpOrderItemEntity::getId, ids);
     }
 }
