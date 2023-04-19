@@ -20,7 +20,7 @@
         purchase_return_order pro
         inner join purchase_return_order_detail prod on pro.id = prod.main_id and prod.is_deleted = false
         <where>
-            pro.is_deleted and pro.invalid_status = false
+            pro.is_deleted = false and pro.invalid_status = false
             <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
                 and prod.source_detail_id in
                 <foreach collection="sourceDetailIds" separator="," item="item" open="(" close=")">

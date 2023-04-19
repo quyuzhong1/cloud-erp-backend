@@ -168,7 +168,6 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         //导出类型
         String type = dto.getType();
         String fileName = "";
-        
         Class<?> clazz = null;
         List<?> list = null;
         if (QcReportExportExcelType.PERSONNEL.getCode().equals(type)) {

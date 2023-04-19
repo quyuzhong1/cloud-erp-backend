@@ -130,8 +130,6 @@ public class QcEffectivenessDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewQcForPersonnelDTO {
 
-        private LocalDate qcDate;
-
         /**
          * 质检员
          */
