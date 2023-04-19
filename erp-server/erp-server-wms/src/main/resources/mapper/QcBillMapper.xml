@@ -104,4 +104,81 @@
 
     </select>
 
+    <select id="paging" resultType="com.erp.model.wms.dto.QcBillDTO$PagingViewDTO">
+        SELECT
+        qb.id, qb.code, qb.qc_dept_id,
+        qb.qc_dept_name, qb.qc_user_id,
+        qb.qc_user_name, qb.purchase_order_id,
+        qb.purchase_order_code,qb.qc_status,
+        qb.qc_date,qi.qc_type,
+        qi.is_inside,qb.supplier_id,
+        qp.sku_id,qi.total_qty,
+        qi.qc_qty,qi.qc_good_qty,
+        qi.qc_bad_qty,qi.qc_result,
+        qi.handle_mode_dict,
+        qi.bad_description,
+        qi.qc_good_rate,qi.qc_bad_rate
+        FROM qc_bill qb
+        LEFT JOIN qc_info qi ON qb.id=qc.main_id AND qi.is_deleted=FALSE
+        LEFT JOIN qc_product qp qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        WHERE qb.is_deleted=FALSE
+        <if test="params.searchType !=null and params.searchType!=''">
+            AND qb.qc_status=#{params.searchType}
+        </if>
+        <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
+            AND qb.purchase_order_code LIKE concat('%', #{params.purchaseOrderCode} ,'%')
+        </if>
+        <if test="params.skuNo !=null and params.skuNo!=''">
+            AND qp.sku_no LIKE concat('%', #{params.skuNo} ,'%')
+        </if>
+        <if test="params.qcStatusList !=null and params.qcStatusList.size>0">
+            AND qb.qc_status IN
+            <foreach collection="params.qcStatusList" item="qcStatus" open="(" separator="," close=")">
+                #{qcStatus}
+            </foreach>
+        </if>
+        <if test="params.qcType !=null and params.qcType!=''">
+            AND qi.qc_type =#{params.qcType}
+        </if>
+        <if test="params.isInside !=null ">
+            AND qi.is_inside =#{params.isInside}
+        </if>
+        <if test="params.supplierIdList !=null and params.supplierIdList.size>0">
+            AND qb.supplier_id IN
+            <foreach collection="params.supplierIdList" item="supplierId" open="(" separator="," close=")">
+                #{supplierId}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+            AND qb.warehouse_id IN
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+
+        <if test="params.qcResultList !=null and params.qcResultList.size>0">
+            AND qi.qc_result IN
+            <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
+                #{qcResult}
+            </foreach>
+        </if>
+
+        <if test="params.handleModeDictList !=null and params.handleModeDictList.size>0">
+            AND qi.handle_mode_dict IN
+            <foreach collection="params.handleModeDictList" item="handleMode" open="(" separator="," close=")">
+                #{handleMode}
+            </foreach>
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND qb.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList!=null and params.createTimeList.size>0">
+            AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.create_time
+        </if>
+
+    </select>
+
 </mapper>

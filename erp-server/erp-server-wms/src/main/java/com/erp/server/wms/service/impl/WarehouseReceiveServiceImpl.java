@@ -41,12 +41,11 @@ import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ProductOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.cglib.core.Local;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -55,7 +54,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -76,7 +74,7 @@ import java.util.stream.Collectors;
 public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseReceiveMapper, WarehouseReceiveEntity> implements WarehouseReceiveService {
 
     @Resource
-    private ProductOrderFeign productOrderFeign;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -126,7 +124,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = records.stream().map(WarehouseReceiveDTO.PagingViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
 
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
@@ -205,9 +203,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Transactional(rollbackFor = Exception.class)
     public String add(WarehouseReceiveDTO.AddDTO dto) {
         //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
         //获取采购单供应商信息
-        PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取用户信息
         SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
         //获取用户部门
@@ -295,12 +293,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
         BeanMapperUtils.copy(warehouseReceiveEntity,viewDTO);
         //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
         //获取采购单供应商信息
-        PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
 
         //查询供应商信息
-        SupplierEntity supplierEntity = productOrderFeign.getSupplierById(warehouseReceiveEntity.getSupplierId());
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(warehouseReceiveEntity.getSupplierId());
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
@@ -321,7 +319,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //获取收货数量
         List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(warehouseReceiveEntity.getPurchaseOrderId());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(detailId);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
             BeanMapperUtils.copy(warehouseReceiveDetailEntity,detailView);
@@ -670,7 +668,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
 
         List<String> list = new ArrayList<>();
         generateStockInViewDTOS.forEach(req -> {
@@ -764,7 +762,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取采购单详情表id集合
         List<String> orderDetailIds = orderRefReceiveDTOS.stream().map(WarehouseReceiveDTO.OrderRefReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         for (WarehouseReceiveDTO.OrderRefReceiveDTO orderRefReceiveDTO : orderRefReceiveDTOS) {
             orderRefReceiveDTO.setApproveStatusName(ApproveStatusEnum.getName(orderRefReceiveDTO.getApproveStatus()));
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(orderRefReceiveDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);

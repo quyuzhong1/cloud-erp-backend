@@ -2,7 +2,6 @@ package com.erp.rpc.wms.feign;
 
 import com.erp.model.scm.entity.*;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -14,7 +13,7 @@ import java.util.List;
  * @Date 2023/4/13 11:41
  **/
 @FeignClient(name = "erp-scm")
-public interface ProductOrderFeign {
+public interface ScmTaskFeign {
 
     /**
      * 根据id查询采购订单

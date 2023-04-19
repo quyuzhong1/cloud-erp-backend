@@ -4,6 +4,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Data;
@@ -98,7 +100,7 @@ public class QcBillDTO implements Serializable {
 
 
     /**
-     * 添加质检规则
+     * 质检单详情
      */
     @Data
     @NoArgsConstructor
@@ -152,7 +154,7 @@ public class QcBillDTO implements Serializable {
         /**
          * 质检状态
          */
-        private String qcStatus;
+        private QcBillStatusEnum qcStatus;
 
         /**
          * 质检状态名
@@ -201,6 +203,17 @@ public class QcBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * all 全部
+         * waitQc 待质检
+         * finishQc 完成质检
+         * cancel 已取消
+         *
+         */
+        @StateEnumValue(strValues = {"all","waitQc","finishQc","cancel"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
 
 
         /**
@@ -275,15 +288,6 @@ public class QcBillDTO implements Serializable {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
-
-
-
-
-
-
-
-
-
 
     }
 

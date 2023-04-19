@@ -1,11 +1,16 @@
 package com.erp.server.wms.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcBillDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +35,18 @@ public class QcBillController extends BaseController {
 
     @Resource
     private QcBillService qcBillService;
+
+
+    /**
+     * 分页
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<QcBillDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcBillDTO.PagingParamDTO> dto) {
+        PagingVO<QcBillDTO.PagingViewDTO> pagingVO = qcBillService.paging(dto);
+        return success(pagingVO);
+    }
 
 
     /**

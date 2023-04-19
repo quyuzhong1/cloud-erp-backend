@@ -39,7 +39,7 @@ import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ProductOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.PurchaseReturnOrderMapper;
 import com.erp.server.wms.service.*;
@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
 public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseReturnOrderMapper, PurchaseReturnOrderEntity> implements PurchaseReturnOrderService {
 
     @Resource
-    private ProductOrderFeign productOrderFeign;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -158,9 +158,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Transactional(rollbackFor = Exception.class)
     public String add(PurchaseReturnOrderDTO.AddDTO dto) {
         //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
         //获取采购单供应商信息
-        PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取用户信息
         SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
         //获取核算公司
@@ -215,11 +215,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
         //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
         //获取采购单供应商信息
-        PurchaseOrderSupplierEntity orderSupplierByOrderId = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         //获取供应商联系人信息
-        SupplierContactEntity supplierContactEntity = productOrderFeign.getSupplierContactById(dto.getSupplierContactId());
+        SupplierContactEntity supplierContactEntity = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
 
         PurchaseReturnOrderEntity entity = new PurchaseReturnOrderEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -257,10 +257,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity,viewDTO);
         //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
 
         //查询供应商信息
-        SupplierEntity supplierEntity = productOrderFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
@@ -281,7 +281,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         //获取采购单详情的id集合
         List<String> detailId = detail.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(detailId);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
             Integer stockInQty = purchaseStockInDetailService.getStockInQty(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId());
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
@@ -612,7 +612,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取采购单详情表id集合
         List<String> orderDetailIds = orderRefReceiveDTOS.stream().map(PurchaseReturnOrderDTO.OrderRefReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         for (PurchaseReturnOrderDTO.OrderRefReceiveDTO orderRefReceiveDTO : orderRefReceiveDTOS) {
             orderRefReceiveDTO.setApproveStatusName(ApproveStatusEnum.getName(orderRefReceiveDTO.getApproveStatus()));
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(orderRefReceiveDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);

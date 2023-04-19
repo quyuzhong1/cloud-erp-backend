@@ -10,7 +10,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ProductOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
@@ -37,7 +37,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
 
     @Resource
-    private ProductOrderFeign productOrderFeign;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -76,7 +76,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
@@ -118,7 +118,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {

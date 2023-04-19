@@ -11,7 +11,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ProductOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<WarehouseReceiveDetailMapper, WarehouseReceiveDetailEntity> implements WarehouseReceiveDetailService {
 
     @Resource
-    private ProductOrderFeign productOrderFeign;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -68,7 +68,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = warehouseReceiveService.getReceiveQty(dto.getPurchaseOrderId());
 
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
@@ -114,7 +114,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = productOrderFeign.listPurchaseOrderDetailById(orderDetailIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();

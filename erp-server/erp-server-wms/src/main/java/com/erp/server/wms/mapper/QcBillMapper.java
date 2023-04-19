@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.entity.QcBillEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -72,4 +73,12 @@ public interface QcBillMapper extends BaseMapper<QcBillEntity> {
      * @return List<ViewQcForPersonnelDTO>
      */
     List<QcEffectivenessDTO.ViewQcForDocumentDTO>viewExportQcForDocument(@Param("params") QcEffectivenessDTO.ExportExcelSearchParamDTO params);
+
+    /**
+     * 分页获取
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<QcBillDTO.PagingViewDTO> paging(Page query, @Param("params") QcBillDTO.PagingParamDTO params);
 }

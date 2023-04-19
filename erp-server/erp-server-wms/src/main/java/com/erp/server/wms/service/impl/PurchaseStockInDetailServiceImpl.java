@@ -16,7 +16,7 @@ import com.erp.model.wms.entity.QcBillEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
-import com.erp.rpc.wms.feign.ProductOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PurchaseStorageDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -47,7 +47,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private ProductOrderFeign productOrderFeign;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
@@ -156,7 +156,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         List<PurchaseStockInDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         //采购明细信息
         List<String> podIds = newList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -224,7 +224,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         //下推单据明细id查询
         List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
         //来源采购订单
-        List<PurchaseOrderDetailEntity> details = productOrderFeign.listPurchaseOrderDetailById(ids);
+        List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(ids);
         if (CollectionUtils.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }

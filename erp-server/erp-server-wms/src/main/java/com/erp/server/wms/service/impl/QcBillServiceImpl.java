@@ -1,21 +1,35 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.SearchType;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcBillEntity;
+import com.erp.model.wms.enums.QcResultEnum;
+import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.QcBillMapper;
 import com.erp.server.wms.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -40,6 +54,15 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
 
     @Resource
     private QcBillRemarkService qcBillRemarkService;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     /**
      * 暂存 质检单
@@ -111,5 +134,47 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         view.setRemarkList(remarkList);
 
         return view;
+    }
+
+    /**
+     * 质检单分页信息
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-04-19 15:25
+     */
+    @Override
+    public PagingVO<QcBillDTO.PagingViewDTO> paging(PagingDTO<QcBillDTO.PagingParamDTO> dto) {
+        QcBillDTO.PagingParamDTO params = dto.getParams();
+        String searchType = params.getSearchType();
+        //如果等于所有
+        if (searchType.equals(SearchType.ALL)) {
+            params.setSearchType("");
+        }
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<QcBillDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+
+        List<String> supplierIdList=list.stream().map(QcBillDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
+        List<String> skuIdList=list.stream().map(QcBillDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+
+
+        for (QcBillDTO.PagingViewDTO item : list) {
+            QcTypeEnum qcTypeEnum = item.getQcType();
+            item.setQcTypeName(qcTypeEnum.getName());
+            String handleModeDict = item.getHandleModeDict();
+            String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setHandleModeName(handleModeName);
+            QcResultEnum qcResultEnum = item.getQcResult();
+            item.setQcResultName(qcResultEnum.getName());
+        }
+
+        return null;
     }
 }

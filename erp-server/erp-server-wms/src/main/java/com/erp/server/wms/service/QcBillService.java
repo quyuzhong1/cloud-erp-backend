@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.entity.QcBillEntity;
 
@@ -36,4 +38,13 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return com.erp.model.wms.dto.QcBillDTO.ViewDTO
      */
     QcBillDTO.ViewDTO view(String id);
+
+    /**
+     * 质检单分页信息
+     * @author yl
+     * @date 2023-04-19 15:25
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
+     */
+    PagingVO<QcBillDTO.PagingViewDTO> paging(PagingDTO<QcBillDTO.PagingParamDTO> dto);
 }

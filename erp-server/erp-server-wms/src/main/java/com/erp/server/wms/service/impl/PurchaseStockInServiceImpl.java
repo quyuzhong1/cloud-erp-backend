@@ -41,7 +41,7 @@ import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ProductOrderFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.PurchaseStorageMapper;
 import com.erp.server.wms.service.*;
@@ -78,7 +78,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private ProductOrderFeign productOrderFeign;
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -283,7 +283,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
 
         //采购订单明细
         List<String> podIds = entityDetails.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -315,7 +315,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         dto.setDetails(details);
 
         //查询采购供应商信息
-        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = productOrderFeign.getOrderSupplierByOrderId(entity.getPurchaseOrderId());
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(entity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
@@ -324,7 +324,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
 
         //查询供应商信息
-        SupplierEntity supplierEntity = productOrderFeign.getSupplierById(purchaseOrderSupplierEntity.getSupplierId());
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseOrderSupplierEntity.getSupplierId());
         if (ObjectUtils.isNotEmpty(supplierEntity)) {
             supplierDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         }
@@ -487,7 +487,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             return list;
         }
         List<String> podIds = list.stream().map(PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = productOrderFeign.listPurchaseOrderDetailById(podIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -651,7 +651,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
      */
     private void addDefaultPurchaseData(String purchaseOrderId, PurchaseStockInEntity entity) {
         //查询采购订单信息
-        PurchaseOrderEntity purchaseOrderEntity = productOrderFeign.getPurchaseOrderById(purchaseOrderId);
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseOrderId);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
@@ -664,7 +664,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
 
         //查询采购供应商
-        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = productOrderFeign.getOrderSupplierByOrderId(purchaseOrderId);
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
             throw new ServiceException(ApiError.ERROR_98036);
         }
