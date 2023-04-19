@@ -16,5 +16,22 @@ import java.util.List;
  */
 public interface QcBillRemarkService extends SuperService<QcBillRemarkEntity> {
 
+    /**
+     * 质检备注 暂存
+     * @author yl
+     * @date 2023-04-19 11:23
+     * @param billId
+     * @param remarkList
+     * @return void
+     */
     void draft(String billId, List<QcRemarkDTO.AddDTO> remarkList);
+
+    /**
+     * 获取到质检备注的信息
+     * @author yl
+     * @date 2023-04-19 14:01
+     * @param id
+     * @return java.util.List<com.erp.model.wms.dto.QcRemarkDTO.AddDTO>
+     */
+    List<QcRemarkDTO.AddDTO> getByMainId(String id);
 }

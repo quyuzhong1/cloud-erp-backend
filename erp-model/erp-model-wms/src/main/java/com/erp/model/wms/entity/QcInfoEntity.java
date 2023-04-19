@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.wms.enums.QcResultEnum;
+import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -35,7 +36,7 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
      * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
      */
     @TableField("qc_type")
-    private QcResultEnum qcType;
+    private QcTypeEnum qcType;
 
     /**
      * 抽检比例
@@ -54,6 +55,12 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
      */
     @TableField("qc_qty")
     private Integer qcQty;
+
+    /**
+     * 质检合格数量
+     */
+    @TableField("qc_good_qty")
+    private Integer qcGoodQty;
 
     /**
      * 不良数量
