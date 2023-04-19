@@ -120,6 +120,7 @@
 
     <select id="getReceiveQty" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$GetReceiveDTO">
         SELECT
+            wr.approve_status,
             wrd.sku_id,
             wrd.sku_no,
             wr.purchase_order_id,
@@ -133,7 +134,8 @@
         GROUP BY
         wrd.sku_id,
         wrd.sku_no,
-        wr.purchase_order_id
+        wr.purchase_order_id,
+        wr.approve_status
     </select>
 
     <select id="purchaseOrderRefReceive" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$OrderRefReceiveDTO">
