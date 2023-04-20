@@ -27,6 +27,11 @@ public class ProductVO implements Serializable {
     public static class ProductPackVO {
 
 
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
         /**
          * sku id
          */

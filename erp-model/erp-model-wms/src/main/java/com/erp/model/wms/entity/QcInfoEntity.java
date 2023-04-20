@@ -112,6 +112,12 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     @TableField("handle_mode_dict")
     private String handleModeDict;
 
+    /**
+     *采购订单明细表id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 

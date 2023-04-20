@@ -23,6 +23,7 @@ public enum BusinessNoTypeEnum {
     CODE_CGRK(13, "cgrk","采购收货单"),
     CODE_CGTH(14, "cgth","采购退货单"),
     CODE_USER(15, "user_no","用户编号"),
+    CODE_QC(16, "qc","质检单"),
 
     ;
 

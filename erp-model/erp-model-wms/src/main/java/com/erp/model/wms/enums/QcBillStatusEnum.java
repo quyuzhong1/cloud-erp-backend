@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * 质检单状态枚举
+ *
  * @author Lambda
  * @Classname QcBillStatusEnum
  * @Description TODO
@@ -13,11 +14,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum QcBillStatusEnum {
 
-    DRAFT("draft","暂存"),
-    WAIT_QC("waitQc","待质检"),
-    EXEMPTION("exemption","免检"),
-    FINISH_QC("finishQc","已质检"),
-    CANCEL("cancel","取消");
+    DRAFT("draft", "暂存"),
+    WAIT_QC("waitQc", "待质检"),
+    EXEMPTION("exemption", "免检"),
+    FINISH_QC("finishQc", "已质检"),
+    CANCEL("cancel", "取消");
 
     /**
      * 类型
@@ -43,4 +44,16 @@ public enum QcBillStatusEnum {
     public String getName() {
         return name;
     }
+
+    public static QcBillStatusEnum getByCode(String code) {
+
+        QcBillStatusEnum[] eumnList = QcBillStatusEnum.values();
+        for (QcBillStatusEnum item : eumnList) {
+            if (code.equals(item.getCode())) {
+                return item;
+            }
+        }
+        return null;
+    }
+
 }

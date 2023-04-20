@@ -4,10 +4,12 @@ package com.erp.server.wms.controller;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcBillDTO;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +38,7 @@ public class QcBillController extends BaseController {
 
     /**
      * 分页
+     *
      * @param dto
      * @return
      */
@@ -53,8 +56,20 @@ public class QcBillController extends BaseController {
      * @return
      */
     @PostMapping("/draft")
-    public ApiResult add(@RequestBody QcBillDTO.SaveOrUpdateDTO dto) {
+    public ApiResult draft(@RequestBody QcBillDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcBillService.draft(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 保存
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated({AddGroup.class}) QcBillDTO.SaveOrUpdateDTO dto) {
+        Boolean result = qcBillService.add(dto);
         return result ? success() : failure();
     }
 
@@ -78,8 +93,8 @@ public class QcBillController extends BaseController {
      * @return
      */
     @PostMapping("/finish")
-    public ApiResult finish(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
-        Boolean result = qcBillService.draft(dto);
+    public ApiResult finish(@RequestBody @Validated({AddGroup.class}) QcBillDTO.SaveOrUpdateDTO dto) {
+        Boolean result = qcBillService.finish(dto);
         return result ? success() : failure();
     }
 
@@ -91,7 +106,7 @@ public class QcBillController extends BaseController {
      * @return
      */
     @PostMapping("/actionFinish")
-    public ApiResult actionFinish(@RequestBody @Validated BaseIdsDTO dto) {
+    public ApiResult actionFinish(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
 
         return success();
     }
@@ -116,7 +131,7 @@ public class QcBillController extends BaseController {
      * @return
      */
     @PostMapping("/actionExemption")
-    public ApiResult actionExemption(@RequestBody @Validated BaseIdsDTO dto) {
+    public ApiResult actionExemption(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
 
         return success();
     }
@@ -151,7 +166,7 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/exportQcBill")
     public ApiResult exportWarehouse(@RequestBody @Valid QcBillDTO.ExportDTO dto, HttpServletResponse response) {
-        qcBillService.exportQcBill(dto,response);
+        qcBillService.exportQcBill(dto, response);
         return success();
     }
 

@@ -45,6 +45,12 @@ public class QcBillDTO implements Serializable {
          */
         private String id;
 
+
+
+
+
+
+
         /**
          * 质检日期
          */
@@ -343,6 +349,11 @@ public class QcBillDTO implements Serializable {
 
         /**
          * 质检状态
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
          */
         private QcBillStatusEnum qcStatus;
 
@@ -486,7 +497,7 @@ public class QcBillDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class ExportDTO extends PagingParamDTO {
+    public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;
     }
