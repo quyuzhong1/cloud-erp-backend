@@ -72,12 +72,6 @@ public interface WmsTaskFeign {
     String addWarehouseReceive(WarehouseReceiveDTO.AddDTO dto);
 
     /**
-     * 获取签收数量
-     */
-    @PostMapping("feign/warehouseReceive/getReceiveQty")
-    List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(@RequestBody String purchaseOrderId);
-
-    /**
      * 获取入库数量
      **/
     @PostMapping("feign/purchaseStockIn/getStockInQty")

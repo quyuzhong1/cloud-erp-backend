@@ -748,7 +748,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
             //设置明细
             List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
-            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getId());
+            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getMainId());
             detailByMainId.forEach(req -> {
                 PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
                 BeanMapperUtils.copy(req,detailDTO);
