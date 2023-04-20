@@ -1059,7 +1059,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @return java.lang.Boolean
      **/
     public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
-        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getVerificationCode()).one();
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
         }
