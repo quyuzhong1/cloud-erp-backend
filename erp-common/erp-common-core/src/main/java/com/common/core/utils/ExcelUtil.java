@@ -135,14 +135,18 @@ public class ExcelUtil {
         for (String s : heads) {
             hs.add(Arrays.asList(head,s));
         }
-        Collection<String> values;
         List<List<String>> list2 = new ArrayList<>();
 
         for (int i = 0; i < list.size(); i++) {
             List<String> objects = new ArrayList<>();
-            values = list.get(i).values();
-            for (String value : values) {
-                objects.add(value);
+            Map<Integer, String> map = list.get(i);
+            for (int j = 0; j < heads.size();j++) {
+                String str = map.get(j);
+                if (StringUtils.isBlank(str)) {
+                    objects.add("");
+                } else {
+                    objects.add(str);
+                }
             }
             list2.add(objects);
         }

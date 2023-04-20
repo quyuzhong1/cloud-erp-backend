@@ -57,7 +57,8 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
 
     @Override
     public void invoke(Map<Integer,String> map, AnalysisContext analysisContext) {
-
+        //表头信息
+        List<String> head = getHead();
         List<String> errorMsgList = new ArrayList<>();
         //遍历map下的数据
         Iterator<Map.Entry<Integer, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
@@ -90,6 +91,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                         entity.setYear(Integer.valueOf(year));
                     } catch (Exception e){
                         errorMsgList.add("年份格式有误");
+                        continue;
                     }
                     yearDate = Integer.valueOf(year);
                     continue;
@@ -189,7 +191,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 Integer indexTemp = i + 1;
                 errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
             }
-            map.put(map.size() ,errStr);
+            map.put(head.size() - 1 ,errStr);
             list.add(map);
             return;
         }
