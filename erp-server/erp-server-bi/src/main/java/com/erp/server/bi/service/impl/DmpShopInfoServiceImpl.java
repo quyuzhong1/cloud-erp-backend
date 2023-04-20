@@ -1,7 +1,6 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -173,13 +172,19 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             throw new ServiceException(ApiError.ERROR_9029);
         }
         //更新启动时间后的订单负责人部门
-        LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(DmpOrderInfoEntity::getDeptId, sysDepartmentDTO.getId());
-        updateWrapper.set(DmpOrderInfoEntity::getDeptName, sysDepartmentDTO.getName());
-        updateWrapper.eq(DmpOrderInfoEntity::getChargeId, dto.getChargeId());
-        updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime());
-        dmpOrderInfoService.update(updateWrapper);
-        return true;
+        List<DmpOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
+                .eq(DmpOrderInfoEntity::getChargeId, dto.getChargeId())
+                .ge(DmpOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime())
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        list.forEach(obj -> {
+            obj.setDeptId(sysDepartmentDTO.getId());
+            obj.setDeptName(sysDepartmentDTO.getName());
+        });
+        dmpOrderInfoService.updateBatchById(list,2000);
+        return Boolean.TRUE;
     }
 
     @Override
@@ -265,40 +270,59 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * 更新订单负责人
      */
     private void updateSaleCharge(String shopNo, LocalDate enableTime, String userId, String userName, SysUserDeptDTO sysUserDeptDTO) {
-        LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(DmpOrderInfoEntity::getChargeId, userId);
-        updateWrapper.set(DmpOrderInfoEntity::getChargeName, userName);
-        if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
-            updateWrapper.set(DmpOrderInfoEntity::getDeptId, sysUserDeptDTO.getDeptId());
-            updateWrapper.set(DmpOrderInfoEntity::getDeptName, sysUserDeptDTO.getDeptName());
+
+        List<DmpOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
+                .eq(DmpOrderInfoEntity::getShopNo, shopNo)
+                .ge(DmpOrderInfoEntity::getPlatformCreateTime, enableTime)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return;
         }
-        updateWrapper.eq(DmpOrderInfoEntity::getShopNo, shopNo);
-        updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, enableTime);
-        dmpOrderInfoService.update(updateWrapper);
+        list.forEach(obj -> {
+            if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
+                obj.setDeptId(sysUserDeptDTO.getDeptId());
+                obj.setDeptName(sysUserDeptDTO.getDeptName());
+            }
+            obj.setChargeId(userId);
+            obj.setChargeName(userName);
+        });
+        dmpOrderInfoService.updateBatchById(list,2000);
     }
 
     /**
      * 更新退款单负责人
      */
     private void updateRefundCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(DmpRefundInfoEntity::getChargeId, userId);
-        updateWrapper.set(DmpRefundInfoEntity::getChargeName, userName);
-        updateWrapper.eq(DmpRefundInfoEntity::getShopNo, shopNo);
-        updateWrapper.ge(DmpRefundInfoEntity::getOrderTime, enableTime);
-        dmpRefundInfoService.update(updateWrapper);
+        List<DmpRefundInfoEntity> list = dmpRefundInfoService.lambdaQuery()
+                .eq(DmpRefundInfoEntity::getShopNo, shopNo)
+                .ge(DmpRefundInfoEntity::getOrderTime, enableTime)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(obj -> {
+            obj.setChargeId(userId);
+            obj.setChargeName(userName);
+        });
+        dmpRefundInfoService.updateBatchById(list,2000);
     }
 
     /**
      * 更新退货单负责人
      */
     private void updateReturnOrderCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(DmpReturnOrderInfoEntity::getChargeId, userId);
-        updateWrapper.set(DmpReturnOrderInfoEntity::getChargeName, userName);
-        updateWrapper.eq(DmpReturnOrderInfoEntity::getShopNo, shopNo);
-        updateWrapper.ge(DmpReturnOrderInfoEntity::getOrderTime, enableTime);
-        dmpReturnOrderInfoService.update(updateWrapper);
+        List<DmpReturnOrderInfoEntity> list = dmpReturnOrderInfoService.lambdaQuery()
+                .eq(DmpReturnOrderInfoEntity::getShopNo, shopNo)
+                .ge(DmpReturnOrderInfoEntity::getOrderTime, enableTime)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(obj -> {
+            obj.setChargeId(userId);
+            obj.setChargeName(userName);
+        });
+        dmpReturnOrderInfoService.updateBatchById(list,2000);
     }
 
     /**

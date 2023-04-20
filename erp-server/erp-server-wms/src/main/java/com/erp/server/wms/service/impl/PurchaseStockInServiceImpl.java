@@ -763,7 +763,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             }
             //收货数量
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                Integer receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setReceiveQty(receiveQty);
             }
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
