@@ -22,10 +22,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -40,7 +37,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -66,7 +62,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -223,9 +222,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         BeanMapperUtils.copy(purchaseOrderSupplierEntity, supplierUpdateDTO);
         dto.setPurchaseOrderSupplierDTO(supplierUpdateDTO);
-        
-      
-        
+
+
         //明细信息
         List<PurchaseOrderDetailEntity> entityDetails = purchaseOrderDetailService.listByPurchaseOrderId(id);
         if (CollectionUtils.isEmpty(entityDetails)) {
@@ -362,7 +360,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //根据ids查询
         List<PurchaseOrderEntity> list = getList(ids);
         //已审核允许反审核
-        long count = list.stream().filter(obj ->  !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
@@ -854,7 +852,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         for (PurchaseOrderDetailEntity detailEntity : list) {
             PurchaseOrderDTO.ViewGenerateStockInDTO viewGenerateStockInDTO = new PurchaseOrderDTO.ViewGenerateStockInDTO();
-            BeanMapperUtils.copy(detailEntity,viewGenerateStockInDTO);
+            BeanMapperUtils.copy(detailEntity, viewGenerateStockInDTO);
             viewGenerateStockInDTO.setPurchaseOrderDetailId(detailEntity.getId());
 
             PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
@@ -900,7 +898,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //订单信息集合
         List<PurchaseOrderEntity> purchaseOrderList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderList)) {
-            log.error("未找到订单信息，ids={}",JSONUtil.toJsonStr(ids));
+            log.error("未找到订单信息，ids={}", JSONUtil.toJsonStr(ids));
             throw new ServiceException(ApiError.ERROR_98025);
         }
         long count = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).count();
@@ -911,7 +909,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //订单明细信息集合
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            log.error("未找到订单明细信息，ids={}",JSONUtil.toJsonStr(ids));
+            log.error("未找到订单明细信息，ids={}", JSONUtil.toJsonStr(ids));
             throw new ServiceException(ApiError.ERROR_98026);
         }
 
@@ -925,7 +923,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //订单信息
             PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(purchaseOrderId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
-                log.error("未找到订单明细信息，id={}",purchaseOrderId);
+                log.error("未找到订单明细信息，id={}", purchaseOrderId);
                 throw new ServiceException(ApiError.ERROR_98025);
             }
             addDTO.setPurchaseOrderId(purchaseOrderId);
@@ -959,7 +957,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98025);
         }
         BeanMapperUtils.copy(entity, getOneDTO);
-
+        getOneDTO.setWarehouseName(entity.getDeliveryWarehouseName());
         //采购供应商信息
         PurchaseOrderSupplierDTO.UpdateDTO updateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
@@ -990,24 +988,33 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
         PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
-        PurchaseOrderEntity entity = this.getById(purchaseOrderId);
+        PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        result.setSupplierId(result.getSupplierId());
-        result.setSupplierName(result.getSupplierName());
-        result.setWarehouseId(result.getWarehouseId());
-        result.setWarehouseName(result.getWarehouseName());
-        
+        result.setSupplierId(entity.getPurchaseOrderSupplierDTO().getSupplierId());
+        result.setSupplierName(entity.getSupplierName());
+        result.setWarehouseId(entity.getDeliveryWarehouseId());
+        result.setWarehouseName(entity.getWarehouseName());
+
         //采购订单详情
         List<PurchaseOrderDetailEntity> orderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
         List<String> skuIdList = orderDetailList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
-        for(ProductVO.ProductPackVO item:skuList){
-           Integer qty=orderDetailList.stream().filter(o->o.getSkuId().equals(item.getSkuId())).findFirst().
-                   flatMap(obj-> Optional.ofNullable(obj.getPurchaseQty())).orElse(0);
-            item.setQty(qty);
+        List<ProductVO.ProductPackVO> productList = new ArrayList<>(orderDetailList.size());
+        for (PurchaseOrderDetailEntity item : orderDetailList) {
+            ProductVO.ProductPackVO flag = new ProductVO.ProductPackVO();
+            String skuId = item.getSkuId();
+            ProductVO.ProductPackVO find = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (find != null) {
+                BeanMapper.copy(find, flag);
+            }
+            flag.setPurchaseOrderDetailId(item.getId());
+            flag.setQty(item.getPurchaseQty());
+            flag.setSkuId(skuId);
+            productList.add(flag);
         }
+        result.setProductList(productList);
         return result;
     }
 
@@ -1258,12 +1265,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     /**
+     * @param records
      * @description: 列表查询数据处理
      * @author Will
      * @date: 2023/4/19 18:42
-     * @param records
      */
-    private void doOpHandlePurchaseOrder(List<PurchaseOrderDTO.ListDTO> records){
+    private void doOpHandlePurchaseOrder(List<PurchaseOrderDTO.ListDTO> records) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }

@@ -16,16 +16,14 @@ import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.WmsAttachmentService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -149,6 +147,22 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         }
         return qcInfoView;
+    }
+
+    /**
+     * 根据采购订单id集合 获取到已质检的数量
+     *
+     * @param purOrderIds
+     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.QcQtyDTO>
+     * @author yl
+     * @date 2023-04-20 12:59
+     */
+    @Override
+    public List<QcInfoDTO.QcQtyDTO> getPurOrderIds(List<String> purOrderIds) {
+        if (CollectionUtils.isEmpty(purOrderIds)) {
+            return Collections.emptyList();
+        }
+        return  baseMapper.getByPurOrderIds(purOrderIds);
     }
 
 

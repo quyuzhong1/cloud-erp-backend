@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -34,4 +36,13 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return com.erp.model.wms.dto.QcInfoDTO.ViewDTO
      */
     QcInfoDTO.ViewDTO getByMainId(String id);
+
+    /**
+     * 根据采购订单id集合 获取到已质检的数量
+     * @author yl
+     * @date 2023-04-20 12:59
+     * @param purOrderIds
+     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.QcQtyDTO>
+     */
+    List<QcInfoDTO.QcQtyDTO> getPurOrderIds(List<String> purOrderIds);
 }

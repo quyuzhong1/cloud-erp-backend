@@ -408,6 +408,8 @@ public class PurchaseOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class GetQcProductDTO {
 
+
+
         /**
          * 供应商id
          */

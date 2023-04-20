@@ -47,7 +47,7 @@ public class QcInfoDTO {
          */
         @NotNull(message = "总量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0", message = "最小值为0")
+        @DecimalMin(value = "1", message = "最小值必须大于0")
         private Integer totalQty;
 
         /**
@@ -55,7 +55,7 @@ public class QcInfoDTO {
          */
         @NotNull(message = "质检量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0", message = "最小值为0")
+        @DecimalMin(value = "1", message = "最小值必须大于0")
         private Integer qcQty;
 
         /**
@@ -63,7 +63,7 @@ public class QcInfoDTO {
          */
         @NotNull(message = "质检合格量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0", message = "最小值为0")
+        @DecimalMin(value = "1", message = "最小值必须大于0")
         private Integer qcGoodQty;
 
         /**
@@ -231,6 +231,67 @@ public class QcInfoDTO {
          *
          */
         private String handleModeName;
+
+
+
+    }
+
+
+    /**
+     * 质检数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcQtyDTO {
+
+
+        /**
+         * 质检单id
+         */
+        private String mainId;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 质检类型
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
+         * stockIn 入库质检  outsideQc 外检质检 insideQc 在库质检 newProductStockIn 新品入库质检 b2bOutsideQc B2B外检
+         */
+        private QcTypeEnum qcType;
+
+
+        /**
+         * 总量
+         */
+
+        private Integer totalQty;
+
+        /**
+         * 质检量
+         */
+
+        private Integer qcQty;
+
+        /**
+         * 质检合格量
+         */
+
+        private Integer qcGoodQty;
+
+        /**
+         * 质检不良量
+         */
+        private Integer qcBadQty;
+
 
 
 

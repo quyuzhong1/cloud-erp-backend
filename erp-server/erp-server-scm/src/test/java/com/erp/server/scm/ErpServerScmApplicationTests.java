@@ -1,5 +1,6 @@
 package com.erp.server.scm;
 
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +37,8 @@ public class ErpServerScmApplicationTests {
 //                new CfgModuleOperateLogFieldEntity().setField("adjustUserName").setFieldName("调价员").setClassPath(classPath).setType(0).setEnumClass("")
 //        );
 //        logFieldService.saveBatch(logFields);
-        System.out.println("sss");
+        String ss=   QcBillStatusEnum.getByCode(QcBillStatusEnum.FINISH_QC.getCode()).getName();
+        System.out.println(ss);
     }
 
 

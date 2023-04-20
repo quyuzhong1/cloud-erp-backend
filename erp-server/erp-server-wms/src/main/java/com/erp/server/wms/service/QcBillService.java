@@ -25,7 +25,7 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @param dto
      * @return
      */
-    Boolean draft(QcBillDTO.SaveOrUpdateDTO dto);
+    Boolean add(QcBillDTO.SaveOrUpdateDTO dto);
     /**
      * 根据采购id查询
      */
@@ -58,4 +58,22 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return void
      */
     void exportQcBill(QcBillDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 完成质检
+     * @author yl
+     * @date 2023-04-20 10:26
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean finish(QcBillDTO.SaveOrUpdateDTO dto);
+
+    /**
+     * 暂存
+     * @author yl
+     * @date 2023-04-20 14:00
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean draft(QcBillDTO.SaveOrUpdateDTO dto);
 }
