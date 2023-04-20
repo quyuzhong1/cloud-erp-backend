@@ -61,7 +61,7 @@ public class BiTargetManagementImportExcelDTO implements Serializable {
     /**
      * SPU
      */
-    @ExcelProperty(value = "*SPU", index = 7)
+    @ExcelProperty(value = "SPU", index = 7)
     private String spuNo;
 
     /**
