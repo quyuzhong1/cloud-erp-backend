@@ -153,6 +153,11 @@ public class PurchaseStockInDTO implements Serializable {
     public static class SearchParamDTO extends SortDTO {
 
         /**
+         * 主键ids
+         */
+        private List<String> ids;
+
+        /**
          * 入库单号
          */
         private String code;
@@ -613,6 +618,11 @@ public class PurchaseStockInDTO implements Serializable {
          * 作废状态
          */
         private String invalidStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * sku

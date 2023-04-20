@@ -905,7 +905,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             log.error("未找到订单信息，ids={}", JSONUtil.toJsonStr(ids));
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        long count = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).count();
+        long count = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98054);
         }
