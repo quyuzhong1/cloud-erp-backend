@@ -25,6 +25,7 @@
         <module>erp-server-bi</module>
         <module>erp-server-scm</module>
         <module>erp-server-wms</module>
+        <module>erp-server-msg</module>
     </modules>
     <dependencies>
         <dependency>
