@@ -166,4 +166,13 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return List<PurchaseReturnOrderEntity>
      */
     List<PurchaseReturnOrderEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
+     * 获取退货数量
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:47
+     * @param purchaseOrderId purchaseOrderId
+     * @return java.lang.Integer
+     **/
+    List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(String purchaseOrderId);
 }

@@ -1,7 +1,10 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
+import com.erp.server.wms.service.PurchaseReturnOrderService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +24,9 @@ import java.util.List;
 public class PurchaseReturnOrderFeignController {
 
     @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
+    @Resource
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
     /**
@@ -34,4 +40,18 @@ public class PurchaseReturnOrderFeignController {
     public List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(@RequestBody List<String> SourceDetailIds) {
         return purchaseReturnOrderDetailService.listBySourceDetailIds(SourceDetailIds);
     }
+
+    /**
+     * 根据采购单详情表id查询收货单详情
+     * @Author Luo_WG
+     * @Date 2023/4/18 16:41
+     * @param podIds podIds
+     * @return java.lang.String
+     **/
+    @PostMapping("/listReturnOrderDetailByPodIds")
+    public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(@RequestBody List<String> podIds) {
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+        return purchaseReturnOrderDetailEntities;
+    }
+
 }

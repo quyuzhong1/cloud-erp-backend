@@ -30,6 +30,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
@@ -292,7 +293,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 throw new ServiceException(ApiError.ERROR_99006);
             }
             detailView.setStockInQty(stockInQty);
-            detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getRealityReturnQty()))));
+            detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getReturnQty()))));
             detailView.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
@@ -669,5 +670,17 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .in(PurchaseReturnOrderEntity::getSourceId,sourceIds)
                 .eq(PurchaseReturnOrderEntity::getInvalidStatus,Boolean.FALSE)
                 .list();
+    }
+
+    /**
+     * 获取退货数量
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:47
+     * @param purchaseOrderId purchaseOrderId
+     * @return java.lang.Integer
+     **/
+    @Override
+    public List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(String purchaseOrderId) {
+        return baseMapper.getReturnQty(purchaseOrderId);
     }
 }

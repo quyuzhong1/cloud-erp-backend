@@ -1036,16 +1036,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
                 .eq(SysUserInfoEntity::getUid, userInfoEntity.getUid()).update();
         if (flag) {
-            boolean result = redisService.setNx(emailVerifyCodeDTO.getEmail(), 1, 1, TimeUnit.MINUTES);
-            if (!result) {
-                throw new ServiceException(ApiError.ERROR_1014);
-            }
             boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());
             if (!emailFlag) {
                 throw new ServiceException(ApiError.ERROR_1008);
             }
             LocalDateTime localDate = LocalDateTime.now();
-            emailVerifyCodeDTO.setVerifyCode(String.format("登录密码：'%s'，请登录后修改设置新密码", num));
+            emailVerifyCodeDTO.setVerifyCode(num);
             emailVerifyCodeDTO.setDate(DateUtil.getCnDate(localDate));
             Boolean sendResult = sendingEmail(emailVerifyCodeDTO, "重置密码");
             if (!sendResult) {
@@ -1127,7 +1123,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String[] recipients = {email};
         emailDTO.setRecipients(recipients);
         emailDTO.setSubject(subject);
-        emailDTO.setTemplate(EmailTemplate.VERIFY_CODE);
+        emailDTO.setTemplate(EmailTemplate.RESETTING_PASSWORD);
         Boolean sendResult = mailService.sedVerifyCode(emailDTO);
         return sendResult;
     }

@@ -328,7 +328,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取采购单详情的id集合
         List<String> detailId = detail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //获取收货数量
-        List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(warehouseReceiveEntity.getPurchaseOrderId());
+        List<WarehouseReceiveDetailEntity> detailEntitieList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(detailId);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
@@ -338,7 +338,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-            Integer receive = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(warehouseReceiveEntity.getPurchaseOrderId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receive = detailEntitieList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setUnReceiveQty(purchaseOrderDetailEntity.getPurchaseQty() - receive);
 
             //获取sku信息
@@ -679,7 +679,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> orderDetailIds = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-
+        //获取收货单详情
+        List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
         List<String> list = new ArrayList<>();
         generateStockInViewDTOS.forEach(req -> {
             boolean contains = list.contains(req.getId());
@@ -700,8 +701,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-            List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = getReceiveQty(req.getPurchaseOrderId());
-            Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId()) && obj.getPurchaseOrderId().equals(req.getPurchaseOrderId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             req.setReceiveQty(receiveQty);
 
             Integer stockInQty = stockInQtyList.stream().filter(obj -> obj.getPurchaseOrderId().equals(req.getPurchaseOrderId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDTO.GetStockInQty::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -786,17 +787,4 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         return orderRefReceiveDTOS;
     }
-
-    /**
-     * 获取产品签收数量
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:47
-     * @param purchaseOrderId purchaseOrderId
-     * @return java.lang.Integer
-     **/
-    @Override
-    public List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(String purchaseOrderId) {
-        return baseMapper.getReceiveQty(purchaseOrderId);
-    }
-
 }

@@ -126,7 +126,7 @@ public class SysUserInfoController extends BaseController {
      * @param dto dto
      * @return
      **/
-    @GetMapping("/forgotPassword")
+    @PostMapping("/forgotPassword")
     public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
         Boolean flag = sysUserInfoService.forgotPassword(dto);
         return flag == true ? success() : failure();

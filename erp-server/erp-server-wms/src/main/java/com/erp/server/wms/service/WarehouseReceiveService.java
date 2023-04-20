@@ -183,13 +183,4 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Integer
      **/
     List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId);
-
-    /**
-     * 获取产品签收数量
-     * @Author Luo_WG
-     * @Date 2023/4/18 19:08
-     * @param purchaseOrderId purchaseOrderId
-     * @return com.erp.model.wms.dto.WarehouseReceiveDTO.GetReceiveDTO
-     **/
-    List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(String purchaseOrderId);
 }

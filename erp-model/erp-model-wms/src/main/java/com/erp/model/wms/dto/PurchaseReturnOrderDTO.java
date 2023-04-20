@@ -661,4 +661,32 @@ public class PurchaseReturnOrderDTO {
          */
         private Integer count;
     }
+
+    /**
+     * 获取签收数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GetReturnQtyDTO {
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQtyDTO;
+
+    }
 }

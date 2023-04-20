@@ -62,5 +62,5 @@ public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseR
      **/
     List<PurchaseReturnOrderDetailEntity> getDetailByMainId(String mainId);
 
-    List<PurchaseReturnOrderDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds);
+    List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> purchaseDetailIds);
 }

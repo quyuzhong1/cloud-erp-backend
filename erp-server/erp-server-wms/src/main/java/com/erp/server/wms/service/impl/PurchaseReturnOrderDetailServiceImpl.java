@@ -86,7 +86,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                 purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                 purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                purchaseReturnOrderDetailEntity.setRealityReturnQty(addDTO.getRealityReturnQty());
+                purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getRealityReturnQty());
                 purchaseReturnOrderDetailEntity.setReplenishQty(addDTO.getReplenishQty());
                 purchaseReturnOrderDetailEntity.setDeductAmountQty(addDTO.getDeductAmountQty());
                 purchaseReturnOrderDetailEntity.setReturnPrice(addDTO.getReturnPrice());
@@ -131,7 +131,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                 purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                 purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                purchaseReturnOrderDetailEntity.setRealityReturnQty(updateDTO.getRealityReturnQty());
+                purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getRealityReturnQty());
                 purchaseReturnOrderDetailEntity.setReplenishQty(updateDTO.getReplenishQty());
                 purchaseReturnOrderDetailEntity.setDeductAmountQty(updateDTO.getDeductAmountQty());
                 purchaseReturnOrderDetailEntity.setReturnPrice(updateDTO.getReturnPrice());
@@ -176,7 +176,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
-    public List<PurchaseReturnOrderDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
+    public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> purchaseDetailIds) {
         return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).list();
     }
 }

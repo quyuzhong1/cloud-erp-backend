@@ -69,7 +69,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-        List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = warehouseReceiveService.getReceiveQty(dto.getPurchaseOrderId());
+        List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
 
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
@@ -89,7 +89,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 throw new ServiceException(ApiError.ERROR_99006);
             }
 
-            Integer receive = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderId().equals(dto.getPurchaseOrderId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - receive)) {
                 throw new ServiceException(ApiError.ERROR_99013);
             }

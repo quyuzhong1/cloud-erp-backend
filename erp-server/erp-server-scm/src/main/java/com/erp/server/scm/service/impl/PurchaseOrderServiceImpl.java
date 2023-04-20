@@ -39,6 +39,8 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -1268,8 +1270,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
         //入库信息
         List<PurchaseStockInDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
         //收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+
+        //退货数量
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
         records.forEach(obj -> {
             obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
@@ -1287,12 +1293,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(obj.getPurchaseQty() - deliveryQty);
 
+            if (receiveQty == MathUtil.ZERO) {
+                obj.setArrivalStatus(ArrivalStatusEnum.NON_ARRIVAL.getCode());
+                obj.setArrivalStatusName(ArrivalStatusEnum.NON_ARRIVAL.getName());
+            } else if (receiveQty > MathUtil.ZERO && receiveQty < obj.getPurchaseQty()) {
+                obj.setArrivalStatus(ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode());
+                obj.setArrivalStatusName(ArrivalStatusEnum.PARTIAL_ARRIVAL.getName());
+            } else {
+                obj.setArrivalStatus(ArrivalStatusEnum.ARRIVED.getCode());
+                obj.setArrivalStatusName(ArrivalStatusEnum.ARRIVED.getName());
+            }
+            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                    .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
             //入库数量
             Integer stockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
                 stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
                         .map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
+            obj.setReturnQty(returnQty);
             obj.setStockInQty(stockInQty);
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));

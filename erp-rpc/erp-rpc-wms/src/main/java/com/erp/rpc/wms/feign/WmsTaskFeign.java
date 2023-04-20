@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
@@ -81,4 +82,12 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/purchaseStockIn/getStockInQty")
     List<PurchaseStockInDTO.GetStockInQty> getStockInQty(@RequestBody List<String> ids);
+
+    /**
+     * 获取退货数量
+     **/
+    @PostMapping("feign/purchaseReturnOrder/listReturnOrderDetailByPodIds")
+    List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(@RequestBody List<String> ids);
+
+
 }

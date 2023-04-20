@@ -8,7 +8,7 @@
             prod.main_id,
             prod.sku_id,
             prod.sku_no,
-            prod.reality_return_qty,
+            prod.return_qty,
             prod.replenish_qty,
             prod.deduct_amount_qty,
             prod.return_price,

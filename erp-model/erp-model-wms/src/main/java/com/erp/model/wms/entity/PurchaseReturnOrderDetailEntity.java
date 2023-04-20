@@ -45,8 +45,8 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     /**
      * 实退数量
      */
-    @TableField("reality_return_qty")
-    private Integer realityReturnQty;
+    @TableField("return_qty")
+    private Integer returnQty;
 
     /**
      * 补货数量

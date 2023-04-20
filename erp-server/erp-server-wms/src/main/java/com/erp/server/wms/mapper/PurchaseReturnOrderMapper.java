@@ -27,7 +27,7 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
 
     IPage<PurchaseReturnOrderDTO.PagingViewDTO> paging(Page query, @Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
-    Integer getReceiveQty(@Param("PurchaseOrderId") String PurchaseOrderId, @Param("skuId") String skuId);
+    List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(@Param("purchaseOrderId") String purchaseOrderId);
 
     List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
 
