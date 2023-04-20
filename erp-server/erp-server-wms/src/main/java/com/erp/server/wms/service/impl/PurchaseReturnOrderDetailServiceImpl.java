@@ -176,7 +176,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
-    public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> purchaseDetailIds) {
-        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).list();
+    public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> podIds) {
+        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId, podIds).list();
     }
 }

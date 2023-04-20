@@ -144,6 +144,7 @@
             wr.code,
             wr.supplier_name,
             wr.approve_status,
+            wr.invalidStatus,
             wrd.sku_no,
             wr.bill_date,
             wrd.receive_qty,

@@ -495,6 +495,16 @@ public class WarehouseReceiveDTO {
         private String approveStatusName;
 
         /**
+         * 作废状态名称
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
          * sku
          */
         private String skuNo;
