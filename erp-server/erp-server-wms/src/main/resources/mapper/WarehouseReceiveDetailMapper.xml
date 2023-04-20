@@ -6,6 +6,9 @@
     <select id="listWarehouseReceiveByPodIds"
             resultType="com.erp.model.wms.entity.WarehouseReceiveDetailEntity">
         select
+            wr.approve_status,
+            wr.bill_date,
+            wr.receive_user_name,
             wrd.main_id,
             wrd.sku_id,
             wrd.sku_no,
@@ -26,5 +29,6 @@
                 </foreach>
             </if>
         </where>
+        order by wr.create_time asc
     </select>
 </mapper>

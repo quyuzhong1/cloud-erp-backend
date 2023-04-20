@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,24 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
         List<QcBillRemarkEntity> list = this.findByMainId(billId);
         List<QcRemarkDTO.AddDTO> resultList = BeanMapper.copyList(list, QcRemarkDTO.AddDTO.class);
         return resultList;
+    }
+
+
+    /**
+     * 根据质检单id集合 查询备注信息
+     *
+     * @param billIdList
+     * @return java.util.List<com.erp.model.wms.entity.QcBillRemarkEntity>
+     * @author yl
+     * @date 2023-04-19 19:31
+     */
+    @Override
+    public List<QcBillRemarkEntity> getByMainIdList(List<String> billIdList) {
+        if (CollectionUtils.isEmpty(billIdList)) {
+            return Collections.emptyList();
+        }
+
+        return this.lambdaQuery().in(QcBillRemarkEntity::getMainId,billIdList).orderByDesc(QcBillRemarkEntity::getCreateTime).list();
     }
 
 

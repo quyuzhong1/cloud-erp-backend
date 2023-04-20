@@ -1,4 +1,4 @@
-package com.erp.model.scm.dto.excel;
+package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
@@ -105,48 +105,48 @@ public class PurchaseStockExportExcelDTO implements Serializable {
      * 交货仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "交货仓库", index = 11)
+    @ExcelProperty(value = "交货仓库", index = 12)
     private String deliveryWarehouseName;
 
     /**
      * 采购员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "采购员", index = 12)
+    @ExcelProperty(value = "采购员", index = 13)
     private String purchaseUserName;
 
     /**
      * 入库员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库员", index = 13)
+    @ExcelProperty(value = "入库员", index = 14)
     private String stockInUserName;
 
     /**
      * 入库备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库备注", index = 14)
+    @ExcelProperty(value = "入库备注", index = 15)
     private String remark;
 
     /**
      * 审核人（最新）
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核人（最新）", index = 15)
+    @ExcelProperty(value = "审核人（最新）", index = 16)
     private String approveUserName;
 
     /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 16)
+    @ExcelProperty(value = "创建人", index = 17)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 17)
+    @ExcelProperty(value = "创建时间", index = 18)
     private String createTime;
 }

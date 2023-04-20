@@ -37,6 +37,11 @@ public class PurchaseStockInDTO implements Serializable {
         private String code;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
          * 采购单号
          */
         private String purchaseOrderCode;

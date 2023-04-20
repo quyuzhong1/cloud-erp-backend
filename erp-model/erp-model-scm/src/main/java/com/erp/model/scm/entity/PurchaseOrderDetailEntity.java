@@ -129,31 +129,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal taxRate;
 
     /**
-     * 签收数量
-     */
-    @TableField("receive_qty")
-    private Integer receiveQty;
-
-    /**
-     * 入库数量
-     */
-    @TableField("stock_in_qty")
-    private Integer stockInQty;
-
-
-    /**
-     * 交货数量
-     */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-
-    /**
-     * 退货数量
-     */
-    @TableField("return_qty")
-    private Integer returnQty;
-
-    /**
      * 是否加急（false否，true是）
      */
     @TableField("is_urgent")

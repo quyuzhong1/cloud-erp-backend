@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -172,22 +173,8 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
         }
-        List<String> skuIds = records.stream().map(QcEffectivenessDTO.ViewQcForDocumentDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        for (QcEffectivenessDTO.ViewQcForDocumentDTO documentDTO : records) {
-            //产品名称
-            if (CollectionUtils.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(obj -> obj.getId().equals(documentDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-                documentDTO.setProductName(productName);
-            }
-            //质检耗时
-            if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
-                LocalDate qcDate = documentDTO.getQcDate();
-                LocalDateTime qcEndTime = documentDTO.getQcEndTime();
-            }
-        }
-
-
+        //格式化数据
+        doOpHandleQcForDocument(records);
         return new PagingVO(pageData);
     }
 
@@ -207,6 +194,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
              list =  this.qcBillMapper.viewExportQcForDocument(dto);
              fileName = "采购入库单数据";
              clazz = ExportQcDocumentExcelDTO.class;
+             doOpHandleQcForDocument((List<QcEffectivenessDTO.ViewQcForDocumentDTO>) list);
         }
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
@@ -217,5 +205,47 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 按单据查询格式化数据
+     * @author Will
+     * @date: 2023/4/19 16:56
+     * @param records
+     */
+    private void doOpHandleQcForDocument (List<QcEffectivenessDTO.ViewQcForDocumentDTO> records) {
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+
+        List<String> skuIds = records.stream().map(QcEffectivenessDTO.ViewQcForDocumentDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+        for (QcEffectivenessDTO.ViewQcForDocumentDTO documentDTO : records) {
+            //产品名称
+            if (CollectionUtils.isNotEmpty(productDetailList)) {
+                String productName = productDetailList.stream().filter(obj -> obj.getId().equals(documentDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                documentDTO.setProductName(productName);
+            }
+            //质检耗时
+            if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
+                Duration between = Duration.between(documentDTO.getQcEndTime(), documentDTO.getQcDate());
+                long hours = between.toHours();
+                documentDTO.setQcUseTime(hours + "H");
+            }
+            //质检预警
+            if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
+                Duration between = Duration.between(LocalDateTime.now(), documentDTO.getQcDate());
+                long hours = between.toHours();
+                if (hours > 24L) {
+                    documentDTO.setWarnRemark("已超时24L");
+                }
+                if (hours > 48L) {
+                    documentDTO.setWarnRemark("已超时48L");
+                }
+                if (hours > 72L) {
+                    documentDTO.setWarnRemark("已超时72L");
+                }
+            }
+        }
     }
 }

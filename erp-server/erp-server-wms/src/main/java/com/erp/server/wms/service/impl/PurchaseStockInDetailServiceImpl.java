@@ -68,7 +68,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         List<PurchaseStockInDetailEntity> list = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
 
         //处理明细数据
-        doOpHandleDetails(list,mainId);
+        doOpHandleDetails(list,mainId,Boolean.FALSE);
 
         //验证关联数量
         checkStockInQty(list,sourceType,mainId);
@@ -96,7 +96,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         List<PurchaseStockInDetailEntity> newList = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
 
         //处理明细id及操作日志
-        doOpHandleDetails(newList,mainId);
+        doOpHandleDetails(newList,mainId,Boolean.TRUE);
 
         //验证关联数量
         checkStockInQty(newList,sourceType,mainId);
@@ -151,7 +151,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<PurchaseStockInDetailEntity> newList, String mainId) {
+    private void doOpHandleDetails (List<PurchaseStockInDetailEntity> newList, String mainId,Boolean isUpdate) {
 
         List<PurchaseStockInDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         //采购明细信息
@@ -180,7 +180,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             }
         }
         //添加操作日志
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), addPairList, "编辑操作");
         }

@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.excel.PurchaseStockExportExcelDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -43,9 +42,9 @@ public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity>
      * @author Will
      * @date: 2023/4/13 17:30
      * @param dto
-     * @return List<PurchaseStockExportExcelDTO>
+     * @return List<PurchaseStockInDTO.ListDTO>
      */
-    List<PurchaseStockExportExcelDTO> listExportExcel(@Param("params") PurchaseStockInDTO.SearchParamDTO dto);
+    List<PurchaseStockInDTO.ListDTO> listExportExcel(@Param("params") PurchaseStockInDTO.SearchParamDTO dto);
     /**
      * @description: 查询退货单
      * @author Will
