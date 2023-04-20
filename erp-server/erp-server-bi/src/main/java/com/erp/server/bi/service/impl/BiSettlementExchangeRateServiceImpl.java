@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.MathUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
@@ -43,7 +43,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
 
     @Override
-    @Transactional
+    //@Transactional
     public Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.Default);
@@ -108,7 +108,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             //将汇率更新到退货表
             dmpReturnOrderInfoService.updateSettlementExchangeRate(entityList);
         }
-        return  true;
+        return  Boolean.TRUE;
     }
 
     @Override

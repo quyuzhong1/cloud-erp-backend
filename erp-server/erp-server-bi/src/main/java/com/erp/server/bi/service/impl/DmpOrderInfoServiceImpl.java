@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -1158,19 +1157,30 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
+        List<DmpOrderInfoEntity> updateList = new ArrayList<>();
+        LocalDateTime begin = LocalDateTime.now();
         entityList.forEach(obj->{
-             //根据日期查询订单
-            LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-             //大于等于开始日期
-            updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin());
-             //小于等于开始日期
-            updateWrapper.le(DmpOrderInfoEntity::getPlatformCreateTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()));
-             //原币种
-            updateWrapper.eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
-            //设置汇率
-            updateWrapper.set(DmpOrderInfoEntity::getCnySettleRate,obj.getExchangeRate());
-            this.update(updateWrapper);
+          LocalDateTime start = LocalDateTime.now();
+          List<DmpOrderInfoEntity> list =  this.lambdaQuery()
+                    .eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode())
+                    .ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin())
+                    .le(DmpOrderInfoEntity::getPlatformCreateTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
+                    .select(DmpOrderInfoEntity::getId,DmpOrderInfoEntity::getCreateTime)
+                    .list();
+          LocalDateTime end = LocalDateTime.now();
+          System.out.println(list.size()+"条数据查询一次时间===============，秒数："+Duration.between(start,end).getSeconds());
+
+           if (CollectionUtils.isEmpty(list)) {
+              return;
+           }
+            List<DmpOrderInfoEntity> collect = list.stream().map(x -> new DmpOrderInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
+            updateList.addAll(list);
         });
+        LocalDateTime start = LocalDateTime.now();
+        System.out.println(updateList.size() +"条数据查询所需时间===============，秒数："+Duration.between(begin,start).getSeconds());
+        this.updateBatchById(updateList,1000);
+        LocalDateTime end = LocalDateTime.now();
+        System.out.println(updateList.size() +"条数据修改所需时间===============，秒数："+Duration.between(start,end).getSeconds());
 
     }
 
