@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 签收单导出
@@ -115,6 +116,16 @@ public class WarehouseReceiveExcelDTO {
      * 创建人
      */
     private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 收货备注
+     */
+    private String remark;
 
     /**
      * 采购单详情表id

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 签收单导出
@@ -17,16 +18,11 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class WarehouseReceiveExportExcelDTO {
     /**
-     * 签收单号
+     * 收货单号
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "签收单号", index = 0)
+    @ExcelProperty(value = "收货单号", index = 0)
     private String code;
-
-    /**
-     * 采购单id
-     */
-    private String purchaseOrderId;
 
     /**
      * 采购单号
@@ -36,46 +32,31 @@ public class WarehouseReceiveExportExcelDTO {
     private String purchaseOrderCode;
 
     /**
-     * 供应商名
+     * 供应商
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "供应商名", index = 2)
+    @ExcelProperty(value = "供应商", index = 2)
     private String supplierName;
 
     /**
      * 单据状态
      */
-    private String approveStatus;
-
-    /**
-     * 审核状态名称
-     */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核状态名称", index = 3)
+    @ExcelProperty(value = "单据状态", index = 3)
     private String approveStatusName;
 
     /**
      * 作废状态
      */
-    private Boolean invalidStatus;
-
-    /**
-     * 作废状态名称
-     */
     @ColumnWidth(30)
-    @ExcelProperty(value = "作废状态名称", index = 4)
+    @ExcelProperty(value = "作废状态", index = 4)
     private String invalidStatusName;
 
     /**
-     * skuId
-     */
-    private String skuId;
-
-    /**
-     * skuNo
+     * SKU
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "skuNo", index = 5)
+    @ExcelProperty(value = "SKU", index = 5)
     private String skuNo;
 
     /**
@@ -86,53 +67,54 @@ public class WarehouseReceiveExportExcelDTO {
     private String productName;
 
     /**
-     * 收货日期
+     * 收货数量
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "收货日期", index = 7)
-    private LocalDate billDate;
-
-    /**
-     * 签收数量
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "签收数量", index = 8)
+    @ExcelProperty(value = "收货数量", index = 7)
     private Integer receiveQty;
-
-    /**
-     * 交货仓库
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "交货仓库", index = 9)
-    private String deliveryWarehouseName;
-
-    /**
-     * 收货人名称
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "收货人名称", index = 10)
-    private String receiveUserName;
-
-    /**
-     * 采购员名称
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "采购员名称", index = 11)
-    private String purchaseUserName;
 
     /**
      * 采购数量
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "采购数量", index = 12)
+    @ExcelProperty(value = "采购数量", index = 8)
     private Integer purchaseQty;
 
     /**
      * 超收数量
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "超收数量", index = 13)
+    @ExcelProperty(value = "超收数量", index = 9)
     private Integer exceedQty;
+
+    /**
+     * 交货仓库
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "交货仓库", index = 10)
+    private String deliveryWarehouseName;
+
+
+    /**
+     * 收货日期
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "收货日期", index = 11)
+    private LocalDate billDate;
+
+    /**
+     * 收货员
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "收货员", index = 12)
+    private String receiveUserName;
+
+    /**
+     * 采购员
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "采购员", index = 13)
+    private String purchaseUserName;
 
     /**
      * 审核人
@@ -142,14 +124,24 @@ public class WarehouseReceiveExportExcelDTO {
     private String approveUserName;
 
     /**
+     * 收货备注
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "收货备注", index = 15)
+    private String remark;
+
+    /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 15)
+    @ExcelProperty(value = "创建人", index = 16)
     private String createUserName;
 
     /**
-     * 采购单详情表id
+     * 创建时间
      */
-    private String purchaseOrderDetailId;
+    @ColumnWidth(30)
+    @ExcelProperty(value = "创建时间", index = 17)
+    private LocalDateTime createTime;
+
 }

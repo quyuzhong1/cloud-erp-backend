@@ -729,6 +729,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (ObjectUtil.isEmpty(userDTO)) {
                 throw new ServiceException(ApiError.ERROR_9011);
             }
+
+            WarehouseReceiveEntity entity = this.getById(dto.getMainId());
+            if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
+                throw new ServiceException(ApiError.ERROR_98057);
+            }
             //获取用户部门
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userDTO.getUid());
 

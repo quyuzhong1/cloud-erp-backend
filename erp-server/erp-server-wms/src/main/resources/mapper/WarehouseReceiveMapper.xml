@@ -203,7 +203,9 @@
         wrd.exceed_qty,
         wr.approve_user_name,
         wr.create_user_name,
-        wrd.purchase_order_detail_id
+        wrd.purchase_order_detail_id,
+        wr.create_time,
+        wrd.remark
         FROM warehouse_receive_detail wrd
         INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
