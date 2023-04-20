@@ -10,6 +10,7 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -174,7 +175,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
     }
 
     @Data

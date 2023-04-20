@@ -811,7 +811,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
                 List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(thisPodIds)) {
-                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setStockInQty(stockInQty);
                 }
             }
@@ -819,7 +819,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                 List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(thisPodIds)) {
-                    Integer receiveQty = receiveDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer receiveQty = receiveDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setReceiveQty(receiveQty);
                 }
             }
