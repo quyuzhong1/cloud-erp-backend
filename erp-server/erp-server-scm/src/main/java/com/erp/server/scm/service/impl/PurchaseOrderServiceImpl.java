@@ -236,7 +236,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> podIds = entityDetails.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         //获取收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        //获取已审核收货信息
+        if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+            receiveDetailList = receiveDetailList.stream().filter(obj -> ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).collect(Collectors.toList());
 
+        }
         //流程信息
         List<PurchaseOrderProcessDTO> processList = new ArrayList<>();
         PurchaseOrderProcessOperationEnum[] values = PurchaseOrderProcessOperationEnum.values();
