@@ -5,13 +5,19 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * ${comments}
@@ -131,5 +137,32 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param uids
      */
     void deleteByIds(List<String> uids);
+
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:46
+     * @param uid 用户id
+     * @return java.lang.Boolean
+     **/
+    Boolean resetPassword(String uid);
+
+    /**
+     * 忘记密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:18
+     * @param forgotPasswordDTO forgotPasswordDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO);
+
+    /**
+     * 忘记密码-获取验证码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:45
+     * @param userAccount userAccount
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Map<String,Object> forgotPasswordGetCode(String userAccount);
 }
 

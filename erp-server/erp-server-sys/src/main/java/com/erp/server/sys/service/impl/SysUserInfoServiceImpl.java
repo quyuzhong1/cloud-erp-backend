@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,6 +11,7 @@ import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -21,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.Md5Util;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.dto.email.EmailDTO;
@@ -45,6 +48,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -91,6 +95,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private SysDepartmentMapper sysDepartmentMapper;
+
+    @Resource
+    private CommonService commonService;
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
@@ -999,4 +1006,129 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         this.removeByIds(uids);
     }
 
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:46
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean resetPassword(String uid) {
+        if (StringUtils.isBlank(uid)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        SysUserInfoEntity userInfoEntity = this.getById(uid);
+        if (StringUtils.isBlank(userInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+        EmailVerifyCodeDTO emailVerifyCodeDTO = new EmailVerifyCodeDTO();
+        emailVerifyCodeDTO.setEmail(userInfoEntity.getEmail());
+        String num = RandomStringUtils.randomNumeric(8);
+        String password = Md5Util.md5(num);
+        SysUserInfoEntity entity = new SysUserInfoEntity();
+
+        PassEntity passEntity = PassHandler.buildPassword(password);
+        entity.setPassword(passEntity.getPassword());
+        entity.setSalt(passEntity.getSalt());
+        boolean flag = lambdaUpdate()
+                .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
+                .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
+                .eq(SysUserInfoEntity::getUid, userInfoEntity.getUid()).update();
+        if (flag) {
+            boolean result = redisService.setNx(emailVerifyCodeDTO.getEmail(), 1, 1, TimeUnit.MINUTES);
+            if (!result) {
+                throw new ServiceException(ApiError.ERROR_1014);
+            }
+            boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());
+            if (!emailFlag) {
+                throw new ServiceException(ApiError.ERROR_1008);
+            }
+            LocalDateTime localDate = LocalDateTime.now();
+            emailVerifyCodeDTO.setVerifyCode(String.format("登录密码：'%s'，请登录后修改设置新密码", num));
+            emailVerifyCodeDTO.setDate(DateUtil.getCnDate(localDate));
+            Boolean sendResult = sendingEmail(emailVerifyCodeDTO, "重置密码");
+            if (!sendResult) {
+                throw new ServiceException(ApiError.ERROR_1010);
+            }
+        }
+        return flag;
+    }
+
+    /**
+     * 忘记密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:18
+     * @param forgotPasswordDTO forgotPasswordDTO
+     * @return java.lang.Boolean
+     **/
+    public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getVerificationCode()).one();
+        if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9043);
+        }
+
+        if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+
+        String code = redisService.getCacheObject(RedisKeyUtil.getEmailCodeCacheKey(sysUserInfoEntity.getEmail()));
+        if (StringUtils.isBlank(code) || !forgotPasswordDTO.getVerificationCode().equals(code)) {
+            throw new ServiceException(ApiError.ERROR_1007);
+        }
+        SysUserInfoEntity entity = new SysUserInfoEntity();
+
+        PassEntity passEntity = PassHandler.buildPassword(forgotPasswordDTO.getPassword());
+        entity.setPassword(passEntity.getPassword());
+        entity.setSalt(passEntity.getSalt());
+        boolean flag = lambdaUpdate()
+                .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
+                .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
+                .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid()).update();
+        return flag;
+    }
+
+    /**
+     * 忘记密码-获取验证码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:45
+     * @param userAccount userAccount
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    public Map<String,Object> forgotPasswordGetCode(String userAccount) {
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).one();
+        if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9043);
+        }
+
+        if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+        EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
+        dto.setEmail(sysUserInfoEntity.getEmail());
+        sedEmail(dto);
+        Map<String,Object> map = new HashMap<>();
+        map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
+        return map;
+    }
+
+    private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {
+        String email = dto.getEmail();
+        boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1014);
+        }
+        boolean flag = ValidatorUtil.isEmail(email);
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_1008);
+        }
+        EmailDTO<EmailVerifyCodeDTO> emailDTO = new EmailDTO();
+        emailDTO.setData(dto);
+        String[] recipients = {email};
+        emailDTO.setRecipients(recipients);
+        emailDTO.setSubject(subject);
+        emailDTO.setTemplate(EmailTemplate.VERIFY_CODE);
+        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        return sendResult;
+    }
 }

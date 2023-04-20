@@ -1,6 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -11,12 +13,10 @@ import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -96,5 +96,42 @@ public class SysUserInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 重置密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:43
+     * @param
+     * @return
+     **/
+    @GetMapping("/resetPassword")
+    public ApiResult resetPassword(@RequestParam("uid") String uid) {
+        Boolean flag = sysUserInfoService.resetPassword(uid);
+        return flag == true ? success() : failure();
+    }
 
+    /**
+     * 忘记密码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:16
+     * @param dto dto
+     * @return
+     **/
+    @GetMapping("/forgotPassword")
+    public ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto) {
+        Boolean flag = sysUserInfoService.forgotPassword(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 忘记密码-获取验证码
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:45
+     * @param userAccount userAccount
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping("/forgotPasswordGetCode")
+    public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
+        Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount);
+        return success(map);
+    }
 }
