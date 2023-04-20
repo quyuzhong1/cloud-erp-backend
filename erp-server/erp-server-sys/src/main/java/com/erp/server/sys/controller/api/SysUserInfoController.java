@@ -20,6 +20,7 @@ import java.util.Map;
 
 
 /**
+ * 用户管理
  * @author yl
  * @email ylstrive@gmail.com
  * @date 2022-07-07 18:28:29
@@ -44,7 +45,11 @@ public class SysUserInfoController extends BaseController {
         return success(list);
     }
 
-
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
     @RequestMapping("/paging")
     public ApiResult list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
         PagingVO pagingVO = sysUserInfoService.paging(dto);
@@ -90,6 +95,11 @@ public class SysUserInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 修改状态
+     * @param stateDTO
+     * @return
+     */
     @RequestMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         sysUserInfoService.updateState(stateDTO);
