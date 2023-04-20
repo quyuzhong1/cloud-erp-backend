@@ -8,19 +8,19 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.ChartVO;
+import com.common.business.vo.PagingVO;
+import com.common.business.vo.SeriesVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.dto.BiTargetTypeDTO;
 import com.erp.model.bi.entity.*;
-import com.common.business.vo.ChartVO;
-import com.common.business.vo.SeriesVO;
 import com.erp.server.bi.enums.BiDataSourceCustomEnum;
 import com.erp.server.bi.enums.BiDataSourceCustomTypeEnum;
 import com.erp.server.bi.enums.DataTypeEnum;
@@ -394,10 +394,10 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                     List<String> keyList = head.keySet().stream().collect(Collectors.toList());
                     for (String key : keyList) {
                         Object value = map.get(key);
+                        map.remove(key);
                         if (ObjectUtils.isEmpty(value)) {
                             map.put(key, "");
                         } else {
-                            map.remove(key);
                             map.put(key,value);
                         }
                     }

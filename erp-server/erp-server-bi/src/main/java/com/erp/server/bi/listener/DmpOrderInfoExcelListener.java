@@ -11,7 +11,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.DmpOrderInfoImportExcelDTO;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -64,14 +63,13 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         //添加数据用于判断是否为空
         allList.add(dto);
         List<String> errorMsgList = new ArrayList<>();
-        DmpOrderInfoEntity entity = new DmpOrderInfoEntity();
         if (StringUtils.isBlank(dto.getPlatformOrderId())) {
             errorMsgList.add("订单号不能为空");
         }
         if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
             errorMsgList.add("订单号不能超过50个字节");
         }
-        if (!StrUtils.isLetterDigitBar(dto.getPlatformOrderId())) {
+        if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && !StrUtils.isLetterDigitBar(dto.getPlatformOrderId())) {
             errorMsgList.add("订单号只能包含字母、数字、-");
         }
 
