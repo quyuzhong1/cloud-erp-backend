@@ -2,7 +2,7 @@ package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.common.core.excel.LocalDateTimeConverter;
+import com.common.business.service.LocalDateStringConverter;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -124,9 +124,8 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      * 订单下单时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "订单下单时间", index = 14,converter = LocalDateTimeConverter.class)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createTime;
+    @ExcelProperty(value = "订单下单时间", index = 14,converter= LocalDateStringConverter.class)
+    private LocalDateTime platformCreateTime;
 
     /**
      * 订单发货时间
@@ -164,7 +163,7 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      * 单价
      */
     @ExcelProperty(value = "单价", index = 20)
-    private BigDecimal sellPrice;
+    private BigDecimal sellPriceOrigin;
 
     /**
      * 数量
@@ -176,7 +175,7 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      * 销售额[原币种]
      */
     @ExcelProperty(value = "销售额[原币种]", index = 22)
-    private BigDecimal sellAmount;
+    private BigDecimal sellAmountOrigin;
 
 
 }
