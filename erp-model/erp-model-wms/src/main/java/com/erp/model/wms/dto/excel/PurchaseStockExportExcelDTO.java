@@ -2,10 +2,12 @@ package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.service.LocalDateStringConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -147,6 +149,6 @@ public class PurchaseStockExportExcelDTO implements Serializable {
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 18)
-    private String createTime;
+    @ExcelProperty(value = "创建时间", index = 18 ,converter= LocalDateStringConverter.class)
+    private LocalDateTime createTime;
 }
