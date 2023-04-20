@@ -197,7 +197,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //来源ids
         List<String> ids = list.stream().map(PurchaseStockInDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //采购订单明细ids
+        List<String> podIds = list.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+
 
         PurchaseStockInEntity entity = purchaseStockInService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
@@ -221,13 +225,14 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             }
         }
 
-        //下推单据明细id查询
-        List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
-        //来源采购订单
-        List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(ids);
+        //采购订单
+        List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+
+        //下推单据明细id查询
+        List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
 
         //查收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
