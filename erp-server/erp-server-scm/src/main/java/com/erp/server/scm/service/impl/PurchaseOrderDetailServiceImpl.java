@@ -312,7 +312,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     /**
-     * 根据主键查询id查询明细
+     * 根据明细id查询明细
      * @Author Luo_WG
      * @Date 2023/4/13 14:00
      * @param ids ids
@@ -324,6 +324,21 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         queryWrapper.in(PurchaseOrderDetailEntity::getId, ids);
         return this.list(queryWrapper);
     }
+
+    /**
+     * 根据主表Id查询明细
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:37
+     * @param id id
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderDetailEntity>
+     **/
+    @Override
+    public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailByOrderId(String id) {
+        LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(PurchaseOrderDetailEntity::getPurchaseOrderId, id);
+        return this.list(queryWrapper);
+    }
+
 
     @Override
     public List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {

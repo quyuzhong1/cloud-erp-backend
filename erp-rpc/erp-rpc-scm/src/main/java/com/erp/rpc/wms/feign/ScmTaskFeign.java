@@ -37,10 +37,10 @@ public interface ScmTaskFeign {
     PurchaseOrderSupplierEntity getOrderSupplierByOrderId(@RequestBody String id);
 
     /**
-     * 根据采购订单id查询详情信息
+     * 根据采购订单详情id查询详情信息
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
-     * @param id id：采购订单id
+     * @param id id：采购订单详情表id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
     @PostMapping("feign/purchaseOrder/listPurchaseOrderDetailById")
@@ -87,4 +87,27 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/getByOrderId")
     PurchaseOrderDTO.GetOneDTO getByOrderId(@RequestBody String purchaseOrderId);
+
+    /**
+     * 根据采购订单id查询详情信息
+     * @param  id：采购订单表id
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     **/
+    @PostMapping("feign/purchaseOrder/listPurchaseOrderDetailByOrderId")
+    List<PurchaseOrderDetailEntity> listPurchaseOrderDetailByOrderId(@RequestBody String id);
+
+    /**
+     * 修改采购订单明细表
+     * @param  entity entity
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     **/
+    @PostMapping("feign/purchaseOrder/updatePurchaseOrderDetailById")
+    Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity);
+
+
+
 }

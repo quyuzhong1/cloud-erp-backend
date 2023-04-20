@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -120,7 +121,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      * 到货时间
      */
     @TableField("arrival_time")
-    private Date arrivalTime;
+    private LocalDateTime arrivalTime;
 
     /**
      * 税率

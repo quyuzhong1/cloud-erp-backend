@@ -5,6 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import javax.validation.Valid;
@@ -30,7 +31,7 @@ public class WarehouseReceiveDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO extends BaseEntity {
 
         /**
          * 采购订单id

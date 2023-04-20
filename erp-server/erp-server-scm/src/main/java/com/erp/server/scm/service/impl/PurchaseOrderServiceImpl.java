@@ -732,6 +732,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
         //生成下推签收单
         List<PurchaseOrderDTO.GenerateReceiveDTO> list = dto.getList();
         //采购订单明细Ids
@@ -780,6 +781,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     }
                 }
                 addDTO.setWarehouseReceiveDetailList(warehouseReceiveDetailList);
+                addDTO.setCreateUserId(userInfo.getUid());
+                addDTO.setCreateUserName(userInfo.getUserName());
+                addDTO.setUpdateUserId(userInfo.getUid());
+                addDTO.setUpdateUserName(userInfo.getUserName());
                 wmsTaskFeign.addWarehouseReceive(addDTO);
                 listSign.add(generateReceiveDTO.getId());
             }
@@ -1308,16 +1313,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(obj.getPurchaseQty() - deliveryQty);
 
-            if (receiveQty == MathUtil.ZERO) {
-                obj.setArrivalStatus(ArrivalStatusEnum.NON_ARRIVAL.getCode());
-                obj.setArrivalStatusName(ArrivalStatusEnum.NON_ARRIVAL.getName());
-            } else if (receiveQty > MathUtil.ZERO && receiveQty < obj.getPurchaseQty()) {
-                obj.setArrivalStatus(ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode());
-                obj.setArrivalStatusName(ArrivalStatusEnum.PARTIAL_ARRIVAL.getName());
-            } else {
-                obj.setArrivalStatus(ArrivalStatusEnum.ARRIVED.getCode());
-                obj.setArrivalStatusName(ArrivalStatusEnum.ARRIVED.getName());
-            }
             Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
                     .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
