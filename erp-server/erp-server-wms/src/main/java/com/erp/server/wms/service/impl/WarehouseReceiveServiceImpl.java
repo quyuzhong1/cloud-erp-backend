@@ -224,6 +224,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGSH, BusinessNoTypeEnum.CODE_CGSH.getCode()));
         //设置收货单主表
         WarehouseReceiveEntity warehouseReceiveEntity = new WarehouseReceiveEntity();
+        BeanMapperUtils.copy(purchaseOrderEntity,warehouseReceiveEntity);
         warehouseReceiveEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         warehouseReceiveEntity.setCode(code);
         warehouseReceiveEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
@@ -238,13 +239,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (departmentDTO != null) {
             warehouseReceiveEntity.setReceiveDeptName(departmentDTO.getName());
         }
-        warehouseReceiveEntity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         warehouseReceiveEntity.setReceiveOrgName(sysAccountingCompanyEntity.getCompanyName());
         warehouseReceiveEntity.setBillDate(dto.getBillDate());
         warehouseReceiveEntity.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
         warehouseReceiveEntity.setDeliveryWarehouseName(warehouseEntity.getName());
-        warehouseReceiveEntity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
-        warehouseReceiveEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
         //保存主表信息
         this.save(warehouseReceiveEntity);
 
@@ -748,7 +746,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
             //设置明细
             List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
-            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getId());
+            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getMainId());
             detailByMainId.forEach(req -> {
                 PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
                 BeanMapperUtils.copy(req,detailDTO);

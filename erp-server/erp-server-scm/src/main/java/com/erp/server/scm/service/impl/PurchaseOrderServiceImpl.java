@@ -700,19 +700,23 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         LoginUser userInfo = commonService.getUserInfo();
         List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceiveDTOS = baseMapper.viewGenerateReceive(ids);
 
+        List<String> detailIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+
         //获取sku的id集合
         List<String> skuIdList = viewGenerateReceiveDTOS.stream().map(PurchaseOrderDTO.ViewGenerateReceiveDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+
+        //获取签收数量
+        List<WarehouseReceiveDetailEntity> receiveQtyList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(detailIdList);
         for (PurchaseOrderDTO.ViewGenerateReceiveDTO viewGenerateReceiveDTO : viewGenerateReceiveDTOS) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(viewGenerateReceiveDTO.getSkuId())).findFirst().orElse(null);
             viewGenerateReceiveDTO.setProductName(productDetailEntity.getName());
             viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
-            //获取签收数量
-            List<WarehouseReceiveDTO.GetReceiveDTO> receiveQtyList = wmsTaskFeign.getReceiveQty(viewGenerateReceiveDTO.getId());
-            Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderId().equals(viewGenerateReceiveDTO.getId())).map(WarehouseReceiveDTO.GetReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() - viewGenerateReceiveDTO.getReceiveQty());
             viewGenerateReceiveDTO.setExceedQty(0);
