@@ -35,7 +35,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         /**
          * 状态名称
          */
-        private String statusName;
+        private String moduleStatus;
     }
 
     /**
@@ -52,7 +52,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         /**
          * 状态名称
          */
-        private String statusName;
+        private String moduleStatus;
     }
 
     /**
