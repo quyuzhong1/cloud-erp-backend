@@ -185,6 +185,9 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         if (ObjectUtils.isEmpty(entity.getTargetValue())) {
             errorMsgList.add("目标值不能为空");
         }
+        if (CollectionUtils.isEmpty(detailList) && CollectionUtils.isEmpty(errorMsgList)) {
+            errorMsgList.add("自助添加数据不能为空");
+        }
         String errStr = "";
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
