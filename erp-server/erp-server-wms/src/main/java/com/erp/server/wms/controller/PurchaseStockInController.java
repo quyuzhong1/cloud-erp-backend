@@ -78,8 +78,8 @@ public class PurchaseStockInController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseStockInDTO.AddDTO dto) {
-        Boolean flag = purchaseStorageService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+        String id = purchaseStorageService.addAndSubmit(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
     
     /**

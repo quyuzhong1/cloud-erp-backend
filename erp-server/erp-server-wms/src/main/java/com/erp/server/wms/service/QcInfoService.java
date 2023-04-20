@@ -25,7 +25,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param qcInfo
      * @return void
      */
-    void draft(String billId, QcInfoDTO.AddDTO qcInfo);
+    void add(String billId, QcInfoDTO.AddDTO qcInfo);
 
     
     /**
@@ -45,4 +45,22 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.QcQtyDTO>
      */
     List<QcInfoDTO.QcQtyDTO> getPurOrderIds(List<String> purOrderIds);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-04-20 15:57
+     * @param ids
+     * @return void
+     */
+    List<QcInfoEntity> getByMainIdList(List<String> ids);
+
+    /**
+     * 批量免检后 批量去更新 数量
+     * @author yl
+     * @date 2023-04-20 17:07
+     * @param ids
+     * @return void
+     */
+    void updateQcQty(List<String> ids);
 }

@@ -76,4 +76,70 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return java.lang.Boolean
      */
     Boolean draft(QcBillDTO.SaveOrUpdateDTO dto);
+
+    
+    /**
+     * 免检
+     * @author yl
+     * @date 2023-04-20 15:29
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean exemption(QcBillDTO.SaveOrUpdateDTO dto);
+
+
+
+
+    /**
+     * 批量完成质检单
+     * @author yl
+     * @date 2023-04-20 15:37
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean batchFinish(List<String> ids);
+
+    /**
+     * 批量完成免检
+     * @author yl
+     * @date 2023-04-20 16:50
+     * @return java.lang.Boolean
+     */
+    Boolean batchExemption(List<String> ids);
+
+    /**
+     * 批量取消 质检单
+     * @author yl
+     * @date 2023-04-20 17:13
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean batchCancel(List<String> ids);
+
+    /**
+     * 删除质检单
+     * @author yl
+     * @date 2023-04-20 17:21
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean delete(List<String> ids);
+    
+    /**
+     * 撤销
+     * @author yl
+     * @date 2023-04-20 17:30
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 分配质检员
+     * @author yl
+     * @date 2023-04-20 17:58
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean assign(QcBillDTO.AssignDTO dto);
 }

@@ -24,7 +24,7 @@ public interface QcBillRemarkService extends SuperService<QcBillRemarkEntity> {
      * @param remarkList
      * @return void
      */
-    void draft(String billId, List<QcRemarkDTO.AddDTO> remarkList);
+    void add(String billId, List<QcRemarkDTO.AddDTO> remarkList);
 
     /**
      * 获取到质检备注的信息

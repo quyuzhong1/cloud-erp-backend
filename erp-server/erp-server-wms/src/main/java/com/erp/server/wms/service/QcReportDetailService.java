@@ -25,7 +25,7 @@ public interface QcReportDetailService extends SuperService<QcReportDetailEntity
      * @param reportDetailList
      * @return void
      */
-    void draft(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList);
+    void add(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList);
 
     /**
      * 根据质检单id获取 质检报告明细信息

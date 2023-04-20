@@ -20,6 +20,8 @@ public class SysDepartmentUserNumberDTO implements Serializable {
 
     private String departmentId;
 
+    private String departmentName;
+
     private String userId;
 
     private String userName;

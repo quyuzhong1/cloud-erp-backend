@@ -47,10 +47,6 @@ public class QcBillDTO implements Serializable {
 
 
 
-
-
-
-
         /**
          * 质检日期
          */
@@ -74,6 +70,17 @@ public class QcBillDTO implements Serializable {
          * 质检部门id
          */
         private String qcDeptId;
+
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
         /**
          * 产品信息

@@ -51,7 +51,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void draft(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList) {
+    public void add(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList) {
         if (CollectionUtils.isEmpty(reportDetailList)) {
             return;
         }

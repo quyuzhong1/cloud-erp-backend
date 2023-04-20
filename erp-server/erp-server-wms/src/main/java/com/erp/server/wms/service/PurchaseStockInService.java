@@ -51,7 +51,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseStockInDTO.AddDTO dto);
+    String   addAndSubmit(PurchaseStockInDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will

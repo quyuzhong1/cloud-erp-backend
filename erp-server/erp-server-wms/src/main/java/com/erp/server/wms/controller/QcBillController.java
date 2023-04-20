@@ -9,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcBillDTO;
-import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -98,20 +97,6 @@ public class QcBillController extends BaseController {
         return result ? success() : failure();
     }
 
-
-    /**
-     * 操作完成质检
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/actionFinish")
-    public ApiResult actionFinish(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-
-        return success();
-    }
-
-
     /**
      * 免检
      *
@@ -120,33 +105,47 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/exemption")
     public ApiResult exemption(@RequestBody @Validated QcBillDTO.SaveOrUpdateDTO dto) {
-        return success();
+        Boolean result = qcBillService.exemption(dto);
+        return result ? success() : failure();
     }
 
 
     /**
-     * 操作完成免检
+     * 批量完成质检
      *
      * @param dto
      * @return
      */
-    @PostMapping("/actionExemption")
-    public ApiResult actionExemption(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-
-        return success();
+    @PostMapping("/batchFinish")
+    public ApiResult actionFinish(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = qcBillService.batchFinish(dto.getIds());
+        return result ? success() : failure();
     }
 
 
     /**
-     * 操作 取消质检
+     * 批量免检
      *
      * @param dto
      * @return
      */
-    @PostMapping("/actionCancel")
-    public ApiResult actionCancel(@RequestBody @Validated BaseIdsDTO dto) {
+    @PostMapping("/batchExemption")
+    public ApiResult batchExemption(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = qcBillService.batchExemption(dto.getIds());
+        return result ? success() : failure();
+    }
 
-        return success();
+
+    /**
+     * 批量取消质检
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchCancel")
+    public ApiResult batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = qcBillService.batchCancel(dto.getIds());
+        return result ? success() : failure();
     }
 
 
@@ -156,13 +155,28 @@ public class QcBillController extends BaseController {
      * @param dto
      * @return
      */
+    @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = qcBillService.delete(dto.getIds());
+        return result ? success() : failure();
     }
 
+
     /**
-     * 导出
-     * 质检单
+     * 撤销
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean result = qcBillService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 导出质检单
      */
     @PostMapping("/exportQcBill")
     public ApiResult exportWarehouse(@RequestBody @Valid QcBillDTO.ExportDTO dto, HttpServletResponse response) {
@@ -177,7 +191,8 @@ public class QcBillController extends BaseController {
      */
     @PostMapping("/assign")
     public ApiResult assign(@RequestBody @Valid QcBillDTO.AssignDTO dto) {
-        return success();
+        Boolean result = qcBillService.assign(dto);
+        return result?success():failure();
 
     }
 

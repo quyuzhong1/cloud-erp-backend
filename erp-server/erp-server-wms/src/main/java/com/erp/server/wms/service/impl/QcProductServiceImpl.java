@@ -11,12 +11,14 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
 import com.erp.server.wms.service.QcProductService;
 import com.erp.server.wms.service.WmsAttachmentService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,7 +47,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void draft(String billId, QcProductDTO.AddDTO qcProduct) {
+    public void add(String billId, QcProductDTO.AddDTO qcProduct) {
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);
         String id = qcProduct.getId();
@@ -97,9 +99,26 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     }
 
 
+    /**
+     * 获取到质检产品信息
+     *
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.QcProductEntity>
+     * @author yl
+     * @date 2023-04-20 16:26
+     */
+    @Override
+    public List<QcProductEntity> getByMainIdList(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(QcProductEntity::getMainId,mainIds).list();
+    }
+
+
     private QcProductEntity getByBillId(String billId) {
         LambdaQueryWrapper<QcProductEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(QcProductEntity::getMainId,billId);
+        queryWrapper.eq(QcProductEntity::getMainId, billId);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
 

@@ -18,6 +18,7 @@ public enum ModuleTypeEnum {
     PURCHASE_STOCK_IN("7", "采购入库单"),
     WAREHOUSE_RECEIVE("8", "收货单"),
     PURCHASE_RETURN_ORDER("9", "采购退货单"),
+    QC_ORDER("10", "质检单"),
 
     ;
 

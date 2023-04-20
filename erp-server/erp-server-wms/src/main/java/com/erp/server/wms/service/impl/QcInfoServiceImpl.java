@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -54,7 +55,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void draft(String billId, QcInfoDTO.AddDTO qcInfo) {
+    public void add(String billId, QcInfoDTO.AddDTO qcInfo) {
         QcInfoEntity qcInfoEntity = new QcInfoEntity();
         String id = qcInfo.getId();
         if (StringUtils.isBlank(id)) {
@@ -162,7 +163,37 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CollectionUtils.isEmpty(purOrderIds)) {
             return Collections.emptyList();
         }
-        return  baseMapper.getByPurOrderIds(purOrderIds);
+        return baseMapper.getByPurOrderIds(purOrderIds);
+    }
+
+    @Override
+    public List<QcInfoEntity> getByMainIdList(List<String> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            return this.lambdaQuery().in(QcInfoEntity::getMainId, ids).list();
+        }
+        return Collections.emptyList();
+    }
+
+
+    /**
+     * 批量免检后 批量去更新 数量
+     *
+     * @param ids
+     * @return void
+     * @author yl
+     * @date 2023-04-20 17:07
+     */
+    @Override
+    public void updateQcQty(List<String> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            LambdaUpdateWrapper<QcInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(QcInfoEntity::getQcBadQty, 0);
+            updateWrapper.set(QcInfoEntity::getQcGoodQty, 0);
+            updateWrapper.set(QcInfoEntity::getQcQty, 0);
+            updateWrapper.eq(QcInfoEntity::getMainId, ids);
+            this.update(updateWrapper);
+        }
+
     }
 
 

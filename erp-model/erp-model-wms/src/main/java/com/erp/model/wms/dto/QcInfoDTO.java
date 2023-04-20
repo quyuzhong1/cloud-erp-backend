@@ -76,6 +76,13 @@ public class QcInfoDTO {
 
 
         /**
+         * 采购订单明细id 不能为空
+         */
+        @NotBlank(message = "质检不良量不能为空")
+        private String purchaseOrderDetailId;
+
+
+        /**
          * 问题属性
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=qcProblemType
          */
