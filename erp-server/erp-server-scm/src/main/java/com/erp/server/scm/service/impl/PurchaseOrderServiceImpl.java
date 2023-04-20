@@ -364,6 +364,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        List<String> podIds = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        //验证有没有下推收货单据
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98055);
+        }
+        //验证有没有下推采购入库单据
+        List<PurchaseStockInDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98056);
+        }
 
         log.info("采购订单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
         //取回流程 TODO
@@ -886,6 +901,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             log.error("未找到订单信息，ids={}",JSONUtil.toJsonStr(ids));
             throw new ServiceException(ApiError.ERROR_98025);
         }
+        long count = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98054);
+        }
+
         //订单明细信息集合
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {

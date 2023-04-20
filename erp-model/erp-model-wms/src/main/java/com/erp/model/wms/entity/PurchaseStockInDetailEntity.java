@@ -58,6 +58,12 @@ public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetai
     private Integer purchaseQty;
 
     /**
+     * 超收数量
+     */
+    @TableField("exceed_qty")
+    private Integer exceedQty;
+
+    /**
      * 收货数量
      */
     @TableField("receive_qty")

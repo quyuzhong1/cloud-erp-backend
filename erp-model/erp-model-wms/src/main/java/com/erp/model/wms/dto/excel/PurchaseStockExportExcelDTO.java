@@ -83,72 +83,65 @@ public class PurchaseStockExportExcelDTO implements Serializable {
     private Integer purchaseQty;
 
     /**
-     * 收货数量
+     * 实收数量
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "收货数量", index = 9)
-    private Integer receiveQty;
-
-    /**
-     * 入库数量
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "入库数量", index = 10)
+    @ExcelProperty(value = "实收数量", index = 9)
     private Integer stockInQty;
 
     /**
      * 超收数量
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "超收数量", index = 11)
+    @ExcelProperty(value = "超收数量", index = 10)
     private Integer exceedQty;
 
     /**
      * 交货仓库
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "交货仓库", index = 12)
+    @ExcelProperty(value = "交货仓库", index = 11)
     private String deliveryWarehouseName;
 
     /**
      * 采购员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "采购员", index = 13)
+    @ExcelProperty(value = "采购员", index = 12)
     private String purchaseUserName;
 
     /**
      * 入库员
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库员", index = 14)
+    @ExcelProperty(value = "入库员", index = 13)
     private String stockInUserName;
 
     /**
      * 入库备注
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "入库备注", index = 15)
+    @ExcelProperty(value = "入库备注", index = 14)
     private String remark;
 
     /**
      * 审核人（最新）
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "审核人（最新）", index = 16)
+    @ExcelProperty(value = "审核人（最新）", index = 15)
     private String approveUserName;
 
     /**
      * 创建人
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建人", index = 17)
+    @ExcelProperty(value = "创建人", index = 16)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 18 ,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "创建时间", index = 17 ,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 }

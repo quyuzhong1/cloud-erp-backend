@@ -24,5 +24,9 @@ public class RocketMqConsumerGroup {
      * 金蝶员工（用户管理）
      */
     public static final String SYNC_KINGDEE_SYS_USER_INFO = "${spring.profiles.active}-sync_kingdee_sys_user_info";
+    /**
+     * 金蝶采购订单（采购订单）
+     */
+    public static final String SYNC_KINGDEE_PURCHASE_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_order";
 
 }

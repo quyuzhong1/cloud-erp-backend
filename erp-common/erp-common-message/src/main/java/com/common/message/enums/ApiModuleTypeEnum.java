@@ -14,8 +14,9 @@ public enum ApiModuleTypeEnum {
     ASSISTANT_DATA(3, "assistantData", "辅助资料",""),
     ONE_LEVEL_CATEGORY(4, "oneLevelCategory", "一级分类","plm"),
     SECOND_LEVEL_CATEGORY(5, "secondLevelCategory", "二级分类","plm"),
-    SYS_USER_INFO(6, "sys_user_info", "员工","sys"),
+    SYS_USER_INFO(6, "sysUserInfo", "员工","sys"),
     CHANGE_ORG(7, "changeOrg", "默认组织切换",""),
+    PURCHASE_ORDER(6, "purchaseOrder", "采购订单","scm"),
     ;
     private Integer code;
 

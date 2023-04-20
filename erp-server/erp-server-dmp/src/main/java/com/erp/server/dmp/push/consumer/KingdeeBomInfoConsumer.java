@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -40,19 +41,23 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
     private KingdeeCommonService kingdeeCommonService;
 
     public static void main(String[] args) {
+
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Empinfo");
-        JSONObject json = new JSONObject();
-        KingdeeUtils.makeFieldJson(json,"FName",".","王维");
-        KingdeeUtils.makeFieldJson(json,"FStaffNumber",".","123456");
-        KingdeeUtils.makeFieldJson(json,"FCreateOrgId.FNumber",".","100");
-        KingdeeUtils.makeFieldJson(json,"FUseOrgId.FNumber",".","100");
-        SaveParam param = new SaveParam(json);
-        SaveResult save = apiUtils.save(param);
-        System.out.println(JSONObject.toJSONString(save));
-    }
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230413-8806"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FId";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
 
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("Number","CGDD-230413-8806");
+        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        System.out.println(queryList);
+        System.out.println(viewJson);
+
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {

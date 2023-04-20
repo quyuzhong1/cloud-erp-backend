@@ -347,8 +347,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                                  String jsonData,String msg,Integer type,Integer status) {
         //新增日志信息
         ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
-        apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
-        apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
+        apiPlmSyncLogDTO.setApiPlatformId(ObjectUtils.isEmpty(platformEntity) ? "" : platformEntity.getId());
+        apiPlmSyncLogDTO.setApiPlatform(ObjectUtils.isEmpty(platformEntity) ? "" :  platformEntity.getName());
         apiPlmSyncLogDTO.setModuleType(type);
         apiPlmSyncLogDTO.setBusinessId(businessId);
         apiPlmSyncLogDTO.setStatus(status);
