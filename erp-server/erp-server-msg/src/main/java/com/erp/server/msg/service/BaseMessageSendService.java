@@ -3,7 +3,7 @@ package com.erp.server.msg.service;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
-import com.erp.server.msg.config.MsgHolder;
+import com.erp.server.msg.config.MsgContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -19,14 +19,14 @@ import javax.annotation.Resource;
 public abstract class BaseMessageSendService implements IMessageSendService, InitializingBean {
 
     @Resource
-    private MsgHolder msgHolder;
+    private MsgContext msgContext;
 
 
     /**
      * 初始化时把平台对应的处理类放到一个map中
      */
     public void afterPropertiesSet() throws Exception {
-        msgHolder.put(channel(), this);
+        msgContext.put(channel(), this);
     }
 
     /**

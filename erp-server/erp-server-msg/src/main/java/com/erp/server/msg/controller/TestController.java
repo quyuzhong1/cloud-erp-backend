@@ -4,7 +4,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
-import com.erp.server.msg.config.MsgHolder;
+import com.erp.server.msg.config.MsgContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,7 +24,7 @@ import java.util.Arrays;
 public class TestController extends BaseController {
 
     @Autowired
-    private MsgHolder msgHolder;
+    private MsgContext msgContext;
 
     /**
      * 发送消息
@@ -37,7 +37,7 @@ public class TestController extends BaseController {
         noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
         noticeMsgInfoDTO.setUrgent(true);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
-        msgHolder.routeSend(noticeMsgInfoDTO);
+        msgContext.routeSend(noticeMsgInfoDTO);
         return success();
     }
 
