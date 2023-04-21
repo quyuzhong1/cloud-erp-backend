@@ -169,6 +169,7 @@
             wr.supplier_name,
             wrd.sku_id,
             wrd.sku_no,
+            wr.delivery_warehouse_id,
             wr.delivery_warehouse_name,
             wrd.purchase_order_detail_id,
             wrd.exceed_qty

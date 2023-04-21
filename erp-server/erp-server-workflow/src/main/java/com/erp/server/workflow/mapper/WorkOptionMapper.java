@@ -1,8 +1,12 @@
 package com.erp.server.workflow.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +18,7 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface WorkOptionMapper extends BaseMapper<WorkOptionEntity> {
+
+    List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(@Param("sysClassify") String sysClassify);
 
 }

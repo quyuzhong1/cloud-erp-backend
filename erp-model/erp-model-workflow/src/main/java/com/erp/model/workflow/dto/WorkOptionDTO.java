@@ -15,6 +15,90 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
+    /**
+     * 添加
+     */
+    @Data
+    @NoArgsConstructor
+    public static class addDTO {
+        /**
+         * 菜单id
+         */
+        private String workMenuId;
+        /**
+         * 地址
+         */
+        private String moduleUrl;
+        /**
+         * 入参
+         */
+        private String moduleParam;
+        /**
+         * 类型  1：常用模块  2：代办模块
+         */
+        private String type;
+    }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class updateDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 菜单id
+         */
+        private String workMenuId;
+        /**
+         * 地址
+         */
+        private String moduleUrl;
+        /**
+         * 入参
+         */
+        private String moduleParam;
+    }
+
+    /**
+     * 菜单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WaitDoMenu {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * name
+         */
+        private String name;
+        /**
+         * 系统分类
+         */
+        private String sysClassify;
+        /**
+         * 模块状态
+         */
+        private String moduleStatus;
+        /**
+         * 模块编码
+         */
+        private String moduleCode;
+        /**
+         * 模块分类
+         */
+        private String moduleClassify;
+        /**
+         * 模块状态名称
+         */
+        private String moduleStatusName;
+    }
+
 
     /**
      * 代办列表

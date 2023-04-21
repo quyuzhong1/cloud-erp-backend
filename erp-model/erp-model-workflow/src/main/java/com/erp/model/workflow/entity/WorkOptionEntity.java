@@ -24,29 +24,40 @@ import java.io.Serializable;
 public class WorkOptionEntity extends BaseEntity<WorkOptionEntity> {
 
     /**
-     * 字典表id
+     * 菜单表id
      */
-    @TableField("dict_basic_id")
-    private String dictBasicId;
+    @TableField("work_menu_id")
+    private String workMenuId;
 
     /**
-     * 字典名称
+     * 属于用户id
      */
-    @TableField("dict_basic_name")
-    private String dictBasicName;
+    @TableField("option_user_id")
+    private String optionUserId;
+
+    /**
+     * 属于用户名称
+     */
+    @TableField("option_user_name")
+    private String optionUserMame;
+
+    /**
+     * 模块地址
+     */
+    @TableField("moduleUrl")
+    private String moduleUrl;
+
+    /**
+     * 模块参数（预留）
+     */
+    @TableField("module_param")
+    private String moduleParam;
 
     /**
      * 类型  1：常用模块  2：代办模块
      */
     @TableField("type")
     private String type;
-
-    /**
-     * 模块名称
-     */
-    @TableField("name")
-    private String name;
-
 
     public static final String DICT_BASIC_ID = "dict_basic_id";
 

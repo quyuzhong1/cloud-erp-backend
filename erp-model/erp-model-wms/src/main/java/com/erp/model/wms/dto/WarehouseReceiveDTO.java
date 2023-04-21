@@ -603,6 +603,11 @@ public class WarehouseReceiveDTO {
         private String productName;
 
         /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
          * 交货仓库
          */
         private String deliveryWarehouseName;
@@ -705,6 +710,16 @@ public class WarehouseReceiveDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 采购订单详情表id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 仓库表id
+         */
+        private String deliveryWarehouseId;
     }
 
     /**

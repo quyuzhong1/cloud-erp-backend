@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.workflow.mapper.WorkOptionMapper">
-
+    <select id="listWaitDoMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
+        SELECT
+        wm.id,
+        wm.sys_classify AS sysClassify,
+        wm.module_status AS moduleStatus,
+        wm.module_code AS moduleCode,
+        wm.module_classify AS moduleClassify,
+        db.name AS moduleStatusName
+        FROM work_menu wm
+        LEFT JOIN dict_basic db on wm.module_status = db."value"
+        <where>
+            <if test="sysClassify != '' and sysClassify != null">
+                AND wm.sys_classify = #{sysClassify}
+            </if>
+        </where>
+    </select>
 </mapper>

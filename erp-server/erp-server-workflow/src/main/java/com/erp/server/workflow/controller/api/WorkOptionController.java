@@ -5,12 +5,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.server.workflow.service.WorkOptionService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -21,6 +20,32 @@ import java.util.List;
 @RestController
 @RequestMapping("/workOption")
 public class WorkOptionController extends BaseController {
+    @Resource
+    private WorkOptionService workOptionService;
+
+    /**
+     * 待办模块-模块分类下拉
+     * @return
+     */
+    @GetMapping("/listWaitDoMenu")
+    public ApiResult<List<WorkOptionDTO.WaitDoMenu>> listWaitDoMenu(@RequestParam("sysClassify") String sysClassify) {
+        List<WorkOptionDTO.WaitDoMenu> waitDoMenus = workOptionService.listWaitDoMenu(sysClassify);
+        return success(waitDoMenus);
+    }
+
+    /**
+     * 新增代办模块
+     * @Author Luo_WG
+     * @Date 2023/4/20 19:45
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/addWaitDo")
+    public ApiResult addWaitDo(@RequestBody WorkOptionDTO.addDTO dto) {
+        Boolean flag = workOptionService.addWaitDo(dto);
+        return flag == true ? success() : failure();
+    }
+
 
     /**
      * 代办列表

@@ -14,12 +14,27 @@ import java.util.List;
  * @since 2023-04-11
  */
 public interface WorkOptionService extends SuperService<WorkOptionEntity> {
+    /**
+     * 待办模块-模块分类下拉
+     * @return
+     */
+    List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify);
 
     /**
-     * 审批中心-下拉搜索选项
+     * 新增代办模块
      * @Author Luo_WG
-     * @Date 2023/4/12 11:58
-     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveSearchOptionDTO>
+     * @Date 2023/4/20 19:45
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
      **/
-    List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOption();
+    Boolean addWaitDo(WorkOptionDTO.addDTO dto);
+
+    /**
+     * 编辑修改代办模块
+     * @Author Luo_WG
+     * @Date 2023/4/20 19:45
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    Boolean updateWaitDo(WorkOptionDTO.updateDTO dto);
 }

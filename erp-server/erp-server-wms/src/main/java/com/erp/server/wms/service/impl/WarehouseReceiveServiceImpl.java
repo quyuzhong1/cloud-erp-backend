@@ -753,10 +753,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 throw new ServiceException(ApiError.ERROR_99006);
             }
 
-            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             req.setReceiveQty(receiveQty);
 
-            Integer stockInQty = purchaseStockInDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer stockInQty = purchaseStockInDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - stockInQty);
             req.setStockInQty(req.getUnStockInQty());
             req.setExceedQty(req.getExceedQty());
@@ -774,14 +774,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     public Boolean generateStockIn(List<WarehouseReceiveDTO.GenerateStockInDTO> dtos) {
-        dtos.forEach(dto -> {
+        LoginUser userInfo = commonService.getUserInfo();
+        List<String> collect = dtos.stream().map(WarehouseReceiveDTO.GenerateStockInDTO::getMainId).distinct().collect(Collectors.toList());
+
+        collect.forEach(id -> {
             //获取用户信息
-            SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getStockInUserId());
+            SysUserDTO userDTO = sysUserFeign.getSysUserById(userInfo.getUid());
             if (ObjectUtil.isEmpty(userDTO)) {
                 throw new ServiceException(ApiError.ERROR_9011);
             }
 
-            WarehouseReceiveEntity entity = this.getById(dto.getMainId());
+            WarehouseReceiveEntity entity = this.getById(id);
             if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
                 throw new ServiceException(ApiError.ERROR_98057);
             }
@@ -789,9 +792,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userDTO.getUid());
 
             PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
-            addDTO.setSourceId(dto.getMainId());
+            addDTO.setSourceId(id);
             addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
-            WarehouseReceiveEntity warehouseReceiveEntity = this.getById(dto.getMainId());
+            WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
 
             addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
             addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
@@ -799,16 +802,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
             //设置明细
             List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
-            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(dto.getMainId());
-            detailByMainId.forEach(req -> {
-                PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
-                BeanMapperUtils.copy(req,detailDTO);
-                detailDTO.setStockInQty(dto.getStockInQty());
-                detailDTO.setExceedQty(dto.getExceedQty());
-                detailDTO.setWarehouseLocationId("");
-                detailDTO.setRemark(req.getRemark());
-                detailDTO.setSourceDetailId(req.getId());
-                detailDTOList.add(detailDTO);
+            dtos.forEach(req -> {
+                if (req.getMainId().equals(id)) {
+                    PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
+                    detailDTO.setStockInQty(req.getStockInQty());
+                    detailDTO.setExceedQty(req.getExceedQty());
+                    detailDTO.setWarehouseLocationId(req.getDeliveryWarehouseId());
+                    detailDTO.setRemark(req.getRemark());
+                    detailDTO.setSourceDetailId(req.getId());
+                    detailDTO.setPurchaseOrderDetailId(req.getPurchaseOrderDetailId());
+                    detailDTOList.add(detailDTO);
+                }
             });
             addDTO.setDetails(detailDTOList);
             purchaseStockInService.add(addDTO);
