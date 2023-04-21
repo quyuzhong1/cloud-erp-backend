@@ -23,7 +23,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -271,8 +270,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 //取开始一条
                 if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                     WarehouseReceiveDetailEntity detailEntity = receiveDetailList.get(0);
-                    processDTO.setUserName(detailEntity.getReceiveUserName());
-                    processDTO.setTime(LocalDateUtil.startLocalDateTime(detailEntity.getBillDate()));
+                    processDTO.setUserName(detailEntity.getApproveUserName());
+                    processDTO.setTime(detailEntity.getApproveTime());
                 }
             }
             //签收完成
@@ -287,8 +286,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 if (processDTO.getIsArrive()) {
                     if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                         WarehouseReceiveDetailEntity detailEntity = receiveDetailList.get(receiveDetailList.size() - 1);
-                        processDTO.setUserName(detailEntity.getReceiveUserName());
-                        processDTO.setTime(LocalDateUtil.startLocalDateTime(detailEntity.getBillDate()));
+                        processDTO.setUserName(detailEntity.getApproveUserName());
+                        processDTO.setTime(detailEntity.getApproveTime());
                     }
                 }
             }

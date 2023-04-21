@@ -299,7 +299,7 @@
 
     <select id="getBySpu" resultType="com.erp.model.bi.vo.SalesVO">
         SELECT
-        (select item_name FROM dmp_order_item where sku_no=i.sku_no LIMIT 1) AS productName
+        min(i.item_name) AS productName
         SUM ( i.quantity ) AS salesQuantity,
         round( SUM ( ( i.amount_after * i.currency_rate ) ) ,2) sales,
         i.sku_no AS name FROM dmp_order_item i
@@ -1679,6 +1679,7 @@
             </if>
         </where>
         GROUP BY i.new_sign,o.source_platform
+        ORDER BY  sales DESC
     </select>
 
     <select id="byCategoryNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -2290,6 +2291,7 @@
             </if>
         </where>
         GROUP BY i.new_sign,o.charge_id
+        ORDER BY sales DESC
 
     </select>
 

@@ -7,8 +7,8 @@
             resultType="com.erp.model.wms.entity.WarehouseReceiveDetailEntity">
         select
             wr.approve_status,
-            wr.bill_date,
-            wr.receive_user_name,
+            wr.approve_time,
+            wr.approve_user_name,
             wrd.main_id,
             wrd.sku_id,
             wrd.sku_no,

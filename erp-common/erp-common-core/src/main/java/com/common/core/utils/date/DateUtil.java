@@ -264,7 +264,6 @@ public class DateUtil {
         return EnumTimePattern.parseDate(strDate);
     }
 
-
     public static LocalDateTime getCurrentTime() {
 
         return LocalDateTime.now();

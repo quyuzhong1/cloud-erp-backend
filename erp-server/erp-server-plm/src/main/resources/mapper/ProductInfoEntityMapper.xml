@@ -23,6 +23,7 @@
           p.property,
           p.category,
           pi.end_time,
+          p.spu_no,
           pph.name as projectPhase
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
@@ -267,7 +268,8 @@
         p.progress_status,
         p.image_url,
         p.property,
-        p.category
+        p.category,
+        p.spu_no
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt

@@ -806,7 +806,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (StringUtils.isBlank(settleRate)) {
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
-
         String chinaName = "中国";
         List<SalesCountVO> resultList = baseMapper.byHomeAndAbroad(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
@@ -1032,7 +1031,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
         return resultList;
@@ -1049,7 +1048,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (totalSales.compareTo(zero) == 0 || sales == null) {
             return zero;
         }
-        BigDecimal ratio = sales.divide(totalSales, 5, BigDecimal.ROUND_HALF_UP);
+        BigDecimal ratio = sales.divide(totalSales, 5, BigDecimal.ROUND_HALF_EVEN);
         return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 

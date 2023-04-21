@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -73,10 +74,10 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     private String purchaseOrderDetailId;
 
     @TableField(exist = false)
-    private String receiveUserName;
+    private String approveUserName;
 
     @TableField(exist = false)
-    private LocalDate billDate;
+    private LocalDateTime approveTime;
 
     @TableField(exist = false)
     private String approveStatus;

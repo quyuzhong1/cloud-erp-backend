@@ -21,6 +21,8 @@ import com.erp.server.bi.service.BiDataSourceCostService;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,6 +86,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                 BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
                 if (StringUtils.isNotBlank(key))  {
                     if (BiDataSourceCostEnum.MONTH.getDesc().equals(key)) {
+                        DateFormat format= new SimpleDateFormat("yyyy年M月");
                         try {
                             Date parse = DateUtil.stringToDate(value);
                             entity.setMonth(LocalDateUtil.date2LocalDateTime(parse));
