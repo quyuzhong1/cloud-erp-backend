@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.DictBasicEntity;
@@ -25,7 +26,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Override
     public List<DictBasicDTO.DropDownDTO> listByType(String type, String remark) {
         List<DictBasicEntity> list = lambdaQuery().eq(DictBasicEntity::getType, type)
-                .eq(DictBasicEntity::getRemark, remark)
+                .eq("processCondition".equalsIgnoreCase(type), DictBasicEntity::getRemark, remark)
                 .list();
        List<DictBasicDTO.DropDownDTO> result = list.stream().map(DictBasicDTO.DropDownDTO::new).collect(Collectors.toList());
         return result;
