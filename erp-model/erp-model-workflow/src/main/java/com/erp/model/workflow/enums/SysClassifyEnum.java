@@ -1,9 +1,9 @@
 package com.erp.model.workflow.enums;
 
 public enum SysClassifyEnum {
-    PLM("PLM", "PLM系统"),
-    SCM("SCM", "SCM系统"),
-    WMS("WMS", "WMS系统");
+    PLM("plm", "PLM系统"),
+    SCM("scm", "SCM系统"),
+    WMS("wms", "WMS系统");
 
     private String code;
     private String name;
@@ -28,5 +28,14 @@ public enum SysClassifyEnum {
             }
         }
         return "";
+    }
+
+    public static SysClassifyEnum getEnumByCode(String code) {
+        for (SysClassifyEnum state : SysClassifyEnum.values()) {
+            if (code.equals(state.getCode())) {
+                return state;
+            }
+        }
+        return null;
     }
 }
