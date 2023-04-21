@@ -1,8 +1,9 @@
 package com.erp.server.msg.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
+import com.erp.server.msg.model.MsgSendChannelWrapParam;
 import com.erp.server.msg.service.BaseMessageSendService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Service;
 public class EmailSendServiceImpl extends BaseMessageSendService {
 
     @Override
-    public ApiResult sendMsg(NoticeMsgInfoDTO noticeMsgInfo) {
+    public ApiResult sendMsg(MsgSendChannelWrapParam noticeMsgInfo) {
+        log.info("通过邮件发送消息，消息内容：{}", JSONObject.toJSONString(noticeMsgInfo));
+        // TODO暂未实现
         return null;
     }
 

@@ -1,8 +1,8 @@
 package com.erp.server.msg.service;
 
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
+import com.erp.server.msg.model.MsgSendChannelWrapParam;
 
 /**
  * @Classname: IMessageSend
@@ -16,7 +16,7 @@ public interface IMessageSendService {
      * 发送消息
      * @return
      */
-    ApiResult doSendMsg(NoticeMsgInfoDTO msgInfo);
+    ApiResult doSendMsg(MsgSendChannelWrapParam msgInfo);
 
     /**
      * 发送渠道

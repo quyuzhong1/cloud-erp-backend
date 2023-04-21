@@ -1,7 +1,12 @@
 package com.erp.server.msg.utils;
 
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.MessageChannelEnum;
+import com.erp.model.msg.enums.NoticeMessageTypeEnum;
+import com.erp.server.msg.enums.MessageChannelAppEnum;
 import com.erp.server.msg.model.FeiShuSendBaseParam;
+import com.erp.server.msg.model.MsgSendChannelWrapParam;
+import com.erp.server.msg.model.NoticeMsgWrapInfoDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +17,9 @@ import java.util.List;
  * @CreateTime: 2023-04-20  17:23
  * @Author: zhangchunlin
  */
-public class FeishuUtil {
+public class MsgConvertUtil {
 
-    public static FeiShuSendBaseParam.ContentDTO wrapTypicalCard(NoticeMsgInfoDTO noticeMsgInfo) {
+    public static FeiShuSendBaseParam.ContentDTO wrapTypicalCard(NoticeMsgWrapInfoDTO noticeMsgInfo) {
         FeiShuSendBaseParam.ContentDTO contentDTO = new FeiShuSendBaseParam.ContentDTO();
 
         FeiShuSendBaseParam.CardDTO.ConfigDTO  config = new FeiShuSendBaseParam.CardDTO.ConfigDTO();
@@ -40,6 +45,30 @@ public class FeishuUtil {
 
         contentDTO.setElements(elements);
         return contentDTO;
+    }
+
+    /**
+     * 填充消息内容
+     * @param messageChannelEnum
+     * @param noticeMessageTypeEnum
+     * @param msgInfo
+     * @return
+     */
+    public static MsgSendChannelWrapParam wrapMsgBody(MessageChannelEnum messageChannelEnum, MessageChannelAppEnum messageChannelAppEnum, NoticeMessageTypeEnum noticeMessageTypeEnum, NoticeMsgInfoDTO msgInfo) {
+        MsgSendChannelWrapParam msgSendChannelWrapParam = new MsgSendChannelWrapParam();
+        msgSendChannelWrapParam.setSendChannel(messageChannelEnum);
+        msgSendChannelWrapParam.setChannelApp(messageChannelAppEnum);
+
+        NoticeMsgWrapInfoDTO noticeMsgWrapInfoDTO = new NoticeMsgWrapInfoDTO();
+        noticeMsgWrapInfoDTO.setReceiverUserIds(msgInfo.getReceiverUserIds());
+        noticeMsgWrapInfoDTO.setTitle(msgInfo.getTitle());
+        noticeMsgWrapInfoDTO.setContent(msgInfo.getContent());
+        noticeMsgWrapInfoDTO.setUrgent(msgInfo.getUrgent());
+        noticeMsgWrapInfoDTO.setNoticeMessageTypeEnum(noticeMessageTypeEnum);
+
+        msgSendChannelWrapParam.setNoticeMsgWrapInfoDTO(noticeMsgWrapInfoDTO);
+
+        return msgSendChannelWrapParam;
     }
 
 }
