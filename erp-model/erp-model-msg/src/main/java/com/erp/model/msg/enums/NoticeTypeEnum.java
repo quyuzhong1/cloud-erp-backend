@@ -16,8 +16,8 @@ import java.util.Objects;
 @AllArgsConstructor
 public enum NoticeTypeEnum {
 
-    SCM_TASK("SCM_TASK", "供应链系统业务通知"),
-    PLM_TASK("PLM_TASK", "产品研发系统业务通知"),
+    SCM_NOTICE("SCM_NOTICE", "供应链系统业务通知"),
+    PLM_NOTICE("PLM_NOTICE", "产品研发系统业务通知"),
     ;
 
     /**

@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * @Classname: MessageChannelEnum
- * @Description: 渠道消息应用
+ * @Description: 渠道消息应用，对应数据库表msg_channel_config表channel_app_code字段
  * @CreateTime: 2023-04-19  10:08
  * @Author: zhangchunlin
  */

@@ -1,6 +1,7 @@
 package com.erp.server.msg.config;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.StrUtils;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
@@ -41,6 +42,8 @@ public class MsgContext {
     @Value("${default_send_channel:'feishu'}")
     private String defaultSendChannel;
 
+    private static final NoticeMessageTypeEnum DEFAULT_MESSAGE_TYPE = NoticeMessageTypeEnum.ACTION_CARD;
+
     private static Map<MessageChannelEnum, IMessageSendService>  HOLDER = new HashMap<>(10);
 
     public void put(MessageChannelEnum messageChannelEnum, IMessageSendService messageSendService) {
@@ -54,15 +57,12 @@ public class MsgContext {
     public void routeSend(NoticeMsgInfoDTO msgInfo) {
         List<MessageChannelEnum> sendChannels = msgInfo.getSendChannels();
         MsgConfigDTO msgConfigDTO = null;
-        if(CollUtil.isNotEmpty(sendChannels)) {
-            log.info("消息发送者指定了发送渠道，优先使用该渠道发送，并且默认使用文本方式消息类型");
-            sendChannels = msgInfo.getSendChannels();
-        } else {
-            log.info("消息发送者没有指定发送渠道，通过消息来源获取配置的发送渠道及其他信息");
-            NoticeTypeEnum noticeTypeEnum = msgInfo.getNoticeTypeEnum();
-            if(Objects.nonNull(noticeTypeEnum)) {
-                msgConfigDTO = sysUserFeign.getMsgConfigById(noticeTypeEnum.getCode());
-            }
+        NoticeTypeEnum noticeTypeEnum = msgInfo.getNoticeTypeEnum();
+        if(Objects.nonNull(noticeTypeEnum)) {
+            msgConfigDTO = sysUserFeign.getMsgConfigById(noticeTypeEnum.getCode());
+        }
+        if(CollUtil.isEmpty(sendChannels)) {
+            log.info("消息发送者没有指定发送渠道，通过消息来源获取配置的发送渠道及其他信息，消息内容：{}", JSONObject.toJSONString(msgInfo));
             sendChannels = wrapMessageChannelNotExists(msgConfigDTO, msgInfo);
             if(null == sendChannels) {
                 return;
@@ -133,13 +133,12 @@ public class MsgContext {
         NoticeTypeEnum noticeTypeEnum = msgInfo.getNoticeTypeEnum();
         NoticeMessageTypeEnum noticeMessageTypeEnum;
         if(Objects.isNull(msgConfigDTO) || StrUtils.isEmpty(msgConfigDTO.getMsgType())) {
-            log.warn("请求的消息来源未找到消息配置信息，消息类型默认取卡片：{}",msgInfo.getNoticeTypeEnum());
-            noticeMessageTypeEnum = NoticeMessageTypeEnum.ACTION_CARD;
+            noticeMessageTypeEnum = DEFAULT_MESSAGE_TYPE;
+            log.warn("请求的消息来源未找到消息配置信息或未传请求来源参数，消息来源类型：{}，消息类型默认取：{}",msgInfo.getNoticeTypeEnum(),noticeMessageTypeEnum);
         } else {
             noticeMessageTypeEnum = NoticeMessageTypeEnum.of(msgConfigDTO.getMsgType());
         }
         List<MsgChannelConfigDTO> msgChannelConfigDTOS;
-        Map<String,List<MsgChannelConfigDTO>> msgChannelConfigMap;
         Boolean fallBack = Boolean.FALSE;
         if(Objects.nonNull(noticeTypeEnum)) {
             msgChannelConfigDTOS = sysUserFeign.findByMsgConfigId(noticeTypeEnum.getCode());
@@ -147,19 +146,22 @@ public class MsgContext {
                 log.warn("请求的消息来源在数据库中未找到消息渠道配置信息，请求的消息来源：{}",msgInfo.getNoticeTypeEnum());
                 fallBack = Boolean.TRUE;
             } else {
-                msgChannelConfigMap = msgChannelConfigDTOS.stream().collect(Collectors.groupingBy(MsgChannelConfigDTO::getChannelCode));
-                msgChannelConfigMap.forEach((channelCode,channelConfigs)->{
-                    channelConfigs.stream().forEach(channelConfig->{
-                        MessageChannelEnum messageChannelEnum = MessageChannelEnum.of(channelConfig.getChannelCode());
-                        if(Objects.equals(channelConfig.getSendFlag(), Boolean.TRUE)) {
-                            MessageChannelAppEnum messageChannelAppEnum = MessageChannelAppEnum.of(channelConfig.getChannelAppCode());
-                            MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, messageChannelAppEnum, noticeMessageTypeEnum, msgInfo);
-                            sendChannelApps.add(msgSendChannelWrapParam);
-                        }
-                    });
-                });
-                if(CollUtil.isEmpty(sendChannelApps)) {
+                Map<String,List<MsgChannelConfigDTO>> msgChannelConfigMap = msgChannelConfigDTOS.stream().collect(Collectors.groupingBy(MsgChannelConfigDTO::getChannelCode));
+                if(CollUtil.isEmpty(msgChannelConfigMap)) {
                     fallBack = Boolean.TRUE;
+                } else {
+                    msgChannelConfigMap.forEach((channelCode,channelConfigs)->{
+                        channelConfigs.stream().forEach(channelConfig->{
+                            MessageChannelEnum messageChannelEnum = MessageChannelEnum.of(channelConfig.getChannelCode());
+                            if(Objects.equals(channelConfig.getSendFlag(), Boolean.TRUE)) {
+                                MessageChannelAppEnum messageChannelAppEnum = MessageChannelAppEnum.of(channelConfig.getChannelAppCode());
+                                MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, messageChannelAppEnum, noticeMessageTypeEnum, msgInfo);
+                                sendChannelApps.add(msgSendChannelWrapParam);
+                            } else {
+                                log.warn("消息来源【{}】对应的渠道【{}】未开启发送消息，不发送消息",noticeTypeEnum.getName(),messageChannelEnum.getName());
+                            }
+                        });
+                    });
                 }
             }
         } else {

@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.server.msg.config.MsgContext;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -48,7 +49,7 @@ public class TestController extends BaseController {
         noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
         noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
         noticeMsgInfoDTO.setUrgent(true);
-        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_NOTICE);
         msgContext.routeSend(noticeMsgInfoDTO);
         return success();
     }
@@ -64,7 +65,8 @@ public class TestController extends BaseController {
         // 请注意：飞书中的**和**中间的数据表示加粗
         noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
         noticeMsgInfoDTO.setUrgent(true);
-        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.PLM_TASK);
+        noticeMsgInfoDTO.setSendChannels(CollUtil.newArrayList(MessageChannelEnum.FEISHU));
+        //noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_NOTICE);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
@@ -86,7 +88,7 @@ public class TestController extends BaseController {
         // 请注意：飞书中的**和**中间的数据表示加粗
         noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
         noticeMsgInfoDTO.setUrgent(true);
-        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_NOTICE);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
