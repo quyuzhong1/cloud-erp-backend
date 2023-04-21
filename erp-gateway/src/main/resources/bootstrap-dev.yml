@@ -3,10 +3,10 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.12
-        namespace: ${NACOS_NAMESPACE:dev-lwg}
+        namespace: ${NACOS_NAMESPACE:dev}
       config:
         server-addr: 172.16.100.12
-        namespace: dev-lwg
+        namespace: dev
         file-extension: yml
         shared-configs: gateway.yml,common.yml
 #    gateway:
