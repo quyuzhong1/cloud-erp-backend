@@ -1047,7 +1047,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (!sendResult) {
                 throw new ServiceException(ApiError.ERROR_1010);
             }
-            redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + userInfoEntity.getUid());
+            redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
         }
         return flag;
     }
