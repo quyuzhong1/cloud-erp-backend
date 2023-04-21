@@ -108,6 +108,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     /**
+     * 代办列表
+     * @Author Luo_WG
+     * @Date 2023/4/11 18:48
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
+     **/
+    @Override
+    public List<WorkOptionDTO.PendingViewDTO> pendingView() {
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionEntity> list = lambdaQuery().eq(WorkOptionEntity::getOptionUserId, userInfo.getUid()).list();
+
+        return null;
+    }
+
+
+    /**
      * 审批中心-下拉搜索选项
      * @Author Luo_WG
      * @Date 2023/4/12 11:58

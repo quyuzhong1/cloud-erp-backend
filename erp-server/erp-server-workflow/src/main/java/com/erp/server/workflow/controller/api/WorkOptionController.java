@@ -34,7 +34,17 @@ public class WorkOptionController extends BaseController {
     }
 
     /**
-     * 新增代办模块
+     * 待办模块-模块分类下拉
+     * @return
+     */
+    @GetMapping("/listWaitDoMenu")
+    public ApiResult<List<WorkOptionDTO.WaitDoMenu>> listOftenMenu(@RequestParam("sysClassify") String sysClassify) {
+        List<WorkOptionDTO.WaitDoMenu> waitDoMenus = workOptionService.listOftenMenu(sysClassify);
+        return success(waitDoMenus);
+    }
+
+    /**
+     * 新增
      * @Author Luo_WG
      * @Date 2023/4/20 19:45
      * @param dto dto
@@ -46,6 +56,18 @@ public class WorkOptionController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 修改
+     * @Author Luo_WG
+     * @Date 2023/4/20 19:45
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/addWaitDo")
+    public ApiResult updateWaitDo(@RequestBody WorkOptionDTO.updateDTO dto) {
+        Boolean flag = workOptionService.updateWaitDo(dto);
+        return flag == true ? success() : failure();
+    }
 
     /**
      * 代办列表
@@ -55,7 +77,7 @@ public class WorkOptionController extends BaseController {
      **/
     @PostMapping("/pendingView")
     public ApiResult<List<WorkOptionDTO.PendingViewDTO>> pendingView() {
-        List<WorkOptionDTO.PendingViewDTO> pendingViewList = null;
+        List<WorkOptionDTO.PendingViewDTO> pendingViewList = workOptionService.pendingView();
         return success(pendingViewList);
     }
 

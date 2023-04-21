@@ -475,7 +475,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
 
                     }*/
-                    Integer reduce = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer reduce = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     Integer thisReduce = detailByMainId.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
                     if (reduce + thisReduce > purchaseOrderDetailEntity.getPurchaseQty()) {
@@ -554,7 +554,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
 
                     }*/
-                Integer reduce = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer reduce = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 Integer thisReduce = detailByMainId.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
                 getArrivalState(reduce-thisReduce, purchaseOrderDetailEntity.getPurchaseQty(), purchaseOrderDetailEntity.getId());
