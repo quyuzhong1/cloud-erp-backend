@@ -797,7 +797,48 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("质检单【%s】更新处理措施" + handleModeName, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "更新处理措施操作");
-        return qcInfoService.updateHandleMode(ids,handleModeDict);
+        return qcInfoService.updateHandleMode(ids, handleModeDict);
+    }
+
+
+    /**
+     * 获取tab 类型数量
+     *
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.TabListDTO>
+     * @author yl
+     * @date 2023-04-21 16:48
+     */
+    @Override
+    public List<QcBillDTO.TabListDTO> tabList() {
+        List<QcBillEntity> list = this.list();
+        List<QcBillDTO.TabListDTO> resultList = new ArrayList<>(4);
+        QcBillDTO.TabListDTO all = new QcBillDTO.TabListDTO();
+        all.setCount(list.size());
+        all.setSearchType(SearchType.ALL);
+        all.setTypeName("全部");
+        resultList.add(all);
+        QcBillDTO.TabListDTO waitQc = new QcBillDTO.TabListDTO();
+        String waitQcType = QcBillStatusEnum.WAIT_QC.getCode();
+        waitQc.setCount((int) list.stream().filter(l->waitQcType.equals(l.getQcStatus().getCode())).count());
+        waitQc.setSearchType(waitQcType);
+        waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
+        resultList.add(waitQc);
+
+        QcBillDTO.TabListDTO finishQc = new QcBillDTO.TabListDTO();
+        String finishQcType = QcBillStatusEnum.FINISH_QC.getCode();
+        finishQc.setCount((int) list.stream().filter(l->finishQcType.equals(l.getQcStatus().getCode())).count());
+        finishQc.setSearchType(finishQcType);
+        finishQc.setTypeName(QcBillStatusEnum.FINISH_QC.getName());
+        resultList.add(finishQc);
+
+        QcBillDTO.TabListDTO cancelQc = new QcBillDTO.TabListDTO();
+        String cancelQcType = QcBillStatusEnum.CANCEL.getCode();
+        cancelQc.setCount((int) list.stream().filter(l->cancelQcType.equals(l.getQcStatus().getCode())).count());
+        cancelQc.setSearchType(finishQcType);
+        cancelQc.setTypeName(QcBillStatusEnum.CANCEL.getName());
+        resultList.add(cancelQc);
+        return resultList;
     }
 
     /**

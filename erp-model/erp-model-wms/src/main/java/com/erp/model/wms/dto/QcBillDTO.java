@@ -46,7 +46,6 @@ public class QcBillDTO implements Serializable {
         private String id;
 
 
-
         /**
          * 质检日期
          */
@@ -108,6 +107,22 @@ public class QcBillDTO implements Serializable {
          * 质检单备注 集合
          */
         private List<QcRemarkDTO.AddDTO> remarkList;
+
+
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String searchType;
+
+        private String typeName;
+
+        private Integer count;
 
 
     }
@@ -223,9 +238,8 @@ public class QcBillDTO implements Serializable {
          * waitQc 待质检
          * finishQc 完成质检
          * cancel 已取消
-         *
          */
-        @StateEnumValue(strValues = {"all","waitQc","finishQc","cancel"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitQc", "finishQc", "cancel"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
@@ -264,38 +278,37 @@ public class QcBillDTO implements Serializable {
 
 
         /**
-         *供应商id集合
+         * 供应商id集合
          */
         private List<String> supplierIdList;
 
 
         /**
-         *质检结果集合
+         * 质检结果集合
          * 来源 http://172.16.100.11:3002/project/92/interface/api/10024
          */
         private List<String> qcResultList;
 
 
         /**
-         *处理措施
+         * 处理措施
          */
         private List<String> handleModeDictList;
 
 
         /**
-         *仓库id 集合
+         * 仓库id 集合
          */
         private List<String> warehouseIdList;
 
 
-
         /**
-         *质检员集合
+         * 质检员集合
          */
         private List<String> qcUserIdList;
 
         /**
-         *创建人 id 集合
+         * 创建人 id 集合
          */
         private List<String> createUserIdList;
 
@@ -353,7 +366,6 @@ public class QcBillDTO implements Serializable {
         private String qcUserName;
 
 
-
         /**
          * 质检状态
          * draft 暂存
@@ -393,12 +405,12 @@ public class QcBillDTO implements Serializable {
 
 
         /**
-         *供应商id
+         * 供应商id
          */
         private String supplierId;
 
         /**
-         *供应商名
+         * 供应商名
          */
         private String supplierName;
 
@@ -473,18 +485,18 @@ public class QcBillDTO implements Serializable {
 
 
         /**
-         *仓库 id
+         * 仓库 id
          */
         private String warehouseId;
 
 
         /**
-         *仓库名
+         * 仓库名
          */
         private String warehouseName;
 
         /**
-         *备注
+         * 备注
          */
         private String remark;
 

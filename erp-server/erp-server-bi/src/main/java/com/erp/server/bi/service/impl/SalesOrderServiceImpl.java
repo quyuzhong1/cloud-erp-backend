@@ -723,7 +723,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
         return list;
@@ -782,7 +782,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
 
@@ -1454,7 +1454,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesBaseVO yearBasisVO = yearBasisList.stream().filter(c -> c.getFlagNo().equals(flagNo))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                vo.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
             vo.setOrderCount(item.getOrderCount());
             vo.setSalesQuantity(item.getSalesQuantity());
@@ -1577,7 +1577,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
         return list;
