@@ -144,7 +144,7 @@ public enum RocketMqTagEnum {
     /**
      * 消息通知，可以不同的业务使用不同的tag
      */
-    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_*_tag"),
+    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
     /**
      * 系统用户同步金蝶
      */
