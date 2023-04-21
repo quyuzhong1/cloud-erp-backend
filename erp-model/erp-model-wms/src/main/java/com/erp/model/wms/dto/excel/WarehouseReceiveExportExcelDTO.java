@@ -3,6 +3,7 @@ package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.service.LocalDateStringConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -141,7 +142,6 @@ public class WarehouseReceiveExportExcelDTO {
      * 创建时间
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "创建时间", index = 17)
+    @ExcelProperty(value = "创建时间", index = 17, converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
-
 }

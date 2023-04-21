@@ -685,6 +685,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> skuIdList = warehouseReceiveExcelDTOS.stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<WarehouseReceiveExportExcelDTO> exportExcelDTOS = new ArrayList<>();
         warehouseReceiveExcelDTOS.forEach(obj -> {
 
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
@@ -694,13 +695,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             obj.setProductName(productDetailEntity.getName());
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            WarehouseReceiveExportExcelDTO warehouseReceiveExportExcelDTO = new WarehouseReceiveExportExcelDTO();
+            BeanMapperUtils.copy(obj, warehouseReceiveExportExcelDTO);
+            exportExcelDTOS.add(warehouseReceiveExportExcelDTO);
         });
 
-        List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = BeanMapperUtils.copyList(WarehouseReceiveExportExcelDTO.class, warehouseReceiveExcelDTOS);
 
         String fileName = "仓库入库单";
         try {
-            ExcelUtil.export(fileName, "仓库入库单", warehouseReceiveExportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "仓库入库单", exportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
