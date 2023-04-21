@@ -160,7 +160,7 @@ public class ProductSkuFeignController {
      * @return
      */
 
-    @GetMapping("/getProductPackBySkuIds")
+    @PostMapping("/getProductPackBySkuIds")
     public List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds) {
         List<ProductVO.ProductPackVO> list = productPackService.getBySkuIds(skuIds);
         return list;

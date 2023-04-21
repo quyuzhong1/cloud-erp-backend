@@ -765,9 +765,39 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("质检单【%s】分配质检员"+userInfo.getUserName(), ModuleTypeEnum.QC_ORDER.getCode(), pairList, "分配操作");
-
+        moduleOperateLogService.batchAddModuleOperateLog("质检单【%s】分配质检员" + userInfo.getUserName(), ModuleTypeEnum.QC_ORDER.getCode(), pairList, "分配操作");
         return this.updateBatchById(qcList);
+    }
+
+
+    /**
+     * 批量更新处理措施
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-20 19:08
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateHandleMode(QcInfoDTO.UpdateHandleModeDTO dto) {
+        List<String> ids = dto.getIds();
+        List<QcBillEntity> qcList = this.listByIds(ids);
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(QcBillStatusEnum.WAIT_QC.getCode());
+        statusList.add(QcBillStatusEnum.DRAFT.getCode());
+        long count = qcList.stream().filter(s -> !statusList.contains(s.getQcStatus().getCode())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99024);
+        }
+        String handleModeDict = dto.getHandleModeDict();
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+        String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
+                findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        //操作日志
+        List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("质检单【%s】更新处理措施" + handleModeName, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "更新处理措施操作");
+        return qcInfoService.updateHandleMode(ids,handleModeDict);
     }
 
     /**

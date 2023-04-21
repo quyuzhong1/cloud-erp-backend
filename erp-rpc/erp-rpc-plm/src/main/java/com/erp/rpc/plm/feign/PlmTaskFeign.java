@@ -100,6 +100,6 @@ public interface PlmTaskFeign {
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.ProductVO.ProductPackVO>
      */
-    @GetMapping("feign/product/getProductPackBySkuIds")
+    @PostMapping("feign/product/getProductPackBySkuIds")
     List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds);
 }

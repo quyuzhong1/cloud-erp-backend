@@ -63,4 +63,15 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return void
      */
     void updateQcQty(List<String> ids);
+
+    
+    /**
+     * 更新处理措施
+     * @author yl
+     * @date 2023-04-20 19:17
+     * @param ids
+     * @param handleModeDict
+     * @return java.lang.Boolean
+     */
+    Boolean updateHandleMode(List<String> ids, String handleModeDict);
 }
