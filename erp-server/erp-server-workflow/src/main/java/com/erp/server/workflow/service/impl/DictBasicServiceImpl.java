@@ -25,7 +25,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Override
     public List<DictBasicDTO.DropDownDTO> listByType(String type, String remark) {
         List<DictBasicEntity> list = lambdaQuery().eq(DictBasicEntity::getType, type)
-                .eq(StrUtil.isNotBlank(remark), DictBasicEntity::getRemark, remark)
+                .eq(DictBasicEntity::getRemark, remark)
                 .list();
        List<DictBasicDTO.DropDownDTO> result = list.stream().map(DictBasicDTO.DropDownDTO::new).collect(Collectors.toList());
         return result;
