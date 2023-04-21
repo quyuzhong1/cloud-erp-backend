@@ -1,21 +1,29 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
+import com.erp.server.scm.service.DictBasicService;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
+import com.erp.server.scm.service.PurchaseOrderSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -34,6 +42,16 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     @Resource
     private PurchaseOrderService purchaseOrderService;
 
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
+
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+
     /**
      * 组装数据发送到金蝶
      */
@@ -47,6 +65,56 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("code",entity.getCode());
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //采购日期
+        resultMap.put("purchaseDate",entity.getPurchaseDate());
+        
+        //查询采购供应商
+        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+            return;
+        }
+        //供应商名称
+        resultMap.put("supplierName",supplierEntity.getSupplierName());
+        //采购组织
+        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
+        //采购部门
+        resultMap.put("purchaseDeptName",entity.getPurchaseDeptName());
+        //采购员
+        resultMap.put("purchaseUserName",entity.getPurchaseUserName());
+        //供应商联系人
+        resultMap.put("contactName",supplierEntity.getContactName());
+        //是否是新品首批
+        resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
+
+        if (ObjectUtils.isNotEmpty(supplierEntity.getPayMethodId())) {
+            DictBasicEntity dictBasicEntity = dictBasicService.getById(supplierEntity.getPayMethodId());
+            if (ObjectUtils.isNotEmpty(dictBasicEntity)) {
+                //付款方式
+                resultMap.put("payMethodId",dictBasicEntity.getValue());
+            }
+        }
+
+        //采购明细
+        List<PurchaseOrderDetailEntity> details = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
+        if (CollectionUtils.isEmpty(details)) {
+            return;
+        }
+        List<JSONObject> list = new ArrayList<>();
+        for (PurchaseOrderDetailEntity detailEntity : details) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.set("skuNo",detailEntity.getSkuNo());
+            jsonObject.set("purchaseQty",detailEntity.getPurchaseQty());
+            jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
+            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
+            jsonObject.set("taxPrice",detailEntity.getTaxPrice());
+            jsonObject.set("deliveryWarehouseName",entity.getDeliveryWarehouseName());
+            jsonObject.set("taxRate",detailEntity.getTaxRate());
+            jsonObject.set("receiveOrgName",entity.getReceiveOrgName());
+            jsonObject.set("isGift",detailEntity.getIsGift());
+            jsonObject.set("detailRemark",detailEntity.getRemark());
+            list.add(jsonObject);
+        }
+        resultMap.put("list",list);
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
