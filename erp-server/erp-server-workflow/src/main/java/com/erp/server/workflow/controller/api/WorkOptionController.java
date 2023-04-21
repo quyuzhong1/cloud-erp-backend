@@ -37,7 +37,7 @@ public class WorkOptionController extends BaseController {
      * 待办模块-模块分类下拉
      * @return
      */
-    @GetMapping("/listWaitDoMenu")
+    @GetMapping("/listOftenMenu")
     public ApiResult<List<WorkOptionDTO.WaitDoMenu>> listOftenMenu(@RequestParam("sysClassify") String sysClassify) {
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = workOptionService.listOftenMenu(sysClassify);
         return success(waitDoMenus);
@@ -63,7 +63,7 @@ public class WorkOptionController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/addWaitDo")
+    @PostMapping("/updateWaitDo")
     public ApiResult updateWaitDo(@RequestBody WorkOptionDTO.updateDTO dto) {
         Boolean flag = workOptionService.updateWaitDo(dto);
         return flag == true ? success() : failure();

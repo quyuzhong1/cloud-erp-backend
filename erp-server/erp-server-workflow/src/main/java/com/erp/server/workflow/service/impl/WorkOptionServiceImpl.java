@@ -1,15 +1,19 @@
 package com.erp.server.workflow.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.ModelTypeEnum;
+import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.CommonService;
 import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +38,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private WorkMenuService workMenuService;
 
     /**
      * 待办模块-模块分类下拉
@@ -117,10 +124,43 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     public List<WorkOptionDTO.PendingViewDTO> pendingView() {
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionEntity> list = lambdaQuery().eq(WorkOptionEntity::getOptionUserId, userInfo.getUid()).list();
+        List<String> menuIds = list.stream().map(WorkOptionEntity::getWorkMenuId).collect(Collectors.toList());
+        List<WorkMenuEntity> workMenuEntities = workMenuService.listByIds(menuIds);
+        list.forEach(req -> {
+            WorkMenuEntity workMenuEntity = workMenuEntities.stream().filter(obj -> obj.getId().equals(req.getWorkMenuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(workMenuEntity)) {
+                switch (SysClassifyEnum.getEnumByCode(workMenuEntity.getSysClassify())) {
+                    case PLM :
+                        //表名
+                        workMenuEntity.getModuleCode();
 
+                        getPlmModuleCount();
+                        break;
+                    case SCM :
+                        getScmModuleCount();
+                        break;
+                    case WMS :
+                        getWmsModuleCount();
+                        break;
+                    default:
+                        break;
+                }
+
+
+            }
+        });
         return null;
     }
 
+    private void getPlmModuleCount() {
+
+    }
+    private void getScmModuleCount() {
+
+    }
+    private void getWmsModuleCount() {
+
+    }
 
     /**
      * 审批中心-下拉搜索选项
