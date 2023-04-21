@@ -55,7 +55,8 @@ public class AuthTokenService {
 
     public String createToken(SysUserDTO info) {
         //先生成一个token
-        String token = IdUtils.fastUUID();
+//        String token = IdUtils.fastUUID();
+        String token = info.getUid();
         info.setToken(token);
         refreshToken(info, authJwtProperties.getExpire());
         String accessToken = JwtUtils.generateToken(info, authJwtProperties.getSecret(), authJwtProperties.getExpire());
