@@ -81,7 +81,6 @@ public class QcReportDTO implements Serializable {
         /**
          * 质检项
          */
-
         private String name;
 
         /**
@@ -90,4 +89,7 @@ public class QcReportDTO implements Serializable {
         private String content;
 
     }
+
+
+
 }

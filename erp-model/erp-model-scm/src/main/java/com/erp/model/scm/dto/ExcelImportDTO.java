@@ -46,4 +46,16 @@ public class ExcelImportDTO implements Serializable {
         private String supplierId;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class QcReportDetailExcelImportDTO extends CommonDTO{
+
+        /**
+         * 质检类型
+         */
+        @NotBlank(message = "质检类型不能为空")
+        private String qcType;
+    }
+
 }

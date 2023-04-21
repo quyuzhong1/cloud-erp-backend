@@ -2,8 +2,10 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcReportDTO;
+import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.entity.QcReportEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -64,5 +66,15 @@ public interface QcReportService extends SuperService<QcReportEntity> {
      */
     void removeByRuleIds(List<String> ruleIds);
 
+
+    /**
+     * 导出质检单报告
+     * @author yl
+     * @date 2023-04-21 18:54
+     * @return void
+     */
+    void exportQcReport(QcReportDetailDTO.ExportDTO dto, HttpServletResponse response);
+
+    
 
 }

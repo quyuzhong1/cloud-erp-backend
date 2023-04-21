@@ -13,6 +13,5 @@
         on ru.id=rp.qc_rule_id AND ru. is_deleted=false
         WHERE rp.is_deleted=FALSE AND
         ru.qc_type=#{qcType} AND ru.approve_status=#{approveStatus}
-        ru.
     </select>
 </mapper>
