@@ -734,7 +734,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取收货单详情
         List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
         //获取入库详情
-        List<PurchaseStockInDetailEntity> purchaseStockInDetailEntities = purchaseStockInDetailService.listDetailBySourceDetailIds(orderDetailIds);
+        List<PurchaseStockInDetailEntity> purchaseStockInDetailEntities = purchaseStockInDetailService.listDetailByPodIds(orderDetailIds);
         List<String> list = new ArrayList<>();
         generateStockInViewDTOS.forEach(req -> {
             boolean contains = list.contains(req.getId());
@@ -759,7 +759,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             req.setReceiveQty(receiveQty);
 
-            Integer stockInQty = purchaseStockInDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer stockInQty = purchaseStockInDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - stockInQty);
             req.setStockInQty(req.getUnStockInQty());
             req.setExceedQty(req.getExceedQty());
