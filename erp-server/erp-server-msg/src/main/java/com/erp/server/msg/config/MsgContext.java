@@ -40,7 +40,10 @@ public class MsgContext {
             NoticeTypeEnum noticeTypeEnum = msgInfo.getNoticeTypeEnum();
             sendChannels = new ArrayList<>(Arrays.asList(noticeTypeEnum.getMessageChannels()));
         }
-        sendChannels.stream().forEach(sendChannel-> HOLDER.get(sendChannel).doSendMsg(msgInfo));
+        sendChannels.stream().forEach(sendChannel-> {
+            // TODO 此处需判断数据库表中配置的发送渠道是否在枚举类中能找到，找不到需要走默认
+            HOLDER.get(sendChannel).doSendMsg(msgInfo);
+        });
     }
 
 

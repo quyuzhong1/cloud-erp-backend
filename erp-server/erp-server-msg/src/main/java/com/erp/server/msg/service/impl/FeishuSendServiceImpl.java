@@ -90,14 +90,15 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         List<String> receiverUserIds = noticeMsgInfo.getReceiverUserIds();
         noticeMsgInfo.setReceiverUserIds(receiverUserIds.stream().distinct().collect(Collectors.toList()));
         Boolean isBatch = noticeMsgInfo.getReceiverUserIds().size() >  1;
+        LarkResultVO larkResultVO;
         if(!isBatch) { // 单条消息
-            LarkResultVO larkResultVO = sendSingleMsg(noticeMsgInfo);
-            if(Objects.nonNull(larkResultVO)) {
-                apiResult.setCode(larkResultVO.getCode() == 0 ? 200 : ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
-                apiResult.setMsg(larkResultVO.getMsg());
-            }
+            larkResultVO = sendSingleMsg(noticeMsgInfo);
         } else { // 批量消息
-
+            larkResultVO = sendBatchMsg(noticeMsgInfo);
+        }
+        if(Objects.nonNull(larkResultVO)) {
+            apiResult.setCode(larkResultVO.getCode() == 0 ? 200 : ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
+            apiResult.setMsg(larkResultVO.getMsg());
         }
         return apiResult;
     }
@@ -150,6 +151,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
                 log.error("发送飞书加急消息失败，消息id:{}",singleMsgResultVO.getMessage_id());
             }
         }
+        return result;
+    }
+
+    /**
+     * 发送批量消息
+     * @param noticeMsgInfo
+     * @return
+     */
+    private LarkResultVO sendBatchMsg(NoticeMsgInfoDTO noticeMsgInfo) {
+        LarkResultVO result = null;
         return result;
     }
 
