@@ -1,9 +1,12 @@
 package com.erp.server.msg.config;
 
+import com.erp.server.msg.model.FeishuConfigParam;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 
 /**
@@ -20,14 +23,6 @@ public class FsProperties {
 
     public static final String PREFIX = "third.fs";
 
-    private String clientSecret;
-
-    private String clientId;
-
-    private String redirectLoginUri;
-
-    private String redirectBindingUri;
-
-    private String appUrl;
+    private Map<String, FeishuConfigParam> configs;
 
 }

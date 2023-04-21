@@ -152,4 +152,13 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateHandleMode(QcInfoDTO.UpdateHandleModeDTO dto);
+
+    /**
+     * 获取tab 类型数量
+     * @author yl
+     * @date 2023-04-21 16:48
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.TabListDTO>
+     */
+    List<QcBillDTO.TabListDTO> tabList();
 }

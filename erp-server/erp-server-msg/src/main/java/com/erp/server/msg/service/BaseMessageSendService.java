@@ -1,9 +1,10 @@
 package com.erp.server.msg.service;
 
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.server.msg.config.MsgContext;
+import com.erp.server.msg.model.MsgSendChannelWrapParam;
+import com.erp.server.msg.model.NoticeMsgWrapInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -34,7 +35,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
      * @return
      */
     @Override
-    public ApiResult doSendMsg(NoticeMsgInfoDTO noticeMsgInfo) {
+    public ApiResult doSendMsg(MsgSendChannelWrapParam noticeMsgInfo) {
         ApiResult sendResult = sendMsg(noticeMsgInfo);
         MessageChannelEnum channelEnum = channel();
         log.info("通过渠道【{}】发送消息【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败");
@@ -45,6 +46,6 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
      * 具体子类实现逻辑
      * @return
      */
-    public abstract ApiResult sendMsg(NoticeMsgInfoDTO noticeMsgInfo);
+    public abstract ApiResult sendMsg(MsgSendChannelWrapParam noticeMsgInfo);
 
 }

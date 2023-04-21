@@ -7,6 +7,7 @@ import org.springframework.validation.ObjectError;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 public class ValidatorUtil {
@@ -180,6 +181,30 @@ public class ValidatorUtil {
 			objectError = fieldErrorMap.get(fieldKeys.get(0));
 		}
 		return objectError;
+	}
+
+
+	/**
+	 * 是否正确（不正确报错）
+	 * @param expression
+	 * @param exceptionSupplier
+	 * @param <X>
+	 */
+	public static<X extends Throwable> void isTrue(boolean expression, Supplier<? extends X> exceptionSupplier) throws X {
+		if(!expression) {
+			throw exceptionSupplier.get();
+		}
+	}
+
+	/**
+	 * 如果条件成立则执行方法（如果是需要检测然后抛异常请勿调用该方法，请调用isTrue方法）
+	 * @param expression
+	 * @param function
+	 */
+	public static void isTrueCall(boolean expression, VoidFunc function) {
+		if(expression) {
+			function.callWithRuntimeException();
+		}
 	}
 
 }

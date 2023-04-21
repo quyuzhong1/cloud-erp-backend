@@ -36,8 +36,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_ORDER)
-public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_application_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_APPLICATION_ORDER)
+public class KingdeePlConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -46,7 +46,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_REQUISITION.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230413-8806"));
         String filterStr = String.join(" and ", queryFilters);
@@ -65,7 +65,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
+        Integer type = ApiModuleTypeEnum.PURCHASE_APPLICATION_ORDER.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
         //业务编码
@@ -76,7 +76,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_REQUISITION.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);

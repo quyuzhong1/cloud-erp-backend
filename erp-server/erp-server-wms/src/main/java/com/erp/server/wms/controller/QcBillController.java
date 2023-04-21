@@ -12,14 +12,12 @@ import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 质检单
@@ -46,6 +44,17 @@ public class QcBillController extends BaseController {
     public ApiResult<PagingVO<QcBillDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcBillDTO.PagingParamDTO> dto) {
         PagingVO<QcBillDTO.PagingViewDTO> pagingVO = qcBillService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 获取 质检tab 列表(待质检以及数量的列表)
+     *
+     * @return
+     */
+    @GetMapping("/tabList")
+    public ApiResult<List<QcBillDTO.TabListDTO>> tabList() {
+        List<QcBillDTO.TabListDTO> list = qcBillService.tabList();
+        return success(list);
     }
 
 
@@ -193,7 +202,7 @@ public class QcBillController extends BaseController {
     @PostMapping("/assign")
     public ApiResult assign(@RequestBody @Valid QcBillDTO.AssignDTO dto) {
         Boolean result = qcBillService.assign(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -204,7 +213,7 @@ public class QcBillController extends BaseController {
     @PostMapping("/updateHandleMode")
     public ApiResult updateHandleMode(@RequestBody @Valid QcInfoDTO.UpdateHandleModeDTO dto) {
         Boolean result = qcBillService.updateHandleMode(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
 

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 供应商管理
+ * 附件管理
  * @author Lambda
  * @Classname AttachmentController
  * @Description TODO

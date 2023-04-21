@@ -395,11 +395,10 @@
 
     <select id="getByCountry" resultType="com.erp.model.bi.vo.SalesByCountryVO">
         SELECT
-        round(( i.amount_after * i.${settleRate} ) , 2 ) sales,
+        sum(round( ( i.amount_after * i.currency_rate ), 2 )) sales,
         i.sku_no AS sku ,
         o.country_name_cn AS country,
-        i.item_name AS productName,
-        i.order_id
+        min(i.item_name) AS productName
         FROM dmp_order_item i
         INNER JOIN dmp_order_info o ON i.order_id = o.id
         <where>
@@ -487,6 +486,9 @@
                 ${params.param}
             </if>
         </where>
+
+        GROUP BY i.sku_no,o.country_name_cn
+        ORDER BY sales desc
     </select>
 
     <select id="getPlatformSales" resultType="java.util.Map">

@@ -17,6 +17,8 @@ public enum ApiModuleTypeEnum {
     SYS_USER_INFO(6, "sysUserInfo", "员工","sys"),
     CHANGE_ORG(7, "changeOrg", "默认组织切换",""),
     PURCHASE_ORDER(8, "purchaseOrder", "采购订单","scm"),
+    PURCHASE_APPLICATION_ORDER(9, "purchaseApplicationOrder", "采购申请单","scm"),
+
     ;
     private Integer code;
 

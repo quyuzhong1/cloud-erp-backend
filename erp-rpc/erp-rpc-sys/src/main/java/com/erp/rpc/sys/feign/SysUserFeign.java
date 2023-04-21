@@ -8,6 +8,8 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.vo.MsgChannelConfigDTO;
+import com.erp.model.sys.vo.MsgConfigDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -247,4 +249,20 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getThirdUnionIdsByUserIds")
     List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
+
+    /**
+     * 根据主键获取消息配置信息
+     * @param id
+     * @return
+     */
+    @GetMapping("feign/msgConfig/getById")
+     MsgConfigDTO getMsgConfigById(@RequestParam(value = "id")String id);
+
+    /**
+     * 根据主键获取消息配置信息
+     * @param msgConfigId
+     * @return
+     */
+    @GetMapping("feign/msgChannelConfig/findByMsgConfigId")
+    List<MsgChannelConfigDTO> findByMsgConfigId(@RequestParam(value = "msgConfigId")String msgConfigId);
 }

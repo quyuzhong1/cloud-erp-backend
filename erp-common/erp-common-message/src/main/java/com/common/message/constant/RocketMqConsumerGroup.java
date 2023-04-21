@@ -29,4 +29,8 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_PURCHASE_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_order";
 
+    /**
+     * 金蝶采购申请单（采购申请单）
+     */
+    public static final String SYNC_KINGDEE_PURCHASE_APPLICATION_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_application_order";
 }

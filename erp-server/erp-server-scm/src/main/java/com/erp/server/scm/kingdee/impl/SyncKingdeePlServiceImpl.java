@@ -9,10 +9,10 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
+import com.erp.server.scm.kingdee.SyncKingdeePlService;
 import com.erp.server.scm.service.DictBasicService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
@@ -34,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Service
-public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseOrderService {
+public class SyncKingdeePlServiceImpl implements SyncKingdeePlService {
 
     @Resource
     private MQProducerService mQProducerService;
@@ -56,7 +56,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
+    public void syncDataToKingdee(PurchaseApplicationEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
@@ -65,9 +65,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("code",entity.getCode());
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
-        //采购日期
-        resultMap.put("purchaseDate",entity.getPurchaseDate());
-        
+
         //查询采购供应商
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
@@ -75,12 +73,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         }
         //供应商名称
         resultMap.put("supplierName",supplierEntity.getSupplierName());
-        //采购组织
-        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
-        //采购部门
-        resultMap.put("purchaseDeptName",entity.getPurchaseDeptName());
-        //采购员
-        resultMap.put("purchaseUserName",entity.getPurchaseUserName());
         //供应商联系人
         resultMap.put("contactName",supplierEntity.getContactName());
         //是否是新品首批
@@ -107,9 +99,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
             jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
-            jsonObject.set("deliveryWarehouseName",entity.getDeliveryWarehouseName());
             jsonObject.set("taxRate",detailEntity.getTaxRate());
-            jsonObject.set("receiveOrgName",entity.getReceiveOrgName());
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
             list.add(jsonObject);
@@ -121,7 +111,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_APPLICATION_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
                 return purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
