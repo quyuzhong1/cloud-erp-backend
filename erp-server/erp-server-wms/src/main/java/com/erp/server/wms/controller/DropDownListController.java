@@ -91,5 +91,19 @@ public class DropDownListController extends BaseController {
     }
 
 
+    /**
+     * 质检信息 质检类型下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/qcInfo/qcType/list")
+    public ApiResult<List<BaseDropDownDTO.QcTypeDTO>> listQcInfoQcTypeDropDown() {
+        List<BaseDropDownDTO.QcTypeDTO> result = Arrays.stream(QcTypeEnum.values())
+                .map(x -> new BaseDropDownDTO.QcTypeDTO(x.getCode(), x.getName(),x.getIsInside()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
 
 }
