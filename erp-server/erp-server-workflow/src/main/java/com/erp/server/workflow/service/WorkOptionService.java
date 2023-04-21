@@ -21,6 +21,12 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
     List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify);
 
     /**
+     * 待办模块-模块分类下拉
+     * @return
+     */
+    List<WorkOptionDTO.WaitDoMenu> listOftenMenu(String sysClassify);
+
+    /**
      * 新增代办模块
      * @Author Luo_WG
      * @Date 2023/4/20 19:45

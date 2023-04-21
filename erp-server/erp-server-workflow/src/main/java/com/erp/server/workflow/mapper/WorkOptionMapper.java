@@ -21,4 +21,6 @@ public interface WorkOptionMapper extends BaseMapper<WorkOptionEntity> {
 
     List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(@Param("sysClassify") String sysClassify);
 
+    List<WorkOptionDTO.WaitDoMenu> listOftenMenu(@Param("sysClassify") String sysClassify);
+
 }

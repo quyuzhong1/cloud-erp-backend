@@ -26,11 +26,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String workMenuId;
         /**
-         * 地址
+         * 地址（预留）
          */
         private String moduleUrl;
         /**
-         * 入参
+         * 入参（预留）
          */
         private String moduleParam;
         /**
@@ -54,17 +54,17 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String workMenuId;
         /**
-         * 地址
+         * 地址（预留）
          */
         private String moduleUrl;
         /**
-         * 入参
+         * 入参（预留）
          */
         private String moduleParam;
     }
 
     /**
-     * 菜单
+     * 模块分类下拉
      */
     @Data
     @NoArgsConstructor
@@ -77,18 +77,6 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * name
          */
         private String name;
-        /**
-         * 系统分类
-         */
-        private String sysClassify;
-        /**
-         * 模块状态
-         */
-        private String moduleStatus;
-        /**
-         * 模块编码
-         */
-        private String moduleCode;
         /**
          * 模块分类
          */

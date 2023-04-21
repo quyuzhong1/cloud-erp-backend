@@ -37,8 +37,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 待办模块-模块分类下拉
-     * @return
-     */
+     * @Author Luo_WG
+     * @Date 2023/4/21 10:49
+     * @param sysClassify sysClassify
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.WaitDoMenu>
+     **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listWaitDoMenu(sysClassify);
@@ -49,7 +52,23 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     /**
-     * 新增代办模块
+     * 常用模块-模块分类下拉
+     * @Author Luo_WG
+     * @Date 2023/4/21 10:50
+     * @param sysClassify sysClassify
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.WaitDoMenu>
+     **/
+    @Override
+    public List<WorkOptionDTO.WaitDoMenu> listOftenMenu(String sysClassify) {
+        List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listOftenMenu(sysClassify);
+        waitDoMenus.forEach(req -> {
+            req.setName(req.getModuleClassify());
+        });
+        return waitDoMenus;
+    }
+
+    /**
+     * 新增模块
      * @Author Luo_WG
      * @Date 2023/4/20 19:45
      * @param dto dto
@@ -69,7 +88,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     /**
-     * 编辑修改代办模块
+     * 编辑修改模块
      * @Author Luo_WG
      * @Date 2023/4/20 19:45
      * @param dto dto
@@ -87,7 +106,6 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         workOptionEntity.setId(dto.getId());
         return this.updateById(workOptionEntity);
     }
-
 
     /**
      * 审批中心-下拉搜索选项

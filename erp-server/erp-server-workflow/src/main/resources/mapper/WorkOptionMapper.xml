@@ -5,16 +5,31 @@
         SELECT
         wm.id,
         wm.sys_classify AS sysClassify,
-        wm.module_status AS moduleStatus,
-        wm.module_code AS moduleCode,
         wm.module_classify AS moduleClassify,
         db.name AS moduleStatusName
         FROM work_menu wm
-        LEFT JOIN dict_basic db on wm.module_status = db."value"
+        LEFT JOIN work_menu_ref_status wmrs ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
         <where>
             <if test="sysClassify != '' and sysClassify != null">
                 AND wm.sys_classify = #{sysClassify}
             </if>
         </where>
+        ORDER BY wm.sys_classify,wm.id
+    </select>
+
+    <select id="listOftenMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
+        SELECT
+            wm.id,
+            wm.sys_classify AS sysClassify,
+            wm.module_classify AS moduleClassify,
+            '' AS moduleStatusName
+        FROM work_menu wm
+        <where>
+            <if test="sysClassify != '' and sysClassify != null">
+                AND wm.sys_classify = #{sysClassify}
+            </if>
+        </where>
+        ORDER BY sys_classify,wm.id
     </select>
 </mapper>
