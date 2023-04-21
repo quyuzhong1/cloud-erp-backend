@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcBillDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.server.wms.service.QcBillService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -193,7 +194,17 @@ public class QcBillController extends BaseController {
     public ApiResult assign(@RequestBody @Valid QcBillDTO.AssignDTO dto) {
         Boolean result = qcBillService.assign(dto);
         return result?success():failure();
+    }
 
+    /**
+     * 批量更新处理措施
+     *
+     * @return
+     */
+    @PostMapping("/updateHandleMode")
+    public ApiResult updateHandleMode(@RequestBody @Valid QcInfoDTO.UpdateHandleModeDTO dto) {
+        Boolean result = qcBillService.updateHandleMode(dto);
+        return result?success():failure();
     }
 
 

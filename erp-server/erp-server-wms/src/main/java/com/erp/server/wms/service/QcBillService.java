@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcBillDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.QcBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -142,4 +143,13 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return java.lang.Boolean
      */
     Boolean assign(QcBillDTO.AssignDTO dto);
+
+    /**
+     * 批量更新处理措施
+     * @author yl
+     * @date 2023-04-20 19:08
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateHandleMode(QcInfoDTO.UpdateHandleModeDTO dto);
 }

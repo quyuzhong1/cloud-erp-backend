@@ -198,6 +198,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
 
     /**
+     * 更新处理措施
+     *
+     * @param mainIds
+     * @param handleModeDict
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-20 19:17
+     */
+    @Override
+    public Boolean updateHandleMode(List<String> mainIds, String handleModeDict) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return false;
+        }
+        LambdaUpdateWrapper<QcInfoEntity> updateWrapper = new LambdaUpdateWrapper();
+        updateWrapper.in(QcInfoEntity::getMainId, mainIds);
+        updateWrapper.set(QcInfoEntity::getHandleModeDict, handleModeDict);
+        return this.update(updateWrapper);
+    }
+
+
+    /**
      * 根据质检单id 获取到质检信息
      *
      * @param billId
