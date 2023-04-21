@@ -2,8 +2,11 @@ package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.service.LocalDateStringConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -69,8 +72,8 @@ public class DmpShopInfoExcelDTO {
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 7)
-    private String createTime;
+    @ExcelProperty(value = "创建时间", index = 7,converter= LocalDateStringConverter.class)
+    private LocalDateTime createTime;
 
     /**
      * 更新人
@@ -83,7 +86,7 @@ public class DmpShopInfoExcelDTO {
      * 更新时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "更新时间", index = 9)
-    private String updateTime;
+    @ExcelProperty(value = "更新时间", index = 9,converter= LocalDateStringConverter.class)
+    private LocalDateTime updateTime;
 
 }

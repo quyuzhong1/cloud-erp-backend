@@ -84,9 +84,11 @@
         doi.platform_order_id,
         doi.source_platform,
         doi.shop_name,
-        doi.order_fee,
-        round(doi.order_fee * doi.currency_rate,2) as cnyRealTimeAmount,
-        round(doi.order_fee * doi.cny_settle_rate,2) as cny_settle_amount,
+        case when doi.currency_rate != 0 then round(doi.order_fee/doi.currency_rate,4)
+        else 0 end as itemTotal,
+        doi.order_fee as cnyRealTimeAmount,
+        case when doi.currency_rate != 0 then  round(doi.order_fee/doi.currency_rate * doi.cny_settle_rate,4)
+        else 0 end as cny_settle_amount,
         doi.buyer_name,
         doi.man_phone,
         doi.second_phone,
@@ -105,6 +107,7 @@
             else '' end correction_status_name,
         doi.correction_status,
         doi.create_time,
+        doi.platform_create_time,
         doi.platform_order_id,
         doi.delivery_time,
         doi.charge_name,
@@ -112,9 +115,9 @@
         doi.dept_name,
         doi2.sku_no,
         doi2.item_name,
-        doi2.sell_price,
+        doi2.sell_price_origin,
         doi2.quantity,
-        round(doi2.sell_price * doi2.quantity,2) as sellAmount
+        round(doi2.sell_price_origin * doi2.quantity,2) as sellAmountOrigin
         from dmp_order_info doi
         left join dmp_order_item doi2 on doi.id = doi2.order_id
         <where>

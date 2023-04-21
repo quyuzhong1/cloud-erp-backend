@@ -22,6 +22,7 @@
         <module>erp-model-dmp</module>
         <module>erp-model-scm</module>
         <module>erp-model-wms</module>
+        <module>erp-model-msg</module>
     </modules>
 
     <dependencies>

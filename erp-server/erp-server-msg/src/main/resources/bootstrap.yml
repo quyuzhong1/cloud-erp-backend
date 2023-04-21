@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: erp-msg
+  profiles:
+    active: dev
+server:
+  port: 9080
+
+logging:
+  config: classpath:logback-spring.xml

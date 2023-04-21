@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -273,5 +274,16 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/updateBusinessSyncKingdeeStatus")
     public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
+    }
+
+    /**
+     * 根据第三方平台和用户id 获取对应的 UnionId
+     *
+     * @return
+     */
+    @PostMapping("/getThirdUnionIdByUserId")
+    public ThirdUnionDTO getThirdUnionIdByUserId(@RequestParam(value = "platform") String platform, @RequestParam(value = "userId") String userId) {
+        ThirdUnionDTO thirdUnion= sysUserThirdService.getUnionByPlatformAndUserId(platform, userId);
+        return thirdUnion;
     }
 }

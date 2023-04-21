@@ -86,4 +86,62 @@ public class StrUtils {
         }
         return sb.toString();
     }
+
+    public static final boolean isEmpty(String foo) {
+        return (foo == null || foo.trim().length() == 0);
+    }
+
+    public static final boolean isEmpty(Object foo) {
+        return (foo == null || foo.toString().trim().length() == 0);
+    }
+
+    public static final boolean isNotEmpty(String foo) {
+        return (null != foo && foo.trim().length() > 0);
+    }
+
+    public static final boolean isNotEmpty(Object foo) {
+        return (null != foo && foo.toString().trim().length() > 0);
+    }
+
+    public static String removeSpecialSymbol(String str) {
+        String newStr = "";
+        if (isNotEmpty(str)) {
+            str = str.replaceAll("\n", "");//回车符
+            str = str.replaceAll("\t ", "");//水平制表符
+            str = str.replaceAll("\r ", "");//换行
+            str = str.replace(String.valueOf((char) 160), " ");
+            newStr = str.trim();
+        }
+        return newStr;
+    }
+
+    public static String removeSpecialSymbol(Object object) {
+        if (object == null) {
+            return "";
+        }
+        return removeSpecialSymbol(object.toString());
+    }
+
+    /**
+     * 字符串去左右空格
+     */
+    public static String null2EmptyWithTrim(String s) {
+        if (s == null) {
+            return "";
+        } else {
+            return s.trim();
+        }
+    }
+
+    /**
+     * 字符串去左右空格
+     */
+    public static String null2EmptyWithTrim(Object s) {
+        if (s == null) {
+            return "";
+        } else {
+            return s.toString().trim();
+        }
+    }
+
 }

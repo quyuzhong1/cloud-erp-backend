@@ -137,14 +137,14 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 throw new ServiceException(ApiError.ERROR_97013);
             }
         }
-        dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
-        dmpShopInfoEntity.setEnableTime(dto.getEnableTime());
         DmpShopChangeLogEntity logEntity = new DmpShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
         logEntity.setChargeId(dto.getChargeId());
         logEntity.setChargeName(findUserDTO.getUserName());
         logEntity.setEnableTimeBegin(null == dmpShopInfoEntity.getEnableTime() ? LocalDate.of(2022, 1, 1) : dmpShopInfoEntity.getEnableTime());
-        logEntity.setEnableTimeEnd(dto.getEnableTime());
+        logEntity.setEnableTimeEnd(dto.getEnableTime().minusDays(1L));
+        dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
+        dmpShopInfoEntity.setEnableTime(dto.getEnableTime());
         //新增变更记录
         boolean flag = dmpShopChangeLogService.save(logEntity);
         if (flag) {
