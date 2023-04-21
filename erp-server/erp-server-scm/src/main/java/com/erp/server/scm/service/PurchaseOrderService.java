@@ -219,4 +219,14 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
      */
     PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId);
+    /**
+     * @description: 更新金蝶发送状态
+     * @author Will
+     * @date: 2023/4/21 10:04
+     * @param ids
+     * @param code
+     * @param syncKingdeeId
+     * @return Boolean
+     */
+    Boolean updateSyncKingdeeStatus(List<String> ids, String code, String syncKingdeeId);
 }
