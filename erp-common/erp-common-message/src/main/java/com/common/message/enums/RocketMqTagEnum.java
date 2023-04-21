@@ -151,10 +151,14 @@ public enum RocketMqTagEnum {
     KINGDEE_SYS_USER_INFO_TAG(30, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
 
     /**
-     * 系统用户同步金蝶
+     * 采购订单同步金蝶
      */
     KINGDEE_PURCHASE_ORDER_TAG(31, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
 
+    /**
+     * 采购申请单同步金蝶
+     */
+    KINGDEE_PURCHASE_APPLICATION_ORDER_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_application_order_tag"),
     ;
     
     
