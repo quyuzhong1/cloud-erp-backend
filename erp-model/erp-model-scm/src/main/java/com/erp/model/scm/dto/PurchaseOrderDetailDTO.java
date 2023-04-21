@@ -238,6 +238,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
     public static class ViewProductDTO {
 
         /**
+         * skuId
+         */
+        private String  skuId;
+
+        /**
          * sku编码
          */
         private String  skuNo;

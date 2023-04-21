@@ -33,6 +33,7 @@
 
     <select id="viewProduct" resultType="com.erp.model.scm.dto.PurchaseOrderDetailDTO$ViewProductDTO">
         select
+            pod.sku_id as skuId,
             pod.sku_no as skuNo,
             pod.product_name as productName,
             pod.purchase_qty as purchaseQty,
