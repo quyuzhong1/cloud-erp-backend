@@ -18,7 +18,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class MsgHolder {
+public class MsgContext {
 
     private static Map<MessageChannelEnum, IMessageSendService>  HOLDER = new HashMap<>(10);
 

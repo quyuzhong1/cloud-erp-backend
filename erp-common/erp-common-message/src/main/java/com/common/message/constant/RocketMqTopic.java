@@ -23,4 +23,9 @@ public class RocketMqTopic {
      * 推送Plm产品信息到dmp
      */
     public static final String SYNC_PLM_PRODUCT_TOPIC = "${spring.profiles.active}-sync_plm_product_topic";
+
+    /**
+     * 发送消息到消息服务主题
+     */
+    public static final String NOTICE_MSG_TOPIC = "${spring.profiles.active}-notice_msg_topic";
 }

@@ -143,6 +143,12 @@ public enum RocketMqTagEnum {
      */
     SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
 
+    //-----------------------------消息通知--------------------------------------------
+
+    /**
+     * 消息通知，可以不同的业务使用不同的tag
+     */
+    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_*_tag"),
     ;
     
     
@@ -159,6 +165,8 @@ public enum RocketMqTagEnum {
     public static final String STOCK = "stock";
 
     public static final String SYNC_DMP = "sync_dmp";
+
+    public static final String MSG_NOTICE = "msg_notice";
 
     private Integer code;
 

@@ -59,14 +59,14 @@ public class NoticeMsgInfoDTO implements Serializable {
     // TODO 泛型扩展实体，便于后面扩展
 
     /**
-     * 发送MQ消息的主题，切勿修改
+     * 发送MQ消息的主题，取值从类RocketMqTopic.NOTICE_MSG_TOPIC
      */
-    private static final String rocketMqTopic = "";
+    private String rocketMqTopic;
 
     /**
-     * 发送MQ消息的tag，切勿修改
+     * 发送MQ消息的tag，取值从类RocketMqTagEnum.MSG_NOTICE_TAG，可以不同的业务使用不同的tag，需替换*号
      */
-    private static final String rocketMqTag = "";
+    private String rocketMqTag;
 
 
 }
