@@ -61,4 +61,21 @@ public class BaseDropDownDTO implements Serializable {
         }
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class QcTypeDTO extends CommonDTO{
+
+        /**
+         * 是否是内部检验  true 是
+         */
+        private Boolean isInside;
+
+        public QcTypeDTO(String code, String value, Boolean isInside) {
+            this.setCode(code);
+            this.setValue(value);
+            this.isInside = isInside;
+        }
+    }
+
 }
