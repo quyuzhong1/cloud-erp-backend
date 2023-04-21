@@ -115,11 +115,13 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
         }
         String userId = noticeMsgInfo.getReceiverUserIds().get(0);
-        ThirdUnionDTO thirdUnionDTO = sysUserFeign.getThirdUnionIdByUserId(ThirdPlatformEnums.FS.code, userId);
-        String unionId = thirdUnionDTO.getThirdUnionId();
-        if(Objects.isNull(thirdUnionDTO) || StrUtils.isEmpty(unionId)) {
-            log.warn("用户【{}】未找到绑定的飞书信息");
+        List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdUnionIdsByUserIds(ThirdPlatformEnums.FS.code, CollUtil.newArrayList(userId));
+        if(CollUtil.isEmpty(thirdUnionDTOs) || StrUtils.isEmpty(thirdUnionDTOs.get(0).getThirdUnionId())) {
+            log.warn("用户【{}】未找到绑定的飞书信息",userId);
+            return null;
         }
+        String unionId = thirdUnionDTOs.get(0).getThirdUnionId();
+
         NoticeTypeEnum noticeTypeEnum = noticeMsgInfo.getNoticeTypeEnum();
         // 消息类型，文本或卡片
         NoticeMessageTypeEnum msgTypeEnum = noticeTypeEnum.getNoticeMessageType();
@@ -133,7 +135,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("receive_id", unionId);
-        FeiShuSendBaseParam param = wrapSingleParam(noticeMsgInfo, feishuMessageTypeEnum);
+        FeiShuSendBaseParam param = wrapParam(noticeMsgInfo, feishuMessageTypeEnum);
         bodyMap.put("content", JSONUtil.toJsonStr(param.getContent()));
         log.info("开始发送飞书消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(bodyMap));
         String resultStr = OkHttpUtils.doPostJson(FeishuConstant.LARK_SEND_MESSAGE_URL, bodyMap, headerMap);
@@ -160,24 +162,44 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      * @return
      */
     private LarkResultVO sendBatchMsg(NoticeMsgInfoDTO noticeMsgInfo) {
-        LarkResultVO result = null;
-        return result;
-    }
-
-    private FeiShuSendBaseParam wrapSingleParam(NoticeMsgInfoDTO noticeMsgInfo,FeishuMessageTypeEnum feishuMessageTypeEnum) {
-        FeiShuSendBaseParam feiShuSendSingleParam = new FeiShuSendBaseParam();
-
-        FeiShuSendBaseParam.ContentDTO contentDTO;
-        switch (feishuMessageTypeEnum) {
-            case INTERACTIVE: // 卡片
-                contentDTO = FeishuUtil.wrapTypicalCard(noticeMsgInfo);
-                break;
-            default: // 默认文本
-                contentDTO = new  FeiShuSendBaseParam.ContentDTO();
-                contentDTO.setText(noticeMsgInfo.getContent());
+        //获取飞书的应用token
+        String tenantAccessToken = getFsTenantAccessToken();
+        if(StrUtils.isEmpty(tenantAccessToken)) {
+            log.error("发送飞书消息失败 token为空");
+            throw new ServiceException(ApiError.ERROR_LARK_TOKEN_IS_NULL);
         }
-        feiShuSendSingleParam.setContent(contentDTO);
-        return feiShuSendSingleParam;
+        List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdUnionIdsByUserIds(ThirdPlatformEnums.FS.code, noticeMsgInfo.getReceiverUserIds());
+        if(CollUtil.isEmpty(thirdUnionDTOs)) {
+            log.warn("批量发送消息未找到绑定的飞书账号信息");
+            return null;
+        }
+        List<String> unionIds = thirdUnionDTOs.stream().map(ThirdUnionDTO::getThirdUnionId).collect(Collectors.toList());
+        NoticeTypeEnum noticeTypeEnum = noticeMsgInfo.getNoticeTypeEnum();
+        // 消息类型，文本或卡片
+        NoticeMessageTypeEnum msgTypeEnum = noticeTypeEnum.getNoticeMessageType();
+
+        Map<String, String> headerMap = new HashMap<>();
+        String authorization = FeishuConstant.FS_AUTHORIZATION + tenantAccessToken;
+        headerMap.put("Authorization", authorization);
+        headerMap.put("Content-Type", FeishuConstant.CONTENT_TYPE);
+
+        Map<String, Object> bodyMap = new HashMap<>();
+        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.of(msgTypeEnum.getCode()).getFeishuMsgType();
+        bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
+        //用户的unionIds
+        bodyMap.put("union_ids", unionIds);
+        FeiShuSendBaseParam param = wrapParam(noticeMsgInfo, feishuMessageTypeEnum);
+        // 特别注意，此处的card不能序列化成json
+        bodyMap.put("card", param.getContent());
+        log.info("开始发送批量飞书消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(bodyMap));
+        String resultStr = OkHttpUtils.doPostJson(FeishuConstant.FS_BATCH_SEND_MESSAGE_URL, bodyMap, headerMap);
+        log.info("结束批量发送飞书消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), resultStr);
+        LarkResultVO result = JSONObject.parseObject(resultStr, LarkResultVO.class);
+        if(null == result || 0 != result.getCode()){
+            log.error("批量发送飞书消息失败，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), JSONUtil.toJsonStr(result));
+            throw new ServiceException(ApiError.ERROR_LARK_SEND_MSG_FAIL);
+        }
+        return result;
     }
 
     /**
@@ -225,6 +247,22 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             throw new ServiceException(ApiError.ERROR_LARK_SEND_MSG_FAIL);
         }
         return result;
+    }
+
+    private FeiShuSendBaseParam wrapParam(NoticeMsgInfoDTO noticeMsgInfo,FeishuMessageTypeEnum feishuMessageTypeEnum) {
+        FeiShuSendBaseParam feiShuSendSingleParam = new FeiShuSendBaseParam();
+
+        FeiShuSendBaseParam.ContentDTO contentDTO;
+        switch (feishuMessageTypeEnum) {
+            case INTERACTIVE: // 卡片
+                contentDTO = FeishuUtil.wrapTypicalCard(noticeMsgInfo);
+                break;
+            default: // 默认文本
+                contentDTO = new  FeiShuSendBaseParam.ContentDTO();
+                contentDTO.setText(noticeMsgInfo.getContent());
+        }
+        feiShuSendSingleParam.setContent(contentDTO);
+        return feiShuSendSingleParam;
     }
 
 }

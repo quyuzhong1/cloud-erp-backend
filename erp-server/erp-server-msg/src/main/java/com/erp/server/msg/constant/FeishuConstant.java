@@ -33,4 +33,9 @@ public interface FeishuConstant {
      */
     String LARK_PRESS_URL = "https://open.feishu.cn/open-apis/im/v1/messages/{}/urgent_app?user_id_type=union_id";
 
+    /**
+     * 批量发送消息地址
+     */
+    String FS_BATCH_SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/message/v4/batch_send/";
+
 }

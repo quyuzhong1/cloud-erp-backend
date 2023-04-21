@@ -239,6 +239,12 @@ public interface SysUserFeign {
     @PostMapping("feign/user/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
 
-    @PostMapping("feign/user/getThirdUnionIdByUserId")
-    ThirdUnionDTO getThirdUnionIdByUserId(@RequestParam(value = "platform") String platform, @RequestParam(value = "userId") String userId);
+    /**
+     * 批量根据用户id获取第三方平台账号信息
+     * @param platform
+     * @param userIds
+     * @return
+     */
+    @PostMapping("feign/user/getThirdUnionIdsByUserIds")
+    List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
 }

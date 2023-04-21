@@ -15,6 +15,7 @@ import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -161,13 +162,12 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
     }
 
     @Override
-    public ThirdUnionDTO getUnionByPlatformAndUserId(String platform, String userId) {
+    public List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds) {
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
-        queryWrapper.eq(SysUserThirdEntity::getUserId, userId);
-        SysUserThirdEntity sysUserThirdEntity =  this.getOne(queryWrapper);
-        ThirdUnionDTO thirdUnionDTO = new ThirdUnionDTO();
-        BeanMapperUtils.copy(sysUserThirdEntity,thirdUnionDTO);
-        return thirdUnionDTO;
+        queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        List<SysUserThirdEntity> sysUserThirdEntitys =  this.list(queryWrapper);
+        List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,sysUserThirdEntitys);
+        return thirdUnionDTOs;
     }
 }

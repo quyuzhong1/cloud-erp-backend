@@ -46,9 +46,9 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
     /**
      * 根据平台和用户id获取平台信息
      * @param platform
-     * @param userId
+     * @param userIds
      * @return
      */
-    ThirdUnionDTO getUnionByPlatformAndUserId(String platform, String userId);
+    List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds);
 }
 

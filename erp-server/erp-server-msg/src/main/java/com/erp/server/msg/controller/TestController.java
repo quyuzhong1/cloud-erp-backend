@@ -1,5 +1,6 @@
 package com.erp.server.msg.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -53,12 +54,34 @@ public class TestController extends BaseController {
     }
 
     /**
-     * 发送消息（MQ）
+     * 发送单条消息（MQ）
      */
     @RequestMapping("/sendMsgMq")
     public ApiResult sendMsgMq() {
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
         noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
+        noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
+        // 请注意：飞书中的**和**中间的数据表示加粗
+        noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
+        noticeMsgInfoDTO.setUrgent(true);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                noticeMsgInfoDTO, IdUtil.simpleUUID());
+        if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
+        return success();
+    }
+
+    /**
+     * 批量发送消息（MQ）
+     */
+    @RequestMapping("/sendMultiMsgMq")
+    public ApiResult sendMultiMsgMq() {
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(CollUtil.newArrayList("1645710077245652993","1631292025469009921"));
         noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
         // 请注意：飞书中的**和**中间的数据表示加粗
         noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
