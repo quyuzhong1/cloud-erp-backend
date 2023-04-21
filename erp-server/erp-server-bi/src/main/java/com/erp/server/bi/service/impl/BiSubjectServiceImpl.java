@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -271,13 +272,13 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         BiDictEntity dict;
-        if (StrUtil.isNotBlank(dto.getCategoryId())){
+        if (StrUtil.isNotBlank(dto.getCategoryId())) {
             dict = dictService.getById(categoryId);
-        }else {
-            dict = dictService.getByTypeName("subjectCategory","销售专题");
+        } else {
+            dict = dictService.getByTypeName("subjectCategory", "销售专题");
         }
         if (null == dict) {
-           throw new ServiceException(500,"专题类型不存在，请确认！");
+            throw new ServiceException(500, "专题类型不存在，请确认！");
         }
         String categoryName = dict.getName();
         categoryId = dict.getId();
@@ -371,7 +372,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         //查询到用户可见的专题
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
-
+        if (CollectionUtils.isEmpty(subjectIdList)) {
+            return Collections.emptyList();
+        }
 
         String type = DictEnum.DASHBOARD.getType();
         String dashboardFlag = DictEnum.DASHBOARD.getValue();
@@ -408,19 +411,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             resultList.add(result);
 
         }
-//        //我创建的
-//        CategorySubjectDTO myCreate = new CategorySubjectDTO();
-//        myCreate.setCategoryName("我创建的专题");
-//        List<SubjectDTO> myCreateList = subjectList.stream().filter(s -> userId.equals(s.getCreateUserId())).collect(Collectors.toList());
-//        myCreate.setSubjectList(myCreateList);
-//        resultList.add(myCreate);
-//
-//        //分享给我的
-//        CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
-//        shareToMeDTO.setCategoryName("共享专题");
-//        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s -> shareToMeIds.contains(s.getId())).collect(Collectors.toList());
-//        shareToMeDTO.setSubjectList(shareToMeList);
-//        resultList.add(shareToMeDTO);
+
         return resultList;
     }
 
