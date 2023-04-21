@@ -66,17 +66,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -98,7 +104,7 @@
         COUNT(DISTINCT ( i.order_id )) AS orderCount,
         round( SUM ( ( i.amount_after * i.${settleRate} ) ) , 2 ) sales,
         i.sku_no AS name,
-        (select item_name FROM dmp_order_item where sku_no=i.sku_no LIMIT 1) AS productName
+        min(i.item_name) AS productName
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>
@@ -156,17 +162,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -251,17 +263,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -350,17 +368,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -442,17 +466,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -750,17 +780,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -844,17 +880,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -931,17 +973,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1020,17 +1068,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -1105,17 +1159,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1192,17 +1252,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1222,7 +1288,7 @@
     <select id="byHomeAndAbroad" resultType="com.erp.model.bi.vo.SalesCountVO">
         SELECT SUM ( round( ( i.amount_after * i.currency_rate ), 2 ) ) sales ,
         country_name_cn AS name FROM
-        dmp_order_item i  LEFT JOIN dmp_order_info o
+        dmp_order_item i LEFT JOIN dmp_order_info o
         ON i.order_id = o.ID
         WHERE (country_name_cn!=null or country_name_cn!='')
         <if test="params.timeType!=null and params.timeType==0">
@@ -1310,17 +1376,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1398,17 +1470,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1485,17 +1563,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1510,7 +1594,6 @@
             </if>
         </where>
         GROUP BY i.new_sign
-
     </select>
     <select id="byPlatformNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT round( SUM ( i.amount_after * i.${settleRate}), 2 ) AS sales,
@@ -1574,17 +1657,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1661,17 +1750,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1749,17 +1844,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -1835,17 +1936,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -1920,17 +2027,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -1949,7 +2062,7 @@
 
     <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
         SELECT o.shop_no,SUM ( round( ( i.amount_after * i.currency_rate ), 2 ) ) sales
-        FROM dmp_order_item i  LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -2032,17 +2145,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2149,17 +2268,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2237,17 +2362,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2310,17 +2441,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -2383,17 +2520,23 @@
         </if>
         <!-- 品类 -->
         <if test="params.category!=null and params.category.size>0">
-            AND i.category_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.category IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
+            )
         </if>
         <!-- 品牌 -->
         <if test="params.brand!=null and params.brand.size>0">
-            AND i.brand_name IN
+            AND i.sku_no IN
+            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+            pi.brand_name IN
             <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                 #{brand}
             </foreach>
+            )
         </if>
         <!-- 用户id -->
         <if test="params.userId!=null and params.userId.size>0">
@@ -2472,17 +2615,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2525,10 +2674,13 @@
 
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
@@ -2598,17 +2750,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2685,17 +2843,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2771,17 +2935,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
@@ -2860,17 +3030,23 @@
             </if>
             <!-- 品类 -->
             <if test="params.category!=null and params.category.size>0">
-                AND i.category_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
+                )
             </if>
             <!-- 品牌 -->
             <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_name IN
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
                 <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
                     #{brand}
                 </foreach>
+                )
             </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
