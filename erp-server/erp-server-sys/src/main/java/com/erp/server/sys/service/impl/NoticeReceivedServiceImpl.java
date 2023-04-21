@@ -5,8 +5,10 @@ import com.erp.model.sys.dto.NoticeReceivedDTO;
 import com.erp.model.sys.entity.NoticeReceivedEntity;
 import com.erp.server.sys.mapper.NoticeReceivedMapper;
 import com.erp.server.sys.service.NoticeReceivedService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,7 +23,15 @@ import java.util.List;
 public class NoticeReceivedServiceImpl extends SuperServiceImpl<NoticeReceivedMapper, NoticeReceivedEntity> implements NoticeReceivedService {
 
     @Override
-    public void add(String id, List<NoticeReceivedDTO.AddDTO> receivedList) {
+    public void add(String noticeId, List<NoticeReceivedDTO.AddDTO> receivedList) {
+        if (CollectionUtils.isEmpty(receivedList)) {
+            List<NoticeReceivedEntity> addList = new ArrayList<>(receivedList.size());
+            for (NoticeReceivedDTO.AddDTO item : receivedList) {
+                NoticeReceivedEntity addEntity = new NoticeReceivedEntity();
+                addEntity.setNoticeId(noticeId);
 
+            }
+
+        }
     }
 }
