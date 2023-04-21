@@ -214,10 +214,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             userDTO = sysUserFeign.getSysUserById(dto.getReceiveUserId());
         }
         //获取用户部门
-        SysDepartmentDTO departmentDTO = null;
+        SysDepartmentUserNumberDTO departmentDTO = null;
         if (StringUtils.isNotBlank(dto.getReceiveDeptId())) {
-            departmentDTO = sysUserFeign.getUserDeptById(dto.getReceiveDeptId());
+            departmentDTO = sysUserFeign.getDeptByUserId(dto.getReceiveUserId());
         }
+
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(purchaseOrderEntity.getReceiveOrgId());
         //获取仓库信息
@@ -239,7 +240,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         warehouseReceiveEntity.setReceiveDeptId(dto.getReceiveDeptId());
         if (departmentDTO != null) {
-            warehouseReceiveEntity.setReceiveDeptName(departmentDTO.getName());
+            warehouseReceiveEntity.setReceiveDeptName(departmentDTO.getDepartmentName());
         }
         warehouseReceiveEntity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         warehouseReceiveEntity.setReceiveOrgName(sysAccountingCompanyEntity.getCompanyName());
