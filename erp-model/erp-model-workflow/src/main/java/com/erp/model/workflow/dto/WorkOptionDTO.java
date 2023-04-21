@@ -87,6 +87,48 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleStatusName;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class MyWorkOptionDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 系统分类 plm wms scm
+         */
+        private String sysClassify;
+
+        /**
+         * 模块分类
+         */
+        private String moduleClassify;
+
+        /**
+         * 模块编码
+         */
+        private String moduleCode;
+
+        /**
+         * 模块状态名称
+         */
+        private String moduleStatusName;
+
+        /**
+         * 模块状态
+         */
+        private String moduleStatus;
+
+        /**
+         * 地址（预留）
+         */
+        private String moduleUrl;
+        /**
+         * 入参（预留）
+         */
+        private String moduleParam;
+    }
 
     /**
      * 代办列表
@@ -95,6 +137,22 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class PendingViewDTO {
         /**
+         * 模块分类 plm wms scm
+         */
+        public String sysClassify;
+
+        /**
+         * 数据集
+         */
+        public List<PendingViewDetailDTO> list;
+    }
+    /**
+     * 代办列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PendingViewDetailDTO {
+        /**
          * 模块名称
          */
         private String name;
@@ -102,7 +160,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         /**
          * 单据数量
          */
-        private String count;
+        private Integer count;
 
         /**
          * 状态名称
@@ -252,4 +310,22 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private List<String> ids;
     }
+
+    /**
+     * 工作台查询表单数量参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TableNumDTO {
+        /**
+         * 表名称
+         */
+        private String tableName;
+
+        /**
+         * 状态
+         */
+        private String approveStatus;
+    }
+
 }

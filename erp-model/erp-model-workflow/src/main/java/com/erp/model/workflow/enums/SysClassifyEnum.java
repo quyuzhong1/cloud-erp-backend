@@ -1,5 +1,8 @@
 package com.erp.model.workflow.enums;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public enum SysClassifyEnum {
     PLM("plm", "PLM系统"),
     SCM("scm", "SCM系统"),
@@ -37,5 +40,13 @@ public enum SysClassifyEnum {
             }
         }
         return null;
+    }
+
+    public static List<ApproveSearchOptionEnum> getAll() {
+        List<ApproveSearchOptionEnum> resultList = new ArrayList<>();
+        for (ApproveSearchOptionEnum optionEnum : ApproveSearchOptionEnum.values()) {
+            resultList.add(optionEnum);
+        }
+        return resultList;
     }
 }

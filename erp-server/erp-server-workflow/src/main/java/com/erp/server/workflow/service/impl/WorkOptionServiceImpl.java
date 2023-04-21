@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
@@ -10,6 +11,8 @@ import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.ModelTypeEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.CommonService;
 import com.erp.server.workflow.service.ProcessTaskService;
@@ -41,6 +44,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private WorkMenuService workMenuService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     /**
      * 待办模块-模块分类下拉
@@ -122,44 +131,59 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.PendingViewDTO> pendingView() {
+        List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
-        List<WorkOptionEntity> list = lambdaQuery().eq(WorkOptionEntity::getOptionUserId, userInfo.getUid()).list();
-        List<String> menuIds = list.stream().map(WorkOptionEntity::getWorkMenuId).collect(Collectors.toList());
-        List<WorkMenuEntity> workMenuEntities = workMenuService.listByIds(menuIds);
-        list.forEach(req -> {
-            WorkMenuEntity workMenuEntity = workMenuEntities.stream().filter(obj -> obj.getId().equals(req.getWorkMenuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(workMenuEntity)) {
-                switch (SysClassifyEnum.getEnumByCode(workMenuEntity.getSysClassify())) {
-                    case PLM :
-                        //表名
-                        workMenuEntity.getModuleCode();
-
-                        getPlmModuleCount();
+        List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
+        List<ApproveSearchOptionEnum> approveSearchOptionEnumList = SysClassifyEnum.getAll();
+        for (ApproveSearchOptionEnum approveSearchOptionEnum : approveSearchOptionEnumList) {
+            WorkOptionDTO.PendingViewDTO pendingViewDTO = new WorkOptionDTO.PendingViewDTO();
+            List<WorkOptionDTO.PendingViewDetailDTO> pendingViewDetailDTOList = new ArrayList<>();
+            pendingViewDTO.setSysClassify(approveSearchOptionEnum.getCode());
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList = myWorkOptionDTOS.stream().filter(req -> req.getSysClassify().equals(approveSearchOptionEnum.getCode())).collect(Collectors.toList());
+            for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
+                WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO = new WorkOptionDTO.PendingViewDetailDTO();
+                WorkOptionDTO.TableNumDTO tableNumDTO = new WorkOptionDTO.TableNumDTO();
+                tableNumDTO.setTableName(myWorkOptionDTO.getModuleCode());
+                tableNumDTO.setApproveStatus(myWorkOptionDTO.getModuleStatus());
+                switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
+                    case PLM:
+                        getPlmModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
                         break;
-                    case SCM :
-                        getScmModuleCount();
+                    case SCM:
+                        getScmModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
                         break;
-                    case WMS :
-                        getWmsModuleCount();
+                    case WMS:
+                        getWmsModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
                         break;
                     default:
                         break;
                 }
-
-
+                pendingViewDTO.setList(pendingViewDetailDTOList);
             }
-        });
-        return null;
+            list.add(pendingViewDTO);
+        }
+        return list;
     }
 
-    private void getPlmModuleCount() {
-
+    private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
+        //Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
+        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
+        pendingViewDetailDTO.setCount(0);
+        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
     }
-    private void getScmModuleCount() {
 
+    private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
+        Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
+        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
+        pendingViewDetailDTO.setCount(tableNum);
+        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
     }
-    private void getWmsModuleCount() {
 
+    private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
+        Integer tableNum = wmsTaskFeign.getTableNum(tableNumDTO);
+        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
+        pendingViewDetailDTO.setCount(tableNum);
+        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
     }
 
     /**

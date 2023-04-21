@@ -32,4 +32,26 @@
         </where>
         ORDER BY sys_classify,wm.id
     </select>
+
+    <select id="listMyWorkOption" resultType="com.erp.model.workflow.dto.WorkOptionDTO$MyWorkOptionDTO">
+        SELECT
+            wm.id,
+            wm.sys_classify AS sysClassify,
+            wm.module_classify AS moduleClassify,
+            wm.module_code AS moduleCode,
+            db.name AS moduleStatusName,
+            wmrs.module_status AS moduleStatus,
+            wm.module_url AS moduleUrl,
+            wm.module_param AS moduleParam
+        FROM work_option wo
+        LEFT JOIN work_menu wm ON wo.work_menu_id =  wm.id
+        LEFT JOIN work_menu_ref_status wmrs ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        <where>
+            <if test="optionUserId != null and optionUserId != ''">
+                AND wo.option_user_id = #{optionUserId}
+            </if>
+        </where>
+        ORDER BY wm.sys_classify,wm.id
+    </select>
 </mapper>

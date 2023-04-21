@@ -13,7 +13,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 工作台选项
+ * 工作台
  * @author LUO_WG
  * @since 2023-04-11
  */
@@ -34,7 +34,7 @@ public class WorkOptionController extends BaseController {
     }
 
     /**
-     * 待办模块-模块分类下拉
+     * 常用模块-模块分类下拉
      * @return
      */
     @GetMapping("/listOftenMenu")

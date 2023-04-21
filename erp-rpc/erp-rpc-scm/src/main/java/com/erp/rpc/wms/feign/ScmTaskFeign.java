@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -108,6 +109,12 @@ public interface ScmTaskFeign {
     @PostMapping("feign/purchaseOrder/updatePurchaseOrderDetailById")
     Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity);
 
-
+    /**
+     * 根据入参查询单据数量
+     * @Author Luo_WG
+     * @Date 2023/4/21 15:34
+     **/
+    @PostMapping("feign/scmWorkOption/getTableNum")
+    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
 
 }
