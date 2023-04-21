@@ -1031,6 +1031,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         return result;
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .in(PurchaseOrderEntity::getId,ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseOrderEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),PurchaseOrderEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
+
 
     /**
      * 处理数据id
