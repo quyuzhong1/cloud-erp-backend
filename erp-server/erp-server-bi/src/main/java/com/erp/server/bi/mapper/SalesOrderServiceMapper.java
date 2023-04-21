@@ -29,10 +29,9 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param dto
      * @param settleRate
      * @param findTime
-     * @param skuNoList
      * @return
      */
-    List<SalesBaseVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate ,@Param("findTime") String  findTime,@Param("skuNoList") List<String> skuNoList);
+    List<SalesBaseVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate ,@Param("findTime") String  findTime);
 
 
     List<SalesVO> getBySpu(BiFilterDTO dto);

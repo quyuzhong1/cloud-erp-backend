@@ -160,10 +160,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (StringUtils.isBlank(settleRate)) {
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
-
-
         List<SalesVO> resultList = baseMapper.getBySku(dto, settleRate);
-
 
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
@@ -173,22 +170,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (dto.getTimeType() != null && dto.getTimeType() == 0) {
             findTime = "platform_create_time";
         }
-        //sku no 集合
-        List<String> skuNoList=resultList.stream().map(SalesVO::getName).collect(Collectors.toList());
-
         //查询进三十天信息
-        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime,skuNoList);
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
         LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
-        List<SalesBaseVO> lastSevenDays =lastThirtyDays.stream().filter(
-                l->(l.getFlagDate().isAfter(beforeSevenDays))&&(nowTime.isAfter(l.getFlagDate()))
-                ).collect(Collectors.toList());
+        dto.setStartTime(beforeSevenDays);
+        dto.setEndTime(nowTime);
 
+        //查询进七天信息
+        List<SalesBaseVO> lastSevenDays =baseMapper.getLastDays(dto, settleRate, findTime);
         for (SalesVO item : resultList) {
-            List<BigDecimal> salesTrend = new ArrayList<>(7);
+            List<Integer> salesTrend = new ArrayList<>(7);
+            //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
-
+            //近七天
             Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
                             b.getFlagNo().equals(item.getName())).
@@ -201,13 +197,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
                 LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
                 LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                BigDecimal salesFlag = lastSevenDays.stream().
+                Integer salesQuantity = lastSevenDays.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
                                 && b.getSales() != null
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
+                        ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
+                salesTrend.add(salesQuantity);
             }
             item.setSalesTrend(salesTrend);
             BigDecimal sales = item.getSales();

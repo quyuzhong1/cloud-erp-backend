@@ -203,7 +203,6 @@
     <select id="getLastDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT
         SUM ( i.quantity ) AS salesQuantity,
-        COUNT(DISTINCT ( i.order_id )) AS orderCount,
         round( SUM ( ( i.amount_after * i.${settleRate} ) ) , 2 ) sales,
         i.sku_no AS flagNo,o.${findTime} AS flagDate
         FROM dmp_order_item i
@@ -291,14 +290,6 @@
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
                 ${params.param}
-            </if>
-
-            <!-- sku -->
-            <if test="skuNoList!=null and skuNoList.size>0">
-                AND i.sku_no IN
-                <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
-                    #{skuNo}
-                </foreach>
             </if>
         </where>
         GROUP BY i.sku_no,o.${findTime}
