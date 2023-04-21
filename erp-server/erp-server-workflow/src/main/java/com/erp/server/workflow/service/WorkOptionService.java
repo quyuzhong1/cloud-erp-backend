@@ -1,8 +1,11 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.service.SuperService;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+
 import java.util.List;
 
 /**
@@ -43,4 +46,12 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @return com.common.core.controller.vo.ApiResult
      **/
     Boolean updateWaitDo(WorkOptionDTO.updateDTO dto);
+
+    /**
+     * 代办列表
+     * @Author Luo_WG
+     * @Date 2023/4/11 18:48
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
+     **/
+    List<WorkOptionDTO.PendingViewDTO> pendingView();
 }
