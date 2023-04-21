@@ -71,6 +71,9 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         //如果是分享
         if (DashboardEnum.SHARE.getFlag().equals(shareFlag) && flag) {
             addSubjectShare(dto.getShareUserIdList(), subjectId);
+        }else{
+            //删除分享的数据
+            deleteBySubjectId(subjectId);
         }
         return subjectId;
     }

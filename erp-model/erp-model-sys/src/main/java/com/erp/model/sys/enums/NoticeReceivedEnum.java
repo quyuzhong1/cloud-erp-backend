@@ -8,7 +8,11 @@ package com.erp.model.sys.enums;
  */
 public enum NoticeReceivedEnum {
 
-    NEW_TASK("itemRole", "产品经理","productCharge");
+    PRODUCT_CHARGE("itemRole", "产品经理","productCharge"),
+    PROJECT_CHARGE("itemRole", "项目经理","projectCharge"),
+    OTHER_PEOPLE("otherPeople", "其它人员","projectCharge");
+
+
 
     private String code;
     private String name;
