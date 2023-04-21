@@ -121,10 +121,6 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_ASSISTANT_DATA_TAG(23, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_assistant_data_tag"),
 
-    /**
-     * 系统用户同步金蝶
-     */
-    KINGDEE_SYS_USER_INFO_TAG(22, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
 
     GC_STOCK_INBOUND_ORDER_TAG(24,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
 
@@ -149,6 +145,16 @@ public enum RocketMqTagEnum {
      * 消息通知，可以不同的业务使用不同的tag
      */
     MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_*_tag"),
+    /**
+     * 系统用户同步金蝶
+     */
+    KINGDEE_SYS_USER_INFO_TAG(30, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
+
+    /**
+     * 系统用户同步金蝶
+     */
+    KINGDEE_PURCHASE_ORDER_TAG(31, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
+
     ;
     
     
