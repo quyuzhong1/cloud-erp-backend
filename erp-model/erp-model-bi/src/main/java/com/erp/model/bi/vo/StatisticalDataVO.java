@@ -27,7 +27,8 @@ public class StatisticalDataVO implements Serializable {
      */
     private String chartType;
 
-    private ChartVO data;         //存放表头和表值
+    //存放表头和表值
+    private ChartVO data;
     /**
      * //总数量
      */
