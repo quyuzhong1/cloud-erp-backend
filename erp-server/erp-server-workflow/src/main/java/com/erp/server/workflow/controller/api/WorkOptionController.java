@@ -51,7 +51,7 @@ public class WorkOptionController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/addWaitDo")
-    public ApiResult addWaitDo(@RequestBody WorkOptionDTO.addDTO dto) {
+    public ApiResult addWaitDo(@RequestBody WorkOptionDTO.AddDTO dto) {
         Boolean flag = workOptionService.addWaitDo(dto);
         return flag == true ? success() : failure();
     }
@@ -64,7 +64,7 @@ public class WorkOptionController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/updateWaitDo")
-    public ApiResult updateWaitDo(@RequestBody WorkOptionDTO.updateDTO dto) {
+    public ApiResult updateWaitDo(@RequestBody WorkOptionDTO.UpdateDTO dto) {
         Boolean flag = workOptionService.updateWaitDo(dto);
         return flag == true ? success() : failure();
     }

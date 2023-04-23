@@ -135,12 +135,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
-        List<ApproveSearchOptionEnum> approveSearchOptionEnumList = SysClassifyEnum.getAll();
-        for (ApproveSearchOptionEnum approveSearchOptionEnum : approveSearchOptionEnumList) {
+        List<SysClassifyEnum> sysClassifyEnums = SysClassifyEnum.getAll();
+        for (SysClassifyEnum searchOptionEnum : sysClassifyEnums) {
             WorkOptionDTO.PendingViewDTO pendingViewDTO = new WorkOptionDTO.PendingViewDTO();
             List<WorkOptionDTO.PendingViewDetailDTO> pendingViewDetailDTOList = new ArrayList<>();
-            pendingViewDTO.setSysClassify(approveSearchOptionEnum.getCode());
-            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList = myWorkOptionDTOS.stream().filter(req -> req.getSysClassify().equals(approveSearchOptionEnum.getCode())).collect(Collectors.toList());
+            pendingViewDTO.setSysClassify(searchOptionEnum.getCode());
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList = myWorkOptionDTOS.stream().filter(req -> req.getSysClassify().equals(searchOptionEnum.getCode())).collect(Collectors.toList());
             for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
                 WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO = new WorkOptionDTO.PendingViewDetailDTO();
                 WorkOptionDTO.TableNumDTO tableNumDTO = new WorkOptionDTO.TableNumDTO();

@@ -42,9 +42,9 @@ public enum SysClassifyEnum {
         return null;
     }
 
-    public static List<ApproveSearchOptionEnum> getAll() {
-        List<ApproveSearchOptionEnum> resultList = new ArrayList<>();
-        for (ApproveSearchOptionEnum optionEnum : ApproveSearchOptionEnum.values()) {
+    public static List<SysClassifyEnum> getAll() {
+        List<SysClassifyEnum> resultList = new ArrayList<>();
+        for (SysClassifyEnum optionEnum : SysClassifyEnum.values()) {
             resultList.add(optionEnum);
         }
         return resultList;
