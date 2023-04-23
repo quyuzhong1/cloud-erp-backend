@@ -222,17 +222,15 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (QcBillDTO.PagingViewDTO item : list) {
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
-            item.setQcStatusName(billStatusEnum.getName());
+            item.setQcStatusName(billStatusEnum!=null?billStatusEnum.getName():"");
             QcTypeEnum qcTypeEnum = item.getQcType();
-            if(qcTypeEnum!=null){
-                item.setQcTypeName(qcTypeEnum.getName());
-            }
+            item.setQcTypeName(qcTypeEnum!=null?qcTypeEnum.getName():"");
             String handleModeDict = item.getHandleModeDict();
             String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setHandleModeName(handleModeName);
             QcResultEnum qcResultEnum = item.getQcResult();
-            item.setQcResultName(qcResultEnum.getName());
+            item.setQcResultName(qcResultEnum!=null?qcResultEnum.getName():"");
             String skuId = item.getSkuId();
             String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -287,15 +285,15 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
                 QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
                 QcBillStatusEnum billStatusEnum = item.getQcStatus();
-                excelDTO.setQcStatusName(billStatusEnum.getName());
+                excelDTO.setQcStatusName(billStatusEnum!=null?billStatusEnum.getName():"");
                 QcTypeEnum qcTypeEnum = item.getQcType();
-                excelDTO.setQcTypeName(qcTypeEnum.getName());
+                excelDTO.setQcTypeName(qcTypeEnum!=null?qcTypeEnum.getName():"");
                 String handleModeDict = item.getHandleModeDict();
                 String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 excelDTO.setHandleModeName(handleModeName);
                 QcResultEnum qcResultEnum = item.getQcResult();
-                excelDTO.setQcResultName(qcResultEnum.getName());
+                excelDTO.setQcResultName(qcResultEnum!=null?qcResultEnum.getName():"");
                 String skuId = item.getSkuId();
                 String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");

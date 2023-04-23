@@ -48,7 +48,7 @@ public class DictBasicController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/list")
+    @PostMapping("/list")
     public ApiResult<List<DictBasicDTO>> list(@RequestParam("key") String key) {
         List<DictBasicDTO> list = dictBasicService.getByKey(key);
         return success(list);
