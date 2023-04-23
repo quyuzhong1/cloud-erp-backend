@@ -2,8 +2,10 @@ package com.erp.server.bi.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SalesPlatformEnum;
+import com.common.core.utils.FieldValidUtil;
 import com.erp.model.bi.dto.BiTargetManagementImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
@@ -54,33 +56,34 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
 
         BiTargetManagementEntity entity = new BiTargetManagementEntity();
         BeanUtils.copyProperties(dto,entity);
+
+        //注解验证信息
+        List<String> msgList = FieldValidUtil.fieldValid(dto);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
+        }
+
         if (ObjectUtils.isEmpty(dto.getYear())) {
             errorMsgList.add("年份不能为空");
         }
-        if (StringUtils.isBlank(dto.getPlatformName())) {
-            errorMsgList.add("平台名称不能为空");
-        } else {
+        if (StringUtils.isNotBlank(dto.getPlatformName())) {
             SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(dto.getPlatformName());
             if (ObjectUtils.isEmpty(platformEnum)) {
                 errorMsgList.add("系统中不存在此平台名称");
             }
         }
-        if (StringUtils.isBlank(dto.getCategory())) {
-            errorMsgList.add("品类不能为空");
-        }
-        //根据名称查询品类
-        Map<String,String> categoryParams = new HashMap<>();
-        categoryParams.put("name",dto.getCategory());
-        BasicCategoryDTO categoryDto = plmTaskFeign.getCategoryByParam(categoryParams);
-        if (ObjectUtils.isEmpty(categoryDto)) {
-            errorMsgList.add("系统中不存在此品类");
-        }
-        if (StringUtils.isBlank(dto.getTargetTypeName())) {
-            errorMsgList.add("销量/销售额不能为空");
-        }
-        if (StringUtils.isBlank(dto.getProductTypeName())) {
-            errorMsgList.add("新老品不能为空");
-        }
+        if (StringUtils.isNotBlank(dto.getCategory())) {
+            //根据名称查询品类
+            Map<String,String> categoryParams = new HashMap<>();
+            categoryParams.put("name",dto.getCategory());
+            BasicCategoryDTO categoryDto = plmTaskFeign.getCategoryByParam(categoryParams);
+            if (ObjectUtils.isEmpty(categoryDto)) {
+                errorMsgList.add("系统中不存在此品类");
+            } else {
+                entity.setCategoryId(categoryDto.getId());
+            }
+          }
+
         if (StringUtils.isBlank(dto.getSkuNo()) && StringUtils.isBlank(dto.getSpuNo())) {
             errorMsgList.add("sku/spu至少填一个");
         }
@@ -134,7 +137,7 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
             list.add(dto);
             return;
         }
-        entity.setCategoryId(categoryDto.getId());
+
         entity.setTargetType(TargetTypeEnum.getCodeByName(dto.getTargetTypeName()));
         entity.setProductType(TargetProductTypeEnum.getCodeByName(dto.getProductTypeName()));
         //同一个平台、品类、销量/销售额、SKU（如果不存在则SPU代替）已存在的则修改

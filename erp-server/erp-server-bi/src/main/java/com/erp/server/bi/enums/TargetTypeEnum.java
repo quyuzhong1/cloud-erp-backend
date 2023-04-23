@@ -1,12 +1,14 @@
 package com.erp.server.bi.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * @author Will
  * @version 1.0
  * @description: TODO
  * @date 2022/12/26 12:12
  */
-public enum TargetTypeEnum {
+public enum TargetTypeEnum implements EnumMessage {
 
     SALESQTY(0, "销量"),
     SALESVOLUME(1, "销售额");
@@ -19,9 +21,11 @@ public enum TargetTypeEnum {
         this.name = name;
     }
 
+    @Override
     public Integer getCode() {
         return code;
     }
+    @Override
     public String getName() {
         return name;
     }

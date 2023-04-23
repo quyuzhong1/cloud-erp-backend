@@ -1,4 +1,4 @@
-package com.erp.server.msg.config;
+package com.erp.server.msg.config.properties;
 
 import com.erp.server.msg.model.MailConfigParam;
 import lombok.Data;
