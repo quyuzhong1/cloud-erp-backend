@@ -607,7 +607,11 @@
         pd.name AS skuName,
         pd.variant_property as variantProperty,
         pl.declare_chinese_name as declareName,
-        pl.declare_model as declareModel
+        pl.declare_model as declareModel,
+        pl.product_property_id AS productPropertyId,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE

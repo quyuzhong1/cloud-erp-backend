@@ -27,7 +27,6 @@ public class ProductVO implements Serializable {
     public static class ProductPackVO {
 
 
-
         /**
          * 采购订单明细id
          */
@@ -83,6 +82,11 @@ public class ProductVO implements Serializable {
         private BigDecimal productNetWeight;
 
         /**
+         * 产品毛重
+         */
+        private BigDecimal productGrossWeight;
+
+        /**
          * 外箱重量
          */
         private BigDecimal boxWeight;
@@ -96,6 +100,28 @@ public class ProductVO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+
+        /**
+         * 单箱数量
+         */
+        private BigDecimal boxQty;
+
+        /**
+         * 主要材质
+         */
+        private String materials;
+
+
+        /**
+         * 功能描述
+         */
+        private String  functionDesc;
+
+        /**
+         * 物流产品属性
+         */
+        private String logisticsProductProperty;
 
 
         /**

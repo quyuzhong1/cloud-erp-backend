@@ -3,8 +3,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.dmp.mapper.ProductDetailMapper;
+import com.erp.server.dmp.pull.mapper.ProductDetailMapper;
 import com.erp.server.dmp.pull.service.dmp.ProductDetailService;
 import org.springframework.stereotype.Service;
 

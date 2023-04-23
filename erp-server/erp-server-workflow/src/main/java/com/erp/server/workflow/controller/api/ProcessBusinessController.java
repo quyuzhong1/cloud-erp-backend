@@ -1,4 +1,4 @@
-package com.erp.server.workflow.controller;
+package com.erp.server.workflow.controller.api;
 
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
  * @since 2023-04-21
  */
 @RestController
-@RequestMapping("/process-task-management-entity")
-public class ProcessTaskManagementController extends BaseController {
+@RequestMapping("/process-business-entity")
+public class ProcessBusinessController extends BaseController {
 
 }

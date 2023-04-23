@@ -3,11 +3,9 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.dmp.mapper.ProductInfoMapper;
+import com.erp.server.dmp.pull.mapper.ProductInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.ProductInfoService;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 
 @Service
 public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, ProductInfoEntity> implements ProductInfoService {
