@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -12,9 +13,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -23,6 +29,7 @@ import com.erp.server.bi.mapper.DmpShopInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +68,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     @Resource
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+
+    @Resource
+    private MQProducerService mQProducerService;
 
 
     @Override
@@ -128,11 +139,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public Boolean changeChargeName(DmpShopInfoChangeDTO dto) {
         DmpShopInfoEntity dmpShopInfoEntity = this.getById(dto.getId());
 
-        if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
+      /*  if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
             if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
                 throw new ServiceException(ApiError.ERROR_97013);
             }
-        }
+        }*/
         DmpShopChangeLogEntity logEntity = new DmpShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
         logEntity.setChargeId(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" :  dmpShopInfoEntity.getChargeId());
@@ -156,14 +167,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             if (CollectionUtils.isNotEmpty(userDeptList)) {
                 sysUserDeptDTO = userDeptList.stream().filter(obj -> dto.getChargeId().equals(obj.getUid())).findFirst().orElse(null);
             }
-            //更新销售数据中的启用日期后的店铺业务负责人
-            updateSaleCharge(dmpShopInfoEntity.getPlarformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
-            //更新退款数据中的启用日期后的店铺业务负责人
-            updateRefundCharge(dmpShopInfoEntity.getPlarformShopNo(),
-                    dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName());
-            //更新退货数据中启用日期后的店铺业务负责人
-            updateReturnOrderCharge(dmpShopInfoEntity.getPlarformShopNo(),
-                    dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName());
+            //更新启用日期后的店铺业务负责人
+            updateCharge(dmpShopInfoEntity.getId(),dmpShopInfoEntity.getPlarformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
+
         }
         return this.updateById(dmpShopInfoEntity);
     }
@@ -269,64 +275,26 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     }
 
 
-    /**
-     * 更新订单负责人
-     */
-    private void updateSaleCharge(String shopNo, LocalDate enableTime, String userId, String userName, SysUserDeptDTO sysUserDeptDTO) {
 
-        List<DmpOrderInfoEntity> list = dmpOrderInfoService.lambdaQuery()
-                .eq(DmpOrderInfoEntity::getShopNo, shopNo)
-                .ge(DmpOrderInfoEntity::getPlatformCreateTime, enableTime)
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            return;
+
+    private void updateCharge(String id,String shopNo, LocalDate enableTime, String userId, String userName, SysUserDeptDTO sysUserDeptDTO) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("id",id);
+        jsonObject.set("shopNo",shopNo);
+        jsonObject.set("enableTime",enableTime);
+        jsonObject.set("userId",userId);
+        jsonObject.set("userName",userName);
+        if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
+            jsonObject.set("deptId",sysUserDeptDTO.getDeptId());
+            jsonObject.set("deptName",sysUserDeptDTO.getDeptName());
         }
-        list.forEach(obj -> {
-            if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
-                obj.setDeptId(sysUserDeptDTO.getDeptId());
-                obj.setDeptName(sysUserDeptDTO.getDeptName());
-            }
-            obj.setChargeId(userId);
-            obj.setChargeName(userName);
+        //异步推送mq
+        CompletableFuture.supplyAsync(() -> {
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, RocketMqTagEnum.SHOP_INFO_CHANGE_CHARGE_TAG.getName(), jsonObject, String.valueOf(jsonObject.get("id")));
+            return result.getSendStatus();
         });
-        dmpOrderInfoService.updateBatchById(list,2000);
     }
 
-    /**
-     * 更新退款单负责人
-     */
-    private void updateRefundCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        List<DmpRefundInfoEntity> list = dmpRefundInfoService.lambdaQuery()
-                .eq(DmpRefundInfoEntity::getShopNo, shopNo)
-                .ge(DmpRefundInfoEntity::getOrderTime, enableTime)
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        list.forEach(obj -> {
-            obj.setChargeId(userId);
-            obj.setChargeName(userName);
-        });
-        dmpRefundInfoService.updateBatchById(list,2000);
-    }
-
-    /**
-     * 更新退货单负责人
-     */
-    private void updateReturnOrderCharge(String shopNo, LocalDate enableTime, String userId, String userName) {
-        List<DmpReturnOrderInfoEntity> list = dmpReturnOrderInfoService.lambdaQuery()
-                .eq(DmpReturnOrderInfoEntity::getShopNo, shopNo)
-                .ge(DmpReturnOrderInfoEntity::getOrderTime, enableTime)
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        list.forEach(obj -> {
-            obj.setChargeId(userId);
-            obj.setChargeName(userName);
-        });
-        dmpReturnOrderInfoService.updateBatchById(list,2000);
-    }
 
     /**
      * @param dto

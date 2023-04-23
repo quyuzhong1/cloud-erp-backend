@@ -33,4 +33,10 @@ public class RocketMqConsumerGroup {
      * 金蝶采购申请单（采购申请单）
      */
     public static final String SYNC_KINGDEE_PURCHASE_APPLICATION_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_application_order";
+
+    /**
+     * 店铺变更辅助人
+     */
+    public static final String SHOP_INFO_CHANGE_CHARGE = "${spring.profiles.active}-shop_info_change_charge";
+
 }

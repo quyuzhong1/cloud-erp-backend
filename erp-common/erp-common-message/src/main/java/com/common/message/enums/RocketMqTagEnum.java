@@ -139,12 +139,6 @@ public enum RocketMqTagEnum {
      */
     SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
 
-    //-----------------------------消息通知--------------------------------------------
-
-    /**
-     * 消息通知，可以不同的业务使用不同的tag
-     */
-    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
     /**
      * 系统用户同步金蝶
      */
@@ -159,6 +153,20 @@ public enum RocketMqTagEnum {
      * 采购申请单同步金蝶
      */
     KINGDEE_PURCHASE_APPLICATION_ORDER_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_application_order_tag"),
+
+    //-----------------------------消息通知--------------------------------------------
+
+    /**
+     * 消息通知，可以不同的业务使用不同的tag
+     */
+    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
+
+    //-----------------------------dmp数据更新--------------------------------------------
+
+    /**
+     * 店铺变更
+     */
+    SHOP_INFO_CHANGE_CHARGE_TAG(33, RocketMqTagEnum.SYNC_KINGDEE,"shop_info_change_charge_tag"),
     ;
     
     

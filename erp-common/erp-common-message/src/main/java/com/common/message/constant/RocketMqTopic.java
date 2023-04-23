@@ -28,4 +28,10 @@ public class RocketMqTopic {
      * 发送消息到消息服务主题
      */
     public static final String NOTICE_MSG_TOPIC = "${spring.profiles.active}-notice_msg_topic";
+
+    /**
+     * dmp数据更新
+     */
+    public static final String DMP_ERP_ORDER_UPDATE_TOPIC = "${spring.profiles.active}-dmp_erp_order_update_topic";
+
 }
