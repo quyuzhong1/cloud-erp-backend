@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.entity.QcBillEntity;
@@ -91,4 +92,13 @@ public interface QcBillMapper extends BaseMapper<QcBillEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
      */
     List<QcBillDTO.PagingViewDTO> getExport(@Param("params") QcBillDTO.ExportDTO dto);
+
+    /**
+     * 获取下推数据
+     * @author yl
+     * @date 2023-04-23 12:12
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
+     */
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("ids")List<String> ids);
 }

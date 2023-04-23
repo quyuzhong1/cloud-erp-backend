@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
- * 质检管理
+ * 质检单
  *
  * @author lambda
  * @since 2023-04-14

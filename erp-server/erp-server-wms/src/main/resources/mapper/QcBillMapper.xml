@@ -332,5 +332,27 @@
         </choose>
 
     </select>
+    <select id="viewGeneratePurchaseReturnOrder"
+            resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
+        SELECT
+          qb.id AS sourceId,
+          qb.purchase_order_id AS purchaseOrderId,
+          qb.purchase_order_code AS purchaseOrderCode,
+          qi.purchase_order_detail_id AS purchaseOrderDetailId,
+          qp.sku_id AS skuId, qp.sku_no AS skuNo
+        FROM qc_bill  qb
+        INNER JOIN qc_info qi  ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+        INNER join qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        WHERE qb.is_deleted=FALSE AND qb.purchase_order_id!=''
+        <if test="ids != null and ids.size > 0">
+            and qb.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+
+
+    </select>
 
 </mapper>

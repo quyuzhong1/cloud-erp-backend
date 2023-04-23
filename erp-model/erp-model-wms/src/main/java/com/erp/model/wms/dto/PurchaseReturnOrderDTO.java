@@ -1,18 +1,12 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -687,6 +681,82 @@ public class PurchaseReturnOrderDTO {
          * 退货数量
          */
         private Integer returnQtyDTO;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseReturnOrderDTO {
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
 
     }
 }

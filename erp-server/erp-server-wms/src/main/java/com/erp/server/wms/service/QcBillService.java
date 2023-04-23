@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.QcBillEntity;
@@ -161,4 +162,14 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.TabListDTO>
      */
     List<QcBillDTO.TabListDTO> tabList();
+
+    
+    /**
+     * 下推 退货单 显示
+     * @author yl
+     * @date 2023-04-23 12:07
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
+     */
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
 }

@@ -97,6 +97,9 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
+    @Resource
+    private PurchaseStockInDetailService purchaseStockInDetailService;
+
     /**
      * 保存 质检单
      *
@@ -222,15 +225,15 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (QcBillDTO.PagingViewDTO item : list) {
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
-            item.setQcStatusName(billStatusEnum!=null?billStatusEnum.getName():"");
+            item.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
             QcTypeEnum qcTypeEnum = item.getQcType();
-            item.setQcTypeName(qcTypeEnum!=null?qcTypeEnum.getName():"");
+            item.setQcTypeName(qcTypeEnum != null ? qcTypeEnum.getName() : "");
             String handleModeDict = item.getHandleModeDict();
             String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setHandleModeName(handleModeName);
             QcResultEnum qcResultEnum = item.getQcResult();
-            item.setQcResultName(qcResultEnum!=null?qcResultEnum.getName():"");
+            item.setQcResultName(qcResultEnum != null ? qcResultEnum.getName() : "");
             String skuId = item.getSkuId();
             String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -285,15 +288,15 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
                 QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
                 QcBillStatusEnum billStatusEnum = item.getQcStatus();
-                excelDTO.setQcStatusName(billStatusEnum!=null?billStatusEnum.getName():"");
+                excelDTO.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
                 QcTypeEnum qcTypeEnum = item.getQcType();
-                excelDTO.setQcTypeName(qcTypeEnum!=null?qcTypeEnum.getName():"");
+                excelDTO.setQcTypeName(qcTypeEnum != null ? qcTypeEnum.getName() : "");
                 String handleModeDict = item.getHandleModeDict();
                 String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 excelDTO.setHandleModeName(handleModeName);
                 QcResultEnum qcResultEnum = item.getQcResult();
-                excelDTO.setQcResultName(qcResultEnum!=null?qcResultEnum.getName():"");
+                excelDTO.setQcResultName(qcResultEnum != null ? qcResultEnum.getName() : "");
                 String skuId = item.getSkuId();
                 String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -820,25 +823,77 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         resultList.add(all);
         QcBillDTO.TabListDTO waitQc = new QcBillDTO.TabListDTO();
         String waitQcType = QcBillStatusEnum.WAIT_QC.getCode();
-        waitQc.setCount((int) list.stream().filter(l->waitQcType.equals(l.getQcStatus().getCode())).count());
+        waitQc.setCount((int) list.stream().filter(l -> waitQcType.equals(l.getQcStatus().getCode())).count());
         waitQc.setSearchType(waitQcType);
         waitQc.setTypeName(QcBillStatusEnum.WAIT_QC.getName());
         resultList.add(waitQc);
 
         QcBillDTO.TabListDTO finishQc = new QcBillDTO.TabListDTO();
         String finishQcType = QcBillStatusEnum.FINISH_QC.getCode();
-        finishQc.setCount((int) list.stream().filter(l->finishQcType.equals(l.getQcStatus().getCode())).count());
+        finishQc.setCount((int) list.stream().filter(l -> finishQcType.equals(l.getQcStatus().getCode())).count());
         finishQc.setSearchType(finishQcType);
         finishQc.setTypeName(QcBillStatusEnum.FINISH_QC.getName());
         resultList.add(finishQc);
 
         QcBillDTO.TabListDTO cancelQc = new QcBillDTO.TabListDTO();
         String cancelQcType = QcBillStatusEnum.CANCEL.getCode();
-        cancelQc.setCount((int) list.stream().filter(l->cancelQcType.equals(l.getQcStatus().getCode())).count());
+        cancelQc.setCount((int) list.stream().filter(l -> cancelQcType.equals(l.getQcStatus().getCode())).count());
         cancelQc.setSearchType(cancelQcType);
         cancelQc.setTypeName(QcBillStatusEnum.CANCEL.getName());
         resultList.add(cancelQc);
         return resultList;
+    }
+
+
+    /**
+     * 下推 退货单 显示
+     *
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
+     * @author yl
+     * @date 2023-04-23 12:07
+     */
+    @Override
+    public List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
+        List<String> skuIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<String> poIdList = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<String> podIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+        //获取到订单采购信息
+        List<PurchaseOrderDTO.PurchaseOrderInfoDTO> purchaseOrderList = scmTaskFeign.getByOrderIds(poIdList);
+        List<PurchaseStockInDetailEntity> stockInSkuList = purchaseStockInDetailService.listDetailByPodIds(podIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
+            //来源类型
+            dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
+            String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
+            dto.setProductName(productName);
+            PurchaseOrderDTO.PurchaseOrderInfoDTO purchaseOrder = purchaseOrderList.stream().filter(P -> P.getPurchaseOrderId().equals(dto.getPurchaseOrderId())).findFirst().orElse(null);
+            if (purchaseOrder != null) {
+                dto.setSupplierName(purchaseOrder.getSupplierName());
+                dto.setDeliveryWarehouseName(purchaseOrder.getDeliveryWarehouseName());
+            }
+            Integer qty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
+                    dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
+            dto.setStockInQty(qty);
+            //币种符号
+            String currencySymbol = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getCurrencySymbol).findFirst().orElse(null);
+            dto.setCurrencySymbol(currencySymbol);
+            //相同采购单号清空后面数据的采购单号和供应商
+            boolean contains = list.contains(dto.getPurchaseOrderId());
+            if (contains) {
+                dto.setPurchaseOrderCode(null);
+                dto.setSupplierName(null);
+                continue;
+            }
+        }
+
+        return list;
     }
 
     /**

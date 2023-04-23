@@ -229,4 +229,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return Boolean
      */
     Boolean updateSyncKingdeeStatus(List<String> ids, String code, String syncKingdeeId);
+
+    /**
+     * 根据采购订单id 集合获取对应数量
+     * @author yl
+     * @date 2023-04-23 14:03
+     * @param purchaseOrderIds
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
+     */
+    List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(List<String> purchaseOrderIds);
 }
