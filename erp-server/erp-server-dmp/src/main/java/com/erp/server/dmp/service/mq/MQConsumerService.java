@@ -2,8 +2,11 @@ package com.erp.server.dmp.service.mq;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.service.dmp.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -31,6 +35,15 @@ public class MQConsumerService {
     private DmpShopInfoService dmpShopInfoService;
     @Resource
     private DmpSkuInfoService dmpSkuInfoService;
+
+    @Resource
+    private ProductInfoService productInfoService;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
     // selectorExpression的意思指的就是tag，默认为“*”，不设置的话会监听所有消息
@@ -133,4 +146,36 @@ public class MQConsumerService {
         }
     }
 
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+            selectorExpression = "sync_dmp_product_info_tag",
+            consumerGroup = "${spring.profiles.active}-plm_product_info_consumer")
+    public class ConsumerPlmProductInfo implements RocketMQListener<ProductInfoEntity> {
+        @Override
+        public void onMessage(ProductInfoEntity ext) {
+            productInfoService.saveOrUpdateProductInfo(ext);
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+            selectorExpression = "sync_dmp_product_sku_tag",
+            consumerGroup = "${spring.profiles.active}-plm_product_detail_consumer")
+    public class ConsumerPlmProductDetail implements RocketMQListener<ProductDetailEntity> {
+        @Override
+        public void onMessage(ProductDetailEntity ext) {
+            productDetailService.saveOrUpdateProductDetail(ext);
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+            selectorExpression = "sync_dmp_product_listing_tag",
+            consumerGroup = "${spring.profiles.active}-plm_product_listing_consumer")
+    public class ConsumerPlmProductListing implements RocketMQListener<Map<String, Object>>  {
+        @Override
+        public void onMessage(Map<String, Object> ext) {
+            dmpOrderItemService.updateNewSign(ext);
+        }
+    }
 }

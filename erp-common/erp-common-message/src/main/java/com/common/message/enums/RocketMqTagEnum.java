@@ -109,19 +109,59 @@ public enum RocketMqTagEnum {
     /**
      * 产品信息同步金蝶
      */
-    KINGDEE_PRODUCT_DETAIL_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+    KINGDEE_PRODUCT_DETAIL_TAG(21, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+
     /**
      * BOM管理同步金蝶
      */
-    KINGDEE_BOM_INFO_TAG(20, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
+    KINGDEE_BOM_INFO_TAG(22, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
 
-    GC_STOCK_INBOUND_ORDER_TAG(21,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
+    /**
+     * 辅助资料同步金蝶（产品分类、）
+     */
+    KINGDEE_ASSISTANT_DATA_TAG(23, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_assistant_data_tag"),
 
-    IML_STOCK_INBOUND_ORDER_TAG(22,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
 
+    GC_STOCK_INBOUND_ORDER_TAG(24,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
+
+    IML_STOCK_INBOUND_ORDER_TAG(25,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
+
+    /**
+     * 同步产品信息到中台dmp
+     */
+    SYNC_DMP_PRODUCT_INFO_TAG(26,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_info_tag"),
+    /**
+     * 同步产品sku到中台dmp
+     */
+    SYNC_DMP_PRODUCT_SKU_TAG(27,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
+    /**
+     * 同步产品sku变更新老品
+     */
+    SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
+
+    //-----------------------------消息通知--------------------------------------------
+
+    /**
+     * 消息通知，可以不同的业务使用不同的tag
+     */
+    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
+    /**
+     * 系统用户同步金蝶
+     */
+    KINGDEE_SYS_USER_INFO_TAG(30, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
+
+    /**
+     * 采购订单同步金蝶
+     */
+    KINGDEE_PURCHASE_ORDER_TAG(31, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
+
+    /**
+     * 采购申请单同步金蝶
+     */
+    KINGDEE_PURCHASE_APPLICATION_ORDER_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_application_order_tag"),
     ;
-    
-    
+
+
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
     public static final String REFUND_ORDER = "refund";
@@ -133,6 +173,10 @@ public enum RocketMqTagEnum {
     public static final String SYNC_KINGDEE = "sync_kingdee";
 
     public static final String STOCK = "stock";
+
+    public static final String SYNC_DMP = "sync_dmp";
+
+    public static final String MSG_NOTICE = "msg_notice";
 
     private Integer code;
 
