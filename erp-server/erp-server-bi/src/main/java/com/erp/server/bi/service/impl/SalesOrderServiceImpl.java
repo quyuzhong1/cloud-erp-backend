@@ -1035,7 +1035,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisStartTime = LocalDateTime.of(startTime.minusYears(1).toLocalDate(), LocalTime.MIN);
         //同比开始时间
-        LocalDateTime yearBasisEndTime = LocalDateTime.of(endTime.minusYears(1).toLocalDate(), LocalTime.MAX);
+        LocalDateTime yearBasisEndTime = LocalDateTime.of(endTime.minusYears(1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -1092,8 +1092,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         BigDecimal differ = sales.subtract(oldSales);
 
-        BigDecimal ratio = differ.divide(oldSales, 2, BigDecimal.ROUND_HALF_UP);
-        return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal ratio = differ.divide(oldSales, 4, BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100")).setScale(4, BigDecimal.ROUND_HALF_UP);
     }
 
 
