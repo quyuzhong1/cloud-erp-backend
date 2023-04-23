@@ -1,21 +1,33 @@
 package com.erp.server.wms.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcReportDetailDTO;
+import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcReportDetailEntity;
 import com.erp.model.wms.entity.QcReportEntity;
+import com.erp.server.wms.listener.QcReportDetailExcelListener;
 import com.erp.server.wms.mapper.QcReportDetailMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcReportDetailService;
 import com.erp.server.wms.service.QcReportService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +43,7 @@ import java.util.stream.Collectors;
  * @since 2023-04-14
  */
 @Service
+@Slf4j
 public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMapper, QcReportDetailEntity> implements QcReportDetailService {
 
 
@@ -95,12 +108,52 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             }
             List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
             String resultDict = item.getResultDict();
-            String resultName=dictList.stream().filter(d -> d.getValue().equals(resultDict)).
+            String resultName = dictList.stream().filter(d -> d.getValue().equals(resultDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setResultName(resultName);
         }
 
         return viewList;
+    }
+
+
+    /**
+     * 导入数据
+     *
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.wms.dto.QcReportDetailDTO.ImportDTO
+     * @author yl
+     * @date 2023-04-21 19:26
+     */
+    @Override
+    public QcReportDetailDTO.ImportDTO importFile(MultipartFile excelFile, String qcType, HttpServletResponse response) {
+        List<QcReportDTO.ListDTO> qcReportList = qcReportService.getByQcType(qcType);
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+        QcReportDetailExcelListener excelListenerUtil = new QcReportDetailExcelListener(qcReportList,dictList);
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), QcReportDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        QcReportDetailDTO.ImportDTO result = new QcReportDetailDTO.ImportDTO();
+        //导入数据处理
+        List<QcReportDetailDTO.ListDTO> successList = excelListenerUtil.getSuccessList();
+        result.setSuccessList(successList);
+        //导出错误数据
+        List<QcReportDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "质检单错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, QcReportDetailImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
 

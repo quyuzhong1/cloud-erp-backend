@@ -3,16 +3,23 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.QcReportDTO;
+import com.erp.model.wms.dto.QcReportDetailDTO;
+import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.entity.QcReportEntity;
 import com.erp.server.wms.mapper.QcReportMapper;
 import com.erp.server.wms.service.QcReportService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +32,7 @@ import java.util.stream.Collectors;
  * @since 2023-04-13
  */
 @Service
+@Slf4j
 public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcReportEntity> implements QcReportService {
 
 
@@ -100,7 +108,6 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
     @Override
     public List<QcReportDTO.ListDTO> getByQcType(String qcType) {
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-
         return baseMapper.getByQcType(qcType, approveStatus);
     }
 
@@ -121,10 +128,30 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
             queryWrapper.in(QcReportEntity::getQcRuleId, ruleIds);
             this.remove(queryWrapper);
         }
-
     }
 
 
+    /**
+     * 导出质检单报告
+     *
+     * @return void
+     * @author yl
+     * @date 2023-04-21 18:54
+     */
+    @Override
+    public void exportQcReport(QcReportDetailDTO.ExportDTO dto, HttpServletResponse response) {
+        List<QcReportDTO.ListDTO> list = this.getByQcType(dto.getQcType());
+        list = list.stream().filter(r -> !r.getDisabled()).collect(Collectors.toList());
+        List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list,ExportQcReportExcelDTO.class);
+        String fileName = "质检报告数据";
+        try {
+            ExcelUtil.export(fileName, "质检报告", resultList, ExportQcReportExcelDTO.class, response);
+        } catch (Exception e) {
+            log.error("导出质检报告出错  ==e",e);
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+
+    }
 
 
     /**

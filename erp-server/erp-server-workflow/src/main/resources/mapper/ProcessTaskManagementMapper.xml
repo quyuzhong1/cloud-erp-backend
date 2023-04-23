@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.ProcessTaskManagementMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="process_instance_id" property="processInstanceId" />
+        <result column="current_node_id" property="currentNodeId" />
+        <result column="task_id" property="taskId" />
+        <result column="current_approver_id" property="currentApproverId" />
+        <result column="current_task_start_time" property="currentTaskStartTime" />
+        <result column="task_status" property="taskStatus" />
+        <result column="timeout_warn_status" property="timeoutWarnStatus" />
+        <result column="timeout_warn_interval" property="timeoutWarnInterval" />
+        <result column="timeout_deal_interval" property="timeoutDealInterval" />
+        <result column="timeout_deal_type" property="timeoutDealType" />
+    </resultMap>
+
+</mapper>
