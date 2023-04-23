@@ -3,6 +3,7 @@ package com.erp.model.workflow.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -55,6 +56,11 @@ public class ProcessBusinessEntity extends BaseEntity<ProcessBusinessEntity> {
     public static final String START_CONDITION = "start_condition";
 
     public static final String DISABLED = "disabled";
+
+    public ProcessBusinessEntity(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
+        this.processDefinitionId  = dto.getId ();
+        this.businessKey = dto.getBusinessKey();
+    }
 
     @Override
     public Serializable pkVal() {

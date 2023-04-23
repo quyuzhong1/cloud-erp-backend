@@ -1,6 +1,7 @@
 package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
@@ -19,6 +20,7 @@ public enum ApproveStatusEnum {
     APPROVE("approve", "已审核");
 
     @EnumValue
+    @JsonValue
     private String status;
     private String name;
 

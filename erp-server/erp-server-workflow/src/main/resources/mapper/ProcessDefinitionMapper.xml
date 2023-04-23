@@ -19,5 +19,42 @@
         <result column="is_deploy" property="isDeploy" />
         <result column="remark" property="remark" />
     </resultMap>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$ListDTO">
+        SELECT
+        pd.id,
+        pd.process_name,
+        pd.approve_status,
+        wm.module_classify,
+        pd.process_version,
+        pd.create_user_name,
+        pd.create_time
+        FROM
+        process_definition pd
+        LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
+        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
+        where pd.is_deleted = false
+        <if test="params.id != null and params.id != ''">
+            and pd.id ilike  concat('%',#{params.id},'%')
+        </if>
+        <if test="params.processName != null and params.processName != ''">
+            and pd.process_name ilike  concat('%',#{params.processName},'%')
+        </if>
+        <if test="params.approveStatus != null and params.approveStatus.size() > 0">
+            and pd.approve_status in
+            <foreach collection="params.approveStatus" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createUserId != null and params.createUserId.size() > 0">
+            and pd.create_user_id in
+            <foreach collection="params.createUserId" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createTimeList != null and params.createTimeList.size() == 2">
+            and pd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pd.create_time
+        </if>
+
+    </select>
 
 </mapper>
