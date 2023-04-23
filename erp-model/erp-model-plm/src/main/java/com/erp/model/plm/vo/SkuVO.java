@@ -63,4 +63,24 @@ public class SkuVO implements Serializable {
      * 变体信息
      */
     private String variantProperty;
+
+    /**
+     * 主要材质
+     */
+    private String materials;
+
+    /**
+     * 功能描述
+     */
+    private String functionDesc;
+    /**
+     * 产品属性
+     */
+    private String productPropertyId;
+
+
+    /**
+     * 产品等级
+     */
+    private String productGrade;
 }

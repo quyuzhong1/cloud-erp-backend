@@ -75,8 +75,8 @@ public class QcReportDetailExcelListener extends AnalysisEventListener<QcReportD
         }
         //质检报告
         QcReportDTO.ListDTO qcReport = qcReportList.stream().filter(
-                obj -> obj.getName().equals(qcReportDetailImportExcelDTO.getQcReportName())
-                        && obj.getContent().equals(qcReportDetailImportExcelDTO.getQcReportContent())
+                obj -> obj.getQcReportName().equals(qcReportDetailImportExcelDTO.getQcReportName())
+                        && obj.getQcReportContent().equals(qcReportDetailImportExcelDTO.getQcReportContent())
         ).findFirst().orElse(null);
 
         //质检结果
@@ -98,8 +98,8 @@ public class QcReportDetailExcelListener extends AnalysisEventListener<QcReportD
 
         addDTO.setDescription(qcReportDetailImportExcelDTO.getDescription());
         addDTO.setQcReportId(qcReport.getQcReportId());
-        addDTO.setQcReportContent(qcReport.getContent());
-        addDTO.setQcReportName(qcReport.getName());
+        addDTO.setQcReportContent(qcReport.getQcReportContent());
+        addDTO.setQcReportName(qcReport.getQcReportName());
         addDTO.setResultDict(qcResult.getValue());
         successList.add(addDTO);
 

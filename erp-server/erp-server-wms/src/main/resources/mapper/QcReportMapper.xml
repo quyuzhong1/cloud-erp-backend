@@ -6,7 +6,7 @@
     <select id="getByQcType" resultType="com.erp.model.wms.dto.QcReportDTO$ListDTO">
         SELECT
          rp.id AS qcReportId,
-         rp.name,rp.content,
+         rp.name AS qcReportName,rp.content AS qcReportContent,
          ru.disabled
         FROM qc_report rp
         INNER JOIN qc_rule ru
