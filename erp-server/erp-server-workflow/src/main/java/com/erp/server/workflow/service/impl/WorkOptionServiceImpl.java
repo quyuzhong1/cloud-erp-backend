@@ -179,6 +179,19 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return frequentlyViewDTOS;
     }
 
+    /**
+     * 立项阶段列表
+     * @Author Luo_WG
+     * @Date 2023/4/12 9:33
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.stageViewDTO>>
+     **/
+    @Override
+    public List<WorkOptionDTO.StageViewDTO> stageView() {
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionDTO.StageViewDTO> stageViewDTOS = baseMapper.stageView(userInfo.getUid());
+        return stageViewDTOS;
+    }
+
     private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
         //Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);

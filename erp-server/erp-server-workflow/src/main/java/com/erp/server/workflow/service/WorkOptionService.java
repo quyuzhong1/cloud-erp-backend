@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
@@ -62,4 +63,13 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
      **/
     List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView();
+
+    /**
+     * 立项阶段列表
+     * @Author Luo_WG
+     * @Date 2023/4/12 9:33
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.stageViewDTO>>
+     **/
+    List<WorkOptionDTO.StageViewDTO> stageView();
+
 }

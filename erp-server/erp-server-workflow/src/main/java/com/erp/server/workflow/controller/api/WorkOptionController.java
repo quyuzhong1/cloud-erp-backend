@@ -101,7 +101,7 @@ public class WorkOptionController extends BaseController {
      **/
     @GetMapping("/stageView")
     public ApiResult<List<WorkOptionDTO.StageViewDTO>> stageView() {
-        List<WorkOptionDTO.StageViewDTO> stageViewDTOList = null;
+        List<WorkOptionDTO.StageViewDTO> stageViewDTOList = workOptionService.stageView();
         return success(stageViewDTOList);
     }
 
