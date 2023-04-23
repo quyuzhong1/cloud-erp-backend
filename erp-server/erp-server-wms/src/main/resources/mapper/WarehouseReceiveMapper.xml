@@ -278,7 +278,7 @@
         <if test="params.param != null and params.param != ''">
             ${params.param}
         </if>
-        ORDER BY wr.create_time,wr.id desc
+        ORDER BY wr.create_time DESC, wr.id
     </select>
 
 </mapper>

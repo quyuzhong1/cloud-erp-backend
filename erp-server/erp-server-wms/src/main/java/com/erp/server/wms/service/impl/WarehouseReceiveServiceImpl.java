@@ -704,9 +704,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         });
 
 
-        String fileName = "仓库入库单";
+        String fileName = "仓库收货单";
         try {
-            ExcelUtil.export(fileName, "仓库入库单", exportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "仓库收货单", exportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
