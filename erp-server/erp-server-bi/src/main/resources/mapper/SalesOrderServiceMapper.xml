@@ -2079,11 +2079,15 @@
         GROUP BY o.shop_no
     </select>
 
-    <select id="byBrand" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round(SUM(i.amount_after * i.${settleRate}),2) AS
-        sales,COALESCE(i.brand_name,'无品牌') AS name,SUM ( i.quantity ) AS salesQuantity,
-        COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
-        dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+    <select id="byBrand" resultType="com.erp.model.bi.vo.SalesVO">
+        SELECT
+        SUM ( i.quantity ) AS salesQuantity,
+        COUNT(DISTINCT ( i.order_id )) AS orderCount,
+        round( SUM ( ( i.amount_after * i.${settleRate} ) ) , 2 ) sales,
+        i.sku_no AS name,
+        min(i.item_name) AS productName
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -2169,8 +2173,9 @@
                 ${params.param}
             </if>
         </where>
-        GROUP BY i.brand_name
+        GROUP BY i.sku_no
         ORDER BY sales DESC
+        nulls last
     </select>
 
 

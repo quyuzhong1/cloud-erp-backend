@@ -104,7 +104,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<ShopSalesVO> byShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesCountVO> byBrand(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    List<SalesVO> byBrand(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     List<SalesBaseVO> byPeopleRank(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
