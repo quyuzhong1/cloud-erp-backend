@@ -30,7 +30,7 @@ public class DictBasicController extends BaseController {
 
     /**
      * 字典通用下拉列表
-     * @param type moduleStatus，superiorOption 上级选项，approveOption 审批人选项，processCondition 流程网关条件 approverEmpty 审批人为空时 multiPersonReview 多人处理方式 timeoutHandling 超时处理方式
+     * @param type moduleStatus，superiorOption 上级选项，approveOption 审批人选项，processCondition 流程网关条件 approverEmpty 审批人为空时 multiPersonReview 多人处理方式 timeoutHandling 超时处理方式 reviewSetting 审批设置
      * @param remark 备注  purchase_order 采购订单 warehouse_receive  仓库收货单 来自关联单据类型 流程网关条件获取需要填入此参数进行分类过滤
      * @return
      */
