@@ -159,8 +159,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                     default:
                         break;
                 }
-                pendingViewDTO.setList(pendingViewDetailDTOList);
+                pendingViewDetailDTOList.add(pendingViewDetailDTO);
             }
+            pendingViewDTO.setList(pendingViewDetailDTOList);
             list.add(pendingViewDTO);
         }
         return list;
