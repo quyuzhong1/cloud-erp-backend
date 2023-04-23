@@ -2,13 +2,14 @@ package com.cloud.erp.gateway.web.server;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.erp.gateway.config.JwtProperties;
+import com.common.core.utils.IdUtils;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
-import com.common.core.utils.IdUtils;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -74,17 +75,16 @@ public class TokenService {
      */
 
     public LoginUser getLoginUser(String accessToken) {
-        LoginUser user = new LoginUser();
-
-//        try {
-//            if (StringUtils.isNotBlank(accessToken)) {
-//                String userKey = JwtUtils.getUserKey(accessToken, jwtProperties.getSecret());
-//                String userJson = redisService.getCacheObject(getTokenKey(userKey));
-//                user = JSONObject.parseObject(userJson, LoginUser.class);
-//            }
-//        } catch (Exception e) {
-//            log.error("出错了==",e);
-//        }
+        LoginUser user = null;
+        try {
+            if (StringUtils.isNotBlank(accessToken)) {
+                String userKey = JwtUtils.getUserKey(accessToken, jwtProperties.getSecret());
+                String userJson = redisService.getCacheObject(getTokenKey(userKey));
+                user = JSONObject.parseObject(userJson, LoginUser.class);
+            }
+        } catch (Exception e) {
+            log.error("出错了==",e);
+        }
         return user;
     }
 
