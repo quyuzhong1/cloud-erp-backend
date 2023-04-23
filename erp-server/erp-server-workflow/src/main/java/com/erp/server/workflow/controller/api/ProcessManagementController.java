@@ -1,4 +1,4 @@
-package com.erp.server.workflow.controller;
+package com.erp.server.workflow.controller.api;
 
 
 import org.springframework.web.bind.annotation.RequestMapping;

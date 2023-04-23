@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.server.wms.mapper.DictBasicMapper;
 import com.erp.server.wms.service.DictBasicService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
  * @since 2023-03-16
  */
 @Service
+@Slf4j
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
 
@@ -66,7 +68,9 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      */
     @Override
     public List<DictBasicDTO> getByKey(String key) {
+        log.info("key====",key);
         List<DictBasicEntity> list = listByKey(key);
+        log.info("getByKey==== result",list);
         List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
         return resultList;
     }

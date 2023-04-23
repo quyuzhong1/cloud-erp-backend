@@ -224,7 +224,9 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
             item.setQcStatusName(billStatusEnum.getName());
             QcTypeEnum qcTypeEnum = item.getQcType();
-            item.setQcTypeName(qcTypeEnum.getName());
+            if(qcTypeEnum!=null){
+                item.setQcTypeName(qcTypeEnum.getName());
+            }
             String handleModeDict = item.getHandleModeDict();
             String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
