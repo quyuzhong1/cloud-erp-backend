@@ -1,4 +1,4 @@
-package com.erp.server.dmp.mapper;
+package com.erp.server.dmp.pull.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.entity.ProductInfoEntity;

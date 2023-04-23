@@ -8,10 +8,13 @@ import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.ProductPackMapper;
+import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductPackService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -20,10 +23,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @Description 产品包装信息服务类
@@ -39,6 +39,9 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private BasicDictService basicDictService;
 
     /**
      * @param productId:产品信息表id
@@ -125,13 +128,19 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
         }
+        //报关属性
+        List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         List<ProductPackEntity> list = this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
         //产品详情信息
         List<SkuVO> productDetailList = productDetailService.getSkuInfoBySkuIds(skuIds);
+
         List<ProductVO.ProductPackVO> resultList = new ArrayList<>(list.size());
         for (ProductPackEntity item : list) {
             String skuId = item.getSkuId();
             ProductVO.ProductPackVO packVO = new ProductVO.ProductPackVO();
+            //产品毛重
+            packVO.setProductGrossWeight(item.getGrossWeight());
+            packVO.setBoxQty(item.getBoxQty());
             //产品大小
             String productSize = item.getProductSize();
             if (StringUtils.isNotBlank(productSize)) {
@@ -170,9 +179,16 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 packVO.setProductName(detail.getSpuName());
                 packVO.setVariantProperty(detail.getVariantProperty());
                 String skuImagesUrl = detail.getSkuImagesUrl();
-                if(StringUtils.isNotBlank(skuImagesUrl)){
+                if (StringUtils.isNotBlank(skuImagesUrl)) {
                     packVO.setSkuImageUrlList(Arrays.asList(skuImagesUrl.split(",")));
                 }
+                packVO.setMaterials(detail.getMaterials());
+                //产品属性
+                String ProductProperty = dictList.stream().filter(d -> d.getId().equals(detail.getProductPropertyId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
+                packVO.setLogisticsProductProperty(ProductProperty);
+                packVO.setFunctionDesc(detail.getFunctionDesc());
+                packVO.setProductGrade(detail.getProductGrade());
             }
             packVO.setSkuId(skuId);
             resultList.add(packVO);
