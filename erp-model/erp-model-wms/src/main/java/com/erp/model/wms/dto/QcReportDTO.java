@@ -81,12 +81,12 @@ public class QcReportDTO implements Serializable {
         /**
          * 质检项
          */
-        private String name;
+        private String qcReportName;
 
         /**
          * 质检内容
          */
-        private String content;
+        private String qcReportContent;
 
     }
 
