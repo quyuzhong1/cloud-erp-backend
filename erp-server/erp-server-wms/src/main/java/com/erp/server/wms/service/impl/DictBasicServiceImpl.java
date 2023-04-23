@@ -68,9 +68,9 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      */
     @Override
     public List<DictBasicDTO> getByKey(String key) {
-        log.info("key====",key);
+        log.info("key===={}",key);
         List<DictBasicEntity> list = listByKey(key);
-        log.info("getByKey==== result",list);
+        log.info("getByKey==== result={}",list);
         List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
         return resultList;
     }
