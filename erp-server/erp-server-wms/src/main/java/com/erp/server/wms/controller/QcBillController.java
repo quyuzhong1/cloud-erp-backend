@@ -8,6 +8,7 @@ import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.server.wms.service.QcBillService;
@@ -214,6 +215,19 @@ public class QcBillController extends BaseController {
     public ApiResult updateHandleMode(@RequestBody @Valid QcInfoDTO.UpdateHandleModeDTO dto) {
         Boolean result = qcBillService.updateHandleMode(dto);
         return result ? success() : failure();
+    }
+
+    /**
+     * 下推退货单数据显示
+     * @author yl
+     * @date: 2023/4/11 20:30
+     * @param dto
+     * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
+     */
+    @PostMapping("/viewGeneratePurchaseReturnOrder")
+    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = qcBillService.viewGeneratePurchaseReturnOrder(dto.getIds());
+        return success(list);
     }
 
 

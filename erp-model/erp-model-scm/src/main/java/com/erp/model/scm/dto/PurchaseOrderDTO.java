@@ -822,4 +822,47 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String code;
     }
+
+
+    /**
+     * 采购订单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderInfoDTO {
+
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+
+
+    }
+
+
+
+
 }

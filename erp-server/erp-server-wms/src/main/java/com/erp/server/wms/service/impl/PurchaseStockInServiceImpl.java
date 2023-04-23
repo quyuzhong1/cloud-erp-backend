@@ -474,24 +474,24 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     @Override
-    public List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids) {
-        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
+    public List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
-        List<String> skuIds = list.stream().map(PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             return list;
         }
-        List<String> podIds = list.stream().map(PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> podIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
 
         List<String> resultIds = new ArrayList<>();
-        for (PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
+        for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
             dto.setSourceType(SourceTypeEnum.PURCHASE_RETURN_ORDER.getType());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);

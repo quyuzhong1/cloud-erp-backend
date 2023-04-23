@@ -63,10 +63,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -125,7 +122,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private SyncKingdeePurchaseOrderService syncKingdeePurchaseOrderService;
-
 
 
     @Override
@@ -1045,12 +1041,29 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .in(PurchaseOrderEntity::getId,ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseOrderEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),PurchaseOrderEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .in(PurchaseOrderEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseOrderEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+    /**
+     * 根据采购订单id 集合获取对应数量
+     *
+     * @param purchaseOrderIds
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
+     * @author yl
+     * @date 2023-04-23 14:03
+     */
+    @Override
+    public List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)) {
+            return Collections.emptyList();
+        }
+        List<PurchaseOrderDTO.PurchaseOrderInfoDTO> resultList = baseMapper.getPurchaseOrderByOrderIds(purchaseOrderIds);
+        return resultList;
     }
 
 

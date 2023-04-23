@@ -21,20 +21,34 @@ public class QcRemarkDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO {
 
+        /**
+         * id
+         */
         private String id;
 
+        /**
+         * 备注
+         */
         private String remark;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+
+        /**
+         * 创建时间
+         */
+        private String createTime;
 
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO  extends AddDTO{
 
-        private String id;
-
-        private String remark;
 
         private String mainId;
 

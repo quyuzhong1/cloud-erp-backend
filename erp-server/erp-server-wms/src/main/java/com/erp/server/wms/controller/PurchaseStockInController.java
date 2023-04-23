@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.server.wms.service.PurchaseStockInService;
 import org.apache.commons.lang3.StringUtils;
@@ -222,8 +223,8 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
-    public ApiResult<List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(dto.getIds());
+    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
     }
 

@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -52,7 +53,7 @@ public interface PurchaseStorageMapper extends BaseMapper<PurchaseStockInEntity>
      * @param ids
      * @return List<ViewGeneratePurchaseReturnOrderDTO>
      */
-    List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("ids") List<String> ids);
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("ids") List<String> ids);
 
     /**
      * 根据采购单获取入库数量

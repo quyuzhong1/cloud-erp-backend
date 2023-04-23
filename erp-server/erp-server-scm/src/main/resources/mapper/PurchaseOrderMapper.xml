@@ -307,4 +307,27 @@
         </if>
     </select>
 
+
+    <select id="getPurchaseOrderByOrderIds" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$PurchaseOrderInfoDTO">
+            SELECT
+            po.id AS purchaseOrderId,
+            ps.supplier_id,
+            ps.supplier_name,
+            po.delivery_warehouse_id,
+            po.delivery_warehouse_name
+            FROM  purchase_order po
+            INNER JOIN purchase_order_supplier ps
+            ON ps.purchase_order_id=po.id AND ps.is_deleted=false
+            WHERE po.is_deleted=false
+            <if test="purchaseOrderIds!=null and purchaseOrderIds.size>0">
+            AND po.id IN
+                <foreach collection="purchaseOrderIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+
+
+
+    </select>
+
 </mapper>

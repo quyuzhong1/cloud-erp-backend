@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 
@@ -140,7 +141,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @param ids
      * @return List<ViewGeneratePurchaseReturnOrderDTO>
      */
-    List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
     /**
      * @description: 下推退货单数据保存
      * @author Will
