@@ -190,9 +190,14 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String name;
 
         /**
-         * 状态名称
+         * 地址（预留）
          */
-        private String moduleStatus;
+        private String moduleUrl;
+
+        /**
+         * 入参（预留）
+         */
+        private String moduleParam;
     }
 
     /**

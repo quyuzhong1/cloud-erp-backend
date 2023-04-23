@@ -25,4 +25,6 @@ public interface WorkOptionMapper extends BaseMapper<WorkOptionEntity> {
 
     List<WorkOptionDTO.MyWorkOptionDTO> listMyWorkOption(@Param("optionUserId") String optionUserId);
 
+    List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView(@Param("optionUserId") String optionUserId);
+
 }

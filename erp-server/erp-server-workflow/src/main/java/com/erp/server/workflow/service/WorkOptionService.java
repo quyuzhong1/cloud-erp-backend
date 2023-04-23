@@ -53,5 +53,13 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @Date 2023/4/11 18:48
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      **/
-    List<WorkOptionDTO.PendingViewDTO> pendingView();
+    List<WorkOptionDTO.PendingViewDTO> listPendingView();
+
+    /**
+     * 常用列表
+     * @Author Luo_WG
+     * @Date 2023/4/11 18:50
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
+     **/
+    List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView();
 }

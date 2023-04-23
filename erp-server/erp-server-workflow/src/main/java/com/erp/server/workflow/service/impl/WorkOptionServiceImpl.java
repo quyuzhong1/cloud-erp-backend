@@ -18,6 +18,7 @@ import com.erp.server.workflow.service.CommonService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -130,7 +131,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      **/
     @Override
-    public List<WorkOptionDTO.PendingViewDTO> pendingView() {
+    public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
         List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
@@ -163,6 +164,19 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             list.add(pendingViewDTO);
         }
         return list;
+    }
+
+    /**
+     * 常用列表
+     * @Author Luo_WG
+     * @Date 2023/4/11 18:50
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
+     **/
+    @Override
+    public List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView() {
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+        return frequentlyViewDTOS;
     }
 
     private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
