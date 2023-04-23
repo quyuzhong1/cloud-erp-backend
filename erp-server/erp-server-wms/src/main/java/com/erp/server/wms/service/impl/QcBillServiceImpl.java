@@ -172,6 +172,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         QcBillDTO.ViewDTO view = new QcBillDTO.ViewDTO();
         BeanMapper.copy(bill, view);
+
         //产品信息
         QcProductDTO.ViewDTO qcProduct = qcProductService.getByMainId(id);
         view.setQcProduct(qcProduct);

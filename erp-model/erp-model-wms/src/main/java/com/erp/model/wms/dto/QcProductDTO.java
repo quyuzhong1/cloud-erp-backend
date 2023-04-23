@@ -148,6 +148,13 @@ public class QcProductDTO {
         private String skuId;
 
 
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+
         /**
          * 产品长
          */
