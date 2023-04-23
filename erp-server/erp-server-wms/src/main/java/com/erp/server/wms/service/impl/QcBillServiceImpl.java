@@ -835,7 +835,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         QcBillDTO.TabListDTO cancelQc = new QcBillDTO.TabListDTO();
         String cancelQcType = QcBillStatusEnum.CANCEL.getCode();
         cancelQc.setCount((int) list.stream().filter(l->cancelQcType.equals(l.getQcStatus().getCode())).count());
-        cancelQc.setSearchType(finishQcType);
+        cancelQc.setSearchType(cancelQcType);
         cancelQc.setTypeName(QcBillStatusEnum.CANCEL.getName());
         resultList.add(cancelQc);
         return resultList;
