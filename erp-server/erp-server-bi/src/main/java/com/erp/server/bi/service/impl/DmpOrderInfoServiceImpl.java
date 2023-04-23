@@ -56,6 +56,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
@@ -1076,13 +1078,26 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             for (Map.Entry<String, List<DmpOrderInfoImportExcelDTO>> entry :  map.entrySet()) {
                 DmpOrderInfoEntity info = new DmpOrderInfoEntity();
                 List<DmpOrderInfoImportExcelDTO> value = entry.getValue();
-                BeanUtils.copyProperties(value.get(0),info);
-                info.setOrderStatus(OrderStateEnum.getCodeByName(value.get(0).getOrderStateName()));
+                DmpOrderInfoImportExcelDTO mainEntity = value.get(0);
+                BeanUtils.copyProperties(mainEntity,info);
+                info.setOrderStatus(OrderStateEnum.getCodeByName(mainEntity.getOrderStateName()));
                 BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-                baseSearchDTO.setSearchKeyword(value.get(0).getChargeName());
+                baseSearchDTO.setSearchKeyword(mainEntity.getChargeName());
                 ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
                 List<FindUserDTO> chargeNameList = listApiResult.getData();
                 info.setChargeId(chargeNameList.get(0).getUserId());
+
+                String platformCreateTimeStr = mainEntity.getPlatformCreateTimeStr();
+                if (StringUtils.isNotBlank(platformCreateTimeStr)) {
+                    info.setPlatformCreateTime(LocalDateUtil.startLocalDateTime(LocalDate.parse(platformCreateTimeStr, dateTimeFormatter)));
+                }
+                String deliveryTimeStr = mainEntity.getDeliveryTimeStr();
+                if (StringUtils.isNotBlank(deliveryTimeStr)) {
+                    info.setPlatformCreateTime(LocalDateUtil.startLocalDateTime(LocalDate.parse(deliveryTimeStr, dateTimeFormatter)));
+                }
+                BigDecimal orderFee = mainEntity.getOrderFee();
+                mainEntity.setOrderFee(MathUtil.multiply(orderFee,ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
+
                 info.setId(IdWorker.getIdStr());
                 infoList.add(info);
                 for (DmpOrderInfoImportExcelDTO excelDTO : value) {
@@ -1090,7 +1105,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                     item.setOrderId(info.getId());
                     item.setSkuNo(excelDTO.getSkuNo());
                     item.setItemName(excelDTO.getItemName());
-                    item.setSellPrice(excelDTO.getSellPrice());
+                    item.setSellPriceOrigin(excelDTO.getSellPriceOrigin());
                     item.setQuantity(excelDTO.getQuantity());
                     itemList.add(item);
                 }
