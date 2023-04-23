@@ -75,7 +75,7 @@ public class WorkOptionController extends BaseController {
      * @Date 2023/4/11 18:48
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      **/
-    @PostMapping("/listPendingView")
+    @GetMapping("/listPendingView")
     public ApiResult<List<WorkOptionDTO.PendingViewDTO>> listPendingView() {
         List<WorkOptionDTO.PendingViewDTO> pendingViewList = workOptionService.listPendingView();
         return success(pendingViewList);
@@ -87,7 +87,7 @@ public class WorkOptionController extends BaseController {
      * @Date 2023/4/11 18:50
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
      **/
-    @PostMapping("/listFrequentlyView")
+    @GetMapping("/listFrequentlyView")
     public ApiResult<List<WorkOptionDTO.FrequentlyViewDTO>> listFrequentlyView() {
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTO = workOptionService.listFrequentlyView();
         return success(frequentlyViewDTO);
@@ -99,7 +99,7 @@ public class WorkOptionController extends BaseController {
      * @Date 2023/4/12 9:33
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.stageViewDTO>>
      **/
-    @PostMapping("/stageView")
+    @GetMapping("/stageView")
     public ApiResult<List<WorkOptionDTO.StageViewDTO>> stageView() {
         List<WorkOptionDTO.StageViewDTO> stageViewDTOList = null;
         return success(stageViewDTOList);
