@@ -14,7 +14,7 @@ import com.erp.model.msg.enums.NoticeMessageTypeEnum;
 import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.msg.config.FsProperties;
+import com.erp.server.msg.config.properties.FsProperties;
 import com.erp.server.msg.constant.FeishuConstant;
 import com.erp.server.msg.enums.ChannelSendMsgTypeEnum;
 import com.erp.server.msg.enums.FeishuMessageTypeEnum;
