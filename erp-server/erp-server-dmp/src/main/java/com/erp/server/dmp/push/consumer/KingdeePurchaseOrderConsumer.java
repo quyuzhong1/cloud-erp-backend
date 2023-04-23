@@ -1,12 +1,11 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -50,14 +49,15 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230413-8806"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FSupplierId.FNumber";
+        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        System.out.println(queryList);
 
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+
+      /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Number","CGDD-230413-8806");
         JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        System.out.println(queryList);
-        System.out.println(viewJson);
+        System.out.println(viewJson);*/
 
     }
 
@@ -103,8 +103,6 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
-        //禁用日期（用于判断是否禁用）
-        String FForbidDate = (String)model.get("ForbidDate");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
 
@@ -115,9 +113,10 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
             return;
         }
-        //禁用的需要先反禁用
-        if (StringUtils.isNotBlank(FForbidDate)) {
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            //反审核
+            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            return;
         }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
@@ -125,18 +124,51 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //删除
-            if (SyncKingdeeOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-                kingdeeCommonService.delete(apiUtils,platformEntity,map,type,code);
-                return;
-            }
-            //主单据id
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            //给修改json对象赋值ID
+            setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
+    }
+
+    /**
+     * 给修改json对象赋值ID
+     */
+    private void setQueryJSONObject (String id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FId = '%s'", id));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FPOOrderEntry_FEntryID,FMaterialId.FNumber";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        if (CollectionUtils.isEmpty(queryList)) {
+            //错误日志
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),filterStr,"未查询到子单据id",type,ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        //主单据id
+        KingdeeUtils.makeFieldJson(json,"FId",".", id);
+        //比较
+        for (Map<String, Object> queryMap: queryList) {
+            ArrayList obj = (ArrayList) json.get("FPOOrderEntry");
+            for (Object o : obj) {
+                JSONObject jsonObject = (JSONObject) o;
+                JSONObject newJson = new JSONObject(new LinkedHashMap<>());
+                Object o1 = queryMap.get("FMaterialId.FNumber");
+                JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
+                Object fNumber = o2.get("FNumber");
+                if (o1.equals(fNumber)) {
+                    newJson.put("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
+                }
+                newJson.putAll(jsonObject);
+                jsonObject.clear();
+                jsonObject.putAll(newJson);
+            }
+        }
+
     }
 
 }

@@ -32,7 +32,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //金蝶id
         String syncKingdeeId = params.get("kingdeeId");
 
-        //系统用户
+        //采购订单
         if (ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString().equals(code)) {
             purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
         }
