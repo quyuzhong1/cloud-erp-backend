@@ -727,29 +727,29 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<String> skuNoList = item.getSkuList();
 
             SalesCountVO salesCount = new SalesCountVO();
-            BigDecimal brandSales = list.stream().filter(s -> skuNoList.contains(s.getName())&&s.getSales()!=null).
+            BigDecimal brandSales = list.stream().filter(s -> skuNoList.contains(s.getName()) && s.getSales() != null).
                     map(SalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             salesCount.setName(name);
             salesCount.setSales(brandSales);
             //销量
-            Integer brandSalesQty = list.stream().filter(s -> skuNoList.contains(s.getName())&&s.getSales()!=null).
+            Integer brandSalesQty = list.stream().filter(s -> skuNoList.contains(s.getName()) && s.getSales() != null).
                     mapToInt(SalesVO::getSalesQuantity).sum();
             salesCount.setSalesQuantity(brandSalesQty);
             //订单量
-            Integer brandOrderCount = list.stream().filter(s -> skuNoList.contains(s.getName())&&s.getSales()!=null).
+            Integer brandOrderCount = list.stream().filter(s -> skuNoList.contains(s.getName()) && s.getSales() != null).
                     mapToInt(SalesVO::getOrderCount).sum();
             salesCount.setOrderCount(brandOrderCount);
             salesCount.setSalesRatio(getSalesRatio(totalSales, brandSales));
 
             //环比
-            BigDecimal brandChainSales=chainList.stream().filter(s -> skuNoList.contains(s.getName())&&s.getSales()!=null).
+            BigDecimal brandChainSales = chainList.stream().filter(s -> skuNoList.contains(s.getName()) && s.getSales() != null).
                     map(SalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             salesCount.setChainRelativeRatio(getChainRelativeRatio(brandSales, brandChainSales));
-             //同比
-            BigDecimal brandYearBasisSales=yearBasisList.stream().filter(s -> skuNoList.contains(s.getName())&&s.getSales()!=null).
+            //同比
+            BigDecimal brandYearBasisSales = yearBasisList.stream().filter(s -> skuNoList.contains(s.getName()) && s.getSales() != null).
                     map(SalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             salesCount.setYearBasisRatio(getChainRelativeRatio(brandSales, brandYearBasisSales));
@@ -771,10 +771,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<SalesCountVO> byPlatform(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = "1";
-        }
-
         List<SalesCountVO> list = baseMapper.byPlatform(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
