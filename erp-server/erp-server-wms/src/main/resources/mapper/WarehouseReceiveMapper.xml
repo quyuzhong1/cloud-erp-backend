@@ -172,7 +172,8 @@
             wr.delivery_warehouse_id,
             wr.delivery_warehouse_name,
             wrd.purchase_order_detail_id,
-            wrd.exceed_qty
+            wrd.exceed_qty,
+            wrd.receive_qty
         FROM warehouse_receive_detail wrd
         INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wrd.is_deleted = FALSE
