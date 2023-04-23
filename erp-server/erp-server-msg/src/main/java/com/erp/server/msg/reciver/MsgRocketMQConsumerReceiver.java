@@ -32,6 +32,7 @@ public class MsgRocketMQConsumerReceiver {
         @Override
         public void onMessage(NoticeMsgInfoDTO msgInfoDTO) {
             log.info("监听到消息发送消息通知，请求内容：{}", JSONObject.toJSONString(msgInfoDTO));
+            // 此处需注意，如果内部抛异常可能会导致某个渠道发送正常重新发送
             msgContext.routeSend(msgInfoDTO);
         }
     }

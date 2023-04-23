@@ -52,7 +52,7 @@ public class NoticeMsgInfoDTO implements Serializable {
     private Boolean urgent = Boolean.FALSE;
 
     /**
-     * 发送渠道，如果指定了则优先按照这个配置的来；否则按照消息来源中定义的取
+     * 发送渠道，一般情况下不需要指定，从数据库表中配置的取；如果指定了则优先按照这个配置的来
      */
     private List<MessageChannelEnum> sendChannels;
 

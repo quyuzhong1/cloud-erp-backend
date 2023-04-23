@@ -265,4 +265,12 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/msgChannelConfig/findByMsgConfigId")
     List<MsgChannelConfigDTO> findByMsgConfigId(@RequestParam(value = "msgConfigId")String msgConfigId);
+
+    /**
+     * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）
+     *
+     * @return
+     */
+    @PostMapping("feign/user/getUserSimpleInfoByIds")
+    List<SysUserSimpleDTO> getUserSimpleInfoByIds(@RequestParam(value = "userIds") List<String> userIds);
 }

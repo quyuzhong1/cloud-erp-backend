@@ -16,8 +16,13 @@ import java.util.Objects;
 @AllArgsConstructor
 public enum NoticeTypeEnum {
 
-    SCM_NOTICE("SCM_NOTICE", "供应链系统业务通知"),
-    PLM_NOTICE("PLM_NOTICE", "产品研发系统业务通知"),
+    /**
+     * 注意，消息来源对应于数据库中erp_sys库中msg_config的主键字段，确定发送的渠道。
+     * 再由msg_channel_config确定发送渠道对应的应用（有可能一个渠道存在多个应用，邮件暂不区分渠道）
+     */
+
+    SCM_TASK("SCM_TASK", "供应链系统任务通知"),
+    PLM_TASK("PLM_TASK", "产品研发系统任务通知"),
     ;
 
     /**

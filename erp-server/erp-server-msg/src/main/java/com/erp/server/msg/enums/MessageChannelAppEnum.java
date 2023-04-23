@@ -13,6 +13,7 @@ public enum MessageChannelAppEnum {
 
     PLM("plm", "产品研发应用"),
     SCM("scm", "供应链应用"),
+    COMMON("common", "通用"),
     ;
     private String code;
 
