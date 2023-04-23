@@ -329,7 +329,7 @@ public class MathUtil {
      * @return
      */
     public BigDecimal divide(BigDecimal d1, BigDecimal d2, int scale) {
-        if (d2 == null) {
+        if (d2 == null||d2.compareTo(BigDecimal.ZERO)==0) {
             return BigDecimal.ZERO;
         }
         BigDecimal newd1 = d1;

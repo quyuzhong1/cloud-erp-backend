@@ -424,6 +424,12 @@ public class QcBillDTO implements Serializable {
          */
         private String skuName;
 
+
+        /**
+         * sku 名
+         */
+        private String skuNo;
+
         /**
          * 总量
          */

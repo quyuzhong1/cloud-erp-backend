@@ -238,6 +238,11 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setSkuName(skuName);
+
+            String skuNo = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+            item.setSkuNo(skuNo);
+
             String supplierId = item.getSupplierId();
             String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -249,6 +254,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
             item.setRemark(remark);
+
 
         }
         return new PagingVO<>(pageData);
@@ -301,6 +307,11 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
                 String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
                 excelDTO.setSkuName(skuName);
+
+                String skuNo = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+                excelDTO.setSkuNo(skuNo);
+
                 String supplierId = item.getSupplierId();
                 String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
