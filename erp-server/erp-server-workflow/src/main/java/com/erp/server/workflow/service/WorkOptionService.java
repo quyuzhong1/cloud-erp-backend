@@ -36,7 +36,7 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean addWaitDo(WorkOptionDTO.addDTO dto);
+    Boolean addWaitDo(WorkOptionDTO.AddDTO dto);
 
     /**
      * 编辑修改代办模块
@@ -45,7 +45,7 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    Boolean updateWaitDo(WorkOptionDTO.updateDTO dto);
+    Boolean updateWaitDo(WorkOptionDTO.UpdateDTO dto);
 
     /**
      * 代办列表

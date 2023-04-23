@@ -20,7 +20,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
      */
     @Data
     @NoArgsConstructor
-    public static class addDTO {
+    public static class AddDTO {
         /**
          * 菜单id
          */
@@ -44,7 +44,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
      */
     @Data
     @NoArgsConstructor
-    public static class updateDTO {
+    public static class UpdateDTO {
         /**
          * id
          */

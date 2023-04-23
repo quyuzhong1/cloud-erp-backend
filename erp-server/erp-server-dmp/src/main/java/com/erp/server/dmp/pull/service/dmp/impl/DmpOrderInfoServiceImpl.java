@@ -222,7 +222,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                     }
                 }
             }
-            //查询订单商品明细，根据sku查询sku信息，获取'类别'、'品牌' 同步到商品信息
+ /*           //查询订单商品明细，根据sku查询sku信息，获取'类别'、'品牌' 同步到商品信息
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
                 if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
@@ -248,7 +248,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         }
                     }
                 }
-            }
+            }*/
         }
         //查询发货详情获取发货时间，同步到订单信息
         DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getPlatformOrderId());

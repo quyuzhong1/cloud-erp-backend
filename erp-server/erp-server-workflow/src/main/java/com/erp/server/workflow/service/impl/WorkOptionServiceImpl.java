@@ -92,7 +92,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @return com.common.core.controller.vo.ApiResult
      **/
     @Override
-    public Boolean addWaitDo(WorkOptionDTO.addDTO dto) {
+    public Boolean addWaitDo(WorkOptionDTO.AddDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
         workOptionEntity.setOptionUserId(userInfo.getUid());
@@ -112,7 +112,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @return com.common.core.controller.vo.ApiResult
      **/
     @Override
-    public Boolean updateWaitDo(WorkOptionDTO.updateDTO dto) {
+    public Boolean updateWaitDo(WorkOptionDTO.UpdateDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
         workOptionEntity.setOptionUserId(userInfo.getUid());
