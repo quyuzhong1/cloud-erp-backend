@@ -36,4 +36,9 @@ public class MsgSendChannelWrapParam implements Serializable {
      */
     private NoticeMsgInfoDTO sourceMsgInfo;
 
+    /**
+     * 仅用于标识一次发送方的请求id
+     */
+    private String msgId;
+
 }

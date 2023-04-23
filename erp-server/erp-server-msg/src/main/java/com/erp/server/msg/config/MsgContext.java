@@ -2,6 +2,7 @@ package com.erp.server.msg.config;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.IdUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
@@ -130,6 +131,7 @@ public class MsgContext {
      * @return
      */
     private List<MsgSendChannelWrapParam> wrapSendChannelWithApps(MsgConfigDTO msgConfigDTO, NoticeMsgInfoDTO msgInfo, List<MessageChannelEnum> messageChannelEnums) {
+        String msgId = IdUtils.simpleUUID();
         List<MsgSendChannelWrapParam> sendChannelApps = Lists.newArrayList();
         NoticeTypeEnum noticeTypeEnum = msgInfo.getNoticeTypeEnum();
         NoticeMessageTypeEnum noticeMessageTypeEnum;
@@ -182,6 +184,9 @@ public class MsgContext {
                 MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, null, noticeMessageTypeEnum, msgInfo);
                 sendChannelApps.add(msgSendChannelWrapParam);
             });
+        }
+        if(CollUtil.isNotEmpty(sendChannelApps)) {
+            sendChannelApps.stream().forEach(data->data.setMsgId(msgId));
         }
         return sendChannelApps;
     }

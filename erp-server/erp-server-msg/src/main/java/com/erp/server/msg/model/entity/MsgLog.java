@@ -15,6 +15,11 @@ import java.time.LocalDateTime;
 public class MsgLog implements Serializable {
 
     /**
+     * 标识一次发送方的请求id
+     */
+    private String msgId;
+
+    /**
      * 发送MQ消息主题
      */
     private String mqTopic;

@@ -63,6 +63,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
     private void recordLog(MsgSendChannelWrapParam noticeMsgInfo, MsgResultVO sendResult, MessageChannelEnum channelEnum) {
         // 记录日志
         MsgLog msgLog = new MsgLog();
+        msgLog.setMsgId(noticeMsgInfo.getMsgId());
         msgLog.setMqTopic(RocketMqTopic.NOTICE_MSG_TOPIC);
         msgLog.setMqTag(RocketMqTagEnum.MSG_NOTICE_TAG.getName());
         msgLog.setSendChannelCode(channelEnum.getCode());
