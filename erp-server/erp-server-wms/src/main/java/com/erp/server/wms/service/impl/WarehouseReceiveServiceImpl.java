@@ -787,24 +787,22 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @return java.lang.Boolean
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generateStockIn(List<WarehouseReceiveDTO.GenerateStockInDTO> dtos) {
         LoginUser userInfo = commonService.getUserInfo();
         List<String> collect = dtos.stream().map(WarehouseReceiveDTO.GenerateStockInDTO::getMainId).distinct().collect(Collectors.toList());
-
-        collect.forEach(id -> {
-            //获取用户信息
-            SysUserDTO userDTO = sysUserFeign.getSysUserById(userInfo.getUid());
-            if (ObjectUtil.isEmpty(userDTO)) {
-                throw new ServiceException(ApiError.ERROR_9011);
-            }
-
+        //获取用户信息
+        SysUserDTO userDTO = sysUserFeign.getSysUserById(userInfo.getUid());
+        if (ObjectUtil.isEmpty(userDTO)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        //获取用户部门
+        SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userInfo.getUid());
+        for (String id : collect) {
             WarehouseReceiveEntity entity = this.getById(id);
             if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
                 throw new ServiceException(ApiError.ERROR_98057);
             }
-            //获取用户部门
-            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userDTO.getUid());
-
             PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
             addDTO.setSourceId(id);
             addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
@@ -830,7 +828,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             });
             addDTO.setDetails(detailDTOList);
             purchaseStockInService.add(addDTO);
-        });
+        }
         return true;
     }
 

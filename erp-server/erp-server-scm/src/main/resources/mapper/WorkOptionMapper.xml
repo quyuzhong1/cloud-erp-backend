@@ -5,7 +5,7 @@
     <select id="getTableNum" resultType="integer">
         SELECT
             COUNT(*)
-        FROM #{tableName}
+        FROM ${tableName}
         where 1=1
         AND approve_status = #{approveStatus}
     </select>
