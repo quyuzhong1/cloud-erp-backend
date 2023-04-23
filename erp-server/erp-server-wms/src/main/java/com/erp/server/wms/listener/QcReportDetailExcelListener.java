@@ -6,6 +6,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
@@ -26,6 +27,11 @@ public class QcReportDetailExcelListener extends AnalysisEventListener<QcReportD
      * 质检规则对应的质检报告
      */
     List<QcReportDTO.ListDTO> qcReportList;
+
+    /**
+     * 字典列表
+     */
+    List<DictBasicEntity> dictList;
     /**
      * 成功的数据
      */
@@ -43,8 +49,9 @@ public class QcReportDetailExcelListener extends AnalysisEventListener<QcReportD
      *
      * @param qcReportList
      */
-    public QcReportDetailExcelListener(List<QcReportDTO.ListDTO> qcReportList) {
+    public QcReportDetailExcelListener(List<QcReportDTO.ListDTO> qcReportList, List<DictBasicEntity> dictList) {
         this.qcReportList = qcReportList;
+        this.dictList = dictList;
     }
 
 
@@ -67,20 +74,21 @@ public class QcReportDetailExcelListener extends AnalysisEventListener<QcReportD
             errorMsgList.addAll(msgList);
         }
         //质检报告
-        QcReportDTO.ListDTO  qcReport=  qcReportList.stream().filter(
+        QcReportDTO.ListDTO qcReport = qcReportList.stream().filter(
                 obj -> obj.getName().equals(qcReportDetailImportExcelDTO.getQcReportName())
                         && obj.getContent().equals(qcReportDetailImportExcelDTO.getQcReportContent())
         ).findFirst().orElse(null);
-        if(Objects.isNull(qcReport)){
-            errorMsgList.add("质检报告不存在");
-        }else{
-            addDTO.setDescription(qcReportDetailImportExcelDTO.getDescription());
-            addDTO.setQcReportId(qcReport.getQcReportId());
-            addDTO.setQcReportContent(qcReport.getContent());
-            addDTO.setQcReportName(qcReport.getName());
-            successList.add(addDTO);
-        }
 
+        //质检结果
+        DictBasicEntity qcResult = dictList.stream().filter(
+                dict -> dict.getName().
+                        equals(qcReportDetailImportExcelDTO.getResultDict())).findFirst().orElse(null);
+        if(Objects.isNull(qcResult)){
+            errorMsgList.add("质检结果有误");
+        }
+        if (Objects.isNull(qcReport)) {
+            errorMsgList.add("质检报告不存在");
+        }
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             qcReportDetailImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -88,13 +96,19 @@ public class QcReportDetailExcelListener extends AnalysisEventListener<QcReportD
             return;
         }
 
+        addDTO.setDescription(qcReportDetailImportExcelDTO.getDescription());
+        addDTO.setQcReportId(qcReport.getQcReportId());
+        addDTO.setQcReportContent(qcReport.getContent());
+        addDTO.setQcReportName(qcReport.getName());
+        addDTO.setResultDict(qcResult.getValue());
+        successList.add(addDTO);
+
     }
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
 
     }
-
 
 
     public List<QcReportDetailImportExcelDTO> getErrorList() {

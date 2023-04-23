@@ -129,7 +129,8 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     @Override
     public QcReportDetailDTO.ImportDTO importFile(MultipartFile excelFile, String qcType, HttpServletResponse response) {
         List<QcReportDTO.ListDTO> qcReportList = qcReportService.getByQcType(qcType);
-        QcReportDetailExcelListener excelListenerUtil = new QcReportDetailExcelListener(qcReportList);
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+        QcReportDetailExcelListener excelListenerUtil = new QcReportDetailExcelListener(qcReportList,dictList);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), QcReportDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
