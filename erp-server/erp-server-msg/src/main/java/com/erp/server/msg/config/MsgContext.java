@@ -68,6 +68,7 @@ public class MsgContext {
                 return;
             }
         }
+        log.info("本次消息发送渠道：【{}】，发送内容：【{}】",JSONObject.toJSONString(sendChannels), msgInfo);
         List<MsgSendChannelWrapParam> msgSendChannelWrapParams = wrapSendChannelWithApps(msgConfigDTO, msgInfo, sendChannels);
         if(CollUtil.isNotEmpty(msgSendChannelWrapParams)) {
             msgSendChannelWrapParams.stream().forEach(msgSendChannelWrapParam -> {
@@ -146,21 +147,29 @@ public class MsgContext {
                 log.warn("请求的消息来源在数据库中未找到消息渠道配置信息，请求的消息来源：{}",msgInfo.getNoticeTypeEnum());
                 fallBack = Boolean.TRUE;
             } else {
+                // 有可能某个渠道未在数据库中配置，即存在部分
                 Map<String,List<MsgChannelConfigDTO>> msgChannelConfigMap = msgChannelConfigDTOS.stream().collect(Collectors.groupingBy(MsgChannelConfigDTO::getChannelCode));
                 if(CollUtil.isEmpty(msgChannelConfigMap)) {
                     fallBack = Boolean.TRUE;
                 } else {
-                    msgChannelConfigMap.forEach((channelCode,channelConfigs)->{
-                        channelConfigs.stream().forEach(channelConfig->{
-                            MessageChannelEnum messageChannelEnum = MessageChannelEnum.of(channelConfig.getChannelCode());
-                            if(Objects.equals(channelConfig.getSendFlag(), Boolean.TRUE)) {
-                                MessageChannelAppEnum messageChannelAppEnum = MessageChannelAppEnum.of(channelConfig.getChannelAppCode());
-                                MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, messageChannelAppEnum, noticeMessageTypeEnum, msgInfo);
-                                sendChannelApps.add(msgSendChannelWrapParam);
-                            } else {
-                                log.warn("消息来源【{}】对应的渠道【{}】未开启发送消息，不发送消息",noticeTypeEnum.getName(),messageChannelEnum.getName());
-                            }
-                        });
+                    messageChannelEnums.stream().forEach(messageChannelEnum -> {
+                        String channelCode = messageChannelEnum.getCode();
+                        if(msgChannelConfigMap.containsKey(channelCode)) { // 数据库配置中存在
+                            List<MsgChannelConfigDTO> channelConfigs = msgChannelConfigMap.get(channelCode);
+                            channelConfigs.stream().forEach(channelConfig->{
+                                if(Objects.equals(channelConfig.getSendFlag(), Boolean.TRUE)) {
+                                    MessageChannelAppEnum messageChannelAppEnum = MessageChannelAppEnum.of(channelConfig.getChannelAppCode());
+                                    MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, messageChannelAppEnum, noticeMessageTypeEnum, msgInfo);
+                                    sendChannelApps.add(msgSendChannelWrapParam);
+                                } else {
+                                    log.warn("消息来源【{}】对应的渠道【{}】未开启发送消息，不发送消息",noticeTypeEnum.getName(),messageChannelEnum.getName());
+                                }
+                            });
+                        } else { // 存在部分配置
+                            log.warn("数据库配置中不存在消息来源【{}】,消息渠道【{}】的配置",noticeTypeEnum.getName(), messageChannelEnum.getName());
+                            MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, null, noticeMessageTypeEnum, msgInfo);
+                            sendChannelApps.add(msgSendChannelWrapParam);
+                        }
                     });
                 }
             }

@@ -23,6 +23,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
@@ -74,6 +75,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
 
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map,String apiPlatformId,Integer moduleType) {
@@ -389,6 +394,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
         if (SystemConstants.SYS.equals(system)) {
             sysUserFeign.updateBusinessSyncKingdeeStatus(params);
+        }
+        if (SystemConstants.SCM.equals(system)) {
+            scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
         }
 
     }

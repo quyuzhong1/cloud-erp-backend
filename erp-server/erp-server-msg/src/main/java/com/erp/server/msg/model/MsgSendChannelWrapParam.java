@@ -1,5 +1,6 @@
 package com.erp.server.msg.model;
 
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.server.msg.enums.MessageChannelAppEnum;
 import lombok.Data;
@@ -26,8 +27,13 @@ public class MsgSendChannelWrapParam implements Serializable {
     private MessageChannelAppEnum channelApp;
 
     /**
-     * 发送内容体
+     * 发送内容体（程序用，可以进行包装）
      */
     private NoticeMsgWrapInfoDTO noticeMsgWrapInfoDTO;
+
+    /**
+     * 发送方源请求内容（用于记录日志）
+     */
+    private NoticeMsgInfoDTO sourceMsgInfo;
 
 }

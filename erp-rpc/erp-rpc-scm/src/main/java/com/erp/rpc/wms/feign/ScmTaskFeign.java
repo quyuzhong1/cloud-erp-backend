@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 采购订单feign
@@ -117,4 +118,9 @@ public interface ScmTaskFeign {
     @PostMapping("feign/scmWorkOption/getTableNum")
     Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
 
+    /**
+     * 更新业务单据状态
+     */
+    @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
 }

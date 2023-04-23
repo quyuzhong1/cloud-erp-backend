@@ -68,6 +68,8 @@ public class MsgConvertUtil {
 
         msgSendChannelWrapParam.setNoticeMsgWrapInfoDTO(noticeMsgWrapInfoDTO);
 
+        msgSendChannelWrapParam.setSourceMsgInfo(msgInfo);
+
         return msgSendChannelWrapParam;
     }
 

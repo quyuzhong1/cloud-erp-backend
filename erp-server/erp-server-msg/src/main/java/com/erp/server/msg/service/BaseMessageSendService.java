@@ -1,14 +1,19 @@
 package com.erp.server.msg.service;
 
-import com.common.core.controller.vo.ApiResult;
+import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.StrUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.server.msg.config.MsgContext;
+import com.erp.server.msg.model.MsgResultVO;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
-import com.erp.server.msg.model.NoticeMsgWrapInfoDTO;
+import com.erp.server.msg.model.entity.MsgLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 /**
  * @Classname: BaseMessageSendService
@@ -35,17 +40,42 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
      * @return
      */
     @Override
-    public ApiResult doSendMsg(MsgSendChannelWrapParam noticeMsgInfo) {
-        ApiResult sendResult = sendMsg(noticeMsgInfo);
+    public MsgResultVO doSendMsg(MsgSendChannelWrapParam noticeMsgInfo) {
+        MsgResultVO sendResult = sendMsg(noticeMsgInfo);
         MessageChannelEnum channelEnum = channel();
         log.info("通过渠道【{}】发送消息【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败");
+        recordLog(noticeMsgInfo, sendResult, channelEnum);
         return sendResult;
+    }
+
+    /**
+     * 记录日志
+     * @param noticeMsgInfo
+     * @param sendResult
+     * @param channelEnum
+     */
+    private void recordLog(MsgSendChannelWrapParam noticeMsgInfo, MsgResultVO sendResult, MessageChannelEnum channelEnum) {
+        // 记录日志
+        MsgLog msgLog = new MsgLog();
+        msgLog.setMqTopic(RocketMqTopic.NOTICE_MSG_TOPIC);
+        msgLog.setMqTag(RocketMqTagEnum.MSG_NOTICE_TAG.getName());
+        msgLog.setSendChannelCode(channelEnum.getCode());
+        msgLog.setMsgSourceContent(JSONObject.toJSONString(noticeMsgInfo.getSourceMsgInfo()));
+        if(Objects.nonNull(sendResult)) {
+            msgLog.setMsgChannelContent(sendResult.getRequestBody());
+            msgLog.setChannelResultCode(StrUtils.null2EmptyWithTrim(sendResult.getCode()));
+            msgLog.setChannelResultMsg(sendResult.getMsg());
+            msgLog.setNeedResend(sendResult.getNeedReSend());
+            msgLog.setRetryTimes(0);
+            msgLog.setNeedResend(sendResult.getNeedReSend());
+        }
+        log.info("通过渠道【{}】发送消息【{}】，请求日志：【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败", JSONObject.toJSONString(msgLog));
     }
 
     /**
      * 具体子类实现逻辑
      * @return
      */
-    public abstract ApiResult sendMsg(MsgSendChannelWrapParam noticeMsgInfo);
+    public abstract MsgResultVO sendMsg(MsgSendChannelWrapParam noticeMsgInfo);
 
 }

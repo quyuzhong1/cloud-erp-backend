@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -1107,6 +1108,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Map<String,Object> map = new HashMap<>();
         map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
         return map;
+    }
+
+    @Override
+    public List<SysUserSimpleDTO> getUserSimpleInfoByIds(List<String> userIds) {
+        List<SysUserInfoEntity> users = this.lambdaQuery().eq(SysUserInfoEntity::getUserState, 1).in(SysUserInfoEntity::getUid,userIds).list();
+        if(CollUtil.isNotEmpty(users)) {
+            return BeanMapperUtils.copyList(SysUserSimpleDTO.class, users);
+        }
+        return null;
     }
 
     private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {
