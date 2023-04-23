@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>erp-server</artifactId>
@@ -9,6 +8,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.erp.server</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>erp-server-msg</name>
     <artifactId>erp-server-msg</artifactId>
     <description>消息中心服务</description>
 
@@ -20,11 +22,6 @@
     </properties>
 
     <dependencies>
-        <!--邮件发送-->
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-msg</artifactId>
