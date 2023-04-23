@@ -30,13 +30,17 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Override
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
-
-        if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+        int nameSize=CollectionUtils.isNotEmpty(attachmentNameList)?attachmentNameList.size():0;
+        if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
             List<WmsAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
             for (int i = 0; i < attachmentUrlList.size(); i++) {
                 WmsAttachmentEntity entity = new WmsAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
-                entity.setAttachName(attachmentNameList.get(i));
+                if(CollectionUtils.isNotEmpty(attachmentNameList)){
+                    if(nameSize>=i){
+                        entity.setAttachName(attachmentNameList.get(i));
+                    }
+                }
                 entity.setType(type);
                 entity.setBusinessId(businessId);
                 addList.add(entity);

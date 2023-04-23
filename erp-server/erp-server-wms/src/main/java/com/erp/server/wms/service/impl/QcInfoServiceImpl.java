@@ -90,17 +90,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private void calculateRatio(QcInfoEntity qcInfoEntity) {
         if (qcInfoEntity != null) {
             //总数量
-            Integer totalQty = qcInfoEntity.getTotalQty();
+            Integer totalQty = qcInfoEntity.getTotalQty()!=null?qcInfoEntity.getTotalQty():0;
             //质检量
-            Integer qcQty = qcInfoEntity.getQcQty();
+            Integer qcQty = qcInfoEntity.getQcQty()!=null?qcInfoEntity.getQcQty():0;
             if (totalQty != 0) {
                 BigDecimal qcSampleRate = MathUtil.divide(new BigDecimal(totalQty), new BigDecimal(qcQty));
                 qcInfoEntity.setQcSampleRate(qcSampleRate);
             }
             //质检合格量
-            Integer qcGoodQty = qcInfoEntity.getQcGoodQty();
+            Integer qcGoodQty = qcInfoEntity.getQcGoodQty()!=null?qcInfoEntity.getQcGoodQty():0;
             //质检不良量
-            Integer qcBadQty = qcInfoEntity.getQcBadQty();
+            Integer qcBadQty = qcInfoEntity.getQcBadQty()!=null?qcInfoEntity.getQcBadQty():0;
             if (qcQty != 0) {
                 BigDecimal qcGoodRate = MathUtil.divide(new BigDecimal(qcQty), new BigDecimal(qcGoodQty));
                 qcInfoEntity.setQcGoodRate(qcGoodRate);

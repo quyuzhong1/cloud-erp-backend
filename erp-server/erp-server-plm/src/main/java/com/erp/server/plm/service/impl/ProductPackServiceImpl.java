@@ -189,6 +189,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 packVO.setLogisticsProductProperty(ProductProperty);
                 packVO.setFunctionDesc(detail.getFunctionDesc());
                 packVO.setProductGrade(detail.getProductGrade());
+                packVO.setSkuNo(detail.getSkuNo());
             }
             packVO.setSkuId(skuId);
             resultList.add(packVO);
