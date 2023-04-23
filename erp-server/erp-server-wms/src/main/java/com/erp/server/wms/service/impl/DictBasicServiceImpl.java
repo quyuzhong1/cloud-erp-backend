@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.RedisService;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -50,10 +49,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
         Boolean result = this.saveOrUpdateBatch(addList);
         //当保存成功
-        if (result) {
-            String redisKey = RedisCacheConstants.WMS_DICT_KEY;
-            redisService.deleteObject(redisKey);
-        }
+//        if (result) {
+//            String redisKey = RedisCacheConstants.WMS_DICT_KEY;
+//            redisService.deleteObject(redisKey);
+//        }
         return result;
     }
 
@@ -62,15 +61,13 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * 根据key 获取字典数据
      *
      * @param key
-     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @return
      * @author yl
      * @date 2023-03-17 14:16
      */
     @Override
     public List<DictBasicDTO> getByKey(String key) {
-        log.info("key===={}",key);
         List<DictBasicEntity> list = listByKey(key);
-        log.info("getByKey==== result={}",list);
         List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
         return resultList;
     }
@@ -109,15 +106,15 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      */
     private List<DictBasicEntity> listAll() {
 
-        String redisKey = RedisCacheConstants.WMS_DICT_KEY;
-        List<DictBasicEntity> dictList = redisService.getCacheList(redisKey);
-        if (CollectionUtils.isNotEmpty(dictList)) {
-            return dictList;
-        }
+//        String redisKey = RedisCacheConstants.WMS_DICT_KEY;
+//        List<DictBasicEntity> dictList = redisService.getCacheList(redisKey);
+//        if (CollectionUtils.isNotEmpty(dictList)) {
+//            return dictList;
+//        }
         List<DictBasicEntity> list = this.list();
-        if (CollectionUtils.isNotEmpty(list)) {
-            redisService.setCacheList(redisKey, list);
-        }
+//        if (CollectionUtils.isNotEmpty(list)) {
+//            redisService.setCacheList(redisKey, list);
+//        }
         return list;
 
     }
