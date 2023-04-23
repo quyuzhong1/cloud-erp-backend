@@ -192,6 +192,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             obj.setDeptId(sysDepartmentDTO.getId());
             obj.setDeptName(sysDepartmentDTO.getName());
         });
+        //更新启用日期后的店铺业务负责人
+        //updateCharge(dto.getChargeId(),dto.getEnableTime(),sysDepartmentDTO.getId(),sysDepartmentDTO.getName());
         dmpOrderInfoService.updateBatchById(list,2000);
         return Boolean.TRUE;
     }

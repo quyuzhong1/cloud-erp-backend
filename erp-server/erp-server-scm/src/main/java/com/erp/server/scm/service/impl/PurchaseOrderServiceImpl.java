@@ -899,11 +899,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setReceiveQty(receiveQty);
             viewGenerateStockInDTO.setExceedQty(exceedQty);
             //未入库数量
-            Integer unStockInQty = MathUtil.ZERO;
+            Integer hasStockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetailList)) {
-                unStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            viewGenerateStockInDTO.setUnStockInQty(detailEntity.getPurchaseQty() - unStockInQty);
+            viewGenerateStockInDTO.setUnStockInQty(detailEntity.getPurchaseQty() - hasStockInQty);
+            //入库数量
+            viewGenerateStockInDTO.setStockInQty(viewGenerateStockInDTO.getUnStockInQty());
             resultList.add(viewGenerateStockInDTO);
         }
         return resultList;
