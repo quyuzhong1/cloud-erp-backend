@@ -35,7 +35,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, selectorExpression = "shop_info_change_charge_tag", consumerGroup = RocketMqConsumerGroup.SHOP_INFO_CHANGE_CHARGE)
+@RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, selectorExpression = "shop_info_change_charge_tag", consumerGroup = RocketMqConsumerGroup.SHOP_INFO_CHANGE)
 public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
 
     @Resource

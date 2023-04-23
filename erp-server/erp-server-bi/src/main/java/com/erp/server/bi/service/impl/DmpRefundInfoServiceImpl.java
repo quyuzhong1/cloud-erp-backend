@@ -13,8 +13,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
@@ -35,7 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -120,31 +117,6 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         }
         return  true;
     }
-
-    @Override
-    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
-        if (CollectionUtils.isEmpty(entityList)) {
-            return;
-        }
-        List<DmpRefundInfoEntity> updateList = new ArrayList<>();
-        entityList.forEach(obj->{
-            List<DmpRefundInfoEntity> list =  this.lambdaQuery()
-                    .eq(DmpRefundInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode())
-                    .ge(DmpRefundInfoEntity::getOrderTime, obj.getSettlementDateBegin())
-                    .le(DmpRefundInfoEntity::getOrderTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
-                    .ne(DmpRefundInfoEntity::getCnySettleRate,obj.getExchangeRate())
-                    .select(DmpRefundInfoEntity::getId)
-                    .list();
-
-            if (org.apache.commons.collections4.CollectionUtils.isEmpty(list)) {
-                return;
-            }
-            list.forEach(e -> e.setCnySettleRate(obj.getExchangeRate()));
-            updateList.addAll(list);
-        });
-        this.updateBatchById(updateList,2000);
-    }
-
 
 }
 

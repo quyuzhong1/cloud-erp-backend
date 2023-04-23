@@ -2,6 +2,7 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ import java.util.List;
  */
 @TableName(value ="dmp_refund_info")
 @Data
+@NoArgsConstructor
 public class DmpRefundInfoEntity implements Serializable {
     /**
      * 主键id
@@ -245,6 +247,11 @@ public class DmpRefundInfoEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public DmpRefundInfoEntity(DmpRefundInfoEntity entity, BigDecimal exchangeRate) {
+        this.id = entity.getId();
+        this.cnySettleRate = exchangeRate;
+    }
 
     @Override
     public String toString() {

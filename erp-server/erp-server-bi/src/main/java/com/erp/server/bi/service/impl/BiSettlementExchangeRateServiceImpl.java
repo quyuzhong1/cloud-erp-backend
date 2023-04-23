@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -7,6 +8,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
@@ -41,6 +45,10 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
     @Resource
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+
+    @Resource
+    private MQProducerService mQProducerService;
+
 
     @Override
     //@Transactional
@@ -101,14 +109,21 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         }
         boolean flag = this.saveBatch(entityList);
         if (flag) {
-            //将汇率更新到订单表
-            dmpOrderInfoService.updateSettlementExchangeRate(entityList);
-            //将汇率更新到退款表
-            dmpRefundInfoService.updateSettlementExchangeRate(entityList);
-            //将汇率更新到退货表
-            dmpReturnOrderInfoService.updateSettlementExchangeRate(entityList);
+            //更新结算汇率
+            updateSettlementExchangeRate(entityList);
         }
         return  Boolean.TRUE;
+    }
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/4/23 20:17
+     */
+    private void updateSettlementExchangeRate (List<BiSettlementExchangeRateEntity> entityList) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("list",entityList);
+        //异步推送mq
+        mQProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, RocketMqTagEnum.CHANGE_CURRENCY_TAG.getName(), jsonObject, "currency");
     }
 
     @Override

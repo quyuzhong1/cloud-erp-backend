@@ -192,8 +192,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             obj.setDeptId(sysDepartmentDTO.getId());
             obj.setDeptName(sysDepartmentDTO.getName());
         });
-        //更新启用日期后的店铺业务负责人
-        //updateCharge(dto.getChargeId(),dto.getEnableTime(),sysDepartmentDTO.getId(),sysDepartmentDTO.getName());
+        //更新启用日期后的店铺业务部门
+        updateChargeDept(dto.getChargeId(),dto.getEnableTime(),sysDepartmentDTO);
         dmpOrderInfoService.updateBatchById(list,2000);
         return Boolean.TRUE;
     }
@@ -278,7 +278,17 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
 
 
-
+    /**
+     * @description: mq异步更新单据负责人
+     * @author Will
+     * @date: 2023/4/23 19:11
+     * @param id
+     * @param shopNo
+     * @param enableTime
+     * @param userId
+     * @param userName
+     * @param sysUserDeptDTO
+     */
     private void updateCharge(String id,String shopNo, LocalDate enableTime, String userId, String userName, SysUserDeptDTO sysUserDeptDTO) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.set("id",id);
@@ -293,6 +303,25 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, RocketMqTagEnum.SHOP_INFO_CHANGE_CHARGE_TAG.getName(), jsonObject, String.valueOf(jsonObject.get("id")));
+            return result.getSendStatus();
+        });
+    }
+    
+    /**
+     * @description: mq异步更新部门
+     * @author Will
+     * @date: 2023/4/23 19:18
+     */
+    private void updateChargeDept(String chargeId, LocalDate enableTime, SysDepartmentDTO sysDepartmentDTO) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("id",sysDepartmentDTO.getId());
+        jsonObject.set("chargeId",chargeId);
+        jsonObject.set("enableTime",enableTime);
+        jsonObject.set("deptId",sysDepartmentDTO.getId());
+        jsonObject.set("deptName",sysDepartmentDTO.getName());
+        //异步推送mq
+        CompletableFuture.supplyAsync(() -> {
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, RocketMqTagEnum.SHOP_INFO_CHANGE_DEPT_TAG.getName(), jsonObject, String.valueOf(jsonObject.get("id")));
             return result.getSendStatus();
         });
     }

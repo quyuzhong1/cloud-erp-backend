@@ -164,9 +164,17 @@ public enum RocketMqTagEnum {
     //-----------------------------dmp数据更新--------------------------------------------
 
     /**
-     * 店铺变更
+     * 店铺变更负责人
      */
-    SHOP_INFO_CHANGE_CHARGE_TAG(33, RocketMqTagEnum.SYNC_KINGDEE,"shop_info_change_charge_tag"),
+    SHOP_INFO_CHANGE_CHARGE_TAG(33, RocketMqTagEnum.SYNC_DMP,"shop_info_change_charge_tag"),
+    /**
+     * 店铺变更部门
+     */
+    SHOP_INFO_CHANGE_DEPT_TAG(34, RocketMqTagEnum.SYNC_DMP,"shop_info_change_dept_tag"),
+    /**
+     * 汇率更新
+     */
+    CHANGE_CURRENCY_TAG(35, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
     ;
     
     

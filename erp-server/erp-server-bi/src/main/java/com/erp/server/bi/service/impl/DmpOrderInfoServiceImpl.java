@@ -25,7 +25,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
@@ -1164,37 +1163,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return list;
     }
 
-    @Override
-    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
-        if (CollectionUtils.isEmpty(entityList)) {
-            return;
-        }
-        List<DmpOrderInfoEntity> updateList = new ArrayList<>();
-        LocalDateTime begin = LocalDateTime.now();
-        entityList.forEach(obj->{
-          LocalDateTime start = LocalDateTime.now();
-          List<DmpOrderInfoEntity> list =  this.lambdaQuery()
-                    .eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode())
-                    .ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin())
-                    .le(DmpOrderInfoEntity::getPlatformCreateTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
-                    .select(DmpOrderInfoEntity::getId,DmpOrderInfoEntity::getCreateTime)
-                    .list();
-          LocalDateTime end = LocalDateTime.now();
-          System.out.println(list.size()+"条数据查询一次时间===============，秒数："+Duration.between(start,end).getSeconds());
-
-           if (CollectionUtils.isEmpty(list)) {
-              return;
-           }
-            List<DmpOrderInfoEntity> collect = list.stream().map(x -> new DmpOrderInfoEntity(x, obj.getExchangeRate())).collect(Collectors.toList());
-            updateList.addAll(list);
-        });
-        LocalDateTime start = LocalDateTime.now();
-        System.out.println(updateList.size() +"条数据查询所需时间===============，秒数："+Duration.between(begin,start).getSeconds());
-        this.updateBatchById(updateList,1000);
-        LocalDateTime end = LocalDateTime.now();
-        System.out.println(updateList.size() +"条数据修改所需时间===============，秒数："+Duration.between(start,end).getSeconds());
-
-    }
 
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,
                                                               Map<String, String> skuMap, Map<String, Integer> salesVolumeMap, Map<String, BigDecimal> saleAmountMap) {

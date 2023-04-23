@@ -3,10 +3,9 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -68,11 +67,4 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @param returnOrderId
      */
     void updateOrderFeeById(String returnOrderId);
-    /**
-     * @description: 更新退货表结算汇率
-     * @author Will
-     * @date: 2023/1/16 10:12
-     * @param entityList
-     */
-    void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList);
 }
