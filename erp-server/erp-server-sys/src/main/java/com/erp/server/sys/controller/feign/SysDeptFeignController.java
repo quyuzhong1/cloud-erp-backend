@@ -46,9 +46,9 @@ public class SysDeptFeignController extends BaseController {
     }
 
     @PostMapping("/getDeptByUserId")
-    public ApiResult getDeptByUserId(@RequestBody String userId) {
+    public SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId) {
         SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getDeptByUserId(userId);
-        return success(dto);
+        return dto;
     }
 
 }
