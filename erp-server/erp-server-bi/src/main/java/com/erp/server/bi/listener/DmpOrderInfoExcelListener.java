@@ -8,6 +8,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.DmpOrderInfoImportExcelDTO;
@@ -63,29 +64,26 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         //添加数据用于判断是否为空
         allList.add(dto);
         List<String> errorMsgList = new ArrayList<>();
-        if (StringUtils.isBlank(dto.getPlatformOrderId())) {
-            errorMsgList.add("订单号不能为空");
+
+        //注解验证信息
+        List<String> msgList = FieldValidUtil.fieldValid(dto);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
         }
-        if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
-            errorMsgList.add("订单号不能超过50个字节");
-        }
-        if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && !StrUtils.isLetterDigitBar(dto.getPlatformOrderId())) {
-            errorMsgList.add("订单号只能包含字母、数字、-");
+        if  (StringUtils.isNotBlank(dto.getPlatformOrderId())) {
+            if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
+                errorMsgList.add("订单号不能超过50个字节");
+            }
+            if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && !StrUtils.isLetterDigitBar(dto.getPlatformOrderId())) {
+                errorMsgList.add("订单号只能包含字母、数字、-");
+            }
         }
 
-        if (StringUtils.isBlank(dto.getSourcePlatform())) {
-            errorMsgList.add("平台名称不能为空");
-        } else {
+        if (StringUtils.isNotBlank(dto.getSourcePlatform())) {
             SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(dto.getSourcePlatform());
             if (ObjectUtils.isEmpty(platformEnum)) {
                 errorMsgList.add("系统中不存在此平台名称");
             }
-        }
-        if (StringUtils.isBlank(dto.getSite())) {
-            errorMsgList.add("站点不能为空");
-        }
-        if (StringUtils.isBlank(dto.getShopName())) {
-            errorMsgList.add("店铺名称不能为空");
         }
         if (StringUtils.isNotBlank(dto.getShopName())) {
             Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getSourcePlatform(), dto.getSite(), dto.getShopName());
@@ -93,13 +91,6 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("在平台站点中未找到该店铺");
             }
         }
-        if (StringUtils.isBlank(dto.getBuyerName())) {
-            errorMsgList.add("下单人不能为空");
-        }
-        if (StringUtils.isBlank(dto.getOrderStateName())) {
-            errorMsgList.add("订单状态不能为空");
-        }
-
         if (StringUtils.isNotBlank(dto.getManPhone())) {
             if (!ValidatorUtil.isMobile(dto.getManPhone())) {
                 errorMsgList.add("下单电话1不正确");
@@ -110,21 +101,6 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("下单电话2不正确");
             }
         }
-        if(StringUtils.isBlank(dto.getCountryNameCn())) {
-            errorMsgList.add("国家名称不能为空");
-        }
-        if(ObjectUtils.isNull(dto.getPlatformCreateTime())) {
-            errorMsgList.add("订单下单时间不能为空");
-        }
-
-        if(StringUtils.isBlank(dto.getChargeName())) {
-            errorMsgList.add("销售员不能为空");
-        }
-
-        if(StringUtils.isBlank(dto.getDeptName())) {
-            errorMsgList.add("销售员不能为空");
-        }
-
         if (StringUtils.isNotBlank(dto.getChargeName())) {
             if (CollectionUtils.isEmpty(deptList)) {
                 errorMsgList.add("销售事业部在系统中未找到");
@@ -154,9 +130,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("订单状态不正确：订单状态：配货中，已发货，已完成，已作废，退货，退款");
             }
         }
-        if(StringUtils.isBlank(dto.getSkuNo())) {
-            errorMsgList.add("SKU不能为空");
-        } else {
+        if(StringUtils.isNotBlank(dto.getSkuNo())) {
             if (!StrUtils.isLetterDigit(dto.getSkuNo())) {
                 errorMsgList.add("SKU只能包含字母和数字");
             }
@@ -168,10 +142,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("系统中不存在此sku编号");
             }
         }
-        if(StringUtils.isBlank(dto.getItemName())) {
-            errorMsgList.add("品名不能为空");
-        }
-        if(ObjectUtils.isEmpty(dto.getSellPrice())) {
+        if(ObjectUtils.isEmpty(dto.getSellPriceOrigin())) {
             errorMsgList.add("单价不能为空");
         }
         if(ObjectUtils.isEmpty(dto.getQuantity())) {

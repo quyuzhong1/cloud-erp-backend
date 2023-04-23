@@ -127,11 +127,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Transactional
     public Boolean changeChargeName(DmpShopInfoChangeDTO dto) {
         DmpShopInfoEntity dmpShopInfoEntity = this.getById(dto.getId());
-        dmpShopInfoEntity.setChargeId(dto.getChargeId());
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
-        if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_9011);
-        }
+
         if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
             if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
                 throw new ServiceException(ApiError.ERROR_97013);
@@ -139,10 +135,17 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         }
         DmpShopChangeLogEntity logEntity = new DmpShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
-        logEntity.setChargeId(dto.getChargeId());
-        logEntity.setChargeName(findUserDTO.getUserName());
+        logEntity.setChargeId(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" :  dmpShopInfoEntity.getChargeId());
+        logEntity.setChargeName(StringUtils.isBlank(dmpShopInfoEntity.getChargeId()) ? "-" : dmpShopInfoEntity.getChargeName());
         logEntity.setEnableTimeBegin(null == dmpShopInfoEntity.getEnableTime() ? LocalDate.of(2022, 1, 1) : dmpShopInfoEntity.getEnableTime());
         logEntity.setEnableTimeEnd(dto.getEnableTime().minusDays(1L));
+
+
+        dmpShopInfoEntity.setChargeId(dto.getChargeId());
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
+        if (ObjectUtils.isEmpty(findUserDTO)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
         dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
         dmpShopInfoEntity.setEnableTime(dto.getEnableTime());
         //新增变更记录

@@ -177,7 +177,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setEndTime(nowTime);
 
         //查询进七天信息
-        List<SalesBaseVO> lastSevenDays =baseMapper.getLastDays(dto, settleRate, findTime);
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(dto, settleRate, findTime);
         for (SalesVO item : resultList) {
             List<Integer> salesTrend = new ArrayList<>(7);
             //近三十天
@@ -298,7 +298,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 if (countryMap.containsKey(country)) {
                     //国家sku
                     List<SalesByCountryVO> countrySalesList = countryMap.get(country);
-                    BigDecimal countrySales = countrySalesList.stream().filter(c->c.getSku().equals(sku)).
+                    BigDecimal countrySales = countrySalesList.stream().filter(c -> c.getSku().equals(sku)).
                             map(SalesByCountryVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                     rowMap.put(country, countrySales);
                 } else {
@@ -680,53 +680,64 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<SalesCountVO> byBrand(BiFilterDTO dto) {
 
+        //品牌集合
+        List<SkuCategoryVO>  brandList=   productDetailService.getSkuBrandList();
+
+        //总的结果
+        List<SalesCountVO> resultList = new ArrayList<>();
+
+
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         if (StringUtils.isBlank(settleRate)) {
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
 
-        List<SalesCountVO> list = baseMapper.byBrand(dto, settleRate);
-        LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime();
-        //获取到环比的开始日期
-        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
-        dto.setStartTime(ringRatioStartDate);
-        dto.setEndTime(ringRatioEndDate);
-        List<SalesCountVO> chainList = baseMapper.byBrand(dto, settleRate);
 
-        //同比开始时间
-        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
-        //同比开始时间
-        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
-        dto.setStartTime(yearBasisStartTime);
-        dto.setEndTime(yearBasisEndTime);
-        //这是同比查询出来的
-        List<SalesCountVO> yearBasisList = baseMapper.byBrand(dto, settleRate);
-        //总的销售额
-        BigDecimal totalSales = list.stream().
-                filter(s -> s.getSales() != null).
-                map(SalesCountVO::getSales).
-                reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        for (SalesCountVO item : list) {
-            String name = item.getName();
-            BigDecimal sales = item.getSales();
-            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
-            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
-                    .findFirst().orElse(null);
-            if (chainVO != null) {
-                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
-            }
-            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
-                    .findFirst().orElse(null);
-            if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
-            }
-        }
-        return list;
+//
+//        //品牌的话 根据sku 分了
+//        List<SalesVO> list = baseMapper.getBySku(dto, settleRate);
+//
+//        LocalDateTime startTime = dto.getStartTime();
+//        LocalDateTime endTime = dto.getEndTime();
+//        //获取到环比的开始日期
+//        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+//        //获取到环比的结束日期
+//        LocalDateTime ringRatioEndDate = startTime;
+//        dto.setStartTime(ringRatioStartDate);
+//        dto.setEndTime(ringRatioEndDate);
+//        List<SalesVO> chainList = baseMapper.getBySku(dto, settleRate);
+//
+//        //同比开始时间
+//        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
+//        //同比开始时间
+//        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
+//        dto.setStartTime(yearBasisStartTime);
+//        dto.setEndTime(yearBasisEndTime);
+//        //这是同比查询出来的
+//        List<SalesVO> yearBasisList = baseMapper.getBySku(dto, settleRate);
+//        //总的销售额
+//        BigDecimal totalSales = list.stream().
+//                filter(s -> s.getSales() != null).
+//                map(SalesCountVO::getSales).
+//                reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//        for (SalesCountVO item : list) {
+//            String name = item.getName();
+//            BigDecimal sales = item.getSales();
+//            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+//            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
+//                    .findFirst().orElse(null);
+//            if (chainVO != null) {
+//                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+//            }
+//            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
+//                    .findFirst().orElse(null);
+//            if (yearBasisVO != null) {
+//                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
+//            }
+//        }
+        return resultList;
     }
 
 

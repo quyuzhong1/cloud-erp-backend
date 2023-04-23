@@ -63,6 +63,10 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         entity.setCode(dto.getCode());
         this.save(entity);
+        //code为空不发送金蝶
+        if (StringUtils.isBlank(dto.getCode())) {
+            return;
+        }
         //组装数据发送到金蝶
         syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
     }
