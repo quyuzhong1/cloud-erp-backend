@@ -769,7 +769,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             Integer reduce = stockInDetailEntityListBySource.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - stockInQty);
 
-            if (req.getReceiveQty() > reduce) {
+            if (req.getReceiveQty() - reduce <= 0) {
                 req.setStockInQty(0);
             } else {
                 req.setStockInQty(req.getReceiveQty() - reduce);
