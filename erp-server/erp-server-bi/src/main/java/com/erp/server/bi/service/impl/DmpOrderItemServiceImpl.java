@@ -31,14 +31,14 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
         if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
             if (BiFilterDTO.validOriginalCurrency(dto)){
-                query.select("SUM(sell_price*quantity) as sell_price");
+                query.select("SUM(amount_after) as sell_price");
             }else {
                 return BigDecimal.ZERO;
             }
         }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
-            query.select("SUM(sell_price*quantity*cny_settle_rate) as sell_price");
+            query.select("SUM(amount_after*cny_settle_rate) as sell_price");
         }else {
-            query.select("SUM(sell_price*quantity*currency_rate) as sell_price");
+            query.select("SUM(amount_after*currency_rate) as sell_price");
         }
         Integer flag = null;
         if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
