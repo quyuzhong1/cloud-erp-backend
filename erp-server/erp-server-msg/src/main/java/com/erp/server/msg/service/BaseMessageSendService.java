@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -68,6 +69,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
         msgLog.setMqTag(RocketMqTagEnum.MSG_NOTICE_TAG.getName());
         msgLog.setSendChannelCode(channelEnum.getCode());
         msgLog.setMsgSourceContent(JSONObject.toJSONString(noticeMsgInfo.getSourceMsgInfo()));
+        msgLog.setCreateTime(LocalDateTime.now());
         if(Objects.nonNull(sendResult)) {
             msgLog.setMsgChannelContent(sendResult.getRequestBody());
             msgLog.setChannelResultCode(StrUtils.null2EmptyWithTrim(sendResult.getCode()));
