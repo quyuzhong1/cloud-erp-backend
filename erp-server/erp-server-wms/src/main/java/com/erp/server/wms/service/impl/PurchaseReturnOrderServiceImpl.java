@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -691,5 +692,24 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     public List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(String purchaseOrderId) {
         return baseMapper.getReturnQty(purchaseOrderId);
+    }
+
+    /**
+     * 修改金蝶同步状态
+     * @Author Luo_WG
+     * @Date 2023/4/24 15:29
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(PurchaseReturnOrderEntity::getId,categoryId)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseReturnOrderEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseReturnOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),PurchaseReturnOrderEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 }
