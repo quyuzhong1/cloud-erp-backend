@@ -172,8 +172,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         dmpOrderInfoEntity.setShopNo(orderEntity.getShopId());
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         // 平台订单时间
-        if (!"null".equalsIgnoreCase(orderEntity.getCreateDate()) && StrUtil.isNotBlank(orderEntity.getCreateDate())) {
-            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate(), sdf));
+        if (!"null".equalsIgnoreCase(orderEntity.getPaidTime()) && StrUtil.isNotBlank(orderEntity.getPaidTime())) {
+            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getPaidTime(), sdf));
         }
         //订单来源平台
         MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
