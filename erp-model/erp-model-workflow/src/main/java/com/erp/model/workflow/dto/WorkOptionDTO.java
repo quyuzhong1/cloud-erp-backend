@@ -100,6 +100,16 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String id;
 
         /**
+         * 模块状态id
+         */
+        private String moduleStatusId;
+
+        /**
+         * 菜单id
+         */
+        private String menuId;
+
+        /**
          * 系统分类 plm wms scm
          */
         private String sysClassify;
@@ -157,6 +167,21 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class PendingViewDetailDTO {
         /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 模块状态id
+         */
+        private String moduleStatusId;
+
+        /**
+         * 菜单id
+         */
+        private String menuId;
+
+        /**
          * 模块名称
          */
         private String name;
@@ -167,9 +192,14 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private Integer count;
 
         /**
-         * 状态名称
+         * 状态编码
          */
         private String moduleStatus;
+
+        /**
+         * 状态名称
+         */
+        private String moduleStatusName;
 
         /**
          * 地址（预留）
@@ -192,6 +222,16 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * id
          */
         private String id;
+
+        /**
+         * 模块状态id
+         */
+        private String moduleStatusId;
+
+        /**
+         * 菜单id
+         */
+        private String menuId;
 
         /**
          * 模块名称

@@ -89,6 +89,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 warehouseReceiveDetailEntity.setExceedQty(addDTO.getExceedQty());
                 warehouseReceiveDetailEntity.setRemark(addDTO.getRemark());
                 warehouseReceiveDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
+                warehouseReceiveDetailEntity.setCreateUserId(dto.getCreateUserId());
+                warehouseReceiveDetailEntity.setCreateUserName(dto.getCreateUserId());
+                warehouseReceiveDetailEntity.setUpdateUserId(dto.getUpdateUserId());
+                warehouseReceiveDetailEntity.setUpdateUserName(dto.getUpdateUserName());
             } else {
                 throw new ServiceException(ApiError.ERROR_99006);
             }

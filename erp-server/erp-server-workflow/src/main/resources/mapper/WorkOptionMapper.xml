@@ -40,7 +40,9 @@
 
     <select id="listMyWorkOption" resultType="com.erp.model.workflow.dto.WorkOptionDTO$MyWorkOptionDTO">
         SELECT
-            wmrs.id,
+            wo.id,
+            wmrs.id AS moduleStatusId,
+            wm.id AS menu_id,
             wm.sys_classify AS sysClassify,
             wm.module_classify AS moduleClassify,
             wm.module_code AS moduleCode,
@@ -61,7 +63,10 @@
 
     <select id="listFrequentlyView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$FrequentlyViewDTO">
         SELECT
-        wmrs.id,
+        wo.id,
+        wmrs.id AS moduleStatusId,
+        wm.id AS menu_id,
+        wm.module_classify AS name,
         wmrs.module_url AS moduleUrl,
         wmrs.module_param AS moduleParam
         FROM work_option wo

@@ -6,6 +6,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.workflow.service.WorkOptionService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -115,6 +116,19 @@ public class WorkOptionController extends BaseController {
     public ApiResult<List<WorkOptionDTO.ApproveViewDTO>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
         List<WorkOptionDTO.ApproveViewDTO> approveViewDTO = null;
         return success(approveViewDTO);
+    }
+
+    /**
+     * 删除
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:03
+     * @param id id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/delete")
+    public ApiResult<List<WorkOptionDTO.ApproveViewDTO>> delete(@RequestParam("id") String id) {
+        Boolean flag = workOptionService.delete(id);
+        return flag == true ? success() : failure();
     }
 
     /**
