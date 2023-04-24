@@ -20,6 +20,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -863,6 +864,76 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             orderRefReceiveDTO.setInvalidStatusName(InvalidStatusEnum.getName(orderRefReceiveDTO.getInvalidStatus()));
         }
         return orderRefReceiveDTOS;
+    }
+
+    /**
+     * 采购订单-下推收货单保存按钮
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:54
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
+        //生成下推签收单
+        List<PurchaseOrderDTO.GenerateReceiveDTO> list = dto.getList();
+        //采购订单明细Ids
+        List<String> purchaseOrderDetailIds = list.stream().map(PurchaseOrderDTO.GenerateReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purchaseOrderDetailIds);;
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        long arrivalStatusCount = purchaseOrderDetailList.stream().filter(obj -> ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())).count();
+        if (arrivalStatusCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98041);
+        }
+
+        List<String> purchaseOrderIds = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
+        if (CollectionUtils.isEmpty(purchaseOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98016);
+        }
+        long approveStatusCount = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (approveStatusCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98040);
+        }
+        List<String> listSign = new ArrayList<>();
+
+        for (PurchaseOrderDTO.GenerateReceiveDTO generateReceiveDTO : list) {
+            boolean contains = listSign.contains(generateReceiveDTO.getId());
+            if (!contains) {
+                WarehouseReceiveDTO.AddDTO addDTO = new WarehouseReceiveDTO.AddDTO();
+                addDTO.setPurchaseOrderId(generateReceiveDTO.getId());
+                addDTO.setPurchaseOrderCode(generateReceiveDTO.getCode());
+                addDTO.setReceiveUserId(generateReceiveDTO.getReceiveUserId());
+                SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(generateReceiveDTO.getReceiveUserId());
+                addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
+                addDTO.setBillDate(generateReceiveDTO.getBillDate());
+                addDTO.setDeliveryWarehouseId(generateReceiveDTO.getDeliveryWarehouseId());
+
+                List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = new ArrayList<>();
+                for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
+                    if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {
+                        WarehouseReceiveDetailDTO.AddDTO detailAddDTO = new WarehouseReceiveDetailDTO.AddDTO();
+                        detailAddDTO.setReceiveQty(receiveDTO.getReceiveQty());
+                        detailAddDTO.setExceedQty(receiveDTO.getExceedQty());
+                        detailAddDTO.setRemark(receiveDTO.getRemark());
+                        detailAddDTO.setPurchaseOrderDetailId(receiveDTO.getPurchaseOrderDetailId());
+                        warehouseReceiveDetailList.add(detailAddDTO);
+                    }
+                }
+                addDTO.setWarehouseReceiveDetailList(warehouseReceiveDetailList);
+                addDTO.setCreateUserId(userInfo.getUid());
+                addDTO.setCreateUserName(userInfo.getUserName());
+                addDTO.setUpdateUserId(userInfo.getUid());
+                addDTO.setUpdateUserName(userInfo.getUserName());
+                add(addDTO);
+                listSign.add(generateReceiveDTO.getId());
+            }
+        }
+        return Boolean.TRUE;
     }
 
 
