@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -211,5 +212,19 @@ public class PurchaseReturnOrderController extends BaseController {
     public ApiResult<List<PurchaseReturnOrderDTO.OrderRefReceiveDTO>> purchaseOrderRefReturn(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
         List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = purchaseReturnOrderService.purchaseOrderRefReturn(purchaseOrderId);
         return success(orderRefReceiveDTOS);
+    }
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @param response response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = purchaseReturnOrderService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
     }
 }
