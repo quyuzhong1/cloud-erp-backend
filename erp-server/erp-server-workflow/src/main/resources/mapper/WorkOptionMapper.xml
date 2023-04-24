@@ -65,7 +65,7 @@
         wmrs.module_url AS moduleUrl,
         wmrs.module_param AS moduleParam
         FROM work_option wo
-        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.menu_id
+        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
         WHERE wo.type = '2'
