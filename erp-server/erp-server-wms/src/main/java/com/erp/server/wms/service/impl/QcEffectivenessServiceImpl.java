@@ -10,6 +10,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.dto.excel.ExportQcDocumentExcelDTO;
@@ -228,13 +229,13 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
             }
             //质检耗时
             if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
-                Duration between = Duration.between(documentDTO.getQcEndTime(), documentDTO.getQcDate());
+                Duration between = Duration.between(documentDTO.getQcEndTime(), LocalDateUtil.endLocalDateTime(documentDTO.getQcDate()) );
                 long hours = between.toHours();
                 documentDTO.setQcUseTime(hours + "H");
             }
             //质检预警
             if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
-                Duration between = Duration.between(LocalDateTime.now(), documentDTO.getQcDate());
+                Duration between = Duration.between(LocalDateTime.now(), LocalDateUtil.endLocalDateTime(documentDTO.getQcDate()));
                 long hours = between.toHours();
                 if (hours > 24L) {
                     documentDTO.setWarnRemark("已超时24L");

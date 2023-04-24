@@ -3,6 +3,8 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
+
 /**
  * 质检结果枚举
  * @author Lambda
@@ -38,5 +40,15 @@ public enum QcResultEnum {
 
     public String getName() {
         return name;
+    }
+
+
+    public static String getByCode(String code) {
+        QcResultEnum qcResultEnum  = Arrays.stream(values()).filter(p -> p.getCode().equals(code))
+                .findFirst().orElse(null);
+        if (qcResultEnum != null) {
+            return qcResultEnum.getName();
+        }
+        return "";
     }
 }

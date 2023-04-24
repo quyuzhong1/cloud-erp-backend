@@ -285,6 +285,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
             dmpOrderItemEntity.setPlatformQuantity(detailsBean.getDeliveringQty());
             //商品名称
             dmpOrderItemEntity.setItemName(detailsBean.getItemName());
+            dmpOrderItemEntity.setShippingFee(detailsBean.getPostFee());
             //商品图片
             dmpOrderItemEntity.setPictureUrl("");
             //商品成本价

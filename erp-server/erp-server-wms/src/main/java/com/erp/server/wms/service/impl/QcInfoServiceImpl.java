@@ -131,8 +131,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<String> nameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             qcInfoView.setBadImageNameList(nameList);
             qcInfoView.setBadImageUrlList(imageUrlList);
-            QcTypeEnum qcTypeEnum = qcInfoView.getQcType();
-            qcInfoView.setQcTypeName(qcTypeEnum.getName());
+            String qcType = qcInfoView.getQcType();
+            qcInfoView.setQcTypeName(QcTypeEnum.getByCode(qcType));
             List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
             //处理措施
             String handleModeDict = qcInfoView.getHandleModeDict();
@@ -145,8 +145,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             String qcProblemName = dictList.stream().filter(d -> d.getValue().equals(qcProblemDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             qcInfoView.setQcProblemName(qcProblemName);
-            QcResultEnum qcResultEnum = qcInfoView.getQcResult();
-            qcInfoView.setQcResultName(qcResultEnum.getName());
+            String qcResult = qcInfoView.getQcResult();
+            qcInfoView.setQcResultName(QcResultEnum.getByCode(qcResult));
 
         }
         return qcInfoView;

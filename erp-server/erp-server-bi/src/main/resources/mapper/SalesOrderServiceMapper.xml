@@ -1358,6 +1358,7 @@
             </if>
         </where>
         GROUP BY o.source_platform
+        ORDER BY sales DESC
     </select>
 
     <select id="byHomeAndAbroad" resultType="com.erp.model.bi.vo.SalesCountVO">
@@ -2221,20 +2222,22 @@
         GROUP BY o.shop_no
     </select>
 
-    <select id="byBrand" resultType="com.erp.model.bi.vo.SalesVO">
+    <select id="byBrand" resultType="com.erp.model.bi.vo.SalesCountVO">
         SELECT
         SUM ( i.quantity ) AS salesQuantity,
-        COUNT(DISTINCT ( o.platform_order_id )) AS orderCount,
+        COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        i.sku_no AS name,
-        min(i.item_name) AS productName
+        pi.brand_name  AS NAME
         FROM dmp_order_item i
-        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        LEFT JOIN
+        dmp_order_info o ON i.order_id = o.ID
+        LEFT JOIN product_detail pd ON pd.sku_no = i.sku_no
+        LEFT JOIN product_info pi ON pi.ID = pd.product_id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -2320,7 +2323,7 @@
                 ${params.param}
             </if>
         </where>
-        GROUP BY i.sku_no
+        GROUP BY pi.brand_name
         ORDER BY sales DESC
         nulls last
     </select>

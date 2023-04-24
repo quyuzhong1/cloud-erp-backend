@@ -137,7 +137,7 @@ public class QcInfoDTO {
         /**
          * 质检类型
          */
-        private QcTypeEnum qcType;
+        private String qcType;
 
         /**
          * 质检类型名
@@ -223,7 +223,7 @@ public class QcInfoDTO {
         /**
          * 质检结果
          */
-        private QcResultEnum qcResult;
+        private String qcResult;
 
         /**
          * 质检结果名
@@ -309,7 +309,7 @@ public class QcInfoDTO {
         /**
          * 处理措施
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
-         * 取dict
+         * 取value
          */
         @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String handleModeDict;
