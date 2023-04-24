@@ -66,4 +66,13 @@ public enum QcTypeEnum {
         }
         return "";
     }
+
+    public static Boolean getIsInsideByCode(String code) {
+        QcTypeEnum qcTypeEnum = Arrays.stream(values()).filter(p -> p.getCode().equals(code))
+                .findFirst().orElse(null);
+        if (qcTypeEnum != null) {
+            return qcTypeEnum.getIsInside();
+        }
+        return false;
+    }
 }

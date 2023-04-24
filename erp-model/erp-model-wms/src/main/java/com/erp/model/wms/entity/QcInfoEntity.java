@@ -3,8 +3,6 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.wms.enums.QcResultEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -36,7 +34,7 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
      * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
      */
     @TableField("qc_type")
-    private QcTypeEnum qcType;
+    private String qcType;
 
     /**
      * 抽检比例
@@ -103,7 +101,7 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
      * 质检结果
      */
     @TableField("qc_result")
-    private QcResultEnum qcResult;
+    private String qcResult;
 
     /**
      * 处理方式

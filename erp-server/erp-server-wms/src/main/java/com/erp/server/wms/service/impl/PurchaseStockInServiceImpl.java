@@ -223,14 +223,40 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     /**
      * 当质检单 质检类型为b2b 是
      * 批量生成入库单
-     * @author yl
-     * @date 2023-04-24 15:08
+     *
      * @param list
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-24 15:08
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<PurchaseStockInDTO.AddDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        for (PurchaseStockInDTO.AddDTO item : list) {
+            PurchaseStockInEntity entity = new PurchaseStockInEntity();
+            BeanMapperUtils.copy(item, entity);
+            entity.setApproveStatus(approveStatus);
+            //添加采购订单默认值
+            addDefaultPurchaseData(item.getPurchaseOrderId(), entity);
+            //处理数据id
+            doOpHandleDataId(item.getStockInDeptId(), item.getStockInUserId(), item.getDeliveryWarehouseId(), entity);
+            log.info("采购入库单新增");
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGRK, BusinessNoTypeEnum.CODE_CGRK.getCode()));
+            entity.setCode(code);
+            //新增主表数据
+            boolean save = this.save(entity);
+            if (save) {
+                //操作日志
+                moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购入库单【%s】", code), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), entity.getId(), "新增操作");
+                //新增明细
+                purchaseStockInDetailService.add(item.getDetails(), entity.getId(), item.getSourceType());
+            }
+        }
 
         return true;
     }

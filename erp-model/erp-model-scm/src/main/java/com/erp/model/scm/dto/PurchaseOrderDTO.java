@@ -431,6 +431,14 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String warehouseName;
 
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+
+
         /**
          * 产品信息
          */

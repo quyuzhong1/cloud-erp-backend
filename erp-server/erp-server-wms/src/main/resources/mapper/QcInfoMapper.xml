@@ -18,6 +18,25 @@
         <foreach collection="purOrderIds" item="purOrderId" open="(" separator="," close=")">
             #{purOrderId}
         </foreach>
+    </select>
 
+    <select id="getStockIn" resultType="com.erp.model.wms.dto.QcInfoDTO$StockInDTO">
+       SELECT
+         qi.id,qi.main_id,
+         qb.purchase_order_id,
+         qb.warehouse_id,
+         qi.purchase_order_detail_id,
+         qi.qc_type,qi.total_qty
+       FROM qc_bill qb
+       INNER JOIN qc_info qi
+       ON qi.main_id=qb.id
+       AND qi.is_deleted=false
+       WHERE qi.is_deleted=false
+       <if test="mainIdList!=null and mainIdList.size>0">
+          AND qb.id IN
+           <foreach collection="mainIdList" item="mainId" open="(" separator="," close=")">
+               #{mainId}
+           </foreach>
+       </if>
     </select>
 </mapper>

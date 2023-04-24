@@ -184,6 +184,9 @@
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
             AND qb.purchase_order_code LIKE concat('%', #{params.purchaseOrderCode} ,'%')
         </if>
+        <if test="params.code !=null and params.code!=''">
+            AND qb.code ilike concat('%', #{params.code} ,'%')
+        </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND qp.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -272,7 +275,10 @@
                     AND qb.qc_status=#{params.searchType}
                 </if>
                 <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-                    AND qb.purchase_order_code LIKE concat('%', #{params.purchaseOrderCode} ,'%')
+                    AND qb.purchase_order_code ilike concat('%', #{params.purchaseOrderCode} ,'%')
+                </if>
+                <if test="params.code !=null and params.code!=''">
+                    AND qb.code ilike concat('%', #{params.code} ,'%')
                 </if>
                 <if test="params.skuNoList !=null and params.skuNoList.size>0">
                     AND qp.sku_no IN

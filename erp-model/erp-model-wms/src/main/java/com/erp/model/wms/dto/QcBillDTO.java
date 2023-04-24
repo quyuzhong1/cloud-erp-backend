@@ -268,6 +268,11 @@ public class QcBillDTO implements Serializable {
 
 
         /**
+         *质检单号
+         */
+        private String code;
+
+        /**
          * 采购单号
          */
         private String purchaseOrderCode;
