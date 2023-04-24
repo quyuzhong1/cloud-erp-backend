@@ -9,15 +9,19 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcReportDetailDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcReportDetailEntity;
 import com.erp.model.wms.entity.QcReportEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.QcReportDetailExcelListener;
 import com.erp.server.wms.mapper.QcReportDetailMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcReportDetailService;
 import com.erp.server.wms.service.QcReportService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +57,9 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
+
     /**
      * 质检报告明细暂存
      *
@@ -69,14 +76,45 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             return;
         }
         List<QcReportDetailEntity> dbList = this.findByMainId(billId);
-        List<QcReportDetailEntity> saveOrUpdateList = BeanMapper.copyList(reportDetailList, QcReportDetailEntity.class);
-        saveOrUpdateList.stream().forEach(s -> s.setMainId(billId));
+        List<QcReportDetailEntity> saveOrUpdateList = new ArrayList<>(reportDetailList.size());
+        List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         //获取到删除的id
         List<String> deleteIdList = getDeleteIds(reportDetailList, dbList);
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
+        String type = WmsConstant.QC_REPORT;
+        for (QcReportDetailDTO.AddDTO item : reportDetailList) {
+            QcReportDetailEntity entity = new QcReportDetailEntity();
+            BeanMapper.copy(item, entity);
+            entity.setMainId(billId);
+            saveOrUpdateList.add(entity);
+            //附件集合
+            List<String> attachmentUrlList = item.getReportUrlList();
+            List<String> attachmentNameList = item.getReportNameList();
+            int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
+            if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    WmsAttachmentEntity addAttachment = new WmsAttachmentEntity();
+                    addAttachment.setAttachUrl(attachmentUrlList.get(i));
+                    if (CollectionUtils.isNotEmpty(attachmentNameList)) {
+                        if (nameSize > i) {
+                            addAttachment.setAttachName(attachmentNameList.get(i));
+                        }
+                    }
+                    addAttachment.setBusinessId(entity.getId());
+                    addAttachment.setType(type);
+                    batchAttachmentList.add(addAttachment);
+                }
+
+            }
+
+        }
+
         this.saveOrUpdateBatch(saveOrUpdateList);
+        if (CollectionUtils.isNotEmpty(batchAttachmentList)) {
+            wmsAttachmentService.saveBatch(batchAttachmentList);
+        }
     }
 
 
@@ -99,6 +137,11 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
         List<String> qcReportIds = viewList.stream().map(QcReportDetailDTO.ViewDTO::getQcReportId).collect(Collectors.toList());
         List<QcReportEntity> qcReportList = qcReportService.listByIds(qcReportIds);
 
+        //获取到业务表id
+        List<String> businessIds = list.stream().map(QcReportDetailEntity::getId).collect(Collectors.toList());
+
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService .getByBusinessIds(businessIds);
+
         for (QcReportDetailDTO.ViewDTO item : viewList) {
             QcReportEntity report = qcReportList.stream().filter(q -> q.getId().equals(item.getQcReportId())).
                     findFirst().orElse(null);
@@ -111,6 +154,18 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             String resultName = dictList.stream().filter(d -> d.getValue().equals(resultDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setResultName(resultName);
+
+            List<String> attachmentUrlList = attachmentList.stream().
+                    filter(a -> a.getBusinessId().equals(item.getId())).
+                    map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
+                    collect(Collectors.toList());
+            List<String> attachmentNameList = attachmentList.stream().
+                    filter(a -> a.getBusinessId().equals(item.getId())).
+                    map(WmsAttachmentDTO.UpdateDTO::getAttachName).
+                    collect(Collectors.toList());
+            item.setReportUrlList(attachmentUrlList);
+            item.setReportNameList(attachmentNameList);
+
         }
 
         return viewList;
@@ -130,7 +185,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     public QcReportDetailDTO.ImportDTO importFile(MultipartFile excelFile, String qcType, HttpServletResponse response) {
         List<QcReportDTO.ListDTO> qcReportList = qcReportService.getByQcType(qcType);
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
-        QcReportDetailExcelListener excelListenerUtil = new QcReportDetailExcelListener(qcReportList,dictList);
+        QcReportDetailExcelListener excelListenerUtil = new QcReportDetailExcelListener(qcReportList, dictList);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), QcReportDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();

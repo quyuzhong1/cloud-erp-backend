@@ -54,6 +54,16 @@ public class QcReportDetailDTO {
         @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String resultDict;
 
+        /**
+         * 质检报告附件url
+         */
+        private List<String> reportUrlList;
+
+        /**
+         * 质检报告名称
+         */
+        private List<String> reportNameList;
+
     }
 
 
@@ -99,6 +109,17 @@ public class QcReportDetailDTO {
          * 质检结果 名
          */
         private String resultName;
+
+
+        /**
+         * 质检报告附件url
+         */
+        private List<String> reportUrlList;
+
+        /**
+         * 质检报告名称
+         */
+        private List<String> reportNameList;
 
     }
 

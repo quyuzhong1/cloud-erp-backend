@@ -23,35 +23,40 @@
         SELECT
         pd.id,
         pd.process_name,
-        pd.approve_status,
-        wm.module_classify,
+        pd.approve_status as approveStatusCode,
+        wm.module_classify as businessName,
         pd.process_version,
-        pd.create_user_name,
-        pd.create_time
+        pd.create_user_name as createUserName,
+        pd.create_time as createTime,
+        pd.bpmn_xml as bpmnXml,
+        pd.is_deploy as isDeploy,
+        pb.business_key,
+        pd.remark,
+        pd.review_setting
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         where pd.is_deleted = false
-        <if test="params.id != null and params.id != ''">
-            and pd.id ilike  concat('%',#{params.id},'%')
+        <if test="null != params and params.id != null and params.id != ''">
+            and pd.id = #{params.id}
         </if>
-        <if test="params.processName != null and params.processName != ''">
+        <if test="null != params and params.processName != null and params.processName != ''">
             and pd.process_name ilike  concat('%',#{params.processName},'%')
         </if>
-        <if test="params.approveStatus != null and params.approveStatus.size() > 0">
+        <if test="null != params and params.approveStatus != null and params.approveStatus.size() > 0">
             and pd.approve_status in
             <foreach collection="params.approveStatus" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
-        <if test="params.createUserId != null and params.createUserId.size() > 0">
+        <if test="null != params and params.createUserIds != null and params.createUserIds.size() > 0">
             and pd.create_user_id in
-            <foreach collection="params.createUserId" item="item" open="(" separator="," close=")">
+            <foreach collection="params.createUserIds" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
-        <if test="params.createTimeList != null and params.createTimeList.size() == 2">
+        <if test="null != params and params.createTimeList != null and params.createTimeList.size() == 2">
             and pd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pd.create_time
         </if>
 

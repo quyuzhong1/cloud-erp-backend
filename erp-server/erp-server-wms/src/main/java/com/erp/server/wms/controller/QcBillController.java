@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.server.wms.service.QcBillService;
@@ -228,6 +229,20 @@ public class QcBillController extends BaseController {
     public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = qcBillService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
+    }
+
+
+    /**
+     * 下推退货单数据保存
+     * @author yl
+     * @date 2023-04-24 9:25
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>>
+     */
+    @PostMapping("/generatePurchaseReturnOrder")
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        Boolean flag = qcBillService.generatePurchaseReturnOrder(dto);
+        return flag?success():failure();
     }
 
 

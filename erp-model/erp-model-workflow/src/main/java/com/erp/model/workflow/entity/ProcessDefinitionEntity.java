@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -22,6 +23,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("process_definition")
+@NoArgsConstructor
 public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity> {
 
     /**

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
@@ -14,7 +15,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
@@ -99,6 +102,9 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
 
     @Resource
     private PurchaseStockInDetailService purchaseStockInDetailService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
 
     /**
      * 保存 质检单
@@ -430,6 +436,42 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
      * @date 2023-04-20 14:55
      */
     private void autoStockInBill(String billId, QcInfoDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId) {
+        PurchaseStockInDTO.AddDTO dto = new PurchaseStockInDTO.AddDTO();
+        List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>(1);
+        PurchaseStockInDetailDTO.AddDTO detail = new PurchaseStockInDetailDTO.AddDTO();
+        detail.setExceedQty(0);
+        detail.setStockInQty(qcInfo.getTotalQty());
+        detail.setSourceDetailId(qcInfo.getId());
+        detail.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
+        details.add(detail);
+        dto.setDetails(details);
+        dto.setSourceId(billId);
+        dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
+        dto.setPurchaseOrderId(purchaseOrderId);
+        dto.setDeliveryWarehouseId(warehouseId);
+        String userId = commonService.getUserInfo().getUid();
+        dto.setStockInUserId(userId);
+        //生成结果
+        String createResultId = purchaseStorageService.addAndSubmit(dto);
+        if (StringUtils.isNotBlank(createResultId)) {
+            BaseApproveParamDTO approveParam = new BaseApproveParamDTO();
+            approveParam.setIds(Arrays.asList(createResultId));
+            approveParam.setType(ApproveTypeEnum.PASS.getStatus());
+            purchaseStorageService.approve(approveParam);
+        }
+    }
+
+
+    /**
+     * 完成质检，免检
+     * 当是 质检类型为b2b 质检的时候
+     * 自动批量完成入库单
+     *
+     * @return void
+     * @author yl
+     * @date 2023-04-20 14:55
+     */
+    private void autoBatchStockInBill(String billId, QcInfoDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId) {
         PurchaseStockInDTO.AddDTO dto = new PurchaseStockInDTO.AddDTO();
         List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>(1);
         PurchaseStockInDetailDTO.AddDTO detail = new PurchaseStockInDetailDTO.AddDTO();
@@ -870,7 +912,9 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
         List<String> skuIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        //采购订单id
         List<String> poIdList = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+        //采购订单明细id
         List<String> podIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         //获取到订单采购信息
@@ -884,6 +928,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
+            dto.setSourceDetailId(dto.getPurchaseOrderDetailId());
             PurchaseOrderDTO.PurchaseOrderInfoDTO purchaseOrder = purchaseOrderList.stream().filter(P -> P.getPurchaseOrderId().equals(dto.getPurchaseOrderId())).findFirst().orElse(null);
             if (purchaseOrder != null) {
                 dto.setSupplierName(purchaseOrder.getSupplierName());
@@ -906,6 +951,77 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
 
         return list;
+    }
+
+
+    /**
+     * 下推退货单
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-24 9:35
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
+
+        //查询采购订单
+        List<String> sourceIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
+
+        //质检单信息
+        List<QcBillEntity> sourceList = this.listByIds(sourceIds);
+
+        //采购订单明细id
+        List<String> podIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseStockInDetailEntity> stockInSkuList = purchaseStockInDetailService.listDetailByPodIds(podIds);
+
+        List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
+        String qcBill = SourceTypeEnum.QC_BILL.getType();
+        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
+        for (Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
+            String sourceId = entry.getKey();
+            List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
+            PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
+            //质检单
+            QcBillEntity qcBillEntity = sourceList.stream().filter(obj -> obj.getSourceId().equals(sourceId)).findFirst().orElse(null);
+            if (Objects.isNull(qcBillEntity)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
+
+            addDTO.setSourceType(qcBill);
+            addDTO.setSourceId(sourceId);
+            addDTO.setPurchaseOrderId(qcBillEntity.getPurchaseOrderId());
+            addDTO.setReturnWarehouseId(qcBillEntity.getWarehouseId());
+            addDTO.setReturnUserId(value.get(0).getReturnUserId());
+            addDTO.setReturnRemark(value.get(0).getRemark());
+            addDTO.setSupplierId(qcBillEntity.getSupplierId());
+            addDTO.setReturnMode(value.get(0).getReturnMode());
+
+            //退货详情
+            List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO detail : value) {
+
+                PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                //验证退货数量
+                Integer stockInQty = stockInSkuList.stream().filter(obj -> obj.getId().equals(detail.getSourceDetailId())).map(e -> e.getStockInQty()).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(stockInQty)) {
+                    throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
+                }
+                if (MathUtil.compareTo(detail.getRealityReturnQty(), stockInQty) > 0) {
+                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
+                }
+                BeanMapperUtils.copy(detail, addDetailDTO);
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setPurchasePriceDetailList(addDetailList);
+            addList.add(addDTO);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
+        }
+        return Boolean.TRUE;
     }
 
     /**

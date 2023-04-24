@@ -32,6 +32,12 @@ public interface WmsConstant {
 
 
     /**
+     * 质检单 质检报告附件
+     */
+    String QC_REPORT="report";
+
+
+    /**
      * 质检信息不良
      */
     String BAD="bad";
