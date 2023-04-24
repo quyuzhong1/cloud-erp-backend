@@ -8,10 +8,13 @@
         qi.main_id,qi.qc_type,
         qi.qc_qty,qi.qc_bad_qty,
         qi.total_qty,qi.qc_good_qty,
-        qb.purchase_order_id,qi.sku_id
-        FROM qc_info qi INNER JOIN  qc_bill qb
-        ON  qi.main_id=qb.id
-        WHERE qb.purchase_order_id IN
+        qb.purchase_order_id,qp.sku_id
+        FROM qc_info qi
+        INNER JOIN  qc_bill qb
+        ON  qi.main_id=qb.id AND qb.is_deleted=false
+        LEFT JOIN qc_product qp
+        ON qp.main_id=qb.id  AND qp.is_deleted=false
+        WHERE qi.is_deleted=false AND  qb.purchase_order_id IN
         <foreach collection="purOrderIds" item="purOrderId" open="(" separator="," close=")">
             #{purOrderId}
         </foreach>

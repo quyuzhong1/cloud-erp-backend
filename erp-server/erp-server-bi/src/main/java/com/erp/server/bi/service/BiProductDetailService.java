@@ -33,7 +33,7 @@ public interface BiProductDetailService extends SuperService<BiProductDetailEnti
      * @param
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
      */
-    List<SkuCategoryVO> getSkuBrandList();
+    List<SkuCategoryVO> getSkuBrandList(List<String> brandList);
 
     /**
      * 根据属性 获取到对应的sku 信息

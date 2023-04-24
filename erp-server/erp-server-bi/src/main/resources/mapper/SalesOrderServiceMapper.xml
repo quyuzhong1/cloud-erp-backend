@@ -1695,7 +1695,6 @@
         GROUP BY i.new_sign
     </select>
     <select id="byPlatformNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-
         SELECT
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales,

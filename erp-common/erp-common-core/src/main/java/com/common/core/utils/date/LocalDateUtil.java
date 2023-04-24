@@ -97,7 +97,7 @@ public class LocalDateUtil {
      */
     public static LocalDateTime getRingRatioDate(LocalDateTime startDate, LocalDateTime endDate) {
         if (endDate != null && startDate != null) {
-            long diff = Duration.between(startDate, endDate).toDays();
+            long diff = Duration.between(startDate, endDate).toDays()+1;
             return LocalDateTime.of(startDate.minusDays(diff).toLocalDate(),LocalTime.MIN) ;
         }
         return null;
