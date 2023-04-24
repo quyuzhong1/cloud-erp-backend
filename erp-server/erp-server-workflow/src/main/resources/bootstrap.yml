@@ -8,7 +8,8 @@ server:
 
 logging:
   config: classpath:logback-spring.xml
-
+mybatis-plus:
+  type-enums-package: com.common.*.enums
 camunda:
   bpm:
     admin-user:
