@@ -154,6 +154,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_PURCHASE_APPLICATION_ORDER_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_application_order_tag"),
 
+    /**
+     * 采购退货单同步金蝶
+     */
+    KINGDEE_PURCHASE_RETURN_ORDER_TAG(33, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_return_order_tag"),
+
     //-----------------------------消息通知--------------------------------------------
 
     /**

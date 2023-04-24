@@ -18,6 +18,7 @@ public enum ApiModuleTypeEnum {
     CHANGE_ORG(7, "changeOrg", "默认组织切换",""),
     PURCHASE_ORDER(8, "purchaseOrder", "采购订单","scm"),
     PURCHASE_APPLICATION_ORDER(9, "purchaseApplicationOrder", "采购申请单","scm"),
+    PURCHASE_RETURN_ORDER(10, "purchaseReturnOrder", "采购退货单","wms"),
 
     ;
     private Integer code;

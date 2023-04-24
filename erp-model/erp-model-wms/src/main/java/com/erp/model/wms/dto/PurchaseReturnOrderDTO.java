@@ -444,6 +444,11 @@ public class PurchaseReturnOrderDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 

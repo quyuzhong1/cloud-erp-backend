@@ -364,7 +364,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity,String businessId,
+    public void  insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity,String businessId,
                                                     String jsonData,String msg,Integer type,Integer status) {
         //新增日志
         insertSyncLog(platformEntity,businessId,jsonData,msg,type,status);
