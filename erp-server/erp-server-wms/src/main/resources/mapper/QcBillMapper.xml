@@ -194,7 +194,7 @@
             </foreach>
         </if>
 
-        <if test="params.qcUserIdList!=null and params.qcUserIdList.size.0">
+        <if test="params.qcUserIdList!=null and params.qcUserIdList.size>0">
             AND qb.qc_user_id IN
             <foreach collection="params.qcUserIdList" item="qcUserId" open="(" separator="," close=")">
                 #{qcUserId}
@@ -300,7 +300,7 @@
                         #{qcStatus}
                     </foreach>
                 </if>
-                <if test="params.qcUserIdList!=null and params.qcUserIdList.size.0">
+                <if test="params.qcUserIdList!=null and params.qcUserIdList.size>0">
                     AND qb.qc_user_id IN
                     <foreach collection="params.qcUserIdList" item="qcUserId" open="(" separator="," close=")">
                         #{qcUserId}
