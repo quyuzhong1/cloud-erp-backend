@@ -9,6 +9,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +47,9 @@ public class ProductSkuFeignController {
      */
     @Resource
     private ProductPackService  productPackService;
+
+    @Resource
+    private WorkOptionService workOptionService;
 
     /**
      * 根据sku查询sku表信息
@@ -164,6 +168,18 @@ public class ProductSkuFeignController {
     public List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds) {
         List<ProductVO.ProductPackVO> list = productPackService.getBySkuIds(skuIds);
         return list;
+    }
+
+    /**
+     * 根据用户获取各任务阶段数量
+     * @Author Luo_WG
+     * @Date 2023/4/24 9:34
+     * @param optionUserId optionUserId
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.StageViewDTO>
+     **/
+    @PostMapping("/stageView")
+    public List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId) {
+        return workOptionService.stageView(optionUserId);
     }
 
 }
