@@ -233,6 +233,10 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         for (QcBillDTO.PagingViewDTO item : list) {
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
             item.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
+            //是否内检
+            Boolean isInside = item.getIsInside();
+            String isInsideType = isInside != null && isInside ? "内部检验" : "外部检验";
+            item.setInsideType(isInsideType);
             QcTypeEnum qcTypeEnum = item.getQcType();
             item.setQcTypeName(qcTypeEnum != null ? qcTypeEnum.getName() : "");
             String handleModeDict = item.getHandleModeDict();
@@ -332,7 +336,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
                 excelDTO.setRemark(remark);
                 //是否内检
                 Boolean isInside = item.getIsInside();
-                excelDTO.setInsideType(isInside ? "内部检验" : "外部检验");
+                excelDTO.setInsideType(isInside != null && isInside ? "内部检验" : "外部检验");
                 resultList.add(excelDTO);
             }
 
@@ -471,30 +475,34 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
      * @author yl
      * @date 2023-04-20 14:55
      */
-    private void autoBatchStockInBill(String billId, QcInfoDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId) {
-        PurchaseStockInDTO.AddDTO dto = new PurchaseStockInDTO.AddDTO();
-        List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>(1);
-        PurchaseStockInDetailDTO.AddDTO detail = new PurchaseStockInDetailDTO.AddDTO();
-        detail.setExceedQty(0);
-        detail.setStockInQty(qcInfo.getTotalQty());
-        detail.setSourceDetailId(qcInfo.getId());
-        detail.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
-        details.add(detail);
-        dto.setDetails(details);
-        dto.setSourceId(billId);
-        dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
-        dto.setPurchaseOrderId(purchaseOrderId);
-        dto.setDeliveryWarehouseId(warehouseId);
-        String userId = commonService.getUserInfo().getUid();
-        dto.setStockInUserId(userId);
-        //生成结果
-        String createResultId = purchaseStorageService.addAndSubmit(dto);
-        if (StringUtils.isNotBlank(createResultId)) {
-            BaseApproveParamDTO approveParam = new BaseApproveParamDTO();
-            approveParam.setIds(Arrays.asList(createResultId));
-            approveParam.setType(ApproveTypeEnum.PASS.getStatus());
-            purchaseStorageService.approve(approveParam);
-        }
+    private void autoBatchStockInBill(List<String> idList) {
+        String b2bQcType = QcTypeEnum.B2B_OUTSIDE_QC.getCode();
+
+//        List<QcInfoDTO.StockInDTO> stockInList = qcInfoService.getStockIn(idList);
+//
+//        PurchaseStockInDTO.AddDTO dto = new PurchaseStockInDTO.AddDTO();
+//        List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>(1);
+//        PurchaseStockInDetailDTO.AddDTO detail = new PurchaseStockInDetailDTO.AddDTO();
+//        detail.setExceedQty(0);
+//        detail.setStockInQty(qcInfo.getTotalQty());
+//        detail.setSourceDetailId(qcInfo.getId());
+//        detail.setPurchaseOrderDetailId(qcInfo.getPurchaseOrderDetailId());
+//        details.add(detail);
+//        dto.setDetails(details);
+//        dto.setSourceId(billId);
+//        dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
+//        dto.setPurchaseOrderId(purchaseOrderId);
+//        dto.setDeliveryWarehouseId(warehouseId);
+//        String userId = commonService.getUserInfo().getUid();
+//        dto.setStockInUserId(userId);
+//        //生成结果
+//        String createResultId = purchaseStorageService.addAndSubmit(dto);
+//        if (StringUtils.isNotBlank(createResultId)) {
+//            BaseApproveParamDTO approveParam = new BaseApproveParamDTO();
+//            approveParam.setIds(Arrays.asList(createResultId));
+//            approveParam.setType(ApproveTypeEnum.PASS.getStatus());
+//            purchaseStorageService.approve(approveParam);
+//        }
     }
 
     /**
@@ -663,7 +671,13 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("质检单【%s】完成操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "完成操作");
-        return this.updateBatchById(qcList);
+        Boolean result = this.updateBatchById(qcList);
+        if (result) {
+            //自动完成入库单
+            this.autoBatchStockInBill(ids);
+        }
+        return result;
+
     }
 
 
@@ -1035,20 +1049,16 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
      */
     private void batchCheckQcQty(List<QcBillEntity> qcList, Boolean isExemption) {
         if (CollectionUtils.isNotEmpty(qcList)) {
-
             qcList.sort(Comparator.comparing(QcBillEntity::getCreateTime, Comparator.reverseOrder()));
-
             List<String> ids = qcList.stream().map(QcBillEntity::getId).collect(Collectors.toList());
             //质检信息
             List<QcInfoEntity> qcInfoList = qcInfoService.getByMainIdList(ids);
 
             //质检产品信息
             List<QcProductEntity> qcProductList = qcProductService.getByMainIdList(ids);
-
             List<String> purOrderIds = qcList.stream().map(QcBillEntity::getPurchaseOrderId).collect(Collectors.toList());
             //获取到对应的 订单明细
             List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purOrderIds);
-
             /**
              * 根据采访订单id集合
              * 获取到已质检数量
@@ -1117,9 +1127,11 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             if (goodQty + badQty > qcQty) {
                 throw new ServiceException(ApiError.ERROR_99016);
             }
+            //采购订单详情id
+            String orderDetailId = qcInfo.getPurchaseOrderDetailId();
             //当采购订单不为空的时候
-            if (StringUtils.isNotBlank(purchaseOrderId)) {
-                List<String> purOrderIds = Arrays.asList(purchaseOrderId);
+            if (StringUtils.isNotBlank(orderDetailId)) {
+                List<String> purOrderIds = Arrays.asList(orderDetailId);
                 //获取到对应的 订单明细
                 List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purOrderIds);
                 //采购的订单数量

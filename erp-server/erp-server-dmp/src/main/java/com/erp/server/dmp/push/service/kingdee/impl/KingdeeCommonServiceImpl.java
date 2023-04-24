@@ -3,9 +3,9 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.constant.SystemConstants;
@@ -111,7 +111,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //给集合父项填充数据
             if (ApiGroupTypeEnum.PARENT.getCode().equals(cfgApiFieldMapDTO.getGroupType())) {
                 //业务系统传参
-                JSONArray JsonArray = JSONArray.parseArray(JSONObject.toJSONString(map.get(cfgApiFieldMapDTO.getSelfField())));
+                JSONArray JsonArray = JSONUtil.parseArray(JSONUtil.toJsonStr(map.get(cfgApiFieldMapDTO.getSelfField())));
                 List<Map<String, Object>> listMap = JsonArray.stream().map(BeanUtil::beanToMap).collect(Collectors.toList());
                 //集合子项参数配置
                 List<CfgApiFieldMapDTO> childList = mapList.stream().filter(obj -> ApiGroupTypeEnum.CHILD.getCode().equals(obj.getGroupType()) && obj.getParentId().equals(cfgApiFieldMapDTO.getId())).collect(Collectors.toList());
@@ -119,16 +119,16 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                     continue;
                 }
                 //json集合
-                List<JSONObject> detailList = new ArrayList<>();
+                JSONArray jsonArray = new JSONArray();
                 if (CollectionUtils.isNotEmpty(listMap)) {
                     for (Map<String,Object> fieldMap: listMap) {
                         JSONObject detailJson = new JSONObject(new LinkedHashMap());
                         //给集合填充数据
                         childList.forEach(obj-> formatJsonObject(obj, detailJson, fieldMap, cfgApiFieldMapValueList));
-                        detailList.add(detailJson);
+                        jsonArray.add(detailJson);
                     }
                 }
-                KingdeeUtils.makeFieldJson(json,apiField,".",detailList);
+                KingdeeUtils.makeFieldJson(json,apiField,".",jsonArray);
 
             }
 
@@ -165,7 +165,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             //现默认唯迹科技
             viewMap.put("CreateOrgId",1);
         }
-        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         return model;
     }
 
@@ -185,14 +185,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         String operateNumber = SyncKingdeeOperateEnum.getNameByCode(operate);
 
         try {
-            apiUtils.excuteOperation(operateNumber,JSONArray.toJSONString(viewMap));
+            apiUtils.excuteOperation(operateNumber,JSONUtil.toJsonStr(viewMap));
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //操作成功添加日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),SyncKingdeeOperateEnum.getDescByCode(operate),type,ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),SyncKingdeeOperateEnum.getDescByCode(operate),type,ApiSendStatusEnum.SUCCESS.getCode());
     }
 
     @Override
@@ -208,14 +208,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             viewMap.put("numbers",Arrays.asList(number));
         }
         try {
-            apiUtils.delete(JSONArray.toJSONString(viewMap));
+            apiUtils.delete(JSONUtil.toJsonStr(viewMap));
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //操作成功添加日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONArray.toJSONString(viewMap),"删除",type,ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),"删除",type,ApiSendStatusEnum.SUCCESS.getCode());
     }
 
 
@@ -232,7 +232,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             save = apiUtils.save(param);
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg.concat("；").concat(e.getMessage()),type,ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONUtil.toJsonStr(json),msg.concat("；").concat(e.getMessage()),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
         //数据id
@@ -242,7 +242,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //更新业务表中的金蝶id
         updateBusinessSyncKingdeeStatus(type,String.valueOf(map.get("id")),"",id);
         //新增成功操作日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(json),msg,type,ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(json),msg,type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交
         submit(platformEntity, map,apiUtils,id,type);
     }
@@ -266,12 +266,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //提交失败操作日志及定时任务
             log.error("提交失败",e);
-            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(ids),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
-        log.info("提交成功,数据Id = 【{}】", JSONObject.toJSONString(ids));
+        log.info("提交成功,数据Id = 【{}】", JSONUtil.toJsonStr(ids));
         //提交成功操作日志
-        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(ids),"提交成功",type,ApiSendStatusEnum.SUCCESS.getCode());
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(ids),"提交成功",type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交成功后继续审核直至已审核
         audit(platformEntity, map,apiUtils,id,type);
     }
@@ -291,7 +291,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     public void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,String id,Integer type) {
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Id",id);
-        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         //单据状态
         String documentStatus = (String)model.get("DocumentStatus");
         if (!KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
@@ -307,8 +307,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 return;
             }
             //审核成功操作日志
-            log.info("审核成功,数据【{}】", JSONObject.toJSONString(viewMap));
-            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONObject.toJSONString(viewMap),"审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
+            log.info("审核成功,数据【{}】", JSONUtil.toJsonStr(viewMap));
+            insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),"审核成功",type,ApiSendStatusEnum.SUCCESS.getCode());
             //当审核状态非已审核时继续审核
             audit(platformEntity, map,apiUtils,id,type);
         }
@@ -437,7 +437,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             }
             //根据值映射转换
             String apiValue = cfgApiFieldMapValueList.stream()
-                    .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(map.get(cfgApiFieldMapDTO.getSelfField())))
+                    .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(String.valueOf(map.get(cfgApiFieldMapDTO.getSelfField()))))
                     .map(CfgApiFieldMapValueEntity::getApiValue)
                     .findFirst()
                     .orElse(null);

@@ -39,7 +39,6 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(String billId, List<QcRemarkDTO.AddDTO> remarkList) {
-
         if (CollectionUtils.isEmpty(remarkList)) {
             return;
         }

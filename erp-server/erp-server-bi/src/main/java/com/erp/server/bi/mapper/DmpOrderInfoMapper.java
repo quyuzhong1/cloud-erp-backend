@@ -55,6 +55,13 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return
      */
     BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("flag") Integer flag);
+
+    /**
+     * 根据不同维度统计销售量
+     * @param dto
+     * @return
+     */
+    Integer countSalesVolume(@Param("params") BiFilterDTO dto);
 }
 
 

@@ -1,8 +1,10 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -14,11 +16,8 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
-import com.google.gson.Gson;
-import com.kingdee.bos.webapi.entity.RepoRet;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -28,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.erp.model.dmp.dto.GoodcangDTO.ResultDTO.fail;
 
 /**
  * @author Will
@@ -47,20 +44,17 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
 
 
 
-//    public static void main(String[] args) {
-//        Map<String, Object> resultMap = new LinkedHashMap<>();
-//        //读取配置，初始化SDK
-//        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
-//        LinkedList<String> queryFilters = new LinkedList<>();
-//        queryFilters.add(String.format("FNumber = '%s'", "testtes"));
-//        String filterStr = String.join(" and ", queryFilters);
-//        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
-//                "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
-//                "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH," +
-//                "FWIDTH,F_ulz_Qty1,F_PRVD_Assistant1.FNumber,F_PRVD_Assistant1.FDataValue,F_PRVD_Assistant1.FId,F_PRVD_Assistant.FId,SubHeadEntity_FErpClsID_FNumber";
-//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
-//        System.out.println(queryList);
-//    }
+    public static void main(String[] args) {
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FNumber = '%s'", "testtes"));
+        String filterStr = String.join(" and ", queryFilters);
+       String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FIsPurchase";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        System.out.println(queryList);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -97,7 +91,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 save = apiUtils.save(param);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type, ApiSendStatusEnum.FAILURE.getCode());
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId, JSONUtil.toJsonStr(json),JSONUtil.toJsonStr(ex),type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //新增成功后编辑二级类目
@@ -105,7 +99,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",id);
             //需要修改字段
-            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
@@ -141,7 +136,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
                 KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),".",entry.getValue());
             }
             //需要修改字段
-            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
@@ -149,7 +145,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
     }
 
 
-    public static void main(String[] args) {
+  /*  public static void main(String[] args) {
         //注意 1：此处不再使用参数形式传入用户名及密码等敏感信息，改为在登录配置文件中设置。
         //注意 2：必须先配置第三方系统登录授权信息后，再进行业务操作，详情参考各语言版本SDK介绍中的登录配置文件说明。
         //读取配置，初始化SDK
@@ -174,5 +170,5 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         } catch (Exception e) {
             fail(e.getMessage());
         }
-    }
+    }*/
 }

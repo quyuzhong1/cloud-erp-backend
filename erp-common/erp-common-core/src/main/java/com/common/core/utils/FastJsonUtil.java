@@ -1,10 +1,11 @@
 package com.common.core.utils;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 
-import java.util.ArrayList;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+
 import java.util.Iterator;
 
 public class FastJsonUtil {
@@ -22,25 +23,25 @@ public class FastJsonUtil {
             if (jsonObject.get(key) instanceof JSONObject) {
                 JSONObject innerObject = (JSONObject) jsonObject.get(key);
                 stringBuffer.append(getAllKey(innerObject));
-            } else if (jsonObject.get(key) instanceof ArrayList) {
-                JSONArray innerObject = JSONArray.parseArray(JSON.toJSONString(jsonObject.get(key)));
+            } else if (jsonObject.get(key) instanceof JSONArray) {
+                JSONArray innerObject = JSONUtil.parseArray(JSON.toJSONString(jsonObject.get(key)));
                 stringBuffer.append(getAllKey(innerObject));
             }
         }
         return stringBuffer;
     }
 
-    public static StringBuffer getAllKey(JSONArray json1) {
+    public static StringBuffer getAllKey(JSONArray jsonArray) {
         StringBuffer stringBuffer = new StringBuffer();
-        if (json1 != null ) {
-            Iterator i1 = json1.iterator();
+        if (jsonArray != null ) {
+            Iterator i1 = jsonArray.iterator();
             while (i1.hasNext()) {
                 Object key = i1.next();
-                if (key instanceof  JSONObject) {
+                if (key instanceof JSONObject) {
                     JSONObject innerObject = (JSONObject) key;
                     stringBuffer.append(getAllKey(innerObject));
-                } else if (key instanceof ArrayList) {
-                    JSONArray innerObject = JSONArray.parseArray(JSON.toJSONString(key));
+                } else if (key instanceof JSONArray) {
+                    JSONArray innerObject = JSONUtil.parseArray(JSON.toJSONString(key));
                     stringBuffer.append(getAllKey(innerObject));
                 } else {
                 }

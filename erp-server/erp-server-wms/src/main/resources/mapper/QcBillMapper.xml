@@ -176,7 +176,7 @@
         qi.qc_good_rate,qi.qc_bad_rate
         FROM qc_bill qb
         LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
-        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <if test="params.searchType !=null and params.searchType!=''">
             AND qb.qc_status=#{params.searchType}
@@ -216,7 +216,7 @@
         </if>
 
         <if test="params.qcResultList !=null and params.qcResultList.size>0">
-            AND bd.result_dict IN
+            AND qi.qc_result IN
             <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
                 #{qcResult}
             </foreach>
@@ -238,7 +238,7 @@
             AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > qb.create_time
         </if>
-
+        ORDER BY qb.create_time DESC
     </select>
 
     <select id="getExport" resultType="com.erp.model.wms.dto.QcBillDTO$PagingViewDTO">
@@ -258,7 +258,7 @@
         qi.qc_good_rate,qi.qc_bad_rate
         FROM qc_bill qb
         LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
-        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
@@ -306,7 +306,7 @@
                 </if>
 
                 <if test="params.qcResultList !=null and params.qcResultList.size>0">
-                    AND bd.result_dict IN
+                    AND qi.qc_result IN
                     <foreach collection="params.qcResultList" item="qcResult" open="(" separator="," close=")">
                         #{qcResult}
                     </foreach>
@@ -331,7 +331,7 @@
                 </if>
             </otherwise>
         </choose>
-
+        ORDER BY qb.create_time DESC
     </select>
     <select id="viewGeneratePurchaseReturnOrder"
             resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
