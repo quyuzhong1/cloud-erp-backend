@@ -39,6 +39,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -1019,6 +1020,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         result.setSupplierName(entity.getSupplierName());
         result.setWarehouseId(entity.getDeliveryWarehouseId());
         result.setWarehouseName(entity.getWarehouseName());
+        //是否新品首批
+        Boolean isFirstMassProduct = entity.getIsFirstMassProduct();
+        //入库质检
+        String qcType = QcTypeEnum.STOCK_IN.getCode();
+        //是
+        if (isFirstMassProduct) {
+            qcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+        }
+        result.setQcType(qcType);
 
         //采购订单详情
         List<PurchaseOrderDetailEntity> orderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);

@@ -133,17 +133,26 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         List<JSONObject> list = new ArrayList<>();
         for (PurchaseReturnOrderDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
+            //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            //产品名称
             jsonObject.set("productName", productDetailEntity.getName());
+            //实退数量
             jsonObject.set("returnQty", detail.getReturnQty());
+            //补货数量
             jsonObject.set("replenishQty", detail.getReplenishQty());
+            //扣款数量
             jsonObject.set("deductAmountQty", detail.getDeductAmountQty());
+            //退货仓库
             jsonObject.set("returnWarehouseName", entity.getReturnWarehouseName());
+            //退货备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-            jsonObject.set("PurchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
-            jsonObject.set("ReturnPrice", detail.getReturnPrice());
+            //采购数量
+            jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
+            //退款单价
+            jsonObject.set("returnPrice", detail.getReturnPrice());
 
             list.add(jsonObject);
         }
@@ -152,7 +161,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
-/*        //异步推送mq
+        //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_RETURN_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -160,7 +169,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
                 return purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
             }
             return Boolean.TRUE;
-        });*/
+        });
 
     }
 }

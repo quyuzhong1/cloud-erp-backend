@@ -61,8 +61,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (StringUtils.isBlank(id)) {
             id = IdWorker.getIdStr();
         }
+
+        String qcType = qcInfo.getQcType();
         //是否内检
-        Boolean isInside = qcInfo.getQcType().getIsInside();
+        Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
         BeanMapper.copy(qcInfo, qcInfoEntity);
 
         //计算比率
@@ -90,17 +92,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private void calculateRatio(QcInfoEntity qcInfoEntity) {
         if (qcInfoEntity != null) {
             //总数量
-            Integer totalQty = qcInfoEntity.getTotalQty()!=null?qcInfoEntity.getTotalQty():0;
+            Integer totalQty = qcInfoEntity.getTotalQty() != null ? qcInfoEntity.getTotalQty() : 0;
             //质检量
-            Integer qcQty = qcInfoEntity.getQcQty()!=null?qcInfoEntity.getQcQty():0;
+            Integer qcQty = qcInfoEntity.getQcQty() != null ? qcInfoEntity.getQcQty() : 0;
             if (totalQty != 0) {
                 BigDecimal qcSampleRate = MathUtil.divide(new BigDecimal(totalQty), new BigDecimal(qcQty));
                 qcInfoEntity.setQcSampleRate(qcSampleRate);
             }
             //质检合格量
-            Integer qcGoodQty = qcInfoEntity.getQcGoodQty()!=null?qcInfoEntity.getQcGoodQty():0;
+            Integer qcGoodQty = qcInfoEntity.getQcGoodQty() != null ? qcInfoEntity.getQcGoodQty() : 0;
             //质检不良量
-            Integer qcBadQty = qcInfoEntity.getQcBadQty()!=null?qcInfoEntity.getQcBadQty():0;
+            Integer qcBadQty = qcInfoEntity.getQcBadQty() != null ? qcInfoEntity.getQcBadQty() : 0;
             if (qcQty != 0) {
                 BigDecimal qcGoodRate = MathUtil.divide(new BigDecimal(qcQty), new BigDecimal(qcGoodQty));
                 qcInfoEntity.setQcGoodRate(qcGoodRate);
@@ -129,8 +131,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<String> nameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             qcInfoView.setBadImageNameList(nameList);
             qcInfoView.setBadImageUrlList(imageUrlList);
-            QcTypeEnum qcTypeEnum = qcInfoView.getQcType();
-            qcInfoView.setQcTypeName(qcTypeEnum.getName());
+            String qcType = qcInfoView.getQcType();
+            qcInfoView.setQcTypeName(QcTypeEnum.getByCode(qcType));
             List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
             //处理措施
             String handleModeDict = qcInfoView.getHandleModeDict();
@@ -143,8 +145,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             String qcProblemName = dictList.stream().filter(d -> d.getValue().equals(qcProblemDict)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             qcInfoView.setQcProblemName(qcProblemName);
-            QcResultEnum qcResultEnum = qcInfoView.getQcResult();
-            qcInfoView.setQcResultName(qcResultEnum.getName());
+            String qcResult = qcInfoView.getQcResult();
+            qcInfoView.setQcResultName(QcResultEnum.getByCode(qcResult));
 
         }
         return qcInfoView;
@@ -215,6 +217,23 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         updateWrapper.in(QcInfoEntity::getMainId, mainIds);
         updateWrapper.set(QcInfoEntity::getHandleModeDict, handleModeDict);
         return this.update(updateWrapper);
+    }
+
+
+    /**
+     * 根据质检单id集合 获取到一些需要入库的数据
+     *
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.StockInDTO>
+     * @author yl
+     * @date 2023-04-24 15:47
+     */
+    @Override
+    public List<QcInfoDTO.StockInDTO> getStockIn(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.getStockIn(mainIdList);
     }
 
 

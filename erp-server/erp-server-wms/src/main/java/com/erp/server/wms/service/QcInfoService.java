@@ -74,4 +74,14 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateHandleMode(List<String> ids, String handleModeDict);
+
+    
+    /**
+     * 根据质检单id集合 获取到一些需要入库的数据
+     * @author yl
+     * @date 2023-04-24 15:47
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.StockInDTO>
+     */
+    List<QcInfoDTO.StockInDTO> getStockIn(List<String> mainIdList);
 }

@@ -20,4 +20,13 @@ import java.util.List;
 public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
 
     List<QcInfoDTO.QcQtyDTO> getByPurOrderIds(@Param("purOrderIds") List<String> purOrderIds);
+
+    /**
+     * 获取入库所需要的参数
+     * @author yl
+     * @date 2023-04-24 15:57
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.StockInDTO>
+     */
+    List<QcInfoDTO.StockInDTO> getStockIn(@Param("mainIdList") List<String> mainIdList);
 }

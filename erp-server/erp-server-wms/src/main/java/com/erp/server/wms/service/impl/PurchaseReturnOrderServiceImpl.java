@@ -467,7 +467,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"反审核操作");
-
+        //审核通过发送金蝶
+        purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
     }
 
@@ -539,6 +540,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .set(PurchaseReturnOrderEntity::getInvalidTime, LocalDateTime.now())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+
+        //审核通过发送金蝶
+        warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 
@@ -704,9 +708,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
         return  this.lambdaUpdate()
-                .eq(PurchaseReturnOrderEntity::getId,categoryId)
+                .eq(PurchaseReturnOrderEntity::getId,id)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseReturnOrderEntity::getSyncKingdeeStatus,syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseReturnOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),PurchaseReturnOrderEntity::getSyncKingdeeId,syncKingdeeId)

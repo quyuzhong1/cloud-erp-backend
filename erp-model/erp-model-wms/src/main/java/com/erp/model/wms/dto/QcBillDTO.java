@@ -268,6 +268,11 @@ public class QcBillDTO implements Serializable {
 
 
         /**
+         *质检单号
+         */
+        private String code;
+
+        /**
          * 采购单号
          */
         private String purchaseOrderCode;
@@ -556,7 +561,7 @@ public class QcBillDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class AssignDTO {
+    public static class AssignDTO {
 
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;

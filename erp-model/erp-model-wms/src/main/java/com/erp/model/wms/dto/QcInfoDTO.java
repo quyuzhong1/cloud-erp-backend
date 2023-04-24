@@ -37,9 +37,9 @@ public class QcInfoDTO {
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
          * stockIn 入库质检  outsideQc 外检质检 insideQc 在库质检 newProductStockIn 新品入库质检 b2bOutsideQc B2B外检
          */
-        @NotNull(message = "质检类型不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @NotBlank(message = "质检类型不能为空", groups = {UpdateGroup.class, AddGroup.class})
         @StateEnumValue(clazz = QcTypeEnum.class, message = "质检类型有误")
-        private QcTypeEnum qcType;
+        private String qcType;
 
 
         /**
@@ -111,7 +111,9 @@ public class QcInfoDTO {
         /**
          * 质检结果
          */
-        private QcResultEnum qcResult;
+        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @StateEnumValue(clazz = QcResultEnum.class, message = "质检结果有误")
+        private String qcResult;
 
         /**
          * 处理措施
@@ -135,7 +137,7 @@ public class QcInfoDTO {
         /**
          * 质检类型
          */
-        private QcTypeEnum qcType;
+        private String qcType;
 
         /**
          * 质检类型名
@@ -221,7 +223,7 @@ public class QcInfoDTO {
         /**
          * 质检结果
          */
-        private QcResultEnum qcResult;
+        private String qcResult;
 
         /**
          * 质检结果名
@@ -307,11 +309,58 @@ public class QcInfoDTO {
         /**
          * 处理措施
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
+         * 取value
          */
         @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String handleModeDict;
 
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+    }
+
+    /**
+     * 需要入库的参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class StockInDTO {
+
+        /**
+         * 表id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+
+        /**
+         * 采购订单详情id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购订单 交付仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 质检总量
+         */
+        private Integer totalQty;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+
     }
 }
