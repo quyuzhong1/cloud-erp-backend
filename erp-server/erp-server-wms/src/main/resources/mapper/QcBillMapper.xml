@@ -176,7 +176,7 @@
         qi.qc_good_rate,qi.qc_bad_rate
         FROM qc_bill qb
         LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
-        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <if test="params.searchType !=null and params.searchType!=''">
             AND qb.qc_status=#{params.searchType}
@@ -258,7 +258,7 @@
         qi.qc_good_rate,qi.qc_bad_rate
         FROM qc_bill qb
         LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
-        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
+        LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
