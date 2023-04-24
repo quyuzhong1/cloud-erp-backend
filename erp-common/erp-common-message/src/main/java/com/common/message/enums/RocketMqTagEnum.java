@@ -150,14 +150,19 @@ public enum RocketMqTagEnum {
     KINGDEE_PURCHASE_ORDER_TAG(31, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
 
     /**
-     * 采购申请单同步金蝶
+     * 采购价目表
      */
-    KINGDEE_PURCHASE_APPLICATION_ORDER_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_application_order_tag"),
+    KINGDEE_PURCHASE_PRICE_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_tag"),
 
     /**
      * 采购退货单同步金蝶
      */
     KINGDEE_PURCHASE_RETURN_ORDER_TAG(33, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_return_order_tag"),
+
+    /**
+     * 采购调价表
+     */
+    KINGDEE_PURCHASE_PRICE_CHANGE_TAG(34, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_change_tag"),
 
     //-----------------------------消息通知--------------------------------------------
 

@@ -15,8 +15,9 @@ public enum KingdeePushModuleEnum {
     BOS_ASSISTANTDATA_DETAIL("BOS_ASSISTANTDATA_DETAIL","辅助资料列表"),
     BD_EMPINFO("BD_Empinfo","员工"),
     PUR_PURCHASEORDER("PUR_PurchaseOrder","采购订单"),
-    PUR_REQUISITION("PUR_Requisition","采购申请单"),
+    PUR_PRICECATEGORY("PUR_PriceCategory","采购价目表"),
     PUR_MRB("PUR_MRB","采购退料单"),
+    PUR_PAT("PUR_PAT","采购调价表"),
 
     ;
     private String code;

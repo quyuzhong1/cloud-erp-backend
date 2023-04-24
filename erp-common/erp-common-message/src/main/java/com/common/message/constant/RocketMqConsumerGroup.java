@@ -30,9 +30,14 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_PURCHASE_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_order";
 
     /**
-     * 金蝶采购申请单（采购申请单）
+     * 金蝶采购价目表（采购价目表）
      */
-    public static final String SYNC_KINGDEE_PURCHASE_APPLICATION_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_application_order";
+    public static final String SYNC_KINGDEE_PURCHASE_PRICE = "${spring.profiles.active}-sync_kingdee_purchase_price";
+
+    /**
+     * 金蝶采购调价表（采购调价表）
+     */
+    public static final String SYNC_KINGDEE_PURCHASE_PRICE_CHANGE = "${spring.profiles.active}-sync_kingdee_purchase_price_change";
 
     /**
      * 金蝶采购申请单（采购申请单）

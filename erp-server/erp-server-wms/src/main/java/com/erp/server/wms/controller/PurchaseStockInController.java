@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.server.wms.service.PurchaseStockInService;
@@ -252,5 +253,18 @@ public class PurchaseStockInController extends BaseController {
     public ApiResult<List<PurchaseStockInDTO.OrderRefStockInDTO>> purchaseOrderRefStockIn(@RequestBody @Validated BaseIdDTO dto) {
         List<PurchaseStockInDTO.OrderRefStockInDTO> list = purchaseStorageService.purchaseOrderRefStockIn(dto.getId());
         return success(list);
+    }
+
+    /**
+     * 下推采购入库单保存
+     * @author Will
+     * @date: 2023/4/13 11:37
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generateStockIn")
+    public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
+        Boolean flag = purchaseStorageService.generateStockIn(dto);
+        return flag == true ? success() : failure();
     }
 }

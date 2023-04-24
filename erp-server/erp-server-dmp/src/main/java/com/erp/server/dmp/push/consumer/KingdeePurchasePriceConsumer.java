@@ -5,7 +5,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -37,8 +36,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_ORDER)
-public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_purchase_price_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_PURCHASE_PRICE)
+public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -47,38 +46,35 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
+        queryFilters.add(String.format("FNumber = '%s'", "CGJM000003"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber,F_ulz_Base.FNumber";
+        String fieldKeys = "FId,FSupplierId.FNumber,FPriceObject,FPriceType,FCurrencyID.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
-
-      /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        System.out.println(viewJson);*/
-
+        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+        System.out.println(viewJson);
+*/
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
+        Integer type = ApiModuleTypeEnum.PURCHASE_PRICE.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
-        //业务编码
-        String code = (String) map.get("code");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -105,21 +101,10 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
+
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
 
-        //操作项
-        String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
-            return;
-        }
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
-        }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
@@ -144,7 +129,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         queryFilters.add(String.format("FId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
         //查询子单据id
-        String fieldKeys = "FPOOrderEntry_FEntryID,FMaterialId.FNumber";
+        String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
@@ -155,7 +140,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         KingdeeUtils.makeFieldJson(json,"FId",".", id);
         //比较
         for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FPOOrderEntry") ;
+            JSONArray obj = (JSONArray)json.get("FPriceListEntry") ;
             JSONArray removeObj = new JSONArray();
             JSONArray addObj = new JSONArray();
             for (Object o : obj) {
@@ -165,7 +150,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
                 JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
                 Object fNumber = o2.get("FNumber");
                 if (o1.equals(fNumber)) {
-                    newJson.set("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
+                    newJson.set("FEntryId",queryMap.get("FPriceListEntry_FEntryID"));
                 }
                 newJson.putAll(jsonObject);
                 removeObj.set(o);

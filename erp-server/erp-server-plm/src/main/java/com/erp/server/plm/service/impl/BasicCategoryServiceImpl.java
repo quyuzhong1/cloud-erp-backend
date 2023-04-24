@@ -96,6 +96,13 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         this.updateById(entity);
         //组装数据发送到金蝶
         syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode());
+        //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
+        if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
+            List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
+            if (CollectionUtils.isNotEmpty(list)) {
+                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode()));
+            }
+        }
         return Boolean.TRUE;
     }
 

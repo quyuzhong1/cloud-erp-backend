@@ -112,6 +112,12 @@ public class PurchasePriceChangeDetailEntity extends BaseEntity<PurchasePriceCha
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 采购价目编号
+     */
+    @TableField(exist = false)
+    private String CJJMCode;
+
 
     @Override
     public Serializable pkVal() {

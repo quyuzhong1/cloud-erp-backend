@@ -120,6 +120,19 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailById(@RequestBody List<String> id) {
         return purchaseOrderDetailService.listDetailByIds(id);
     }
+    /**
+     * @description: 根据采购订单ids查询明细
+     * @author Will
+     * @date: 2023/4/24 19:43
+     * @param ids
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/listByPurchaseOrderIds")
+    public List<PurchaseOrderDetailEntity> listByPurchaseOrderIds(@RequestBody List<String> ids) {
+        return purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+    }
+
+
 
     /**
      * 根据采购订单id查询详情信息

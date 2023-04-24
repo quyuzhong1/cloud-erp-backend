@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
@@ -215,4 +216,12 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @date: 2023/4/19 16:14
      */
     List<PurchaseStockInDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(String purchaseOrderId);
+    /**
+     * @description: 生成采购入库单
+     * @author Will
+     * @date: 2023/4/13 11:39
+     * @param dto
+     * @return Boolean
+     */
+    Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto);
 }

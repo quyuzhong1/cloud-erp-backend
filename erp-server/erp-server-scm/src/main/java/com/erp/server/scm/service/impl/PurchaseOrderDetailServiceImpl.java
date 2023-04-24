@@ -335,7 +335,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailByOrderId(String id) {
         LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(PurchaseOrderDetailEntity::getPurchaseOrderId, id);
+        queryWrapper.in(PurchaseOrderDetailEntity::getPurchaseOrderId, id);
         return this.list(queryWrapper);
     }
 

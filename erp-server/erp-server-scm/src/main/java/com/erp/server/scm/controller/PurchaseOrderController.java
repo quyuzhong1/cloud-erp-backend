@@ -280,18 +280,6 @@ public class PurchaseOrderController extends BaseController {
         List<PurchaseOrderDTO.ViewGenerateStockInDTO> list = purchaseOrderService.viewGenerateStockIn(dto.getIds());
         return success(list);
     }
-    /**
-     * 下推采购入库单保存
-     * @author Will
-     * @date: 2023/4/13 11:37
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
-        Boolean flag = purchaseOrderService.generateStockIn(dto);
-        return flag == true ? success() : failure();
-    }
 
     /**
      * 结束交货

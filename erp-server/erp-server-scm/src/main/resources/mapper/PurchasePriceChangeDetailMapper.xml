@@ -27,4 +27,24 @@
         )
 
     </select>
+    <select id="listByPurchasePriceChangeId"
+            resultType="com.erp.model.scm.entity.PurchasePriceChangeDetailEntity">
+        SELECT
+        ppcd.sku_id,
+        ppcd.delivery_day,
+        ppcd.min_qty,
+        ppcd.max_qty,
+        ppcd.currency,
+        ppcd.tax_price,
+        ppcd.tax_rate,
+        ppcd.disabled,
+        pp.code
+        FROM  purchase_price_change_detail ppcd
+        left join purchase_price_detail ppd on ppcd.purchase_price_detail_id = ppd.id and ppd.is_deleted = false
+        left join purchase_price pp on pp.id = ppd.purchase_price_id and pp.is_deleted = false
+        <where>
+            ppcd.is_deleted = false and ppc.id = #{purchasePriceChangeId}
+        </where>
+
+    </select>
 </mapper>

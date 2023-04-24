@@ -35,12 +35,13 @@ import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -910,67 +911,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             resultList.add(viewGenerateStockInDTO);
         }
         return resultList;
-    }
-
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto) {
-        //保存信息
-        List<PurchaseOrderDTO.GenerateStockInDTO> list = dto.getList();
-        List<String> ids = list.stream().map(PurchaseOrderDTO.GenerateStockInDTO::getPurchaseOrderId).collect(Collectors.toList());
-
-        //订单信息集合
-        List<PurchaseOrderEntity> purchaseOrderList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(purchaseOrderList)) {
-            log.error("未找到订单信息，ids={}", JSONUtil.toJsonStr(ids));
-            throw new ServiceException(ApiError.ERROR_98025);
-        }
-        long count = purchaseOrderList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98054);
-        }
-
-        //订单明细信息集合
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
-        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
-            log.error("未找到订单明细信息，ids={}", JSONUtil.toJsonStr(ids));
-            throw new ServiceException(ApiError.ERROR_98026);
-        }
-
-        Map<String, List<PurchaseOrderDTO.GenerateStockInDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDTO.GenerateStockInDTO::getPurchaseOrderId));
-        List<PurchaseStockInDTO.AddDTO> resultList = new ArrayList<>();
-        for (Map.Entry<String, List<PurchaseOrderDTO.GenerateStockInDTO>> entry : map.entrySet()) {
-            PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
-            String purchaseOrderId = entry.getKey();
-            List<PurchaseOrderDTO.GenerateStockInDTO> value = entry.getValue();
-
-            //订单信息
-            PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(purchaseOrderId)).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(entity)) {
-                log.error("未找到订单明细信息，id={}", purchaseOrderId);
-                throw new ServiceException(ApiError.ERROR_98025);
-            }
-            addDTO.setPurchaseOrderId(purchaseOrderId);
-            addDTO.setSourceId(purchaseOrderId);
-            addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getType());
-            addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
-            addDTO.setStockInDeptId(entity.getPurchaseDeptId());
-            addDTO.setStockInUserId(entity.getPurchaseUserId());
-            List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>();
-            for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
-                PurchaseStockInDetailDTO.AddDTO addDetailDTO = new PurchaseStockInDetailDTO.AddDTO();
-                addDetailDTO.setSourceDetailId(generateStockInDTO.getPurchaseOrderDetailId());
-                addDetailDTO.setPurchaseOrderDetailId(generateStockInDTO.getPurchaseOrderDetailId());
-                addDetailDTO.setStockInQty(generateStockInDTO.getStockInQty());
-                addDetailDTO.setExceedQty(generateStockInDTO.getExceedQty());
-                addDetailDTO.setRemark(generateStockInDTO.getRemark());
-                details.add(addDetailDTO);
-            }
-            addDTO.setDetails(details);
-            resultList.add(addDTO);
-        }
-        Boolean add = wmsTaskFeign.batchAddPurchaseStockIn(resultList);
-        return add;
     }
 
     @Override

@@ -108,7 +108,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
             jsonObject.set("deliveryWarehouseName",entity.getDeliveryWarehouseName());
-            jsonObject.set("taxRate",detailEntity.getTaxRate());
+            jsonObject.set("taxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             jsonObject.set("receiveOrgName",entity.getReceiveOrgName());
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
