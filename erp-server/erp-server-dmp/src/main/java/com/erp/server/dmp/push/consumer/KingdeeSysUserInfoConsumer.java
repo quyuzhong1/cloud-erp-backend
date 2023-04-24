@@ -1,12 +1,13 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -56,7 +57,7 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Number","23041200001");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
        System.out.println(queryList);
         //System.out.println(viewJson);
 
@@ -136,7 +137,8 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
             }
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);

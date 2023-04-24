@@ -3,9 +3,10 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Dict;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SyncKingdeeOmsStatusEnum;
+import com.common.business.service.SuperServiceImpl;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.GoodcangDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -18,7 +19,6 @@ import com.erp.server.dmp.mapper.DmpWarehouseInboundRecordMapper;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.DmpWarehouseInboundItemService;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
-import com.common.business.service.SuperServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import lombok.extern.slf4j.Slf4j;
@@ -149,7 +149,7 @@ public class DmpWarehouseInboundRecordServiceImpl extends SuperServiceImpl<DmpWa
         dict.put("number", recordEntity.getReceivingCode());
         dict.put("CreateOrgId", ApiKingdeeOrganizationEnum.ORGANIZATION_HK.getCode());
         JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(dict));
-        String kingdeeId = viewJson.getString("Id");
+        String kingdeeId = viewJson.getStr("Id");
         if(SyncKingdeeOmsStatusEnum.BE_SUBMIT.equals(recordEntity.getSyncKingdeeStatus())){
             // 金蝶接口调用 提交
             submitKingdeeTransferRecord(kingdeeId, recordEntity.getReceivingCode(), apiUtils);

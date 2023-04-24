@@ -1,6 +1,8 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -47,9 +49,9 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230413-8806"));
+        queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber";
+        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber,F_ulz_Combo";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
@@ -153,20 +155,24 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         KingdeeUtils.makeFieldJson(json,"FId",".", id);
         //比较
         for (Map<String, Object> queryMap: queryList) {
-            ArrayList obj = (ArrayList) json.get("FPOOrderEntry");
+            JSONArray obj = (JSONArray)json.get("FPOOrderEntry") ;
+            JSONArray removeObj = new JSONArray();
+            JSONArray addObj = new JSONArray();
             for (Object o : obj) {
-                JSONObject jsonObject = (JSONObject) o;
+                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
                 JSONObject newJson = new JSONObject(new LinkedHashMap<>());
                 Object o1 = queryMap.get("FMaterialId.FNumber");
                 JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
                 Object fNumber = o2.get("FNumber");
                 if (o1.equals(fNumber)) {
-                    newJson.put("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
+                    newJson.set("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
                 }
                 newJson.putAll(jsonObject);
-                jsonObject.clear();
-                jsonObject.putAll(newJson);
+                removeObj.set(o);
+                addObj.set(newJson);
             }
+            obj.removeAll(removeObj);
+            obj.addAll(addObj);
         }
 
     }

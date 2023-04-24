@@ -1,7 +1,7 @@
 package com.erp.server.dmp.utils;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
@@ -106,8 +106,7 @@ public class KingdeeApiUtils {
         if (0 < topRowCount){
             param.setTopRowCount(topRowCount);
         }
-
-        String paramJson = JSONObject.toJSONString(param);
+        String paramJson = JSONUtil.toJsonStr(param);
         try {
             List<List<Object>> apiResult = client.executeBillQuery(paramJson);
             if (apiResult.isEmpty()){
@@ -213,8 +212,8 @@ public class KingdeeApiUtils {
         JSONObject json;
         try {
             String view = client.view(this.formId, jsonData);
-            JSONObject parse = (JSONObject) JSONObject.parse(view);
-            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject parse =  JSONUtil.parseObj(view);
+            JSONObject result = JSONUtil.parseObj(parse.get("Result"));
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
@@ -390,7 +389,7 @@ public class KingdeeApiUtils {
         String result;
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        String paramJson=JSONObject.toJSONString(param);
+        String paramJson = JSONUtil.toJsonStr(param);
         try {
             result = client.push(this.formId,paramJson);
             System.out.println(result);
@@ -432,8 +431,8 @@ public class KingdeeApiUtils {
         JSONObject json;
         try {
             String view = client.excuteOperation(this.formId,operateNumber, jsonData);
-            JSONObject parse = (JSONObject) JSONObject.parse(view);
-            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject parse = JSONUtil.parseObj(view);
+            JSONObject result = JSONUtil.parseObj(parse.get("Result"));
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
@@ -454,8 +453,8 @@ public class KingdeeApiUtils {
         JSONObject json;
         try {
             String view = client.delete(this.formId, jsonData);
-            JSONObject parse = (JSONObject) JSONObject.parse(view);
-            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject parse = JSONUtil.parseObj(view);
+            JSONObject result = JSONUtil.parseObj(parse.get("Result"));
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
             json = (JSONObject)result.get("Result");
             if(!(Boolean) responseStatus.get("IsSuccess")){
