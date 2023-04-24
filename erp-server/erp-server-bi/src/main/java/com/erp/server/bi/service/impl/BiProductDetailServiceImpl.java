@@ -65,8 +65,9 @@ public class BiProductDetailServiceImpl extends SuperServiceImpl<BiProductDetail
      * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
      */
     @Override
-    public List<SkuCategoryVO> getSkuBrandList() {
-        List<BiProductInfoEntity> productList = biProductInfoService.list();
+    public List<SkuCategoryVO> getSkuBrandList(List<String> brandList) {
+        List<BiProductInfoEntity> productList = biProductInfoService.getbrandList(brandList);
+
         Map<String, List<BiProductInfoEntity>> productMap = productList.parallelStream().
                 collect(Collectors.groupingBy(BiProductInfoEntity::getBrandName));
         List<SkuCategoryVO> resultList = new ArrayList<>(productMap.size());
