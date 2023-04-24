@@ -65,6 +65,7 @@
 
     <select id="viewQcForDocument" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
         select
+        qb.id as qcId,
         qb.qc_date as qcDate,
         qb.qc_user_name as qcUserName,
         qb.code as qcCode,

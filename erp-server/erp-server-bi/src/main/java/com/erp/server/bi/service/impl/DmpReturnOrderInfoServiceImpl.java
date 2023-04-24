@@ -17,9 +17,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
@@ -43,7 +41,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -170,32 +167,6 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             this.update(updateWrapper);
         }
     }
-
-    @Override
-    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
-        if (CollectionUtils.isEmpty(entityList)) {
-            return;
-        }
-
-        List<DmpReturnOrderInfoEntity> updateList = new ArrayList<>();
-        entityList.forEach(obj->{
-            List<DmpReturnOrderInfoEntity> list =  this.lambdaQuery()
-                    .eq(DmpReturnOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode())
-                    .ge(DmpReturnOrderInfoEntity::getOrderTime, obj.getSettlementDateBegin())
-                    .le(DmpReturnOrderInfoEntity::getOrderTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
-                    .ne(DmpReturnOrderInfoEntity::getCnySettleRate,obj.getExchangeRate())
-                    .select(DmpReturnOrderInfoEntity::getId)
-                    .list();
-
-            if (org.apache.commons.collections4.CollectionUtils.isEmpty(list)) {
-                return;
-            }
-            list.forEach(e -> e.setCnySettleRate(obj.getExchangeRate()));
-            updateList.addAll(list);
-        });
-        this.updateBatchById(updateList,2000);
-    }
-
 
 }
 

@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.QcProductDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
 import com.erp.server.wms.service.QcProductService;
@@ -36,6 +38,10 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @Resource
     private WmsAttachmentService wmsAttachmentService;
 
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     /**
      * 质检产品信息 暂存
      *
@@ -56,6 +62,14 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         }
         qcProductEntity.setMainId(billId);
         qcProductEntity.setId(id);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(qcProduct.getSkuId()));
+
+        SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(qcProduct.getSkuId())).findFirst().orElse(null);
+        if(skuVO!=null){
+            qcProductEntity.setProductGrade(skuVO.getProductGrade());
+            qcProductEntity.setVariantProperty(skuVO.getVariantProperty());
+            qcProductEntity.setSkuNo(skuVO.getSkuNo());
+        }
         //产品信息
         List<String> productImageNameList = qcProduct.getProductImageNameList();
         List<String> productImageUrlList = qcProduct.getProductImageUrlList();
@@ -82,6 +96,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         QcProductDTO.ViewDTO productView = new QcProductDTO.ViewDTO();
         if (product != null) {
             BeanMapper.copy(product, productView);
+            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(product.getSkuId()));
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(product.getId()));
             List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
@@ -93,6 +108,14 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
 
             productView.setProductImageNameList(productNameList);
             productView.setProductImageUrlList(productImageUrlList);
+            SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(productView.getSkuId())).findFirst().orElse(null);
+            if(skuVO!=null){
+                productView.setProductGrade(skuVO.getProductGrade());
+                productView.setProductName(skuVO.getSpuName());
+                productView.setSkuNo(skuVO.getSkuNo());
+                productView.setVariantProperty(skuVO.getVariantProperty());
+            }
+
         }
 
         return productView;
@@ -112,7 +135,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(QcProductEntity::getMainId,mainIds).list();
+        return this.lambdaQuery().in(QcProductEntity::getMainId, mainIds).list();
     }
 
 

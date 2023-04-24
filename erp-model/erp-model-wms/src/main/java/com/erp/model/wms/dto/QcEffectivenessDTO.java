@@ -191,6 +191,12 @@ public class QcEffectivenessDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewQcForDocumentDTO {
+
+        /**
+         * 质检主键id
+         */
+        private String qcId;
+
         /**
          * 质检时间
          */

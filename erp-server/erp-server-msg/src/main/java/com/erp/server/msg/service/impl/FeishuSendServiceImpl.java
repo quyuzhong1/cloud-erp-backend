@@ -101,7 +101,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             return null;
         }
 
-        MsgResultVO msgResult = new MsgResultVO();
+        MsgResultVO msgResult;
         List<String> receiverUserIds = noticeMsgWrapInfoDTO.getReceiverUserIds();
         noticeMsgWrapInfoDTO.setReceiverUserIds(receiverUserIds.stream().distinct().collect(Collectors.toList()));
         Boolean isBatch = noticeMsgWrapInfoDTO.getReceiverUserIds().size() >  1;

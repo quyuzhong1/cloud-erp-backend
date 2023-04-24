@@ -729,6 +729,11 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer unStockInQty;
 
         /**
+         * 实收数量
+         */
+        private Integer stockInQty;
+
+        /**
          * 超收数量
          */
         private Integer exceedQty;

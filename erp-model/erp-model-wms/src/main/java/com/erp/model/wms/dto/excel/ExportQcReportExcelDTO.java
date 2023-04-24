@@ -25,14 +25,16 @@ public class ExportQcReportExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "质检项", index = 0)
-    private String name;
+    private String qcReportName;
 
     /**
      * 质检内容
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "质检内容", index = 1)
-    private String content;
+    private String qcReportContent;
+
+
 
 
     /**

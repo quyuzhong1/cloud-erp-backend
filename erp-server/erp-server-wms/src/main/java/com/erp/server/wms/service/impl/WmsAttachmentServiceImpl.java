@@ -37,7 +37,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
                 WmsAttachmentEntity entity = new WmsAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
                 if(CollectionUtils.isNotEmpty(attachmentNameList)){
-                    if(nameSize>=i){
+                    if(nameSize>i){
                         entity.setAttachName(attachmentNameList.get(i));
                     }
                 }

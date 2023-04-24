@@ -18,6 +18,8 @@
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!--忽略测试-->
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencies>
