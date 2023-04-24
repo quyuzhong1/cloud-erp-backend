@@ -737,8 +737,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         //获取收货单详情
         List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
-        //获取入库详情
-        List<PurchaseStockInDetailEntity> purchaseStockInDetailEntities = purchaseStockInDetailService.listDetailByPodIds(orderDetailIds);
 
         List<String> collect = detailEntityList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseStockInDetailEntity> stockInDetailEntityListBySource = purchaseStockInDetailService.listDetailBySourceDetailIds(collect);
@@ -765,19 +763,16 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
-
-            Integer stockInQty = purchaseStockInDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer reduce = stockInDetailEntityListBySource.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-            req.setUnStockInQty(purchaseOrderDetailEntity.getPurchaseQty() - stockInQty);
-
             if (req.getReceiveQty() - reduce <= 0) {
+                req.setUnStockInQty(0);
                 req.setStockInQty(0);
             } else {
                 req.setStockInQty(req.getReceiveQty() - reduce);
+                req.setUnStockInQty(req.getReceiveQty() - reduce);
             }
 
-            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            req.setReceiveQty(receiveQty);
+            req.setReceiveQty(req.getReceiveQty());
             req.setExceedQty(req.getExceedQty());
 
         });
