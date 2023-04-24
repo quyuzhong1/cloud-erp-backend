@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Lambda
@@ -40,7 +41,7 @@ public class QcRemarkDTO implements Serializable {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
 
     }
 

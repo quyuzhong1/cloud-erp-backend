@@ -233,6 +233,10 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         for (QcBillDTO.PagingViewDTO item : list) {
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
             item.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
+            //是否内检
+            Boolean isInside = item.getIsInside();
+            String isInsideType=isInside!=null&&isInside?"内部检验":"外部检验";
+            item.setInsideType(isInsideType);
             QcTypeEnum qcTypeEnum = item.getQcType();
             item.setQcTypeName(qcTypeEnum != null ? qcTypeEnum.getName() : "");
             String handleModeDict = item.getHandleModeDict();
@@ -332,7 +336,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
                 excelDTO.setRemark(remark);
                 //是否内检
                 Boolean isInside = item.getIsInside();
-                excelDTO.setInsideType(isInside ? "内部检验" : "外部检验");
+                excelDTO.setInsideType(isInside!=null&&isInside ? "内部检验" : "外部检验");
                 resultList.add(excelDTO);
             }
 
