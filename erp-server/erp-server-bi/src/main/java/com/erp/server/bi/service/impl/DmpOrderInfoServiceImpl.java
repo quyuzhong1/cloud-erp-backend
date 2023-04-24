@@ -884,7 +884,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO ringVo = countSalesVolume(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleCountVO yoyVo = countSalesVolume(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
@@ -908,7 +908,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO ringVo = countOrderQuantity(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleCountVO yoyVo = countOrderQuantity(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
@@ -983,7 +983,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO ringVo = countRefundOrderNum(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleCountVO yoyVo = countRefundOrderNum(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
