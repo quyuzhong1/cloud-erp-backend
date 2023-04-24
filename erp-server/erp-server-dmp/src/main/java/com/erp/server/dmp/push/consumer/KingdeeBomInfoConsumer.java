@@ -1,9 +1,10 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -53,7 +54,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         System.out.println(queryList);
         System.out.println(viewJson);
 
@@ -92,7 +93,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
                 save = apiUtils.save(param);
             } catch (Exception ex) {
                 //新增失败时添加日志及定时任务
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONObject.toJSONString(json),JSONObject.toJSONString(ex),type,ApiSendStatusEnum.FAILURE.getCode());
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONUtil.toJsonStr(json),JSONUtil.toJsonStr(ex),type,ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //新增成功后编辑用量
@@ -120,7 +121,8 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             //给修改json对象赋值ID
             setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
 
-            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
@@ -153,7 +155,7 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
                 JSONObject o2 = (JSONObject)jsonObject.get("FMATERIALIDCHILD");
                 Object fNumber = o2.get("FNumber");
                 if (o1.equals(fNumber)) {
-                    jsonObject.put("FEntryId",queryMap.get("FTreeEntity_FEntryId"));
+                    jsonObject.set("FEntryId",queryMap.get("FTreeEntity_FEntryId"));
                 }
             }
         }

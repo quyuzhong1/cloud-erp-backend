@@ -1,11 +1,12 @@
 package com.erp.server.dmp.push.consumer;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -54,7 +55,7 @@ public class KingdeeAssistantDataDetailConsumer implements RocketMQListener<Map<
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
         viewMap.put("number","SouthChina");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         System.out.println(queryList);
         System.out.println(viewJson);
 
@@ -120,7 +121,8 @@ public class KingdeeAssistantDataDetailConsumer implements RocketMQListener<Map<
             }
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FEntryId",".", id);
-            ArrayList<String> apiFieldList = (ArrayList<String>) json.keySet().stream().collect(Collectors.toList());
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
@@ -140,10 +142,10 @@ public class KingdeeAssistantDataDetailConsumer implements RocketMQListener<Map<
             viewMap.put("number",parentCode);
             JSONObject model;
             try {
-                model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+                model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
             } catch (Exception e) {
                 //更新数据
-                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONArray.toJSONString(viewMap),"未找到上级辅助资料",type, ApiSendStatusEnum.FAILURE.getCode());
+                kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, businessId,JSONUtil.toJsonStr(viewMap),"未找到上级辅助资料",type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             String id = (String) model.get("Id");

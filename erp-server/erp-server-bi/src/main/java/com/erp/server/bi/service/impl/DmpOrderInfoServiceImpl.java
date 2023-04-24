@@ -121,7 +121,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
 //        BigDecimal amount = BigDecimal.ZERO;
-        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 条件存在sku的情况
         // 先查询订单号
 //        query.select("id");
@@ -170,18 +170,19 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Override
     public TargetSaleCountVO countSalesVolume(BiFilterDTO dto) {
-        Integer count = 0;
-        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        // 先查询订单号
-        query.select("id")
-                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
-        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-        if (CollectionUtils.isEmpty(list)) {
-            return new TargetSaleCountVO(count);
-        }
-        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        // 根据订单号获取订单详情，筛选sku
-        count = dmpOrderItemService.countSalesVolume(orderIds, dto.getSku());
+//        Integer count = 0;
+//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+//        // 先查询订单号
+//        query.select("id")
+//                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
+//        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+//        if (CollectionUtils.isEmpty(list)) {
+//            return new TargetSaleCountVO(count);
+//        }
+//        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+//        // 根据订单号获取订单详情，筛选sku
+//        count = dmpOrderItemService.countSalesVolume(orderIds, dto.getSku());
+        Integer count = baseMapper.countSalesVolume(dto);
         return new TargetSaleCountVO(count);
     }
 
@@ -842,7 +843,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
+//        dto.setEndTime(dto.getEndTime());
         TargetSaleSumVO currentVo = sumSales(dto);
         BigDecimal currentAmount = currentVo.getValue();
         if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
@@ -867,7 +868,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
+//        dto.setEndTime(dto.getEndTime());
         TargetSaleCountVO currentVo = countSalesVolume(dto);
         Integer currentAmount = currentVo.getValue();
         if (0 == currentAmount){
@@ -892,7 +893,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
         TargetSaleCountVO currentVo = countOrderQuantity(dto);
         Integer currentAmount = currentVo.getValue();
         if (0 == currentAmount){
