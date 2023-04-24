@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import org.apache.commons.lang3.StringUtils;
@@ -252,6 +253,19 @@ public class WarehouseReceiveController extends BaseController {
     public ApiResult<List<WarehouseReceiveDTO.OrderRefReceiveDTO>> purchaseOrderRefReceive(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
         List<WarehouseReceiveDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = warehouseReceiveService.purchaseOrderRefReceive(purchaseOrderId);
         return success(orderRefReceiveDTOS);
+    }
+
+    /**
+     * 下推收货单保存
+     * @author Will
+     * @date: 2023/3/15 18:26
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generateReceive")
+    public ApiResult generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+        Boolean flag = warehouseReceiveService.generateReceive(dto);
+        return flag == true ? success() : failure();
     }
 
 }

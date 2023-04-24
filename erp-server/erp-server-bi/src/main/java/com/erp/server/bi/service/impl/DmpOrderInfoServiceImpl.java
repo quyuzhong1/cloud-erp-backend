@@ -120,36 +120,26 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
-        BigDecimal amount = BigDecimal.ZERO;
+//        BigDecimal amount = BigDecimal.ZERO;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
-            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-                if (BiFilterDTO.validOriginalCurrency(dto)){
-                    query.select("sum(order_fee) as order_fee");
-                }else {
-                    return new TargetSaleSumVO(amount);
-                }
-            } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
-                query.select("sum(order_fee*settle_rate) as order_fee");
-            } else  {
-                query.select("sum(order_fee*currency_rate) as order_fee");
-            }
-            DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
-            amount = null != dmpOrderInfoEntity?dmpOrderInfoEntity.getOrderFee(): BigDecimal.ZERO;
-        } else {
-            // 条件存在sku的情况
-            // 先查询订单号
-            query.select("id");
-            List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-            if (CollectionUtils.isEmpty(list)) {
-                return new TargetSaleSumVO(amount);
-            }
-            List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-            // 根据订单号获取订单详情，筛选sku
-            amount = dmpOrderItemService.sumSales(orderIds, dto);
+        // 条件存在sku的情况
+        // 先查询订单号
+//        query.select("id");
+//        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+//        if (CollectionUtils.isEmpty(list)) {
+//            return new TargetSaleSumVO(amount);
+//        }
+//        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+//        // 根据订单号获取订单详情，筛选sku
+//        amount = dmpOrderItemService.sumSales(orderIds, dto);
+        Integer flag = null;
+        if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
+            flag = 1;
         }
+        BigDecimal amount = baseMapper.sumSales(dto, flag);
         return new TargetSaleSumVO(amount.setScale(4, BigDecimal.ROUND_DOWN));
     }
+
 
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
@@ -376,7 +366,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(order_fee*currency_rate,0)) as order_fee", groupByStr);
+        qw.select("SUM(COALESCE(amount_after,0)) as order_fee", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getQuarterResultList(quarterTargetMap,new HashMap<>(4),start.getYear());
@@ -480,7 +470,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(order_fee*currency_rate, 0)) as order_fee", groupByStr);
+        qw.select("SUM(COALESCE(order_fee, 0)) as order_fee", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getMonthResultList(monthTargetMap, new HashMap<>(4),start.getYear());

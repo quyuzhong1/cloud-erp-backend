@@ -72,4 +72,12 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      **/
     List<WorkOptionDTO.StageViewDTO> stageView();
 
+    /**
+     * 移除
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:03
+     * @param id id
+     * @return java.lang.Boolean
+     **/
+    Boolean delete(String id);
 }

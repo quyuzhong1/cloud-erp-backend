@@ -75,7 +75,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
         if (ObjectUtil.isNotEmpty(myWorkOptionDTOS)) {
-            collect = myWorkOptionDTOS.stream().map(WorkOptionDTO.MyWorkOptionDTO::getId).collect(Collectors.toList());
+            collect = myWorkOptionDTOS.stream().map(WorkOptionDTO.MyWorkOptionDTO::getModuleStatusId).collect(Collectors.toList());
         }
         for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
             req.setName(req.getModuleClassify() + "-" + req.getModuleStatusName());
@@ -222,6 +222,18 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.StageViewDTO> stageViewDTOS = plmTaskFeign.stageView(userInfo.getUid());
         return stageViewDTOS;
+    }
+
+    /**
+     * 删除
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:03
+     * @param id id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean delete(String id) {
+        return this.removeById(id);
     }
 
     private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {

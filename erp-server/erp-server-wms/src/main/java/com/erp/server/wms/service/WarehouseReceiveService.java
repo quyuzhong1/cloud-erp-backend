@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.apache.ibatis.annotations.Param;
@@ -183,4 +184,13 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Integer
      **/
     List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId);
+
+    /**
+     * 采购订单-下推收货单保存按钮
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:54
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
 }

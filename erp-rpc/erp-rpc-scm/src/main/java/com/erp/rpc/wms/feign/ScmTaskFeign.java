@@ -29,6 +29,16 @@ public interface ScmTaskFeign {
     PurchaseOrderEntity getPurchaseOrderById(@RequestBody String id);
 
     /**
+     * 根据ids查询采购订单
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     **/
+    @PostMapping("feign/purchaseOrder/listPurchaseOrderByIds")
+    List<PurchaseOrderEntity> listPurchaseOrderByIds(@RequestBody List<String> ids);
+
+    /**
      * 根据采购订单id查询供应商
      * @Author Luo_WG
      * @Date 2023/4/13 11:20

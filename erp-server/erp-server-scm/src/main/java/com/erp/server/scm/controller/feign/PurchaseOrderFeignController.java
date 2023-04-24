@@ -53,6 +53,20 @@ public class PurchaseOrderFeignController {
         return purchaseOrderService.getById(id);
     }
 
+
+    /**
+     * 根据ids查询采购订单
+     *
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     **/
+    @PostMapping("/listPurchaseOrderByIds")
+    public List<PurchaseOrderEntity> listPurchaseOrderByIds(@RequestBody List<String> ids) {
+        return purchaseOrderService.listByIds(ids);
+    }
+
     /**
      * 根据采购订单id查询供应商
      *
