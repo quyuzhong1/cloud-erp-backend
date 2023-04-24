@@ -220,6 +220,21 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         return id;
     }
 
+    /**
+     * 当质检单 质检类型为b2b 是
+     * 批量生成入库单
+     * @author yl
+     * @date 2023-04-24 15:08
+     * @param list
+     * @return java.lang.Boolean
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAdd(List<PurchaseStockInDTO.AddDTO> list) {
+
+        return true;
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
