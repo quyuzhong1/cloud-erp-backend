@@ -1,10 +1,39 @@
-*.iml
+HELP.md
+target/
+logs/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
 .idea
-target
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+### VS Code ###
+.vscode/
+*.env
 *.log
+*.jar
+*.xml
 erp-common/erp-common-business/mvnw
 erp-common/erp-common-business/mvnw.cmd
 erp-common/erp-common-business/.mvn/
-*.env
-**/rebel.xml
-*.jar
