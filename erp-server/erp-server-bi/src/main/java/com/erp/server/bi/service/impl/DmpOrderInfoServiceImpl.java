@@ -859,7 +859,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleSumVO ringVo = sumSales(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleSumVO yoyVo = sumSales(dto);
 
         return new TargetSaleAndYoySumVO(currentVo, ringVo, yoyVo);
