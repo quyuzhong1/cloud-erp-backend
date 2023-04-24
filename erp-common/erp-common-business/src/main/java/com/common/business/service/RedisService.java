@@ -1,5 +1,6 @@
 package com.common.business.service;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundSetOperations;
 import org.springframework.data.redis.core.HashOperations;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * @Created by yl
  */
 @Component
-public class RedisService {
+public class RedisService implements InitializingBean {
 
 
     @Autowired
@@ -235,5 +236,10 @@ public class RedisService {
     public Boolean setNx(String key, Object value, long timeout, final TimeUnit unit) {
         Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
         return result != null && result;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println(redisTemplate);
     }
 }

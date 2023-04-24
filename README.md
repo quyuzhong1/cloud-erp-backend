@@ -90,3 +90,17 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+
+##项目端口
+erp-gateway    9000
+erp-admin      9010
+erp-sys        9020
+erp-auth       9030
+erp-workflow   9040
+erp-plm        9050
+erp-dmp        9060
+erp-bi         9070
+erp-scm        9080
+erp-wms        9090
+erp-msg        9100

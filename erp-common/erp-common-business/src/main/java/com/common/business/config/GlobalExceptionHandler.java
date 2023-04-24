@@ -5,6 +5,7 @@ import com.alibaba.excel.util.StringUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -116,6 +117,16 @@ public class GlobalExceptionHandler {
             return ApiResult.error(ApiError.ERROR_1024.code, StrUtil.format("数据【{}】重复，请修改后再提交",duplicateKey));
         } else {
             return ApiResult.error(ApiError.ERROR_1024);
+        }
+    }
+
+    @ExceptionHandler(value = IllegalMonitorStateException.class)
+    public ApiResult resolveException(IllegalMonitorStateException ex) {
+        log.error("系统异常:", ex);
+        if (StrUtils.isNotEmpty(ex.getMessage()) && ex.getMessage().contains("attempt to unlock lock, not locked by current thread by node id")) {
+            return ApiResult.error(ApiError.ERROR_1026);
+        } else {
+            return ApiResult.error(ApiError.Default);
         }
     }
 

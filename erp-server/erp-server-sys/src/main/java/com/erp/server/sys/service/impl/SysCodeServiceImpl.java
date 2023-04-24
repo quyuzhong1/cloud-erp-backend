@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.service.RedisLock;
+import com.common.business.enums.DistributedLockEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -16,14 +16,18 @@ import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
 import com.erp.server.sys.mapper.SysCodeMapper;
 import com.erp.server.sys.service.SysCodeService;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Will
@@ -31,27 +35,27 @@ import java.util.Date;
  * @description: TODO
  * @date 2022/11/21 11:35
  */
+@Slf4j
 @Service
 public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity>  implements SysCodeService {
 
-    @Resource
-    private RedisLock redisLock;
-
-    /**
-     * 系统编号的缓存锁
-     */
-    public static final String LOCK_SYS_CODE = "lock:sys_code:";
+    @Autowired
+    private RedissonClient redisson;
 
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String getSkuNo(SysCodeSkuDTO dto) {
         //加锁
-        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
-        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
-            throw new ServiceException(ApiError.ERROR_9026);
-        }
+        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
+        boolean isLock;
         try {
+            // 内部会自动续期
+            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            log.info("是否获取到锁: {}", isLock);
+            if (!isLock) {
+                throw new ServiceException(ApiError.ERROR_1026);
+            }
             SysCodeDTO sysCodeDto = new SysCodeDTO();
             BeanMapperUtils.copy(dto,sysCodeDto);
             //生成单号
@@ -69,9 +73,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(sysCodeDto.getId(),sysCodeDto.getNum());
             return sysCode.toString();
+        } catch (InterruptedException e) {
+            log.error("生成单号获取锁异常",e);
+            throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //解锁
-            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+            //释放锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
+                lock.unlock(); // 释放锁
+            }
         }
     }
 
@@ -79,11 +88,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String getSpuNo(SysCodeDTO dto) {
         //加锁
-        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
-        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
-            throw new ServiceException(ApiError.ERROR_9026);
-        }
+        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
+        boolean isLock;
         try {
+            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            log.info("是否获取到锁: {}", isLock);
+            if (!isLock) {
+                throw new ServiceException(ApiError.ERROR_1026);
+            }
             //生成单号
             getOrSaveSysCode(dto);
             StringBuffer sysCode = new StringBuffer();
@@ -95,9 +107,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
+        } catch (InterruptedException e) {
+            log.error("生成单号获取锁异常",e);
+            throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //解锁
-            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+            //释放锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
+                lock.unlock(); // 释放锁
+            }
         }
     }
 
@@ -105,11 +122,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String getSeqNo(SysCodeDTO dto) {
         //加锁
-        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
-        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
-            throw new ServiceException(ApiError.ERROR_9026);
-        }
+        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
+        boolean isLock;
         try {
+            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            log.info("是否获取到锁: {}", isLock);
+            if (!isLock) {
+                throw new ServiceException(ApiError.ERROR_1026);
+            }
             //生成单号
             getOrSaveSysCode(dto);
             StringBuffer sysCode = new StringBuffer();
@@ -121,9 +141,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
+        } catch (InterruptedException e) {
+            log.error("生成单号获取锁异常",e);
+            throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //解锁
-            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+            //释放锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
+                lock.unlock(); // 释放锁
+            }
         }
     }
 
@@ -132,11 +157,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public String getBusinessNo(SysCodeDTO dto) {
         //加锁
-        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
-        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
-            throw new ServiceException(ApiError.ERROR_9026);
-        }
+        RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
+        boolean isLock;
         try {
+            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            log.info("是否获取到锁: {}", isLock);
+            if (!isLock) {
+                throw new ServiceException(ApiError.ERROR_1026);
+            }
             //生成单号
             getOrSaveSysCode(dto);
             //判断最后修改日期是否是当天，不是则重置num
@@ -154,9 +182,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
+        }  catch (InterruptedException e) {
+            log.error("生成单号获取锁异常",e);
+            throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //解锁
-            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+            //释放锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
+                lock.unlock(); // 释放锁
+            }
         }
     }
 
