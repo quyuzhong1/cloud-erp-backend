@@ -561,7 +561,7 @@ public class QcBillDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class AssignDTO {
+    public static class AssignDTO {
 
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
