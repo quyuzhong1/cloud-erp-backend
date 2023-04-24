@@ -5,7 +5,7 @@
     <select id="skuMatrix" resultType="com.erp.model.bi.vo.SkuMatrixVO">
         SELECT
             CONCAT(sku.sku_no,'[', sku.name_cn, ']') AS name,
-            COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales,
+            COALESCE(SUM(doit.amount_after), 0) AS sales,
             COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0)as amount
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
@@ -101,7 +101,7 @@
     <select id="shopMatrix" resultType="com.erp.model.bi.vo.MatrixVO">
         SELECT
             shop."name" AS name,
-            SUM(doit.sell_price*doit.quantity) AS sales,
+            SUM(doit.amount_after) AS sales,
             0 AS netProfit
         FROM dmp_shop_info shop
         LEFT JOIN dmp_order_info doi ON shop.plarform_shop_no = doi.shop_no
@@ -196,7 +196,7 @@
             date_part('YEAR', doi.platform_create_time) AS year,
             shop."name" AS name,
             shop.plarform_shop_no AS shop_no,
-            SUM(doit.sell_price*doit.quantity) AS sales
+            SUM(doit.amount_after) AS sales
         FROM dmp_order_info doi
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
@@ -289,7 +289,7 @@
     <select id="categoryMatrix" resultType="com.erp.model.bi.vo.SkuMatrixVO">
         SELECT
             sku.parent_category_name AS name,
-            COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales,
+            COALESCE(SUM(doit.amount_after), 0) AS sales,
             COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0) as amount
             FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
@@ -387,7 +387,7 @@
             sku.sku_no AS name,
             sku.name_cn as productName,
             COALESCE(SUM(doit.quantity),0) AS salesQuantity,
-            COALESCE(SUM(doit.sell_price*doit.quantity),0) AS saleAmount,
+            COALESCE(SUM(doit.amount_after),0) AS saleAmount,
             COALESCE(SUM(droi.order_fee),0) AS returnOrderAmount,
             COALESCE(SUM(dri.refund_amount),0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
@@ -488,7 +488,7 @@
     <select id="skuYearSaleAmount" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
         SELECT
             sku.sku_no AS name,
-            SUM(doit.sell_price*doit.quantity) AS amount
+            SUM(doit.amount_after) AS amount
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
@@ -505,7 +505,7 @@
 
     <select id="yearSaleAmount" resultType="java.math.BigDecimal">
         SELECT
-            SUM(doit.sell_price*doit.quantity) AS saleAmount
+            SUM(doit.amount_after) AS saleAmount
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
@@ -542,7 +542,7 @@
         SELECT
         dsi.name AS name,
         SUM(doit.quantity) AS salesQuantity,
-        SUM(doit.sell_price*doit.quantity) AS saleAmount,
+        SUM(doit.amount_after) AS saleAmount,
         SUM(droi.order_fee) AS returnOrderAmount,
         SUM(dri.refund_amount) AS refundAmount,
         count(dri.platform_order_id) refundOrderQty
@@ -641,7 +641,7 @@
     <select id="shopYearSaleAmount" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
         SELECT
         dsi.name AS name,
-        SUM(doit.sell_price*doit.quantity) AS amount
+        SUM(doit.amount_after) AS amount
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
@@ -661,7 +661,7 @@
         SELECT
             dsi.charge_name AS name,
             COALESCE(SUM(doit.quantity), 0) AS salesQuantity,
-            COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS saleAmount,
+            COALESCE(SUM(doit.amount_after), 0) AS saleAmount,
             COALESCE(SUM(droi.order_fee), 0) AS returnOrderAmount,
             COALESCE(SUM(dri.refund_amount), 0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
@@ -758,7 +758,7 @@
     <select id="userYearSaleAmount" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
         SELECT
             dsi.charge_name AS name,
-            SUM(doit.sell_price*doit.quantity) AS amount
+            SUM(doit.amount_after) AS amount
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
@@ -779,7 +779,7 @@
             <include refid="date_type_condition_params"/>
             AS name,
             COALESCE(SUM(doit.quantity), 0) AS salesQuantity,
-            COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS saleAmount,
+            COALESCE(SUM(doit.amount_after), 0) AS saleAmount,
             COALESCE(SUM(droi.order_fee), 0) AS returnOrderAmount,
             COALESCE(SUM(dri.refund_amount), 0)AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
@@ -880,7 +880,7 @@
         SELECT
         <include refid="date_type_condition"/>
          AS name,
-        SUM(doit.sell_price*doit.quantity) AS amount
+        SUM(doit.amount_after) AS amount
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
@@ -901,7 +901,7 @@
 
     <select id="yearSaleAmountBySku" resultType="java.math.BigDecimal">
         SELECT
-        SUM(doit.sell_price*doit.quantity) AS saleAmount
+        SUM(doit.amount_after) AS saleAmount
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
@@ -976,7 +976,7 @@
         SELECT
             to_char(doi.platform_create_time, 'YYYY-MM-dd') as date,
             COALESCE(sum(doit.quantity), 0)AS salesQuantity,
-            COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales
+            COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
@@ -1077,7 +1077,7 @@
         concat(to_char((doi.platform_create_time::DATE - INTERVAL '1 day' - ( EXTRACT ( dow FROM ( doi.platform_create_time::DATE - INTERVAL '1 day' ) ) - 1 || ' day' ) :: INTERVAL ),'yyyy-mm-dd'),
         '~',to_char(doi.platform_create_time::DATE  +cast(-1*(TO_NUMBER(to_char(doi.platform_create_time::DATE ,'D'),'99')-2) + 6 ||' days' as interval),'yyyy-mm-dd'))as date,
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
-        COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales
+        COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
@@ -1175,7 +1175,7 @@
         SELECT
             to_char(platform_create_time,'yyyy-MM') as date,
             COALESCE(sum(doit.quantity), 0)AS salesQuantity,
-            COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales
+            COALESCE(SUM(doit.amount_after), 0) AS sales
             FROM dmp_shop_info dsi
             LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
             LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
@@ -1273,7 +1273,7 @@
         SELECT
         concat(to_char(platform_create_time,'yyyy'),' Q', (cast(to_char(platform_create_time,'MM') as integer) -1) / 3 +1) as date ,
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
-        COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales
+        COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
@@ -1373,7 +1373,7 @@
         SELECT
         to_char(platform_create_time,'yyyy') as date,
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
-        COALESCE(SUM(doit.sell_price*doit.quantity), 0) AS sales
+        COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
         LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id

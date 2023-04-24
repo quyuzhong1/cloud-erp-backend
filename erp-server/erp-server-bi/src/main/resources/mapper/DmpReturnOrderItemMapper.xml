@@ -14,13 +14,13 @@
     <select id="sumReturnAmountBySku" resultType="java.math.BigDecimal">
         select
             <if test="settleMethod == 2">
-                SUM(droi.sell_price*droi.quantity)
+                SUM(droi.amount_after)
             </if>
             <if test="settleMethod == 0">
-                SUM(droi.sell_price*droi.quantity*dro.currency_rate)
+                SUM(droi.amount_after*dro.currency_rate)
             </if>
             <if test="settleMethod == 1">
-                SUM(droi.sell_price*droi.quantity*dro.cny_settle_rate)
+                SUM(droi.amount_after*dro.cny_settle_rate)
             </if>
         from dmp_return_order_item as droi
         LEFT JOIN dmp_return_order_info as dro on dro.return_order_id = droi."id"

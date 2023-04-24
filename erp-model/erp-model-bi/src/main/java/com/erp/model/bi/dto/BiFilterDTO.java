@@ -112,7 +112,7 @@ public class BiFilterDTO extends PermissionsDTO {
 
 
     public LocalDateTime getEndTime() {
-        return LocalDateTime.of(endTime.toLocalDate(), LocalTime.MIN);
+        return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
     }
 
     /**

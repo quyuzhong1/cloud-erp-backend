@@ -82,26 +82,26 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     public BigDecimal sumRefundAmount(List<String> orderIds, BiFilterDTO dto) {
 // 没有sku情况
         BigDecimal amount = BigDecimal.ZERO;
-        QueryWrapper<DmpReturnOrderInfoEntity> query = new QueryWrapper<>();
+//        QueryWrapper<DmpReturnOrderInfoEntity> query = new QueryWrapper<>();
 
-        if(CollectionUtils.isEmpty(dto.getSku())){
-            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-                if (BiFilterDTO.validOriginalCurrency(dto)){
-                    query.select("sum(order_fee) as order_fee");
-                }else {
-                    return BigDecimal.ZERO;
-                }
-            }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
-                query.select("sum(order_fee*cny_settle_rate) as order_fee");
-            }else{
-                query.select("sum(order_fee*currency_rate) as order_fee");
-            }
-            DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = baseMapper.selectOne(query);
-            amount = dmpReturnOrderInfoEntity.getOrderFee();
-        }else {
+//        if(CollectionUtils.isEmpty(dto.getSku())){
+//            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+//                if (BiFilterDTO.validOriginalCurrency(dto)){
+//                    query.select("sum(order_fee/currency_rate) as order_fee");
+//                }else {
+//                    return BigDecimal.ZERO;
+//                }
+//            }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
+//                query.select("sum(order_fee/cny_settle_rate) as order_fee");
+//            }else{
+//                query.select("sum(order_fee) as order_fee");
+//            }
+//            DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = baseMapper.selectOne(query);
+//            amount = dmpReturnOrderInfoEntity.getOrderFee();
+//        }else {
             // 根据订单号获取订单详情，筛选sku
             amount = dmpReturnOrderItemService.sumReturnAmountBySKu(dto);
-        }
+//        }
         return amount;
     }
 
