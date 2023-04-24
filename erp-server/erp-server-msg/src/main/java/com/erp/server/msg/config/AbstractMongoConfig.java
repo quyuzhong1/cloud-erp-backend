@@ -18,7 +18,7 @@ public abstract class AbstractMongoConfig {
 
 	private String getPropertyUriAsString(ConfigurableEnvironment env, String key, String defaultVal) {
 		String k = "spring.data."+key+".mongodb.uri";
-        log.info("环境：{},数据库：{}",env.getProperty("spring.profiles.active"),key);
+        log.info("环境：{},数据库：{},{}",env.getProperty("spring.profiles.active"),key,k);
 		return ObjectUtils.isEmpty(env.getProperty(k))?defaultVal:env.getProperty(k);
 	}
 
