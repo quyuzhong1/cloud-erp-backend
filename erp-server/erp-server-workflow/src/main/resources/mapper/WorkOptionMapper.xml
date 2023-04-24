@@ -54,7 +54,7 @@
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
-        WHERE wo.type = '1'
+        WHERE wo.is_deleted = FALSE AND wo.type = '1'
             <if test="optionUserId != null and optionUserId != ''">
                 AND wo.option_user_id = #{optionUserId}
             </if>
@@ -73,7 +73,7 @@
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
-        WHERE wo.type = '2'
+        WHERE wo.is_deleted = FALSE AND wo.type = '2'
         <if test="optionUserId != null and optionUserId != ''">
             AND wo.option_user_id = #{optionUserId}
         </if>
