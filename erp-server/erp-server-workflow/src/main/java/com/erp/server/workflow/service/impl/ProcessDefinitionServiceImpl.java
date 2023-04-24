@@ -40,19 +40,19 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Override
     public boolean saveOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         // 查询数据是否存在
-        Optional<ProcessDefinitionEntity> entityOptional = getByIdOpt(dto.getId());
+        ProcessDefinitionEntity entity = getById(dto.getId());
         // dto转换为 processDefinitionEntity 和 processBusinessEntity 两个实体
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
         ProcessBusinessEntity processBusinessEntity = new ProcessBusinessEntity(dto);
         // 不存在则新增
-        if (!entityOptional.isPresent()) {
+        if (null == entity) {
             // 保存 processDefinitionEntity
-            if (!save(processDefinitionEntity) && processBusinessService.save(processBusinessEntity)) {
+            if (!(save(processDefinitionEntity) && processBusinessService.save(processBusinessEntity))) {
                 throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
             }
         }else {
             // 存在则更新
-            processDefinitionEntity.setId(entityOptional.get().getId());
+            processDefinitionEntity.setId(entity.getId());
             // 更新 processDefinitionEntity
             if (!updateById(processDefinitionEntity)) {
                 throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);

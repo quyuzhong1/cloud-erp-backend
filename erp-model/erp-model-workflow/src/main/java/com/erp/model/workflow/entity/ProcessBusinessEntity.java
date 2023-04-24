@@ -58,7 +58,7 @@ public class ProcessBusinessEntity extends BaseEntity<ProcessBusinessEntity> {
     public static final String DISABLED = "disabled";
 
     public ProcessBusinessEntity(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
-        this.processDefinitionId  = dto.getId ();
+        this.processDefinitionId  = dto.getId();
         this.businessKey = dto.getBusinessKey();
     }
 

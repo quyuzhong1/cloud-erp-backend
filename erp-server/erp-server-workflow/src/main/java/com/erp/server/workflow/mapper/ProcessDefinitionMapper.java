@@ -6,6 +6,7 @@ import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -18,5 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProcessDefinitionMapper extends BaseMapper<ProcessDefinitionEntity> {
 
-    IPage<ProcessDefinitionDTO.ListDTO> paging(Page query, ProcessDefinitionDTO.QueryDTO params);
+    IPage<ProcessDefinitionDTO.ListDTO> paging(@Param("page") Page page, @Param("params") ProcessDefinitionDTO.QueryDTO params);
 }
