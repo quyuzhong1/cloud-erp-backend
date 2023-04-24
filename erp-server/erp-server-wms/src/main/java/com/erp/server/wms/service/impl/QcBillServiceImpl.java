@@ -726,6 +726,9 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         List<QcBillEntity> qcList = this.listByIds(ids);
+        if(CollectionUtils.isEmpty(qcList)){
+            throw new ServiceException(ApiError.ERROR_99015);
+        }
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99018);
