@@ -17,11 +17,9 @@ import com.erp.server.bi.service.DmpRefundInfoService;
 import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -50,9 +48,8 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(JSONObject jsonObject) {
-        List<BiSettlementExchangeRateEntity> entityList = (List<BiSettlementExchangeRateEntity>)jsonObject.get("list");
+        List<BiSettlementExchangeRateEntity> entityList = JSONArray.parseArray(JSONUtil.toJsonStr(jsonObject.get("list")),BiSettlementExchangeRateEntity.class);
         //更新销售数据中的启用日期后的店铺业务负责人
         updateSaleCurrency(entityList);
         //更新退款数据中的启用日期后的店铺业务负责人
@@ -138,7 +135,7 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
     }
 
 
-    public void update (List all, int start, int end,Integer type){
+    public void update (List<?> all, int start, int end,Integer type){
 
         if(all.size() <= end){
             end = all.size();
@@ -148,7 +145,7 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
         }
 
         //截取start ~ end条数据
-        List<T> collect = all.subList(start, end);
+        List<?> collect = all.subList(start, end);
         if(CollUtil.isEmpty(collect)){
             return;
         }
@@ -156,7 +153,7 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
         //批量更新数据的方法
         updateList(collect,type);
         //递归 每次插入1500条数据，这里1500写死了，就是不灵活的地方
-        update(all,start + 1500,end + 1500,type);
+        update(all,start + 1000,end + 1000,type);
     }
 
 
@@ -164,17 +161,17 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
     /**
      * 更新订单
      */
-    private void updateList (List<T> collect,Integer type) {
+    private void updateList (List<?> collect,Integer type) {
         if (MathUtil.ONE.equals(type)) {
-            List<DmpOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpOrderInfoEntity.class);
+            List<DmpOrderInfoEntity> list = (List<DmpOrderInfoEntity>)collect;
             dmpOrderInfoService.updateBatchById(list);
         }
         if (MathUtil.TWO.equals(type)) {
-            List<DmpRefundInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpRefundInfoEntity.class);
+            List<DmpRefundInfoEntity> list = (List<DmpRefundInfoEntity>)collect;
             dmpRefundInfoService.updateBatchById(list);
         }
         if (MathUtil.THREE.equals(type)) {
-            List<DmpReturnOrderInfoEntity> list = JSONArray.parseArray(JSONUtil.toJsonStr(collect),DmpReturnOrderInfoEntity.class);
+            List<DmpReturnOrderInfoEntity> list = (List<DmpReturnOrderInfoEntity>)collect;
             dmpReturnOrderInfoService.updateBatchById(list);
         }
     }

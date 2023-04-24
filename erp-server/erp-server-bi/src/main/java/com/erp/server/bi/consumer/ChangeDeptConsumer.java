@@ -15,7 +15,6 @@ import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -29,14 +28,13 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, selectorExpression = "shop_info_change_dept_tag", consumerGroup = RocketMqConsumerGroup.SHOP_INFO_CHANGE)
+@RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, selectorExpression = "shop_info_change_dept_tag", consumerGroup = RocketMqConsumerGroup.SHOP_INFO_CHANGE_DEPT)
 public class ChangeDeptConsumer implements RocketMQListener<JSONObject> {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(JSONObject jsonObject) {
 
         String chargeId = (String)jsonObject.get("chargeId");
