@@ -758,5 +758,17 @@ public class PurchaseReturnOrderDTO {
          */
         private String currencySymbol;
 
+        /**
+         * 实退数量
+         */
+        private Integer realityReturnQty;
+
+
+        /**
+         * 扣款数量
+         */
+        private Integer deductAmountQty;
+
+
     }
 }

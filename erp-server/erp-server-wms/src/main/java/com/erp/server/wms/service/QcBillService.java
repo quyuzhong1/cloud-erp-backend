@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.QcBillDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.QcBillEntity;
@@ -172,4 +173,14 @@ public interface QcBillService extends SuperService<QcBillEntity> {
      * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
+
+    
+    /**
+     * 下推退货单
+     * @author yl
+     * @date 2023-04-24 9:35
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
 }
