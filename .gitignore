@@ -8,3 +8,4 @@ erp-common/erp-common-business/.mvn/
 *.env
 **/rebel.xml
 *.jar
+*.yml
