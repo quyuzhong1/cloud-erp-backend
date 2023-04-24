@@ -108,8 +108,6 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
     private PurchaseStockInDetailService purchaseStockInDetailService;
 
 
-
-
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
@@ -131,7 +129,11 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(),dto.getQcDeptId(),bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+
+        String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
+        //检查采购价目明细
+        checkPurchaseOrderDetailId(dto.getPurchaseOrderId(),purchaseOrderDetailId);
 
         QcBillStatusEnum waitQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.WAIT_QC.getCode());
         bill.setQcStatus(waitQc);
@@ -381,6 +383,11 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         //采购订单
         String purchaseOrderId = dto.getPurchaseOrderId();
+
+        String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
+        //检查采购价目明细
+        checkPurchaseOrderDetailId(purchaseOrderId,purchaseOrderDetailId);
+
         Boolean isExist = StringUtils.isNotBlank(purchaseOrderId);
         //检查质检数量
         checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
@@ -392,7 +399,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         BeanMapper.copy(dto, bill);
         //处理相关数据
-        HandleData(dto.getQcUserId(),dto.getQcDeptId(),bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
         String code = bill.getCode();
         if (StringUtils.isBlank(code)) {
             code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
@@ -442,6 +449,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
 
     /**
      * 处理相关数据
+     *
      * @param qcUserId
      * @param qcDeptId
      * @param entity
@@ -572,7 +580,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
         //处理相关数据
-        HandleData(dto.getQcUserId(),dto.getQcDeptId(),bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
         //采购订单
         String purchaseOrderId = dto.getPurchaseOrderId();
         if (StringUtils.isNotBlank(purchaseOrderId)) {
@@ -620,12 +628,18 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             String id = IdWorker.getIdStr();
             qcInfo.setId(id);
         }
+
+
+        //采购订单id
+        String purchaseOrderId = dto.getPurchaseOrderId();
+        String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
+        //检查采购价目明细
+        checkPurchaseOrderDetailId(purchaseOrderId,purchaseOrderDetailId);
+
         //免检设置为0
         qcInfo.setQcBadQty(0);
         qcInfo.setQcGoodQty(0);
         qcInfo.setQcQty(0);
-        //采购订单
-        String purchaseOrderId = dto.getPurchaseOrderId();
         Boolean isExist = StringUtils.isNotBlank(purchaseOrderId);
         //检查质检数量
         checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
@@ -637,7 +651,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         BeanMapper.copy(dto, bill);
         //处理相关数据
-        HandleData(dto.getQcUserId(),dto.getQcDeptId(),bill);
+        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
         String code = bill.getCode();
         if (StringUtils.isBlank(code)) {
             code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
@@ -684,6 +698,15 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
         }
         return result;
+    }
+
+    private void checkPurchaseOrderDetailId(String purchaseOrderId, String purchaseOrderDetailId) {
+        //当采购订单id 不为空的时候 采购明细也不能为空
+        if (StringUtils.isNotBlank(purchaseOrderId)) {
+            if (StringUtils.isBlank(purchaseOrderDetailId)) {
+                throw new ServiceException(ApiError.ERROR_99006);
+            }
+        }
     }
 
 

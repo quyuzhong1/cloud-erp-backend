@@ -78,7 +78,7 @@ public class QcInfoDTO {
         /**
          * 采购订单明细id 不能为空
          */
-        @NotBlank(message = "质检不良量不能为空")
+        //@NotBlank(message = "采购订单明细id 不能为空")
         private String purchaseOrderDetailId;
 
 
@@ -239,6 +239,12 @@ public class QcInfoDTO {
          * 处理措施名
          */
         private String handleModeName;
+
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
 
 
     }

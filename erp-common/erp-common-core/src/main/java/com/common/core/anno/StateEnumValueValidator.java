@@ -94,12 +94,18 @@ public class StateEnumValueValidator implements ConstraintValidator<StateEnumVal
      * @return
      */
     private Object getGetMethodByField(Object obj, String field) throws InvocationTargetException, IllegalAccessException {
-        Method[] methods = obj.getClass().getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            if (("get" + field).toLowerCase().equals(methods[i].getName().toLowerCase())) {
-                return methods[i].invoke(obj);
+        if (obj instanceof Enum) {
+            Method[] methods = obj.getClass().getMethods();
+            for (int i = 0; i < methods.length; i++) {
+                if (("get" + field).toLowerCase().equals(methods[i].getName().toLowerCase())) {
+                    return methods[i].invoke(obj);
+                }
             }
+        } else {
+            return obj;
         }
+
+
         return null;
     }
 }
