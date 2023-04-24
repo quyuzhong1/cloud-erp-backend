@@ -11,6 +11,7 @@ import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.ModelTypeEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
@@ -20,10 +21,14 @@ import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +56,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 待办模块-模块分类下拉
@@ -189,7 +197,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public List<WorkOptionDTO.StageViewDTO> stageView() {
         LoginUser userInfo = commonService.getUserInfo();
-        List<WorkOptionDTO.StageViewDTO> stageViewDTOS = baseMapper.stageView(userInfo.getUid());
+        List<WorkOptionDTO.StageViewDTO> stageViewDTOS = plmTaskFeign.stageView(userInfo.getUid());
         return stageViewDTOS;
     }
 
@@ -202,6 +210,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
         Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
+                .getRequestAttributes()).getRequest();
+        String localAddr = request.getLocalAddr();
+        int serverPort = request.getServerPort();
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());

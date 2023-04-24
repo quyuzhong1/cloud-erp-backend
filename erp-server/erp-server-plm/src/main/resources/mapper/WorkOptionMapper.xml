@@ -5,4 +5,23 @@
     <select id="getTableNum" resultType="integer">
        SELECT 0
     </select>
+
+
+    <select id="stageView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$StageViewDTO">
+        SELECT
+        COUNT(*),
+        pt.phase_name AS stageName
+        FROM
+        project_task pt
+        INNER JOIN project_info pi ON pt.product_id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN project_phase pp ON pt.phase_id = pp."id" AND pt.is_deleted = FALSE
+        WHERE pi.project_status NOT IN (3) AND pp.is_deleted = FALSE
+        AND pt.product_id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted = FALSE)
+        <if test="optionUserId != null and optionUserId != ''">
+            AND pt.charge_id = #{optionUserId}
+        </if>
+        GROUP BY
+        pt.phase_name ,
+        pp.is_deleted
+    </select>
 </mapper>

@@ -35,9 +35,14 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_PURCHASE_APPLICATION_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_application_order";
 
     /**
-     * 店铺变更
+     * 店铺变更负责人
      */
-    public static final String SHOP_INFO_CHANGE = "${spring.profiles.active}-shop_info_change";
+    public static final String SHOP_INFO_CHANGE_CHARGE = "${spring.profiles.active}-shop_info_change_charge";
+
+    /**
+     * 店铺变更部门
+     */
+    public static final String SHOP_INFO_CHANGE_DEPT = "${spring.profiles.active}-shop_info_change_dept";
 
     /**
      * 汇率变更

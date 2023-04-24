@@ -21,7 +21,6 @@ import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -35,7 +34,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, selectorExpression = "shop_info_change_charge_tag", consumerGroup = RocketMqConsumerGroup.SHOP_INFO_CHANGE)
+@RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_UPDATE_TOPIC, selectorExpression = "shop_info_change_charge_tag", consumerGroup = RocketMqConsumerGroup.SHOP_INFO_CHANGE_CHARGE)
 public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
 
     @Resource
@@ -50,7 +49,6 @@ public class ChangeChargeConsumer implements RocketMQListener<JSONObject> {
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void onMessage(JSONObject jsonObject) {
 
         String shopNo = (String)jsonObject.get("shopNo");
