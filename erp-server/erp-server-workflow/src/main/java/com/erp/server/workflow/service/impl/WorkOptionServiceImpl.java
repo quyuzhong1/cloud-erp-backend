@@ -69,10 +69,22 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
+        List<String> collect = new ArrayList<>();
+        LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listWaitDoMenu(sysClassify);
-        waitDoMenus.forEach(req -> {
+
+        List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
+        if (ObjectUtil.isNotEmpty(myWorkOptionDTOS)) {
+            collect = myWorkOptionDTOS.stream().map(WorkOptionDTO.MyWorkOptionDTO::getId).collect(Collectors.toList());
+        }
+        for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
             req.setName(req.getModuleClassify() + "-" + req.getModuleStatusName());
-        });
+            if (collect.contains(req.getId())) {
+                req.setSign(1);
+            } else {
+                req.setSign(0);
+            }
+        }
         return waitDoMenus;
     }
 
@@ -85,10 +97,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listOftenMenu(String sysClassify) {
+        List<String> collect = new ArrayList<>();
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+        if (ObjectUtil.isNotEmpty(frequentlyViewDTOS)) {
+            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getId).collect(Collectors.toList());
+        }
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listOftenMenu(sysClassify);
-        waitDoMenus.forEach(req -> {
+        for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
             req.setName(req.getModuleClassify());
-        });
+            if (collect.contains(req.getId())) {
+                req.setSign(1);
+            } else {
+                req.setSign(0);
+            }
+        }
         return waitDoMenus;
     }
 

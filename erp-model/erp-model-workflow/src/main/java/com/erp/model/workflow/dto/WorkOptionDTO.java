@@ -78,6 +78,10 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String name;
         /**
+         * 是否已添加  0 否 1 是
+         */
+        private Integer sign;
+        /**
          * 模块分类
          */
         private String moduleClassify;
@@ -184,6 +188,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @Data
     @NoArgsConstructor
     public static class FrequentlyViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
         /**
          * 模块名称
          */

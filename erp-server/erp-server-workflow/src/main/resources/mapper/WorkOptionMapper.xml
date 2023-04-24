@@ -20,22 +20,27 @@
 
     <select id="listOftenMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
         SELECT
-            wm.id,
+            max(wmrs.id) id,
             wm.sys_classify AS sysClassify,
             wm.module_classify AS moduleClassify,
             '' AS moduleStatusName
         FROM work_menu wm
+        LEFT JOIN work_menu_ref_status wmrs ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
         <where>
             <if test="sysClassify != '' and sysClassify != null">
                 AND wm.sys_classify = #{sysClassify}
             </if>
         </where>
-        ORDER BY sys_classify,wm.id
+        GROUP BY
+        wm.sys_classify,
+        wm.module_classify
+        ORDER BY sys_classify,max(wmrs.id)
     </select>
 
     <select id="listMyWorkOption" resultType="com.erp.model.workflow.dto.WorkOptionDTO$MyWorkOptionDTO">
         SELECT
-            wm.id,
+            wmrs.id,
             wm.sys_classify AS sysClassify,
             wm.module_classify AS moduleClassify,
             wm.module_code AS moduleCode,
@@ -44,7 +49,7 @@
             wmrs.module_url AS moduleUrl,
             wmrs.module_param AS moduleParam
         FROM work_option wo
-        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.menu_id
+        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
         WHERE wo.type = '1'
@@ -56,11 +61,9 @@
 
     <select id="listFrequentlyView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$FrequentlyViewDTO">
         SELECT
-            wm.id,
-            wm.sys_classify AS sysClassify,
-            wm.module_classify AS moduleClassify,
-            wmrs.module_url AS moduleUrl,
-            wmrs.module_param AS moduleParam
+        wmrs.id,
+        wmrs.module_url AS moduleUrl,
+        wmrs.module_param AS moduleParam
         FROM work_option wo
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.menu_id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
