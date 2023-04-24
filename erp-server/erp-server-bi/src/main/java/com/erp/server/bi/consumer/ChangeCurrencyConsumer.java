@@ -72,6 +72,7 @@ public class ChangeCurrencyConsumer implements RocketMQListener<JSONObject> {
                     .ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin())
                     .le(DmpOrderInfoEntity::getPlatformCreateTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()))
                     .select(DmpOrderInfoEntity::getId,DmpOrderInfoEntity::getCreateTime)
+                    .ne(DmpOrderInfoEntity::getCnySettleRate,obj.getExchangeRate())
                     .list();
             if (CollectionUtils.isEmpty(list)) {
                 return;
