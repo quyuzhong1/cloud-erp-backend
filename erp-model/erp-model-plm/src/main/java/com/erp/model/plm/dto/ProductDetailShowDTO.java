@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -161,14 +162,14 @@ public class ProductDetailShowDTO implements Serializable {
      * product_detail
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime firstMassProductDate;
+    private LocalDate firstMassProductDate;
 
     /**
      * 预计计划上市时间
      * product_detail
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime planListingTime;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDate planListingTime;
 
     /**
      * 试产数量

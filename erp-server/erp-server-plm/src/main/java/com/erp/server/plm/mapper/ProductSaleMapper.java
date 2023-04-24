@@ -1,6 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -22,6 +23,15 @@ public interface ProductSaleMapper extends BaseMapper<ProductSaleEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
      **/
     List<ProductSaleShowDTO> list(@Param("productId") String productId);
+
+    /**
+     * 获取所有上市时间
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    List<NewProductDTO> getListingProductAll();
+
 }
 
 

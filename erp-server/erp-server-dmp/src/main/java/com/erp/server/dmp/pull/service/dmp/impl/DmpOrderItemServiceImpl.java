@@ -90,7 +90,12 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         return this.update(dmpOrderItemEntity, lambdaQueryWrapper);
     }
 
-
+    /**
+     * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     * @return void
+     **/
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem) {
@@ -129,11 +134,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             LocalDate date = LocalDate.parse(String.valueOf(map.get("newListingTime")), fmt);
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
-        } else if (map.get("pastListingTime") != null) {
+        }/* else if (map.get("pastListingTime") != null) {
             LocalDate date = LocalDate.parse(String.valueOf(map.get("pastListingTime")), fmt);
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
-        }
+        }*/
         if (StringUtils.isBlank(year)) {
             return;
         }

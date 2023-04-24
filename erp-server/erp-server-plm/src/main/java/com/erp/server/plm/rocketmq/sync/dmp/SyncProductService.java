@@ -8,7 +8,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
  * @Author Luo_WG
  * @Date 2023/4/19 14:02
  **/
-public interface SyncPlmProductService {
+public interface SyncProductService {
 
     /**
      * 同步产品信息表数据到中台表
@@ -23,4 +23,11 @@ public interface SyncPlmProductService {
      * @Date 2023/4/19 14:03
      **/
     void syncProductSkuToDmp();
+
+    /**
+     * 产品是否新品同步到中台
+     * @Author Luo_WG
+     * @Date 2023/4/19 14:03
+     **/
+    void syncNewProductToDmp();
 }

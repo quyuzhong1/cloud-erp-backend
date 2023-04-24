@@ -9,6 +9,7 @@ import com.common.business.vo.LoginUser;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -87,14 +88,12 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         boolean flag = this.saveOrUpdate(saleEntity);
         newListingTime = productSaleDTO.getListingTime();
         if (flag) {
-            if (!pastListingTime.equals(newListingTime)) {
-                ProductDetailEntity productDetailEntity = productDetailService.getById(saleEntity.getSkuId());
-                Map<String,Object> map = new HashMap<>();
-                map.put("skuNo",productDetailEntity.getSkuNo());
-                map.put("pastListingTime",pastListingTime);
-                map.put("newListingTime",newListingTime);
-                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, saleEntity.getId());
-            }
+            ProductDetailEntity productDetailEntity = productDetailService.getById(saleEntity.getSkuId());
+            Map<String, Object> map = new HashMap<>();
+            map.put("skuNo", productDetailEntity.getSkuNo());
+            map.put("pastListingTime", pastListingTime);
+            map.put("newListingTime", newListingTime);
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, saleEntity.getId());
         }
         return flag;
     }
@@ -124,7 +123,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                     ProductDetailEntity productDetailEntity = productDetailService.getById(req.getSkuId());
                     Map<String, Object> map = new HashMap<>();
                     map.put("skuNo", productDetailEntity.getSkuNo());
-                    map.put("pastListingTime", pastListingTime);
+//                    map.put("pastListingTime", pastListingTime);
                     map.put("newListingTime", newListingTime);
                     mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, req.getId());
                 }
@@ -161,6 +160,17 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         LambdaQueryWrapper<ProductSaleEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductSaleEntity::getSkuId, skuIds);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 获取所有上市时间
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    @Override
+    public List<NewProductDTO> getListingProductAll() {
+        return baseMapper.getListingProductAll();
     }
 }
 

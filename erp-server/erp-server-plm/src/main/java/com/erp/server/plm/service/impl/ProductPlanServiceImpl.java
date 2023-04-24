@@ -915,9 +915,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(firstMassProductList)) {
-            LocalDate firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
+            LocalDateTime firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
                     .map(ProductDetailEntity::getFirstMassProductDate).get();
-            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate) ? null : firstMassProductDate);
+            productPlanEntity.setFirstMassStockInDate(ObjectUtils.isEmpty(firstMassProductDate.toLocalDate()) ? null : firstMassProductDate.toLocalDate());
         }
         List<String> skuIds = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //查询销售信息最后的上市时间
