@@ -12,8 +12,6 @@ import com.erp.server.msg.model.MsgSendChannelWrapParam;
 import com.erp.server.msg.model.entity.MsgLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -31,8 +29,10 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
     @Resource
     private MsgContext msgContext;
 
+    /*
     @Autowired
     private MongoTemplate mongoTemplate;
+     */
 
 
     /**
@@ -80,7 +80,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
         }
         log.info("通过渠道【{}】发送消息【{}】，消息日志：【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败", JSONObject.toJSONString(msgLog));
         try {
-            mongoTemplate.insert(msgLog, MongoTableConstant.MSG_LOG);
+            //mongoTemplate.insert(msgLog, MongoTableConstant.MSG_LOG);
         } catch (Exception e) {
             log.error("记录消息日志到mongodb异常",e);
         }
