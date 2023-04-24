@@ -205,39 +205,24 @@
         </if>
         GROUP BY doi.${groupName}
     </select>
-    <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
-        SELECT
-         <if test="null != params.settleMethod and params.settleMethod == 0">
-            SUM(doit.amount_after * COALESCE(doit.currency_rate, 0))
-         </if>
-         <if test="null != params.settleMethod and params.settleMethod == 2">
-            SUM(doit.amount_after)
-         </if>
-         <if test="null != params.settleMethod and params.settleMethod == 1">
-            SUM(doit.amount_after * COALESCE(doit.settle_rate, 0))
-         </if>
-          AS salesAmount
-        FROM dmp_order_info AS doi
-        left join  dmp_order_item AS doit on doi.id = doit.order_id
-        left join product_detail AS pd on doit.sku_no = pd.sku_no
-        left join product_info AS pi on pi.id = pd.product_id
-        <where>
-            <if test = "params.timeType != null and params.timeType == 0">
-                <if test="params.startTime != null">
-                    AND doi.platform_create_time >= #{params.startTime}
-                </if>
-                <if test="params.endTime != null">
-                    AND doi.platform_create_time &lt; #{params.endTime}
-                </if>
+
+    <sql id="conditionSql">
+        <if test = "params.timeType != null and params.timeType == 0">
+            <if test="params.startTime != null">
+                AND doi.platform_create_time >= #{params.startTime}
             </if>
-            <if test = "params.timeType != null and params.timeType == 1">
-                <if test="params.startTime != null">
-                    AND doi.delivery_time >= #{params.startTime}
-                </if>
-                <if test="params.endTime != null">
-                    AND doi.delivery_time &lt; #{params.endTime}
-                </if>
+            <if test="params.endTime != null">
+                AND doi.platform_create_time &lt; #{params.endTime}
             </if>
+        </if>
+        <if test = "params.timeType != null and params.timeType == 1">
+            <if test="params.startTime != null">
+                AND doi.delivery_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND doi.delivery_time &lt; #{params.endTime}
+            </if>
+        </if>
 
         /*部门*/
         <if test="params.department!=null and params.department.size>0">
@@ -296,14 +281,44 @@
                 #{skuNo}
             </foreach>
         </if>
-        <!--新品-->
-        <if test="flag != null ">
-            AND doit.new_sign = flag
-        </if>
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
             #{params.param}
         </if>
+    </sql>
+    <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
+        SELECT
+         <if test="null != params.settleMethod and params.settleMethod == 0">
+            SUM(doit.amount_after * COALESCE(doit.currency_rate, 0))
+         </if>
+         <if test="null != params.settleMethod and params.settleMethod == 2">
+            SUM(doit.amount_after)
+         </if>
+         <if test="null != params.settleMethod and params.settleMethod == 1">
+            SUM(doit.amount_after * COALESCE(doit.settle_rate, 0))
+         </if>
+          AS salesAmount
+        FROM dmp_order_info AS doi
+        left join  dmp_order_item AS doit on doi.id = doit.order_id
+        left join product_detail AS pd on doit.sku_no = pd.sku_no
+        left join product_info AS pi on pi.id = pd.product_id
+        <where>
+           <include refid="conditionSql"/>
+            <!--新品-->
+            <if test="flag != null ">
+                AND doit.new_sign = flag
+            </if>
+        </where>
+    </select>
+    <select id="countSalesVolume" resultType="java.lang.Integer"  parameterType="com.erp.model.bi.dto.BiFilterDTO">
+        SELECT
+        SUM(coalesce(doit.quantity, 0)) AS salesVolume
+        FROM dmp_order_info AS doi
+        left join  dmp_order_item AS doit on doi.id = doit.order_id
+        left join product_detail AS pd on doit.sku_no = pd.sku_no
+        left join product_info AS pi on pi.id = pd.product_id
+        <where>
+            <include refid="conditionSql"/>
         </where>
     </select>
 
