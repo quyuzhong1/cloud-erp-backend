@@ -1,18 +1,11 @@
 package com.erp.server.plm.schedule;
 
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.plm.rocketmq.sync.dmp.SyncPlmProductService;
+import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
 import com.erp.server.plm.service.NoticeMessageService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.ProductInfoService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 来源xxljob
@@ -27,13 +20,12 @@ import java.util.List;
 @Slf4j
 public class PlmJob {
 
-
     @Autowired
     private NoticeMessageService noticeMessageService;
 
-
     @Autowired
-    private SyncPlmProductService syncPlmProductService;
+    private SyncProductService syncProductService;
+
 
     /**
      * 生成发送任务预警通知 每天17:00
@@ -48,7 +40,7 @@ public class PlmJob {
      */
     @XxlJob("productInfoSyncDmp")
     public void productInfoSyncDmp() {
-        syncPlmProductService.syncProductInfoToDmp();
+        syncProductService.syncProductInfoToDmp();
     }
 
     /**
@@ -56,6 +48,14 @@ public class PlmJob {
      */
     @XxlJob("productSkuSyncDmp")
     public void productSkuSyncDmp() {
-        syncPlmProductService.syncProductSkuToDmp();
+        syncProductService.syncProductSkuToDmp();
+    }
+
+    /**
+     * 新老品同步
+     */
+    @XxlJob("newProductToDmp")
+    public void newProductToDmp() {
+        syncProductService.syncNewProductToDmp();
     }
 }

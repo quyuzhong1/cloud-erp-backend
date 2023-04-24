@@ -4,26 +4,27 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
         SELECT
-          p.id AS product_id,
-          p.name,
-          p.grade,
-          p.charge_name AS productChargeName,
-          pi.project_status,
-          p.brand_name,
-          pi.id AS projectId,
-          p.grade_id,
-          p.charge_id AS productChargeId,
-          p.project_charge_id AS projectChargeId,
-          p.type,
-          p.approval_status,
-          pi.charge_name AS projectChargeName,
-          p.create_time,
-          p.progress_status,
-          p.image_url,
-          p.property,
-          p.category,
-          pi.end_time,
-          pph.name as projectPhase
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        p.spu_no,
+        pph.name as projectPhase
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -67,7 +68,7 @@
         </if>
 
         <if test="params.gradeList !=null and params.gradeList.size>0">
-          AND p.grade_id IN
+            AND p.grade_id IN
             <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
@@ -90,7 +91,7 @@
         <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
             AND pi.charge_id IN
             <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="," >
-                 #{chargeId}
+                #{chargeId}
             </foreach>
         </if>
 
@@ -112,14 +113,14 @@
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
             <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                   string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
 
 
         <if test="params.startTime !=null">
-          AND p.create_time &gt;=#{params.startTime}
+            AND p.create_time &gt;=#{params.startTime}
         </if>
 
         <if test="params.endTime !=null">
@@ -267,7 +268,8 @@
         p.progress_status,
         p.image_url,
         p.property,
-        p.category
+        p.category,
+        p.spu_no
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -487,7 +489,7 @@
 
 
     <select id="getProductInfoByIds" resultType="com.erp.model.plm.dto.ProductShowDTO">
-           SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
         p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
@@ -502,6 +504,55 @@
 
     </select>
 
-
+    <select id="getProductInfoAll" resultType="com.erp.model.plm.entity.ProductInfoEntity">
+        SELECT
+            id,
+            name,
+            category,
+            property,
+            charge_name,
+            charge_id,
+            grade,
+            brand_name,
+            approval_status,
+            sys_field,
+            property_id,
+            brand_id,
+            category_id,
+            create_time,
+            update_time,
+            type,
+            delete_state,
+            spu_no,
+            sell_spot,
+            function_desc,
+            usage_desc,
+            pirate_risk,
+            materials,
+            spec_type,
+            sale_method,
+            relevance_product_id,
+            grade_id,
+            create_user_id,
+            create_user_name,
+            update_user_id,
+            update_user_name,
+            is_finished_product_dev,
+            approval_time,
+            product_version,
+            entrusted_develop_cost,
+            mold_cost,
+            sample_fee,
+            is_customized,
+            sales_channel,
+            name_en,
+            image_url,
+            progress_status,
+            project_charge_id,
+            template_id,
+            is_deleted,
+            version
+        FROM product_info
+    </select>
 
 </mapper>

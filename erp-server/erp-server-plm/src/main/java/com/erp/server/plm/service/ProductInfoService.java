@@ -55,7 +55,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean saveTemplate(SaveProductTemplateDTO dto);
-     
+
     /**
      * 更改项目状态
      * @author yl
@@ -142,7 +142,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds,Integer isFinishedProductDev);
 
-    
+
     /**
      * 查询产品列表 和产品开发列表的分类产品
      * @author yl
@@ -172,5 +172,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return com.erp.model.plm.entity.ProductInfoEntity
      **/
     ProductInfoEntity getProductByName(String name);
+
+    /**
+     * 获取所有产品信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/3/29 14:26
+     * @return com.erp.model.plm.entity.ProductInfoEntity
+     **/
+    List<ProductInfoEntity> getProductInfoAll();
 
 }

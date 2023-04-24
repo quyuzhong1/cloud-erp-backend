@@ -39,6 +39,12 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     List<ProductShowDTO> getProductInfoByIds(@Param("productIds") List<String> productIds);
 
-
+    /**
+     * 获取所有产品信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:22
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
+     **/
+    List<ProductInfoEntity> getProductInfoAll();
 
 }

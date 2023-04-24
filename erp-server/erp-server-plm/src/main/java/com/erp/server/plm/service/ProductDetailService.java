@@ -186,13 +186,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     CleanSkuDto getProductIdBySkuClean(String sku);
-    
+
     /**
      * 方法说明
      * @author yl
      * @date 2022-11-21 17:13
      * @param productId
-     * @return 
+     * @return
      */
     List<ProductDetailEntity> getSkuListByProductId(String productId);
     /**
@@ -332,7 +332,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     ProductSmallestUnitDTO getSkuBySkuId(String skuId);
 
-    
+
     /**
      * 变更管理 审核通过后
      * 变更sku
@@ -343,7 +343,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void changeSku(ProductSmallestUnitDTO sku);
 
-    
+
     /**
      * 根据sku ids 获取到产品经理
      * @author yl
@@ -422,7 +422,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param id
      * @param syncKingdeeStatus
      */
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus);
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId);
 
 
 
@@ -444,4 +444,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      */
     List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto);
+
+    /**
+     * 获取所有明细信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    List<ProductDetailEntity> getProductDetailAll();
 }

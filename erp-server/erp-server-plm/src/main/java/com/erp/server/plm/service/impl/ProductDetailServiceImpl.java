@@ -12,6 +12,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
@@ -1596,7 +1597,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //workflowFeign.taskPass(approveProcess);
         //审核通过后发送到金蝶系统
-        syncKingdeeProductDetailService.syncDataToKingdee(entity);
+        syncKingdeeProductDetailService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
         return true;
     }
 
@@ -1898,7 +1899,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95126);
         }
-        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity);
+        syncKingdeeProductDetailService.syncDataToKingdee(productDetailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
         return Boolean.TRUE;
     }
 
@@ -1954,11 +1955,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
-                .set(ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),ProductDetailEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
     }
 
@@ -2294,7 +2296,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
         //编辑通过后发送金蝶
-        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity);
+        syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -2600,5 +2602,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
     }
 
-
+    /**
+     * 获取所有明细信息包括删除，用来同步到DMP
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:12
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    public List<ProductDetailEntity> getProductDetailAll() {
+        return baseMapper.getProductDetailAll();
+    }
 }
