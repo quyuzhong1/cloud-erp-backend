@@ -121,7 +121,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
 //        BigDecimal amount = BigDecimal.ZERO;
-        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 条件存在sku的情况
         // 先查询订单号
 //        query.select("id");
@@ -842,7 +842,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
+//        dto.setEndTime(dto.getEndTime());
         TargetSaleSumVO currentVo = sumSales(dto);
         BigDecimal currentAmount = currentVo.getValue();
         if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
@@ -892,7 +892,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
         TargetSaleCountVO currentVo = countOrderQuantity(dto);
         Integer currentAmount = currentVo.getValue();
         if (0 == currentAmount){

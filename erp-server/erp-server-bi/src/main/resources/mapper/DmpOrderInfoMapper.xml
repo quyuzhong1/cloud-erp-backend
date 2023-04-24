@@ -227,7 +227,7 @@
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
                 <if test="params.endTime != null">
-                    AND doi.platform_create_time &lt;= #{params.endTime}
+                    AND doi.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <if test = "params.timeType != null and params.timeType == 1">
@@ -235,7 +235,7 @@
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
                 <if test="params.endTime != null">
-                    AND doi.delivery_time &lt;= #{params.endTime}
+                    AND doi.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
 
