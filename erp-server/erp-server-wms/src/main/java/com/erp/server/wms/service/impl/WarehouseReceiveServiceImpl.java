@@ -260,14 +260,15 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //保存主表信息
         this.save(warehouseReceiveEntity);
 
+        //修改到货状态
+        updateArrivalState(warehouseReceiveEntity);
+
         //保存详情信息
         warehouseReceiveDetailService.add(dto, warehouseReceiveEntity.getId());
 
         //操作日志
         moduleOperateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】",code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),warehouseReceiveEntity.getId(),"新增操作");
 
-        //修改到货状态
-        updateArrivalState(warehouseReceiveEntity);
         return warehouseReceiveEntity.getId();
     }
 
