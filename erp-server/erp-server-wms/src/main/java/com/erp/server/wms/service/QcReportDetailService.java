@@ -49,4 +49,13 @@ public interface QcReportDetailService extends SuperService<QcReportDetailEntity
      */
     QcReportDetailDTO.ImportDTO importFile(MultipartFile excelFile,String qcType, HttpServletResponse response);
 
+    /**
+     * 根据质检单id 集合 获取删除数据
+     *
+     * @param mainIdList
+     * @return void
+     * @author yl
+     * @date 2023-04-25 16:15
+     */
+    void removeByMainIds(List<String> mainIdList);
 }

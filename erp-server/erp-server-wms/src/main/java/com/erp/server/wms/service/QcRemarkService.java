@@ -43,4 +43,13 @@ public interface QcRemarkService extends SuperService<QcRemarkEntity> {
      * @return java.util.List<com.erp.model.wms.entity.QcBillRemarkEntity>
      */
     List<QcRemarkEntity> getByMainIdList(List<String> billIdList);
+    /**
+     * 根据质检单id 获取到质检信息
+     *
+     * @param mainIdList
+     * @return com.erp.model.wms.entity.QcInfoEntity
+     * @author yl
+     * @date 2023-04-19 12:26
+     */
+    void removeByMainIds(List<String> mainIdList);
 }

@@ -58,10 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -641,6 +638,14 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     @Override
     public List<PurchaseStockInEntity> getStockInBySourceId(String sourceId) {
         return lambdaQuery().eq(PurchaseStockInEntity::getSourceId, sourceId).list();
+    }
+
+    @Override
+    public List<PurchaseStockInEntity> getStockInBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PurchaseStockInEntity::getSourceId, sourceIds).list();
     }
 
     /**

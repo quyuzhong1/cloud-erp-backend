@@ -47,4 +47,13 @@ public interface QcProductService extends SuperService<QcProductEntity> {
      * @return java.util.List<com.erp.model.wms.entity.QcProductEntity>
      */
     List<QcProductEntity> getByMainIdList(List<String> mainids);
+    /**
+     * 根据质检单id 集合 获取删除数据
+     *
+     * @param mainIdList
+     * @return void
+     * @author yl
+     * @date 2023-04-25 16:15
+     */
+    void removeByMainIds(List<String> ids);
 }
