@@ -72,5 +72,5 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @param dto
      * @return
      */
-    Boolean exportExcel(ProcessDefinitionDTO.QueryDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response);
 }

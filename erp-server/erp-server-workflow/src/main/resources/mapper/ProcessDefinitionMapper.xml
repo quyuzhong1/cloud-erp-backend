@@ -20,10 +20,6 @@
         <result column="remark" property="remark" />
     </resultMap>
     <sql id="query_list_sql">
-        where pd.is_deleted = false
-        <if test="null != params and params.id != null and params.id != ''">
-            and pd.id = #{params.id}
-        </if>
         <if test="null != params and params.processName != null and params.processName != ''">
             and pd.process_name ilike  concat('%',#{params.processName},'%')
         </if>
@@ -62,10 +58,14 @@
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
+        where pd.is_deleted = false
+        <if test="null != params and params.id != null and params.id != ''">
+            and pd.id = #{params.id}
+        </if>
        <include refid="query_list_sql"/>
     </select>
     <select id="query" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$ExportDTO"
-            parameterType="com.erp.model.workflow.dto.ProcessDefinitionDTO$QueryDTO">
+            parameterType="com.erp.model.workflow.dto.ProcessDefinitionDTO$QueryExportDTO">
         SELECT
         pd.id,
         pd.process_name,
@@ -84,6 +84,13 @@
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         LEFT JOIN dict_basic db on db.value = pd.review_setting and db.is_deleted = false  and db.type = 'reviewSetting'
+        where pd.is_deleted = false
+        <if test="null != params and params.id != null and params.id.size() > 0">
+            and pd.id in
+            <foreach collection="params.id" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <include refid="query_list_sql"/>
     </select>
 

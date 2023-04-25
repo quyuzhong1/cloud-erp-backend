@@ -91,6 +91,35 @@ public class ProcessDefinitionDTO {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class QueryExportDTO {
+        /**
+         * 流程编码
+         */
+        private List<String> id;
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 流程状态
+         */
+        private List<String> approveStatus;
+
+        /**
+         * 创建人
+         */
+        private List<String> createUserIds;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDateTime> createTimeList;
+
+    }
+
 
     @Data
     @NoArgsConstructor

@@ -34,5 +34,5 @@ public interface ProcessDefinitionMapper extends BaseMapper<ProcessDefinitionEnt
      * @param dto
      * @return
      */
-    List<ProcessDefinitionDTO.ExportDTO> query(@Param("params") ProcessDefinitionDTO.QueryDTO dto);
+    List<ProcessDefinitionDTO.ExportDTO> query(@Param("params") ProcessDefinitionDTO.QueryExportDTO dto);
 }
