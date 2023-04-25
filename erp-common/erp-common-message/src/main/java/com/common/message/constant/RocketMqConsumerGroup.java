@@ -44,6 +44,12 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_PURCHASE_RETURN_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_return_order";
 
+
+    /**
+     * 金蝶仓库
+     */
+    public static final String SYNC_KINGDEE_WAREHOUSE = "${spring.profiles.active}-sync_kingdee_warehouse";
+
     /**
      * 店铺变更负责人
      */
