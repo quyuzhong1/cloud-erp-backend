@@ -276,7 +276,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(warehouseReceiveEntity.getPurchaseOrderId());
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-        List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(warehouseReceiveEntity.getId());
+//        List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(warehouseReceiveEntity.getId());
 
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailEntities) {
                     /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
@@ -551,16 +551,16 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(req.getPurchaseOrderId());
             List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
             List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(req.getId());
+//            List<WarehouseReceiveDetailEntity> detailByMainId = warehouseReceiveDetailService.getDetailByMainId(req.getId());
 
             for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailEntities) {
                     /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
 
                     }*/
                 Integer reduce = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                Integer thisReduce = detailByMainId.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+//                Integer thisReduce = detailByMainId.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
-                getArrivalState(reduce-thisReduce, purchaseOrderDetailEntity.getPurchaseQty(), purchaseOrderDetailEntity.getId());
+                getArrivalState(reduce, purchaseOrderDetailEntity.getPurchaseQty(), purchaseOrderDetailEntity.getId());
 
             }
         });
