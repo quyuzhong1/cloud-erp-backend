@@ -21,6 +21,7 @@ public enum ApiModuleTypeEnum {
     PURCHASE_RETURN_ORDER(10, "purchaseReturnOrder", "采购退货单","wms"),
     PURCHASE_PRICE_CHANGE(11, "PurchasePriceChange", "采购调价表","scm"),
     WAREHOUSE_INFO(12, "warehouseManage", "仓库管理","wms"),
+    SUPPLIER(13, "supplier", "供应商管理","scm"),
 
     ;
     private Integer code;

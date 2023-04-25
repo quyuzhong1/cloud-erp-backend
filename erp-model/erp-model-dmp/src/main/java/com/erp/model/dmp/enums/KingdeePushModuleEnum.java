@@ -19,6 +19,7 @@ public enum KingdeePushModuleEnum {
     PUR_MRB("PUR_MRB","采购退料单"),
     PUR_PAT("PUR_PAT","采购调价表"),
     BD_STOCK("BD_STOCK","仓库"),
+    BD_SUPPLIER("BD_Supplier","供应商"),
 
     ;
     private String code;
