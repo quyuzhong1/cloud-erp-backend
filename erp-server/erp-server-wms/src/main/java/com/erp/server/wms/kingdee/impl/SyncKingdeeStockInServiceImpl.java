@@ -14,6 +14,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -76,7 +77,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
      **/
     @Override
     public void syncDataToKingdee(PurchaseStockInEntity entity, String operate) {
-       /* Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -112,44 +113,41 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("address", supplierEntity.getCompanyAddress());
 
         //退货单明细
-        List<PurchaseReturnOrderDetailEntity> detailList = purchaseStockInService.getDetailByMainId(entity.getId());
+        List<PurchaseStockInDetailEntity> detailList = purchaseStockInDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
 
         //获取sku的id集合
-        List<String> skuIdList = detailList.stream().map(PurchaseReturnOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(PurchaseStockInDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
         //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = detailList.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> orderDetailIds = detailList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
 
         List<JSONObject> list = new ArrayList<>();
-        for (PurchaseReturnOrderDetailEntity detail : detailList) {
+        for (PurchaseStockInDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detail.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             //产品名称
             jsonObject.set("productName", productDetailEntity.getName());
-            //实退数量
-            jsonObject.set("returnQty", detail.getReturnQty());
-            //补货数量
-            jsonObject.set("replenishQty", detail.getReplenishQty());
-            //扣款数量
-            jsonObject.set("deductAmountQty", detail.getDeductAmountQty());
-            //退货仓库
-            jsonObject.set("returnWarehouseName", entity.getReturnWarehouseName());
-            //退货备注
+            //实收数量
+            jsonObject.set("returnQty", detail.getReceiveQty());
+
+            //交货仓库
+            jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
+            //库位
+            jsonObject.set("deliveryWarehouseName", detail.getWarehouseLocationName());
+            //入库备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
             //采购数量
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
-            //退款单价
-            jsonObject.set("returnPrice", detail.getReturnPrice());
 
             list.add(jsonObject);
         }
@@ -158,12 +156,12 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
-        //异步推送mq
+       /* //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_RETURN_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
+                return purchaseStockInService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
             }
             return Boolean.TRUE;
         });*/

@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -235,4 +236,16 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @return Boolean
      */
     Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto);
+
+    /**
+     * 修改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/24 15:29
+     **/
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId);
 }

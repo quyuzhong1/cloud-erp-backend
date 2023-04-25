@@ -138,6 +138,18 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     }
 
     /**
+     * 根据主表id查询明细
+     * @Author Luo_WG
+     * @Date 2023/4/25 16:41
+     * @param id id
+     * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
+     **/
+    @Override
+    public List<PurchaseStockInDetailEntity> listDetailByMainId(String id) {
+        return lambdaQuery().eq(PurchaseStockInDetailEntity::getMainId, id).list();
+    }
+
+    /**
      * 处理明细中的数据id
      */
     private void doOpHandleDetails (List<PurchaseStockInDetailEntity> newList, String mainId,Boolean isUpdate) {

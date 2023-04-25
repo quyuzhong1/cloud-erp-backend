@@ -649,6 +649,26 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
     }
 
     /**
+     * 修改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/24 15:29
+     **/
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .eq(PurchaseStockInEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseStockInEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseStockInEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseStockInEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+    }
+
+    /**
      * 审核后更新审核状态、审核人、审核时间
      */
     private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
@@ -852,7 +872,6 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         Boolean add = this.batchAddPurchaseStockIn(resultList);
         return add;
     }
-
 
     /**
      * @param records
