@@ -60,4 +60,11 @@ public interface WorkflowService {
 
      */
     void cancelProcess(List<String> ids);
+
+    /**
+     * 流程发布
+     * @param dto
+     * @return
+     */
+    ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto);
 }

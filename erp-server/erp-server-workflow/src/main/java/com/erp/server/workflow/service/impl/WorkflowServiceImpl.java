@@ -8,10 +8,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
-import com.erp.server.workflow.service.ActHistoryActivityService;
-import com.erp.server.workflow.service.ProcessTaskService;
-import com.erp.server.workflow.service.WorkflowBusinessProcessService;
-import com.erp.server.workflow.service.WorkflowService;
+import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +18,7 @@ import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.impl.RepositoryServiceImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
+import org.camunda.bpm.engine.repository.DecisionDefinition;
 import org.camunda.bpm.engine.repository.Deployment;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
@@ -69,6 +67,8 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Autowired
     private WorkflowBusinessProcessService workflowBusinessProcessService;
+    @Autowired
+    private ProcessDefinitionService processDefinitionService;
 
     /**
      * 撤回流程
@@ -566,5 +566,24 @@ public class WorkflowServiceImpl implements WorkflowService {
             return ProcessInstanceStateEnum.PROCESS_ENDED.getCode();
         }
         return ProcessInstanceStateEnum.PROCESS_ING.getCode();
+    }
+
+    @Override
+    public ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto) {
+        // 获取流程定义信息
+        com.erp.model.workflow.entity.ProcessDefinitionEntity definitionEntity = processDefinitionService.getById(dto.getProcessDefinitionId());
+        if(null == definitionEntity){
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        Deployment deploy = repositoryService.createDeployment()
+                    .name(definitionEntity.getProcessName())
+                    .addString(definitionEntity.getProcessName() + ".bpmn", definitionEntity.getBpmnXml())
+                    .deploy();
+        // 保存部署时间和部署id 部署状态
+        // 更新流程定义信息
+//        definitionEntity.setDeploymentId(deploy.getId());
+//        return new ProcessDTO.DeployResultDTO(definitionEntity);
+        return null;
+
     }
 }
