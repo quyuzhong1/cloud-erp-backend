@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
@@ -70,6 +71,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/warehouseReceive/addWarehouseReceive")
     String addWarehouseReceive(WarehouseReceiveDTO.AddDTO dto);
+
+    /**
+     * 批量新增退货单
+     */
+    @PostMapping("feign/purchaseReturnOrder/addReturnOrder")
+    Boolean batchAddReturnOrder(List<PurchaseReturnOrderDTO.AddDTO> dto);
 
     /**
      * 获取入库数量

@@ -729,6 +729,11 @@ public class PurchaseReturnOrderDTO {
         private String supplierName;
 
         /**
+         * 供应商名称
+         */
+        private String supplierId;
+
+        /**
          * sku编码
          */
         private String skuNo;
@@ -747,6 +752,11 @@ public class PurchaseReturnOrderDTO {
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
 
         /**
          * 入库数量

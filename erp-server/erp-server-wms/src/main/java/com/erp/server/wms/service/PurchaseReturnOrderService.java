@@ -186,4 +186,14 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
+
+    
+    /**
+     * 批量生成退货单
+     * @author yl
+     * @date 2023-04-25 11:09
+     * @param list
+     * @return java.lang.Boolean
+     */
+    Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list);
 }

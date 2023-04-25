@@ -13,6 +13,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
@@ -408,6 +410,33 @@ public class PurchaseOrderController extends BaseController {
     public ApiResult<List<PurchaseOrderDetailDTO.ViewProductDTO>> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
         List<PurchaseOrderDetailDTO.ViewProductDTO> list = purchaseOrderDetailService.viewProduct(dto);
         return success(list);
+    }
+
+
+    /**
+     * 采购订单 下推退货单数据显示
+     * @author yl
+     * @date 2023-04-25 9:37
+     * @param dto
+     * @return
+     */
+    @PostMapping("/viewGeneratePurchaseReturnOrder")
+    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseOrderService.viewGeneratePurchaseReturnOrder(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推退货单数据保存
+     * @author Will
+     * @date: 2023/4/11 20:33
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generatePurchaseReturnOrder")
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        Boolean flag = purchaseOrderService.generatePurchaseReturnOrder(dto);
+        return flag ? success() : failure();
     }
 
 

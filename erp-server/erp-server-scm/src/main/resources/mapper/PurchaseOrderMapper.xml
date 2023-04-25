@@ -329,5 +329,33 @@
 
 
     </select>
+    <select id="viewGeneratePurchaseReturnOrder"
+            resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
+
+        SELECT
+        po.id AS sourceId,
+        pod.id AS sourceDetailId,
+        pod.id AS sourceDetailId,
+        po.id AS purchaseOrderDetailId,
+        po.code AS purchaseOrderCode,
+        po.delivery_warehouse_name AS deliveryWarehouseName,
+        po.delivery_warehouse_id AS deliveryWarehouseId,
+        pod.sku_id, pod.sku_no,pod.product_name,
+        pod.currency_symbol,pos.supplier_name,
+        pos.supplier_id
+        FROM purchase_order_detail   pod
+        LEFT JOIN
+        purchase_order po  ON
+        pod.purchase_order_id=po.id AND po.is_deleted=false
+        INNER JOIN purchase_order_supplier pos
+        ON pos.purchase_order_id=po.id AS pos.is_deleted=false
+        WHERE pod.is_deleted=false
+        AND pod.purchase_order_id
+        IN
+        <foreach collection="purchaseOrderIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+
+    </select>
 
 </mapper>

@@ -20,7 +20,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -32,7 +31,6 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
@@ -114,10 +112,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 主页分页查询
-     * @Author Luo_WG
-     * @Date 2023/4/13 15:41
+     *
      * @param pagingParamDTO pagingParamDTO
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:41
      **/
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> paging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -157,10 +156,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 新增
-     * @Author Luo_WG
-     * @Date 2023/4/13 11:03
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:03
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -179,7 +179,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
         //设置收货单主表
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = new PurchaseReturnOrderEntity();
-        BeanMapperUtils.copy(dto,purchaseReturnOrderEntity);
+        BeanMapperUtils.copy(dto, purchaseReturnOrderEntity);
         purchaseReturnOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         purchaseReturnOrderEntity.setCode(code);
         purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
@@ -199,7 +199,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         this.save(purchaseReturnOrderEntity);
 
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】",code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),purchaseReturnOrderEntity.getId(),"新增操作");
+        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "新增操作");
 
         //保存详情信息
         purchaseReturnOrderDetailService.add(dto, purchaseReturnOrderEntity.getId());
@@ -208,10 +208,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 修改
-     * @Author Luo_WG
-     * @Date 2023/4/13 14:51
+     *
      * @param dto dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 14:51
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -230,7 +231,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         SupplierContactEntity supplierContactEntity = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
 
         PurchaseReturnOrderEntity entity = new PurchaseReturnOrderEntity();
-        BeanMapperUtils.copy(dto,entity);
+        BeanMapperUtils.copy(dto, entity);
         entity.setReturnUserName(sysUserDTO.getUserName());
         entity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         entity.setReturnWarehouseName(warehouseEntity.getName());
@@ -242,10 +243,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         entity.setSupplierContactName(supplierContactEntity.getPerson());
         //更新收货单主表信息
         this.updateById(entity);
-        
+
         //操作日志
         PurchaseReturnOrderEntity byId = this.getById(dto.getId());
-        moduleOperateLogService.addModuleOperateLogByObj(byId,entity,ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),entity.getId(),"","");
+        moduleOperateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "", "");
 
         //更新收货单详情表信息
         return purchaseReturnOrderDetailService.update(dto);
@@ -253,17 +254,18 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 查询详情
-     * @Author Luo_WG
-     * @Date 2023/4/13 17:10
+     *
      * @param id id
      * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewDTO
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:10
      **/
     @Override
     public PurchaseReturnOrderDTO.ViewDTO view(String id) {
 
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
-        BeanMapperUtils.copy(purchaseReturnOrderEntity,viewDTO);
+        BeanMapperUtils.copy(purchaseReturnOrderEntity, viewDTO);
         //获取采购订单主表信息
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
 
@@ -293,7 +295,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
             Integer stockInQty = purchaseStockInDetailService.getStockInQty(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId());
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
-            BeanMapperUtils.copy(purchaseReturnOrderDetailEntity,detailView);
+            BeanMapperUtils.copy(purchaseReturnOrderDetailEntity, detailView);
             //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
@@ -317,10 +319,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 提交
-     * @Author Luo_WG
-     * @Date 2023/4/14 10:04
+     *
      * @param ids ids
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/14 10:04
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -349,17 +352,18 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"提交操作");
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "提交操作");
 
         return Boolean.TRUE;
     }
 
     /**
      * 新增提交
-     * @Author Luo_WG
-     * @Date 2023/4/6 18:52
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -373,10 +377,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 修改提交
-     * @Author Luo_WG
-     * @Date 2023/4/6 18:52
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -390,10 +395,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 批量审核
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:06
+     *
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -429,7 +435,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单",ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
         //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         return Boolean.TRUE;
@@ -437,10 +443,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 批量反审核
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -466,7 +473,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"反审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
@@ -474,10 +481,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 取消流程
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:58
+     *
      * @param ids ids
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:58
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -504,18 +512,19 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"取消流程操作");
+        moduleOperateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "取消流程操作");
 
         return Boolean.TRUE;
     }
 
     /**
      * 批量作废
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
-     * @param ids ids
+     *
+     * @param ids    ids
      * @param remark remark
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -527,7 +536,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //审核不通过 待提交可以作废
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                ||entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
 
         if (count != warehouseReceiveList.size()) {
@@ -548,10 +557,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 批量删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param ids ids
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -577,11 +587,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 导出
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
-     * @param dto dto
+     *
+     * @param dto      dto
      * @param response response
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
      **/
     @Override
     public Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
@@ -614,10 +625,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 采购订单-关联的退货订单
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:47
+     *
      * @param purchaseOrderId purchaseOrderId
      * @return java.lang.Integer
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:47
      **/
     @Override
     public List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(String purchaseOrderId) {
@@ -645,16 +657,17 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 列表状态数量统计
-     * @Author Luo_WG
-     * @Date 2023/4/17 13:12
+     *
      * @param dto dto
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:12
      **/
     @Override
     public List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> listCount(PermissionsDTO dto) {
         PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
         List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> list = new ArrayList<>();
-        for (PurchaseChangeListTypeEnum item: values) {
+        for (PurchaseChangeListTypeEnum item : values) {
             PurchaseReturnOrderDTO.PagingParamDTO pagingParamDTO = new PurchaseReturnOrderDTO.PagingParamDTO();
             pagingParamDTO.setParam(dto.getParam());
             PurchaseReturnOrderDTO.ReturnOrderCountDTO resultDTO = new PurchaseReturnOrderDTO.ReturnOrderCountDTO();
@@ -671,7 +684,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setType(item.getCode());
             list.add(resultDTO);
         }
@@ -681,17 +694,18 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     public List<PurchaseReturnOrderEntity> listBySourceIds(List<String> sourceIds) {
         return lambdaQuery()
-                .in(PurchaseReturnOrderEntity::getSourceId,sourceIds)
-                .eq(PurchaseReturnOrderEntity::getInvalidStatus,Boolean.FALSE)
+                .in(PurchaseReturnOrderEntity::getSourceId, sourceIds)
+                .eq(PurchaseReturnOrderEntity::getInvalidStatus, Boolean.FALSE)
                 .list();
     }
 
     /**
      * 获取退货数量
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:47
+     *
      * @param purchaseOrderId purchaseOrderId
      * @return java.lang.Integer
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:47
      **/
     @Override
     public List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(String purchaseOrderId) {
@@ -700,20 +714,40 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     /**
      * 修改金蝶同步状态
-     * @Author Luo_WG
-     * @Date 2023/4/24 15:29
+     *
      * @param id
      * @param syncKingdeeStatus
      * @param syncKingdeeId
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/24 15:29
      **/
     @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(PurchaseReturnOrderEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseReturnOrderEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchaseReturnOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),PurchaseReturnOrderEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .eq(PurchaseReturnOrderEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseReturnOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseReturnOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseReturnOrderEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+
+    /**
+     * 批量生成退货单
+     *
+     * @param list
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-04-25 11:09
+     */
+    @Override
+    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (PurchaseReturnOrderDTO.AddDTO item : list) {
+                this.add(item);
+            }
+        }
+        return true;
     }
 }

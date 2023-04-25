@@ -304,7 +304,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO{
+    public static class AddDTO extends CommonDTO {
 
         /**
          * 供应商信息
@@ -323,7 +323,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO{
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主表id
@@ -369,13 +369,13 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 关联单据（仅详情显示，无需传参）
          */
-        private PurchaseOrderRefOtherDTO  purchaseOrderRefOtherDTO;
+        private PurchaseOrderRefOtherDTO purchaseOrderRefOtherDTO;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class GetOneDTO extends CommonDTO{
+    public static class GetOneDTO extends CommonDTO {
 
         /**
          * 采购供应商信息
@@ -393,7 +393,6 @@ public class PurchaseOrderDTO implements Serializable {
         private String supplierName;
 
 
-
         /**
          * 仓库名
          */
@@ -407,7 +406,6 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class GetQcProductDTO {
-
 
 
         /**
@@ -438,11 +436,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String qcType;
 
 
+        /**
+         * 是否 是内检
+         */
+        private Boolean isInside;
+
 
         /**
          * 产品信息
          */
-        private List<ProductVO.ProductPackVO>  productList;
+        private List<ProductVO.ProductPackVO> productList;
 
     }
 
@@ -503,7 +506,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 签订日期（乙方）
          */
-        private LocalDate  secondSignDate;
+        private LocalDate secondSignDate;
 
         /**
          * 供方地址（乙方）
@@ -664,16 +667,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 收货数量
          */
         @NotNull(message = "收货数量不能为空")
-        @Min(value = 1,message = "收货数量最小值为1")
-        @Max(value = 99999999,message = "收货数量最大值为99999999")
+        @Min(value = 1, message = "收货数量最小值为1")
+        @Max(value = 99999999, message = "收货数量最大值为99999999")
         private Integer receiveQty;
 
         /**
          * 超收数量
          */
         @NotNull(message = "超收数量不能为空")
-        @Min(value = 0,message = "超收数量最小值为1")
-        @Max(value = 99999999,message = "超收数量最大值为99999999")
+        @Min(value = 0, message = "超收数量最小值为1")
+        @Max(value = 99999999, message = "超收数量最大值为99999999")
         private Integer exceedQty;
 
         /**
@@ -729,7 +732,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 已签收数量
          */
-        private Integer  receiveQty;
+        private Integer receiveQty;
 
         /**
          * 未入库数量
@@ -776,16 +779,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 实收数量
          */
         @NotNull(message = "实收数量不能为空")
-        @Min(value = 0,message = "实收数量最小值为0")
-        @Max(value = 999999999,message = "实收数量最大值为999999999")
+        @Min(value = 0, message = "实收数量最小值为0")
+        @Max(value = 999999999, message = "实收数量最大值为999999999")
         private Integer stockInQty;
 
         /**
          * 超收数量
          */
         @NotNull(message = "超收数量不能为空")
-        @Min(value = 0,message = "超收数量最小值为0")
-        @Max(value = 999999999,message = "超收数量最大值为999999999")
+        @Min(value = 0, message = "超收数量最小值为0")
+        @Max(value = 999999999, message = "超收数量最大值为999999999")
         private Integer exceedQty;
 
         /**
@@ -872,10 +875,7 @@ public class PurchaseOrderDTO implements Serializable {
         private String deliveryWarehouseName;
 
 
-
     }
-
-
 
 
 }
