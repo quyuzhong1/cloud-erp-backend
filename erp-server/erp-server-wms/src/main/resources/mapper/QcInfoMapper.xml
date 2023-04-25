@@ -173,7 +173,8 @@
         qi.qc_bad_qty,qi.qc_result,
         qi.handle_mode_dict,
         qi.bad_description,
-        qi.qc_good_rate,qi.qc_bad_rate
+        qi.qc_good_rate*100  AS qcGoodRate,
+        qi.qc_bad_rate*100 AS qcBadRate
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
@@ -266,7 +267,8 @@
         qi.qc_bad_qty,qi.qc_result,
         qi.handle_mode_dict,
         qi.bad_description,
-        qi.qc_good_rate,qi.qc_bad_rate
+        qi.qc_good_rate*100  AS qcGoodRate,
+        qi.qc_bad_rate*100 AS qcBadRate
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE

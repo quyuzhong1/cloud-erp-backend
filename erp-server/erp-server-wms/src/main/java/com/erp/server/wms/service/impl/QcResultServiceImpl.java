@@ -96,7 +96,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             //质检量
             Integer qcQty = qcResultEntity.getQcQty() != null ? qcResultEntity.getQcQty() : 0;
             if (totalQty != 0) {
-                BigDecimal qcSampleRate = MathUtil.divide(new BigDecimal(totalQty), new BigDecimal(qcQty));
+                BigDecimal qcSampleRate = MathUtil.divide(new BigDecimal(qcQty), new BigDecimal(totalQty));
                 qcResultEntity.setQcSampleRate(qcSampleRate);
             }
             //质检合格量
@@ -104,9 +104,9 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             //质检不良量
             Integer qcBadQty = qcResultEntity.getQcBadQty() != null ? qcResultEntity.getQcBadQty() : 0;
             if (qcQty != 0) {
-                BigDecimal qcGoodRate = MathUtil.divide(new BigDecimal(qcQty), new BigDecimal(qcGoodQty));
+                BigDecimal qcGoodRate = MathUtil.divide(new BigDecimal(qcGoodQty), new BigDecimal(qcQty));
                 qcResultEntity.setQcGoodRate(qcGoodRate);
-                BigDecimal qcBadRate = MathUtil.divide(new BigDecimal(qcQty), new BigDecimal(qcBadQty));
+                BigDecimal qcBadRate = MathUtil.divide(new BigDecimal(qcBadQty), new BigDecimal(qcQty));
                 qcResultEntity.setQcBadRate(qcBadRate);
             }
         }
@@ -132,6 +132,14 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             qcInfoView.setBadImageNameList(nameList);
             qcInfoView.setBadImageUrlList(imageUrlList);
             String qcType = qcInfoView.getQcType();
+            //不良率
+            BigDecimal badRate = qcInfoView.getQcBadRate();
+            qcInfoView.setQcBadRate(MathUtil.BigDecimal_100.multiply(badRate));
+            BigDecimal goodRate = qcInfoView.getQcGoodRate();
+            qcInfoView.setQcGoodRate(MathUtil.BigDecimal_100.multiply(goodRate));
+
+            BigDecimal sampleRate = qcInfoView.getQcSampleRate();
+            qcInfoView.setQcSampleRate(MathUtil.BigDecimal_100.multiply(sampleRate));
             qcInfoView.setQcTypeName(QcTypeEnum.getByCode(qcType));
             List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
             //处理措施
