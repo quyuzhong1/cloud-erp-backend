@@ -6,6 +6,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
@@ -96,8 +97,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                     purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                     purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                    PurchaseStockInDetailEntity purchaseStockInDetailEntity = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseStockInDetailEntity());
-                    if (addDTO.getRealityReturnQty() > purchaseStockInDetailEntity.getStockInQty()) {
+                    Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                    if (addDTO.getRealityReturnQty() > stockInQty) {
                         throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
                     }
                     purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getRealityReturnQty());

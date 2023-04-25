@@ -323,7 +323,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String variantProperty;
 
         /**
-         * 变体信息
+         * 含税单价
          */
         private BigDecimal taxPrice;
 
