@@ -11,7 +11,7 @@
         from
         qc_info qb
         <where>
-            qb.is_deleted = false
+            qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -31,7 +31,7 @@
         count (0) as count
         from qc_info qb
         <where>
-            qb.is_deleted = false
+            qb.is_deleted = false and qb.qc_date is not null
             <if test="beginDate != null and endDate != null">
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
@@ -54,7 +54,7 @@
         end) as unQcTimeOutQty
         from qc_info qb
         <where>
-            qb.is_deleted = false
+            qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -79,7 +79,7 @@
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         <where>
-            qb.is_deleted = false
+            qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
@@ -114,7 +114,7 @@
             sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then  1 else 0 end) as unQcTimeOutQty
         from qc_info qb
         <where>
-            qb.is_deleted = false
+            qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
@@ -138,7 +138,7 @@
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         <where>
-            qb.is_deleted = false
+            qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
