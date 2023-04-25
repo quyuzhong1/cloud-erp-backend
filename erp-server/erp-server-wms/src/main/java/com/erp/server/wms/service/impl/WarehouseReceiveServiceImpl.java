@@ -260,15 +260,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //保存主表信息
         this.save(warehouseReceiveEntity);
 
-        //修改到货状态
-        updateArrivalState(warehouseReceiveEntity);
-
         //保存详情信息
         warehouseReceiveDetailService.add(dto, warehouseReceiveEntity.getId());
 
         //操作日志
         moduleOperateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】",code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),warehouseReceiveEntity.getId(),"新增操作");
 
+        //修改到货状态
+        updateArrivalState(warehouseReceiveEntity);
         return warehouseReceiveEntity.getId();
     }
 
@@ -284,12 +283,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
                     }*/
             Integer reduce = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            Integer thisReduce = detailByMainId.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+//            Integer thisReduce = detailByMainId.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            if (reduce + thisReduce > purchaseOrderDetailEntity.getPurchaseQty()) {
+            if (reduce > purchaseOrderDetailEntity.getPurchaseQty()) {
                 throw new ServiceException(ApiError.ERROR_98058);
             }
-            getArrivalState(reduce + thisReduce, purchaseOrderDetailEntity.getPurchaseQty(), purchaseOrderDetailEntity.getId());
+            getArrivalState(reduce, purchaseOrderDetailEntity.getPurchaseQty(), purchaseOrderDetailEntity.getId());
         }
     }
 
