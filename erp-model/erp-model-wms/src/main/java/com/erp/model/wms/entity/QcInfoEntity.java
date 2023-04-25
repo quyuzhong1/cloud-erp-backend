@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -83,7 +84,7 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
      * 质检结束时间
      */
     @TableField("qc_finish_time")
-    private LocalDate qcFinishTime;
+    private LocalDateTime qcFinishTime;
 
     /**
      * 质检来源

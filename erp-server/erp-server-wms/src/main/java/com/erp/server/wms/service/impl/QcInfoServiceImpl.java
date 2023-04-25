@@ -49,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -406,7 +406,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             bill.setCode(code);
         }
         bill.setId(billId);
-        bill.setQcFinishTime(LocalDate.now());
+        bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum finishQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.FINISH_QC.getCode());
         bill.setQcStatus(finishQc);
         String warehouseId = "";
@@ -658,7 +658,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             bill.setCode(code);
         }
         bill.setId(billId);
-        bill.setQcFinishTime(LocalDate.now());
+        bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
         bill.setQcStatus(exemption);
         String warehouseId = "";
@@ -735,7 +735,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //批量检查
         batchCheckQcQty(qcList, false);
-        LocalDate now = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         //质检状态
         QcBillStatusEnum finishQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.FINISH_QC.getCode());
         for (QcInfoEntity item : qcList) {
@@ -780,7 +780,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //批量检查
         batchCheckQcQty(qcList, true);
-        LocalDate now = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         //质检状态
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
         for (QcInfoEntity item : qcList) {
