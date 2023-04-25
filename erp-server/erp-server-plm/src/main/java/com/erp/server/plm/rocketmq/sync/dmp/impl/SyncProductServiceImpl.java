@@ -60,7 +60,7 @@ public class SyncProductServiceImpl implements SyncProductService {
         List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
         // 异步推送到MQ
         list.stream().peek(msg ->{
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_INFO_TAG.getName(),msg, msg.getId());
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_SKU_TAG.getName(),msg, msg.getId());
         }).collect(Collectors.toList());;
     }
 
@@ -74,7 +74,7 @@ public class SyncProductServiceImpl implements SyncProductService {
         List<NewProductDTO> list = productSaleService.getListingProductAll();
         // 异步推送到MQ
         list.stream().peek(msg ->{
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_INFO_TAG.getName(),msg, msg.getId());
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(),msg, msg.getId());
         }).collect(Collectors.toList());;
     }
 }
