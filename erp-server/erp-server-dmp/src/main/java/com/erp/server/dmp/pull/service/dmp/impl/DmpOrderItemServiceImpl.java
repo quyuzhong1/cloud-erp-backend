@@ -8,6 +8,7 @@ import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,13 +129,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateNewSign(NewProductDTO dto) {
-        LambdaUpdateWrapper<DmpOrderItemEntity> updateWrapper = new LambdaUpdateWrapper<>();
+
         String year = "";
         String skuNo = String.valueOf(dto.getSkuNo());
         if (dto.getNewListingTime() != null) {
             LocalDate date = dto.getNewListingTime();
             year = String.valueOf(date.getYear());
-            updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
+
         }/* else if (map.get("pastListingTime") != null) {
             LocalDate date = LocalDate.parse(String.valueOf(map.get("pastListingTime")), fmt);
             year = String.valueOf(date.getYear());
@@ -144,7 +145,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             return;
         }
         List<String> ids = baseMapper.getItemIdBySkuAndYear(year, skuNo);
-        updateWrapper.in(DmpOrderItemEntity::getId, ids);
+        List<List<String>> partition = Lists.partition(ids, 1000);
+        partition.forEach(req -> {
+            LambdaUpdateWrapper<DmpOrderItemEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
+            updateWrapper.in(DmpOrderItemEntity::getId, req);
+            this.update(updateWrapper);
+        });
     }
 }
 
