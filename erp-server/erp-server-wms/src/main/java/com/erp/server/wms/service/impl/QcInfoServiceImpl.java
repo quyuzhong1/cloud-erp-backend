@@ -38,6 +38,7 @@ import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -1023,6 +1024,22 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     public List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids) {
+        List<QcInfoEntity> qcInfoList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(qcInfoList)) {
+            throw new ServiceException(ApiError.ERROR_99015);
+        }
+        String finishQcCode = QcBillStatusEnum.FINISH_QC.getCode();
+        long count = qcInfoList.stream().filter(f -> !f.getQcStatus().getCode().equals(finishQcCode)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99029);
+        }
+        List<QcResultEntity> qcResultList = qcResultService.getByMainIdList(ids);
+        long handleCount = qcResultList.stream().filter(r -> !r.getHandleModeDict().equals(WmsConstant.QC_RESULT_HANDLE_MODE)).count();
+        if (handleCount > 0) {
+            throw new ServiceException(ApiError.ERROR_99029);
+        }
+
+
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
         List<String> skuIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -1079,8 +1096,25 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
+        List<String> ids = dto.getList().stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
+        List<QcInfoEntity> qcInfoList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(qcInfoList)) {
+            throw new ServiceException(ApiError.ERROR_99015);
+        }
+        String finishQcCode = QcBillStatusEnum.FINISH_QC.getCode();
 
+        long count = qcInfoList.stream().filter(f -> !f.getQcStatus().getCode().equals(finishQcCode)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99029);
+        }
+        List<QcResultEntity> qcResultList = qcResultService.getByMainIdList(ids);
+        long handleCount = qcResultList.stream().filter(r -> !r.getHandleModeDict().equals(WmsConstant.QC_RESULT_HANDLE_MODE)).count();
+        if (handleCount > 0) {
+            throw new ServiceException(ApiError.ERROR_99029);
+        }
+
+
+        List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //查询采购订单
         List<String> sourceIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
 
