@@ -118,6 +118,9 @@ public enum ApiError implements Serializable {
     ERROR_94004(94004, "启动流程失败"),
     ERROR_94005(94005, "您无权操作,不是您审核"),
     ERROR_94006(94006, "审核失败"),
+    SAVE_PROCESS_ERROR(94007,"保存流程定义失败"),
+    UPDATE_PROCESS_ERROR(94008,"更新流程定义失败"),
+    PROCESS_DEFINITION_NOT_EXIST(94009,"流程定义不存在"),
 
 
 
@@ -439,11 +442,6 @@ public enum ApiError implements Serializable {
     ERROR_99024(99024,"只有待质检,暂存的质检单才能更新处理措施"),
     ERROR_99025(99025,"产品【%s】收货数量已经达到采购数量"),
 
-
-
-    // 流程中心错误
-    SAVE_PROCESS_ERROR(96001,"保存流程定义失败"),
-    UPDATE_PROCESS_ERROR(96002,"更新流程定义失败"),
 
     ERROR_end(1000000, "系统错误");
 

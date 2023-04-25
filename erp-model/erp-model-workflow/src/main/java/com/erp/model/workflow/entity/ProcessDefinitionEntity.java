@@ -2,6 +2,7 @@ package com.erp.model.workflow.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -45,12 +47,6 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
     private String bpmnXml;
 
     /**
-     * 是否已发布
-     */
-    @TableField("is_deploy")
-    private Boolean isDeploy;
-
-    /**
      * 描述信息
      */
     @TableField("remark")
@@ -61,6 +57,40 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
      */
     @TableField("review_setting")
     private String reviewSetting;
+
+    /**
+     * 审核状态
+     */
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+
+    /**
+     * 审核人
+     */
+    @TableField("approve_user_id")
+    private Long approveUserId;
+    /**
+     * 审核人姓名
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
+     * 流程部署ID
+     */
+    @TableField("deployment_id")
+    private String deploymentId;
+    /**
+     * 部署时间
+     */
+    @TableField("deploy_time")
+    private LocalDateTime deployTime;
+
 
     public static final String PROCESS_NAME = "process_name";
 
