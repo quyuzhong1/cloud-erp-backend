@@ -22,7 +22,7 @@ public enum ApiModuleTypeEnum {
     PURCHASE_PRICE_CHANGE(11, "PurchasePriceChange", "采购调价表","scm"),
     WAREHOUSE_INFO(12, "warehouseManage", "仓库管理","wms"),
     SUPPLIER(13, "supplier", "供应商管理","scm"),
-    PURCHASESTOCKIN(14, "purchaseStockIn", "入库单","wms"),
+    PURCHASE_STOCK_IN(14, "purchaseStockIn", "入库单","wms"),
 
     ;
     private Integer code;
