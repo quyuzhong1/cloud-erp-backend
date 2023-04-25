@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.QcBillRemarkEntity;
+import com.erp.model.wms.entity.QcRemarkEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-04-14
  */
 @Mapper
-public interface QcBillRemarkMapper extends BaseMapper<QcBillRemarkEntity> {
+public interface QcRemarkMapper extends BaseMapper<QcRemarkEntity> {
 
 }

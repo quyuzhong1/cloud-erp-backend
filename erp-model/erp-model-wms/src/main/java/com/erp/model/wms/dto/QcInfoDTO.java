@@ -1,149 +1,462 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * @author Lambda
- * @Classname QcInfoDTO
+ * @Classname QcBill
  * @Description TODO
- * @Date 2023-04-14 15:31
+ * @Date 2023-04-14 15:20
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class QcInfoDTO {
+public class QcInfoDTO implements Serializable {
 
 
     /**
-     * 暂存 质检信息
+     * 添加质检规则
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class SaveOrUpdateDTO extends PermissionsDTO {
 
+        /**
+         * 质检单id
+         */
         private String id;
-        /**
-         * 质检类型
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
-         * stockIn 入库质检  outsideQc 外检质检 insideQc 在库质检 newProductStockIn 新品入库质检 b2bOutsideQc B2B外检
-         */
-        @NotBlank(message = "质检类型不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @StateEnumValue(clazz = QcTypeEnum.class, message = "质检类型有误")
-        private String qcType;
 
 
         /**
-         * 总量
+         * 质检日期
          */
-        @NotNull(message = "总量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "1", message = "最小值必须大于0")
-        private Integer totalQty;
-
-        /**
-         * 质检量
-         */
-        @NotNull(message = "质检量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "1", message = "最小值必须大于0")
-        private Integer qcQty;
-
-        /**
-         * 质检合格量
-         */
-        @NotNull(message = "质检合格量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "1", message = "最小值必须大于0")
-        private Integer qcGoodQty;
-
-        /**
-         * 质检不良量
-         */
-        @NotNull(message = "质检不良量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0", message = "最小值为0")
-        private Integer qcBadQty;
+        @NotNull(message = "质检日期不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        private LocalDate qcDate;
 
 
         /**
-         * 采购订单明细id 不能为空
+         * 采购订单id
          */
-        //@NotBlank(message = "采购订单明细id 不能为空")
-        private String purchaseOrderDetailId;
+        //@NotBlank(message = "采购订单id不能为空")
+        private String purchaseOrderId;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
 
 
         /**
-         * 问题属性
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=qcProblemType
+         * 质检部门id
          */
-        private String qcProblemDict;
+        private String qcDeptId;
 
 
         /**
-         * 不良现象
-         * 选择不良的时候必填
+         * 来源id
          */
-        @Size(max = 250, message = "最大250个字符")
-        private String badDescription;
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 产品信息
+         * 从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
+         */
+        @Valid
+        private QcProductDTO.AddDTO qcProduct;
 
 
         /**
-         * 不良图片地址集合
+         * 质检信息
          */
-        private List<String> badImageUrlList;
-
-        /**
-         * 不良图片名称地址集合
-         */
-        private List<String> badImageNameList;
+        @Valid
+        private QcResultDTO.AddDTO qcInfo;
 
 
         /**
-         * 质检结果
+         * 质检报告明细
+         * 来源  http://172.16.100.11:3002/project/92/interface/api/9574
          */
-        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @StateEnumValue(clazz = QcResultEnum.class, message = "质检结果有误")
-        private String qcResult;
+        @Valid
+        private List<QcReportDetailDTO.AddDTO> reportDetailList;
 
         /**
-         * 处理措施
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
+         * 质检单备注 集合
          */
-        @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        private String handleModeDict;
+        private List<QcRemarkDTO.AddDTO> remarkList;
+
+
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String searchType;
+
+        private String typeName;
+
+        private Integer count;
+
+
     }
 
 
     /**
-     * 质检详情
+     * 质检单详情
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends PermissionsDTO {
 
+        /**
+         * 质检单id
+         */
         private String id;
+
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 质检日期
+         */
+        private LocalDate qcDate;
+
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+
+        /**
+         * 采购订单code
+         */
+        private String purchaseOrderCode;
+
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+
+        /**
+         * 仓库 id
+         */
+        private String warehouseId;
+
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+
+        /**
+         * 质检部门id
+         */
+        private String qcDeptId;
+
+        /**
+         * 质检状态
+         */
+        private QcBillStatusEnum qcStatus;
+
+        /**
+         * 质检状态名
+         */
+        private String qcStatusName;
+
+        /**
+         * 质检部门
+         */
+        private String qcDeptName;
+
+        /**
+         * 产品信息
+         * 从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
+         */
+        @Valid
+        private QcProductDTO.ViewDTO qcProduct;
+
+
+        /**
+         * 质检信息
+         */
+        @Valid
+        private QcResultDTO.ViewDTO qcInfo;
+
+
+        /**
+         * 质检报告明细
+         * 来源  http://172.16.100.11:3002/project/92/interface/api/9574
+         */
+        @Valid
+        private List<QcReportDetailDTO.ViewDTO> reportDetailList;
+
+        /**
+         * 质检单备注 集合
+         */
+        private List<QcRemarkDTO.AddDTO> remarkList;
+
+
+    }
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * all 全部
+         * waitQc 待质检
+         * finishQc 完成质检
+         * cancel 已取消
+         */
+        @StateEnumValue(strValues = {"all", "waitQc", "finishQc", "cancel"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
+
+
+        /**
+         *质检单号
+         */
+        private String code;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+
+        /**
+         * SKU no
+         */
+        private List<String> skuNoList;
+
+
+        /**
+         * 质检状态
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/9673
+         */
+        private List<String> qcStatusList;
+
+
+        /**
+         * 质检类型
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
+         */
+        private String qcType;
+
+
+        /**
+         * 是否内检
+         * true 内部检验
+         */
+        private Boolean isInside;
+
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIdList;
+
+
+        /**
+         * 质检结果集合
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/10024
+         */
+        private List<String> qcResultList;
+
+
+        /**
+         * 处理措施
+         */
+        private List<String> handleModeDictList;
+
+
+        /**
+         * 仓库id 集合
+         */
+        private List<String> warehouseIdList;
+
+
+        /**
+         * 质检员集合
+         */
+        private List<String> qcUserIdList;
+
+        /**
+         * 创建人 id 集合
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+    }
+
+
+    /**
+     * 仓库分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+        /**
+         * 质检单id
+         */
+        private String id;
+
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 质检日期
+         */
+        private LocalDate qcDate;
+
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+
+        /**
+         * 采购订单code
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+
+        /**
+         * 质检状态
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
+         */
+        private QcBillStatusEnum qcStatus;
+
+        /**
+         * 质检状态名
+         */
+        private String qcStatusName;
 
 
         /**
          * 质检类型
          */
-        private String qcType;
+        private QcTypeEnum qcType;
 
         /**
          * 质检类型名
          */
         private String qcTypeName;
 
+        /**
+         * 是否内检  true 是
+         */
+        private Boolean isInside;
+
+
+        /**
+         * 内检 类型
+         */
+        private String insideType;
+
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku 名
+         */
+        private String skuName;
+
+
+        /**
+         * sku 名
+         */
+        private String skuNo;
 
         /**
          * 总量
@@ -157,73 +470,19 @@ public class QcInfoDTO {
 
 
         /**
-         * 抽检比例
-         */
-        private BigDecimal qcSampleRate;
-
-
-        /**
-         * 是否内检  true 是
-         */
-        private Boolean isInside;
-
-        /**
          * 质检合格量
          */
         private Integer qcGoodQty;
-
-        /**
-         * 质检合格率
-         */
-        private BigDecimal qcGoodRate;
 
         /**
          * 质检不良量
          */
         private Integer qcBadQty;
 
-
-        /**
-         * 质检不良率
-         */
-        private BigDecimal qcBadRate;
-
-
-        /**
-         * 问题属性
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=qcProblemType
-         */
-        private String qcProblemDict;
-
-
-        /**
-         * 问题属性 名
-         */
-        private String qcProblemName;
-
-
-        /**
-         * 不良现象
-         * 选择不良的时候必填
-         */
-        private String badDescription;
-
-
-        /**
-         * 不良图片地址集合
-         */
-        private List<String> badImageUrlList;
-
-        /**
-         * 不良图片名称地址集合
-         */
-        private List<String> badImageNameList;
-
-
         /**
          * 质检结果
          */
-        private String qcResult;
+        private QcResultEnum qcResult;
 
         /**
          * 质检结果名
@@ -232,141 +491,82 @@ public class QcInfoDTO {
 
         /**
          * 处理措施
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
          */
         private String handleModeDict;
 
         /**
          * 处理措施名
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
          */
         private String handleModeName;
 
-
         /**
-         * 采购订单明细id
+         * 不良现象
          */
-        private String purchaseOrderDetailId;
-
-
-    }
-
-
-    /**
-     * 质检数量
-     */
-    @Data
-    @NoArgsConstructor
-    public static class QcQtyDTO {
+        private String badDescription;
 
 
         /**
-         * 质检单id
+         * 质检合格率
          */
-        private String mainId;
+        private BigDecimal qcGoodRate;
 
         /**
-         * 采购订单id
+         * 质检不良率
          */
-        private String purchaseOrderId;
+        private BigDecimal qcBadRate;
 
 
         /**
-         * skuId
-         */
-        private String skuId;
-
-        /**
-         * 质检类型
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890
-         * stockIn 入库质检  outsideQc 外检质检 insideQc 在库质检 newProductStockIn 新品入库质检 b2bOutsideQc B2B外检
-         */
-        private QcTypeEnum qcType;
-
-
-        /**
-         * 总量
-         */
-
-        private Integer totalQty;
-
-        /**
-         * 质检量
-         */
-
-        private Integer qcQty;
-
-        /**
-         * 质检合格量
-         */
-
-        private Integer qcGoodQty;
-
-        /**
-         * 质检不良量
-         */
-        private Integer qcBadQty;
-
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class UpdateHandleModeDTO {
-
-        /**
-         * 处理措施
-         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
-         * 取value
-         */
-        @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        private String handleModeDict;
-
-        @NotEmpty(message = "ids不能为空")
-        private List<String> ids;
-    }
-
-    /**
-     * 需要入库的参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class StockInDTO {
-
-        /**
-         * 表id
-         */
-        private String id;
-        /**
-         * 主表id
-         */
-        private String mainId;
-
-
-        /**
-         * 采购订单id
-         */
-        private String purchaseOrderId;
-
-
-        /**
-         * 采购订单详情id
-         */
-        private String purchaseOrderDetailId;
-
-        /**
-         * 采购订单 交付仓库id
+         * 仓库 id
          */
         private String warehouseId;
 
-        /**
-         * 质检总量
-         */
-        private Integer totalQty;
 
         /**
-         * 质检类型
+         * 仓库名
          */
-        private String qcType;
+        private String warehouseName;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
 
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+
+        private List<String> ids;
+    }
+
+
+    /**
+     * 分配质检员
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AssignDTO {
+
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        @NotBlank(message = "质检员不能为空")
+        private String qcUserId;
     }
 }

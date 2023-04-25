@@ -3,16 +3,17 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * <p>
- * 
+ * 质检单表
  * </p>
  *
  * @author lambda
@@ -25,123 +26,112 @@ import java.math.BigDecimal;
 public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
 
     /**
-     * 质检单id
+     * 质检单号
      */
-    @TableField("main_id")
-    private String mainId;
+    @TableField("code")
+    private String code;
 
     /**
-     * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
+     * 质检部门id
      */
-    @TableField("qc_type")
-    private String qcType;
+    @TableField("qc_dept_id")
+    private String qcDeptId;
 
     /**
-     * 抽检比例
+     * 质检部门name
      */
-    @TableField("qc_sample_rate")
-    private BigDecimal qcSampleRate;
+    @TableField("qc_dept_name")
+    private String qcDeptName;
 
     /**
-     * 是否内检 默认 true
+     * 质检人
      */
-    @TableField("is_inside")
-    private Boolean isInside;
+    @TableField("qc_user_id")
+    private String qcUserId;
 
     /**
-     * 质检数量
+     * 质检人名
      */
-    @TableField("qc_qty")
-    private Integer qcQty;
+    @TableField("qc_user_name")
+    private String qcUserName;
 
     /**
-     * 质检合格数量
+     * 采购订单id
      */
-    @TableField("qc_good_qty")
-    private Integer qcGoodQty;
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
 
     /**
-     * 不良数量
+     * 采购订单编号
      */
-    @TableField("qc_bad_qty")
-    private Integer qcBadQty;
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
 
     /**
-     * 总数量
+     * 质检状态
      */
-    @TableField("total_qty")
-    private Integer totalQty;
+    @TableField("qc_status")
+    private QcBillStatusEnum qcStatus;
 
     /**
-     * 质检合格率
+     * 质检日期
      */
-    @TableField("qc_good_rate")
-    private BigDecimal qcGoodRate;
+    @TableField("qc_date")
+    private LocalDate qcDate;
 
     /**
-     * 质检不良率
+     * 质检结束时间
      */
-    @TableField("qc_bad_rate")
-    private BigDecimal qcBadRate;
+    @TableField("qc_finish_time")
+    private LocalDate qcFinishTime;
 
     /**
-     * 质检问题属性
-     * type=qcProblemType
+     * 质检来源
      */
-    @TableField("qc_problem_dict")
-    private String qcProblemDict;
+    @TableField("source_type")
+    private String sourceType;
 
     /**
-     * 不良描述
+     * 来源id
      */
-    @TableField("bad_description ")
-    private String badDescription ;
+    @TableField("source_id")
+    private String sourceId;
 
     /**
-     * 质检结果
+     * 供应商id
      */
-    @TableField("qc_result")
-    private String qcResult;
+    @TableField("supplier_id")
+    private String supplierId;
 
     /**
-     * 处理方式
-     * type=handleModeType
+     * 仓库id
      */
-    @TableField("handle_mode_dict")
-    private String handleModeDict;
-
-    /**
-     *采购订单明细表id
-     */
-    @TableField("purchase_order_detail_id")
-    private String purchaseOrderDetailId;
+    @TableField("warehouse_id")
+    private String warehouseId;
 
 
-    public static final String MAIN_ID = "main_id";
 
-    public static final String QC_TYPE = "qc_type";
+    public static final String CODE = "code";
 
-    public static final String QC_SAMPLE_RATE = "qc_sample_rate";
+    public static final String QC_DEPT_ID = "qc_dept_id";
 
-    public static final String IS_INSIDE = "is_inside";
+    public static final String QC_DEPT_NAME = "qc_dept_name";
 
-    public static final String QC_QTY = "qc_qty";
+    public static final String QC_USER_ID = "qc_user_id";
 
-    public static final String QC_BAD_QTY = "qc_bad_qty";
+    public static final String QC_USER_NAME = "qc_user_name";
 
-    public static final String TOTAL_QTY = "total_qty";
+    public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
-    public static final String QC_GOOD_RATE = "qc_good_rate";
+    public static final String PURCHASE_ORDER_CODE = "purchase_order_code";
 
-    public static final String QC_BAD_RATE = "qc_bad_rate";
+    public static final String QC_STATUS = "qc_status";
 
-    public static final String QC_PROBLEM_KEY = "qc_problem_dict";
+    public static final String QC_DATE = "qc_date";
 
-    public static final String BAD_DESCRIPTION  = "bad_description ";
+    public static final String SOURCE_TYPE = "source_type";
 
-    public static final String QC_RESULT = "qc_result";
-
-    public static final String HANDLE_MODE_KEY = "handle_mode_dict";
+    public static final String SOURCE_ID = "source_id";
 
     @Override
     public Serializable pkVal() {

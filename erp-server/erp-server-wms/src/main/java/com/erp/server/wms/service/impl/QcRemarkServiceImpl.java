@@ -3,9 +3,9 @@ package com.erp.server.wms.service.impl;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.QcRemarkDTO;
-import com.erp.model.wms.entity.QcBillRemarkEntity;
-import com.erp.server.wms.mapper.QcBillRemarkMapper;
-import com.erp.server.wms.service.QcBillRemarkService;
+import com.erp.model.wms.entity.QcRemarkEntity;
+import com.erp.server.wms.mapper.QcRemarkMapper;
+import com.erp.server.wms.service.QcRemarkService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * @since 2023-04-14
  */
 @Service
-public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper, QcBillRemarkEntity> implements QcBillRemarkService {
+public class QcRemarkServiceImpl extends SuperServiceImpl<QcRemarkMapper, QcRemarkEntity> implements QcRemarkService {
 
 
     /**
@@ -42,8 +42,8 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
         if (CollectionUtils.isEmpty(remarkList)) {
             return;
         }
-        List<QcBillRemarkEntity> dbList = this.findByMainId(billId);
-        List<QcBillRemarkEntity> saveOrUpdateList = BeanMapper.copyList(remarkList, QcBillRemarkEntity.class);
+        List<QcRemarkEntity> dbList = this.findByMainId(billId);
+        List<QcRemarkEntity> saveOrUpdateList = BeanMapper.copyList(remarkList, QcRemarkEntity.class);
         saveOrUpdateList.stream().forEach(s -> s.setMainId(billId));
         //获取到删除的id
         List<String> deleteIdList = getDeleteIds(remarkList, dbList);
@@ -64,7 +64,7 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
      */
     @Override
     public List<QcRemarkDTO.AddDTO> getByMainId(String billId) {
-        List<QcBillRemarkEntity> list = this.findByMainId(billId);
+        List<QcRemarkEntity> list = this.findByMainId(billId);
         List<QcRemarkDTO.AddDTO> resultList = BeanMapper.copyList(list, QcRemarkDTO.AddDTO.class);
         return resultList;
     }
@@ -79,12 +79,12 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
      * @date 2023-04-19 19:31
      */
     @Override
-    public List<QcBillRemarkEntity> getByMainIdList(List<String> billIdList) {
+    public List<QcRemarkEntity> getByMainIdList(List<String> billIdList) {
         if (CollectionUtils.isEmpty(billIdList)) {
             return Collections.emptyList();
         }
 
-        return this.lambdaQuery().in(QcBillRemarkEntity::getMainId,billIdList).orderByDesc(QcBillRemarkEntity::getCreateTime).list();
+        return this.lambdaQuery().in(QcRemarkEntity::getMainId,billIdList).orderByDesc(QcRemarkEntity::getCreateTime).list();
     }
 
 
@@ -97,10 +97,10 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
      * @author yl
      * @date 2023-04-19 11:27
      */
-    private List<String> getDeleteIds(List<QcRemarkDTO.AddDTO> remarkList, List<QcBillRemarkEntity> dbList) {
+    private List<String> getDeleteIds(List<QcRemarkDTO.AddDTO> remarkList, List<QcRemarkEntity> dbList) {
         List<String> ids = remarkList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
                 map(QcRemarkDTO.AddDTO::getId).collect(Collectors.toList());
-        List<String> dbIds = dbList.stream().map(QcBillRemarkEntity::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(QcRemarkEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
 
@@ -111,7 +111,7 @@ public class QcBillRemarkServiceImpl extends SuperServiceImpl<QcBillRemarkMapper
      * @param billId
      * @return
      */
-    private List<QcBillRemarkEntity> findByMainId(String billId) {
-        return lambdaQuery().eq(QcBillRemarkEntity::getMainId, billId).list();
+    private List<QcRemarkEntity> findByMainId(String billId) {
+        return lambdaQuery().eq(QcRemarkEntity::getMainId, billId).list();
     }
 }

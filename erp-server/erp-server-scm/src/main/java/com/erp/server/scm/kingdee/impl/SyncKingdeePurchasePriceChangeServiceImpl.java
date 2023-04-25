@@ -4,16 +4,20 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceChangeService;
+import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -42,6 +47,9 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
 
     @Resource
     private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
+
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
 
     @Resource
     private SupplierService supplierService;
@@ -77,27 +85,41 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             return;
         }
 
-        //价目明细
+        //调价明细
         List<PurchasePriceChangeDetailEntity> details = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
+        List<String> detailIds = details.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
+
+        List<PurchasePriceDetailEntity> purchasePriceDetailList = purchasePriceDetailService.listByIds(detailIds);
+        //价目明细
+        if (CollectionUtils.isEmpty(purchasePriceDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+
 
 
         List<JSONObject> list = new ArrayList<>();
         for (PurchasePriceChangeDetailEntity detailEntity : details) {
+
+            PurchasePriceDetailEntity purchasePriceDetailEntity = purchasePriceDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchasePriceDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchasePriceDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98024);
+            }
+
             JSONObject jsonObject = new JSONObject();
             //采购价目编号
             jsonObject.set("CGJM_code",detailEntity.getCJJMCode());
             //供应商编号
             resultMap.put("supplierCode",supplierEntity.getCode());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
-            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
-            jsonObject.set("taxPrice",detailEntity.getTaxPrice());
-            jsonObject.set("taxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
-            jsonObject.set("minQty",detailEntity.getMinQty());
-            jsonObject.set("maxQty",detailEntity.getMaxQty());
+            jsonObject.set("beforeTaxPrice",purchasePriceDetailEntity.getTaxPrice());
+            jsonObject.set("afterTaxPrice",detailEntity.getTaxPrice());
+            jsonObject.set("beforeTaxRate",MathUtil.multiply(purchasePriceDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("afterTaxPrice",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             jsonObject.set("effectiveDate",detailEntity.getEffectiveDate());
+            jsonObject.set("expireDate",detailEntity.getExpireDate());
             list.add(jsonObject);
         }
         resultMap.put("list",list);

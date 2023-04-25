@@ -114,14 +114,14 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
      * 订单下单时间
      */
     @ExcelProperty(value = "*订单下单时间", index = 14)
-    @FieldValid(fieldName = "订单下单时间",isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "订单下单时间",isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.DATETIME)
     private String platformCreateTimeStr;
 
     /**
      * 订单发货时间
      */
     @ExcelProperty(value = "订单发货时间", index = 15)
-    @FieldValid(fieldName = "订单发货时间" ,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "订单发货时间" ,formatPattern = FieldFormatPatternTypeEnum.DATETIME)
     private String deliveryTimeStr;
 
     /**

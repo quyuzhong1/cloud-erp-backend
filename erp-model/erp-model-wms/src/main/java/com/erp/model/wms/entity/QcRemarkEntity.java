@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("qc_bill_remark")
-public class QcBillRemarkEntity extends BaseEntity<QcBillRemarkEntity> {
+@TableName("qc_remark")
+public class QcRemarkEntity extends BaseEntity<QcRemarkEntity> {
 
     /**
      * 质检单id

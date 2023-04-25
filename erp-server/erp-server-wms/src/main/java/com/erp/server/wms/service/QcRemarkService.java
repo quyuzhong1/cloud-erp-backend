@@ -2,7 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcRemarkDTO;
-import com.erp.model.wms.entity.QcBillRemarkEntity;
+import com.erp.model.wms.entity.QcRemarkEntity;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * @author lambda
  * @since 2023-04-14
  */
-public interface QcBillRemarkService extends SuperService<QcBillRemarkEntity> {
+public interface QcRemarkService extends SuperService<QcRemarkEntity> {
 
     /**
      * 质检备注 暂存
@@ -42,5 +42,5 @@ public interface QcBillRemarkService extends SuperService<QcBillRemarkEntity> {
      * @param billIdList
      * @return java.util.List<com.erp.model.wms.entity.QcBillRemarkEntity>
      */
-    List<QcBillRemarkEntity> getByMainIdList(List<String> billIdList);
+    List<QcRemarkEntity> getByMainIdList(List<String> billIdList);
 }
