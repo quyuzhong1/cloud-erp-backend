@@ -44,6 +44,7 @@
             pod.remark as remark,
             pod.id as purchaseOrderDetailId,
             pod.variant_property,
+            pod.tax_price,
             pod.currency,
             pod.currency_symbol
         from purchase_order po
