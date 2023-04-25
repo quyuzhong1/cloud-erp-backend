@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
@@ -30,14 +29,16 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Override
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
-        int nameSize=CollectionUtils.isNotEmpty(attachmentNameList)?attachmentNameList.size():0;
+        //先删除
+        this.delete(type, businessId);
+        int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
         if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
             List<WmsAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
             for (int i = 0; i < attachmentUrlList.size(); i++) {
                 WmsAttachmentEntity entity = new WmsAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
-                if(CollectionUtils.isNotEmpty(attachmentNameList)){
-                    if(nameSize>i){
+                if (CollectionUtils.isNotEmpty(attachmentNameList)) {
+                    if (nameSize > i) {
                         entity.setAttachName(attachmentNameList.get(i));
                     }
                 }
@@ -48,6 +49,19 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             this.saveBatch(addList);
         }
 
+    }
+
+    /**
+     * 先删除
+     *
+     * @param type
+     * @param businessId
+     */
+    private void delete(String type, String businessId) {
+        LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WmsAttachmentEntity::getBusinessId, businessId);
+        queryWrapper.eq(WmsAttachmentEntity::getType, type);
+        this.remove(queryWrapper);
     }
 
     @Override
@@ -65,10 +79,11 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     /**
      * 删除附件信息
-     * @author yl
-     * @date 2023-04-19 11:11
+     *
      * @param dto
      * @return void
+     * @author yl
+     * @date 2023-04-19 11:11
      */
     @Override
     public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
@@ -79,6 +94,5 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
         }
         this.remove(queryWrapper);
-        FastDFSClientUtil.deleteFile(dto.getAttachUrl());
     }
 }
