@@ -57,9 +57,9 @@ public class PlmJob {
     /**
      * 新老品同步
      */
-    @XxlJob("newProductToDmp")
+//    @XxlJob("newProductToDmp")
 //    @Scheduled(cron = “0 0 2 * * ?"")
-//    @PostConstruct
+    //   @PostConstruct
     public void newProductToDmp() {
         syncProductService.syncNewProductToDmp();
     }

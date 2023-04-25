@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Description 产品销售信息服务类
@@ -91,7 +92,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             ProductDetailEntity productDetailEntity = productDetailService.getById(saleEntity.getSkuId());
             NewProductDTO map = new NewProductDTO();
             map.setSkuNo(productDetailEntity.getSkuNo());
-//            map.put("pastListingTime", pastListingTime);
+            map.setNewListingTime(pastListingTime);
             map.setNewListingTime(newListingTime);
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, saleEntity.getId());
         }
@@ -110,16 +111,17 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         LocalDate pastListingTime = null;
         LocalDate newListingTime = null;
         List<ProductSaleEntity> list = BeanMapper.copyList(productSaleList, ProductSaleEntity.class);
-        List<ProductSaleEntity> productSaleEntities = this.listByIds(list);
+        List<String> collect = list.stream().map(ProductSaleEntity::getId).collect(Collectors.toList());
+        List<ProductSaleEntity> productSaleEntities = this.listByIds(collect);
         boolean flag = this.saveOrUpdateBatch(list);
 
         if (flag) {
             for (ProductSaleEntity req : list) {
                 newListingTime = req.getListingTime();
 
-                ProductSaleEntity productSaleEntity = productSaleEntities.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new ProductSaleEntity());
+/*                ProductSaleEntity productSaleEntity = productSaleEntities.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new ProductSaleEntity());
                 pastListingTime = productSaleEntity.getListingTime();
-                if (!newListingTime.equals(pastListingTime)) {
+                if (!newListingTime.equals(pastListingTime)) {*/
                     ProductDetailEntity productDetailEntity = productDetailService.getById(req.getSkuId());
                     NewProductDTO map = new NewProductDTO();
                     map.setId(req.getId());
@@ -127,7 +129,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
 //                    map.put("pastListingTime", pastListingTime);
                     map.setNewListingTime(newListingTime);
                     mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, req.getId());
-                }
+//                }
             }
 
         }
