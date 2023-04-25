@@ -156,7 +156,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
-       /* //异步推送mq
+/*        //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
