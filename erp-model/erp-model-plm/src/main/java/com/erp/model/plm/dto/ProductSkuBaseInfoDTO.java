@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -29,12 +30,12 @@ public class ProductSkuBaseInfoDTO {
     /**
      * 计划上市时间
      */
-    private LocalDateTime planListingTime;
+    private LocalDate planListingTime;
 
     /**
      * 首批量产入库时间
      */
-    private LocalDateTime firstMassProductDate;
+    private LocalDate firstMassProductDate;
 
     /**
      * 单位表id

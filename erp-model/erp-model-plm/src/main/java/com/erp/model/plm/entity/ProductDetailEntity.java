@@ -48,13 +48,13 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
      * 计划上市时间
      */
     @TableField(value = "plan_listing_time")
-    private LocalDateTime planListingTime;
+    private LocalDate planListingTime;
 
     /**
      * 首批量产入库时间
      */
     @TableField(value = "first_mass_product_date")
-    private LocalDateTime firstMassProductDate;
+    private LocalDate firstMassProductDate;
     
     /**
      * 单位表id
