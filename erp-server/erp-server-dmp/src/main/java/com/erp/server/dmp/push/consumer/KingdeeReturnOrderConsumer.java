@@ -156,7 +156,7 @@ public class KingdeeReturnOrderConsumer implements RocketMQListener<Map<String, 
                 JSONObject o2 = (JSONObject)jsonObject.get("FMATERIALID");
                 Object fNumber = o2.get("FNumber");
                 if (o1.equals(fNumber)) {
-                    newJson.set("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
+                    newJson.set("FEntryId",queryMap.get("FPURMRBENTRY_FEntryID"));
                 }
                 newJson.putAll(jsonObject);
                 removeObj.set(o);

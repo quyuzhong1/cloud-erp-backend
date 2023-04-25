@@ -412,6 +412,8 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购入库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), pairList, "作废操作");
+        //审核通过发送金蝶
+        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
     }
 
@@ -475,6 +477,9 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购入库单【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), pairList, "反审核操作");
+        //审核通过发送金蝶
+        list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
         return Boolean.TRUE;
     }
 

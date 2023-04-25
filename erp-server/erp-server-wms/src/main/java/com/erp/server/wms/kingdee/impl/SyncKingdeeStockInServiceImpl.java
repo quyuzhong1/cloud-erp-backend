@@ -112,7 +112,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //供应商地址
         resultMap.put("address", supplierEntity.getCompanyAddress());
 
-        //退货单明细
+        //入库单明细
         List<PurchaseStockInDetailEntity> detailList = purchaseStockInDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -142,7 +142,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //交货仓库
             jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
             //库位
-            jsonObject.set("deliveryWarehouseName", detail.getWarehouseLocationName());
+            jsonObject.set("warehouseLocationName", detail.getWarehouseLocationName());
             //入库备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
@@ -156,7 +156,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
-/*        //异步推送mq
+        //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -164,6 +164,6 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 return purchaseStockInService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
             }
             return Boolean.TRUE;
-        });*/
+        });
     }
 }

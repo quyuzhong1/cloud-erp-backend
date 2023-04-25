@@ -42,4 +42,10 @@ public interface WmsConstant {
      */
     String BAD="bad";
 
+
+    /**
+     * 质检结果处理措施
+     */
+    String QC_RESULT_HANDLE_MODE="returnSupplier";
+
 }

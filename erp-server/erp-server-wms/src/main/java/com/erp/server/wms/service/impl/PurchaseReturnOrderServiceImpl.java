@@ -195,8 +195,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(dto.getSupplierId());
         purchaseReturnOrderEntity.setSupplierName(supplierEntity.getName());
         purchaseReturnOrderEntity.setSupplierContactId(dto.getSupplierContactId());
-        SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
-        purchaseReturnOrderEntity.setSupplierContactName(supplierContactById.getPerson());
+        if (StringUtils.isNotBlank(dto.getSupplierContactId())) {
+            SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
+            purchaseReturnOrderEntity.setSupplierContactName(supplierContactById.getPerson());
+        }
         purchaseReturnOrderEntity.setReturnUserName(userDTO.getUserName());
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         purchaseReturnOrderEntity.setBillDate(LocalDate.now());
@@ -436,6 +438,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     .set(PurchaseReturnOrderEntity::getApproveTime, LocalDateTime.now())
                     .in(PurchaseReturnOrderEntity::getId, ids)
                     .update();
+
+            
         } else {
             //审核不通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -558,6 +562,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .set(PurchaseReturnOrderEntity::getInvalidTime, LocalDateTime.now())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+        //操作日志
+        List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), pairList, "作废操作");
 
         //审核通过发送金蝶
         warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
