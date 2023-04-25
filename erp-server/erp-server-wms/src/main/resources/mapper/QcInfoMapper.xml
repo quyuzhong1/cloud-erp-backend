@@ -9,7 +9,7 @@
         qb.qc_status as type,
         count(0) as count
         from
-        qc_bill qb
+        qc_info qb
         <where>
             qb.is_deleted = false
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -29,7 +29,7 @@
         end as dateStr,
         qb.qc_status as status,
         count (0) as count
-        from qc_bill qb
+        from qc_info qb
         <where>
             qb.is_deleted = false
             <if test="beginDate != null and endDate != null">
@@ -52,7 +52,7 @@
         then 1 else 0 end) as qcTimeOutQty,
         sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then 1 else 0
         end) as unQcTimeOutQty
-        from qc_bill qb
+        from qc_info qb
         <where>
             qb.is_deleted = false
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -75,8 +75,8 @@
         qi.qc_qty as qcQty,
         qb.qc_status as qcStatus,
         qb.qc_finish_time as qcEndTime
-        from qc_bill qb
-        inner join qc_info qi on qb.id = qi.main_id and qi.is_deleted = false
+        from qc_info qb
+        inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         <where>
             qb.is_deleted = false
@@ -112,7 +112,7 @@
             sum (case when qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time then  1 else 0 end) as qcTimelyQty,
             sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status in ('finishQc','exemption')  then  1 else 0 end) as qcTimeOutQty,
             sum (case when qb.qc_finish_time > qb.qc_date::timestamp + '1 day' and qb.qc_status = 'waitQc' then  1 else 0 end) as unQcTimeOutQty
-        from qc_bill qb
+        from qc_info qb
         <where>
             qb.is_deleted = false
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -134,8 +134,8 @@
             qi.qc_qty as qcQty,
             qb.qc_status as qcStatus,
             qb.qc_finish_time as qcEndTime
-        from qc_bill qb
-        inner join qc_info qi on qb.id = qi.main_id and qi.is_deleted = false
+        from qc_info qb
+        inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
         <where>
             qb.is_deleted = false
@@ -174,8 +174,8 @@
         qi.handle_mode_dict,
         qi.bad_description,
         qi.qc_good_rate,qi.qc_bad_rate
-        FROM qc_bill qb
-        LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+        FROM qc_info qb
+        LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <if test="params.searchType !=null and params.searchType!=''">
@@ -267,8 +267,8 @@
         qi.handle_mode_dict,
         qi.bad_description,
         qi.qc_good_rate,qi.qc_bad_rate
-        FROM qc_bill qb
-        LEFT JOIN qc_info qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+        FROM qc_info qb
+        LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE
         <choose>
@@ -363,8 +363,8 @@
           qp.sku_id AS skuId, qp.sku_no AS skuNo,
           qi.qc_bad_qty AS realityReturnQty,
           qi.deductAmountQty AS realityReturnQty
-        FROM qc_bill  qb
-        INNER JOIN qc_info qi  ON qb.id=qi.main_id AND qi.is_deleted=FALSE
+        FROM qc_info  qb
+        INNER JOIN qc_result qi  ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         INNER join qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
         WHERE qb.is_deleted=FALSE AND qb.purchase_order_id!=''
         <if test="ids != null and ids.size > 0">
