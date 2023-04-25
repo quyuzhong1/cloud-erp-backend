@@ -71,6 +71,11 @@ public class PurchaseReturnOrderDTO {
         private String supplierContactId;
 
         /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
          * 来源id
          */
         private String sourceId;

@@ -45,9 +45,9 @@ public class SyncProductServiceImpl implements SyncProductService {
     public void syncProductInfoToDmp() {
         List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
         // 异步推送到MQ
-        list.stream().peek(msg ->{
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_INFO_TAG.getName(),msg, msg.getId());
-        }).collect(Collectors.toList());;
+        list.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_INFO_TAG.getName(),req, req.getId());
+        });
     }
 
     /**
@@ -59,9 +59,9 @@ public class SyncProductServiceImpl implements SyncProductService {
     public void syncProductSkuToDmp() {
         List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
         // 异步推送到MQ
-        list.stream().peek(msg ->{
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_SKU_TAG.getName(),msg, msg.getId());
-        }).collect(Collectors.toList());;
+        list.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_SKU_TAG.getName(),req, req.getId());
+        });
     }
 
     /**
@@ -72,16 +72,9 @@ public class SyncProductServiceImpl implements SyncProductService {
     @Override
     public void syncNewProductToDmp() {
         List<NewProductDTO> list = productSaleService.getListingProductAll();
+        // 异步推送到MQ
         list.forEach(req -> {
-            if (req.getSkuNo().equals("1907")) {
-                System.out.println("@@@@@@@@@@@@@@@@@@@@@@");
-                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(),req, req.getId());
-                // 异步推送到MQ
-  /*              list.stream().peek(msg ->{
-                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(),msg, msg.getId());
-                }).collect(Collectors.toList());;*/
-            }
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(),req, req.getId());
         });
-
     }
 }

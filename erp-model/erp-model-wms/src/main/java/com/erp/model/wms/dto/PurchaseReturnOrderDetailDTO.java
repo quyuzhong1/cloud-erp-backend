@@ -25,6 +25,21 @@ public class PurchaseReturnOrderDetailDTO {
     @NoArgsConstructor
     public static class AddDTO {
         /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
          * 实退数量
          */
         private Integer realityReturnQty;
