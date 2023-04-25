@@ -11,6 +11,7 @@ import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.EasyExcelLocalDateConverter;
 import com.common.core.excel.EasyExcelLocalTimeConverter;
+import com.common.core.excel.LocalDateTimeConverter;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -61,14 +62,17 @@ public class ExcelUtil {
             WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
 
             // LocalDateTime转化器，导入导出都可以使用
-            EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+            EasyExcelLocalTimeConverter localTimeDateConverter = new EasyExcelLocalTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localTimeDateConverter.supportJavaTypeKey()), localTimeDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localTimeDateConverter.supportJavaTypeKey(), localTimeDateConverter.supportExcelTypeKey()), localTimeDateConverter);
             // LocalDate转化器，导入导出都可以使用
             EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
             excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
             excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
-
+            // LocalDateTime转化器，导入导出都可以使用
+            LocalDateTimeConverter localDateTimeConverter = new LocalDateTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeConverter.supportJavaTypeKey()), localDateTimeConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeConverter.supportJavaTypeKey(), localDateTimeConverter.supportExcelTypeKey()), localDateTimeConverter);
             // 写出数据
             excelWriter.write(dataResult, writeSheet, writeTable);
 

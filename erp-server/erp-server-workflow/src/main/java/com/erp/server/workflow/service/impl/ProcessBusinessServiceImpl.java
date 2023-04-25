@@ -6,6 +6,8 @@ import com.erp.server.workflow.service.ProcessBusinessService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务实现类
@@ -17,4 +19,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusinessMapper, ProcessBusinessEntity> implements ProcessBusinessService {
 
+    @Override
+    public List<ProcessBusinessEntity> getByDefinitionId(String definitionId) {
+        List<ProcessBusinessEntity> list = lambdaQuery()
+                .eq(ProcessBusinessEntity::getProcessDefinitionId, definitionId)
+                .list();
+        return list;
+    }
 }

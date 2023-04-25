@@ -3,6 +3,8 @@ package com.erp.server.workflow.service;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -13,4 +15,10 @@ import com.common.business.service.SuperService;
  */
 public interface ProcessBusinessService extends SuperService<ProcessBusinessEntity> {
 
+    /**
+     * 根据流程定义ID获取流程业务
+     * @param definitionId
+     * @return
+     */
+    List<ProcessBusinessEntity> getByDefinitionId(String definitionId);
 }
