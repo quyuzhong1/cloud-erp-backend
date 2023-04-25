@@ -1,5 +1,5 @@
 package com.common.business.config;
-;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.data.redis.connection.RedisNode;
@@ -16,7 +16,6 @@ import java.util.Map;
  * @CreateTime: 2023-04-24  18:43
  * @Author: zhangchunlin
  */
-@Component
 @ConfigurationProperties(prefix = RedisConfigProperties.PREFIX)
 @RefreshScope
 public class RedisConfigProperties {

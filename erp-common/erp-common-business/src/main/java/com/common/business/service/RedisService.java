@@ -1,6 +1,5 @@
 package com.common.business.service;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.BoundSetOperations;
 import org.springframework.data.redis.core.HashOperations;
@@ -18,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * @Created by yl
  */
 @Component
-public class RedisService implements InitializingBean {
+public class RedisService  {
 
 
     @Autowired
@@ -238,8 +237,4 @@ public class RedisService implements InitializingBean {
         return result != null && result;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        System.out.println(redisTemplate);
-    }
 }
