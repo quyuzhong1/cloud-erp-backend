@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 /**
  * 来源xxljob
  * plm 定时任务
@@ -55,7 +57,9 @@ public class PlmJob {
     /**
      * 新老品同步
      */
-    @Scheduled(cron = "0 0 2 * * ?")
+//    @XxlJob("newProductToDmp")
+//    @Scheduled(cron = “0 0 2 * * ?"")
+    @PostConstruct
     public void newProductToDmp() {
         syncProductService.syncNewProductToDmp();
     }

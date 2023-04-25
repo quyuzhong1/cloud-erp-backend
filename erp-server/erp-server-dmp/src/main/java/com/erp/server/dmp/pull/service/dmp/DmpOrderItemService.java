@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.plm.dto.NewProductDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -69,5 +70,5 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @Date 2022/11/14 21:25
      * @return void
      **/
-    void updateNewSign(Map<String, Object> map);
+    void updateNewSign(NewProductDTO dto);
 }

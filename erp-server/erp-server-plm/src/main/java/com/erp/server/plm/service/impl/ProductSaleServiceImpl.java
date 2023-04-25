@@ -89,10 +89,10 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         newListingTime = productSaleDTO.getListingTime();
         if (flag) {
             ProductDetailEntity productDetailEntity = productDetailService.getById(saleEntity.getSkuId());
-            Map<String, Object> map = new HashMap<>();
-            map.put("skuNo", productDetailEntity.getSkuNo());
-            map.put("pastListingTime", pastListingTime);
-            map.put("newListingTime", newListingTime);
+            NewProductDTO map = new NewProductDTO();
+            map.setSkuNo(productDetailEntity.getSkuNo());
+//            map.put("pastListingTime", pastListingTime);
+            map.setNewListingTime(newListingTime);
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, saleEntity.getId());
         }
         return flag;
@@ -121,10 +121,11 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 pastListingTime = productSaleEntity.getListingTime();
                 if (!newListingTime.equals(pastListingTime)) {
                     ProductDetailEntity productDetailEntity = productDetailService.getById(req.getSkuId());
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("skuNo", productDetailEntity.getSkuNo());
+                    NewProductDTO map = new NewProductDTO();
+                    map.setId(req.getId());
+                    map.setSkuNo(productDetailEntity.getSkuNo());
 //                    map.put("pastListingTime", pastListingTime);
-                    map.put("newListingTime", newListingTime);
+                    map.setNewListingTime(newListingTime);
                     mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, req.getId());
                 }
             }
