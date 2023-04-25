@@ -19,7 +19,7 @@ import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReportExportExcelType;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.mapper.QcBillMapper;
+import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.QcEffectivenessService;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 public class QcEffectivenessServiceImpl implements QcEffectivenessService {
 
     @Resource
-    private QcBillMapper qcBillMapper;
+    private QcInfoMapper qcInfoMapper;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -57,7 +57,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> details = new ArrayList<>();
 
         //质检总览
-        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcBillMapper.listQcBillGroupQcStatus(dto);
+        List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> list = qcInfoMapper.listQcBillGroupQcStatus(dto);
 
         //总计
         QcEffectivenessDTO.ViewQcOverviewDetailDTO totalDTO = new QcEffectivenessDTO.ViewQcOverviewDetailDTO();
@@ -130,7 +130,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                 beginDate = endDate.minusMonths(15);
             }
         }
-        List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcBillMapper.listQcBillGroupQcTrend(dto.getType(),beginDate,endDate);
+        List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcInfoMapper.listQcBillGroupQcTrend(dto.getType(),beginDate,endDate);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> map = list.stream().collect(Collectors.groupingBy(QcEffectivenessDTO.GroupQcTrendDTO::getDateStr));
             for (Map.Entry<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> entry : map.entrySet()) {
@@ -162,14 +162,14 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     @Override
     public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcBillMapper.viewQcForPersonnel(query, pagingDTO.getParams());
+        IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcInfoMapper.viewQcForPersonnel(query, pagingDTO.getParams());
         return new PagingVO(pageData);
     }
 
     @Override
     public PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<QcEffectivenessDTO.ViewQcForDocumentDTO> pageData = this.qcBillMapper.viewQcForDocument(query, pagingDTO.getParams());
+        IPage<QcEffectivenessDTO.ViewQcForDocumentDTO> pageData = this.qcInfoMapper.viewQcForDocument(query, pagingDTO.getParams());
         List<QcEffectivenessDTO.ViewQcForDocumentDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
@@ -187,12 +187,12 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         Class<?> clazz = null;
         List<?> list = null;
         if (QcReportExportExcelType.PERSONNEL.getCode().equals(type)) {
-             list =  this.qcBillMapper.viewExportQcForPersonnel(dto);
+             list =  this.qcInfoMapper.viewExportQcForPersonnel(dto);
              fileName = "采购入库单数据";
              clazz = ExportQcPersonnelExcelDTO.class;
         }
         if (QcReportExportExcelType.DOCUMENT.getCode().equals(type)) {
-             list =  this.qcBillMapper.viewExportQcForDocument(dto);
+             list =  this.qcInfoMapper.viewExportQcForDocument(dto);
              fileName = "采购入库单数据";
              clazz = ExportQcDocumentExcelDTO.class;
              doOpHandleQcForDocument((List<QcEffectivenessDTO.ViewQcForDocumentDTO>) list);

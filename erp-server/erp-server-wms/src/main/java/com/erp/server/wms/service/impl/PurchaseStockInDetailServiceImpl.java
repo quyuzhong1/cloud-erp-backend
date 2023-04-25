@@ -12,7 +12,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
 import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.PurchaseStockInEntity;
-import com.erp.model.wms.entity.QcBillEntity;
+import com.erp.model.wms.entity.QcInfoEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -53,7 +53,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
-    private QcBillService qcBillService;
+    private QcInfoService qcInfoService;
 
     @Resource
     private PurchaseStockInService purchaseStockInService;
@@ -217,7 +217,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         }
 
         //判断是否存在质检单、存在且未质检完成则不支持入库
-        List<QcBillEntity> qcList =  qcBillService.listByPoIds(Arrays.asList(entity.getId()));
+        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isNotEmpty(qcList)) {
            Long count = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.getCode().equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.getCode().equals(obj.getQcStatus())).count();
             if (count > 0) {

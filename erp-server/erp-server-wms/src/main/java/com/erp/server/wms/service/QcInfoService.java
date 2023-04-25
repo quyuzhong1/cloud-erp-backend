@@ -1,14 +1,20 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
+import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
  * <p>
- *  服务类
+ * 质检单表 服务类
  * </p>
  *
  * @author lambda
@@ -18,70 +24,163 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
 
 
     /**
-     * 质检信息 暂存
-     * @author yl
-     * @date 2023-04-19 10:11
-     * @param billId
-     * @param qcInfo
-     * @return void
+     * 暂存质检单
+     * @param dto
+     * @return
      */
-    void add(String billId, QcInfoDTO.AddDTO qcInfo);
-
-    
+    Boolean add(QcInfoDTO.SaveOrUpdateDTO dto);
     /**
-     * 获取到质检信息
+     * 根据采购id查询
+     */
+    List<QcInfoEntity> listByPoIds(List<String> poIds);
+
+    /**
+     * 质检单详情
      * @author yl
-     * @date 2023-04-19 12:24
+     * @date 2023-04-19 11:53
      * @param id
-     * @return com.erp.model.wms.dto.QcInfoDTO.ViewDTO
+     * @return com.erp.model.wms.dto.QcBillDTO.ViewDTO
      */
-    QcInfoDTO.ViewDTO getByMainId(String id);
+    QcInfoDTO.ViewDTO view(String id);
 
     /**
-     * 根据采购订单id集合 获取到已质检的数量
+     * 质检单分页信息
      * @author yl
-     * @date 2023-04-20 12:59
-     * @param purOrderIds
-     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.QcQtyDTO>
+     * @date 2023-04-19 15:25
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
      */
-    List<QcInfoDTO.QcQtyDTO> getPurOrderIds(List<String> purOrderIds);
+    PagingVO<QcInfoDTO.PagingViewDTO> paging(PagingDTO<QcInfoDTO.PagingParamDTO> dto);
 
     /**
-     * 方法说明
+     * 导出
      * @author yl
-     * @date 2023-04-20 15:57
-     * @param ids
+     * @date 2023-04-19 17:39
+     * @param dto
+     * @param response
      * @return void
      */
-    List<QcInfoEntity> getByMainIdList(List<String> ids);
+    void exportQcBill(QcInfoDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
-     * 批量免检后 批量去更新 数量
+     * 完成质检
      * @author yl
-     * @date 2023-04-20 17:07
-     * @param ids
-     * @return void
-     */
-    void updateQcQty(List<String> ids);
-
-    
-    /**
-     * 更新处理措施
-     * @author yl
-     * @date 2023-04-20 19:17
-     * @param ids
-     * @param handleModeDict
+     * @date 2023-04-20 10:26
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateHandleMode(List<String> ids, String handleModeDict);
+    Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto);
+
+    /**
+     * 暂存
+     * @author yl
+     * @date 2023-04-20 14:00
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean draft(QcInfoDTO.SaveOrUpdateDTO dto);
 
     
     /**
-     * 根据质检单id集合 获取到一些需要入库的数据
+     * 免检
      * @author yl
-     * @date 2023-04-24 15:47
-     * @param mainIdList
-     * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.StockInDTO>
+     * @date 2023-04-20 15:29
+     * @param dto
+     * @return java.lang.Boolean
      */
-    List<QcInfoDTO.StockInDTO> getStockIn(List<String> mainIdList);
+    Boolean exemption(QcInfoDTO.SaveOrUpdateDTO dto);
+
+
+
+
+    /**
+     * 批量完成质检单
+     * @author yl
+     * @date 2023-04-20 15:37
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean batchFinish(List<String> ids);
+
+    /**
+     * 批量完成免检
+     * @author yl
+     * @date 2023-04-20 16:50
+     * @return java.lang.Boolean
+     */
+    Boolean batchExemption(List<String> ids);
+
+    /**
+     * 批量取消 质检单
+     * @author yl
+     * @date 2023-04-20 17:13
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean batchCancel(List<String> ids);
+
+    /**
+     * 删除质检单
+     * @author yl
+     * @date 2023-04-20 17:21
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean delete(List<String> ids);
+    
+    /**
+     * 撤销
+     * @author yl
+     * @date 2023-04-20 17:30
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 分配质检员
+     * @author yl
+     * @date 2023-04-20 17:58
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean assign(QcInfoDTO.AssignDTO dto);
+
+    /**
+     * 批量更新处理措施
+     * @author yl
+     * @date 2023-04-20 19:08
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateHandleMode(QcResultDTO.UpdateHandleModeDTO dto);
+
+    /**
+     * 获取tab 类型数量
+     * @author yl
+     * @date 2023-04-21 16:48
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.TabListDTO>
+     */
+    List<QcInfoDTO.TabListDTO> tabList();
+
+    
+    /**
+     * 下推 退货单 显示
+     * @author yl
+     * @date 2023-04-23 12:07
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
+     */
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
+
+    
+    /**
+     * 下推退货单
+     * @author yl
+     * @date 2023-04-24 9:35
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
 }
