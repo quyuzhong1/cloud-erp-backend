@@ -46,11 +46,11 @@ public class KingdeePurchasePriceChangeConsumer implements RocketMQListener<Map<
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PAT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CGJM000003"));
+        queryFilters.add(String.format("FBillNo = '%s'", "CGTJ0001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FSupplierId.FNumber,FPriceObject,FPriceType,FCurrencyID.FNumber";
+        String fieldKeys = "FId,FMaterialId.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
@@ -129,7 +129,7 @@ public class KingdeePurchasePriceChangeConsumer implements RocketMQListener<Map<
         queryFilters.add(String.format("FId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
         //查询子单据id
-        String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber";
+        String fieldKeys = "FPUR_PATENTRY_FEntryID,FMaterialId.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
@@ -140,7 +140,7 @@ public class KingdeePurchasePriceChangeConsumer implements RocketMQListener<Map<
         KingdeeUtils.makeFieldJson(json,"FId",".", id);
         //比较
         for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FPriceListEntry") ;
+            JSONArray obj = (JSONArray)json.get("FPUR_PATENTRY") ;
             JSONArray removeObj = new JSONArray();
             JSONArray addObj = new JSONArray();
             for (Object o : obj) {
@@ -150,7 +150,7 @@ public class KingdeePurchasePriceChangeConsumer implements RocketMQListener<Map<
                 JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
                 Object fNumber = o2.get("FNumber");
                 if (o1.equals(fNumber)) {
-                    newJson.set("FEntryId",queryMap.get("FPriceListEntry_FEntryID"));
+                    newJson.set("FEntryId",queryMap.get("FPUR_PATENTRY_FEntryID"));
                 }
                 newJson.putAll(jsonObject);
                 removeObj.set(o);
