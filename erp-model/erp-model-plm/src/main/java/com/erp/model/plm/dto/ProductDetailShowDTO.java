@@ -161,7 +161,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 首批入库时间
      * product_detail
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDate firstMassProductDate;
 
     /**

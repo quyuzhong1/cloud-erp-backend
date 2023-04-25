@@ -128,11 +128,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Transactional(rollbackFor = Exception.class)
     public void updateNewSign(NewProductDTO dto) {
         LambdaUpdateWrapper<DmpOrderItemEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String year = "";
         String skuNo = String.valueOf(dto.getSkuNo());
         if (dto.getNewListingTime() != null) {
-            LocalDate date = LocalDate.parse(String.valueOf(dto.getNewListingTime()), fmt);
+            LocalDate date = dto.getNewListingTime();
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
         }/* else if (map.get("pastListingTime") != null) {
