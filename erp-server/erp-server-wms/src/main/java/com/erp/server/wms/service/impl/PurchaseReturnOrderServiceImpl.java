@@ -274,7 +274,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
         viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
 
-        if (SourceTypeEnum.QC_BILL.getType().equals(purchaseReturnOrderEntity.getSourceType())) {
+        if (SourceTypeEnum.QC_BILL.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getCode());
         } else {
             viewDTO.setSourceTypeName(ReturnOrderSourceEnum.OTHER.getCode());

@@ -817,7 +817,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
             addDTO.setSourceId(id);
-            addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getType());
+            addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode());
             WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
 
             addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());

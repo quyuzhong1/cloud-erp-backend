@@ -1,5 +1,8 @@
 package com.erp.model.wms.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum SourceTypeEnum {
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
@@ -11,19 +14,21 @@ public enum SourceTypeEnum {
     /**
      * 类型
      */
-    private String type;
+    @EnumValue
+    @JsonValue
+    private String code;
     /**
      * 名称
      */
     private String name;
 
     SourceTypeEnum(String type, String name) {
-        this.type = type;
+        this.code = type;
         this.name = name;
     }
 
-    public String getType() {
-        return type;
+    public String getCode() {
+        return code;
     }
 
     public String getName() {
@@ -32,7 +37,7 @@ public enum SourceTypeEnum {
 
     public static String getName(String type) {
         for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
-            if (type.equals(sourceTypeEnum.getType())) {
+            if (type.equals(sourceTypeEnum.getCode())) {
                 return sourceTypeEnum.name();
             }
         }

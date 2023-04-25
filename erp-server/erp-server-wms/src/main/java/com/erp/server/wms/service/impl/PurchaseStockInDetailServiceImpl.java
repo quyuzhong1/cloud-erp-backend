@@ -259,7 +259,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
                 throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty)));
             }
             //来源收货单
-            if (SourceTypeEnum.WAREHOUSE_RECEIVE.getType().equals(sourceType)) {
+            if (SourceTypeEnum.WAREHOUSE_RECEIVE.getCode().equals(sourceType)) {
                 //收货数量
                 Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).findFirst().orElse(MathUtil.ZERO);
 

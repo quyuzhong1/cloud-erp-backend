@@ -5,6 +5,7 @@ import com.erp.server.plm.service.NoticeMessageService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -54,7 +55,7 @@ public class PlmJob {
     /**
      * 新老品同步
      */
-    @XxlJob("newProductToDmp")
+    @Scheduled(cron = "0 0 2 * * ?")
     public void newProductToDmp() {
         syncProductService.syncNewProductToDmp();
     }

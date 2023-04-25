@@ -496,7 +496,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         details.add(detail);
         dto.setDetails(details);
         dto.setSourceId(billId);
-        dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
+        dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
         dto.setPurchaseOrderId(purchaseOrderId);
         dto.setDeliveryWarehouseId(warehouseId);
         String userId = commonService.getUserInfo().getUid();
@@ -528,7 +528,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         stockInList = stockInList.stream().filter(s -> StringUtils.isNotBlank(s.getPurchaseOrderId()) &&
                 b2bQcType.equals(s.getQcType())).collect(Collectors.toList());
 
-        String sourceType = SourceTypeEnum.QC_BILL.getType();
+        String sourceType = SourceTypeEnum.QC_BILL.getCode();
         String userId = commonService.getUserInfo().getUid();
         //获取部门信息
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
@@ -1020,7 +1020,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         }
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
-            dto.setSourceType(SourceTypeEnum.QC_BILL.getType());
+            dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
             dto.setSourceDetailId(dto.getPurchaseOrderDetailId());
@@ -1073,7 +1073,7 @@ public class QcBillServiceImpl extends SuperServiceImpl<QcBillMapper, QcBillEnti
         List<PurchaseStockInDetailEntity> stockInSkuList = purchaseStockInDetailService.listDetailByPodIds(podIds);
 
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
-        String qcBill = SourceTypeEnum.QC_BILL.getType();
+        String qcBill = SourceTypeEnum.QC_BILL.getCode();
         Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
         for (Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
             String sourceId = entry.getKey();

@@ -535,7 +535,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         List<String> resultIds = new ArrayList<>();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
-            dto.setSourceType(SourceTypeEnum.PURCHASE_RETURN_ORDER.getType());
+            dto.setSourceType(SourceTypeEnum.PURCHASE_RETURN_ORDER.getCode());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
 
@@ -820,7 +820,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             }
             addDTO.setPurchaseOrderId(purchaseOrderId);
             addDTO.setSourceId(purchaseOrderId);
-            addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getType());
+            addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             addDTO.setStockInDeptId(entity.getPurchaseDeptId());
             addDTO.setStockInUserId(entity.getPurchaseUserId());
