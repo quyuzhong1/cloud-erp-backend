@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import org.apache.commons.lang3.StringUtils;
@@ -117,6 +118,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         }
     }
 
+
     /**
      * 同步PLM的到货时间更新新老品
      * @Author Luo_WG
@@ -125,13 +127,12 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateNewSign(Map<String, Object> map) {
+    public void updateNewSign(NewProductDTO dto) {
         LambdaUpdateWrapper<DmpOrderItemEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String year = "";
-        String skuNo = String.valueOf(map.get("skuNo"));
-        if (map.get("newListingTime") != null) {
-            LocalDate date = LocalDate.parse(String.valueOf(map.get("newListingTime")), fmt);
+        String skuNo = String.valueOf(dto.getSkuNo());
+        if (dto.getNewListingTime() != null) {
+            LocalDate date = dto.getNewListingTime();
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
         }/* else if (map.get("pastListingTime") != null) {

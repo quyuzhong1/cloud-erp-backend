@@ -5,6 +5,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.service.dmp.*;
@@ -172,9 +173,9 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_listing_tag",
             consumerGroup = "${spring.profiles.active}-plm_product_listing_consumer")
-    public class ConsumerPlmProductListing implements RocketMQListener<Map<String, Object>>  {
+    public class ConsumerPlmProductListing implements RocketMQListener<NewProductDTO>  {
         @Override
-        public void onMessage(Map<String, Object> ext) {
+        public void onMessage(NewProductDTO ext) {
             dmpOrderItemService.updateNewSign(ext);
         }
     }
