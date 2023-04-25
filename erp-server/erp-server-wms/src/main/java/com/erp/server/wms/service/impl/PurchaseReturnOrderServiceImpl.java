@@ -191,9 +191,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         }
 
-
-
-
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
 
@@ -235,39 +232,53 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
-        //根据用户id获取用户信息
-        SysUserDTO sysUserDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
-        //获取仓库信息
-        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
+        //获取用户信息
+        SysUserDTO userDTO = sysUserFeign.getSysUserById(dto.getReturnUserId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
-        //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
-        //获取采购单供应商信息
-        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
-        //获取供应商联系人信息
-        SupplierContactEntity supplierContactEntity = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
+        //生成单号
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
+        //设置收货单主表
+        PurchaseReturnOrderEntity purchaseReturnOrderEntity = new PurchaseReturnOrderEntity();
+        BeanMapperUtils.copy(dto, purchaseReturnOrderEntity);
+        purchaseReturnOrderEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        purchaseReturnOrderEntity.setCode(code);
+        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+            //获取采购订单主表信息
+            PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
+            purchaseReturnOrderEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
+            purchaseReturnOrderEntity.setPurchaseOrderCode(purchaseOrderEntity.getCode());
+        }
 
-        PurchaseReturnOrderEntity entity = new PurchaseReturnOrderEntity();
-        BeanMapperUtils.copy(dto, entity);
-        entity.setReturnUserName(sysUserDTO.getUserName());
-        entity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
-        entity.setReturnWarehouseName(warehouseEntity.getName());
-        entity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
-        entity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
-        entity.setSupplierId(orderSupplierByOrderId.getSupplierId());
-        entity.setSupplierName(orderSupplierByOrderId.getSupplierName());
-        entity.setSupplierContactId(dto.getSupplierContactId());
-        entity.setSupplierContactName(supplierContactEntity.getPerson());
+        //获取采购单供应商信息
+//        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+
+        SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
+        purchaseReturnOrderEntity.setPurchaseUserId(dto.getPurchaseUserId());
+        purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
+        purchaseReturnOrderEntity.setSupplierId(dto.getSupplierId());
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(dto.getSupplierId());
+        purchaseReturnOrderEntity.setSupplierName(supplierEntity.getName());
+        purchaseReturnOrderEntity.setSupplierContactId(dto.getSupplierContactId());
+        if (StringUtils.isNotBlank(dto.getSupplierContactId())) {
+            SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
+            purchaseReturnOrderEntity.setSupplierContactName(supplierContactById.getPerson());
+        }
+        purchaseReturnOrderEntity.setReturnUserName(userDTO.getUserName());
+        purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
+        purchaseReturnOrderEntity.setBillDate(LocalDate.now());
+        purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
         //更新收货单主表信息
-        this.updateById(entity);
+        this.updateById(purchaseReturnOrderEntity);
 
         //操作日志
         PurchaseReturnOrderEntity byId = this.getById(dto.getId());
-        moduleOperateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), entity.getId(), "", "");
+        moduleOperateLogService.addModuleOperateLogByObj(byId, purchaseReturnOrderEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "", "");
 
         //更新收货单详情表信息
-        return purchaseReturnOrderDetailService.update(dto);
+        return purchaseReturnOrderDetailService.update(dto, purchaseReturnOrderEntity.getId());
     }
 
     /**
@@ -452,10 +463,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     .update();
 
     /*        for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
-                List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
-
-
-            }*//*        for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
                 List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
 
 

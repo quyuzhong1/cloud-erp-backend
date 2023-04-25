@@ -111,6 +111,11 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderCode;
 
         /**
+         * 退货来源
+         */
+        private String sourceType;
+
+        /**
          * 供应商id
          */
         private String supplierId;
@@ -149,6 +154,11 @@ public class PurchaseReturnOrderDTO {
          * 供应商联系人id
          */
         private String supplierContactId;
+
+        /**
+         * 采购用户id
+         */
+        private String purchaseUserId;
 
         /**
          * 签收单明细

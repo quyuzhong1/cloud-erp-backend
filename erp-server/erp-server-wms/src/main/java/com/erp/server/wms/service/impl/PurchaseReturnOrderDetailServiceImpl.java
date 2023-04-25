@@ -117,7 +117,6 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
-
                     purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getRealityReturnQty());
                     purchaseReturnOrderDetailEntity.setReplenishQty(addDTO.getReplenishQty());
                     purchaseReturnOrderDetailEntity.setDeductAmountQty(addDTO.getDeductAmountQty());
@@ -171,39 +170,76 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
+    public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-        //遍历需要保存的采购收货单详情信息，并赋值采购单信息
-        List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
-        for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
-            PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
-            if (StringUtils.isNotBlank(updateDTO.getId())) {
-                purchaseReturnOrderDetailEntity.setId(updateDTO.getId());
+        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+            //获取界面传过来的采购单详情表id集合
+            List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+            //根据ids查询采购单详情
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+            //遍历需要保存的采购收货单详情信息，并赋值采购单信息
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
+            List<PurchaseStockInDetailEntity> stockInDetailEntityList = purchaseStockInDetailService.listDetailByPodIds(orderDetailIds);
+            List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+                PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
+                purchaseReturnOrderDetailEntity.setMainId(id);
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                    purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
+                    purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
+
+                    if (dto.getSourceType().equals(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode())) {
+                        Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                        if (updateDTO.getRealityReturnQty() > receiveQty) {
+                            throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
+                        }
+                    } else {
+                        Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                        if (updateDTO.getRealityReturnQty() > stockInQty) {
+                            throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
+                        }
+                    }
+                    purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getRealityReturnQty());
+                    purchaseReturnOrderDetailEntity.setReplenishQty(updateDTO.getReplenishQty());
+                    purchaseReturnOrderDetailEntity.setDeductAmountQty(updateDTO.getDeductAmountQty());
+                    purchaseReturnOrderDetailEntity.setReturnPrice(updateDTO.getReturnPrice());
+                    purchaseReturnOrderDetailEntity.setRemark(updateDTO.getRemark());
+                    purchaseReturnOrderDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
+                    purchaseReturnOrderDetailEntity.setCurrency(updateDTO.getCurrency());
+                    purchaseReturnOrderDetailEntity.setSourceDetailId(updateDTO.getSourceDetailId());
+                } else {
+                    throw new ServiceException(ApiError.ERROR_99006);
+                }
+                listDetail.add(purchaseReturnOrderDetailEntity);
             }
-            purchaseReturnOrderDetailEntity.setMainId(updateDTO.getMainId());
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
-                purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getRealityReturnQty());
-                purchaseReturnOrderDetailEntity.setReplenishQty(updateDTO.getReplenishQty());
-                purchaseReturnOrderDetailEntity.setDeductAmountQty(updateDTO.getDeductAmountQty());
-                purchaseReturnOrderDetailEntity.setReturnPrice(updateDTO.getReturnPrice());
-                purchaseReturnOrderDetailEntity.setRemark(updateDTO.getRemark());
-                purchaseReturnOrderDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
-                purchaseReturnOrderDetailEntity.setCurrency(updateDTO.getCurrency());
-                purchaseReturnOrderDetailEntity.setSourceDetailId(updateDTO.getSourceDetailId());
-            } else {
-                throw new ServiceException(ApiError.ERROR_99006);
-            }
-            listDetail.add(purchaseReturnOrderDetailEntity);
+        } else {
+            notProductOrderUpdate(dto, id, listDetail);
         }
         return this.saveOrUpdateBatch(listDetail);
+    }
+
+    /**
+     * 无采购单新增
+     * @Author Luo_WG
+     * @Date 2023/4/25 14:39
+     * @param dto id
+     * @return void
+     **/
+    private List<PurchaseReturnOrderDetailEntity> notProductOrderUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
+        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+            //遍历需要保存的采购收货单详情信息，并赋值采购单信息
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
+            for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+                PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
+                BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
+                purchaseReturnOrderDetailEntity.setMainId(id);
+                purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getRealityReturnQty());
+                listDetail.add(purchaseReturnOrderDetailEntity);
+            }
+        }
+        return listDetail;
     }
 
     /**

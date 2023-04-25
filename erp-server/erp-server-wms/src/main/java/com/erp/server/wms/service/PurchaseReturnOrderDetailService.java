@@ -42,7 +42,7 @@ public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseR
      * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto);
+    Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id);
 
     /**
      * 根据主表id删除
