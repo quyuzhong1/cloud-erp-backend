@@ -181,7 +181,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 已入库数量
          */
-        private Integer stockInQty;
+        private Integer hasStockInQty;
 
         /**
          * 采购数量
@@ -222,6 +222,22 @@ public class PurchaseReturnOrderDetailDTO {
          * 采购订单详情表id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
+
     }
 
 }
