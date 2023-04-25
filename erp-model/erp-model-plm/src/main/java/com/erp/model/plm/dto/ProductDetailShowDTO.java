@@ -243,15 +243,15 @@ public class ProductDetailShowDTO implements Serializable {
      * 上市时间
      * product_sale
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime listingTime;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDate listingTime;
 
     /**
      * 退市时间
      * product_sale
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime delistingTime;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDate delistingTime;
 
     /**
      * 箱单数量
