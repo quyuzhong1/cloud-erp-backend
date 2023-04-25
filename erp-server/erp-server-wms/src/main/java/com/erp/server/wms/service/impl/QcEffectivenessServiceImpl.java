@@ -88,7 +88,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
             }
         }
         resultDTO.setList(details);
-        String rate = MathUtil.compareTo(totalCount, MathUtil.ZERO) == 0 ? MathUtil.subtract(new BigDecimal(qcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100) + "%" : "0%";
+        BigDecimal rate = MathUtil.subtract(new BigDecimal(qcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100);
         resultDTO.setCompletionRate(rate);
         return resultDTO;
     }
