@@ -2,9 +2,12 @@ package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.common.business.service.SuperService;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -29,4 +32,45 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @return
      */
     PagingVO<ProcessDefinitionDTO.ListDTO> paging(PagingDTO<ProcessDefinitionDTO.QueryDTO> dto);
+
+    /**
+     * 流程定义反审核
+     * @param dto
+     * @return
+     */
+    boolean unApprove(ProcessDefinitionDTO.UnApproveDTO dto);
+    /**
+     * 流程发布
+     * @param dto
+     * @return
+     */
+    ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto);
+
+    /**
+     * 流程定义提交审核
+     * @param dto
+     * @return
+     */
+    Boolean submitApprove(ProcessDefinitionDTO.SubmitDTO dto);
+
+    /**
+     * 流程定义审核撤销
+     * @param dto
+     * @return
+     */
+    Boolean cancelApprove(ProcessDefinitionDTO.CancelDTO dto);
+
+    /**
+     * 流程定义复制
+     * @param dto
+     * @return
+     */
+    ProcessDefinitionDTO.CopyResultDTO copy(ProcessDefinitionDTO.CopyDTO dto);
+
+    /**
+     * 流程定义导出
+     * @param dto
+     * @return
+     */
+    Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response);
 }

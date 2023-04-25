@@ -2,8 +2,11 @@ package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ProcessInstanceStateEnum;
+import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
@@ -16,10 +19,12 @@ import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.impl.RepositoryServiceImpl;
+import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.repository.DecisionDefinition;
 import org.camunda.bpm.engine.repository.Deployment;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Comment;
@@ -328,30 +333,6 @@ public class WorkflowServiceImpl implements WorkflowService {
 
 
     /**
-     * 发布流程
-     *
-     * @param dto
-     * @return void
-     * @author yl
-     * @date 2022-08-17 17:52
-     */
-    @Override
-    public Boolean deployDefinitionByResource(DeployProcessDTO dto) {
-        Boolean deployResult = true;
-        try {
-            Deployment deploy = repositoryService.createDeployment()
-                    .name(dto.getBusinessName())
-                    .addClasspathResource("diagrams/" + dto.getBpmnName())
-                    .deploy();
-        } catch (Exception e) {
-            deployResult = false;
-            log.error("部署流程出错了====", e);
-        }
-        return deployResult;
-    }
-
-
-    /**
      * 获取审批记录
      *
      * @param dto
@@ -566,24 +547,5 @@ public class WorkflowServiceImpl implements WorkflowService {
             return ProcessInstanceStateEnum.PROCESS_ENDED.getCode();
         }
         return ProcessInstanceStateEnum.PROCESS_ING.getCode();
-    }
-
-    @Override
-    public ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto) {
-        // 获取流程定义信息
-        com.erp.model.workflow.entity.ProcessDefinitionEntity definitionEntity = processDefinitionService.getById(dto.getProcessDefinitionId());
-        if(null == definitionEntity){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
-        }
-        Deployment deploy = repositoryService.createDeployment()
-                    .name(definitionEntity.getProcessName())
-                    .addString(definitionEntity.getProcessName() + ".bpmn", definitionEntity.getBpmnXml())
-                    .deploy();
-        // 保存部署时间和部署id 部署状态
-        // 更新流程定义信息
-//        definitionEntity.setDeploymentId(deploy.getId());
-//        return new ProcessDTO.DeployResultDTO(definitionEntity);
-        return null;
-
     }
 }

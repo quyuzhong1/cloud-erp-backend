@@ -1,7 +1,12 @@
 package com.erp.model.workflow.dto;
 
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 
 /**
  * 流程相关参数
@@ -21,7 +26,18 @@ public class ProcessDTO {
         /**
          * 部署流程ID
          */
+        @NotBlank(message = "流程定义ID不能为空")
         private String processDefinitionId;
+
+        /**
+         * 审核意见
+         */
+        private ApproveStatusEnum approveCode;
+
+        /**
+         * 审核意见
+         */
+        private String comment;
     }
 
     /**
@@ -57,17 +73,25 @@ public class ProcessDTO {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
         /**
          * 更新时间
          */
-        private String updateTime;
+        private LocalDateTime updateTime;
         /**
          * 备注
          */
         private String remark;
 
-        private Boolean result;
+        public DeployResultDTO(ProcessDefinitionEntity definitionEntity, int version) {
+            this.processDefinitionId = definitionEntity.getId();
+            this.processName = definitionEntity.getProcessName();
+            this.processVersion = version;
+            this.bpmnXml = definitionEntity.getBpmnXml();
+            this.createTime = definitionEntity.getCreateTime();
+            this.updateTime = definitionEntity.getUpdateTime();
+            this.remark = definitionEntity.getRemark();
+        }
     }
 
 

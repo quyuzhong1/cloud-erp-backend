@@ -13,7 +13,7 @@
         <result column="update_time" property="updateTime" />
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
-        <result column="process_definition_id " property="processDefinitionId " />
+        <result column="process_definition_id " property="processDefinitionId" />
         <result column="business_key" property="businessKey" />
         <result column="start_condition" property="startCondition" />
         <result column="disabled" property="disabled" />

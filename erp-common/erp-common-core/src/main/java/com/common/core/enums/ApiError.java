@@ -121,6 +121,11 @@ public enum ApiError implements Serializable {
     SAVE_PROCESS_ERROR(94007,"保存流程定义失败"),
     UPDATE_PROCESS_ERROR(94008,"更新流程定义失败"),
     PROCESS_DEFINITION_NOT_EXIST(94009,"流程定义不存在"),
+    PROCESS_DEFINITION_NOT_UPDATE(94010,"流程定义已审核，不可修改"),
+    PROCESS_DEFINITION_NOT_APPROVE(94011,"流程定义未审核，不需要反审"),
+    PROCESS_DEFINITION_NOT_WAIT_SUBMIT(94012,"流程定义非待提交状态，不需要提交审核"),
+    PROCESS_DEFINITION_NOT_APPROVE_ING(94013,"流程定义不在审核中，不能撤销"),
+    CANCEL_PROCESS_ERROR(94014,"流程定义撤销失败"),
 
 
 
@@ -446,8 +451,8 @@ public enum ApiError implements Serializable {
     ERROR_99026(99026,"【%s】退货数量不能大于入库数量"),
     ERROR_99027(99027,"存在有效的入库单，不能撤销"),
     ERROR_99028(99028,"存在有效的退货单，不能撤销"),
-    ERROR_99029(99029,"【%s】退货数量不能大于收货数量"),
-
+    ERROR_99029(99029,"只有已质检,且接受措施-退货供应商 才可下推退货单"),
+    ERROR_99030(99030,"【%s】退货数量不能大于收货数量"),
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

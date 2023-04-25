@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -22,12 +23,13 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("process_business")
+@NoArgsConstructor
 public class ProcessBusinessEntity extends BaseEntity<ProcessBusinessEntity> {
 
     /**
      * 流程定义ID
      */
-    @TableField("process_definition_id ")
+    @TableField("process_definition_id")
     private String processDefinitionId ;
 
     /**

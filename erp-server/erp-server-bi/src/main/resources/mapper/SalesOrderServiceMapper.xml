@@ -2232,7 +2232,7 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        pi.brand_name  AS NAME
+        COALESCE(pi.brand_name,'-') AS NAME
         FROM dmp_order_item i
         LEFT JOIN
         dmp_order_info o ON i.order_id = o.ID

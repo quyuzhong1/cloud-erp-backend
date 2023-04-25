@@ -37,25 +37,6 @@ public class ReimbursementController extends BaseController {
     @Autowired
     private ProcessTaskService processTaskService;
 
-    //部署流程
-    @PostMapping("/deploy")
-    public ApiResult deploy(@RequestBody @Validated DeployProcessDTO dto) {
-        Boolean  deployResult= workflowService.deployDefinitionByResource(dto);
-        return deployResult==true?success():failure("部署失败");
-    }
-
-    /**
-     * 流程发布
-     * @param dto
-     * @return
-     */
-    @PostMapping("/deploy/v2")
-    public ApiResult<ProcessDTO.DeployResultDTO> deployProcess(@RequestBody @Validated ProcessDTO.DeployDTO dto) {
-        ProcessDTO.DeployResultDTO resultDTO= workflowService.deploy(dto);
-        return success(resultDTO);
-    }
-
-
     //删除流程
     @PostMapping("/removeProcess")
     public ApiResult removeProcess(@RequestParam(value = "deploymentId")  String  deploymentId) {
