@@ -20,4 +20,6 @@ import java.util.List;
 public interface QcReportMapper extends BaseMapper<QcReportEntity> {
 
     List<QcReportDTO.ListDTO> getByQcType(@Param("qcType") String qcType,@Param("approveStatus") String approveStatus);
+
+
 }

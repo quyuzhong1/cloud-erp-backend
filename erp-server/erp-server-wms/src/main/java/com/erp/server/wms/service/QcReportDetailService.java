@@ -58,4 +58,6 @@ public interface QcReportDetailService extends SuperService<QcReportDetailEntity
      * @date 2023-04-25 16:15
      */
     void removeByMainIds(List<String> mainIdList);
+
+    void exportReportByMainId(String id, HttpServletResponse response);
 }

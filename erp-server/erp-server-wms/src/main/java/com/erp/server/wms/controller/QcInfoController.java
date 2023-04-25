@@ -8,10 +8,7 @@ import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
-import com.erp.model.wms.dto.QcResultDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.server.wms.service.QcInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +31,8 @@ public class QcInfoController extends BaseController {
 
     @Resource
     private QcInfoService qcInfoService;
+
+
 
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller;
 
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ExcelImportDTO;
@@ -43,6 +44,20 @@ public class QcBillReportDetailController extends BaseController {
         qcReportService.exportQcReport(dto, response);
         return success();
     }
+
+    /**
+     *
+     * 质检列表导出质检报告
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/exportReport")
+    public ApiResult exportReport(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        qcReportDetailService.exportReportByMainId(dto.getId(), response);
+        return success();
+    }
+
 
 
     /**

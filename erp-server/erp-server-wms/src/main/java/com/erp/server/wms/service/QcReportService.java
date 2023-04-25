@@ -75,6 +75,6 @@ public interface QcReportService extends SuperService<QcReportEntity> {
      */
     void exportQcReport(QcReportDetailDTO.ExportDTO dto, HttpServletResponse response);
 
-    
+
 
 }

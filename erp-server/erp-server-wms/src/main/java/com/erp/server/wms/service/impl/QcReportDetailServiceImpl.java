@@ -8,11 +8,17 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.DictBasicEntity;
+import com.erp.model.wms.entity.QcReportDetailEntity;
+import com.erp.model.wms.entity.QcReportEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.QcReportDetailExcelListener;
 import com.erp.server.wms.mapper.QcReportDetailMapper;
@@ -138,7 +144,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
         //获取到业务表id
         List<String> businessIds = list.stream().map(QcReportDetailEntity::getId).collect(Collectors.toList());
 
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService .getByBusinessIds(businessIds);
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(businessIds);
 
         for (QcReportDetailDTO.ViewDTO item : viewList) {
             QcReportEntity report = qcReportList.stream().filter(q -> q.getId().equals(item.getQcReportId())).
@@ -224,6 +230,44 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             LambdaQueryWrapper<QcReportDetailEntity> queryWrapper = new LambdaQueryWrapper();
             queryWrapper.in(QcReportDetailEntity::getMainId, mainIdList);
             this.remove(queryWrapper);
+        }
+    }
+
+    /**
+     * 质检列表 导出质检报告
+     * @author yl
+     * @date 2023-04-25 17:12
+     * @param mainId
+     * @param response
+     * @return void
+     */
+    /**
+     * 质检列表 导出质检报告
+     *
+     * @param mainId
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-04-25 17:12
+     */
+    @Override
+    public void exportReportByMainId(String mainId, HttpServletResponse response) {
+        List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(mainId);
+        List<DictBasicDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
+        List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list, ExportQcReportExcelDTO.class);
+        for (ExportQcReportExcelDTO item : resultList) {
+            String resultDict = item.getResultDict();
+            String resultName = dictList.stream().filter(d -> d.getValue().equals(resultDict)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setResultDict(resultName);
+        }
+
+        String fileName = "质检报告数据";
+        try {
+            ExcelUtil.export(fileName, "质检报告", resultList, ExportQcReportExcelDTO.class, response);
+        } catch (Exception e) {
+            log.error("导出质检报告出错  ==e", e);
+            throw new ServiceException(ApiError.ERROR_1015);
         }
     }
 

@@ -3,5 +3,16 @@
 <mapper namespace="com.erp.server.wms.mapper.QcReportDetailMapper">
 
 
-
+    <select id="getByMainId" resultType="com.erp.model.wms.dto.QcReportDetailDTO$ListDTO">
+        SELECT
+         qr.name AS qcReportName,
+         qr.content AS qcReportContent,
+         qd.description,
+         qd.result_dict
+        FROM qc_detail qd
+        INNER JOIN qc_report qr
+        on qd.qc_report_id=qr.id
+        WHERE qd.is_deleted=FALSE AND
+        qd.main_id=#{mainId}
+    </select>
 </mapper>

@@ -14,4 +14,7 @@
         WHERE rp.is_deleted=FALSE AND
         ru.qc_type=#{qcType} AND ru.approve_status=#{approveStatus}
     </select>
+
+
+
 </mapper>
