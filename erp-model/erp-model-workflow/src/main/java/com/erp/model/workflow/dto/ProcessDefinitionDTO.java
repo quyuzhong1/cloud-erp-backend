@@ -97,7 +97,7 @@ public class ProcessDefinitionDTO {
         /**
          * 流程编码
          */
-        private List<String> id;
+        private List<String> ids;
         /**
          * 流程名称
          */
