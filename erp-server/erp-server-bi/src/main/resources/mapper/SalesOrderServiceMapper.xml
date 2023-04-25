@@ -2325,7 +2325,6 @@
         </where>
         GROUP BY pi.brand_name
         ORDER BY sales DESC
-        nulls last
     </select>
 
 
