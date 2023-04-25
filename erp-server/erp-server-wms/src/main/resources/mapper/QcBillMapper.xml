@@ -23,10 +23,10 @@
     <select id="listQcBillGroupQcTrend" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$GroupQcTrendDTO">
         select
         case when #{type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
-        when #{type} = 'week' then to_char(date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,
+        when #{type} = 'week' then to_char(qb.qc_date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,
         'YYYY-mm-dd')
         when #{type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
-        as dateStr,
+        end as dateStr,
         qb.qc_status as status,
         count (0) as count
         from qc_bill qb
