@@ -246,6 +246,25 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
 
     /**
+     * 根据质检单id 集合 获取删除数据
+     *
+     * @param mainIdList
+     * @return void
+     * @author yl
+     * @date 2023-04-25 16:15
+     */
+    @Override
+    public void removeByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            LambdaQueryWrapper<QcResultEntity> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.in(QcResultEntity::getMainId, mainIdList);
+            this.remove(queryWrapper);
+        }
+
+    }
+
+
+    /**
      * 根据质检单id 获取到质检信息
      *
      * @param billId

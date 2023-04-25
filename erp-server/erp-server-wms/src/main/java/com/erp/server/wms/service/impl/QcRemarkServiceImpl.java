@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.QcRemarkDTO;
@@ -85,6 +86,24 @@ public class QcRemarkServiceImpl extends SuperServiceImpl<QcRemarkMapper, QcRema
         }
 
         return this.lambdaQuery().in(QcRemarkEntity::getMainId,billIdList).orderByDesc(QcRemarkEntity::getCreateTime).list();
+    }
+
+
+    /**
+     * 根据质检单id 获取到质检信息
+     *
+     * @param mainIdList
+     * @return com.erp.model.wms.entity.QcInfoEntity
+     * @author yl
+     * @date 2023-04-19 12:26
+     */
+    @Override
+    public void removeByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            LambdaQueryWrapper<QcRemarkEntity> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.in(QcRemarkEntity::getMainId, mainIdList);
+            this.remove(queryWrapper);
+        }
     }
 
 

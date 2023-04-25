@@ -133,7 +133,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //检查采购价目明细
-        checkPurchaseOrderDetailId(dto.getPurchaseOrderId(),purchaseOrderDetailId);
+        checkPurchaseOrderDetailId(dto.getPurchaseOrderId(), purchaseOrderDetailId);
 
         QcBillStatusEnum waitQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.WAIT_QC.getCode());
         bill.setQcStatus(waitQc);
@@ -374,33 +374,36 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto) {
+        String id = dto.getId();
+        QcInfoEntity bill = this.getById(id);
+        if (Objects.isNull(bill)) {
+            throw new ServiceException(ApiError.ERROR_99015);
+        }
+
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
-        //当质检信息id 为空的时候
-        if (StringUtils.isBlank(qcInfo.getId())) {
-            String id = IdWorker.getIdStr();
-            qcInfo.setId(id);
-        }
+
         //采购订单
         String purchaseOrderId = dto.getPurchaseOrderId();
 
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //检查采购价目明细
-        checkPurchaseOrderDetailId(purchaseOrderId,purchaseOrderDetailId);
+        checkPurchaseOrderDetailId(purchaseOrderId, purchaseOrderDetailId);
 
         Boolean isExist = StringUtils.isNotBlank(purchaseOrderId);
         //检查质检数量
         checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
         //质检单
-        QcInfoEntity bill = new QcInfoEntity();
+
         String billId = dto.getId();
         if (StringUtils.isBlank(billId)) {
             billId = IdWorker.getIdStr();
         }
+        String code = bill.getCode();
         BeanMapper.copy(dto, bill);
+
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
-        String code = bill.getCode();
         if (StringUtils.isBlank(code)) {
             code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
             bill.setCode(code);
@@ -621,21 +624,18 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     public Boolean exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
+        String id = dto.getId();
+        QcInfoEntity bill = this.getById(id);
+        if (Objects.isNull(bill)) {
+            throw new ServiceException(ApiError.ERROR_99015);
+        }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
-        //当质检信息id 为空的时候
-        if (StringUtils.isBlank(qcInfo.getId())) {
-            String id = IdWorker.getIdStr();
-            qcInfo.setId(id);
-        }
-
-
         //采购订单id
         String purchaseOrderId = dto.getPurchaseOrderId();
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //检查采购价目明细
-        checkPurchaseOrderDetailId(purchaseOrderId,purchaseOrderDetailId);
-
+        checkPurchaseOrderDetailId(purchaseOrderId, purchaseOrderDetailId);
         //免检设置为0
         qcInfo.setQcBadQty(0);
         qcInfo.setQcGoodQty(0);
@@ -644,19 +644,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //检查质检数量
         checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
         //质检单
-        QcInfoEntity bill = new QcInfoEntity();
         String billId = dto.getId();
         if (StringUtils.isBlank(billId)) {
             billId = IdWorker.getIdStr();
         }
+        String code = bill.getCode();
         BeanMapper.copy(dto, bill);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
-        String code = bill.getCode();
-        if (StringUtils.isBlank(code)) {
-            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
-            bill.setCode(code);
-        }
         bill.setId(billId);
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
@@ -695,7 +690,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
 
             //操作日志
-            moduleOperateLogService.addModuleOperateLog(String.format("新增了一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
+            moduleOperateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
         }
         return result;
     }
@@ -726,7 +721,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         List<QcInfoEntity> qcList = this.listByIds(ids);
-        if(CollectionUtils.isEmpty(qcList)){
+        if (CollectionUtils.isEmpty(qcList)) {
             throw new ServiceException(ApiError.ERROR_99015);
         }
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
@@ -860,7 +855,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //删除操作日志
         moduleOperateLogService.removeByBusinessIds(ids);
-        return this.removeByIds(ids);
+        Boolean result = this.removeByIds(ids);
+        qcResultService.removeByMainIds(ids);
+        qcRemarkService.removeByMainIds(ids);
+        qcReportDetailService.removeByMainIds(ids);
+        qcProductService.removeByMainIds(ids);
+        return result;
     }
 
 
@@ -882,6 +882,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         long count = qcList.stream().filter(s -> !statusList.contains(s.getQcStatus().getCode())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99023);
+        }
+        //入库的
+        List<PurchaseStockInEntity> stockInList = purchaseStorageService.getStockInBySourceIds(ids);
+        long stockInCount = stockInList.stream().filter(s -> !s.getInvalidStatus()).count();
+        if (stockInCount > 0) {
+            throw new ServiceException(ApiError.ERROR_99027);
+        }
+
+        //退货单
+        List<PurchaseReturnOrderEntity> returnList = purchaseReturnOrderService.listBySourceIds(ids);
+        long returnCount = returnList.stream().filter(s -> !s.getInvalidStatus()).count();
+        if (returnCount > 0) {
+            throw new ServiceException(ApiError.ERROR_99028);
         }
 
         //TODO 工作流要处理
@@ -908,6 +921,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<String> ids = dto.getIds();
         String qcUserId = dto.getQcUserId();
         List<QcInfoEntity> qcList = this.listByIds(ids);
+        String waitQcCode = QcBillStatusEnum.WAIT_QC.getCode();
+        long count = qcList.stream().filter(q -> !q.getQcStatus().getCode().equals(waitQcCode)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99060);
+        }
+
         SysDepartmentUserNumberDTO userInfo = sysUserFeign.getDeptByUserId(qcUserId);
         for (QcInfoEntity item : qcList) {
             item.setQcDeptId(userInfo.getDepartmentId());

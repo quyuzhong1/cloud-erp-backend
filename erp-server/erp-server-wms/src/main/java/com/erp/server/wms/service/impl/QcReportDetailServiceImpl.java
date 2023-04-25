@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -11,10 +12,7 @@ import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.QcReportDetailImportExcelDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.QcReportDetailEntity;
-import com.erp.model.wms.entity.QcReportEntity;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.QcReportDetailExcelListener;
 import com.erp.server.wms.mapper.QcReportDetailMapper;
@@ -209,6 +207,24 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
         }
         result.setErrorUrl(url);
         return result;
+    }
+
+
+    /**
+     * 根据质检单id 集合 获取删除数据
+     *
+     * @param mainIdList
+     * @return void
+     * @author yl
+     * @date 2023-04-25 16:15
+     */
+    @Override
+    public void removeByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            LambdaQueryWrapper<QcReportDetailEntity> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.in(QcReportDetailEntity::getMainId, mainIdList);
+            this.remove(queryWrapper);
+        }
     }
 
 

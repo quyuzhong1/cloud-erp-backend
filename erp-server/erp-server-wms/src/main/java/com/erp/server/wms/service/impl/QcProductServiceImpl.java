@@ -138,6 +138,23 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         return this.lambdaQuery().in(QcProductEntity::getMainId, mainIds).list();
     }
 
+    /**
+     * 根据质检单id 集合 获取删除数据
+     *
+     * @param mainIdList
+     * @return void
+     * @author yl
+     * @date 2023-04-25 16:15
+     */
+    @Override
+    public void removeByMainIds(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            LambdaQueryWrapper<QcProductEntity> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.in(QcProductEntity::getMainId, mainIdList);
+            this.remove(queryWrapper);
+        }
+    }
+
 
     private QcProductEntity getByBillId(String billId) {
         LambdaQueryWrapper<QcProductEntity> queryWrapper = new LambdaQueryWrapper<>();
