@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -63,4 +64,13 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
      */
     List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(@Param("purchaseOrderIds") List<String> purchaseOrderIds);
+
+    /**
+     * 根据采购订单id 获取下推数据显示
+     * @author yl
+     * @date 2023-04-25 9:43
+     * @param ids
+     * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO
+     */
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("purchaseOrderIds") List<String> ids);
 }
