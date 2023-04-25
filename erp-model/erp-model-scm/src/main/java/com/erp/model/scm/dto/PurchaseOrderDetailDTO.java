@@ -322,5 +322,15 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private String variantProperty;
 
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
     }
 }
