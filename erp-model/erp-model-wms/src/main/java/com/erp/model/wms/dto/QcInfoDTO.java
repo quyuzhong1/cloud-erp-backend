@@ -8,7 +8,6 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -276,12 +275,7 @@ public class QcInfoDTO implements Serializable {
          */
         private String qcDeptName;
 
-        /**
-         * 质检完成时间
-         *
-         */
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime qcFinishTime;
+
 
         /**
          * 产品信息

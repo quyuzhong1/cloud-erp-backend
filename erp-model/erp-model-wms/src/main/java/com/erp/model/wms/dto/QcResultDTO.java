@@ -5,11 +5,13 @@ import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -246,6 +248,12 @@ public class QcResultDTO {
          */
         private String purchaseOrderDetailId;
 
+        /**
+         * 质检完成时间
+         *
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime qcFinishTime;
 
     }
 

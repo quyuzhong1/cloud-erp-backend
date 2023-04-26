@@ -202,6 +202,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //质检信息
         QcResultDTO.ViewDTO qcInfo = qcResultService.getByMainId(id);
         view.setQcInfo(qcInfo);
+        qcInfo.setQcFinishTime(bill.getQcFinishTime());
 
         //质检报告 信息
         List<QcReportDetailDTO.ViewDTO> reportDetailList = qcReportDetailService.getByMainId(id);
