@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcReportExportExcelType;
+import com.erp.model.wms.enums.ViewQcTrendEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -70,6 +71,7 @@ public class QcEffectivenessDTO implements Serializable {
          * 类型（day日、week周、month月）
          */
         @NotBlank(message = "类型不能为空")
+        @StateEnumValue(clazz = ViewQcTrendEnum.class, message = "类型有误")
         private String type;
 
         /**
