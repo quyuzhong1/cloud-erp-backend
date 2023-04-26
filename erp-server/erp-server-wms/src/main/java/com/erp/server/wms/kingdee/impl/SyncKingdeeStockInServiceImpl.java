@@ -12,10 +12,7 @@ import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
-import com.erp.model.wms.entity.PurchaseStockInEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -24,10 +21,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
-import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
-import com.erp.server.wms.service.PurchaseStockInDetailService;
-import com.erp.server.wms.service.PurchaseStockInService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -67,6 +61,9 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     @Resource
     private MQProducerService mQProducerService;
 
+    @Resource
+    private WarehouseService warehouseService;
+
     /**
      * 发送消息同步金蝶
      * @Author Luo_WG
@@ -104,7 +101,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
-        //供应商编码 // TODO
+        //供应商编码
         resultMap.put("supplierCode", supplierEntity.getCode());
         //供应商
         resultMap.put("supplierName", entity.getSupplierName());
@@ -131,7 +128,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         List<String> orderDetailIds = detailList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
         List<JSONObject> list = new ArrayList<>();
         for (PurchaseStockInDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -142,9 +140,14 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("productName", productDetailEntity.getName());
             //实收数量
             jsonObject.set("returnQty", detail.getReceiveQty());
-
+            //供应商编码
+            jsonObject.set("supplierCode", supplierEntity.getCode());
+            //供应商编码
+            jsonObject.set("supplierName", supplierEntity.getName());
             //交货仓库
             jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
+            //交货仓库
+            jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             //库位
             jsonObject.set("warehouseLocationName", detail.getWarehouseLocationName());
             //入库备注

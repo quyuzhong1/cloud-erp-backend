@@ -84,6 +84,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("code",entity.getCode());
         //退料组织
         resultMap.put("returnOrgName",entity.getReturnOrgName());
+
         //获取用户部门id
         SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
         //获取用户部门信息
@@ -106,8 +107,22 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("returnRemark",entity.getReturnRemark());
         //供应商
         resultMap.put("supplierName",entity.getSupplierName());
+
         //退货方式
-        resultMap.put("returnMode", ReturnModeEnum.getName(entity.getReturnMode()));
+        if (entity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
+            resultMap.put("returnMode", "退料并扣款");
+        } else {
+            resultMap.put("returnMode", "退料补料");
+        }
+
+        if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {
+            resultMap.put("sourceType", "检验退料");
+        } else {
+            resultMap.put("sourceType", "库存退料");
+        }
+
+
+
         //供应商联系人
         resultMap.put("supplierContactName", entity.getSupplierContactName());
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
