@@ -48,9 +48,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CGJM000003"));
+        queryFilters.add(String.format("FNumber = '%s'", "CGJM23042500008"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FSupplierId.FNumber,FPriceObject,FPriceType,FCurrencyID.FNumber";
+        String fieldKeys = "FId,FSupplierId.FNumber,FPriceObject,FPriceType,FCurrencyID.FNumber,FPricer.FName";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 

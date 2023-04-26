@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -88,7 +89,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
             }
         }
         resultDTO.setList(details);
-        BigDecimal rate = MathUtil.subtract(new BigDecimal(qcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100);
+        BigDecimal rate = MathUtil.divide(new BigDecimal(qcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100);
         resultDTO.setCompletionRate(rate);
         return resultDTO;
     }
@@ -190,12 +191,14 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
              list =  this.qcInfoMapper.viewExportQcForPersonnel(dto);
              fileName = "采购入库单数据";
              clazz = ExportQcPersonnelExcelDTO.class;
+             list =  BeanMapperUtils.copyList(ExportQcPersonnelExcelDTO.class,list);
         }
         if (QcReportExportExcelType.DOCUMENT.getCode().equals(type)) {
              list =  this.qcInfoMapper.viewExportQcForDocument(dto);
              fileName = "采购入库单数据";
              clazz = ExportQcDocumentExcelDTO.class;
              doOpHandleQcForDocument((List<QcEffectivenessDTO.ViewQcForDocumentDTO>) list);
+            list =  BeanMapperUtils.copyList(ExportQcDocumentExcelDTO.class,list);
         }
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;

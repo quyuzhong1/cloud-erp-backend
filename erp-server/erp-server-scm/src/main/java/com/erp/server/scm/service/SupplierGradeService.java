@@ -35,4 +35,13 @@ public interface SupplierGradeService extends SuperService<SupplierGradeEntity> 
      * @return java.lang.Boolean
      */
     Boolean checkDelete(String id);
+
+    /**
+     * @description: 根据供应商id查询
+     * @author Will
+     * @date: 2023/4/25 19:46
+     * @param supplierId
+     * @return SupplierGradeEntity
+     */
+    SupplierGradeEntity getBySupplierId(String supplierId);
 }

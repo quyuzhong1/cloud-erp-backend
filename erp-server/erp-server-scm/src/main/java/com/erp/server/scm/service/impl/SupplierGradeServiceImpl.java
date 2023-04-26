@@ -76,6 +76,11 @@ public class SupplierGradeServiceImpl extends SuperServiceImpl<SupplierGradeMapp
         return true;
     }
 
+    @Override
+    public SupplierGradeEntity getBySupplierId(String supplierId) {
+        return lambdaQuery().eq(SupplierGradeEntity::getId,supplierId).one();
+    }
+
 
     /**
      * 获取到删除的数据

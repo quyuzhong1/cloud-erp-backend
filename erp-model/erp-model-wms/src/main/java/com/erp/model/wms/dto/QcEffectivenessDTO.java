@@ -284,7 +284,7 @@ public class QcEffectivenessDTO implements Serializable {
         /**
          * 是否超时（true是，false否）
          */
-        private Boolean isOverTime;
+        private Boolean isTimeOut;
 
     }
 }

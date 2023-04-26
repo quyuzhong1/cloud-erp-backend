@@ -169,6 +169,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_PURCHASE_STOCK_IN_TAG(35, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_stock_in_tag"),
 
+    /**
+     * 供应商同步金蝶
+     */
+    KINGDEE_SUPPLIER_TAG(36, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_supplier_tag"),
+
     //-----------------------------消息通知--------------------------------------------
 
     /**

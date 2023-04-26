@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum QcReportExportExcelType {
 
 
-    PERSONNEL ("personnel ", "按人员"),
+    PERSONNEL ("personnel", "按人员"),
     DOCUMENT("document", "按单据");
 
     /**

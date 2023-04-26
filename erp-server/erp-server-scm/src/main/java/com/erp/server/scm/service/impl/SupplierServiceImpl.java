@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -33,6 +34,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
+import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
@@ -51,6 +53,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,6 +97,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     //采购价目表
     @Resource
     private PurchasePriceService purchasePriceService;
+
+    @Resource
+    private SyncKingdeeSupplierService syncKingdeeSupplierService;
 
     /**
      * 保存供应商信息
@@ -511,6 +517,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
+            //发送金蝶
+            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return result;
     }
@@ -599,6 +607,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+            //发送金蝶
+            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -910,8 +920,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 this.updateBatchById(updateList);
             }
         }
+    }
 
-
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .in(SupplierEntity::getId,ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SupplierEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),SupplierEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     /**

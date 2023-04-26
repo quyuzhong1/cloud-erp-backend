@@ -3,6 +3,7 @@ package com.erp.server.scm.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -11,6 +12,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
@@ -21,6 +23,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -46,7 +49,8 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
-
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -73,8 +77,13 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         resultMap.put("supplierName",supplierEntity.getName());
         //采购组织
         resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
-        //定价员
-        resultMap.put("pricingUserName",entity.getPricingUserName());
+
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPricingUserId());
+
+        if (ObjectUtils.isNotEmpty(findUserDTO)) {
+            //定价员
+            resultMap.put("pricingUserCode",findUserDTO.getCode());
+        }
 
         //价目明细
         List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());
@@ -83,11 +92,13 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         }
         List<JSONObject> list = new ArrayList<>();
         for (PurchasePriceDetailDTO.ViewDTO detailEntity : details) {
+            BigDecimal rate = MathUtil.divide(detailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
-            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
+            jsonObject.set("taxRate",rate);
+            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,rate)) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
-            jsonObject.set("taxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             jsonObject.set("minQty",detailEntity.getMinQty());
             jsonObject.set("maxQty",detailEntity.getMaxQty());
             jsonObject.set("effectiveDate",detailEntity.getEffectiveDate());

@@ -47,18 +47,18 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_SUPPLIER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
+        queryFilters.add(String.format("FNumber = '%s'", "VEN00280"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber,F_ulz_Base.FNumber";
+        String fieldKeys = "FNumber,FFinanceInfo_FEntryID,FBankInfo_FEntryID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
 
       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        viewMap.put("Number","VEN00280");
+        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         System.out.println(viewJson);*/
 
     }
@@ -144,7 +144,7 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
         queryFilters.add(String.format("FId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
         //查询子单据id
-        String fieldKeys = "FPOOrderEntry_FEntryID,FMaterialId.FNumber";
+        String fieldKeys = "FFinanceInfo_FEntryID,FBankInfo_FEntryID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
@@ -155,24 +155,12 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
         KingdeeUtils.makeFieldJson(json,"FId",".", id);
         //比较
         for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FPOOrderEntry") ;
-            JSONArray removeObj = new JSONArray();
-            JSONArray addObj = new JSONArray();
+            JSONArray obj = (JSONArray)json.get("FFinanceInfo") ;
             for (Object o : obj) {
                 JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
-                JSONObject newJson = new JSONObject(new LinkedHashMap<>());
-                Object o1 = queryMap.get("FMaterialId.FNumber");
-                JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
-                Object fNumber = o2.get("FNumber");
-                if (o1.equals(fNumber)) {
-                    newJson.set("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
-                }
-                newJson.putAll(jsonObject);
-                removeObj.set(o);
-                addObj.set(newJson);
+                jsonObject.set("FEntryId",queryMap.get("FFinanceInfo_FEntryID"));
             }
-            obj.removeAll(removeObj);
-            obj.addAll(addObj);
+
         }
 
     }

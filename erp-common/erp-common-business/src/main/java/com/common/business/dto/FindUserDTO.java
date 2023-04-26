@@ -16,6 +16,7 @@ import java.io.Serializable;
 public class FindUserDTO implements Serializable {
     private String userId;
 
+    private String code;
 
     private String userName;
 
