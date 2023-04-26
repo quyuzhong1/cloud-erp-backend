@@ -41,14 +41,14 @@ public class DictNodeServiceImpl extends SuperServiceImpl<DictNodeMapper, DictNo
     /**
      * 根据业务类型获取到通知节点
      *
-     * @param businessType
+     * @param module
      * @return java.util.List<com.erp.model.sys.dto.DictNodeDTO.ViewDTO>
      * @author yl
      * @date 2023-04-26 14:46
      */
     @Override
-    public List<DictNodeDTO.ViewDTO> listByBusinessType(String businessType) {
-        List<DictNodeEntity> list = this.lambdaQuery().eq(DictNodeEntity::getBusinessType, businessType).list();
+    public List<DictNodeDTO.ViewDTO> listByBusinessType(String module) {
+        List<DictNodeEntity> list = this.lambdaQuery().eq(DictNodeEntity::getModule, module).list();
         return BeanMapper.copyList(list,DictNodeDTO.ViewDTO.class);
     }
 }

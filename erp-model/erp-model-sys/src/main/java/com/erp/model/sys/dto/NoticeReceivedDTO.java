@@ -67,4 +67,27 @@ public class NoticeReceivedDTO implements Serializable {
 
 
     }
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        @NotBlank(message = "接收类型")
+        private String receivedDict;
+
+        /**
+         * 接收类型
+         */
+        @NotBlank(message = "接收类型值")
+        private String receivedValue;
+
+
+    }
 }

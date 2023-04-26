@@ -58,7 +58,7 @@ public class MyBatisGeneratorRun {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"dict_basic"};
+        String[] tables = new String[]{"cfg_node_member"};
         autoGenerator(prefix, tables);
 
 

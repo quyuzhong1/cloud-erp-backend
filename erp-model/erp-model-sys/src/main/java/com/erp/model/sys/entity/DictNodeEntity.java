@@ -25,9 +25,9 @@ public class DictNodeEntity extends BaseEntity<DictNodeEntity> {
 
 
     /**
-     * 节点code 
+     * 节点key
      */
-    @TableField("node_code")
+    @TableField("node_key")
     private String nodeCode;
 
     /**
@@ -37,21 +37,14 @@ public class DictNodeEntity extends BaseEntity<DictNodeEntity> {
     private String nodeName;
 
     /**
-     * 业务类型
+     * 业务模块
      */
-    @TableField("business_type")
-    private String businessType;
+    @TableField("module")
+    private String module;
 
 
 
 
-    public static final String DISABLED = "disabled";
-
-    public static final String NODE_CODE = "node_code";
-
-    public static final String NODE_NAME = "node_name";
-
-    public static final String SYSTEM = "system";
 
     @Override
     public Serializable pkVal() {

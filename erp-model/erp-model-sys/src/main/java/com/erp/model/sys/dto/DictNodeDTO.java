@@ -21,17 +21,17 @@ public class DictNodeDTO {
     @NoArgsConstructor
     public static class AddDTO {
 
-        @Size(max = 20, message = "节点code不能超过20字符")
-        @NotBlank(message = "节点code不能为空")
-        private String nodeCode;
+        @Size(max = 20, message = "节点key不能超过20字符")
+        @NotBlank(message = "节点key不能为空")
+        private String nodeKey;
 
         @Size(max = 30, message = "节点名称不能超过30字符")
         @NotBlank(message = "节点名称不能为空")
         private String nodeName;
 
 
-        @NotBlank(message = "业务类型不能为空")
-        private String businessType;
+        @NotBlank(message = "业务模块不能为空")
+        private String module;
     }
 
 

@@ -33,5 +33,5 @@ public interface NoticeReceivedService extends SuperService<NoticeReceivedEntity
      * @param receivedList
      * @return void
      */
-    void edit(List<NoticeReceivedDTO.UpdateDTO> receivedList);
+    Boolean edit(String noticeId,List<NoticeReceivedDTO.UpdateDTO> receivedList);
 }

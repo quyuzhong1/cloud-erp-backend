@@ -77,8 +77,13 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
         List<NoticeReceivedDTO.UpdateDTO> receivedList = dto.getReceivedList();
         Boolean result = this.updateById(notice);
         if (result) {
-            noticeReceivedService.edit(receivedList);
+            noticeReceivedService.edit(id,receivedList);
         }
         return result;
+    }
+
+    @Override
+    public void view(String id) {
+
     }
 }
