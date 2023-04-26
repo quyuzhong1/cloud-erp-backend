@@ -17,7 +17,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class NoticeReceivedDTO implements Serializable {
+public class NoticeReceiverDTO implements Serializable {
 
 
     /**
@@ -29,19 +29,21 @@ public class NoticeReceivedDTO implements Serializable {
 
         /**
          * 接收类型
-         * 来源
-         * http://172.16.100.11:3002/project/36/interface/api/10672
-         * type=itemPeople
-         * type=otherPeople
+         * 对应type
          */
         @NotBlank(message = "接收类型")
-        private String receivedDict;
+        private String receiverType;
 
         /**
          * 接收类型
          */
         @NotBlank(message = "接收类型值")
-        private String receivedValue;
+        private String receiverValue;
+
+        /**
+         * 接收类型名
+         */
+        private String receiverTypeName;
 
 
     }
@@ -57,13 +59,13 @@ public class NoticeReceivedDTO implements Serializable {
         private String id;
 
         @NotBlank(message = "接收类型")
-        private String receivedDict;
+        private String receiverType;
 
         /**
          * 接收类型
          */
         @NotBlank(message = "接收类型值")
-        private String receivedValue;
+        private String receiverValue;
 
 
     }
@@ -80,13 +82,13 @@ public class NoticeReceivedDTO implements Serializable {
         private String id;
 
         @NotBlank(message = "接收类型")
-        private String receivedDict;
+        private String receiverType;
 
         /**
          * 接收类型
          */
         @NotBlank(message = "接收类型值")
-        private String receivedValue;
+        private String receiverValue;
 
 
     }

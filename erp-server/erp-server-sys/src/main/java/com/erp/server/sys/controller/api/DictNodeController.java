@@ -43,7 +43,7 @@ public class DictNodeController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult add(@RequestParam(value = "businessType") String businessType) {
+    public ApiResult<List<DictNodeDTO.ViewDTO>> add(@RequestParam(value = "module") String businessType) {
         List<DictNodeDTO.ViewDTO> list = dictNodeService.listByBusinessType(businessType);
         return  success(list);
     }

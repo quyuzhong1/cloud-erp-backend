@@ -1,7 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -143,5 +143,16 @@ public class SysUserInfoController extends BaseController {
     public ApiResult<Map<String,Object>> forgotPasswordGetCode(@RequestParam("userAccount") String userAccount) {
         Map<String,Object> map = sysUserInfoService.forgotPasswordGetCode(userAccount);
         return success(map);
+    }
+
+    /**
+     * 获取用户信息
+     * @param searchKeyword
+     * @return
+     */
+    @GetMapping("/listBySearchKeyword")
+    public ApiResult<List<FindUserDTO>> listBySearchKeyword(@RequestParam(value ="searchKeyword" )String searchKeyword) {
+        List<FindUserDTO> list = sysUserInfoService.listBySearchKeyword(searchKeyword);
+        return success(list);
     }
 }

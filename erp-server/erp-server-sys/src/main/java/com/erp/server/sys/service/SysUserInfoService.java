@@ -8,13 +8,9 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -171,5 +167,14 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return
      */
     List<SysUserSimpleDTO> getUserSimpleInfoByIds(List<String> userIds);
+
+    /**
+     * 根据搜索关键字 获取到用户信息
+     * @author yl
+     * @date 2023-04-26 18:14
+     * @param searchKeyword
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    List<FindUserDTO> listBySearchKeyword(String searchKeyword);
 }
 

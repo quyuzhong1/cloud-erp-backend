@@ -27,8 +27,8 @@ public class NoticeInfoEntity extends BaseEntity<NoticeInfoEntity> {
     /**
      * 通知节点id
      */
-    @TableField("node_id")
-    private String nodeId;
+    @TableField("node_key")
+    private String nodeKey;
 
 
     /**

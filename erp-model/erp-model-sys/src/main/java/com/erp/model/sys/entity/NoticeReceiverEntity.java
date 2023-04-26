@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("notice_received")
-public class NoticeReceivedEntity extends BaseEntity<NoticeReceivedEntity> {
+@TableName("notice_receiver")
+public class NoticeReceiverEntity extends BaseEntity<NoticeReceiverEntity> {
 
     /**
      * 通知id
@@ -32,15 +32,17 @@ public class NoticeReceivedEntity extends BaseEntity<NoticeReceivedEntity> {
     /**
      * 接收者类型
      */
-    @TableField("received_dict")
-    private String receivedDict;
+    @TableField("receiver_type")
+    private String receiverType;
 
     /**
      * 接收的值
      */
-    @TableField("received_vaule")
-    private String receivedVaule;
+    @TableField("receiver_value")
+    private String receiverValue;
 
+    @TableField("receiver_type_name")
+    private String receiverTypeName;
 
 
     @Override

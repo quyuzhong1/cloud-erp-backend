@@ -1,7 +1,7 @@
 package com.erp.server.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.sys.entity.NoticeReceivedEntity;
+import com.erp.model.sys.entity.NoticeReceiverEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-04-20
  */
 @Mapper
-public interface NoticeReceivedMapper extends BaseMapper<NoticeReceivedEntity> {
+public interface NoticeReceivedMapper extends BaseMapper<NoticeReceiverEntity> {
 
 }

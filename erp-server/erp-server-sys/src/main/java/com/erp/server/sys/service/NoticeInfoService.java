@@ -1,8 +1,11 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.entity.NoticeInfoEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -42,9 +45,24 @@ public interface NoticeInfoService extends SuperService<NoticeInfoEntity> {
      * @param id
      * @return java.lang.Boolean
      */
-    void view(String id);
+    NoticeDTO.ViewDTO view(String id);
 
 
+    /**
+     * 根据节点key 获取对应数据
+     * @author yl
+     * @date 2023-04-26 18:41
+     * @param nodeKeys
+     * @return java.util.List<com.erp.model.sys.entity.NoticeInfoEntity>
+     */
+    List<NoticeInfoEntity> listByNodeKeys(List<String> nodeKeys);
 
 
+    /**
+     * 启用 禁用 通知节点
+     *
+     * @param dto
+     * @return
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
 }

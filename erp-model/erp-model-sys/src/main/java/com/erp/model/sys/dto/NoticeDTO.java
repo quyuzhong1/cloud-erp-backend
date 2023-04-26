@@ -3,6 +3,7 @@ package com.erp.model.sys.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
@@ -31,7 +32,7 @@ public class NoticeDTO implements Serializable {
          * 通知节点
          */
         @NotBlank(message = "通知节点不能为空")
-        private String nodeId;
+        private String nodeKey;
 
         /**
          * 通知系统平台
@@ -42,15 +43,17 @@ public class NoticeDTO implements Serializable {
 
         /**
          * 业务类型
+         * qcInfo 质检单
          */
         @NotBlank(message = "业务模块不能为空")
         private String module;
+
 
         /**
          * 通知接收人信息
          */
         @NotEmpty(message = "接收者信息不能为空")
-        List<NoticeReceivedDTO.AddDTO> receivedList;
+        List<NoticeDTO.CfgNodeDTO> cfgNodeList;
 
 
     }
@@ -72,7 +75,7 @@ public class NoticeDTO implements Serializable {
          * 通知节点
          */
         @NotBlank(message = "通知节点不能为空")
-        private String nodeId;
+        private String nodeKey;
 
         /**
          * 通知系统平台
@@ -83,15 +86,16 @@ public class NoticeDTO implements Serializable {
         /**
          * 业务类型
          */
-        @NotBlank(message = "业务类型为空")
-        private String businessType;
+        @NotBlank(message = "业务模块不能为空")
+        private String module;
 
 
         /**
          * 通知接收人信息
          */
-        @NotEmpty(message = "接收者信息不能为空")
-        List<NoticeReceivedDTO.UpdateDTO> receivedList;
+        @NotEmpty(message = "节点配置不能为空")
+        @Valid
+        List<NoticeDTO.UpdateCfgNodeDTO> cfgNodeList;
 
 
     }
@@ -110,7 +114,7 @@ public class NoticeDTO implements Serializable {
         /**
          * 通知节点
          */
-        private String nodeId;
+        private String nodeKey;
 
         /**
          * 通知系统平台
@@ -121,14 +125,40 @@ public class NoticeDTO implements Serializable {
         /**
          * 业务类型
          */
-        private String businessType;
+        private String module;
 
         /**
          * 通知接收人信息
          */
-        @NotEmpty(message = "接收者信息不能为空")
-        List<NoticeReceivedDTO.ViewDTO> receivedList;
 
+        List<NoticeDTO.UpdateCfgNodeDTO> CfgNodeList;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CfgNodeDTO {
+        private String type;
+        private List<NoticeReceiverDTO.AddDTO>  receiverList;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateCfgNodeDTO {
+        /**
+         * 类型
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
+         * 接收人的信息
+         */
+        @NotEmpty(message = "接收人不能为空")
+        private List<NoticeReceiverDTO.UpdateDTO>  receiverList;
 
     }
 }

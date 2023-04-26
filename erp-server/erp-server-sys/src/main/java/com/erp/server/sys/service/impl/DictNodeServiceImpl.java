@@ -4,11 +4,15 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictNodeDTO;
 import com.erp.model.sys.entity.DictNodeEntity;
+import com.erp.model.sys.entity.NoticeInfoEntity;
 import com.erp.server.sys.mapper.DictNodeMapper;
 import com.erp.server.sys.service.DictNodeService;
+import com.erp.server.sys.service.NoticeInfoService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -21,6 +25,8 @@ import java.util.List;
 @Service
 public class DictNodeServiceImpl extends SuperServiceImpl<DictNodeMapper, DictNodeEntity> implements DictNodeService {
 
+    @Resource
+    private NoticeInfoService noticeInfoService;
 
     /**
      * 添加节点
@@ -49,6 +55,15 @@ public class DictNodeServiceImpl extends SuperServiceImpl<DictNodeMapper, DictNo
     @Override
     public List<DictNodeDTO.ViewDTO> listByBusinessType(String module) {
         List<DictNodeEntity> list = this.lambdaQuery().eq(DictNodeEntity::getModule, module).list();
-        return BeanMapper.copyList(list,DictNodeDTO.ViewDTO.class);
+        List<DictNodeDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictNodeDTO.ViewDTO.class);
+        List<String> nodeKeys = resultList.stream().map(DictNodeDTO.ViewDTO::getNodeKey).collect(Collectors.toList());
+        List<NoticeInfoEntity> noticeInfoList = noticeInfoService.listByNodeKeys(nodeKeys);
+        List<String> noticeNodeKeyList = noticeInfoList.stream().map(NoticeInfoEntity::getNodeKey).collect(Collectors.toList());
+        for (DictNodeDTO.ViewDTO item : resultList) {
+            String nodeKey = item.getNodeKey();
+            Boolean isDeleted = noticeNodeKeyList.contains(nodeKey) ? true : false;
+            item.setIsDeleted(isDeleted);
+        }
+        return resultList;
     }
 }

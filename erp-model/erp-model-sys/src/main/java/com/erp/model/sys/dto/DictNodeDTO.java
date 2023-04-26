@@ -39,15 +39,29 @@ public class DictNodeDTO {
     @NoArgsConstructor
     public static class ViewDTO {
 
+        /**
+         * 节点key
+         */
+        private String nodeKey;
 
-        private String nodeCode;
-
-
+        /**
+         * 节点名称
+         */
         private String nodeName;
 
+        /**
+         * 业务模块
+         */
+        private String module;
 
-        private String businessType;
+        /**
+         * 是否禁用
+         * true 禁用
+         * false 不禁用
+         * 添加过后就会禁用
+         */
+        private Boolean isDeleted;
 
-        private String id;
+
     }
 }
