@@ -17,6 +17,9 @@ public enum SyncKingdeeOperateEnum {
     OPERATE_INVALID("operateInvalid", "Cancel","作废"),
     OPERATE_UN_INVALID("operateUnInvalid", "Uncancel","反作废"),
     OPERATE_DELETE("operateDelete", "","删除"),
+    OPERATE_SUB_EFFECTIVE("operateSubEffective", "SubEffective","取消明细禁用"),
+    OPERATE_SUB_UN_EFFECTIVE("operateSubUnEffective", "SubUnEffective","明细禁用"),
+
     ;
     private String code;
 

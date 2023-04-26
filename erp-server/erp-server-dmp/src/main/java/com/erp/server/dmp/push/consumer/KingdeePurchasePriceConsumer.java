@@ -5,6 +5,8 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
@@ -75,6 +77,43 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
+
+
+        //操作项，分录禁用
+        String operate = (String) map.get("operate");
+        if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate)) {
+            JSONArray list = JSONUtil.parseArray(map.get("list"));
+            JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
+            JSONArray pkEntryIds = new JSONArray();
+            for (Object obj : list ) {
+                JSONObject newObj = new JSONObject();
+                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(obj));
+                String id = (String)jsonObject.get("syncKingdeeId");
+                String skuNo = (String)jsonObject.get("skuNo");
+
+                LinkedList<String> queryFilters = new LinkedList<>();
+                queryFilters.add(String.format("FId = '%s'", id));
+                String filterStr = String.join(" and ", queryFilters);
+                //查询子单据id
+                String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber";
+                List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+                newObj.set("id",id);
+                List<String> entryIds = new ArrayList<>();
+                //比较
+                for (Map<String, Object> queryMap: queryList) {
+                    String number = (String)queryMap.get("FMaterialId.FNumber");
+                    String detailId =  (String)queryMap.get("FPriceListEntry_FEntryID");
+                    if (StringUtils.equals(skuNo,number)) {
+                        entryIds.add(detailId);
+                    }
+                }
+                newObj.set("EntryIds",String.join(",",entryIds));
+                pkEntryIds.put(newObj);
+            }
+            viewMap.set("PkEntryIds",pkEntryIds);
+            apiUtils.excuteOperation(SyncKingdeeOperateEnum.getNameByCode(operate),JSONUtil.toJsonStr(viewMap));
+            return;
+        }
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);

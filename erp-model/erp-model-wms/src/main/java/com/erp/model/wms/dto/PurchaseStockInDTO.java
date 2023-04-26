@@ -419,6 +419,11 @@ public class PurchaseStockInDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
          * 采购订单单号
          */
         private String purchaseOrderCode;
@@ -460,7 +465,6 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 扣款数量
          */
-        @NotNull(message = "扣款数量不能为空")
         @Min(value = 1,message = "扣款数量最小值为1")
         @Max(value = 99999999,message = "扣款数量最大值为99999999")
         private Integer deductAmountQty;
