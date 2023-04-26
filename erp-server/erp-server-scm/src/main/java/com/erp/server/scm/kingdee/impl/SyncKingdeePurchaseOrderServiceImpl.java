@@ -8,15 +8,9 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.entity.DictBasicEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
-import com.erp.server.scm.service.DictBasicService;
-import com.erp.server.scm.service.PurchaseOrderDetailService;
-import com.erp.server.scm.service.PurchaseOrderService;
-import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -52,6 +46,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     private DictBasicService dictBasicService;
 
 
+    @Resource
+    private SupplierService supplierService;
+
     /**
      * 组装数据发送到金蝶
      */
@@ -69,12 +66,16 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("purchaseDate",entity.getPurchaseDate());
         
         //查询采购供应商
-        PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
+        PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
+        if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
+            return;
+        }
+        SupplierEntity supplierEntity = supplierService.getById(purchaseOrderSupplierEntity.getSupplierId());
         if (ObjectUtils.isEmpty(supplierEntity)) {
             return;
         }
-        //供应商名称
-        resultMap.put("supplierName",supplierEntity.getSupplierName());
+        //供应商编码
+        resultMap.put("supplierCode",supplierEntity.getCode());
         //采购组织
         resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
         //采购部门
@@ -82,12 +83,12 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         //采购员
         resultMap.put("purchaseUserName",entity.getPurchaseUserName());
         //供应商联系人
-        resultMap.put("contactName",supplierEntity.getContactName());
+        resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());
         //是否是新品首批
         resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
 
-        if (ObjectUtils.isNotEmpty(supplierEntity.getPayMethodId())) {
-            DictBasicEntity dictBasicEntity = dictBasicService.getById(supplierEntity.getPayMethodId());
+        if (ObjectUtils.isNotEmpty(purchaseOrderSupplierEntity.getPayMethodId())) {
+            DictBasicEntity dictBasicEntity = dictBasicService.getById(purchaseOrderSupplierEntity.getPayMethodId());
             if (ObjectUtils.isNotEmpty(dictBasicEntity)) {
                 //付款方式
                 resultMap.put("payMethodId",dictBasicEntity.getValue());

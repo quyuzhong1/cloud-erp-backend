@@ -73,8 +73,8 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         if (ObjectUtils.isEmpty(supplierEntity)) {
             return;
         }
-        //供应商名称
-        resultMap.put("supplierName",supplierEntity.getName());
+        //供应商编码
+        resultMap.put("supplierCode",supplierEntity.getCode());
         //采购组织
         resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
 

@@ -313,7 +313,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             audit(platformEntity, map,apiUtils,id,type);
         }
         //更新业务单据状态
-        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type,map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),"");
+        kingdeeCommonService.updateBusinessSyncKingdeeStatus(type,map.get("id").toString(),SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(),id);
     }
 
 
