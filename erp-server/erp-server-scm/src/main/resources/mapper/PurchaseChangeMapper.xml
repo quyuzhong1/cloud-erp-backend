@@ -47,6 +47,7 @@
             pcd.old_amount as oldAmount,
             pcd.qty as qty,
             pcd.price as price,
+            pcd.currency_symbol,
             pcd.amount as amount,
             pcd.remark as remark,
             pc.change_user_name as changeUserName,

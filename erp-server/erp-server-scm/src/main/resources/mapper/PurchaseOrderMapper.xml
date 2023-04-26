@@ -45,6 +45,7 @@
             pod.is_urgent as isUrgent,
             po.delivery_warehouse_name as deliveryWarehouseName,
             pod.tax_price as taxPrice,
+            pod.currency_symbol,
             pod.purchase_qty as purchaseQty,
             pod.purchase_amount as purchaseAmount,
             pod.receive_qty as receiveQty,

@@ -108,6 +108,11 @@ public class PurchaseChangeDTO implements Serializable {
         private BigDecimal price;
 
         /**
+         * 货币符号
+         */
+        private String currencySymbol;
+
+        /**
          * 新含税金额
          */
         private BigDecimal amount;

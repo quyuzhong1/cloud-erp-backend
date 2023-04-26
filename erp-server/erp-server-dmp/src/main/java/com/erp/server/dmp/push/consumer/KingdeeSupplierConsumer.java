@@ -157,6 +157,10 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
             //财务信息
             JSONObject finance = (JSONObject)json.get("FFinanceInfo") ;
             finance.set("FEntryId",queryMap.get("FFinanceInfo_FEntryID"));
+
+            //商务信息
+            JSONObject business = (JSONObject)json.get("FBusinessInfo") ;
+            business.set("FEntryId",queryMap.get("FBusinessInfo_FEntryID"));
         }
 
     }
