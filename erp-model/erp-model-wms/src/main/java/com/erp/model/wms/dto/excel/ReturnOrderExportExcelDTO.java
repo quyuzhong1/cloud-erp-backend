@@ -71,7 +71,7 @@ public class ReturnOrderExportExcelDTO {
      * 退货日期
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "收货数量", index = 7)
+    @ExcelProperty(value = "退货日期", index = 7)
     private LocalDate billDate;
 
     /**
