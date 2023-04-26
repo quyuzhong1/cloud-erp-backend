@@ -75,11 +75,6 @@ public class ProcessDefinitionDTO {
         private String processName;
 
         /**
-         * 流程状态
-         */
-        private List<String> approveStatus;
-
-        /**
          * 创建人
          */
         private List<String> createUserIds;

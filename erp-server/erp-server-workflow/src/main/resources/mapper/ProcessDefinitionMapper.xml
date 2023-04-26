@@ -23,12 +23,6 @@
         <if test="null != params and params.processName != null and params.processName != ''">
             and pd.process_name ilike  concat('%',#{params.processName},'%')
         </if>
-        <if test="null != params and params.approveStatus != null and params.approveStatus.size() > 0">
-            and pd.approve_status in
-            <foreach collection="params.approveStatus" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
         <if test="null != params and params.createUserIds != null and params.createUserIds.size() > 0">
             and pd.create_user_id in
             <foreach collection="params.createUserIds" item="item" open="(" separator="," close=")">
@@ -44,7 +38,6 @@
         SELECT
         pd.id,
         pd.process_name,
-        pd.approve_status as approveStatusCode,
         wm.module_classify as businessName,
         pd.process_version,
         pd.create_user_name as createUserName,

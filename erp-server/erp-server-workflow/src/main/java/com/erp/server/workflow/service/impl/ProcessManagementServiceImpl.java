@@ -1,10 +1,12 @@
 package com.erp.server.workflow.service.impl;
 
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.ProcessManagementService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * <p>
@@ -17,4 +19,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManagementMapper, ProcessManagementEntity> implements ProcessManagementService {
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
+
+
+        return null;
+    }
 }

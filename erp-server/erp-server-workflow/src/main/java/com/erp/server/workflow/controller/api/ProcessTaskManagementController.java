@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
  * @since 2023-04-21
  */
 @RestController
-@RequestMapping("/process-task-management-entity")
+@RequestMapping("/process/task/management")
 public class ProcessTaskManagementController extends BaseController {
 
 }

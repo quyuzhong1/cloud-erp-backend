@@ -9,7 +9,10 @@ import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.server.workflow.service.ProcessDefinitionService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;

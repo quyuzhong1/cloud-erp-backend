@@ -81,11 +81,11 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         if(CollectionUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(pageData);
         }
-        pageData.getRecords().stream().peek(x -> x.setApproveStatusName(x.getApproveStatusCode().getName())).collect(Collectors.toList());
         return new PagingVO<>(pageData);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto) {
         // 获取流程定义信息
         ProcessDefinitionEntity definitionEntity = getById(dto.getProcessDefinitionId());

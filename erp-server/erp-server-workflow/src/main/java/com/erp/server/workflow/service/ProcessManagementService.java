@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service;
 
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.common.business.service.SuperService;
 
@@ -13,4 +14,10 @@ import com.common.business.service.SuperService;
  */
 public interface ProcessManagementService extends SuperService<ProcessManagementEntity> {
 
+    /**
+     * 启动流程
+     * @param dto
+     * @return
+     */
+    ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto);
 }
