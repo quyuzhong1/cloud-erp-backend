@@ -4,7 +4,7 @@ package com.erp.server.sys.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.NoticeDTO;
-import com.erp.server.sys.service.NoticeService;
+import com.erp.server.sys.service.NoticeInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +24,7 @@ import javax.annotation.Resource;
 public class NoticeController extends BaseController {
 
     @Resource
-    private NoticeService noticeService;
+    private NoticeInfoService noticeInfoService;
 
 
     /**
@@ -35,7 +35,7 @@ public class NoticeController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated NoticeDTO.AddDTO dto) {
-        Boolean result = noticeService.add(dto);
+        Boolean result = noticeInfoService.add(dto);
         return result ? success() : failure();
     }
 

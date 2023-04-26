@@ -7,21 +7,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
-
 /**
- * <p>
- * 通知表
- * </p>
- *
+ * 通知信息表
  * @author lambda
  * @since 2023-04-20
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("notice")
-public class NoticeEntity extends BaseEntity<NoticeEntity> {
+@TableName("notice_info")
+public class NoticeInfoEntity extends BaseEntity<NoticeInfoEntity> {
 
     /**
      * 禁用状态 false 没有  true禁用
@@ -30,20 +25,13 @@ public class NoticeEntity extends BaseEntity<NoticeEntity> {
     private Boolean disabled;
 
     /**
-     * 通知节点code
-     * 对应字典的
+     * 通知节点id
+
      */
-    @TableField("node_code_dict")
-    private String nodeCodeDict;
+    @TableField("node_id")
+    private String nodeId;
 
 
-    public static final String DISABLED = "disabled";
 
-    public static final String NODE_CODE = "node_code";
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }

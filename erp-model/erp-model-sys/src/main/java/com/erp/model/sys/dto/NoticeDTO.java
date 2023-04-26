@@ -31,7 +31,7 @@ public class NoticeDTO implements Serializable {
          * 通知节点
          */
         @NotBlank(message = "通知节点不能为空")
-        private String nodeCodeDict;
+        private String nodeId;
 
 
         /**
