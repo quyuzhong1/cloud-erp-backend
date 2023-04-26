@@ -422,7 +422,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean update = this.update(dto);
-        if (update) {
+        if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));
@@ -441,7 +441,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
+ /*       if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //判断是否是审核中的状态
@@ -488,7 +488,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
-        //审核通过发送金蝶
+      */  //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         return Boolean.TRUE;
     }

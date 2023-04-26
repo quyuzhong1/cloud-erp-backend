@@ -135,7 +135,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //产品名称
             jsonObject.set("productName", productDetailEntity.getName());
             //实收数量
-            jsonObject.set("returnQty", detail.getReceiveQty());
+            jsonObject.set("returnQty", detail.getStockInQty());
             //供应商编码
             jsonObject.set("supplierCode", supplierEntity.getCode());
             //供应商编码

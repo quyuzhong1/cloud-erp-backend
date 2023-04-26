@@ -87,7 +87,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(PurchaseReturnOrderDTO.AddDTO dto, String id) {
-        Integer returnQty = MathUtil.ZERO;
+        Integer returnQty = 0;
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
@@ -176,7 +176,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
-        Integer returnQty = MathUtil.ZERO;
+        Integer returnQty = 0;
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {

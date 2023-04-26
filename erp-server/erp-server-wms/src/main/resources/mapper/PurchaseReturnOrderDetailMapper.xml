@@ -32,6 +32,7 @@
 
     <select id="listReturnOrderDetailByPodIds" resultType="com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity">
         select
+        prod.id,
         pro.approve_status,
         prod.main_id,
         prod.sku_id,
