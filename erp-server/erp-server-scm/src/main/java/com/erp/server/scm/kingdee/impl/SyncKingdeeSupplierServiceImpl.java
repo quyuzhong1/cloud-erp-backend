@@ -9,8 +9,8 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -95,42 +95,37 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
             //供应商等级
             resultMap.put("grade",grade.getName());
         }
-        //财务信息
-        JSONObject finance = new JSONObject();
         //结算币别
-        finance.set("payCurrency",entity.getPayCurrency());
+        resultMap.put("payCurrency",entity.getPayCurrency());
 
         DictBasicEntity payMethod = dictBasicService.getById(entity.getPayMethodId());
         if (ObjectUtils.isNotEmpty(payMethod)) {
             //结算方式
-            finance.set("payMethod",payMethod.getValue());
+            resultMap.put("payMethod",payMethod.getValue());
         }
-        resultMap.put("financeList",Arrays.asList(finance));
 
         List<JSONObject>  blankList = new ArrayList<>();
-        List<SupplierAccountDTO.UpdateDTO> accountList = supplierAccountService.getBySupplierId(entity.getId());
+        List<SupplierAccountEntity> accountList = supplierAccountService.listBySupplierId(entity.getId());
 
         if (CollectionUtils.isNotEmpty(accountList)) {
             //查询银行信息
-            List<String> bankIds = accountList.stream().map(SupplierAccountDTO.UpdateDTO::getBankId).distinct().collect(Collectors.toList());
+            List<String> bankIds = accountList.stream().map(SupplierAccountEntity::getBankId).distinct().collect(Collectors.toList());
             List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIds);
-            for (SupplierAccountDTO.UpdateDTO updateDTO : accountList) {
+            for (SupplierAccountEntity accountEntity : accountList) {
                 JSONObject bank = new JSONObject();
-                //银行主键id
-                bank.set("accountId",updateDTO.getId());
                 //银行账号
-                bank.set("bankAccount",updateDTO.getBankAccount());
+                bank.set("bankAccount",accountEntity.getBankAccount());
                 //收款方
-                bank.set("payee",updateDTO.getPayee());
+                bank.set("payee",accountEntity.getPayee());
                 if (CollectionUtils.isNotEmpty(bankList)) {
-                    String bankName = bankList.stream().filter(obj -> obj.getId().equals(updateDTO.getBankId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+                    String bankName = bankList.stream().filter(obj -> obj.getId().equals(accountEntity.getBankId())).map(BaseIdDTO::getName).findFirst().orElse(null);
                     //收款银行
                     bank.set("bankName",bankName);
                 }
                 //开户银行
-                bank.set("bankSubbranch",updateDTO.getBankSubbranch());
+                bank.set("bankSubbranch",accountEntity.getBankSubbranch());
                 //备注
-                bank.set("remark",updateDTO.getRemark());
+                bank.set("remark",accountEntity.getRemark());
                 blankList.add(bank);
             }
             resultMap.put("blankList",blankList);

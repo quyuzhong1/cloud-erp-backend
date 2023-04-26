@@ -1,6 +1,5 @@
 package com.erp.server.dmp.push.consumer;
 
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -49,17 +48,17 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_SUPPLIER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "VEN00280"));
+        queryFilters.add(String.format("FNumber = '%s'", "GYS23041400017"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FNumber,FFinanceInfo_FEntryID,FBankInfo_FEntryID";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        String fieldKeys = "FNumber,FFinanceInfo_FEntryID,FPayCondition.FNumber";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
 
-      /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","VEN00280");
+       LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("Number","GYS23041400017");
         JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);*/
+        System.out.println(viewJson);
 
     }
 
@@ -141,10 +140,10 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
      */
     private void setQueryJSONObject (String id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FId = '%s'", id));
+        queryFilters.add(String.format("FSupplierId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
         //查询子单据id
-        String fieldKeys = "FFinanceInfo_FEntryID,FBankInfo_FEntryID";
+        String fieldKeys = "FFinanceInfo_FEntryID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
@@ -152,15 +151,12 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
             return;
         }
         //主单据id
-        KingdeeUtils.makeFieldJson(json,"FId",".", id);
+        KingdeeUtils.makeFieldJson(json,"FSupplierId",".", id);
         //比较
         for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FFinanceInfo") ;
-            for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
-                jsonObject.set("FEntryId",queryMap.get("FFinanceInfo_FEntryID"));
-            }
-
+            //财务信息
+            JSONObject finance = (JSONObject)json.get("FFinanceInfo") ;
+            finance.set("FEntryId",queryMap.get("FFinanceInfo_FEntryID"));
         }
 
     }
