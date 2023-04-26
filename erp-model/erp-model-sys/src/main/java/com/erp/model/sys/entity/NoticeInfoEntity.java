@@ -39,10 +39,10 @@ public class NoticeInfoEntity extends BaseEntity<NoticeInfoEntity> {
 
 
     /**
-     * 业务类型
+     * 业务模块
      */
-    @TableField("business_type")
-    private String businessType;
+    @TableField("module")
+    private String module;
 
 
 

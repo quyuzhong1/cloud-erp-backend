@@ -2,9 +2,11 @@ package com.erp.model.workflow.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,13 +54,13 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
      * 当前节点开始时间
      */
     @TableField("current_task_start_time")
-    private Date currentTaskStartTime;
+    private LocalDateTime currentTaskStartTime;
 
     /**
      * 任务状态
      */
     @TableField("task_status")
-    private String taskStatus;
+    private ApproveStatusEnum taskStatus;
 
     /**
      * 超时预警状态
@@ -104,6 +106,16 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     public static final String TIMEOUT_DEAL_INTERVAL = "timeout_deal_interval";
 
     public static final String TIMEOUT_DEAL_TYPE = "timeout_deal_type";
+
+
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus) {
+        this.processInstanceId = processInstanceId;
+        this.currentNodeId = activityId;
+        this.taskId = taskId;
+        this.currentTaskStartTime = startTime;
+        this.taskStatus = approveStatus;
+
+    }
 
     @Override
     public Serializable pkVal() {

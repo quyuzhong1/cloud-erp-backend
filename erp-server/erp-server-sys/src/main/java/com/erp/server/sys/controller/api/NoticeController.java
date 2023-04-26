@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.NoticeDTO;
@@ -50,5 +51,19 @@ public class NoticeController extends BaseController {
         Boolean result = noticeInfoService.edit(dto);
         return result ? success() : failure();
     }
+    
+    /**
+     * 通知详情
+     * @author yl
+     * @date 2023-04-26 16:17
+     * @param dto
+     * @return 
+     */
+    @PostMapping("/view")
+    public ApiResult<NoticeDTO.AddDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+         noticeInfoService.view(dto.getId());
+        return success() ;
+    }
+    
 
 }

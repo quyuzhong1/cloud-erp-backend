@@ -1,9 +1,12 @@
 package com.erp.model.workflow.dto;
 
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -76,5 +79,49 @@ public class ProcessManagementDTO {
          * 流程结束时间
          */
         private String endTime;
+
+        public StartResultDTO(String processDefinitionId, String processInstanceId, String taskId, LocalDateTime processStartTime, String businessId) {
+            this.processDefinitionId = processDefinitionId;
+            this.processInstanceId = processInstanceId;
+            this.taskId = taskId;
+            this.startTime = processStartTime.toString();
+            this.businessId = businessId;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveDTO {
+
+            @NotBlank(message = "业务类型不能为空")
+            private String businessKey;
+
+            /**
+            * 业务表id
+            */
+            @NotBlank(message = "业务表id不能为空")
+            private String businessId;
+
+            /**
+            * 审批人
+            */
+            @NotBlank(message = "审批人不能为空")
+            private String userId;
+
+            /**
+            * 审批意见
+            */
+            private String comment;
+
+            /**
+            * 审批结果
+            */
+            @NotBlank(message = "审批结果不能为空")
+            private ApproveTypeEnum approveType;
+
+            /**
+            * 流程参数map
+            */
+            private Map<String,Object> variablesMap;
     }
 }

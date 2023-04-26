@@ -20,4 +20,10 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return
      */
     ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto);
+
+    /**
+     * 流程审核
+     * @param dto
+     */
+    void approveProcess(ProcessManagementDTO.ApproveDTO dto);
 }

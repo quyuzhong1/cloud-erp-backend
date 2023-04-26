@@ -35,8 +35,19 @@ public class ProcessManagementController extends BaseController {
      * @return
      */
     @PostMapping("/start")
-    public ApiResult startProcess(@RequestBody @Valid ProcessManagementDTO.StartDTO dto) {
+    public ApiResult<ProcessManagementDTO.StartResultDTO> startProcess(@RequestBody @Valid ProcessManagementDTO.StartDTO dto) {
         ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcess(dto);
         return success(result);
+    }
+
+    /**
+     * 流程审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/approve")
+    public ApiResult approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
+        processManagementService.approveProcess(dto);
+        return success();
     }
 }
