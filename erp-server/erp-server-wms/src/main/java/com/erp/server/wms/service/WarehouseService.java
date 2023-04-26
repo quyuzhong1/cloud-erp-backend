@@ -4,8 +4,8 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
-import com.common.business.vo.PagingVO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -176,4 +176,12 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto);
+    /**
+     * 更新同步状态
+     * @author Will
+     * @date: 2023/4/26 19:26
+     * @param id
+     * @param syncKingdeeStatus
+     */
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId);
 }

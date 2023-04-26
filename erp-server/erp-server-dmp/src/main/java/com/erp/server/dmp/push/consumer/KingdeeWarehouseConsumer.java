@@ -1,8 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -25,7 +23,9 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -51,8 +51,7 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
 
         //业务id
         String  businessId = String.valueOf(map.get("id"));
-        //金蝶code
-        String kingdeeWarehouseCode=(String) map.get("kingdeeWarehouseCode");
+
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -74,7 +73,7 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("kingdeeWarehouseCode"));
+            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
 
             //更新数据
@@ -95,59 +94,28 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
             kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
             return;
         }
+
+        if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
+            String code = (String)map.get("code");
+            //启用、禁用
+            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            return;
+        }
+
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //给修改json对象赋值ID
-            setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
+            //主单据id
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
-
-
-
     }
 
-    private void setQueryJSONObject(String id, KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, JSONObject json) {
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FId = '%s'", id));
-        String filterStr = String.join(" and ", queryFilters);
-        //查询子单据id
-        String fieldKeys = "FPURMRBENTRY_FEntryID,FMATERIALID.FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-        if (CollectionUtils.isEmpty(queryList)) {
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),filterStr,"未查询到子单据id",type,ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
-        //主单据id
-        KingdeeUtils.makeFieldJson(json,"FId",".", id);
-        //比较
-        for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FPURMRBENTRY") ;
-            JSONArray removeObj = new JSONArray();
-            JSONArray addObj = new JSONArray();
-            for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
-                JSONObject newJson = new JSONObject(new LinkedHashMap<>());
-                Object o1 = queryMap.get("FMATERIALID.FNumber");
-                JSONObject o2 = (JSONObject)jsonObject.get("FMATERIALID");
-                Object fNumber = o2.get("FNumber");
-                if (o1.equals(fNumber)) {
-                    newJson.set("FEntryId",queryMap.get("FPOOrderEntry_FEntryID"));
-                }
-                newJson.putAll(jsonObject);
-                removeObj.set(o);
-                addObj.set(newJson);
-            }
-            obj.removeAll(removeObj);
-            obj.addAll(addObj);
-        }
-    }
 }

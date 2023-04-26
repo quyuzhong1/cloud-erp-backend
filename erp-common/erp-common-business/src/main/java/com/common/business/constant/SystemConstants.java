@@ -14,4 +14,5 @@ public interface SystemConstants {
 
     String SYS = "sys";
 
+    String WMS = "wms";
 }

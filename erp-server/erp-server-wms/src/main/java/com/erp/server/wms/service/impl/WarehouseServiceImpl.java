@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -25,6 +26,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
@@ -43,6 +45,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +67,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SyncKingdeeWarehouseService syncKingdeeWarehouseService;
 
 
     @Override
@@ -239,6 +245,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+
+            //审核通过后发送金蝶
+            list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             return result;
         } else {
             //审核不通过
@@ -277,6 +286,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             throw new ServiceException(ApiError.ERROR_99003);
         }
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+
+        //反审核后发送金蝶
+        list.forEach(obj -> syncKingdeeWarehouseService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return result;
     }
 
@@ -518,6 +530,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return this.submit(Arrays.asList(id));
 
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(WarehouseEntity::getId,id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),WarehouseEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),WarehouseEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),WarehouseEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     /**
