@@ -423,7 +423,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
         List<PurchaseStockInEntity> list = getList(ids);
-/*        //审核中允许审核
+        //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
@@ -448,7 +448,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购入库单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), pairList, "审核操作");
-    */    //审核通过发送金蝶
+        //审核通过发送金蝶
         list.forEach(obj -> syncKingdeeStockInService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
     }
 
