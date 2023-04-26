@@ -146,16 +146,14 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
      * @return void
      **/
     private List<PurchaseReturnOrderDetailEntity> notProductOrderAdd(PurchaseReturnOrderDTO.AddDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
-        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
-            //遍历需要保存的采购收货单详情信息，并赋值采购单信息
-            List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
-            for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
-                PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
-                BeanMapperUtils.copy(addDTO, purchaseReturnOrderDetailEntity);
-                purchaseReturnOrderDetailEntity.setMainId(id);
-                purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
-                listDetail.add(purchaseReturnOrderDetailEntity);
-            }
+        //遍历需要保存的采购收货单详情信息，并赋值采购单信息
+        List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
+        for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
+            PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
+            BeanMapperUtils.copy(addDTO, purchaseReturnOrderDetailEntity);
+            purchaseReturnOrderDetailEntity.setMainId(id);
+            purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
+            listDetail.add(purchaseReturnOrderDetailEntity);
         }
         return listDetail;
     }
@@ -221,16 +219,14 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
      * @return void
      **/
     private List<PurchaseReturnOrderDetailEntity> notProductOrderUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
-        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
-            //遍历需要保存的采购收货单详情信息，并赋值采购单信息
-            List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
-            for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
-                PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
-                BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
-                purchaseReturnOrderDetailEntity.setMainId(id);
-                purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
-                listDetail.add(purchaseReturnOrderDetailEntity);
-            }
+        //遍历需要保存的采购收货单详情信息，并赋值采购单信息
+        List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
+        for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+            PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
+            BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
+            purchaseReturnOrderDetailEntity.setMainId(id);
+            purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
+            listDetail.add(purchaseReturnOrderDetailEntity);
         }
         return listDetail;
     }
