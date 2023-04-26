@@ -153,6 +153,18 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
 
     }
 
+    /**
+     * 根据质检类型获取质检报告信息
+     * @author yl
+     * @date 2023-04-26 9:50
+     * @param qcTypeList
+     * @return java.util.List<com.erp.model.wms.dto.QcReportDTO.ListDTO>
+     */
+    @Override
+    public List<QcReportDTO.ListDTO> listByQcType(List<String> qcTypeList) {
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        return baseMapper.listByQcType(qcTypeList, approveStatus);
+    }
 
 
     /**

@@ -35,7 +35,7 @@ public class QcInfoDTO implements Serializable {
 
 
     /**
-     * 添加质检规则
+     * 添加质检单
      */
     @Data
     @NoArgsConstructor
@@ -109,6 +109,63 @@ public class QcInfoDTO implements Serializable {
          */
         private List<QcRemarkDTO.AddDTO> remarkList;
 
+
+    }
+
+
+    /**
+     * 收获单自动下推质检单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveToQcDTO{
+
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单code
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品等级
+         */
+        private String productGrade;
+
+
+        /**
+         *变体属性
+         */
+        private String variantProperty;
 
     }
 

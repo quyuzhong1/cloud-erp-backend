@@ -112,6 +112,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
+
+    @Resource
+    private QcReportService qcReportService;
+
     /**
      * 保存 质检单
      *
@@ -1039,7 +1043,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99029);
         }
 
-
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
         List<String> skuIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -1170,6 +1173,103 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addList.forEach(obj -> purchaseReturnOrderService.add(obj));
         }
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 入库单自动下推质检单
+     *
+     * @param dto
+     * @return
+     * @author yl
+     * @date 2023-04-26 9:30
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean autoReceiveToQcDTO(List<QcInfoDTO.ReceiveToQcDTO> dto) {
+        if (CollectionUtils.isEmpty(dto)) {
+            return Boolean.TRUE;
+        }
+        List<QcInfoEntity> addQcList = new ArrayList<>(dto.size());
+        //质检结果
+        List<QcResultEntity> addQcResultList = new ArrayList<>(dto.size());
+
+        //质检产品
+        List<QcProductEntity> addQcProductList = new ArrayList<>(dto.size());
+
+        //质检报告
+        List<QcReportDetailEntity> addQcReportDetailList = new ArrayList<>(dto.size());
+
+
+        //质检类型
+        List<String> qcTypeList = dto.stream().map(QcInfoDTO.ReceiveToQcDTO::getQcType).collect(Collectors.toList());
+        //质检类型的集合
+        List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(qcTypeList);
+        Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
+        String qcUserId = commonService.getUserInfo().getUid();
+        String qcUserName = commonService.getUserInfo().getUserName();
+        String departId = "";
+        String departName = "";
+        //质检员
+        if (StringUtils.isNotBlank(qcUserId)) {
+            SysDepartmentUserNumberDTO userDTO = sysUserFeign.getDeptByUserId(qcUserId);
+            departId = userDTO.getDepartmentId();
+            departName = userDTO.getDepartmentName();
+        }
+
+
+        for (QcInfoDTO.ReceiveToQcDTO item : dto) {
+            QcInfoEntity qcInfo = new QcInfoEntity();
+            String id = IdWorker.getIdStr();
+            qcInfo.setId(id);
+            qcInfo.setPurchaseOrderCode(item.getPurchaseOrderCode());
+            qcInfo.setPurchaseOrderId(item.getPurchaseOrderId());
+            qcInfo.setSupplierId(item.getSupplierId());
+            qcInfo.setWarehouseId(item.getDeliveryWarehouseId());
+            qcInfo.setQcDeptId(departId);
+            qcInfo.setQcDeptName(departName);
+            qcInfo.setQcUserId(qcUserId);
+            qcInfo.setQcUserName(qcUserName);
+            addQcList.add(qcInfo);
+            //质检结果
+            QcResultEntity qcResult = new QcResultEntity();
+            qcResult.setMainId(id);
+            String qcType = item.getQcType();
+            Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
+            qcResult.setQcType(item.getQcType());
+            qcResult.setIsInside(isInside);
+            addQcResultList.add(qcResult);
+
+            //质检产品
+            QcProductEntity qcProduct = new QcProductEntity();
+            qcProduct.setMainId(id);
+            qcProduct.setProductGrade(item.getProductGrade());
+            qcProduct.setSkuNo(item.getSkuNo());
+            qcProduct.setSkuId(item.getSkuId());
+            qcProduct.setVariantProperty(item.getVariantProperty());
+            addQcProductList.add(qcProduct);
+
+            //质检报告信息
+            List<QcReportDTO.ListDTO> reportList = qcTypeMap.get(qcType);
+            if (CollectionUtils.isNotEmpty(reportList)) {
+                for (QcReportDTO.ListDTO report : reportList) {
+                    QcReportDetailEntity qcReportDetail = new QcReportDetailEntity();
+                    qcReportDetail.setMainId(id);
+                    qcReportDetail.setQcReportId(report.getQcReportId());
+                    addQcReportDetailList.add(qcReportDetail);
+                }
+
+            }
+
+        }
+        //添加质检单
+        Boolean batchQc = this.saveBatch(addQcList);
+        if (batchQc) {
+            qcProductService.saveBatch(addQcProductList);
+            qcResultService.saveBatch(addQcResultList);
+            qcReportDetailService.saveBatch(addQcReportDetailList);
+        }
+        return batchQc;
     }
 
     /**

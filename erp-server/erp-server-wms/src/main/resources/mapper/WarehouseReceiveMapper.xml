@@ -281,5 +281,22 @@
         </if>
         ORDER BY wr.create_time DESC, wr.id
     </select>
-
+    <select id="getQcList" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$QcDTO">
+       SELECT
+         wrd.sku_id,
+         wrd.sku_no,
+         wrd.receive_qty,
+         wr.supplier_id,
+         wr.purchase_order_id,
+         wr.purchase_order_code,
+         wr.delivery_warehouse_id
+       FROM  warehouse_receive_detail wrd
+       LEFT JOIN warehouse_receive wr
+       ON wrd.main_id=wr.id AND wr.is_deleted = FALSE
+       WHERE wrd.is_deleted = FALSE
+       AND wrd.main_id IN
+        <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

@@ -420,6 +420,19 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         return this.updateById(rule);
     }
 
+    /**
+     * 获取审核通过且启用的
+     *
+     * @return
+     */
+    @Override
+    public List<QcRuleEntity> listByApprove() {
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        return this.lambdaQuery().
+                eq(QcRuleEntity::getApproveStatus,approveStatus).
+                eq(QcRuleEntity::getDisabled,Boolean.FALSE).list();
+    }
+
 
     /**
      * 更改审核状态

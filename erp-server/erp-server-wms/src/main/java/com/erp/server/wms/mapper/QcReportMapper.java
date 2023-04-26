@@ -22,4 +22,5 @@ public interface QcReportMapper extends BaseMapper<QcReportEntity> {
     List<QcReportDTO.ListDTO> getByQcType(@Param("qcType") String qcType,@Param("approveStatus") String approveStatus);
 
 
+    List<QcReportDTO.ListDTO> listByQcType(@Param("qcTypeList")List<String> qcTypeList, @Param("approveStatus")String approveStatus);
 }

@@ -16,10 +16,12 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -37,6 +39,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -53,17 +56,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -106,12 +109,19 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Resource
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
+    @Resource
+    private QcRuleService qcRuleService;
+
+    @Resource
+    private QcInfoService qcInfoService;
+
     /**
      * 主页分页查询
-     * @Author Luo_WG
-     * @Date 2023/4/13 15:41
+     *
      * @param pagingParamDTO pagingParamDTO
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:41
      **/
     @Override
     public PagingVO<WarehouseReceiveDTO.PagingViewDTO> paging(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> pagingParamDTO) {
@@ -152,7 +162,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     throw new ServiceException(ApiError.ERROR_95107);
                 }
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);
-                if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_99006);
                 }
                 obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
@@ -165,16 +175,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 列表状态数量统计
-     * @Author Luo_WG
-     * @Date 2023/4/17 13:12
+     *
      * @param dto dto
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:12
      **/
     @Override
     public List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> listCount(PermissionsDTO dto) {
         PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
         List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> list = new ArrayList<>();
-        for (PurchaseChangeListTypeEnum item: values) {
+        for (PurchaseChangeListTypeEnum item : values) {
             WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
             pagingParamDTO.setParam(dto.getParam());
             WarehouseReceiveDTO.WarehouseReceiveCountDTO resultDTO = new WarehouseReceiveDTO.WarehouseReceiveCountDTO();
@@ -191,7 +202,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setType(item.getCode());
             list.add(resultDTO);
         }
@@ -200,10 +211,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 新增
-     * @Author Luo_WG
-     * @Date 2023/4/13 11:03
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:03
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -264,7 +276,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         warehouseReceiveDetailService.add(dto, warehouseReceiveEntity.getId());
 
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】",code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),warehouseReceiveEntity.getId(),"新增操作");
+        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】", code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), warehouseReceiveEntity.getId(), "新增操作");
 
         //修改到货状态
         updateArrivalState(warehouseReceiveEntity);
@@ -294,10 +306,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 修改
-     * @Author Luo_WG
-     * @Date 2023/4/13 14:51
+     *
      * @param dto dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 14:51
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -310,7 +323,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getDeliveryWarehouseId());
 
         WarehouseReceiveEntity entity = new WarehouseReceiveEntity();
-        BeanMapperUtils.copy(dto,entity);
+        BeanMapperUtils.copy(dto, entity);
         entity.setReceiveUserName(sysUserDTO.getUserName());
         entity.setReceiveDeptName(departmentDTO.getName());
         entity.setDeliveryWarehouseName(warehouseEntity.getName());
@@ -319,7 +332,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //操作日志
         WarehouseReceiveEntity byId = this.getById(dto.getId());
-        moduleOperateLogService.addModuleOperateLogByObj(byId,entity,ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),entity.getId(),"","");
+        moduleOperateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), entity.getId(), "", "");
 
         //更新收货单详情表信息
         return warehouseReceiveDetailService.update(dto);
@@ -327,16 +340,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 查询详情
-     * @Author Luo_WG
-     * @Date 2023/4/13 17:10
+     *
      * @param id id
      * @return com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:10
      **/
     @Override
     public WarehouseReceiveDTO.ViewDTO view(String id) {
         WarehouseReceiveDTO.ViewDTO viewDTO = new WarehouseReceiveDTO.ViewDTO();
         WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
-        BeanMapperUtils.copy(warehouseReceiveEntity,viewDTO);
+        BeanMapperUtils.copy(warehouseReceiveEntity, viewDTO);
         //获取采购订单主表信息
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(warehouseReceiveEntity.getPurchaseOrderId());
         //获取采购单供应商信息
@@ -367,7 +381,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : detail) {
             WarehouseReceiveDetailDTO.ViewDTO detailView = new WarehouseReceiveDetailDTO.ViewDTO();
-            BeanMapperUtils.copy(warehouseReceiveDetailEntity,detailView);
+            BeanMapperUtils.copy(warehouseReceiveDetailEntity, detailView);
             //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
@@ -392,10 +406,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 提交
-     * @Author Luo_WG
-     * @Date 2023/4/14 10:04
+     *
      * @param ids ids
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/14 10:04
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -418,7 +433,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //TODO 待加审核流程
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"提交操作");
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "提交操作");
 
         //更新审核状态
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
@@ -429,10 +444,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 新增提交
-     * @Author Luo_WG
-     * @Date 2023/4/6 18:52
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -446,10 +462,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 修改提交
-     * @Author Luo_WG
-     * @Date 2023/4/6 18:52
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 18:52
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -463,10 +480,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 批量审核
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:06
+     *
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -497,6 +515,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     .in(WarehouseReceiveEntity::getId, ids)
                     .update();
 
+            //根据条件生成质检单
+            createQcBill(ids);
+
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -505,17 +526,78 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         }
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个收货单",ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个收货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "审核操作");
+
+
 
         return Boolean.TRUE;
     }
 
     /**
+     * 生成质检单
+     *
+     * @param ids
+     * @return void
+     * @author yl
+     * @date 2023-04-25 19:22
+     */
+    private void createQcBill(List<String> ids) {
+        List<WarehouseReceiveDTO.QcDTO> qcList = baseMapper.getQcList(ids);
+        List<String> skuIds = qcList.stream().map(WarehouseReceiveDTO.QcDTO::getSkuId).collect(Collectors.toList());
+        List<String> purchaseOrderIds = qcList.stream().map(WarehouseReceiveDTO.QcDTO::getPurchaseOrderId).collect(Collectors.toList());
+        //获取到sku 信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
+        for (WarehouseReceiveDTO.QcDTO item : qcList) {
+            String skuId = item.getSkuId();
+            String purchaseOrderId = item.getPurchaseOrderId();
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().orElse(new SkuVO());
+            item.setProductGrade(sku.getProductGrade());
+            item.setVariantProperty(sku.getVariantProperty());
+            Boolean isFirstMassProduct = purchaseOrderList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(false);
+            item.setIsFirstMassProduct(isFirstMassProduct);
+
+        }
+        List<QcInfoDTO.ReceiveToQcDTO> addList = new ArrayList<>(qcList.size());
+        //获取到审核通过的 且启用的质检规则
+        List<QcRuleEntity> qcRuleList = qcRuleService.listByApprove();
+        //新品质检
+        String newProduct = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+        List<String> productGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(newProduct)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
+        String newProductGrade = String.join(",", productGradeList);
+
+        //入库质检
+        String stockIn = QcTypeEnum.STOCK_IN.getCode();
+        List<String> stockInProductGradeList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getProductGradeKey).collect(Collectors.toList());
+        String stockInProductGrade = String.join(",", stockInProductGradeList);
+        //新品 并且符合等级的
+        List<WarehouseReceiveDTO.QcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct() && newProductGrade.contains(q.getProductGrade())).collect(Collectors.toList());
+        for (WarehouseReceiveDTO.QcDTO newItem : newProductList) {
+            QcInfoDTO.ReceiveToQcDTO newQc = new QcInfoDTO.ReceiveToQcDTO();
+            BeanMapper.copy(newItem, newQc);
+            newQc.setQcType(newProduct);
+            addList.add(newQc);
+        }
+        //旧品 并且符合等级的
+        List<WarehouseReceiveDTO.QcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct() && stockInProductGrade.contains(q.getProductGrade())).collect(Collectors.toList());
+        for (WarehouseReceiveDTO.QcDTO stockInItem : stockInProductList) {
+            QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
+            BeanMapper.copy(stockInItem, stockInQc);
+            stockInQc.setQcType(stockIn);
+            addList.add(stockInQc);
+        }
+        qcInfoService.autoReceiveToQcDTO(addList);
+    }
+
+    /**
      * 批量反审核
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param ids ids
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -567,17 +649,18 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"反审核操作");
+        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "反审核操作");
 
         return Boolean.TRUE;
     }
 
     /**
      * 取消流程
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:58
+     *
      * @param ids ids
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:58
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -604,18 +687,19 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("收货单【%s】取消流程", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"取消流程操作");
+        moduleOperateLogService.batchAddModuleOperateLog("收货单【%s】取消流程", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "取消流程操作");
 
         return Boolean.TRUE;
     }
 
     /**
      * 批量作废
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
-     * @param ids ids
+     *
+     * @param ids    ids
      * @param remark remark
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -627,7 +711,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //审核不通过 待提交可以作废
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                ||entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
         ).count();
 
         if (count != warehouseReceiveList.size()) {
@@ -639,10 +723,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 .set(WarehouseReceiveEntity::getInvalidRemark, remark)
                 .set(WarehouseReceiveEntity::getInvalidTime, LocalDateTime.now())
                 .in(WarehouseReceiveEntity::getId, ids)
-        .update();
+                .update();
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"作废操作");
+        moduleOperateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "作废操作");
         warehouseReceiveList.forEach(req -> {
             //修改到货状态
             updateArrivalState(req);
@@ -652,10 +736,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 批量删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param ids ids
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -688,16 +773,17 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 导出
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
-     * @param dto dto
+     *
+     * @param dto      dto
      * @param response response
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
      **/
     @Override
     public Boolean exportExcel(WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<WarehouseReceiveExcelDTO> warehouseReceiveExcelDTOS = baseMapper.warehouseReceiveExportExcel(dto);
-         //获取sku的id集合
+        //获取sku的id集合
         List<String> skuIdList = warehouseReceiveExcelDTOS.stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
@@ -728,10 +814,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 下推入库单列表查询
-     * @Author Luo_WG
-     * @Date 2023/4/14 14:24
+     *
      * @param ids ids
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.GenerateStockInViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/14 14:24
      **/
     @Override
     public List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(List<String> ids) {
@@ -772,7 +859,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setStockInUserId(userInfo.getUid());
             req.setStockInUserName(userInfo.getUserName());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(req.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if  (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
+            if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_99006);
             }
             Integer reduce = stockInDetailEntityListBySource.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -793,10 +880,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 下推入库单
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
+     *
      * @param dtos dtos
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -846,10 +934,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 采购订单-关联的收货单据
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:47
+     *
      * @param purchaseOrderId purchaseOrderId
      * @return java.lang.Integer
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:47
      **/
     @Override
     public List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId) {
@@ -875,10 +964,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 采购订单-下推收货单保存按钮
-     * @Author Luo_WG
-     * @Date 2023/4/24 13:54
+     *
      * @param dto dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:54
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -888,7 +978,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<PurchaseOrderDTO.GenerateReceiveDTO> list = dto.getList();
         //采购订单明细Ids
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseOrderDTO.GenerateReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purchaseOrderDetailIds);;
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purchaseOrderDetailIds);
+        ;
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98017);
         }
@@ -946,12 +1037,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     /**
      * 判断到货状态
+     *
+     * @param receiveQty  到货数量
+     * @param purchaseQty 采购数量
+     * @param id          采购明细id
+     * @return java.lang.Integer
      * @Author Luo_WG
      * @Date 2023/4/20 18:47
-     * @param receiveQty 到货数量
-     * @param purchaseQty 采购数量
-     * @param id 采购明细id
-     * @return java.lang.Integer
      **/
     private Boolean getArrivalState(Integer receiveQty, Integer purchaseQty, String id) {
         String arrivalStatus = "";
@@ -959,10 +1051,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (receiveQty <= MathUtil.ZERO) {
             arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
         } else if (receiveQty > MathUtil.ZERO && receiveQty < purchaseQty) {
-        //部分到货
+            //部分到货
             arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
         } else {
-        //已到货
+            //已到货
             arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
         }
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
@@ -971,5 +1063,16 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
         Boolean flag = scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
         return flag;
+    }
+
+    public static void main(String[] args) {
+        List<String> strList = new ArrayList<>();
+        strList.add("s,a,b");
+
+        List<String> str1List = new ArrayList<>();
+        str1List.add("s,b,c,d");
+
+        String dd = "S,A,B,C,D";
+        System.out.println(dd.contains("A"));
     }
 }

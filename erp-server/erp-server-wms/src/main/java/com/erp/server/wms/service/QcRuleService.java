@@ -129,4 +129,10 @@ public interface QcRuleService extends SuperService<QcRuleEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateDisabledState(UpdateStateDTO dto);
+
+    /**
+     * 获取审核通过且启用的
+     * @return
+     */
+    List<QcRuleEntity> listByApprove();
 }

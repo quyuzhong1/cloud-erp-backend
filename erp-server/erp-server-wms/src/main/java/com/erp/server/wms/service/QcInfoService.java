@@ -183,4 +183,13 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
+    
+    /**
+     * 入库单自动下推质检单
+     * @author yl
+     * @date 2023-04-26 9:30
+     * @param dto
+     * @return 
+     */
+    Boolean autoReceiveToQcDTO(List<QcInfoDTO.ReceiveToQcDTO>  dto);
 }

@@ -69,6 +69,12 @@ public class QcReportDTO implements Serializable {
         /**
          * 禁用状态
          */
+        private String qcType;
+
+
+        /**
+         * 禁用状态
+         */
         private Boolean disabled;
 
 

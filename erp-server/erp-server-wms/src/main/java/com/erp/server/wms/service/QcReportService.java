@@ -75,6 +75,12 @@ public interface QcReportService extends SuperService<QcReportEntity> {
      */
     void exportQcReport(QcReportDetailDTO.ExportDTO dto, HttpServletResponse response);
 
-
-
+    /**
+     * 根据质检类型获取质检报告信息
+     * @author yl
+     * @date 2023-04-26 9:50
+     * @param qcTypeList
+     * @return java.util.List<com.erp.model.wms.dto.QcReportDTO.ListDTO>
+     */
+    List<QcReportDTO.ListDTO> listByQcType(List<String> qcTypeList);
 }

@@ -1,24 +1,20 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.validator.AddGroup;
-import com.common.business.validator.UpdateGroup;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
  * 收货单DTO
+ *
  * @Author Luo_WG
  * @Date 2023/4/6 17:18
  **/
@@ -116,6 +112,46 @@ public class WarehouseReceiveDTO {
          */
         @Valid
         private List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList;
+    }
+
+
+    /**
+     * 质检需要的信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcDTO {
+
+
+        private Boolean isFirstMassProduct;
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        private String supplierId;
+
+        private String purchaseOrderId;
+
+        private String purchaseOrderCode;
+
+
+        private String skuId;
+
+
+        private String skuNo;
+
+
+        private String receiveQty;
+
+        private String productGrade;
+
+        /**
+         *变体属性
+         */
+        private String variantProperty;
+
+
     }
 
 
@@ -630,7 +666,7 @@ public class WarehouseReceiveDTO {
         /**
          * 已签收数量
          */
-        private Integer  receiveQty;
+        private Integer receiveQty;
 
         /**
          * 未入库数量

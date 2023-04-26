@@ -363,8 +363,7 @@
           qb.purchase_order_code AS purchaseOrderCode,
           qi.purchase_order_detail_id AS purchaseOrderDetailId,
           qp.sku_id AS skuId, qp.sku_no AS skuNo,
-          qi.qc_bad_qty AS realityReturnQty,
-          qi.deductAmountQty AS realityReturnQty
+          qi.qc_bad_qty AS realityReturnQty
         FROM qc_info  qb
         INNER JOIN qc_result qi  ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         INNER join qc_product qp ON qp.main_id=qi.main_id AND qb.is_deleted=FALSE
