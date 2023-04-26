@@ -3,10 +3,10 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.model.sys.dto.NoticeDTO;
-import com.erp.model.sys.entity.NoticeEntity;
-import com.erp.server.sys.mapper.NoticeMapper;
+import com.erp.model.sys.entity.NoticeInfoEntity;
+import com.erp.server.sys.mapper.NoticeInfoMapper;
 import com.erp.server.sys.service.NoticeReceivedService;
-import com.erp.server.sys.service.NoticeService;
+import com.erp.server.sys.service.NoticeInfoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +21,7 @@ import javax.annotation.Resource;
  * @since 2023-04-20
  */
 @Service
-public class NoticeServiceImpl extends SuperServiceImpl<NoticeMapper, NoticeEntity> implements NoticeService {
+public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, NoticeInfoEntity> implements NoticeInfoService {
 
 
     @Resource
@@ -38,8 +38,7 @@ public class NoticeServiceImpl extends SuperServiceImpl<NoticeMapper, NoticeEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(NoticeDTO.AddDTO dto) {
-        NoticeEntity notice = new NoticeEntity();
-        notice.setNodeCodeDict(dto.getNodeCodeDict());
+        NoticeInfoEntity notice = new NoticeInfoEntity();
         String id = IdWorker.getIdStr();
         notice.setId(id);
         Boolean result = this.save(notice);

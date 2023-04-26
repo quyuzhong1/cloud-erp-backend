@@ -29,6 +29,7 @@ public class NoticeReceivedDTO implements Serializable {
 
         /**
          * 接收类型
+         * 来源
          */
         @NotBlank(message = "接收类型")
         private String receivedType;
@@ -39,10 +40,7 @@ public class NoticeReceivedDTO implements Serializable {
         @NotBlank(message = "接收类型值")
         private String receivedValue;
 
-        /**
-         * 接收类型
-         */
-        private String receivedName;
+
 
 
 

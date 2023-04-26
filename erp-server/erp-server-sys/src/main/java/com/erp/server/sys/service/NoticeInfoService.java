@@ -2,7 +2,7 @@ package com.erp.server.sys.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.sys.dto.NoticeDTO;
-import com.erp.model.sys.entity.NoticeEntity;
+import com.erp.model.sys.entity.NoticeInfoEntity;
 
 /**
  * <p>
@@ -12,7 +12,7 @@ import com.erp.model.sys.entity.NoticeEntity;
  * @author lambda
  * @since 2023-04-20
  */
-public interface NoticeService extends SuperService<NoticeEntity> {
+public interface NoticeInfoService extends SuperService<NoticeInfoEntity> {
 
     
     /**
