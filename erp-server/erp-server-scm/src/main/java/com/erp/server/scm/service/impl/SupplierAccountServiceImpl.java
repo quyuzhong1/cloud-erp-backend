@@ -84,6 +84,10 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         return BeanMapper.copyList(list, SupplierAccountDTO.UpdateDTO.class);
     }
 
+    @Override
+    public List<SupplierAccountEntity> listBySupplierId(String supplierId) {
+        return lambdaQuery().eq(SupplierAccountEntity::getSupplierId,supplierId).list();
+    }
 
     /**
      * 更改供应商账户信息
