@@ -144,6 +144,16 @@ public interface ScmTaskFeign {
     Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity);
 
     /**
+     * 批量修改采购订单明细表
+     * @param  entityList entityList
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     **/
+    @PostMapping("feign/purchaseOrder/updatePurchaseOrderDetailByIdBatch")
+    Boolean updatePurchaseOrderDetailByIdBatch(@RequestBody List<PurchaseOrderDetailEntity> entityList);
+
+    /**
      * 根据入参查询单据数量
      * @Author Luo_WG
      * @Date 2023/4/21 15:34
