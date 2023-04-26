@@ -18,6 +18,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -27,6 +28,7 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
+import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -64,6 +66,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
     @Resource
     private MQProducerService mQProducerService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 发送消息同步金蝶
@@ -151,7 +156,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         List<String> orderDetailIds = detailList.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getReturnWarehouseId());
         List<JSONObject> list = new ArrayList<>();
         for (PurchaseReturnOrderDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -168,6 +174,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             jsonObject.set("deductAmountQty", detail.getDeductAmountQty());
             //退货仓库
             jsonObject.set("returnWarehouseName", entity.getReturnWarehouseName());
+            //仓库编码
+            jsonObject.set("returnWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             //退货备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
