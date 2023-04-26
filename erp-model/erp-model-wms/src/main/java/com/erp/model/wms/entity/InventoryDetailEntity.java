@@ -22,6 +22,11 @@ import java.time.LocalDate;
 @TableName("inventory_detail")
 public class InventoryDetailEntity extends BaseEntity<InventoryDetailEntity> implements Serializable  {
 
+    /**
+     * 实时库存表id
+     */
+    @TableField("info_id")
+    private String infoId;
 
     /**
      * 批次日期
@@ -29,11 +34,6 @@ public class InventoryDetailEntity extends BaseEntity<InventoryDetailEntity> imp
     @TableField("instock_batch_date")
     private LocalDate instockBatchDate;
 
-    /**
-     * 实时库存表id
-     */
-    @TableField("info_id")
-    private String infoId;
 
     /**
      * 数量。

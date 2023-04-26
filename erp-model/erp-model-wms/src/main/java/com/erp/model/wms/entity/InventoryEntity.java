@@ -54,8 +54,8 @@ public class InventoryEntity extends BaseEntity<InventoryEntity> implements Seri
     /**
      * 状态编码
      */
-    @TableField("status_code")
-    private String statusCode;
+    @TableField("dict_inventory_status")
+    private String dictInventoryStatus;
 
     /**
      * 数量

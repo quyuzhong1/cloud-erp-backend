@@ -1,4 +1,4 @@
-package com.erp.model.wms.enums;
+package com.erp.model.wms.enums.inventory;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -9,9 +9,9 @@ import java.util.Objects;
  * @CreateTime: 2023-04-25  11:25
  * @Author: zhangchunlin
  */
-public enum InventoryDirectEnum {
-    INVENTORY_IN("inventory_in", "增加"),
-    INVENTORY_OUT("inventory_out", "减少"),
+public enum InventoryModeEnum {
+    IN_STOCK("1", "增加"),
+    OUT_STOCK("-1", "减少"),
     ;
 
     private String code;
@@ -22,7 +22,7 @@ public enum InventoryDirectEnum {
     private String name;
 
 
-    InventoryDirectEnum(String code, String name) {
+    InventoryModeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -37,12 +37,12 @@ public enum InventoryDirectEnum {
 
 
     /**
-     * 根据状态代码获取
+     * 根据代码获取
      * @param code
      * @return
      */
-    public static InventoryDirectEnum of(String code) {
-        return Arrays.stream(InventoryDirectEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    public static InventoryModeEnum of(String code) {
+        return Arrays.stream(InventoryModeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
 }

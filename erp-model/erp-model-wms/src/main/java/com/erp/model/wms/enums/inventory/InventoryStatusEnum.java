@@ -1,4 +1,4 @@
-package com.erp.model.wms.enums;
+package com.erp.model.wms.enums.inventory;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -44,7 +44,7 @@ public enum InventoryStatusEnum {
 
 
     /**
-     * 根据状态代码获取
+     * 根据代码获取
      * @param code
      * @return
      */

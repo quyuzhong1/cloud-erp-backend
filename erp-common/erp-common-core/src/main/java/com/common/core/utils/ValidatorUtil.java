@@ -1,16 +1,25 @@
 package com.common.core.utils;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.google.common.collect.Maps;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ValidatorUtil {
+
+	private static Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
 	/**
 	 * 正则表达式：验证用户名
 	 */
@@ -204,6 +213,24 @@ public class ValidatorUtil {
 	public static void isTrueCall(boolean expression, VoidFunc function) {
 		if(expression) {
 			function.callWithRuntimeException();
+		}
+	}
+
+	/**
+	 * 校验对象
+	 *
+	 * @param object 待校验对象
+	 * @param groups 待校验的组
+	 * @throws ServiceException 校验不通过，则报ServiceException异常
+	 */
+	public static void validateEntity(Object object, Class<?>... groups)
+			throws ServiceException {
+		Set<ConstraintViolation<Object>> constraintViolations = validator.validate(object, groups);
+		if (!constraintViolations.isEmpty()) {
+			List<ConstraintViolation<Object>> sortedConstraintViolations = new ArrayList<>(constraintViolations);
+			sortedConstraintViolations = sortedConstraintViolations.stream().sorted(Comparator.comparing(ConstraintViolation::getMessage)).collect(Collectors.toList());
+			ConstraintViolation<Object> constraint = sortedConstraintViolations.iterator().next();
+			throw new ServiceException(ApiError.ERROR_400.code, constraint.getMessage());
 		}
 	}
 
