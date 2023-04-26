@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 退货单
@@ -26,7 +27,7 @@ public class ReturnOrderExcelDTO {
     private String purchaseOrderCode;
 
     /**
-     * 供应商名称
+     * 供应商
      */
     private String supplierName;
 
@@ -71,14 +72,14 @@ public class ReturnOrderExcelDTO {
     private LocalDate billDate;
 
     /**
-     * 交货仓库
+     * 退货仓库
      */
-    private String deliveryWarehouseName;
+    private String returnWarehouseName;
 
     /**
      * 退货数量
      */
-    private String realityReturnQty;
+    private String returnQty;
 
     /**
      * 退货原因
@@ -89,6 +90,11 @@ public class ReturnOrderExcelDTO {
      * 退货方式
      */
     private String returnMode;
+
+    /**
+     * 退货方式名称
+     */
+    private String returnModeName;
 
     /**
      * 采购员
@@ -118,6 +124,6 @@ public class ReturnOrderExcelDTO {
     /**
      * 创建时间
      */
-    private String createTime;
+    private LocalDateTime createTime;
 
 }

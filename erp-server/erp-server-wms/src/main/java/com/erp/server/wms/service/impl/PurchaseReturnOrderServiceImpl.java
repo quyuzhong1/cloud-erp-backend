@@ -31,6 +31,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
+import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -142,8 +143,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     obj.setCode(null);
                     obj.setPurchaseOrderCode(null);
                     obj.setSupplierName(null);
+                    obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setInvalidStatus(null);
+                    obj.setInvalidStatusName(null);
                     return;
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
@@ -153,6 +156,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     throw new ServiceException(ApiError.ERROR_95107);
                 }
                 obj.setProductName(productDetailEntity.getName());
+                obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
                 list.add(obj.getId());
             });
         }
@@ -502,8 +506,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
+    public Boolean disApprove(List<String> ids) {
         List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -555,7 +558,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(@RequestBody @Validated List<String> ids) {
+    public Boolean cancelProcess(List<String> ids) {
         List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -664,7 +667,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @Date 2023/4/13 18:59
      **/
     @Override
-    public Boolean exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         List<ReturnOrderExcelDTO> returnOrderExcelDTOS = baseMapper.returnOrderExportExcel(dto);
         //获取sku的id集合
         List<String> skuIdList = returnOrderExcelDTOS.stream().map(ReturnOrderExcelDTO::getSkuId).collect(Collectors.toList());
@@ -679,13 +682,15 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             obj.setProductName(productDetailEntity.getName());
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
+
         });
 
-        List<WarehouseReceiveExportExcelDTO> warehouseReceiveExportExcelDTOS = BeanMapperUtils.copyList(WarehouseReceiveExportExcelDTO.class, returnOrderExcelDTOS);
+        List<ReturnOrderExportExcelDTO> returnOrderExportExcelDTOList = BeanMapperUtils.copyList(ReturnOrderExportExcelDTO.class, returnOrderExcelDTOS);
 
         String fileName = "退货单";
         try {
-            ExcelUtil.export(fileName, "退货单", warehouseReceiveExportExcelDTOS, WarehouseReceiveExportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "退货单", returnOrderExportExcelDTOList, ReturnOrderExportExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }

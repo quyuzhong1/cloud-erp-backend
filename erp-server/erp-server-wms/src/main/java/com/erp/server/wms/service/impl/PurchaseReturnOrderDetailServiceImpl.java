@@ -108,16 +108,16 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
                     if (dto.getSourceType().equals(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                        if (addDTO.getRealityReturnQty() > receiveQty) {
+                        if (addDTO.getReturnQty() > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     } else {
                         Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                        if (addDTO.getRealityReturnQty() > stockInQty) {
+                        if (addDTO.getReturnQty() > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
-                    purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getRealityReturnQty());
+                    purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
                     purchaseReturnOrderDetailEntity.setReplenishQty(addDTO.getReplenishQty());
                     purchaseReturnOrderDetailEntity.setDeductAmountQty(addDTO.getDeductAmountQty());
                     purchaseReturnOrderDetailEntity.setReturnPrice(addDTO.getReturnPrice());
@@ -153,7 +153,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 BeanMapperUtils.copy(addDTO, purchaseReturnOrderDetailEntity);
                 purchaseReturnOrderDetailEntity.setMainId(id);
-                purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getRealityReturnQty());
+                purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
                 listDetail.add(purchaseReturnOrderDetailEntity);
             }
         }
@@ -184,6 +184,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
+                BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
                 purchaseReturnOrderDetailEntity.setMainId(id);
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
@@ -192,23 +193,15 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
                     if (dto.getSourceType().equals(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                        if (updateDTO.getRealityReturnQty() > receiveQty) {
+                        if (updateDTO.getReturnQty() > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     } else {
                         Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                        if (updateDTO.getRealityReturnQty() > stockInQty) {
+                        if (updateDTO.getReturnQty() > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
-                    purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getRealityReturnQty());
-                    purchaseReturnOrderDetailEntity.setReplenishQty(updateDTO.getReplenishQty());
-                    purchaseReturnOrderDetailEntity.setDeductAmountQty(updateDTO.getDeductAmountQty());
-                    purchaseReturnOrderDetailEntity.setReturnPrice(updateDTO.getReturnPrice());
-                    purchaseReturnOrderDetailEntity.setRemark(updateDTO.getRemark());
-                    purchaseReturnOrderDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
-                    purchaseReturnOrderDetailEntity.setCurrency(updateDTO.getCurrency());
-                    purchaseReturnOrderDetailEntity.setSourceDetailId(updateDTO.getSourceDetailId());
                 } else {
                     throw new ServiceException(ApiError.ERROR_99006);
                 }
@@ -235,7 +228,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
                 purchaseReturnOrderDetailEntity.setMainId(id);
-                purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getRealityReturnQty());
+                purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
                 listDetail.add(purchaseReturnOrderDetailEntity);
             }
         }

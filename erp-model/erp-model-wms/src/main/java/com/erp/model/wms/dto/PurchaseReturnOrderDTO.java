@@ -417,14 +417,14 @@ public class PurchaseReturnOrderDTO {
         private LocalDate billDate;
 
         /**
-         * 交货仓库
+         * 退货仓库
          */
-        private String deliveryWarehouseName;
+        private String returnWarehouseName;
 
         /**
          * 退货数量
          */
-        private Integer realityReturnQty;
+        private Integer returnQty;
 
         /**
          * 退货原因
@@ -435,6 +435,11 @@ public class PurchaseReturnOrderDTO {
          * 退货方式
          */
         private String returnMode;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
 
         /**
          * 采购员名称
@@ -615,7 +620,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货数量
          */
-        private Integer realityReturnQty;
+        private Integer returnQty;
 
         /**
          * 退货原因
@@ -792,7 +797,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 实退数量
          */
-        private Integer realityReturnQty;
+        private Integer returnQty;
 
 
         /**

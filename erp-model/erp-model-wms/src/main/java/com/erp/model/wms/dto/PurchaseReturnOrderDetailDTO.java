@@ -42,7 +42,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 实退数量
          */
-        private Integer realityReturnQty;
+        private Integer returnQty;
 
         /**
          * 补货数量
@@ -78,6 +78,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 币别
          */
         private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -109,7 +114,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 实退数量
          */
-        private Integer realityReturnQty;
+        private Integer returnQty;
 
         /**
          * 补货数量
@@ -145,6 +150,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 币别
          */
         private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -191,7 +201,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 实退数量
          */
-        private Integer realityReturnQty;
+        private Integer returnQty;
 
         /**
          * 补货数量

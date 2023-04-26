@@ -97,10 +97,10 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param ids ids
      * @return java.lang.Boolean
      **/
-    Boolean disApprove(BaseApproveParamDTO baseApproveParamDTO);
+    Boolean disApprove(List<String> ids);
 
     /**
      * 取消流程

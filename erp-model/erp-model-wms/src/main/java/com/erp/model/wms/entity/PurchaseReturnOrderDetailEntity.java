@@ -73,6 +73,12 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     private String currency;
 
     /**
+     * 币别符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+    /**
      * 备注
      */
     @TableField("remark")

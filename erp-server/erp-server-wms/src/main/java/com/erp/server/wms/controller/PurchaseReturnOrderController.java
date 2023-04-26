@@ -153,12 +153,12 @@ public class PurchaseReturnOrderController extends BaseController {
      * 批量反审核审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = purchaseReturnOrderService.disApprove(baseApproveParamDTO);
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseReturnOrderService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
