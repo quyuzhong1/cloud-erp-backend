@@ -34,4 +34,13 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
                 .list();
         return list;
     }
+
+    @Override
+    public ProcessBusinessEntity getProcessBusiness(String businessKey) {
+        ProcessBusinessEntity processBusiness = lambdaQuery()
+                .eq(ProcessBusinessEntity::getBusinessKey, businessKey)
+                .eq(ProcessBusinessEntity::getDisabled, Boolean.FALSE)
+                .one();
+        return processBusiness;
+    }
 }

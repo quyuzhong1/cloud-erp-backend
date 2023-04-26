@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
+
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -64,13 +66,18 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
      * 开始时间
      */
     @TableField("start_time")
-    private Date startTime;
+    private LocalDateTime startTime;
 
     /**
      * 结束时间
      */
     @TableField("end_time")
-    private Date endTime;
+    private LocalDateTime endTime;
+    /**
+     * 流程引擎流程定义Id
+     */
+    @TableField("act_process_definition_id")
+    private String actProcessDefinitionId;
 
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -88,6 +95,19 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     public static final String START_TIME = "start_time";
 
     public static final String END_TIME = "end_time";
+
+    public static final String ACT_PROCESS_DEFINITION_ID = "act_process_definition_id";
+
+    public ProcessManagementEntity(String actProcessDefinitionId, String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId) {
+        this.processDefinitionId = processDefinitionId;
+        this.processInstanceId = processInstanceId;
+        this.businessId = dto.getBusinessId();
+        this.businessCode = dto.getBusinessCode();
+        this.currentNodeId = activityId;
+        this.startTime = startTime;
+        this.actProcessDefinitionId = actProcessDefinitionId;
+
+    }
 
     @Override
     public Serializable pkVal() {

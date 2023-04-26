@@ -62,7 +62,6 @@
         SELECT
         pd.id,
         pd.process_name,
-        pd.approve_status as approveStatusCode,
         wm.module_classify as businessName,
         pd.process_version,
         pd.create_user_name as createUserName,

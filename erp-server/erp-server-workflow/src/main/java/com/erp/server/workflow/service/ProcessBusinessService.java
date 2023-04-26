@@ -29,4 +29,11 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
      * @return
      */
     List<ProcessBusinessEntity> getByDefinitionIds(List<String> definitionIds);
+
+    /**
+     * 根据业务ID获取流程业务
+     * @param businessKey
+     * @return
+     */
+    ProcessBusinessEntity getProcessBusiness(String businessKey);
 }
