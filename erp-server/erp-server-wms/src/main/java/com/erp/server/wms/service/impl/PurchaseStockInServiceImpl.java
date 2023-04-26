@@ -548,9 +548,16 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
 
+
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+            dto.setPurchaseOrderDetailId(detailEntity.getId());
             //币种符号
-            String currencySymbol = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getCurrencySymbol).findFirst().orElse(null);
-            dto.setCurrencySymbol(currencySymbol);
+            dto.setCurrencySymbol(detailEntity.getCurrencySymbol());
+            //单价
+            dto.setTaxPrice(detailEntity.getTaxPrice());
             //相同采购单号清空后面数据的采购单号和供应商
             boolean contains = list.contains(dto.getPurchaseOrderId());
             if (contains) {
@@ -578,6 +585,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99012);
         }
+        LoginUser userInfo = commonService.getUserInfo();
 
         List<PurchaseStockInDetailEntity> sourceDetailList = purchaseStockInDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(sourceDetailList)) {
@@ -591,7 +599,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
             List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
             PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
             //采购单
-            PurchaseStockInEntity purchaseStockInEntity = sourceList.stream().filter(obj -> obj.getSourceId().equals(sourceId)).findFirst().orElse(null);
+            PurchaseStockInEntity purchaseStockInEntity = sourceList.stream().filter(obj -> obj.getId().equals(sourceId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseStockInEntity)) {
                 throw new ServiceException(ApiError.ERROR_98050);
             }
@@ -610,9 +618,14 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
                     throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
                 }
                 BeanMapperUtils.copy(detail, addDetailDTO);
+                addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
+                addDetailDTO.setReturnQty(detail.getRealityReturnQty());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
+            addDTO.setReturnUserId(userInfo.getUid());
+            addDTO.setReturnOrgId(purchaseStockInEntity.getReceiveOrgId());
+            addDTO.setReturnWarehouseId(purchaseStockInEntity.getDeliveryWarehouseId());
             addList.add(addDTO);
         }
         if (CollectionUtils.isNotEmpty(addList)) {

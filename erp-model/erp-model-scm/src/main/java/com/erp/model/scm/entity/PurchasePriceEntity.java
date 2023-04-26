@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -91,6 +92,12 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
+
+    /**
+     * 明细ids
+     */
+    @TableField(exist = false)
+    private List<String> ids;
 
 
     @Override

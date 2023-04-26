@@ -805,7 +805,10 @@ public class PurchaseReturnOrderDTO {
          */
         private Integer deductAmountQty;
 
-
+        /**
+         * 退款单价
+         */
+        private BigDecimal taxPrice;
     }
 
     @Data
