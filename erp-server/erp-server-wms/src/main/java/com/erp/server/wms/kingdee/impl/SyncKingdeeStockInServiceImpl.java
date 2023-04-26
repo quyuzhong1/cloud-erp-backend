@@ -102,13 +102,17 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //新品首批
         resultMap.put("isFirstMassProduct", entity.getIsFirstMassProduct());
 
+        //查询供应商信息
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
+        //供应商编码 // TODO
+        resultMap.put("supplierCode", supplierEntity.getCode());
         //供应商
         resultMap.put("supplierName", entity.getSupplierName());
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(entity.getPurchaseOrderId());
+
         //供应商联系人
         resultMap.put("supplierContactName", purchaseOrderSupplierEntity.getContactName());
 
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         //供应商地址
         resultMap.put("address", supplierEntity.getCompanyAddress());
 
@@ -148,6 +152,12 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
             //采购数量
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
+
+            //计价数量
+            jsonObject.set("priceBaseQty", purchaseOrderDetailEntity.getPurchaseQty());
+
+            //采购编号
+            jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
 
             list.add(jsonObject);
         }
