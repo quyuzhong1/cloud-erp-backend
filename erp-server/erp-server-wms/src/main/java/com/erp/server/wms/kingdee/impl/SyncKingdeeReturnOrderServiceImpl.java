@@ -87,10 +87,15 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //获取用户部门id
         SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
-        //获取用户部门信息
-        SysDepartmentDTO department = sysUserFeign.getUserDeptById(departmentDTO.getDepartmentId());
         //采购部门
-        resultMap.put("productDept",department.getName());
+        if (ObjectUtil.isEmpty(departmentDTO)) {
+            //获取用户部门信息
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(departmentDTO.getDepartmentId());
+            resultMap.put("productDept", department.getName());
+        } else {
+            resultMap.put("productDept", "");
+        }
+
         //退货日期
         resultMap.put("billDate",entity.getBillDate());
         // TODO 单据状态
@@ -105,8 +110,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         }
         //退货原因
         resultMap.put("returnRemark",entity.getReturnRemark());
-        //供应商
-        resultMap.put("supplierName",entity.getSupplierName());
+
+        //查询供应商信息
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
+        //供应商编码
+        resultMap.put("supplierCode", supplierEntity.getCode());
         //供应商
         resultMap.put("supplierName",entity.getSupplierName());
 
@@ -123,11 +131,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             resultMap.put("sourceType", "库存退料");
         }
 
-
-
         //供应商联系人
         resultMap.put("supplierContactName", entity.getSupplierContactName());
-        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         //供应商地址
         resultMap.put("address", supplierEntity.getCompanyAddress());
 
