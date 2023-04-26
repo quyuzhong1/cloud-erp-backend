@@ -107,6 +107,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("returnRemark",entity.getReturnRemark());
         //供应商
         resultMap.put("supplierName",entity.getSupplierName());
+        //供应商
+        resultMap.put("supplierName",entity.getSupplierName());
 
         //退货方式
         if (entity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {

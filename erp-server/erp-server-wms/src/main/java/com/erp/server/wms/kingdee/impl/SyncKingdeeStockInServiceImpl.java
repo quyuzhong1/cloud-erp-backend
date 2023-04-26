@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -83,13 +84,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("code", entity.getCode());
         //入库组织
         resultMap.put("receiveOrgName", entity.getReceiveOrgName());
-        //获取用户部门id
-        SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
-        //获取用户部门信息
-        SysDepartmentDTO department = sysUserFeign.getUserDeptById(departmentDTO.getDepartmentId());
         //采购部门
-        resultMap.put("productDept", department.getName());
-
+        resultMap.put("productDept", entity.getPurchaseDeptName());
         //入库日期
         resultMap.put("billDate", entity.getStockInDate());
         // TODO 单据状态
