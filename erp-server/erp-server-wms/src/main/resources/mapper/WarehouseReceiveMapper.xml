@@ -50,7 +50,7 @@
             and wr.purchase_order_code = #{params.purchaseOrderCode}
         </if>
 
-        <if test="params.invalidStatus != null and params.invalidStatus != ''">
+        <if test="params.invalidStatus != null">
             and wr.invalid_status = #{params.invalidStatus}
         </if>
 
@@ -237,7 +237,7 @@
             and wr.purchase_order_code = #{params.purchaseOrderCode}
         </if>
 
-        <if test="params.invalidStatus != null and params.invalidStatus != ''">
+        <if test="params.invalidStatus != null">
             and wr.invalid_status = #{params.invalidStatus}
         </if>
 

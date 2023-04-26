@@ -62,7 +62,7 @@
             </foreach>
         </if>
 
-        <if test="params.invalidStatus != null and params.invalidStatus != ''">
+        <if test="params.invalidStatus != null">
             and pro.invalid_status = #{params.invalidStatus}
         </if>
 
@@ -215,7 +215,7 @@
             </foreach>
         </if>
 
-        <if test="params.invalidStatus != null and params.invalidStatus != ''">
+        <if test="params.invalidStatus != null">
             and pro.invalid_status = #{params.invalidStatus}
         </if>
 
