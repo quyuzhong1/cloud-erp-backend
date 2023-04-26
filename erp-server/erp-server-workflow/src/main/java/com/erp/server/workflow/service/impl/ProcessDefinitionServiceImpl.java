@@ -5,16 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.RedisService;
+import com.common.business.service.SuperServiceImpl;
 import com.common.business.utils.ExportUtil;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -22,7 +19,6 @@ import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.server.workflow.mapper.ProcessDefinitionMapper;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
-import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
@@ -32,9 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -70,10 +64,6 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
                 throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
             }
         }else {
-            // 存在则更新
-            if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus()) || ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
-                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_UPDATE);
-            }
             processDefinitionEntity.setId(entity.getId());
             // 更新 processDefinitionEntity
             if (!updateById(processDefinitionEntity)) {
@@ -96,34 +86,15 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     }
 
     @Override
-    public boolean unApprove(ProcessDefinitionDTO.UnApproveDTO dto) {
-        // 查询数据是否存在
-        ProcessDefinitionEntity entity = getById(dto.getId());
-        if(null == entity){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
-        }
-        // 判断是否已审核
-        if(!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_APPROVE);
-        }
-        // 更新审核状态
-        ProcessDefinitionEntity updateEntity = new ProcessDefinitionEntity(entity.getId(), ApproveStatusEnum.WAIT_SUBMIT);
-        if(!updateById(updateEntity)){
-            throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
-        }
-        return Boolean.TRUE;
-    }
-
-    @Override
     public ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto) {
         // 获取流程定义信息
-        com.erp.model.workflow.entity.ProcessDefinitionEntity definitionEntity = getById(dto.getProcessDefinitionId());
+        ProcessDefinitionEntity definitionEntity = getById(dto.getProcessDefinitionId());
         if(null == definitionEntity){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
-        // 判断流程状态为审核中
-        if(!ApproveStatusEnum.APPROVE_ING.equals(definitionEntity.getApproveStatus())){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_APPROVE);
+        // 已发布的流程不能再次发布
+        if(definitionEntity.getIsDeploy()){
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_ALREADY_DEPLOY);
         }
         Deployment deploy = repositoryService.createDeployment()
                 .name(definitionEntity.getProcessName())
@@ -132,52 +103,11 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         DeploymentEntity deploymentEntity = (DeploymentEntity) deploy;
         org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity entity = (org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity) deploymentEntity.getDeployedArtifacts().get(org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity.class).get(0);
         // 保存部署时间和部署id 部署状态
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        String uid = null == loginUser ? "" : loginUser.getUid();
-        String userName = null == loginUser ? "" : loginUser.getUserName();
-        com.erp.model.workflow.entity.ProcessDefinitionEntity update = new com.erp.model.workflow.entity.ProcessDefinitionEntity(dto,
-                deploy.getId(), deploy.getDeploymentTime(), uid,  userName,entity.getVersion());
+        ProcessDefinitionEntity update = new ProcessDefinitionEntity(dto, deploy.getId(), deploy.getDeploymentTime(),entity.getVersion());
         updateById(update);
         return new ProcessDTO.DeployResultDTO(definitionEntity, entity.getVersion());
     }
 
-    @Override
-    public Boolean submitApprove(ProcessDefinitionDTO.SubmitDTO dto) {
-        // 查询数据是否存在
-        ProcessDefinitionEntity entity = getById(dto.getId());
-        if(null == entity){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
-        }
-        // 判断是否为待提交状态
-        if(!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_WAIT_SUBMIT);
-        }
-        // 更新审核状态
-        ProcessDefinitionEntity updateEntity = new ProcessDefinitionEntity(entity.getId(), ApproveStatusEnum.APPROVE_ING);
-        if(!updateById(updateEntity)){
-            throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
-        }
-        return Boolean.TRUE;
-    }
-
-    @Override
-    public Boolean cancelApprove(ProcessDefinitionDTO.CancelDTO dto) {
-        // 查询数据是否存在
-        ProcessDefinitionEntity entity = getById(dto.getId());
-        if(null == entity){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
-        }
-        // 判断是否为审核中状态
-        if(!ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_APPROVE_ING);
-        }
-        // 更新审核状态
-        ProcessDefinitionEntity updateEntity = new ProcessDefinitionEntity(entity.getId(), ApproveStatusEnum.WAIT_SUBMIT);
-        if(!updateById(updateEntity)){
-            throw new ServiceException(ApiError.CANCEL_PROCESS_ERROR);
-        }
-        return Boolean.TRUE;
-    }
 
     @Override
     public ProcessDefinitionDTO.CopyResultDTO copy(ProcessDefinitionDTO.CopyDTO dto) {
@@ -213,5 +143,28 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         String fileName = ExportUtil.getFileName(redisService, "流程设计记录");
         ExcelUtil.export(fileName, "流程设计记录", list, ProcessDefinitionDTO.ExportDTO.class, response);
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteByIds(List<String> ids) {
+        // 查询数据是否存在
+        List<ProcessDefinitionEntity> entityList = listByIds(ids);
+        if(CollectionUtil.isEmpty(entityList)){
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        // 已发布的流程不能删除
+        List<ProcessDefinitionEntity> deployList = entityList.stream().filter(x -> x.getIsDeploy()).collect(Collectors.toList());
+        if(CollectionUtil.isNotEmpty(deployList)){
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_DELETE);
+        }
+        // 删除关联业务数据
+        List<ProcessBusinessEntity> processBusinessList = processBusinessService.getByDefinitionIds(ids);
+        if(CollectionUtil.isNotEmpty(processBusinessList)){
+            List<String> businessIds = processBusinessList.stream().map(ProcessBusinessEntity::getId).collect(Collectors.toList());
+            processBusinessService.removeByIds(businessIds);
+        }
+        // 删除流程定义
+        return removeByIds(ids);
     }
 }

@@ -62,28 +62,6 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
     private String reviewSetting;
 
     /**
-     * 审核状态
-     */
-    @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
-
-    /**
-     * 审核人
-     */
-    @TableField("approve_user_id")
-    private String approveUserId;
-    /**
-     * 审核人姓名
-     */
-    @TableField("approve_user_name")
-    private String approveUserName;
-    /**
-     * 审核时间
-     */
-    @TableField("approve_time")
-    private LocalDateTime approveTime;
-
-    /**
      * 流程部署ID
      */
     @TableField("deployment_id")
@@ -100,12 +78,6 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
     @TableField("is_deploy")
     private Boolean isDeploy;
 
-    /**
-     * 审核意见
-     */
-    @TableField("comment")
-    private String comment;
-
 
     public static final String PROCESS_NAME = "process_name";
 
@@ -117,21 +89,11 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
 
     public static final String REVIEW_SETTING = "review_setting";
 
-    public static final String APPROVE_STATUS = "approve_status";
-
-    public static final String APPROVE_USER_ID = "approve_user_id";
-
-    public static final String APPROVE_USER_NAME = "approve_user_name";
-
-    public static final String APPROVE_TIME = "approve_time";
-
     public static final String DEPLOYMENT_ID = "deployment_id";
 
     public static final String DEPLOY_TIME = "deploy_time";
 
     public static final String IS_DEPLOY = "is_deploy";
-
-    public static final String COMMENT = "comment";
 
 
     public ProcessDefinitionEntity(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
@@ -142,23 +104,12 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
         this.reviewSetting = dto.getReviewSetting();
     }
 
-    public ProcessDefinitionEntity(String id, ApproveStatusEnum waitSubmit) {
-        super(id);
-        this.approveStatus = waitSubmit;
-        this.isDeploy = Boolean.FALSE;
-    }
-
-    public ProcessDefinitionEntity(ProcessDTO.DeployDTO dto, String deploymentId, Date deploymentTime, String uid, String userName, int version) {
+    public ProcessDefinitionEntity(ProcessDTO.DeployDTO dto, String deploymentId, Date deploymentTime, int version) {
         super.setId(dto.getProcessDefinitionId());
         this.deploymentId = deploymentId;
         this.deployTime = LocalDateUtil.date2LocalDateTime(deploymentTime);
-        this.approveUserId = uid;
-        this.approveUserName = userName;
-        this.approveTime = LocalDateTime.now();
-        this.approveStatus = dto.getApproveCode();
         this.isDeploy = Boolean.TRUE;
         this.processVersion = version;
-        this.comment = dto.getComment();
     }
 
     @Override

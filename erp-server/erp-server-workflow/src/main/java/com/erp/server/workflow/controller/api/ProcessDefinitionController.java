@@ -60,55 +60,23 @@ public class ProcessDefinitionController extends BaseController {
      */
     @PostMapping("/delete")
     public ApiResult<Boolean> delete(@RequestBody @Valid ProcessDefinitionDTO.DeleteDTO dto) {
-        boolean result = processDefinitionService.removeByIds(dto.getIds());
+        boolean result = processDefinitionService.deleteByIds(dto.getIds());
         return result ? success() : failure();
     }
 
     /**
-     * 流程定义反审核
-     *
-     * @param dto
-     * @return ApiResult<Boolean>
-     */
-    @PostMapping("/unApprove")
-    public ApiResult<Boolean> unApprove(@RequestBody @Valid ProcessDefinitionDTO.UnApproveDTO dto) {
-        boolean result = processDefinitionService.unApprove(dto);
-        return result ? success() : failure();
-    }
-
-    /**
-     * 流程定义审核
+     * 流程定义发布
      * @param dto
      * @return
      */
-    @PostMapping("/approve")
-    public ApiResult<ProcessDTO.DeployResultDTO> approve(@RequestBody @Validated ProcessDTO.DeployDTO dto) {
+    @PostMapping("/deploy")
+    public ApiResult<ProcessDTO.DeployResultDTO> deploy(@RequestBody @Validated ProcessDTO.DeployDTO dto) {
         try {
             ProcessDTO.DeployResultDTO resultDTO= processDefinitionService.deploy(dto);
             return success(resultDTO);
         }catch (Exception e){
             return failure(e.getMessage());
         }
-    }
-
-    /**
-     * 流程定义提交审核
-     */
-    @PostMapping("/submit")
-    public ApiResult submitApprove(@RequestBody @Validated ProcessDefinitionDTO.SubmitDTO dto){
-        // 提交审核
-        Boolean result = processDefinitionService.submitApprove(dto);
-        return result ? success() : failure();
-    }
-
-    /**
-     * 撤销流程定义审核
-     */
-    @PostMapping("/cancel")
-    public ApiResult cancelApprove(@RequestBody @Validated ProcessDefinitionDTO.CancelDTO dto){
-        // 撤销审核
-        Boolean result = processDefinitionService.cancelApprove(dto);
-        return result ? success() : failure();
     }
 
     /**

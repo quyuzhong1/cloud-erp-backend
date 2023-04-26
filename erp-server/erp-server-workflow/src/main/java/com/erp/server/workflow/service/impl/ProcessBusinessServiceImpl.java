@@ -26,4 +26,12 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
                 .list();
         return list;
     }
+
+    @Override
+    public List<ProcessBusinessEntity> getByDefinitionIds(List<String> definitionIds) {
+        List<ProcessBusinessEntity> list = lambdaQuery()
+                .in(ProcessBusinessEntity::getProcessDefinitionId, definitionIds)
+                .list();
+        return list;
+    }
 }

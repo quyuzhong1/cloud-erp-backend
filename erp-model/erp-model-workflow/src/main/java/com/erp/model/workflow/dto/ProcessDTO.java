@@ -28,16 +28,6 @@ public class ProcessDTO {
          */
         @NotBlank(message = "流程定义ID不能为空")
         private String processDefinitionId;
-
-        /**
-         * 审核意见
-         */
-        private ApproveStatusEnum approveCode;
-
-        /**
-         * 审核意见
-         */
-        private String comment;
     }
 
     /**
@@ -66,11 +56,6 @@ public class ProcessDTO {
         private Integer processVersion;
 
         /**
-         * 流程图XMl
-         */
-        private String bpmnXml;
-
-        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -87,7 +72,6 @@ public class ProcessDTO {
             this.processDefinitionId = definitionEntity.getId();
             this.processName = definitionEntity.getProcessName();
             this.processVersion = version;
-            this.bpmnXml = definitionEntity.getBpmnXml();
             this.createTime = definitionEntity.getCreateTime();
             this.updateTime = definitionEntity.getUpdateTime();
             this.remark = definitionEntity.getRemark();

@@ -126,6 +126,8 @@ public enum ApiError implements Serializable {
     PROCESS_DEFINITION_NOT_WAIT_SUBMIT(94012,"流程定义非待提交状态，不需要提交审核"),
     PROCESS_DEFINITION_NOT_APPROVE_ING(94013,"流程定义不在审核中，不能撤销"),
     CANCEL_PROCESS_ERROR(94014,"流程定义撤销失败"),
+    PROCESS_DEFINITION_ALREADY_DEPLOY(94015,"流程定义已部署，不需要重复发布"),
+    PROCESS_DEFINITION_DEPLOY_DELETE(94016,"流程定义已部署，不可删除"),
 
 
 

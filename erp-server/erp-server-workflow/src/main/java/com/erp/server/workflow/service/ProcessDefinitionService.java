@@ -8,6 +8,7 @@ import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.common.business.service.SuperService;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -32,33 +33,12 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @return
      */
     PagingVO<ProcessDefinitionDTO.ListDTO> paging(PagingDTO<ProcessDefinitionDTO.QueryDTO> dto);
-
-    /**
-     * 流程定义反审核
-     * @param dto
-     * @return
-     */
-    boolean unApprove(ProcessDefinitionDTO.UnApproveDTO dto);
     /**
      * 流程发布
      * @param dto
      * @return
      */
     ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto);
-
-    /**
-     * 流程定义提交审核
-     * @param dto
-     * @return
-     */
-    Boolean submitApprove(ProcessDefinitionDTO.SubmitDTO dto);
-
-    /**
-     * 流程定义审核撤销
-     * @param dto
-     * @return
-     */
-    Boolean cancelApprove(ProcessDefinitionDTO.CancelDTO dto);
 
     /**
      * 流程定义复制
@@ -73,4 +53,11 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @return
      */
     Boolean exportExcel(ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 删除流程定义
+     * @param ids
+     * @return
+     */
+    boolean deleteByIds(List<String> ids);
 }

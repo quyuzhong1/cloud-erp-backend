@@ -133,16 +133,6 @@ public class ProcessDefinitionDTO {
         private String processName;
 
         /**
-         * 流程审核状态
-         */
-        private ApproveStatusEnum approveStatusCode;
-
-        /**
-         * 流程审核状态名称
-         */
-        private String approveStatusName;
-
-        /**
          * BPMN流程图
          */
         private String bpmnXml;

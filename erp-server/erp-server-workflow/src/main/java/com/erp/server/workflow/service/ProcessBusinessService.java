@@ -21,4 +21,12 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
      * @return
      */
     List<ProcessBusinessEntity> getByDefinitionId(String definitionId);
+
+
+    /**
+     * 根据流程定义IDs获取流程业务
+     * @param definitionIds
+     * @return
+     */
+    List<ProcessBusinessEntity> getByDefinitionIds(List<String> definitionIds);
 }
