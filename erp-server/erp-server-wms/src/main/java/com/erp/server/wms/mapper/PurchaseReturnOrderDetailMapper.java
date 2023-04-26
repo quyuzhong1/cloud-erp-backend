@@ -25,4 +25,13 @@ public interface PurchaseReturnOrderDetailMapper extends BaseMapper<PurchaseRetu
      * @return List<PurchaseReturnOrderDetailEntity>
      */
     List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+
+    /**
+     * 根据采购详情id查询退货明细
+     * @Author Luo_WG
+     * @Date 2023/4/26 17:53
+     * @param podIds podIds
+     * @return java.util.List<com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity>
+     **/
+    List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(@Param("podIds") List<String> podIds);
 }

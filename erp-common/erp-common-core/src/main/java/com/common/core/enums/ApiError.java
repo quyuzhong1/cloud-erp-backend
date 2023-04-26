@@ -457,6 +457,7 @@ public enum ApiError implements Serializable {
     ERROR_99028(99028,"存在有效的退货单，不能撤销"),
     ERROR_99029(99029,"只有已质检,且接受措施-退货供应商 才可下推退货单"),
     ERROR_99030(99030,"【%s】退货数量不能大于收货数量"),
+    ERROR_99031(99031,"【%s】退货单据合计数量不能大于入库数量"),
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

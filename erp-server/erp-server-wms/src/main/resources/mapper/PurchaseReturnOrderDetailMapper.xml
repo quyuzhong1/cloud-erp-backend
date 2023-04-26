@@ -29,4 +29,32 @@
             </if>
         </where>
     </select>
+
+    <select id="listReturnOrderDetailByPodIds" resultType="com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity">
+        select
+        pro.approve_status,
+        prod.main_id,
+        prod.sku_id,
+        prod.sku_no,
+        prod.return_qty,
+        prod.replenish_qty,
+        prod.deduct_amount_qty,
+        prod.return_price,
+        prod.currency,
+        prod.remark,
+        prod.source_detail_id,
+        prod.purchase_order_detail_id
+        from
+        purchase_return_order pro
+        inner join purchase_return_order_detail prod on pro.id = prod.main_id and prod.is_deleted = false
+        <where>
+            pro.is_deleted = false and pro.invalid_status = false
+            <if test="podIds != null and podIds.size > 0">
+                and prod.purchase_order_detail_id in
+                <foreach collection="podIds" separator="," item="id" open="(" close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>

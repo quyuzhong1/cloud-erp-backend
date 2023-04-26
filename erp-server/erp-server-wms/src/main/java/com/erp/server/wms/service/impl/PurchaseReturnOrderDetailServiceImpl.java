@@ -98,6 +98,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<PurchaseStockInDetailEntity> stockInDetailEntityList = purchaseStockInDetailService.listDetailByPodIds(orderDetailIds);
             List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
+            List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = listReturnOrderDetailByPodIds(orderDetailIds);
             for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 purchaseReturnOrderDetailEntity.setMainId(id);
@@ -115,6 +116,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                         Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (addDTO.getReturnQty() > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
+                        }
+                        Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                        if (addDTO.getReturnQty() + returnQty > stockInQty) {
+                            throw new ServiceException(ApiError.ERROR_99031.code, String.format(ApiError.ERROR_99031.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
                     purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
@@ -180,6 +185,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<PurchaseStockInDetailEntity> stockInDetailEntityList = purchaseStockInDetailService.listDetailByPodIds(orderDetailIds);
             List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(orderDetailIds);
+            List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = listReturnOrderDetailByPodIds(orderDetailIds);
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
                 BeanMapperUtils.copy(updateDTO, purchaseReturnOrderDetailEntity);
@@ -198,6 +204,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                         Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (updateDTO.getReturnQty() > stockInQty) {
                             throw new ServiceException(ApiError.ERROR_99026.code, String.format(ApiError.ERROR_99026.msg, purchaseOrderDetailEntity.getSkuNo()));
+                        }
+
+                        Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !req.getId().equals(updateDTO.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                        if (updateDTO.getReturnQty() + returnQty > stockInQty) {
+                            throw new ServiceException(ApiError.ERROR_99031.code, String.format(ApiError.ERROR_99031.msg, purchaseOrderDetailEntity.getSkuNo()));
                         }
                     }
                 } else {
@@ -261,6 +272,6 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Override
     public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> podIds) {
-        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId, podIds).list();
+        return baseMapper.listReturnOrderDetailByPodIds(podIds);
     }
 }
