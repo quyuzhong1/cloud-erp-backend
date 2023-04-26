@@ -2,12 +2,14 @@ package com.erp.model.workflow.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.ProcessStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -60,7 +62,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
      * 流程状态
      */
     @TableField("process_status")
-    private String processStatus;
+    private ProcessStatusEnum processStatus;
 
     /**
      * 开始时间
@@ -74,10 +76,22 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     @TableField("end_time")
     private LocalDateTime endTime;
     /**
-     * 流程引擎流程定义Id
+     * 业务名称
      */
-    @TableField("act_process_definition_id")
-    private String actProcessDefinitionId;
+    @TableField("business_name")
+    private String businessName;
+
+    /**
+     * 审核状态 approveStatus
+     */
+    @TableField("approve_Status")
+    private ApproveStatusEnum approveStatus;
+
+    /**
+     * 业务类型KEY
+     */
+    @TableField("business_key")
+    private String businessKey;
 
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -96,17 +110,23 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String END_TIME = "end_time";
 
-    public static final String ACT_PROCESS_DEFINITION_ID = "act_process_definition_id";
+    public static final String BUSINESS_NAME = "business_name";
 
-    public ProcessManagementEntity(String actProcessDefinitionId, String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId) {
+    public static final String APPROVE_STATUS = "approve_status";
+
+    public static final String BUSINESS_KEY = "business_key";
+
+    public ProcessManagementEntity(String businessName, String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId) {
         this.processDefinitionId = processDefinitionId;
         this.processInstanceId = processInstanceId;
         this.businessId = dto.getBusinessId();
         this.businessCode = dto.getBusinessCode();
         this.currentNodeId = activityId;
         this.startTime = startTime;
-        this.actProcessDefinitionId = actProcessDefinitionId;
-
+        this.processStatus = ProcessStatusEnum.RUNNING;
+        this.approveStatus = ApproveStatusEnum.APPROVE_ING;
+        this.businessName = businessName;
+        this.businessKey = dto.getBusinessKey();
     }
 
     @Override
