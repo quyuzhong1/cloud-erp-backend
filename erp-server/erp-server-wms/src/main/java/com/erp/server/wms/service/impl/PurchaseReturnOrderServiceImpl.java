@@ -462,11 +462,21 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     .in(PurchaseReturnOrderEntity::getId, ids)
                     .update();
 
-    /*        for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
+            for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
+                List<PurchaseOrderDetailEntity> list = new ArrayList<>();
                 List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
-
-
-            }*/
+                List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+                //退料扣款
+                if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
+                    List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+                    detailByMainId.forEach(returnOrderDetailEntity -> {
+                        PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+                        purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                        list.add(purchaseOrderDetailEntity);
+                    });
+                    scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
+                }
+            }
 
         } else {
             //审核不通过
@@ -512,6 +522,21 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
 
+        for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
+            List<PurchaseOrderDetailEntity> list = new ArrayList<>();
+            List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
+            List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+            //退料扣款
+            if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
+                List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
+                detailByMainId.forEach(returnOrderDetailEntity -> {
+                    PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+                    purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                    list.add(purchaseOrderDetailEntity);
+                });
+                scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
+            }
+        }
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -800,5 +801,19 @@ public class PurchaseReturnOrderDTO {
         private Integer deductAmountQty;
 
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePurchaseOrderAmount {
+        /**
+         * 采购单详情表id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal purchaseAmount; 
     }
 }

@@ -199,4 +199,15 @@ public class PurchaseOrderFeignController {
         return purchaseOrderDetailService.updateById(entity);
     }
 
+    /**
+     * 批量修改采购订单明细表
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:51
+     * @param entityList entityList
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updatePurchaseOrderDetailByIdBatch")
+    public Boolean updatePurchaseOrderDetailByIdBatch(@RequestBody List<PurchaseOrderDetailEntity> entityList) {
+        return purchaseOrderDetailService.updateBatchById(entityList);
+    }
 }
