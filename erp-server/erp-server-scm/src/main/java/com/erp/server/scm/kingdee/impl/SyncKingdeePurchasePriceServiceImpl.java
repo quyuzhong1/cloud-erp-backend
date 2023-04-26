@@ -96,7 +96,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
-            jsonObject.set("taxRate",rate);
+            jsonObject.set("taxRate",detailEntity.getTaxRate());
             jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,rate)) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
             jsonObject.set("minQty",detailEntity.getMinQty());

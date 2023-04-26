@@ -117,7 +117,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             jsonObject.set("beforeTaxPrice",purchasePriceDetailEntity.getTaxPrice());
             jsonObject.set("afterTaxPrice",detailEntity.getTaxPrice());
             jsonObject.set("beforeTaxRate",MathUtil.multiply(purchasePriceDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
-            jsonObject.set("afterTaxPrice",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("afterTaxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             jsonObject.set("effectiveDate",detailEntity.getEffectiveDate());
             jsonObject.set("expireDate",detailEntity.getExpireDate());
             list.add(jsonObject);

@@ -71,7 +71,7 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         //编码
         resultMap.put("code",entity.getCode());
         //名称
-        resultMap.put("name",entity.getCode());
+        resultMap.put("name",entity.getName());
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //公司地址
