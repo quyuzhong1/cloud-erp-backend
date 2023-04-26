@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ReturnModeEnum {
 
     DEDUCTION("deduction","退货扣款"),
-    REPLENISHMENT("replenishment","退料补货");
+    REPLENISHMENT("replenishment","退货补货");
 
     /**
      * 类型

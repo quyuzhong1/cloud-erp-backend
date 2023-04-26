@@ -253,7 +253,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pro.create_time,pro.id desc
+        pro.create_time desc, pro.id
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
