@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.NoticeReceivedDTO;
 import com.erp.model.sys.entity.NoticeReceivedEntity;
 import com.erp.server.sys.mapper.NoticeReceivedMapper;
@@ -28,10 +29,23 @@ public class NoticeReceivedServiceImpl extends SuperServiceImpl<NoticeReceivedMa
             List<NoticeReceivedEntity> addList = new ArrayList<>(receivedList.size());
             for (NoticeReceivedDTO.AddDTO item : receivedList) {
                 NoticeReceivedEntity addEntity = new NoticeReceivedEntity();
+                BeanMapper.copy(item, addEntity);
                 addEntity.setNoticeId(noticeId);
-
+                addList.add(addEntity);
             }
 
         }
+    }
+
+    /**
+     * 更改接收人
+     * @author yl
+     * @date 2023-04-26 16:01
+     * @param receivedList
+     * @return void
+     */
+    @Override
+    public void edit(List<NoticeReceivedDTO.UpdateDTO> receivedList) {
+
     }
 }

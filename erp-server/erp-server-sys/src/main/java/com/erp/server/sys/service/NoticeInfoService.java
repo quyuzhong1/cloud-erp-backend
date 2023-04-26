@@ -23,4 +23,14 @@ public interface NoticeInfoService extends SuperService<NoticeInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean add(NoticeDTO.AddDTO dto);
+
+    
+    /**
+     * 编辑通知
+     * @author yl
+     * @date 2023-04-26 15:47
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean edit(NoticeDTO.UpdateDTO dto);
 }

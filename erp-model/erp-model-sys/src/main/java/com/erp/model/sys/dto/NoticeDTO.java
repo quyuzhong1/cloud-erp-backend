@@ -33,6 +33,18 @@ public class NoticeDTO implements Serializable {
         @NotBlank(message = "通知节点不能为空")
         private String nodeId;
 
+        /**
+         * 通知系统平台
+         */
+        @NotBlank(message = "系统平台不能为空")
+        private String system;
+
+
+        /**
+         * 业务类型
+         */
+        @NotBlank(message = "业务类型为空")
+        private String businessType;
 
         /**
          * 通知接收人信息
@@ -40,6 +52,46 @@ public class NoticeDTO implements Serializable {
         @NotEmpty(message = "接收者信息不能为空")
         List<NoticeReceivedDTO.AddDTO> receivedList;
 
+
+    }
+
+    /**
+     * 修改通知
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "id信息不能为空")
+        private String id;
+
+        /**
+         * 通知节点
+         */
+        @NotBlank(message = "通知节点不能为空")
+        private String nodeId;
+
+        /**
+         * 通知系统平台
+         */
+        @NotBlank(message = "系统平台不能为空")
+        private String system;
+
+        /**
+         * 业务类型
+         */
+        @NotBlank(message = "业务类型为空")
+        private String businessType;
+
+
+        /**
+         * 通知接收人信息
+         */
+        @NotEmpty(message = "接收者信息不能为空")
+        List<NoticeReceivedDTO.UpdateDTO> receivedList;
 
 
     }

@@ -32,8 +32,8 @@ public class NoticeReceivedEntity extends BaseEntity<NoticeReceivedEntity> {
     /**
      * 接收者类型
      */
-    @TableField("received_type")
-    private String receivedType;
+    @TableField("received_dict")
+    private String receivedDict;
 
     /**
      * 接收的值
@@ -42,11 +42,6 @@ public class NoticeReceivedEntity extends BaseEntity<NoticeReceivedEntity> {
     private String receivedVaule;
 
 
-    public static final String NOTICE_ID = "notice_id";
-
-    public static final String RECEIVED_TYPE = "received_type";
-
-    public static final String RECEIVED_VAULE = "received_vaule";
 
     @Override
     public Serializable pkVal() {

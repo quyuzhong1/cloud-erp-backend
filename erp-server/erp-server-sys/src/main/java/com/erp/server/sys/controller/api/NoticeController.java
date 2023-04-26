@@ -39,4 +39,16 @@ public class NoticeController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 修改通知
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated NoticeDTO.UpdateDTO dto) {
+        Boolean result = noticeInfoService.edit(dto);
+        return result ? success() : failure();
+    }
+
 }

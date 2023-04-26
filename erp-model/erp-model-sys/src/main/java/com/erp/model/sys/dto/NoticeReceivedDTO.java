@@ -8,6 +8,7 @@ import java.io.Serializable;
 
 /**
  * 通知节点接收人
+ *
  * @author Lambda
  * @Classname NoticeReceivedDTO
  * @Description TODO
@@ -17,7 +18,6 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class NoticeReceivedDTO implements Serializable {
-
 
 
     /**
@@ -30,9 +30,12 @@ public class NoticeReceivedDTO implements Serializable {
         /**
          * 接收类型
          * 来源
+         * http://172.16.100.11:3002/project/36/interface/api/10672
+         * type=itemPeople
+         * type=otherPeople
          */
         @NotBlank(message = "接收类型")
-        private String receivedType;
+        private String receivedDict;
 
         /**
          * 接收类型
@@ -41,11 +44,26 @@ public class NoticeReceivedDTO implements Serializable {
         private String receivedValue;
 
 
+    }
 
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
 
+        @NotBlank(message = "id不能为空")
+        private String id;
 
+        @NotBlank(message = "接收类型")
+        private String receivedDict;
 
-
+        /**
+         * 接收类型
+         */
+        @NotBlank(message = "接收类型值")
+        private String receivedValue;
 
 
     }

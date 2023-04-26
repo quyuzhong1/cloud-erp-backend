@@ -25,4 +25,13 @@ public interface NoticeReceivedService extends SuperService<NoticeReceivedEntity
      * @return void
      */
     void add(String id, List<NoticeReceivedDTO.AddDTO> receivedList);
+
+    /**
+     * 更改接收人
+     * @author yl
+     * @date 2023-04-26 16:01
+     * @param receivedList
+     * @return void
+     */
+    void edit(List<NoticeReceivedDTO.UpdateDTO> receivedList);
 }

@@ -26,10 +26,23 @@ public class NoticeInfoEntity extends BaseEntity<NoticeInfoEntity> {
 
     /**
      * 通知节点id
-
      */
     @TableField("node_id")
     private String nodeId;
+
+
+    /**
+     * 通知系统
+     */
+    @TableField("system")
+    private String system;
+
+
+    /**
+     * 业务类型
+     */
+    @TableField("business_type")
+    private String businessType;
 
 
 

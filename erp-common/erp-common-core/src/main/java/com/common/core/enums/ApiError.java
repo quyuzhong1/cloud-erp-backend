@@ -106,6 +106,7 @@ public enum ApiError implements Serializable {
     ERROR_9042(9042, "重置失败，邮箱无效请修改正确邮箱"),
     ERROR_9043(9043, "账号不存在"),
     ERROR_9044(9044, "账号未绑定邮箱，请绑定邮箱后操作"),
+    ERROR_9045(9045, "通知不存在"),
 
     /**
      * 工作流错误
