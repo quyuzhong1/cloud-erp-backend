@@ -28,12 +28,18 @@ import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.*;
@@ -90,6 +96,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
 
     @Override
@@ -239,6 +248,22 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             //更新采购申请单生成PO类型
             updatePurchaseOrderCreatePoType(list);
 
+            //修改到货状态
+            List<PurchaseChangeDetailEntity> purchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
+            List<String> podIds = purchaseChangeDetailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+            List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+            List<WarehouseReceiveDetailEntity> receiveDetailEntityList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+            purchaseChangeDetailList.forEach(req -> {
+                Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                Integer purchaseQty = req.getQty();
+                if (returnQty > receiveQty) {
+                    throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, req.getSkuNo()));
+                }
+                approveArrivalState(returnQty, receiveQty, purchaseQty, req.getPurchaseOrderDetailId());
+            });
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -250,6 +275,37 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购变更单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"审核操作");
+    }
+
+    /**
+     * 判断到货状态
+     *
+     * @param returnQty  退货数量
+     * @param receiveQty 收货数量
+     * @param purchaseQty 采购数量
+     * @param id          采购明细id
+     * @return java.lang.Integer
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:47
+     **/
+    private Boolean approveArrivalState(Integer returnQty, Integer receiveQty, Integer purchaseQty, String id) {
+        String arrivalStatus = "";
+        //未到货
+        if (receiveQty - returnQty <= MathUtil.ZERO) {
+            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+        } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
+            //部分到货
+            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+        } else {
+            //已到货
+            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+        }
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
+        purchaseOrderDetailEntity.setId(id);
+        purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
+        purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+        Boolean flag = purchaseOrderDetailService.updateById(purchaseOrderDetailEntity);
+        return flag;
     }
 
     @Override
