@@ -143,7 +143,7 @@
         pro.approve_user_name,
         pro.create_user_name,
         pro.create_time,
-        prod.purchase_order_detail_id,
+        prod.purchase_order_detail_id
         FROM purchase_return_order_detail prod
         LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
