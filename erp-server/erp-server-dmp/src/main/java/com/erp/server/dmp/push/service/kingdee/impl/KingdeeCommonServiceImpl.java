@@ -179,8 +179,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //金蝶id
         String syncKingdeeId = (String) map.get("syncKingdeeId");
 
-        if (ObjectUtils.isEmpty(syncKingdeeId)) {
-            viewMap.put("ids",Arrays.asList(syncKingdeeId));
+        if (StringUtils.isNotBlank(syncKingdeeId)) {
+            viewMap.put("ids",syncKingdeeId);
         } else {
             viewMap.put("numbers",Arrays.asList(number));
         }

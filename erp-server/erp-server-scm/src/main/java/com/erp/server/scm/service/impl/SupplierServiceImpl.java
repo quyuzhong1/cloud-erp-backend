@@ -545,6 +545,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String content = String.format("编辑了供应商[%s] 启用状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
+        //发送金蝶
+        if (dto.getState()) {
+            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+        } else {
+            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+        }
         return this.updateById(supplier);
     }
 
