@@ -622,6 +622,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
                 addDetailList.add(addDetailDTO);
             }
+            addDTO.setReturnMode(value.get(0).getReturnMode());
             addDTO.setPurchasePriceDetailList(addDetailList);
             addDTO.setReturnUserId(userInfo.getUid());
             addDTO.setReturnOrgId(purchaseStockInEntity.getReceiveOrgId());
