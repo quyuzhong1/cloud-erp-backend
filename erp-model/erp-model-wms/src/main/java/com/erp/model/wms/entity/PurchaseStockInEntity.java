@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -39,7 +41,7 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
      * 入库日期
      */
     @TableField("stock_in_date")
-    private Date stockInDate;
+    private LocalDate stockInDate;
 
     /**
      * 入库员id
@@ -50,7 +52,7 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
     /**
      * 入库员名称
      */
-    @TableField("storage_user_name")
+    @TableField("stock_in_user_name")
     private String stockInUserName;
 
     /**
@@ -90,13 +92,13 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
     private String deliveryWarehouseName;
 
     /**
-     * 采购部门id
+     * 入库部门id
      */
     @TableField("stock_in_dept_id")
     private String stockInDeptId;
 
     /**
-     * 采购部门名称
+     * 采入库部门名称
      */
     @TableField("stock_in_dept_name")
     private String stockInDeptName;
@@ -165,7 +167,7 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
     /**
      * 审核人名称
@@ -179,6 +181,35 @@ public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
+    /**
+     * 采购订单id
+     */
+    @TableField("purchase_order_id")
+    private String purchaseOrderId;
+
+    /**
+     * 采购订单编码
+     */
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
+
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步金蝶时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
     public static final String CODE = "code";
 

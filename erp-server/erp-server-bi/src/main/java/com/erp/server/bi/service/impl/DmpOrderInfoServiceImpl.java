@@ -5,24 +5,25 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.RedisService;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
-import com.common.business.service.RedisService;
-import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
@@ -33,14 +34,15 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
-import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -80,7 +82,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
-
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -117,36 +118,26 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
-        BigDecimal amount = BigDecimal.ZERO;
-        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
-            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-                if (BiFilterDTO.validOriginalCurrency(dto)){
-                    query.select("sum(order_fee) as order_fee");
-                }else {
-                    return new TargetSaleSumVO(amount);
-                }
-            } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
-                query.select("sum(order_fee*settle_rate) as order_fee");
-            } else  {
-                query.select("sum(order_fee*currency_rate) as order_fee");
-            }
-            DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
-            amount = null != dmpOrderInfoEntity?dmpOrderInfoEntity.getOrderFee(): BigDecimal.ZERO;
-        } else {
-            // 条件存在sku的情况
-            // 先查询订单号
-            query.select("id");
-            List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-            if (CollectionUtils.isEmpty(list)) {
-                return new TargetSaleSumVO(amount);
-            }
-            List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-            // 根据订单号获取订单详情，筛选sku
-            amount = dmpOrderItemService.sumSales(orderIds, dto);
+//        BigDecimal amount = BigDecimal.ZERO;
+//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+        // 条件存在sku的情况
+        // 先查询订单号
+//        query.select("id");
+//        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+//        if (CollectionUtils.isEmpty(list)) {
+//            return new TargetSaleSumVO(amount);
+//        }
+//        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+//        // 根据订单号获取订单详情，筛选sku
+//        amount = dmpOrderItemService.sumSales(orderIds, dto);
+        Integer flag = null;
+        if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
+            flag = 1;
         }
+        BigDecimal amount = baseMapper.sumSales(dto, flag);
         return new TargetSaleSumVO(amount.setScale(4, BigDecimal.ROUND_DOWN));
     }
+
 
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
@@ -177,18 +168,19 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Override
     public TargetSaleCountVO countSalesVolume(BiFilterDTO dto) {
-        Integer count = 0;
-        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        // 先查询订单号
-        query.select("id")
-                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
-        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-        if (CollectionUtils.isEmpty(list)) {
-            return new TargetSaleCountVO(count);
-        }
-        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        // 根据订单号获取订单详情，筛选sku
-        count = dmpOrderItemService.countSalesVolume(orderIds, dto.getSku());
+//        Integer count = 0;
+//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+//        // 先查询订单号
+//        query.select("id")
+//                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
+//        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+//        if (CollectionUtils.isEmpty(list)) {
+//            return new TargetSaleCountVO(count);
+//        }
+//        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+//        // 根据订单号获取订单详情，筛选sku
+//        count = dmpOrderItemService.countSalesVolume(orderIds, dto.getSku());
+        Integer count = baseMapper.countSalesVolume(dto);
         return new TargetSaleCountVO(count);
     }
 
@@ -373,7 +365,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(order_fee*currency_rate,0)) as order_fee", groupByStr);
+        qw.select("SUM(COALESCE(amount_after,0)) as order_fee", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getQuarterResultList(quarterTargetMap,new HashMap<>(4),start.getYear());
@@ -477,7 +469,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(order_fee*currency_rate, 0)) as order_fee", groupByStr);
+        qw.select("SUM(COALESCE(order_fee, 0)) as order_fee", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getMonthResultList(monthTargetMap, new HashMap<>(4),start.getYear());
@@ -849,7 +841,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
+//        dto.setEndTime(dto.getEndTime());
         TargetSaleSumVO currentVo = sumSales(dto);
         BigDecimal currentAmount = currentVo.getValue();
         if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
@@ -865,7 +857,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleSumVO ringVo = sumSales(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleSumVO yoyVo = sumSales(dto);
 
         return new TargetSaleAndYoySumVO(currentVo, ringVo, yoyVo);
@@ -874,7 +866,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
+//        dto.setEndTime(dto.getEndTime());
         TargetSaleCountVO currentVo = countSalesVolume(dto);
         Integer currentAmount = currentVo.getValue();
         if (0 == currentAmount){
@@ -890,7 +882,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO ringVo = countSalesVolume(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleCountVO yoyVo = countSalesVolume(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
@@ -899,7 +891,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-        dto.setEndTime(dto.getEndTime());
         TargetSaleCountVO currentVo = countOrderQuantity(dto);
         Integer currentAmount = currentVo.getValue();
         if (0 == currentAmount){
@@ -915,7 +906,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO ringVo = countOrderQuantity(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleCountVO yoyVo = countOrderQuantity(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
@@ -990,35 +981,128 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO ringVo = countRefundOrderNum(dto);
         // 查询去年同周期 同比
         dto.setStartTime(startTime.minusYears(1));
-        dto.setEndTime(endTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1).minusDays(1));
         TargetSaleCountVO yoyVo = countRefundOrderNum(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
-        //系统中已存在的订单
-        List<DmpOrderInfoEntity> orderList = this.list();
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,orderList,deptList,plmTaskFeign,dmpOrderItemService, this, dmpShopInfoService, sysUserFeign);
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,deptList,plmTaskFeign, dmpShopInfoService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
+
+            //验证导入数据是否为空
+            List<DmpOrderInfoImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.ERROR_95123);
+            }
+
+            //成功数据
+            List<DmpOrderInfoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+
+            //错误数据
+            List<DmpOrderInfoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+            //处理重复SKU
+            doOpHandleOrderInfo(successList, errorList);
+
+            if (errorList.size() > 0) {
                 StringBuffer sb = new StringBuffer();
                 String excelPath = "excel/dmpOrderInfo.xlsx";
                 String name = "dmpOrderInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);
                 sb.append(name);
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 return false;
             }
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }
         return  true;
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public void doOpHandleOrderInfo (List<DmpOrderInfoImportExcelDTO> successList, List<DmpOrderInfoImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        List<DmpOrderInfoImportExcelDTO> removeList = new ArrayList<>();
+        List<String> platformOrderIds = successList.stream().map(DmpOrderInfoImportExcelDTO::getPlatformOrderId).collect(Collectors.toList());
+
+        List<DmpOrderInfoEntity> list = this.lambdaQuery().in(DmpOrderInfoEntity::getPlatformOrderId, platformOrderIds).list();
+
+        for (DmpOrderInfoImportExcelDTO addDTO : successList) {
+
+            DmpOrderInfoEntity dmpOrderInfoEntity = list.stream().filter(obj -> obj.getPlatformOrderId().equals(addDTO.getPlatformOrderId())).findFirst().orElse(null);
+
+            //存在错误信息则
+            if (ObjectUtils.isNotEmpty(dmpOrderInfoEntity)) {
+                addDTO.setErrorMsg("1、订单号已存在，不能重复添加");
+                errorList.add(addDTO);
+                removeList.add(addDTO);
+                continue;
+            }
+        }
+        if (CollectionUtils.isNotEmpty(removeList)) {
+            successList.removeAll(removeList);
+        }
+        if (CollectionUtils.isNotEmpty(successList)) {
+            Map<String, List<DmpOrderInfoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(DmpOrderInfoImportExcelDTO::getPlatformOrderId));
+            //主表信息
+            List<DmpOrderInfoEntity> infoList = new ArrayList<>();
+            //明细信息
+            List<DmpOrderItemEntity> itemList = new ArrayList<>();
+
+            for (Map.Entry<String, List<DmpOrderInfoImportExcelDTO>> entry :  map.entrySet()) {
+                DmpOrderInfoEntity info = new DmpOrderInfoEntity();
+                List<DmpOrderInfoImportExcelDTO> value = entry.getValue();
+                DmpOrderInfoImportExcelDTO mainEntity = value.get(0);
+                BeanUtils.copyProperties(mainEntity,info);
+                info.setOrderStatus(OrderStateEnum.getCodeByName(mainEntity.getOrderStateName()));
+                BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
+                baseSearchDTO.setSearchKeyword(mainEntity.getChargeName());
+                ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
+                List<FindUserDTO> chargeNameList = listApiResult.getData();
+                info.setChargeId(chargeNameList.get(0).getUserId());
+
+              /*  String platformCreateTimeStr = mainEntity.getPlatformCreateTimeStr();
+                if (StringUtils.isNotBlank(platformCreateTimeStr)) {
+                    info.setPlatformCreateTime(LocalDateUtil.stringToLocalDateTime(platformCreateTimeStr));
+                }
+                String deliveryTimeStr = mainEntity.getDeliveryTimeStr();
+                if (StringUtils.isNotBlank(deliveryTimeStr)) {
+                    info.setDeliveryTime(LocalDateUtil.stringToLocalDateTime(deliveryTimeStr));
+                }*/
+                BigDecimal orderFee = mainEntity.getOrderFee();
+                mainEntity.setOrderFee(MathUtil.multiply(orderFee,ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
+
+                info.setId(IdWorker.getIdStr());
+                infoList.add(info);
+                for (DmpOrderInfoImportExcelDTO excelDTO : value) {
+                    DmpOrderItemEntity item = new DmpOrderItemEntity();
+                    item.setOrderId(info.getId());
+                    item.setSkuNo(excelDTO.getSkuNo());
+                    item.setItemName(excelDTO.getItemName());
+                    item.setSellPriceOrigin(excelDTO.getSellPriceOrigin());
+                    item.setQuantity(excelDTO.getQuantity());
+                    itemList.add(item);
+                }
+            }
+            //新增主表信息
+            if (CollectionUtils.isNotEmpty(infoList)) {
+                this.saveBatch(infoList);
+            }
+            //新增明细信息
+            if (CollectionUtils.isNotEmpty(itemList)) {
+                dmpOrderItemService.saveBatch(itemList);
+            }
+        }
     }
 
     @Override
@@ -1067,26 +1151,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return list;
     }
 
-    @Override
-    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
-        if (CollectionUtils.isEmpty(entityList)) {
-            return;
-        }
-        entityList.forEach(obj->{
-             //根据日期查询订单
-            LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-             //大于等于开始日期
-            updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin());
-             //小于等于开始日期
-            updateWrapper.le(DmpOrderInfoEntity::getPlatformCreateTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()));
-             //原币种
-            updateWrapper.eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
-            //设置汇率
-            updateWrapper.set(DmpOrderInfoEntity::getCnySettleRate,obj.getExchangeRate());
-            this.update(updateWrapper);
-        });
-
-    }
 
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,
                                                               Map<String, String> skuMap, Map<String, Integer> salesVolumeMap, Map<String, BigDecimal> saleAmountMap) {
@@ -1221,7 +1285,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             List<DmpOrderItemEntity> itemList = dmpOrderItemList.stream().filter(e -> obj.getId().equals(e.getOrderId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(itemList)) {
                 List<DmpOrderItemDTO> itemResultList = BeanMapperUtils.copyList(DmpOrderItemDTO.class, itemList);
-                itemResultList.stream().forEach(e -> e.setSellAmount(MathUtil.multiply(e.getSellPrice(),e.getQuantity())));
+                itemResultList.stream().forEach(e -> e.setSellAmountOrigin(MathUtil.multiply(e.getSellPriceOrigin(),e.getQuantity())));
                 obj.setChildren(itemResultList);
             }
             obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState()));

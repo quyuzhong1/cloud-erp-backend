@@ -1,16 +1,14 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -47,8 +45,8 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     /**
      * 实退数量
      */
-    @TableField("reality_return_qty")
-    private Integer realityReturnQty;
+    @TableField("return_qty")
+    private Integer returnQty;
 
     /**
      * 补货数量
@@ -66,19 +64,19 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
      * 退货单价
      */
     @TableField("return_price")
-    private String returnPrice;
-
-    /**
-     * 总价
-     */
-    @TableField("total_price")
-    private String totalPrice;
+    private BigDecimal returnPrice;
 
     /**
      * 币别
      */
     @TableField("currency")
     private String currency;
+
+    /**
+     * 币别符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
 
     /**
      * 备注
@@ -91,6 +89,18 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
+
+    /**
+     * 采购订单详情表id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
+
+    @TableField(exist = false)
+    private String approveStatus;
+
+    @TableField(exist = false)
+    private String returnMode;
 
     @Override
     public Serializable pkVal() {

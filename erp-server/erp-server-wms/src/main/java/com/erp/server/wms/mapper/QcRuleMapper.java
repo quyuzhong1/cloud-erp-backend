@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.QcRuleDTO;
 import com.erp.model.wms.entity.QcRuleEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -18,5 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface QcRuleMapper extends BaseMapper<QcRuleEntity> {
 
-    IPage<QcRuleDTO.PagingViewDTO> paging(Page query);
+    IPage<QcRuleDTO.PagingViewDTO> paging(Page query, @Param("params")   QcRuleDTO.PagingParamDTO params);
 }

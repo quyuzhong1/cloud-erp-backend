@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -33,6 +34,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
+import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
@@ -51,6 +53,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,6 +98,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private PurchasePriceService purchasePriceService;
 
+    @Resource
+    private SyncKingdeeSupplierService syncKingdeeSupplierService;
+
     /**
      * 保存供应商信息
      *
@@ -121,7 +127,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(dto, addEntity);
 
         List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         String categoryId = dto.getCategoryId();
@@ -268,7 +274,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
         }
         List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         String categoryId = dto.getCategoryId();
@@ -326,9 +332,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return new PagingVO(pageData);
         }
         List<String> keyList = new ArrayList<>(3);
-        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
@@ -511,6 +517,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
+            //发送金蝶
+            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         }
         return result;
     }
@@ -537,6 +545,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String content = String.format("编辑了供应商[%s] 启用状态 有[%s] 变更为[%s]", supplier.getName(), dto.getState() == true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
         addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "修改操作");
 
+        //发送金蝶
+        if (dto.getState()) {
+            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+        } else {
+            syncKingdeeSupplierService.syncDataToKingdee(supplier, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+        }
         return this.updateById(supplier);
     }
 
@@ -599,6 +613,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+            //发送金蝶
+            list.forEach(obj -> syncKingdeeSupplierService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -669,9 +685,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierExportExcelDTO> resultList = new ArrayList<>(list.size());
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> keyList = new ArrayList<>(3);
-            keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
-            keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
-            keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+            keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+            keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+            keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
             //获取供应商等级
             List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
             //根据 key list 获取到对应数据
@@ -750,9 +766,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         List<String> keyList = new ArrayList<>(3);
-        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getKey());
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getKey());
+        keyList.add(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
         //根据 key list 获取到对应数据
@@ -910,8 +926,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 this.updateBatchById(updateList);
             }
         }
+    }
 
-
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .in(SupplierEntity::getId,ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SupplierEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),SupplierEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     /**

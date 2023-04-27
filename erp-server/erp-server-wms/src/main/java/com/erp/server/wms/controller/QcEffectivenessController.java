@@ -1,5 +1,7 @@
 package com.erp.server.wms.controller;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * 品质时效表
@@ -32,12 +33,12 @@ public class QcEffectivenessController extends BaseController {
      * @author Will
      * @date: 2023/4/12 11:26
      * @param dto
-     * @return ApiResult<List<ViewQcOverviewDTO>>
+     * @return ApiResult<ViewQcOverviewDTO>
      */
     @PostMapping("/viewQcOverview")
-    public ApiResult<List<QcEffectivenessDTO.ViewQcOverviewDTO>> viewQcOverview(@RequestBody @Validated QcEffectivenessDTO.CommonSearchParamDTO dto) {
-        List<QcEffectivenessDTO.ViewQcOverviewDTO> list = qcEffectivenessService.viewQcOverview(dto);
-        return success(list);
+    public ApiResult<QcEffectivenessDTO.ViewQcOverviewDTO> viewQcOverview(@RequestBody @Validated QcEffectivenessDTO.CommonSearchParamDTO dto) {
+        QcEffectivenessDTO.ViewQcOverviewDTO result = qcEffectivenessService.viewQcOverview(dto);
+        return success(result);
     }
 
     /**
@@ -48,9 +49,9 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcTrend")
-    public ApiResult<List<QcEffectivenessDTO.ViewQcTrendDTO>> viewQcTrend(@RequestBody @Validated QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
-        List<QcEffectivenessDTO.ViewQcTrendDTO> list = qcEffectivenessService.viewQcTrend(dto);
-        return success(list);
+    public ApiResult<QcEffectivenessDTO.ViewQcTrendDTO> viewQcTrend(@RequestBody @Validated QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
+        QcEffectivenessDTO.ViewQcTrendDTO result = qcEffectivenessService.viewQcTrend(dto);
+        return success(result);
     }
 
     /**
@@ -61,8 +62,8 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcForPersonnel")
-    public ApiResult<List<QcEffectivenessDTO.ViewQcForPersonnelDTO>> viewQcForPersonnel(@RequestBody @Validated QcEffectivenessDTO.CommonSearchParamDTO dto) {
-        List<QcEffectivenessDTO.ViewQcForPersonnelDTO> list = qcEffectivenessService.viewQcForPersonnel(dto);
+    public ApiResult<PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO>> viewQcForPersonnel(@RequestBody @Validated PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> dto) {
+        PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> list = qcEffectivenessService.viewQcForPersonnel(dto);
         return success(list);
     }
 
@@ -74,8 +75,8 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcForDocument")
-    public ApiResult<List<QcEffectivenessDTO.ViewQcForDocumentDTO>> viewQcForDocument(@RequestBody @Validated QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO dto) {
-        List<QcEffectivenessDTO.ViewQcForDocumentDTO> list = qcEffectivenessService.viewQcForDocument(dto);
+    public ApiResult<PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO>> viewQcForDocument(@RequestBody @Validated PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> dto) {
+        PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> list = qcEffectivenessService.viewQcForDocument(dto);
         return success(list);
     }
 

@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -10,19 +11,14 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.mapper.PurchasePriceChangeDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchasePriceChangeDetailService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.PurchasePriceHistoryService;
+import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -63,7 +59,13 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
+    @Resource
+    private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
+
+    
     /**
      * 检查区间报价是否重叠
      *
@@ -360,6 +362,13 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         //修改价目详情
         purchasePriceDetailService.updateBatchById(updateList);
 
+        //同步金蝶数据
+        List<String> priceIds = purchasePriceDetailList.stream().distinct().map(PurchasePriceDetailEntity::getPurchasePriceId).collect(Collectors.toList());
+        List<PurchasePriceEntity> purchasePriceList = purchasePriceService.listByIds(priceIds);
+        if (CollectionUtils.isEmpty(purchasePriceList)) {
+            throw new ServiceException(ApiError.ERROR_98024);
+        }
+        purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
 
     }
 
@@ -450,6 +459,11 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         return list;
     }
 
+    @Override
+    public List<PurchasePriceChangeDetailEntity> listByPurchasePriceChangeId(String purchasePriceChangeId) {
+        return baseMapper.listByPurchasePriceChangeId(purchasePriceChangeId);
+    }
+
 
     /**
      * 获取删除的id集合
@@ -496,9 +510,9 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         if (CollectionUtils.isNotEmpty(list)) {
             for (int i = 0; i < list.size() - 1; i++) {
                 if (list.get(i) > list.get(i + 1)) {
-                return false;
+                    return false;
+                }
             }
-        }
         }
         return true;
     }

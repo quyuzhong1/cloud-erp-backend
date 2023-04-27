@@ -4,8 +4,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +37,11 @@ public class PurchaseStockInDTO implements Serializable {
         private String code;
 
         /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
          * 采购单号
          */
         private String purchaseOrderCode;
@@ -65,6 +70,11 @@ public class PurchaseStockInDTO implements Serializable {
          * 作废状态名称
          */
         private String invalidStatusName;
+
+        /**
+         * skuid
+         */
+        private String skuId;
 
         /**
          * sku编码
@@ -114,7 +124,7 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 入库员名称
          */
-        private String storageUserName;
+        private String stockInUserName;
 
         /**
          * 备注
@@ -141,6 +151,17 @@ public class PurchaseStockInDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
+
+        /**
+         * 入库单号
+         */
+        private String code;
+
         /**
          * sku编码
          */
@@ -212,82 +233,6 @@ public class PurchaseStockInDTO implements Serializable {
         private Integer count;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class ProductSearchParamDTO {
-
-        /**
-         * 采购订单id
-         */
-        private String purchaseOrderId;
-
-        /**
-         * sku编号集合
-         */
-        private List<String>  skuNoList;
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class ViewProductDTO {
-
-        /**
-         * sku编码
-         */
-        private String  skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 采购数量
-         */
-        private Integer purchaseQty;
-
-        /**
-         * 收货数量
-         */
-        private Integer receiveQty;
-
-        /**
-         * 本次入库数量
-         */
-        private Integer stockInQty;
-
-        /**
-         * 实退数量
-         */
-        private Integer realityReturnQty;
-
-        /**
-         * 收料组织名称
-         */
-        private String  receiveOrgName;
-
-        /**
-         * 是否赠品
-         */
-        private Boolean isGift;
-
-        /**
-         * 是否加急
-         */
-        private Boolean isUrgent;
-
-        /**
-         * 备注
-         */
-        private String remark;
-
-        /**
-         * 订单明细id
-         */
-        private String purchaseOrderDetailId;
-
-    }
 
     @Data
     @NoArgsConstructor
@@ -327,7 +272,7 @@ public class PurchaseStockInDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 来源
+         * 来源 purchaseOrder采购订单
          */
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;
@@ -336,6 +281,7 @@ public class PurchaseStockInDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "明细不能为空")
+        @Valid
         private List<PurchaseStockInDetailDTO.AddDTO> details;
     }
 
@@ -347,11 +293,14 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 主键id
          */
+        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
          * 明细
          */
+        @NotEmpty(message = "明细不能为空")
+        @Valid
         private List<PurchaseStockInDetailDTO.UpdateDTO> details;
     }
 
@@ -426,60 +375,20 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 明细
          */
-        private List<PurchaseStockInDetailDTO.ViewDTO> detail;
+        private List<PurchaseStockInDetailDTO.ViewDTO> details;
     }
+
+
 
 
 
     @Data
     @NoArgsConstructor
-    public static class ViewGeneratePurchaseReturnOrderDTO {
+    public static class ListGeneratePurchaseReturnOrderDTO {
 
-        /**
-         * 采购入库id
-         */
-        private String purchaseStockInId;
-
-        /**
-         * 采购入库明细id
-         */
-        private String purchaseStockInDetailId;
-
-        /**
-         * 采购单号
-         */
-        private String purchaseOrderCode;
-
-        /**
-         * 供应商名称
-         */
-        private String supplierName;
-
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 交货仓库名称
-         */
-        private String deliveryWarehouseName;
-
-        /**
-         * 入库数量
-         */
-        private Integer stockInQty;
-
-        /**
-         * 库位名称
-         */
-        private String warehouseLocationName;
-
+        @NotEmpty(message = "新增采购退货单数据不不能为空")
+        @Valid
+        private List<GeneratePurchaseReturnOrderDTO> list;
     }
 
     @Data
@@ -487,14 +396,47 @@ public class PurchaseStockInDTO implements Serializable {
     public static class GeneratePurchaseReturnOrderDTO {
 
         /**
-         * 采购入库id
+         * 来源类型
          */
-        private String purchaseStockInId;
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
 
         /**
-         * 采购入库明细id
+         * 来源id
          */
-        private String purchaseStockInDetailId;
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购订单单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * 退货人id
@@ -509,26 +451,34 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 实退数量
          */
+        @Min(value = 1,message = "实退数量最小值为1")
+        @Max(value = 99999999,message = "实退数量最大值为99999999")
         private Integer realityReturnQty;
 
         /**
          * 补货数量
          */
+        @Min(value = 1,message = "补货数量最小值为1")
+        @Max(value = 99999999,message = "补货数量最大值为99999999")
         private Integer replenishQty;
 
         /**
          * 扣款数量
          */
+        @Min(value = 1,message = "扣款数量最小值为1")
+        @Max(value = 99999999,message = "扣款数量最大值为99999999")
         private Integer deductAmountQty;
 
         /**
          * 含税单价
          */
+        @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal taxPrice;
 
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
         /**
@@ -536,5 +486,122 @@ public class PurchaseStockInDTO implements Serializable {
          */
         private String currency;
 
+    }
+
+    /**
+     * 获取签收数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GetStockInQty {
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class OrderRefStockInDTO {
+        /**
+         * 收货单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态
+         */
+        private String invalidStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 入库日期
+         */
+        private LocalDate stockInDate;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 入库员名称
+         */
+        private String stockInUserName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
     }
 }

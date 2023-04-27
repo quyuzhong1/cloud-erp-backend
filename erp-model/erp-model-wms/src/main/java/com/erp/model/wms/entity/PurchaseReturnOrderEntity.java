@@ -78,7 +78,7 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     private String returnUserName;
 
     /**
-     * 退货方式
+     * 退货方式 退货扣款 退货补货
      */
     @TableField("return_mode")
     private String returnMode;
@@ -98,8 +98,8 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     /**
      * 退货原因
      */
-    @TableField("receice_remark")
-    private String receiceRemark;
+    @TableField("return_remark")
+    private String returnRemark;
 
     /**
      * 退货日期
@@ -112,6 +112,12 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
      */
     @TableField("invalid_status")
     private Boolean invalidStatus;
+
+    /**
+     * 作废描述
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
 
     /**
      * 作废时间
@@ -148,6 +154,60 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
      */
     @TableField("source_id")
     private String sourceId;
+
+    /**
+     * 退货仓库id
+     */
+    @TableField("return_warehouse_id")
+    private String returnWarehouseId;
+
+    /**
+     * 退货仓库名称
+     */
+    @TableField("return_warehouse_name")
+    private String returnWarehouseName;
+
+    /**
+     * 采购员id
+     */
+    @TableField("purchase_user_id")
+    private String purchaseUserId;
+
+    /**
+     * 采购员名称
+     */
+    @TableField("purchase_user_name")
+    private String purchaseUserName;
+
+    /**
+     * 退货仓库联系人id
+     */
+    @TableField("supplier_contact_id")
+    private String supplierContactId;
+
+    /**
+     * 退货仓库联系人
+     */
+    @TableField("supplier_contact_name")
+    private String supplierContactName;
+
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步金蝶时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
 
     public static final String APPROVE_STATUS = "approve_status";

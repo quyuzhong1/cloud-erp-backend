@@ -2,11 +2,11 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -15,6 +15,7 @@ import java.util.List;
  */
 @TableName(value ="dmp_return_order_info")
 @Data
+@NoArgsConstructor
 public class DmpReturnOrderInfoEntity implements Serializable {
     /**
      * 主键id
@@ -225,6 +226,11 @@ public class DmpReturnOrderInfoEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public DmpReturnOrderInfoEntity(DmpReturnOrderInfoEntity entity, BigDecimal exchangeRate) {
+        this.id = entity.getId();
+        this.cnySettleRate = exchangeRate;
+    }
 
     @Override
     public String toString() {

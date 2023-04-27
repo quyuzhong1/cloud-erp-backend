@@ -1,10 +1,12 @@
 package com.erp.model.scm.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.service.LocalDateStringConverter;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -151,7 +153,7 @@ public class PurchaseOrderExportExcelDTO implements Serializable {
     /**
      * 创建时间
      */
-    @ExcelProperty(value = "创建时间", index = 22)
-    private String createTime;
+    @ExcelProperty(value = "创建时间", index = 22, converter= LocalDateStringConverter.class)
+    private LocalDateTime createTime;
 
 }

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

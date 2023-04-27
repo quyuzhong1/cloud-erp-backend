@@ -32,10 +32,6 @@ public interface WorkflowService {
     //启动一个流程
     ProcessNodeDTO startProcess(StartProcessDTO dto);
 
-
-    //发布流程
-    Boolean deployDefinitionByResource(DeployProcessDTO dto);
-
     List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto);
 
 

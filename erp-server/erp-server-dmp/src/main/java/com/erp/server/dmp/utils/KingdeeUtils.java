@@ -1,8 +1,11 @@
 package com.erp.server.dmp.utils;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class KingdeeUtils {
 
@@ -52,39 +55,17 @@ public class KingdeeUtils {
         }
 
         String[] fieldArr = pathStr.replace(splitStr,"||").split("\\|\\|");
-        JSONObject curNode=jsonRoot;
-        for(int i=0;i<fieldArr.length;i++){
-            String field=fieldArr[i];
-            if(i<fieldArr.length-1){
+        JSONObject curNode = jsonRoot;
+        for(int i=0; i < fieldArr.length; i++){
+            String field = fieldArr[i];
+            if(i < fieldArr.length-1){
                 curNode.putIfAbsent(field,new JSONObject());
-                curNode=curNode.getJSONObject(field);
+                curNode = curNode.getJSONObject(field);
             }else{
                 curNode.putIfAbsent(fieldArr[fieldArr.length-1],value);
             }
         }
 
         return jsonRoot;
-    }
-
-    public static void main(String[] args) {
-//        String fieldKeys = "FID,FBillNo,FDate,FBillTypeID,FDocumentStatus";
-//        List<String> list = new ArrayList<>();
-//        list.add("test1");
-//        list.add("test2");
-//        list.add("test3");
-//        list.add("test4");
-//        list.add("test5");
-//        Map<String, String> stringStringMap = keySetValByLinked(fieldKeys, list);
-//        System.out.println(stringStringMap);
-
-        JSONObject json=new JSONObject();
-        json.put("FTreeEntity",new ArrayList<Map<String,Object>>());
-//        json.putIfAbsent("root",new JSONObject());
-//        System.out.println(makeFieldJson(null,"a_b_c","_","kk").toJSONString());
-        System.out.println(makeFieldJson(json,"FTreeEntity_trr",".","c").toJSONString());
-        System.out.println(makeFieldJson(json,"A.B.D",".","d").toJSONString());
-        System.out.println(makeFieldJson(json,"E.F.G",".","g").toJSONString());
-        System.out.println(json.toJSONString());
-
     }
 }

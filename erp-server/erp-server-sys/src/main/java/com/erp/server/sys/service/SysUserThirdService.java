@@ -42,5 +42,13 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
      * @return void
      */
     void deleteByUserIds(List<String> userIds);
+
+    /**
+     * 根据平台和用户id获取平台信息
+     * @param platform
+     * @param userIds
+     * @return
+     */
+    List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds);
 }
 

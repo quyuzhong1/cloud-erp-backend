@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.core.utils.MathUtil;
 import com.erp.server.wms.service.CommonService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -39,10 +40,14 @@ public class ErpObjectHandler implements MetaObjectHandler {
             this.setFieldValByName("version", MathUtil.ONE, metaObject);
             this.setFieldValByName("createTime", localDateTime, metaObject);
             this.setFieldValByName("updateTime", localDateTime, metaObject);
-            this.setFieldValByName("createUserId", userId, metaObject);
-            this.setFieldValByName("createUserName", userName, metaObject);
-            this.setFieldValByName("updateUserId", userId, metaObject);
-            this.setFieldValByName("updateUserName", userName, metaObject);
+            if (StringUtils.isNotBlank(userId)) {
+                this.setFieldValByName("createUserId", userId, metaObject);
+                this.setFieldValByName("updateUserId", userId, metaObject);
+            }
+            if (StringUtils.isNotBlank(userName)) {
+                this.setFieldValByName("createUserName", userName, metaObject);
+                this.setFieldValByName("updateUserName", userName, metaObject);
+            }
         }
 
 

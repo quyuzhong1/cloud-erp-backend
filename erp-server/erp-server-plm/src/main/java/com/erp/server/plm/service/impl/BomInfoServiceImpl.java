@@ -11,9 +11,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -30,14 +30,13 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.dto.BusinessTableDTO;
+import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
@@ -214,11 +213,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
         return  this.lambdaUpdate()
                 .eq(BomInfoEntity::getId,id)
-                .set(BomInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),BomInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),BomInfoEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
     }
 
@@ -987,7 +987,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
 //        }
         // 发送到金蝶
-        syncKingdeeBomInfoService.syncDataToKingdee(bom);
+        syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
     }
 
 
@@ -1014,7 +1014,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             // 发送到金蝶
-            syncKingdeeBomInfoService.syncDataToKingdee(bom);
+            syncKingdeeBomInfoService.syncDataToKingdee(bom, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
         }
     }
 
@@ -1049,7 +1049,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 String operateContent = getUpdateContent(oldBomList, bomSkuList);
                 bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
                 //再次发送到金蝶
-                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity);
+                syncKingdeeBomInfoService.syncDataToKingdee(bomEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
     }

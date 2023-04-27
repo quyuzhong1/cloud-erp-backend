@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.NoticeInfoMapper">
+
+
+    <select id="paging" resultType="com.erp.model.sys.dto.NoticeDTO$PagingViewDTO">
+       SELECT
+          ni.id,ni.module,ni.node_key,ni.disabled,
+          cnm.type,cnm.type_name,
+          ni.create_user_name,
+          ni.create_time,
+          ni.update_user_name,
+          ni.update_time,
+          dn.node_name
+       FROM notice_info ni
+       INNER JOIN
+       cfg_node_member cnm
+       ON cnm.node_key=ni.node_key AND cnm.is_deleted=FALSE
+       LEFT JOIN dict_node dn ON dn.node_key=ni.node_key
+       WHERE ni.is_deleted=False
+       <if test="params.module !=null and params.module!=''">
+         AND ni.module=#{params.module}
+       </if>
+       <if test="params.nodeName !=null and params.nodeName!=''">
+           AND dn.node_name ilike concat('%',#{params.nodeName},'%')
+       </if>
+       ORDER BY ni.create_time DESC
+
+
+    </select>
+</mapper>

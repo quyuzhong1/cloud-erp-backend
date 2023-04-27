@@ -133,4 +133,9 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @return void
      */
     void checkIsRefSupplier(List<String> supplierIds);
+
+    /**
+     * 更新金蝶同步状态
+     */
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId);
 }

@@ -1,5 +1,7 @@
 package com.erp.model.plm.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * @Description 销售方式枚举
  * @Author Luo_WG
@@ -7,7 +9,7 @@ package com.erp.model.plm.enums;
  * @param
  * @return
  **/
-public enum SaleMethodEnum {
+public enum SaleMethodEnum implements EnumMessage {
     GOODS(1, "商品"),
     GIFT(2, "赠品"),
     PACKAGING_MATERIALS(3, "包材");

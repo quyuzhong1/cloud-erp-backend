@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -120,38 +121,13 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      * 到货时间
      */
     @TableField("arrival_time")
-    private Date arrivalTime;
+    private LocalDateTime arrivalTime;
 
     /**
      * 税率
      */
     @TableField("tax_rate")
     private BigDecimal taxRate;
-
-    /**
-     * 签收数量
-     */
-    @TableField("receive_qty")
-    private Integer receiveQty;
-
-    /**
-     * 入库数量
-     */
-    @TableField("stock_in_qty")
-    private Integer stockInQty;
-
-
-    /**
-     * 交货数量
-     */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-
-    /**
-     * 退货数量
-     */
-    @TableField("return_qty")
-    private Integer returnQty;
 
     /**
      * 是否加急（false否，true是）

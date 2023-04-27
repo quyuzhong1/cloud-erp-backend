@@ -4,27 +4,27 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
         SELECT
-        p.id AS product_id,
-        p.name,
-        p.grade,
-        p.charge_name AS productChargeName,
-        pi.project_status,
-        p.brand_name,
-        pi.id AS projectId,
-        p.grade_id,
-        p.charge_id AS productChargeId,
-        p.project_charge_id AS projectChargeId,
-        p.type,
-        p.approval_status,
-        pi.charge_name AS projectChargeName,
-        p.create_time,
-        p.progress_status,
-        p.image_url,
-        p.property,
-        p.category,
-        pi.end_time,
-        p.spu_no,
-        pph.name as projectPhase
+          p.id AS product_id,
+          p.name,
+          p.grade,
+          p.charge_name AS productChargeName,
+          pi.project_status,
+          p.brand_name,
+          pi.id AS projectId,
+          p.grade_id,
+          p.charge_id AS productChargeId,
+          p.project_charge_id AS projectChargeId,
+          p.type,
+          p.approval_status,
+          pi.charge_name AS projectChargeName,
+          p.create_time,
+          p.progress_status,
+          p.image_url,
+          p.property,
+          p.category,
+          pi.end_time,
+          p.spu_no,
+          pph.name as projectPhase
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -68,7 +68,7 @@
         </if>
 
         <if test="params.gradeList !=null and params.gradeList.size>0">
-            AND p.grade_id IN
+          AND p.grade_id IN
             <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
@@ -91,7 +91,7 @@
         <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
             AND pi.charge_id IN
             <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="," >
-                #{chargeId}
+                 #{chargeId}
             </foreach>
         </if>
 
@@ -113,14 +113,14 @@
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
             <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+                   string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
 
 
         <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
+          AND p.create_time &gt;=#{params.startTime}
         </if>
 
         <if test="params.endTime !=null">
@@ -489,7 +489,7 @@
 
 
     <select id="getProductInfoByIds" resultType="com.erp.model.plm.dto.ProductShowDTO">
-        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+           SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
         p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.type,p.approval_status,pi.charge_name AS projectChargeName,

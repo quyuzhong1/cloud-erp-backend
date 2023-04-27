@@ -4,7 +4,10 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -80,4 +83,34 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/listApproveSku")
     List<SkuVO> listApproveSku();
+
+    /**
+     * 根据id查询sku信息
+     * @Author Luo_WG
+     * @Date 2023/4/14 15:10
+     * @param ids ids
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    @PostMapping("feign/product/getByIdList")
+    List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids);
+
+    /**
+     * 根据sku id 集合获取到产品包装信息
+     * @author yl
+     * @date 2023-04-17 18:37
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.ProductVO.ProductPackVO>
+     */
+    @PostMapping("feign/product/getProductPackBySkuIds")
+    List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据用户获取各任务阶段数量
+     * @Author Luo_WG
+     * @Date 2023/4/24 9:34
+     * @param optionUserId optionUserId
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.StageViewDTO>
+     **/
+    @PostMapping("feign/product/stageView")
+    List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId);
 }

@@ -1,7 +1,6 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -11,6 +10,8 @@ import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -188,14 +189,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     PurchaseChangeDTO.ViewDTO viewPurchaseChange(String id);
     /**
-     * @description: 查询关联单据
-     * @author Will
-     * @date: 2023/4/3 14:34
-     * @param dto
-     * @return AssociatedDocumentDTO
-     */
-    PurchaseOrderDTO.AssociatedDocumentDTO viewAssociatedDocuments(BaseIdDTO dto);
-    /**
      * @description: 下推采购入库单显示
      * @author Will
      * @date: 2023/4/13 11:38
@@ -204,11 +197,58 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(List<String> ids);
     /**
-     * @description: 生成采购入库单
+     * @description: 根据id查询采购订单
      * @author Will
-     * @date: 2023/4/13 11:39
-     * @param dto
+     * @date: 2023/4/17 9:20
+     * @param id
+     * @return UpdateDTO
+     */
+    PurchaseOrderDTO.GetOneDTO getPurchaseOrder(String id);
+
+    /**
+     * 根据采购订单id 获取对应产品信息
+     * @author yl
+     * @date 2023-04-17 18:27
+     * @param purchaseOrderId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     */
+    PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId);
+    /**
+     * @description: 更新金蝶发送状态
+     * @author Will
+     * @date: 2023/4/21 10:04
+     * @param ids
+     * @param code
+     * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto);
+    Boolean updateSyncKingdeeStatus(List<String> ids, String code, String syncKingdeeId);
+
+    /**
+     * 根据采购订单id 集合获取对应数量
+     * @author yl
+     * @date 2023-04-23 14:03
+     * @param purchaseOrderIds
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
+     */
+    List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(List<String> purchaseOrderIds);
+
+    
+    /**
+     * 采购订单 下推 退货数据显示
+     * @author yl
+     * @date 2023-04-25 9:39
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
+     */
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
+
+    /**
+     * 下推退货单
+     * @author yl
+     * @date 2023-04-25 10:32
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
 }

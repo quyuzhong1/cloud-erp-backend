@@ -139,12 +139,6 @@ public enum RocketMqTagEnum {
      */
     SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
 
-    //-----------------------------消息通知--------------------------------------------
-
-    /**
-     * 消息通知，可以不同的业务使用不同的tag
-     */
-    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
     /**
      * 系统用户同步金蝶
      */
@@ -156,12 +150,60 @@ public enum RocketMqTagEnum {
     KINGDEE_PURCHASE_ORDER_TAG(31, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
 
     /**
-     * 采购申请单同步金蝶
+     * 采购价目表
      */
-    KINGDEE_PURCHASE_APPLICATION_ORDER_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_application_order_tag"),
+    KINGDEE_PURCHASE_PRICE_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_tag"),
+
+    /**
+     * 采购退货单同步金蝶
+     */
+    KINGDEE_PURCHASE_RETURN_ORDER_TAG(33, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_return_order_tag"),
+
+    /**
+     * 采购调价表
+     */
+    KINGDEE_PURCHASE_PRICE_CHANGE_TAG(34, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_change_tag"),
+
+    /**
+     * 采购入库单同步金蝶
+     */
+    KINGDEE_PURCHASE_STOCK_IN_TAG(35, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_stock_in_tag"),
+
+    /**
+     * 供应商同步金蝶
+     */
+    KINGDEE_SUPPLIER_TAG(36, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_supplier_tag"),
+
+    /**
+     * 仓库同步金蝶
+     */
+    KINGDEE_WAREHOUSE_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_warehouse_tag"),
+
+
+    //-----------------------------消息通知--------------------------------------------
+
+    /**
+     * 消息通知，可以不同的业务使用不同的tag
+     */
+    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
+
+    //-----------------------------dmp数据更新--------------------------------------------
+
+    /**
+     * 店铺变更负责人
+     */
+    SHOP_INFO_CHANGE_CHARGE_TAG(33, RocketMqTagEnum.SYNC_DMP,"shop_info_change_charge_tag"),
+    /**
+     * 店铺变更部门
+     */
+    SHOP_INFO_CHANGE_DEPT_TAG(34, RocketMqTagEnum.SYNC_DMP,"shop_info_change_dept_tag"),
+    /**
+     * 汇率更新
+     */
+    CHANGE_CURRENCY_TAG(35, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
     ;
-
-
+    
+    
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
     public static final String REFUND_ORDER = "refund";

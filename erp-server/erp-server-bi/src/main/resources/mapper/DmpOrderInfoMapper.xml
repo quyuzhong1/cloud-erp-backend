@@ -27,9 +27,11 @@
             doi.platform_order_id,
             doi.source_platform,
             doi.shop_name,
-            doi.order_fee,
-            round(doi.order_fee * doi.currency_rate,2) as cnyRealTimeAmount,
-            round(doi.order_fee * doi.cny_settle_rate,2) as cny_settle_amount,
+            case when doi.currency_rate != 0 then round(doi.order_fee/doi.currency_rate,4)
+                else 0 end as itemTotal,
+            doi.order_fee as cnyRealTimeAmount,
+            case when doi.currency_rate != 0 then  round(doi.order_fee/doi.currency_rate * doi.cny_settle_rate,4)
+                else 0 end as cny_settle_amount,
             doi.buyer_name,
             doi.man_phone,
             doi.second_phone,
@@ -47,13 +49,13 @@
         from dmp_order_info doi
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
-                and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
+                and doi.platform_order_id = #{params.platformOrderId}
             </if>
             <if test="params.shopName != null and params.shopName != ''">
-                and doi.shop_name like concat('%',#{params.shopName},'%')
+                and doi.shop_name = #{params.shopName}
             </if>
             <if test="params.platformName != null and params.platformName != ''">
-                and doi.source_platform like concat('%',#{params.platformName},'%')
+                and doi.source_platform = #{params.platformName}
             </if>
             <if test="params.orderState != null and params.orderState != ''">
                 and doi.order_state = #{params.orderState}
@@ -82,9 +84,11 @@
         doi.platform_order_id,
         doi.source_platform,
         doi.shop_name,
-        doi.order_fee,
-        round(doi.order_fee * doi.currency_rate,2) as cnyRealTimeAmount,
-        round(doi.order_fee * doi.cny_settle_rate,2) as cny_settle_amount,
+        case when doi.currency_rate != 0 then round(doi.order_fee/doi.currency_rate,4)
+        else 0 end as itemTotal,
+        doi.order_fee as cnyRealTimeAmount,
+        case when doi.currency_rate != 0 then  round(doi.order_fee/doi.currency_rate * doi.cny_settle_rate,4)
+        else 0 end as cny_settle_amount,
         doi.buyer_name,
         doi.man_phone,
         doi.second_phone,
@@ -103,6 +107,7 @@
             else '' end correction_status_name,
         doi.correction_status,
         doi.create_time,
+        doi.platform_create_time,
         doi.platform_order_id,
         doi.delivery_time,
         doi.charge_name,
@@ -110,9 +115,9 @@
         doi.dept_name,
         doi2.sku_no,
         doi2.item_name,
-        doi2.sell_price,
+        doi2.sell_price_origin,
         doi2.quantity,
-        round(doi2.sell_price * doi2.quantity,2) as sellAmount
+        round(doi2.sell_price_origin * doi2.quantity,2) as sellAmountOrigin
         from dmp_order_info doi
         left join dmp_order_item doi2 on doi.id = doi2.order_id
         <where>
@@ -148,8 +153,9 @@
 
     <select id="sumByDeptAndCostType" resultType="com.erp.model.bi.vo.DimensionSalesVO">
         SELECT ${groupName} AS dimension,
-        SUM(order_fee * currency_rate) AS salesAmount
+        SUM(doit.afer_amount) AS salesAmount
         FROM dmp_order_info AS doi
+        left join  dmp_order_item AS doit on doi.id = doit.order_id
         WHERE doi.${groupName} IS NOT NULL
         <if test="params.startTime != null">
             AND doi.platform_create_time >= #{params.startTime}
@@ -198,6 +204,122 @@
             #{params.param}
         </if>
         GROUP BY doi.${groupName}
+    </select>
+
+    <sql id="conditionSql">
+        <if test = "params.timeType != null and params.timeType == 0">
+            <if test="params.startTime != null">
+                AND doi.platform_create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND doi.platform_create_time &lt; #{params.endTime}
+            </if>
+        </if>
+        <if test = "params.timeType != null and params.timeType == 1">
+            <if test="params.startTime != null">
+                AND doi.delivery_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND doi.delivery_time &lt; #{params.endTime}
+            </if>
+        </if>
+
+        /*部门*/
+        <if test="params.department!=null and params.department.size>0">
+            AND doi.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        /*平台*/
+        <if test="params.platform!=null and params.platform.size>0">
+            AND doi.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        /*站点*/
+        <if test="params.site!=null and params.site.size>0">
+            AND doi.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+
+        /*店铺*/
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND doi.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        /*用户id*/
+        <if test="params.userId!=null and params.userId.size>0">
+            AND doi.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!--分类-->
+        <if test="params.category!=null and params.category.size>0">
+            AND pi.category_id  IN
+            <foreach collection="category" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
+        <!--品牌-->
+        <if test="params.brand !=null and params.brand.size>0">
+            AND pi.brand_id IN
+            <foreach collection="params.brand" item="brandId" open="(" separator="," close=")">
+                #{brandId}
+            </foreach>
+        </if>
+        <!--sku-->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND doit.sku_no IN
+            <foreach collection="params.sku" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+    </sql>
+    <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">
+        SELECT
+         <if test="null != params.settleMethod and params.settleMethod == 0">
+            SUM(doit.amount_after * COALESCE(doit.currency_rate, 0))
+         </if>
+         <if test="null != params.settleMethod and params.settleMethod == 2">
+            SUM(doit.amount_after)
+         </if>
+         <if test="null != params.settleMethod and params.settleMethod == 1">
+            SUM(doit.amount_after * COALESCE(doit.settle_rate, 0))
+         </if>
+          AS salesAmount
+        FROM dmp_order_info AS doi
+        left join  dmp_order_item AS doit on doi.id = doit.order_id
+        left join product_detail AS pd on doit.sku_no = pd.sku_no
+        left join product_info AS pi on pi.id = pd.product_id
+        <where>
+           <include refid="conditionSql"/>
+            <!--新品-->
+            <if test="flag != null ">
+                AND doit.new_sign = flag
+            </if>
+        </where>
+    </select>
+    <select id="countSalesVolume" resultType="java.lang.Integer"  parameterType="com.erp.model.bi.dto.BiFilterDTO">
+        SELECT
+        SUM(coalesce(doit.quantity, 0)) AS salesVolume
+        FROM dmp_order_info AS doi
+        left join  dmp_order_item AS doit on doi.id = doit.order_id
+        left join product_detail AS pd on doit.sku_no = pd.sku_no
+        left join product_info AS pi on pi.id = pd.product_id
+        <where>
+            <include refid="conditionSql"/>
+        </where>
     </select>
 
 

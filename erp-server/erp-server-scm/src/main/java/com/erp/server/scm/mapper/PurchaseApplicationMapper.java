@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -37,7 +36,7 @@ public interface PurchaseApplicationMapper extends BaseMapper<PurchaseApplicatio
      * @param params
      * @return List<PurchaseApplicationExportExcelDTO>
      */
-    List<PurchaseApplicationExportExcelDTO> listExportExcel(@Param("params") PurchaseApplicationDTO.SearchParamDTO params);
+    List<PurchaseApplicationDTO.ListDTO> listExportExcel(@Param("params") PurchaseApplicationDTO.SearchParamDTO params);
     /**
      * @description: 列表数量
      * @author Will

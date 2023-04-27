@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 采购订单明细DTO
  * @date 2023/3/16 14:43
  */
 @Data
@@ -214,5 +214,128 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductSearchParamDTO {
+
+        /**
+         * 采购订单id
+         */
+        @NotBlank(message = "采购订单id不能为空")
+        private String purchaseOrderId;
+
+        /**
+         * sku编号集合
+         */
+        private List<String>  skuNoList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewProductDTO {
+
+        /**
+         * skuId
+         */
+        private String  skuId;
+
+        /**
+         * sku编码
+         */
+        private String  skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 未交货数量
+         */
+        private Integer unReceiveQty;
+
+        /**
+         * 未入库数量
+         */
+        private Integer unStockInQty;
+
+        /**
+         * 已入库数量
+         */
+        private Integer hasStockInQty;
+
+        /**
+         * 实退数量
+         */
+        private Integer realityReturnQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 收料组织名称
+         */
+        private String  receiveOrgName;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 订单明细id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
     }
 }

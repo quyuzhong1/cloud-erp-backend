@@ -1,10 +1,25 @@
 package com.common.core.utils;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.google.common.collect.Maps;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ValidatorUtil {
+
+	private static Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
 	/**
 	 * 正则表达式：验证用户名
 	 */
@@ -151,6 +166,72 @@ public class ValidatorUtil {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public static ObjectError getPermanentError(List<ObjectError> allErrors) {
+		//此处按字段排序，以免每次报出来的错误不一致
+		ObjectError objectError = allErrors.get(0);
+		long fieldErrorCnt = allErrors.stream().filter(r->r instanceof FieldError).count();
+		if(allErrors.size() == fieldErrorCnt) {
+			Map<String,ObjectError> fieldErrorMap = Maps.newLinkedHashMap();
+			allErrors.stream().forEach(objError -> {
+				if(objError instanceof FieldError) {
+					fieldErrorMap.put(((FieldError) objError).getField(),objError);
+				}
+			});
+			Collection<String> fieldKeySet = fieldErrorMap.keySet();
+			List<String> fieldKeys = new ArrayList<>(fieldKeySet);
+			Collections.sort(fieldKeys);
+
+			objectError = fieldErrorMap.get(fieldKeys.get(0));
+		}
+		return objectError;
+	}
+
+
+	/**
+	 * 是否正确（不正确报错）
+	 * @param expression
+	 * @param exceptionSupplier
+	 * @param <X>
+	 */
+	public static<X extends Throwable> void isTrue(boolean expression, Supplier<? extends X> exceptionSupplier) throws X {
+		if(!expression) {
+			throw exceptionSupplier.get();
+		}
+	}
+
+	/**
+	 * 如果条件成立则执行方法（如果是需要检测然后抛异常请勿调用该方法，请调用isTrue方法）
+	 * @param expression
+	 * @param function
+	 */
+	public static void isTrueCall(boolean expression, VoidFunc function) {
+		if(expression) {
+			function.callWithRuntimeException();
+		}
+	}
+
+	/**
+	 * 校验对象
+	 *
+	 * @param object 待校验对象
+	 * @param groups 待校验的组
+	 * @throws ServiceException 校验不通过，则报ServiceException异常
+	 */
+	public static void validateEntity(Object object, Class<?>... groups)
+			throws ServiceException {
+		Set<ConstraintViolation<Object>> constraintViolations = validator.validate(object, groups);
+		if (!constraintViolations.isEmpty()) {
+			List<ConstraintViolation<Object>> sortedConstraintViolations = new ArrayList<>(constraintViolations);
+			sortedConstraintViolations = sortedConstraintViolations.stream().sorted(Comparator.comparing(ConstraintViolation::getMessage)).collect(Collectors.toList());
+			ConstraintViolation<Object> constraint = sortedConstraintViolations.iterator().next();
+			throw new ServiceException(ApiError.ERROR_400.code, constraint.getMessage());
+		}
 	}
 
 }

@@ -22,6 +22,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceService;
 import com.erp.server.scm.listener.PurchasePriceDetailExcelListener;
 import com.erp.server.scm.mapper.PurchasePriceDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
@@ -77,6 +78,8 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     @Resource
     private PurchasePriceHistoryService purchasePriceHistoryService;
 
+    @Resource
+    private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
 
     /**
      * 检查sku 区间报价
@@ -506,7 +509,12 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         detailList.forEach(d -> d.setDisabled(disabled));
 
-        return this.updateBatchById(detailList);
+        this.updateBatchById(detailList);
+
+        //金蝶更新分录禁用
+        syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList,disabled);
+
+        return Boolean.TRUE;
     }
 
 

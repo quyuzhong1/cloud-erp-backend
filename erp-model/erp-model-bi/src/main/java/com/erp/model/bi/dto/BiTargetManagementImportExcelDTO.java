@@ -1,6 +1,8 @@
 package com.erp.model.bi.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.enums.ProductTypeEnum;
+import com.common.core.anno.FieldValid;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,24 +28,28 @@ public class BiTargetManagementImportExcelDTO implements Serializable {
      * 平台
      */
     @ExcelProperty(value = "*平台", index = 1)
+    @FieldValid(fieldName = "平台", isNotBlank = true)
     private String platformName;
 
     /**
      * 品类
      */
     @ExcelProperty(value = "*品类", index = 2)
+    @FieldValid(fieldName = "品类", isNotBlank = true)
     private String category;
 
     /**
      * 销量/销售额
      */
     @ExcelProperty(value = "*销量/销售额", index = 3)
+    @FieldValid(fieldName = "销量/销售额", isNotBlank = true, enumClass = ProductTypeEnum.class)
     private String targetTypeName;
 
     /**
      * 新老品
      */
     @ExcelProperty(value = "*新品/老品", index = 4)
+    @FieldValid(fieldName = "新品/老品", isNotBlank = true, enumClass = ProductTypeEnum.class)
     private String productTypeName;
 
     /**
@@ -61,7 +67,7 @@ public class BiTargetManagementImportExcelDTO implements Serializable {
     /**
      * SPU
      */
-    @ExcelProperty(value = "*SPU", index = 7)
+    @ExcelProperty(value = "SPU", index = 7)
     private String spuNo;
 
     /**

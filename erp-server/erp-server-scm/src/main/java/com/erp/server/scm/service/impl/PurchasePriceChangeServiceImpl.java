@@ -12,6 +12,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -29,6 +30,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
+import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,6 +80,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
+
+    @Resource
+    private SyncKingdeePurchasePriceChangeService syncKingdeePurchasePriceChangeService;
 
     /**
      * 添加采购价目变更
@@ -131,9 +137,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         //判断是否能通过
         Boolean isPass = getIsPass(dto.getPurchasePriceChangeDetailList());
-        if (isPass) {
-            changeEntity.setApproveStatus(ApproveStatusEnum.getByStatus(approveStatus));
-        }
+
         //获取组织
         List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
@@ -154,7 +158,15 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             purchasePriceChangeDetailService.addPriceChangeDetail(id, dto.getPurchasePriceChangeDetailList());
 
             if (isPass) {
-                purchasePriceChangeDetailService.updatePurchasePriceDetail(Arrays.asList(changeEntity));
+                //提交
+                Boolean isSubmit = this.submitApprove(Arrays.asList(changeEntity.getId()));
+                if (isSubmit) {
+                    //审核
+                    BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
+                    paramDTO.setIds(Arrays.asList(changeEntity.getId()));
+                    paramDTO.setType(ScmConstant.PASS);
+                    this.approve(paramDTO);
+                }
             }
 
             //添加日志
@@ -480,6 +492,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (result) {
             //当是审核通过的时候 就要去复写 且添加历史数据
             if (isPass) {
+                //推送金蝶数据
+                list.forEach(obj -> syncKingdeePurchasePriceChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
                 purchasePriceChangeDetailService.updatePurchasePriceDetail(list);
             }
             //添加日志
@@ -613,6 +627,15 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         return purchasePriceDetailService.getPriceChangeDetail(purchasePriceId);
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .in(PurchasePriceChangeEntity::getId,ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceChangeEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),PurchasePriceChangeEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
 
     /**
      * 修改状态

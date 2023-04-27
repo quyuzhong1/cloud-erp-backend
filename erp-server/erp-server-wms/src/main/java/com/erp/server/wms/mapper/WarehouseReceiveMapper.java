@@ -1,8 +1,16 @@
 package com.erp.server.wms.mapper;
 
-import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.QcInfoDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.WarehouseReceiveExcelDTO;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +23,17 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntity> {
 
+    IPage<WarehouseReceiveDTO.PagingViewDTO> paging(Page query, @Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
+    Integer listCount(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
+    List<WarehouseReceiveDTO.GetReceiveDTO> getReceiveQty(@Param("purchaseOrderId") String purchaseOrderId);
+
+    List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(@Param("purchaseOrderId") String purchaseOrderId);
+
+    List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInView(@Param("ids") List<String> ids);
+
+    List<WarehouseReceiveExcelDTO> warehouseReceiveExportExcel(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
+
+    List<QcInfoDTO.ReceiveToQcDTO> getQcList(@Param("mainIds") List<String> mainIds);
 }

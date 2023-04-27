@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.entity.QcReportEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +19,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface QcReportMapper extends BaseMapper<QcReportEntity> {
 
+    List<QcReportDTO.ListDTO> getByQcType(@Param("qcType") String qcType,@Param("approveStatus") String approveStatus);
+
+
+    List<QcReportDTO.ListDTO> listByQcType(@Param("qcTypeList")List<String> qcTypeList, @Param("approveStatus")String approveStatus);
 }

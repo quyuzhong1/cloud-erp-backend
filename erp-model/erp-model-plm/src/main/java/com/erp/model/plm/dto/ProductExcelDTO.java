@@ -19,7 +19,7 @@ public class ProductExcelDTO implements Serializable {
 
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "产品id", index = 0)
+    @ExcelProperty(value = "产品编号", index = 0)
     private String productId;
 
     @ColumnWidth(30)

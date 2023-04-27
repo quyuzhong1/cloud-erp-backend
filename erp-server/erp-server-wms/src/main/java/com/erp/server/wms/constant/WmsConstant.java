@@ -18,4 +18,34 @@ public interface WmsConstant {
      * 通过类型
      */
     String PASS = "pass";
+
+
+    /**
+     * 质检产品图片 类型
+     */
+    String QC_PRODUCT="product";
+
+    /**
+     * 质检外箱图片 类型
+     */
+    String QC_BOX="box";
+
+
+    /**
+     * 质检单 质检报告附件
+     */
+    String QC_REPORT="report";
+
+
+    /**
+     * 质检信息不良
+     */
+    String BAD="bad";
+
+
+    /**
+     * 质检结果处理措施
+     */
+    String QC_RESULT_HANDLE_MODE="returnSupplier";
+
 }

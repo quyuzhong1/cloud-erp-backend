@@ -10,6 +10,8 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -73,6 +75,29 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     @TableField("purchase_org_name")
     private String purchaseOrgName;
 
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步金蝶时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
+
+    /**
+     * 明细ids
+     */
+    @TableField(exist = false)
+    private List<String> ids;
 
 
     @Override

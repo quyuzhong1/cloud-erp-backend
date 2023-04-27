@@ -2,7 +2,10 @@ package com.erp.server.scm.controller;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -10,6 +13,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -36,6 +42,9 @@ public class PurchaseOrderController extends BaseController {
 
     @Resource
     private PurchaseOrderService purchaseOrderService;
+
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
      * 分页查询
@@ -140,22 +149,6 @@ public class PurchaseOrderController extends BaseController {
         return success(dto);
     }
 
-    /**
-     * 查询关联单据
-     * @author Will
-     * @date: 2023/4/3 14:32
-     * @param dto
-     * @return ApiResult<AssociatedDocumentDTO>
-     */
-    @PostMapping("/viewAssociatedDocuments")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "change_user_id",
-            menuCode = "scm:purchaseChange:paging",
-            tableAlias = "pc")
-    public ApiResult<PurchaseOrderDTO.AssociatedDocumentDTO> viewAssociatedDocuments(@RequestBody @Validated BaseIdDTO dto) {
-        PurchaseOrderDTO.AssociatedDocumentDTO resultDTO = purchaseOrderService.viewAssociatedDocuments(dto);
-        return success(resultDTO);
-    }
 
     /**
      * 删除
@@ -289,18 +282,6 @@ public class PurchaseOrderController extends BaseController {
         List<PurchaseOrderDTO.ViewGenerateStockInDTO> list = purchaseOrderService.viewGenerateStockIn(dto.getIds());
         return success(list);
     }
-    /**
-     * 下推采购入库单保存
-     * @author Will
-     * @date: 2023/4/13 11:37
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
-        Boolean flag = purchaseOrderService.generateStockIn(dto);
-        return flag == true ? success() : failure();
-    }
 
     /**
      * 结束交货
@@ -389,5 +370,75 @@ public class PurchaseOrderController extends BaseController {
         Boolean flag = purchaseOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
+
+    /**
+     * 查询单个采购订单
+     * @author Will
+     * @date: 2023/4/17 9:14
+     * @param id
+     * @return ApiResult<GetOneDTO>
+     */
+    @GetMapping(value = "/getPurchaseOrder")
+    public ApiResult<PurchaseOrderDTO.GetOneDTO> getPurchaseOrder(@RequestParam("id") String id) {
+        PurchaseOrderDTO.GetOneDTO getOneDTO = purchaseOrderService.getPurchaseOrder(id);
+        return success(getOneDTO);
+    }
+
+
+    /**
+     * 根据采购订单id 获取质检产品信息
+     * @author yl
+     * @date 2023-04-17 18:23
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
+     */
+    @GetMapping(value = "/getQcProductInfo")
+    public ApiResult<PurchaseOrderDTO.GetQcProductDTO> getQcProductInfo(@RequestParam("id") String id) {
+        PurchaseOrderDTO.GetQcProductDTO result = purchaseOrderService.getQcProductInfo(id);
+        return success(result);
+    }
+
+    /**
+     * 添加产品数据显示
+     * @author Will
+     * @date: 2023/4/14 10:21
+     * @param dto
+     * @return ApiResult<ViewProductDTO>
+     */
+    @PostMapping(value = "/viewProduct")
+    public ApiResult<List<PurchaseOrderDetailDTO.ViewProductDTO>> viewProduct(@RequestBody @Validated PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ViewProductDTO> list = purchaseOrderDetailService.viewProduct(dto);
+        return success(list);
+    }
+
+
+    /**
+     * 采购订单 下推退货单数据显示
+     * @author yl
+     * @date 2023-04-25 9:37
+     * @param dto
+     * @return
+     */
+    @PostMapping("/viewGeneratePurchaseReturnOrder")
+    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseOrderService.viewGeneratePurchaseReturnOrder(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推退货单数据保存
+     * @author Will
+     * @date: 2023/4/11 20:33
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generatePurchaseReturnOrder")
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        Boolean flag = purchaseOrderService.generatePurchaseReturnOrder(dto);
+        return flag ? success() : failure();
+    }
+
+
 
 }

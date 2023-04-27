@@ -5,7 +5,10 @@ import cn.hutool.core.collection.CollectionUtil;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -229,6 +232,14 @@ public class LocalDateUtil {
         Month firstMonthOfLastQuarter = firstMonthOfQuarter.minus(1L);
         int yearOfLastQuarter = firstMonthOfQuarter.getValue() < 4 ? date.getYear() - 1 : date.getYear();
         return LocalDateTime.of(LocalDate.of(yearOfLastQuarter, firstMonthOfLastQuarter, firstMonthOfLastQuarter.maxLength()), LocalTime.MAX);
+    }
+
+    /**
+     * 导入接收后转为localDateTime
+     */
+    public static LocalDateTime stringToLocalDateTime(String strDate) {
+        Date date = EnumTimePattern.parseDate(strDate);
+       return LocalDateUtil.date2LocalDateTime(date);
     }
 
 

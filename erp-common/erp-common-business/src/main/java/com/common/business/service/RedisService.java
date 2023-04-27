@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * @Created by yl
  */
 @Component
-public class RedisService {
+public class RedisService  {
 
 
     @Autowired
@@ -236,4 +236,5 @@ public class RedisService {
         Boolean result = redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
         return result != null && result;
     }
+
 }

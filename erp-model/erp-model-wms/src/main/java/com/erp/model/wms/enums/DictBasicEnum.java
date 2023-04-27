@@ -9,7 +9,8 @@ package com.erp.model.wms.enums;
  */
 public enum DictBasicEnum {
 
-    WAREHOUSE_TYPE("warehouseType", "warehouseType", "仓库类型");
+    WAREHOUSE_TYPE("warehouseType", "warehouseType", "仓库类型"),
+    QC_REPORT_RESULT("qcReportResult", "qcReportResult", "质检单质检结果");
 
 
     private String key;

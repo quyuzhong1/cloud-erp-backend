@@ -12,6 +12,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -45,6 +46,22 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return
      */
     List<DimensionSalesVO> sumByDeptAndCostType(@Param("params") BiFilterDTO dto, @Param("groupName") String groupName);
+
+    /**
+     * 根据不同维度统计销售额
+     *
+     * @param dto
+     * @param flag
+     * @return
+     */
+    BigDecimal sumSales(@Param("params") BiFilterDTO dto, @Param("flag") Integer flag);
+
+    /**
+     * 根据不同维度统计销售量
+     * @param dto
+     * @return
+     */
+    Integer countSalesVolume(@Param("params") BiFilterDTO dto);
 }
 
 

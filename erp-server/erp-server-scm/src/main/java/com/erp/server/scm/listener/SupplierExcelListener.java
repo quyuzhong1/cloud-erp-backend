@@ -296,31 +296,31 @@ public class SupplierExcelListener extends AnalysisEventListener<SupplierImportE
 
         //资质名称
         if (StringUtils.isNotBlank(credentialName)) {
-        //已存在的
-        SupplierCredentialDTO.ImportAddDTO existCredential = credentialList.stream().filter(c -> c.getSupplierName().equals(name) &&
+            //已存在的
+            SupplierCredentialDTO.ImportAddDTO existCredential = credentialList.stream().filter(c -> c.getSupplierName().equals(name) &&
                     c.getName().equals(credentialName)).findFirst().orElse(null);
-        if (Objects.isNull(existCredential)) {
-            credentialList.add(credential);
-        }
+            if (Objects.isNull(existCredential)) {
+                credentialList.add(credential);
+            }
         }
 
 
         if(StringUtils.isNotBlank(payee)){
-        //已存在的
-        SupplierAccountDTO.ImportAddDTO existAccount = bankAccountList.stream().filter(b -> b.getPayee().equals(excelDTO.getPayee()) &&
-                b.getSupplierName().equals(name)).findFirst().orElse(null);
-        if (Objects.isNull(existAccount)) {
-            bankAccountList.add(bankAccount);
-        }
+            //已存在的
+            SupplierAccountDTO.ImportAddDTO existAccount = bankAccountList.stream().filter(b -> b.getPayee().equals(excelDTO.getPayee()) &&
+                    b.getSupplierName().equals(name)).findFirst().orElse(null);
+            if (Objects.isNull(existAccount)) {
+                bankAccountList.add(bankAccount);
+            }
         }
 
         if(StringUtils.isNotBlank(person)){
-        //存在的联系人
-        SupplierContactDTO.ImportAddDTO existContact = contactList.stream().filter(c -> c.getSupplierName().equals(name) &&
+            //存在的联系人
+            SupplierContactDTO.ImportAddDTO existContact = contactList.stream().filter(c -> c.getSupplierName().equals(name) &&
                     c.getPerson().equals(person)).findFirst().orElse(null);
-        if (Objects.isNull(existContact)) {
-            contactList.add(contact);
-        }
+            if (Objects.isNull(existContact)) {
+                contactList.add(contact);
+            }
         }
 
 

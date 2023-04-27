@@ -24,16 +24,6 @@ public class WarehouseReceiveDetailDTO {
     public static class AddDTO {
 
         /**
-         * skuId
-         */
-        private String skuId;
-
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
          * 收货数量
          */
         private Integer receiveQty;
@@ -61,14 +51,19 @@ public class WarehouseReceiveDetailDTO {
     @NoArgsConstructor
     public static class UpdateDTO {
         /**
-         * 收货单明细id
+         * 收货单详情表id
          */
         private String id;
 
         /**
+         * 收货单主表id
+         */
+        private String main_id;
+
+        /**
          * 采购单详情表id
          */
-        private String purchaseDetailId;
+        private String PurchaseOrderDetailId;
 
         /**
          * 收货数量
@@ -120,12 +115,17 @@ public class WarehouseReceiveDetailDTO {
         /**
          * 计划交货时间
          */
-        private LocalDate planReceiveTime;
+        private LocalDate planDeliveryDate;
 
         /**
          * 采购数量
          */
         private Integer purchaseQty;
+
+        /**
+         * 未签收数量
+         */
+        private Integer unReceiveQty;
 
         /**
          * 收货数量
@@ -141,6 +141,11 @@ public class WarehouseReceiveDetailDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 采购单详情表id
+         */
+        private String PurchaseOrderDetailId;
     }
 
 }

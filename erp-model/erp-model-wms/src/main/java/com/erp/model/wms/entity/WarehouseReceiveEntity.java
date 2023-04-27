@@ -10,8 +10,8 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.*;
 import lombok.experimental.Accessors;
 
 /**
@@ -119,6 +119,12 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
     private LocalDateTime invalidTime;
 
     /**
+     * 作废描述
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
+    /**
      * 审核人id
      */
     @TableField("approve_user_id")
@@ -147,6 +153,18 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
      */
     @TableField("delivery_warehouse_name")
     private String deliveryWarehouseName;
+
+    /**
+     * 采购员id
+     */
+    @TableField("purchase_user_id")
+    private String purchaseUserId;
+
+    /**
+     * 采购员名称
+     */
+    @TableField("purchase_user_name")
+    private String purchaseUserName;
 
     @Override
     public Serializable pkVal() {

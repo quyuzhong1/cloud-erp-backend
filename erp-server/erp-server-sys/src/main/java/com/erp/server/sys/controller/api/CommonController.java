@@ -1,18 +1,19 @@
 package com.erp.server.sys.controller.api;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.EnumCacheUtils;
 import com.common.core.utils.FastDFSClientUtil;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -63,5 +64,30 @@ public class CommonController extends BaseController {
 
     }
 
+    /**
+     * 批量获取枚举下拉框，供前端调用，不用每个枚举类都提供一个单独的接口（每个服务都有专属自己的）
+     * @param types
+     * @return
+     */
+    @GetMapping("enumDropDownBatch")
+    public ApiResult<Map<String,List<Map<String,Object>>>> enumSelect(@RequestParam(value = "types")List<String> types) {
+        Map<String,List<Map<String,Object>>> typeMaps = Maps.newHashMap();
+        Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
+        if(CollectionUtil.isNotEmpty(types)) {
+            types.stream().forEach(r-> typeMaps.put(r,enumMaps.get(r)));
+        }
+        return success(typeMaps);
+    }
+
+    /**
+     * 获取枚举下拉框，供前端调用，不用每个枚举类都提供一个单独的接口（每个服务都有专属自己的）
+     * @param type
+     * @return
+     */
+    @GetMapping("enumDropDown")
+    public ApiResult<List<Map<String,Object>>> enumSelect(@RequestParam(value = "type")String type) {
+        Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
+        return success(enumMaps.get(type));
+    }
 
 }

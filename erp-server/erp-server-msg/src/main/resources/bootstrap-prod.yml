@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.10
+        namespace: prod
+      config:
+        server-addr: 172.16.100.10
+        namespace: prod
+        file-extension: yml
+        shared-configs: common.yml,erp-msg.yml
+#显示日期的
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+
+
+
+
+
+
+

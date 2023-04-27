@@ -124,7 +124,7 @@ public class PurchasePriceChangeController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
-            menuCode = "scm:purchase:price:change:view",
+            menuCode = "scm:purchase:price:change:priceChangeDetail",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
     public ApiResult<PurchasePriceChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
@@ -211,11 +211,6 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
-            menuCode = "scm:purchase:price:change:approve",
-            serviceClass = PurchasePriceChangeService.class,
-            keyIdName = "ids")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = purchasePriceChangeService.approve(dto);
         return result == true ? success() : failure();

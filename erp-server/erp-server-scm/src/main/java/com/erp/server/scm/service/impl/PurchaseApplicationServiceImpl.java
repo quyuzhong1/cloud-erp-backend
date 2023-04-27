@@ -39,6 +39,8 @@ import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -114,15 +116,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
-        //清空明细数据
         List<PurchaseApplicationDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据处理
+        doOpHandlePurchaseApplication(records);
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> ids = records.stream().map(PurchaseApplicationDTO.ListDTO::getId).collect(Collectors.toList());
-            //查询流程id判断是否存在流程 TODO
-
             List<String> list = new ArrayList<>();
-            records.forEach(obj -> {
-                obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
+            for (PurchaseApplicationDTO.ListDTO obj : records) {
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
@@ -130,14 +132,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     obj.setApproveStatusName(null);
                     obj.setIsFirstMassProduct(null);
                     obj.setCreateUserName(null);
-                    return;
+                    continue;
                 }
-                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 list.add(obj.getId());
-            });
+            }
         }
         return new PagingVO(pageData);
     }
+
+
 
     @Override
     public List<ListStatusCountDTO.PurchaseApplicationCountDTO> listCount(PermissionsDTO dto) {
@@ -259,8 +262,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<PurchaseApplicationEntity> list = getList(ids);
-        //审核中和已审核允许反审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        //已审核允许反审核
+        long count = list.stream().filter(obj ->  !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
@@ -496,7 +499,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
-        List<PurchaseApplicationExportExcelDTO> resultList = baseMapper.listExportExcel(dto);
+        List<PurchaseApplicationDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        //数据处理
+        doOpHandlePurchaseApplication(list);
+        List<PurchaseApplicationExportExcelDTO> resultList = BeanMapperUtils.copyList(PurchaseApplicationExportExcelDTO.class, list);
         String fileName = "采购申请单数据";
         try {
             ExcelUtil.export(fileName, "采购申请单数据", resultList, PurchaseApplicationExportExcelDTO.class, response);
@@ -764,4 +773,59 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         return  detailList;
     }
 
+    /**
+     * @description: 列表查询数据处理
+     * @author Will
+     * @date: 2023/4/19 17:57
+     * @param records
+     */
+    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records){
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+
+        //查询关联采购
+        List<String> detailIds = records.stream().map(PurchaseApplicationDTO.ListDTO::getPurchaseApplicationDetailId).collect(Collectors.toList());
+        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
+        searchParamDTO.setPurchaseApplicationDetailIds(detailIds);
+        List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
+        //入库信息
+        List<PurchaseStockInDetailEntity> purchaseStockInDetailList = new ArrayList<>();
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList =  new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(refList)) {
+            List<String> podIds = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+            //查询入库
+            purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+            //查询收货
+            receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        }
+
+        for (PurchaseApplicationDTO.ListDTO obj : records){
+            //采购数量
+            if (CollectionUtils.isNotEmpty(refList)) {
+                Integer purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setRealPurchaseQty(purchaseQty);
+            }
+            //入库数量
+            if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(thisPodIds)) {
+                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    obj.setStockInQty(stockInQty);
+                }
+            }
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(thisPodIds)) {
+                    Integer receiveQty = receiveDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    obj.setReceiveQty(receiveQty);
+                }
+            }
+
+            obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+        }
+    }
 }

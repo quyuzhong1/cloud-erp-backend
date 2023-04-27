@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.common.business.vo.LoginUser;
@@ -14,6 +15,7 @@ import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -157,5 +159,15 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
         this.remove(queryWrapper);
 
+    }
+
+    @Override
+    public List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds) {
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
+        queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        List<SysUserThirdEntity> sysUserThirdEntitys =  this.list(queryWrapper);
+        List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,sysUserThirdEntitys);
+        return thirdUnionDTOs;
     }
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.ProcessDefinitionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.ProcessDefinitionEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="process_name" property="processName" />
+        <result column="process_version" property="processVersion" />
+        <result column="bpmn_xml" property="bpmnXml" />
+        <result column="is_deploy" property="isDeploy" />
+        <result column="remark" property="remark" />
+    </resultMap>
+    <sql id="query_list_sql">
+        <if test="null != params and params.processName != null and params.processName != ''">
+            and pd.process_name ilike  concat('%',#{params.processName},'%')
+        </if>
+        <if test="null != params and params.createUserIds != null and params.createUserIds.size() > 0">
+            and pd.create_user_id in
+            <foreach collection="params.createUserIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != params and params.createTimeList != null and params.createTimeList.size() == 2">
+            and pd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pd.create_time
+        </if>
+        order by pd.create_time desc
+    </sql>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$ListDTO">
+        SELECT
+        pd.id,
+        pd.process_name,
+        wm.module_classify as businessName,
+        pd.process_version,
+        pd.create_user_name as createUserName,
+        pd.create_time as createTime,
+        pd.bpmn_xml as bpmnXml,
+        pd.is_deploy as isDeploy,
+        pb.business_key,
+        pd.remark,
+        pd.review_setting
+        FROM
+        process_definition pd
+        LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
+        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
+        where pd.is_deleted = false
+        <if test="null != params and params.id != null and params.id != ''">
+            and pd.id = #{params.id}
+        </if>
+       <include refid="query_list_sql"/>
+    </select>
+    <select id="query" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$ExportDTO"
+            parameterType="com.erp.model.workflow.dto.ProcessDefinitionDTO$QueryExportDTO">
+        SELECT
+        pd.id,
+        pd.process_name,
+        wm.module_classify as businessName,
+        pd.process_version,
+        pd.create_user_name as createUserName,
+        pd.create_time as createTime,
+        pd.bpmn_xml as bpmnXml,
+        case  WHEN pd.is_deploy THEN '是' else '否' END as isDeploy,
+        pb.business_key,
+        pd.remark,
+        db.name AS reviewSetting
+        FROM
+        process_definition pd
+        LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
+        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
+        LEFT JOIN dict_basic db on db.value = pd.review_setting and db.is_deleted = false  and db.type = 'reviewSetting'
+        where pd.is_deleted = false
+        <if test="null != params and params.id != null and params.id.size() > 0">
+            and pd.id in
+            <foreach collection="params.id" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <include refid="query_list_sql"/>
+    </select>
+
+</mapper>

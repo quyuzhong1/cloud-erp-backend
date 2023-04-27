@@ -1,9 +1,15 @@
 package com.erp.server.plm.controller;
 
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BasicDictDTO;
+import com.erp.model.plm.dto.CategoryControllerDTO;
+import com.erp.model.plm.dto.DictControllerDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.service.BasicDictService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -11,7 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 公共接口
@@ -60,6 +69,29 @@ public class BasicDictController extends BaseController {
     public ApiResult<List<BasicDictEntity>> list(String type) {
         List<BasicDictEntity> list = basicDictService.listByType(type);
         return success(list);
+    }
+
+    /**
+     * 字典下拉框
+     * @mock productBrand
+     * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家
+     */
+    @GetMapping("/drop/down")
+    public ApiResult<List<DictControllerDTO.DictDropDownDTO>> listDictDropDown(@RequestParam(name = "type") String type){
+        BasicDictTypeEnum enumByType = BasicDictTypeEnum.getEnumByType(type);
+        if (null == enumByType){
+            return success(new ArrayList<>());
+        }
+        List<BasicDictEntity> list = basicDictService.lambdaQuery()
+                .eq(StrUtil.isNotBlank(type), BasicDictEntity::getType, enumByType.getCode())
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<DictControllerDTO.DictDropDownDTO> result = list.stream()
+                .map(DictControllerDTO.DictDropDownDTO::new)
+                .collect(Collectors.toList());
+        return success(result);
     }
 
 

@@ -14,9 +14,11 @@ import com.erp.model.sys.dto.DepartmentSearchDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
+import com.erp.server.sys.service.SysUserInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,9 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Autowired
     private SysDepartmentService sysDepartmentService;
+
+    @Autowired
+    private SysUserInfoService sysUserInfoService;
 
     @Override
     public PagingVO findDepartmentUser(PagingDTO<DepartmentSearchDTO> dto) {
@@ -108,21 +113,21 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
      * @date 2022-07-29 10:45
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean saveBatchDepartmentUser(BatchSysDepartUserDTO dto) {
         Set<String> userIds = dto.getUserIds();
         String departmentId = dto.getDepartmentId();
         //先删除对应的关系
         removeDepartmentUser(departmentId, userIds);
         //在添加
-        List<SysDepartmentUserEntity> addList=new LinkedList<>();
-        for(String userId:userIds){
-            SysDepartmentUserEntity entity=new SysDepartmentUserEntity();
+        List<SysDepartmentUserEntity> addList = new LinkedList<>();
+        for (String userId : userIds) {
+            SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
             entity.setUserId(userId);
             entity.setDepartmentId(departmentId);
             addList.add(entity);
         }
-        if(CollectionUtils.isNotEmpty(addList)){
+        if (CollectionUtils.isNotEmpty(addList)) {
             return this.saveBatch(addList);
         }
         return false;
@@ -131,13 +136,13 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public SysDepartmentUserNumberDTO getByUserId(String id) {
         LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysDepartmentUserEntity::getUserId,id);
-        queryWrapper.ne(SysDepartmentUserEntity::getDepartmentId,"");
+        queryWrapper.eq(SysDepartmentUserEntity::getUserId, id);
+        queryWrapper.ne(SysDepartmentUserEntity::getDepartmentId, "");
         queryWrapper.last("limit 1");
         SysDepartmentUserEntity sysDepartmentUserEntity = this.getOne(queryWrapper);
         SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO();
         if (ObjectUtils.isNotEmpty(sysDepartmentUserEntity)) {
-            BeanMapperUtils.copy(sysDepartmentUserEntity,dto);
+            BeanMapperUtils.copy(sysDepartmentUserEntity, dto);
         }
         return dto;
     }
@@ -145,15 +150,15 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public List<SysDepartmentUserEntity> listByDepartmentIds(List<String> departmentIdList) {
         LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SysDepartmentUserEntity::getDepartmentId,departmentIdList);
+        queryWrapper.in(SysDepartmentUserEntity::getDepartmentId, departmentIdList);
         return this.list(queryWrapper);
     }
 
     @Override
     public List<SysDepartmentUserEntity> listSuperiorById(String id) {
         LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysDepartmentUserEntity::getDepartmentId,id);
-        queryWrapper.eq(SysDepartmentUserEntity::getLeadState,1);
+        queryWrapper.eq(SysDepartmentUserEntity::getDepartmentId, id);
+        queryWrapper.eq(SysDepartmentUserEntity::getLeadState, 1);
         return this.list(queryWrapper);
     }
 
@@ -163,7 +168,12 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         if (CollectionUtils.isEmpty(list)) {
             return new SysDepartmentUserNumberDTO();
         }
-        SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO( list.get(0).getDepartmentId(), list.get(0).getUserId(),"");
+        SysUserInfoEntity userInfo = sysUserInfoService.getById(userId);
+        String userName = "";
+        if (userInfo != null) {
+            userName = userInfo.getUserName();
+        }
+        SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO(list.get(0).getDepartmentId(), "", userId, userName);
         return dto;
     }
 

@@ -24,10 +24,11 @@ import java.io.Serializable;
 public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
 
     /**
-     * key 查询依据
+     * 当需要用到
+     * 两个维度 获取值是可填
      */
-    @TableField("key")
-    private String key;
+    @TableField("remark")
+    private String remark;
 
     /**
      * value 使用值

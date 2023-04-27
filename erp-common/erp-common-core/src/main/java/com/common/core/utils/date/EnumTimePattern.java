@@ -19,6 +19,11 @@ public enum EnumTimePattern {
 	ym("^[0-9]{4}[0-9]{2}$", "yyyyMM", null, null),
 
 	/**
+	 * 日期格式：2019年4月
+	 */
+	ym_ch("^[0-9]{4}[年][0-9]{1,2}[月]$", "yyyy年M月", null, null),
+
+	/**
 	 * 日期格式：20190401
 	 */
 	ymd("^[0-9]{4}[0-9]{2}[0-9]{2}$", "yyyyMMdd", null, null),

@@ -72,7 +72,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(ProductDetailEntity entity) {
+    public void syncDataToKingdee(ProductDetailEntity entity,String operate) {
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
@@ -90,6 +90,10 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
         ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(entity.getId());
 
         Map<String, Object> resultMap = new HashMap<>();
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
         //sku
         resultMap.put("id", entity.getId());
         //sku
@@ -247,7 +251,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return productDetailService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.IN_SYNC.getCode());
+                return productDetailService.updateSyncKingdeeStatus(entity.getId(),SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
             }
            return Boolean.TRUE;
         });

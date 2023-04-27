@@ -92,7 +92,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             ProductDetailEntity productDetailEntity = productDetailService.getById(saleEntity.getSkuId());
             NewProductDTO map = new NewProductDTO();
             map.setSkuNo(productDetailEntity.getSkuNo());
-//            map.put("pastListingTime", pastListingTime);
+            map.setNewListingTime(pastListingTime);
             map.setNewListingTime(newListingTime);
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, saleEntity.getId());
         }
@@ -122,13 +122,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
 /*                ProductSaleEntity productSaleEntity = productSaleEntities.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new ProductSaleEntity());
                 pastListingTime = productSaleEntity.getListingTime();
                 if (!newListingTime.equals(pastListingTime)) {*/
-                ProductDetailEntity productDetailEntity = productDetailService.getById(req.getSkuId());
-                NewProductDTO map = new NewProductDTO();
-                map.setId(req.getId());
-                map.setSkuNo(productDetailEntity.getSkuNo());
+                    ProductDetailEntity productDetailEntity = productDetailService.getById(req.getSkuId());
+                    NewProductDTO map = new NewProductDTO();
+                    map.setId(req.getId());
+                    map.setSkuNo(productDetailEntity.getSkuNo());
 //                    map.put("pastListingTime", pastListingTime);
-                map.setNewListingTime(newListingTime);
-                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, req.getId());
+                    map.setNewListingTime(newListingTime);
+                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, req.getId());
 //                }
             }
 

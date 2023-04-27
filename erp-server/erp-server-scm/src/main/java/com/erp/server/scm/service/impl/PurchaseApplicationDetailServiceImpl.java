@@ -140,6 +140,13 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
         List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIds);
 
+        //添加操作日志
+        List<PurchaseApplicationDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchaseApplicationId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(), addPairList, "编辑操作");
+        }
+
         for (PurchaseApplicationDetailEntity entity : newList) {
             entity.setPurchaseApplicationId(purchaseApplicationId);
             //仓库名称
@@ -162,10 +169,8 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
             entity.setReceiveOrgName(receiveOrgName);
 
-            //操作日志
-            if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),purchaseApplicationId,"编辑操作");
-            } else {
+            //修改操作日志
+            if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseApplicationDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98017);

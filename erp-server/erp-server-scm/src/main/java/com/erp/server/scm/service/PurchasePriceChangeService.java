@@ -120,4 +120,8 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO>
      */
     List<PurchasePriceChangeDetailDTO.ViewDTO> getSkuChangeList(String purchasePriceId);
+    /**
+     * 更新金蝶同步状态
+     */
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId);
 }

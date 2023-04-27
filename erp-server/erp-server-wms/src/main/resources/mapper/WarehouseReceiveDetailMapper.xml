@@ -3,5 +3,33 @@
 <mapper namespace="com.erp.server.wms.mapper.WarehouseReceiveDetailMapper">
 
 
-
+    <select id="listWarehouseReceiveByPodIds"
+            resultType="com.erp.model.wms.entity.WarehouseReceiveDetailEntity">
+        select
+            wrd.id,
+            wr.approve_status,
+            wr.approve_time,
+            wr.approve_user_name,
+            wrd.main_id,
+            wrd.sku_id,
+            wrd.sku_no,
+            wrd.plan_delivery_date,
+            wrd.receive_qty,
+            wrd.exceed_qty,
+            wrd.remark,
+            wrd.purchase_order_detail_id
+        from
+        warehouse_receive wr
+        inner join warehouse_receive_detail wrd on wr.id = wrd.main_id and wrd.is_deleted = false
+        <where>
+            wr.is_deleted = false and wr.invalid_status = false
+            <if test="purchaseDetailIds != null and purchaseDetailIds.size > 0">
+               and wrd.purchase_order_detail_id in
+                <foreach collection="purchaseDetailIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by wr.create_time asc
+    </select>
 </mapper>

@@ -29,4 +29,12 @@ public interface PurchasePriceChangeDetailMapper extends BaseMapper<PurchasePric
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(@Param("supplierId") String supplierId,@Param("statusList") List<String> statusList );
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/4/24 20:05
+     * @param purchasePriceChangeId
+     * @return List<PurchasePriceChangeDetailEntity>
+     */
+    List<PurchasePriceChangeDetailEntity> listByPurchasePriceChangeId(@Param("purchasePriceChangeId") String purchasePriceChangeId);
 }

@@ -8,8 +8,7 @@ package com.common.business.constant;
  */
 public class AuthPassPath {
 
-
-    public static final String PASS_PATH_LIST = "/user/accountLogin;/user/scanCodeLogin;/calendar/save/year";
+    public static final String PASS_PATH_LIST = "/user/accountLogin;/user/scanCodeLogin;/calendar/save/year;/user/forgotPasswordGetCode;/user/forgotPassword";
 
 
 

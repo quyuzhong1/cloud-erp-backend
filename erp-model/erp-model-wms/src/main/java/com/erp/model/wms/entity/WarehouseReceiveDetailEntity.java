@@ -1,17 +1,15 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -30,8 +28,8 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     /**
      * 签收单主表id
      */
-    @TableField("warehouse_receive_id")
-    private String warehouseReceiveId;
+    @TableField("main_id")
+    private String mainId;
 
     /**
      * skuId
@@ -48,8 +46,8 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
     /**
      * 计划交货时间
      */
-    @TableField("plan_receive_time")
-    private LocalDate planReceiveTime;
+    @TableField("plan_delivery_date")
+    private LocalDate planDeliveryDate;
 
     /**
      * 收货数量
@@ -74,6 +72,15 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
      */
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
+
+    @TableField(exist = false)
+    private String approveUserName;
+
+    @TableField(exist = false)
+    private LocalDateTime approveTime;
+
+    @TableField(exist = false)
+    private String approveStatus;
 
 
     public static final String WAREHOUSE_RECEIVE_ID = "warehouse_receive_id";

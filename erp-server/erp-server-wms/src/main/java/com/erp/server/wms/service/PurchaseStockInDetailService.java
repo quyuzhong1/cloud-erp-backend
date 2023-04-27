@@ -20,22 +20,56 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @author Will
      * @date: 2023/4/13 15:49
      * @param details
-     * @param purchaseStockInId
+     * @param mainId
      */
-    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String purchaseStockInId);
+    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId ,String sourceType);
     /**
      * @description: 修改明细
      * @author Will
      * @date: 2023/4/13 15:58
      * @param details
-     * @param purchaseStockInId
+     * @param mainId
      */
-    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String purchaseStockInId);
+    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId,String sourceType);
     /**
      * @description: 根据主表ids删除
      * @author Will
      * @date: 2023/4/13 16:05
-     * @param ids
+     * @param mainIds
      */
-    void removeByMainIds(List<String> ids);
+    void removeByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/4/13 17:35
+     * @param mainId
+     * @return List<PurchaseStockInDetailEntity>
+     */
+    List<PurchaseStockInDetailEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据来源ids查询明细
+     * @author Will
+     * @date: 2023/4/14 12:17
+     * @param sourceDetailIds
+     * @return List<PurchaseStockInDetailEntity>
+     */
+    List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2023/4/19 10:33
+     * @param podIds 
+     * @return List<PurchaseStockInDetailEntity> 
+     */
+    List<PurchaseStockInDetailEntity> listDetailByPodIds(List<String> podIds);
+
+    /**
+     * 根据主表id查询明细
+     * @Author Luo_WG
+     * @Date 2023/4/25 16:41
+     * @param id id
+     * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
+     **/
+    List<PurchaseStockInDetailEntity> listDetailByMainId(String id);
 }

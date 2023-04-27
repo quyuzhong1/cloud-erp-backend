@@ -2,8 +2,10 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.QcReportDTO;
+import com.erp.model.wms.dto.QcReportDetailDTO;
 import com.erp.model.wms.entity.QcReportEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -44,4 +46,41 @@ public interface QcReportService extends SuperService<QcReportEntity> {
      * @return void
      */
     void updateQcReport(String qcRuleId, List<QcReportDTO.UpdateDTO> qcReportLList);
+
+    
+    /**
+     * 根据质检类型 获取待 报告明细
+     * @author yl
+     * @date 2023-04-18 16:01
+     * @param qcType
+     * @return java.util.List<com.erp.model.wms.dto.QcReportDTO.ListDTO>
+     */
+    List<QcReportDTO.ListDTO> getByQcType(String qcType);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-04-18 16:27
+     * @param ruleIds
+     * @return void
+     */
+    void removeByRuleIds(List<String> ruleIds);
+
+
+    /**
+     * 导出质检单报告
+     * @author yl
+     * @date 2023-04-21 18:54
+     * @return void
+     */
+    void exportQcReport(QcReportDetailDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 根据质检类型获取质检报告信息
+     * @author yl
+     * @date 2023-04-26 9:50
+     * @param qcTypeList
+     * @return java.util.List<com.erp.model.wms.dto.QcReportDTO.ListDTO>
+     */
+    List<QcReportDTO.ListDTO> listByQcType(List<String> qcTypeList);
 }

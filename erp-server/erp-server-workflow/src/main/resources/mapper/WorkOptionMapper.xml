@@ -1,5 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.workflow.mapper.WorkOptionMapper">
+    <select id="listWaitDoMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
+        SELECT
+            wmrs.id,
+            wm.sys_classify AS sysClassify,
+            wm.module_classify AS moduleClassify,
+            db.name AS moduleStatusName
+        FROM work_menu wm
+        LEFT JOIN work_menu_ref_status wmrs ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        <where>
+            <if test="sysClassify != '' and sysClassify != null">
+                AND wm.sys_classify = #{sysClassify}
+            </if>
+        </where>
+        ORDER BY wm.sys_classify,wm.id
+    </select>
+
+    <select id="listOftenMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
+        SELECT
+            max(wmrs.id) id,
+            wm.sys_classify AS sysClassify,
+            wm.module_classify AS moduleClassify,
+            '' AS moduleStatusName
+        FROM work_menu wm
+        LEFT JOIN work_menu_ref_status wmrs ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        <where>
+            <if test="sysClassify != '' and sysClassify != null">
+                AND wm.sys_classify = #{sysClassify}
+            </if>
+        </where>
+        GROUP BY
+        wm.sys_classify,
+        wm.module_classify
+        ORDER BY sys_classify,max(wmrs.id)
+    </select>
+
+    <select id="listMyWorkOption" resultType="com.erp.model.workflow.dto.WorkOptionDTO$MyWorkOptionDTO">
+        SELECT
+            wo.id,
+            wmrs.id AS moduleStatusId,
+            wm.id AS menu_id,
+            wm.sys_classify AS sysClassify,
+            wm.module_classify AS moduleClassify,
+            wm.module_code AS moduleCode,
+            db.name AS moduleStatusName,
+            wmrs.module_status AS moduleStatus,
+            wmrs.module_url AS moduleUrl,
+            wmrs.module_param AS moduleParam
+        FROM work_option wo
+        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
+        LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        WHERE wo.is_deleted = FALSE AND wo.type = '1'
+            <if test="optionUserId != null and optionUserId != ''">
+                AND wo.option_user_id = #{optionUserId}
+            </if>
+        ORDER BY wm.sys_classify,wm.id
+    </select>
+
+    <select id="listFrequentlyView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$FrequentlyViewDTO">
+        SELECT
+        wo.id,
+        wmrs.id AS moduleStatusId,
+        wm.id AS menu_id,
+        wm.module_classify AS name,
+        wmrs.module_url AS moduleUrl,
+        wmrs.module_param AS moduleParam
+        FROM work_option wo
+        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.id
+        LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        WHERE wo.is_deleted = FALSE AND wo.type = '2'
+        <if test="optionUserId != null and optionUserId != ''">
+            AND wo.option_user_id = #{optionUserId}
+        </if>
+        ORDER BY wm.sys_classify,wm.id
+    </select>
 
 </mapper>

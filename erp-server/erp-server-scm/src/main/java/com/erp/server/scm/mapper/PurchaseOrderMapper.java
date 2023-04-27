@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -35,9 +35,9 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @author Will
      * @date: 2023/3/27 16:01
      * @param params
-     * @return List<PurchaseOrderExportExcelDTO>
+     * @return List<PurchaseOrderDTO.ListDTO>
      */
-    List<PurchaseOrderExportExcelDTO> listExportExcel(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+    List<PurchaseOrderDTO.ListDTO> listExportExcel(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
     /**
      * @description: 查询列表数量
      * @author Will
@@ -46,4 +46,31 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") PurchaseOrderDTO.SearchParamDTO params);
+
+    /**
+     * 下推收货单列表
+     * @Author Luo_WG
+     * @Date 2023/4/18 18:06
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.ViewGenerateReceiveDTO>
+     **/
+    List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(@Param("ids") List<String> ids);
+
+    /**
+     * 获取订单信息
+     * @author yl
+     * @date 2023-04-23 14:10
+     * @param purchaseOrderIds
+     * @return java.util.List<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
+     */
+    List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getPurchaseOrderByOrderIds(@Param("purchaseOrderIds") List<String> purchaseOrderIds);
+
+    /**
+     * 根据采购订单id 获取下推数据显示
+     * @author yl
+     * @date 2023-04-25 9:43
+     * @param ids
+     * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO
+     */
+    List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("purchaseOrderIds") List<String> ids);
 }

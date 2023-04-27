@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.QcResultMapper">
+
+
+    <select id="getByPurOrderIds" resultType="com.erp.model.wms.dto.QcResultDTO$QcQtyDTO">
+        SELECT
+        qi.main_id,qi.qc_type,
+        qi.qc_qty,qi.qc_bad_qty,
+        qi.total_qty,qi.qc_good_qty,
+        qb.purchase_order_id,qp.sku_id
+        FROM qc_result qi
+        INNER JOIN  qc_info qb
+        ON  qi.main_id=qb.id AND qb.is_deleted=false
+        LEFT JOIN qc_product qp
+        ON qp.main_id=qb.id  AND qp.is_deleted=false
+        WHERE qi.is_deleted=false AND  qb.purchase_order_id IN
+        <foreach collection="purOrderIds" item="purOrderId" open="(" separator="," close=")">
+            #{purOrderId}
+        </foreach>
+    </select>
+
+    <select id="getStockIn" resultType="com.erp.model.wms.dto.QcResultDTO$StockInDTO">
+       SELECT
+         qi.id,qi.main_id,
+         qb.purchase_order_id,
+         qb.warehouse_id,
+         qi.purchase_order_detail_id,
+         qi.qc_type,qi.total_qty
+       FROM qc_info qb
+       INNER JOIN qc_result qi
+       ON qi.main_id=qb.id
+       AND qi.is_deleted=false
+       WHERE qi.is_deleted=false
+       <if test="mainIdList!=null and mainIdList.size>0">
+          AND qb.id IN
+           <foreach collection="mainIdList" item="mainId" open="(" separator="," close=")">
+               #{mainId}
+           </foreach>
+       </if>
+    </select>
+</mapper>

@@ -4,15 +4,22 @@ package com.erp.server.wms.controller;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.server.wms.service.PurchaseReturnOrderService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 采购退货单
@@ -22,6 +29,9 @@ import com.common.core.controller.BaseController;
 @RestController
 @RequestMapping("/purchaseReturnOrder")
 public class PurchaseReturnOrderController extends BaseController {
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
     /**
      * 列表查询
      * @Author Luo_WG
@@ -31,8 +41,21 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/paging")
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = null;
+        PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = purchaseReturnOrderService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:14
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
+     **/
+    @PostMapping("/listCount")
+    public ApiResult<List<PurchaseReturnOrderDTO.ReturnOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> warehouseReceiveCountDTOS = purchaseReturnOrderService.listCount(dto);
+        return success(warehouseReceiveCountDTOS);
     }
 
     /**
@@ -44,8 +67,8 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        Boolean flag = false;
-        return flag == true ? success() : failure();
+        String id = purchaseReturnOrderService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -57,7 +80,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.update(dto);
         return flag == true ? success() : failure();
     }
 
@@ -70,7 +93,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @GetMapping("/view")
     public ApiResult<PurchaseReturnOrderDTO.ViewDTO> view(@Param("id") String id) {
-        PurchaseReturnOrderDTO.ViewDTO dto = null;
+        PurchaseReturnOrderDTO.ViewDTO dto = purchaseReturnOrderService.view(id);
         return success(dto);
     }
 
@@ -83,7 +106,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -96,7 +119,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -109,7 +132,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/updateAndSubmit")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -122,7 +145,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
     }
 
@@ -130,25 +153,25 @@ public class PurchaseReturnOrderController extends BaseController {
      * 批量反审核审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param baseApproveParamDTO baseApproveParamDTO
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = false;
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseReturnOrderService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
     /**
-     * 批量撤销
+     * 取消流程
      * @Author Luo_WG
-     * @Date 2023/4/6 19:29
-     * @param idsDTO idsDTO
+     * @Date 2023/4/13 18:58
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/withDraw")
-    public ApiResult withDraw(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = false;
+    @PostMapping("/cancelProcess")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = purchaseReturnOrderService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -161,7 +184,7 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/invalid")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -174,8 +197,34 @@ public class PurchaseReturnOrderController extends BaseController {
      **/
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = false;
+        Boolean flag = purchaseReturnOrderService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 采购订单-关联的退货单据
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param purchaseOrderId purchaseOrderId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/purchaseOrderRefReturn")
+    public ApiResult<List<PurchaseReturnOrderDTO.OrderRefReceiveDTO>> purchaseOrderRefReturn(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
+        List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> orderRefReceiveDTOS = purchaseReturnOrderService.purchaseOrderRefReturn(purchaseOrderId);
+        return success(orderRefReceiveDTOS);
+    }
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @param response response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = purchaseReturnOrderService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
 }

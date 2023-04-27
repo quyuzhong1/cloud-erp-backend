@@ -5,13 +5,13 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
-import com.erp.server.plm.service.BasicCategoryService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProductSaleService;
+import com.erp.server.plm.service.*;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -40,6 +40,16 @@ public class ProductSkuFeignController {
 
     @Resource
     private SyncKingdeeService syncKingdeeService;
+
+
+    /**
+     *产品包装信息
+     */
+    @Resource
+    private ProductPackService  productPackService;
+
+    @Resource
+    private WorkOptionService workOptionService;
 
     /**
      * 根据sku查询sku表信息
@@ -132,6 +142,44 @@ public class ProductSkuFeignController {
     public List<SkuVO> listApproveSku() {
         List<SkuVO> skuList = productDetailService.searchSku(null);
         return skuList;
+    }
+
+    /**
+     * 根据id查询sku信息
+     * @Author Luo_WG
+     * @Date 2023/4/14 15:07
+     * @param ids ids
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     **/
+    @PostMapping("/getByIdList")
+    public List<ProductDetailEntity> getByIdList(@RequestBody List<String> ids) {
+        List<ProductDetailEntity> byIdList = productDetailService.getByIdList(ids);
+        return byIdList;
+    }
+
+
+    /**
+     * 根据sku id 集合获取对应产品信息
+     * @param skuIds
+     * @return
+     */
+
+    @PostMapping("/getProductPackBySkuIds")
+    public List<ProductVO.ProductPackVO> getProductPackBySkuIds(@RequestBody List<String> skuIds) {
+        List<ProductVO.ProductPackVO> list = productPackService.getBySkuIds(skuIds);
+        return list;
+    }
+
+    /**
+     * 根据用户获取各任务阶段数量
+     * @Author Luo_WG
+     * @Date 2023/4/24 9:34
+     * @param optionUserId optionUserId
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.StageViewDTO>
+     **/
+    @PostMapping("/stageView")
+    public List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId) {
+        return workOptionService.stageView(optionUserId);
     }
 
 }

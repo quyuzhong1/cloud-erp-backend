@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -131,6 +132,12 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
      */
     @TableField("sync_kingdee_time")
     private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

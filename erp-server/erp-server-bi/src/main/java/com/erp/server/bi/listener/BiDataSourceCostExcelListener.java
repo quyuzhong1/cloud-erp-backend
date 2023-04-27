@@ -4,11 +4,12 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.LocalDateUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SalesPlatformEnum;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
@@ -19,9 +20,6 @@ import com.erp.server.bi.service.BiDataSourceCostService;
 import org.apache.commons.collections.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,11 +78,10 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                 BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
                 if (StringUtils.isNotBlank(key))  {
                     if (BiDataSourceCostEnum.MONTH.getDesc().equals(key)) {
-                        DateFormat format= new SimpleDateFormat("yyyy年M月");
                         try {
-                            Date parse = format.parse(value);
+                            Date parse = DateUtil.stringToDate(value);
                             entity.setMonth(LocalDateUtil.date2LocalDateTime(parse));
-                        } catch (ParseException e) {
+                        } catch (Exception e) {
                             errorMsgList.add("月份格式错误");
                         }
                         continue;
@@ -123,22 +120,23 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                     }
                     if (CollectionUtils.isNotEmpty(dictList)) {
                         String costType = dictList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse(null);
-                        if (StringUtils.isNotBlank(costType)) {
-                            detailEntity.setCostType(costType);
-                            //既不是数值也不是百分比
-                            if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
-                                errorMsgList.add("成本必须是数值或百分比数据");
-                            }
-                            if (StrUtils.isDigit(value)) {
-                                detailEntity.setCostValue(MathUtil.valueOf(value));
-                                detailEntity.setValueType(MathUtil.ZERO);
-                                detailList.add(detailEntity);
-                            } else {
-                                detailEntity.setValueType(MathUtil.ONE);
-                                String costValue = value.replace("%", "");
-                                detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
-                                detailList.add(detailEntity);
-                            }
+                        if (StringUtils.isBlank(costType)) {
+                            errorMsgList.add("未找到成本数据:"+key);
+                        }
+                        detailEntity.setCostType(costType);
+                        //既不是数值也不是百分比
+                        if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
+                            errorMsgList.add("成本必须是数值或百分比数据");
+                        }
+                        if (StrUtils.isDigit(value)) {
+                            detailEntity.setCostValue(MathUtil.valueOf(value));
+                            detailEntity.setValueType(MathUtil.ZERO);
+                            detailList.add(detailEntity);
+                        } else {
+                            detailEntity.setValueType(MathUtil.ONE);
+                            String costValue = value.replace("%", "");
+                            detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
+                            detailList.add(detailEntity);
                         }
                     }
                 }

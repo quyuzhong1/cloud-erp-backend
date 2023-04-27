@@ -23,10 +23,18 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesVO> getBySku(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
+
+    /**
+     * 获取最近天数的销售数据
+     * @param dto
+     * @param settleRate
+     * @param findTime
+     * @return
+     */
     List<SalesBaseVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate ,@Param("findTime") String  findTime);
 
 
-    List<SalesVO> getBySpu(BiFilterDTO dto);
+    List<SalesVO> getBySpu(@Param("params") BiFilterDTO dto);
 
     /**
      * 根据国家查询销售额

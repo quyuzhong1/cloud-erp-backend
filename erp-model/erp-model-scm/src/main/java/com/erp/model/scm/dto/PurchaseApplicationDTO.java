@@ -32,6 +32,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String id;
 
         /**
+         * 申请单明细id
+         */
+        private String  purchaseApplicationDetailId;
+
+        /**
          * 申请单号
          */
         private String code;
@@ -89,7 +94,7 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 计划交期
          */
-        private LocalDate planDeliveryDate;
+        private String planDeliveryDate;
 
         /**
          * 申请数量

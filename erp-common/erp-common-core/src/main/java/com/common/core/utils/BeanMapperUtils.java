@@ -41,7 +41,7 @@ public class BeanMapperUtils {
      * @param data    数据（对象）
      * @return 映射类对象
      */
-    public <E, T> E map(Class<E> toClass, T data) {
+    public static <E, T> E map(Class<E> toClass, T data) {
         return MAPPER_FACADE.map(data, toClass);
     }
 

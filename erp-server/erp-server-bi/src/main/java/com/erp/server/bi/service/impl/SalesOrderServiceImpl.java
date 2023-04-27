@@ -1,14 +1,15 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.date.LocalDateUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.ChartVO;
 import com.common.business.vo.SeriesVO;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
@@ -16,7 +17,7 @@ import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
-import com.erp.server.bi.service.BiSkuInfoService;
+import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -46,7 +47,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         implements SalesOrderService {
 
     @Resource
-    private BiSkuInfoService skuInfoService;
+    private BiProductDetailService productDetailService;
 
     @Resource
     private DmpShopInfoService shopInfoService;
@@ -62,12 +63,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setName("月销售额趋势");
         ChartVO chart = new ChartVO();
         LocalDate now = LocalDate.now();
-
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         String timeFlag = "delivery_time";
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
             timeFlag = "platform_create_time";
@@ -80,7 +77,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //去年
         dto.setStartTime(LocalDateUtil.getLastYearStart(now));
         dto.setEndTime(LocalDateUtil.getLastYearEnd(now));
-        List<SalesFlagVO> lastYearList=baseMapper.byLastYear(dto,timeFlag, settleRate);
+        List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate);
 
         int initSize = 12;
         List<String> xAxisList = new ArrayList<>(initSize);
@@ -156,37 +153,33 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<SalesVO> resultList = baseMapper.getBySku(dto, settleRate);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         String findTime = "delivery_time";
         if (dto.getTimeType() != null && dto.getTimeType() == 0) {
             findTime = "platform_create_time";
         }
-
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
-        ;
-
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
-        //查询近七天信息
-        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(dto, settleRate, findTime);
 
+        //查询进七天信息
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(dto, settleRate, findTime);
         for (SalesVO item : resultList) {
-            List<BigDecimal> salesTrend = new ArrayList<>(7);
+            List<Integer> salesTrend = new ArrayList<>(7);
+            //近三十天
             Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
-
+            //近七天
             Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
-                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
+                            b.getFlagNo().equals(item.getName())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
             item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
@@ -196,13 +189,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
                 LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
                 LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                BigDecimal salesFlag = lastSevenDays.stream().
+                Integer salesQuantity = lastSevenDays.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
                                 && b.getSales() != null
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
+                        ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
+                salesTrend.add(salesQuantity);
             }
             item.setSalesTrend(salesTrend);
             BigDecimal sales = item.getSales();
@@ -244,14 +237,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
+        //获取到数据
         List<SalesByCountryVO> list = baseMapper.getByCountry(dto, settleRate);
+        //国家
+        List<String> countryList = list.stream().map(SalesByCountryVO::getCountry).distinct().collect(Collectors.toList());
 
+        //sku
+        List<String> skuList = list.stream().map(SalesByCountryVO::getSku).distinct().collect(Collectors.toList());
+
+
+        //国家分组
         Map<String, List<SalesByCountryVO>> countryMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesByCountryVO::getCountry));
+
+
+        //sku 分组
         Map<String, List<SalesByCountryVO>> skuMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesByCountryVO::getSku));
 
@@ -269,38 +269,31 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         columnList.add(productNameAxes);
 
         //国家
-        List<String> countryList = new LinkedList<>();
-        for (Map.Entry<String, List<SalesByCountryVO>> item : countryMap.entrySet()) {
-            String country = item.getKey();
-            countryList.add(country);
+        for (String country : countryList) {
             XAxesVO axes = new XAxesVO();
             axes.setProp(country);
             axes.setLabel(country);
             columnList.add(axes);
         }
-        //sku
-        List<String> skuList = new LinkedList<>();
-        for (Map.Entry<String, List<SalesByCountryVO>> item : skuMap.entrySet()) {
-            skuList.add(item.getKey());
-        }
-        List<Map<String, Object>> rowAxesList = new LinkedList<>();
 
+        List<Map<String, Object>> rowAxesList = new LinkedList<>();
         for (String sku : skuList) {
             Map<String, Object> rowMap = new LinkedHashMap<>();
             rowMap.put("sku", sku);
+            //产品名称
+            String productName = skuMap.containsKey(sku) ? skuMap.get(sku).get(0).getProductName() : "";
+            rowMap.put("productName", productName);
             for (String country : countryList) {
-                String productName = "";
-                SalesByCountryVO product = list.stream().filter(s -> s.getSku().equals(sku)).findFirst().orElse(null);
-                if (product != null) {
-                    productName = product.getProductName();
-                }
-                rowMap.put("productName", productName);
-                SalesByCountryVO salesInfo = list.stream().filter(s -> sku.equals(s.getSku()) && country.equals(s.getCountry())).findFirst().orElse(null);
-                if (salesInfo != null) {
-                    rowMap.put(country, salesInfo.getSales());
+                if (countryMap.containsKey(country)) {
+                    //国家sku
+                    List<SalesByCountryVO> countrySalesList = countryMap.get(country);
+                    BigDecimal countrySales = countrySalesList.stream().filter(c -> c.getSku().equals(sku)).
+                            map(SalesByCountryVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    rowMap.put(country, countrySales);
                 } else {
-                    rowMap.put(country, BigDecimal.ZERO);
+                    rowMap.put(country, 0);
                 }
+
             }
             rowAxesList.add(rowMap);
         }
@@ -323,9 +316,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = "1";
-        }
         //获取各个平台的销售额
         List<Map<String, Object>> resultList = baseMapper.getPlatformSales(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
@@ -361,9 +351,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         //获取各个平台的销售额
         List<SalesFlagVO> resultList = baseMapper.byTobToc(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
@@ -413,9 +400,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = "1";
-        }
         String findTime = "delivery_time";
         if (dto.getTimeType() != null && dto.getTimeType() == 0) {
             findTime = "platform_create_time";
@@ -489,13 +473,27 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO byTopShop(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = "1";
-        }
+        String shopNo = "shopNo";
         StatisticalDataVO result = new StatisticalDataVO();
         result.setName("销售额TOP20店铺");
         result.setChartType(ChartType.BAR);
         List<Map<String, Object>> resultList = baseMapper.byTopShop(dto, settleRate);
+        List<String> shopNoList = resultList.stream().map(obj -> obj.get(shopNo).toString()).collect(Collectors.toList());
+        List<DmpShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
+        for (Map<String, Object> item : resultList) {
+            if (item.containsKey(shopNo)) {
+                String shopNoFlag = item.get(shopNo).toString();
+                String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(shopNoFlag)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                item.put("shopName", shopName);
+            } else {
+                item.put("shopName", "");
+            }
+
+
+        }
+
+
         ChartVO chartVO = new ChartVO();
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
         List<Object> xAxisList = new ArrayList<>(initSize);
@@ -526,13 +524,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public XyAxesResultVO byShopCountry(BiFilterDTO dto) {
-
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         XyAxesResultVO result = new XyAxesResultVO();
         List<ShopSalesVO> list = baseMapper.byShopCountry(dto, settleRate);
         //以店铺
@@ -598,13 +591,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         XyAxesResultVO result = new XyAxesResultVO();
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
         int skuCategorySize = skuCategoryList.size();
         //列名
         List<XAxesVO> columnList = new ArrayList<>(skuCategorySize + 1);
@@ -658,20 +647,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byBrand(BiFilterDTO dto) {
-
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
+        //品牌的话 根据sku 分了
         List<SalesCountVO> list = baseMapper.byBrand(dto, settleRate);
+
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
         List<SalesCountVO> chainList = baseMapper.byBrand(dto, settleRate);
@@ -681,6 +667,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
         List<SalesCountVO> yearBasisList = baseMapper.byBrand(dto, settleRate);
@@ -691,20 +679,22 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 reduce(BigDecimal.ZERO, BigDecimal::add);
 
         for (SalesCountVO item : list) {
-            String name = item.getName();
-            BigDecimal sales = item.getSales();
-            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
-            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
-                    .findFirst().orElse(null);
-            if (chainVO != null) {
-                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
-            }
-            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
-                    .findFirst().orElse(null);
-            if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
-            }
+            BigDecimal brandSales = item.getSales();
+            item.setSalesRatio(getSalesRatio(totalSales, brandSales));
+            //环比
+            BigDecimal brandChainSales = chainList.stream().filter(s -> s.getName().equals(item.getName())).
+                    map(SalesCountVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            item.setChainRelativeRatio(getChainRelativeRatio(brandSales, brandChainSales));
+            //同比
+            BigDecimal brandYearBasisSales = yearBasisList.stream().filter(s -> s.getName().equals(item.getName())).
+                    map(SalesCountVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            item.setYearBasisRatio(getChainRelativeRatio(brandSales, brandYearBasisSales));
+
         }
+
         return list;
     }
 
@@ -719,17 +709,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<SalesCountVO> byPlatform(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = "1";
-        }
-
         List<SalesCountVO> list = baseMapper.byPlatform(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
         //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
         List<SalesCountVO> chainList = baseMapper.byPlatform(dto, settleRate);
@@ -738,6 +725,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -761,7 +750,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
 
@@ -782,10 +771,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         String chinaName = "中国";
         List<SalesCountVO> resultList = baseMapper.byHomeAndAbroad(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
@@ -835,16 +820,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime endTime = dto.getEndTime();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         List<SalesBaseVO> list = baseMapper.byPeople(dto, settleRate);
-
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
         //这个是环比的查询出来的
@@ -856,6 +836,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
         List<SalesBaseVO> yearBasisList = baseMapper.byPeople(dto, settleRate);
@@ -916,11 +898,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<ShopNewAndOldSalesVO> byShopNewAndOld(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         List<ShopSalesVO> shopSalesList = baseMapper.byShopNewAndOld(dto, settleRate);
+
+        List<String> shopNoList = shopSalesList.stream().map(ShopSalesVO::getShopNo).collect(Collectors.toList());
+
+        List<DmpShopInfoEntity> shopList = shopInfoService.getByShopNoList(shopNoList);
+
         int initSize = shopSalesList.size();
         List<ShopNewAndOldSalesVO> resultList = new ArrayList<>(initSize);
         Map<String, List<ShopSalesVO>> groupMap = shopSalesList.parallelStream().
@@ -936,8 +919,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     equals(newFlag)).findFirst().orElse(null);
             ShopSalesVO oldItem = salesList.stream().filter(s -> s.getFlag().
                     equals(oldFlag)).findFirst().orElse(null);
-            ShopSalesVO salesVO = salesList.get(0);
-            vo.setShopName(salesVO.getShopName());
             if (newItem != null) {
                 vo.setNewSales(newItem.getSales());
                 vo.setNewSalesQuantity(newItem.getSalesQuantity());
@@ -946,9 +927,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setOldSales(oldItem.getSales());
                 vo.setOldSalesQuantity(oldItem.getSalesQuantity());
             }
+            String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(item.getKey())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            vo.setShopName(shopName);
             resultList.add(vo);
         }
+        resultList.sort(Comparator.comparing(ShopNewAndOldSalesVO::getOldSales, Comparator.reverseOrder()));
         return resultList;
+
     }
 
 
@@ -962,16 +948,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<SalesCountVO> byCountry(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<SalesCountVO> resultList = baseMapper.byCountry(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
 
@@ -981,8 +964,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisStartTime = LocalDateTime.of(startTime.minusYears(1).toLocalDate(), LocalTime.MIN);
         //同比开始时间
-        LocalDateTime yearBasisEndTime = LocalDateTime.of(endTime.minusYears(1).toLocalDate(), LocalTime.MAX);
+        LocalDateTime yearBasisEndTime = LocalDateTime.of(endTime.minusYears(1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(yearBasisStartTime);
+
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
         List<SalesCountVO> yearBasisList = baseMapper.byCountry(dto, settleRate);
@@ -1004,7 +990,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
         return resultList;
@@ -1021,7 +1007,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (totalSales.compareTo(zero) == 0 || sales == null) {
             return zero;
         }
-        BigDecimal ratio = sales.divide(totalSales, 5, BigDecimal.ROUND_HALF_UP);
+        BigDecimal ratio = sales.divide(totalSales, 5, BigDecimal.ROUND_HALF_EVEN);
         return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
@@ -1038,8 +1024,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         BigDecimal differ = sales.subtract(oldSales);
 
-        BigDecimal ratio = differ.divide(oldSales, 2, BigDecimal.ROUND_HALF_UP);
-        return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal ratio = differ.divide(oldSales, 4, BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100")).setScale(4, BigDecimal.ROUND_HALF_UP);
     }
 
 
@@ -1052,13 +1038,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public StatisticalDataVO byCategory(BiFilterDTO dto) {
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setChartType(ChartType.BAR);
@@ -1101,10 +1083,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<PeopleSalesRankVO> byPeopleWeekRank(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         LocalDate nowDate = LocalDate.now();
@@ -1169,9 +1147,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         LocalDate nowDate = LocalDate.now();
         //本月开始时间
@@ -1235,12 +1210,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<PeopleSalesRankVO> byPeopleQuarterRank(BiFilterDTO dto) {
         List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-
         //获取汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         LocalDate nowDate = LocalDate.now();
         //本季度开始时间
         LocalDateTime quarterStart = LocalDateUtil.getThisQuarterStart(nowDate);
@@ -1306,9 +1277,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         //本年度 开始时间
         LocalDateTime yearStart = LocalDateUtil.getThisYearStart(nowDate);
         //本年度 结束时间
@@ -1370,17 +1338,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime endTime = dto.getEndTime();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
-
         List<SalesBaseVO> list = baseMapper.byDept(dto, settleRate);
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
 
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
         //这个是环比的查询出来的
@@ -1391,6 +1355,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
         List<SalesBaseVO> yearBasisList = baseMapper.byDept(dto, settleRate);
@@ -1427,7 +1393,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesBaseVO yearBasisVO = yearBasisList.stream().filter(c -> c.getFlagNo().equals(flagNo))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                vo.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
             vo.setOrderCount(item.getOrderCount());
             vo.setSalesQuantity(item.getSalesQuantity());
@@ -1449,9 +1415,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<SalesFlagVO> list = baseMapper.byDeptNewAndOld(dto, settleRate);
         //新品
         Integer newFlag = BiConstant.NEW;
@@ -1511,16 +1474,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<SalesCountVO> list = baseMapper.byNewAndOld(dto, settleRate);
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
         //这个是环比的查询出来的
@@ -1530,6 +1490,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
         List<SalesCountVO> yearBasisList = baseMapper.byNewAndOld(dto, settleRate);
@@ -1550,7 +1512,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
         }
         return list;
@@ -1570,9 +1532,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime endTime = dto.getEndTime();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
+
         //新品
         Integer newFlag = BiConstant.NEW;
         //老品
@@ -1582,8 +1542,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
         List<SalesFlagVO> chainList = baseMapper.byPlatformNewAndOld(dto, settleRate);
@@ -1626,6 +1586,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             }
             resultList.add(vo);
         }
+
+        resultList.sort(Comparator.comparing(ProductNewAndOldVO::getOldProductSales, Comparator.reverseOrder()));
         return resultList;
     }
 
@@ -1634,9 +1596,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         //新品
         Integer newFlag = BiConstant.NEW;
         //老品
@@ -1701,12 +1660,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
         //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
+        List<SkuCategoryVO> skuCategoryList = productDetailService.getSkuCategoryList();
         List<SalesFlagVO> list = baseMapper.byCategoryNewAndOld(dto, settleRate);
         for (SkuCategoryVO item : skuCategoryList) {
             ProductNewAndOldVO vo = new ProductNewAndOldVO();
@@ -1753,14 +1709,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<ShopSalesVO> list = baseMapper.bySite(dto, settleRate);
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
-        //获取到环比的结束日期
-        LocalDateTime ringRatioEndDate = startTime;
+        //获取到环比的结束日期 因为get 加一天 所以这里减一天
+        LocalDateTime ringRatioEndDate = LocalDateTime.of(startTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setStartTime(ringRatioStartDate);
         dto.setEndTime(ringRatioEndDate);
 
@@ -1772,6 +1725,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
+        // 因为get 加一天 所以这里减一天
+        yearBasisEndTime = LocalDateTime.of(yearBasisEndTime.plusDays(-1).toLocalDate(), LocalTime.MIN);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
         List<ShopSalesVO> yearBasisList = baseMapper.bySite(dto, settleRate);
@@ -1839,12 +1794,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<SalesBaseVO> list = baseMapper.byCategory(dto, settleRate);
         //获取到sku 属性分类
-        List<SkuCategoryVO> itemPropertyList = skuInfoService.getSkuPropertyList();
+        List<SkuCategoryVO> itemPropertyList = productDetailService.getSkuPropertyList();
         //自研
         List<SkuCategoryVO> homemadeList = itemPropertyList.stream().
                 filter(s -> BiConstant.HOMEMADE.equals(s.getName())).
@@ -1907,9 +1859,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO byOldProductTop(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         List<SalesBaseVO> list = baseMapper.byOldProductTop(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
         StatisticalDataVO statistical = new StatisticalDataVO();
@@ -1949,9 +1898,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
+
 
         List<SalesBaseVO> list = baseMapper.byNewProductTop(dto, settleRate);
         int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
@@ -1999,9 +1946,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
+
         List<SalesFlagVO> list = baseMapper.byMarketingCenter(dto, timeFlag, settleRate);
 
         List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate);
@@ -2060,9 +2005,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public StatisticalDataVO byEuropeAndJapanSite(BiFilterDTO dto) {
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
+
 
         List<ShopSalesVO> list = baseMapper.byShop(dto, settleRate);
         StatisticalDataVO statistical = new StatisticalDataVO();
@@ -2118,9 +2061,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        if (StringUtils.isBlank(settleRate)) {
-            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
-        }
         //查找的日期
         String timeFlag = "delivery_time";
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {

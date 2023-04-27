@@ -3,6 +3,7 @@ package com.erp.server.scm.handler;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.core.utils.MathUtil;
 import com.erp.server.scm.service.CommonService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     private CommonService commonService;
 
     /**
-     *   插入时的填充数据
+     * 插入时的填充数据
      */
     @Override
     public void insertFill(MetaObject metaObject) {
@@ -48,7 +49,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
-        this.setFieldValByName("updateUserName", userName, metaObject);
+        LocalDateTime localDateTime = LocalDateTime.now();
+        this.setFieldValByName("updateTime", localDateTime, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
+        this.setFieldValByName("updateUserName", userName, metaObject);
     }
 }

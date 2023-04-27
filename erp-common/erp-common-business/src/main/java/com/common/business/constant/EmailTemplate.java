@@ -8,8 +8,7 @@ package com.common.business.constant;
  */
 public interface EmailTemplate {
 
-
-
-
     String  VERIFY_CODE="verify.code";
+
+    String  RESETTING_PASSWORD="resettingPassword";
 }

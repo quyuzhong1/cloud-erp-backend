@@ -77,8 +77,6 @@ public class SupplierAccountEntity extends BaseEntity<SupplierAccountEntity> {
 
 
 
-
-
     @Override
     public Serializable pkVal() {
         return null;

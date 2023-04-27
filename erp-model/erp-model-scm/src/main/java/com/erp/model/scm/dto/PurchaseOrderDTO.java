@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.plm.vo.ProductVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -82,6 +83,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String arrivalStatusName;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * sku编码
          */
         private String skuNo;
@@ -104,7 +110,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 计划交期
          */
-        private LocalDate planDeliveryDate;
+        private String planDeliveryDate;
 
         /**
          * 交货仓库名称
@@ -115,6 +121,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 含税单价
          */
         private BigDecimal taxPrice;
+
+        /**
+         * 货币符号
+         */
+        private String currencySymbol;
 
         /**
          * 采购数量
@@ -298,7 +309,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO{
+    public static class AddDTO extends CommonDTO {
 
         /**
          * 供应商信息
@@ -317,7 +328,7 @@ public class PurchaseOrderDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO{
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主表id
@@ -363,8 +374,86 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 关联单据（仅详情显示，无需传参）
          */
-        private PurchaseOrderRefOtherDTO  purchaseOrderRefOtherDTO;
+        private PurchaseOrderRefOtherDTO purchaseOrderRefOtherDTO;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class GetOneDTO extends CommonDTO {
+
+        /**
+         * 采购供应商信息
+         */
+        private PurchaseOrderSupplierDTO.UpdateDTO purchaseOrderSupplierDTO;
+
+        /**
+         * 公司地址
+         */
+        private String companyAddress;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+        private String code;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class GetQcProductDTO {
+
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+
+        /**
+         * 是否 是内检
+         */
+        private Boolean isInside;
+
+
+        /**
+         * 产品信息
+         */
+        private List<ProductVO.ProductPackVO> productList;
+
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -422,7 +511,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 签订日期（乙方）
          */
-        private LocalDate  secondSignDate;
+        private LocalDate secondSignDate;
 
         /**
          * 供方地址（乙方）
@@ -482,6 +571,16 @@ public class PurchaseOrderDTO implements Serializable {
         private String supplierName;
 
         /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
          * skuId
          */
         private String skuId;
@@ -497,24 +596,19 @@ public class PurchaseOrderDTO implements Serializable {
         private String productName;
 
         /**
-         * 计划交期
+         * 收货时间
          */
-        private String planDeliveryDate;
+        private LocalDate billDate;
 
         /**
-         * 交货仓库id
+         * 收货人id
          */
-        private String deliveryWarehouseId;
+        private String receiveUserId;
 
         /**
-         * 交货仓库
+         * 收货人名称
          */
-        private String deliveryWarehouseName;
-
-        /**
-         * 含税单价
-         */
-        private BigDecimal taxPrice;
+        private String receiveUserName;
 
         /**
          * 采购数量
@@ -522,14 +616,24 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer purchaseQty;
 
         /**
-         * 采购金额
+         * 未交货数量
          */
-        private BigDecimal purchaseAmount;
+        private Integer unReceiveQty;
 
         /**
-         * 已交货数量
+         * 收货数量
          */
         private Integer receiveQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        private Integer remark;
     }
 
     /**
@@ -540,15 +644,55 @@ public class PurchaseOrderDTO implements Serializable {
     public static class GenerateReceiveDTO {
 
         /**
-         * 采购订单明细id
+         * 采购订单主表id
          */
-        @NotBlank(message = "采购订单明细id不能为空")
+        private String id;
+
+        /**
+         * 采购订单明细Id
+         */
         private String purchaseOrderDetailId;
 
         /**
-         * 本次交货数量
+         * 采购单号
          */
-        private Integer thisReceiveQty;
+        private String code;
+
+        /**
+         * 收货日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 收货人id
+         */
+        private String receiveUserId;
+
+        /**
+         * 收货数量
+         */
+        @NotNull(message = "收货数量不能为空")
+        @Min(value = 1, message = "收货数量最小值为1")
+        @Max(value = 99999999, message = "收货数量最大值为99999999")
+        private Integer receiveQty;
+
+        /**
+         * 超收数量
+         */
+        @NotNull(message = "超收数量不能为空")
+        @Min(value = 0, message = "超收数量最小值为1")
+        @Max(value = 99999999, message = "超收数量最大值为99999999")
+        private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 仓库id
+         */
+        private String deliveryWarehouseId;
     }
 
     @Data
@@ -593,12 +737,22 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 已签收数量
          */
-        private String  receiveQty;
+        private Integer receiveQty;
 
         /**
          * 未入库数量
          */
-        private String unStockInQty;
+        private Integer unStockInQty;
+
+        /**
+         * 实收数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 超收数量
+         */
+        private Integer exceedQty;
 
     }
 
@@ -630,17 +784,23 @@ public class PurchaseOrderDTO implements Serializable {
          * 实收数量
          */
         @NotNull(message = "实收数量不能为空")
-        @Min(value = 0,message = "实收数量最小值为0")
-        @Max(value = 999999999,message = "实收数量最大值为999999999")
+        @Min(value = 0, message = "实收数量最小值为0")
+        @Max(value = 999999999, message = "实收数量最大值为999999999")
         private Integer stockInQty;
 
         /**
          * 超收数量
          */
         @NotNull(message = "超收数量不能为空")
-        @Min(value = 0,message = "超收数量最小值为0")
-        @Max(value = 999999999,message = "超收数量最大值为999999999")
+        @Min(value = 0, message = "超收数量最小值为0")
+        @Max(value = 999999999, message = "超收数量最大值为999999999")
         private Integer exceedQty;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大255个字符")
+        private String remark;
     }
 
     @Data
@@ -670,4 +830,57 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private List<PurchaseChangeDTO.ListDTO> purchaseChangeList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownListDTO {
+        /**
+         * 采购id
+         */
+        String id;
+        /**
+         * 采购单号
+         */
+        private String code;
+    }
+
+
+    /**
+     * 采购订单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderInfoDTO {
+
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+
+    }
+
+
 }

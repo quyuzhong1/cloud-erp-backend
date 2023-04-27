@@ -1,9 +1,10 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * @author Will
@@ -17,17 +18,17 @@ public interface QcEffectivenessService {
      * @author Will
      * @date: 2023/4/12 12:04
      * @param dto
-     * @return List<ViewQcOverviewDTO>
+     * @return ViewQcOverviewDTO
      */
-    List<QcEffectivenessDTO.ViewQcOverviewDTO> viewQcOverview(QcEffectivenessDTO.CommonSearchParamDTO dto);
+    QcEffectivenessDTO.ViewQcOverviewDTO viewQcOverview(QcEffectivenessDTO.CommonSearchParamDTO dto);
     /**
      * @description: 质检趋势查询
      * @author Will
      * @date: 2023/4/12 12:07
      * @param dto 
-     * @return List<ViewQcTrendDTO> 
+     * @return ViewQcTrendDTO
      */
-    List<QcEffectivenessDTO.ViewQcTrendDTO> viewQcTrend(QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto);
+    QcEffectivenessDTO.ViewQcTrendDTO viewQcTrend(QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto);
     /**
      * @description: 按人员查询
      * @author Will
@@ -35,7 +36,7 @@ public interface QcEffectivenessService {
      * @param dto 
      * @return List<ViewQcForPersonnelDTO> 
      */
-    List<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(QcEffectivenessDTO.CommonSearchParamDTO dto);
+    PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> dto);
     /**
      * @description: 按单据查询
      * @author Will
@@ -43,7 +44,7 @@ public interface QcEffectivenessService {
      * @param dto
      * @return List<ViewQcForDocumentDTO> 
      */
-    List<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO dto);
+    PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> dto);
     /**
      * @description: 导出
      * @author Will

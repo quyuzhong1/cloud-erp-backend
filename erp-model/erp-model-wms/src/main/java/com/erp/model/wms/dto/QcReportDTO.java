@@ -48,7 +48,7 @@ public class QcReportDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO  extends AddDTO{
+    public static class UpdateDTO extends AddDTO {
         /**
          * 报告id
          */
@@ -56,4 +56,46 @@ public class QcReportDTO implements Serializable {
 
 
     }
+
+
+    /**
+     * 质检报告详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+
+        /**
+         * 禁用状态
+         */
+        private String qcType;
+
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+
+
+        /**
+         * 质检报告id
+         */
+        private String qcReportId;
+
+
+        /**
+         * 质检项
+         */
+        private String qcReportName;
+
+        /**
+         * 质检内容
+         */
+        private String qcReportContent;
+
+    }
+
+
+
 }

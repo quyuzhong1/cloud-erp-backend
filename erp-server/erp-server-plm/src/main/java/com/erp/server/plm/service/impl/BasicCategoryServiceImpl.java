@@ -1,9 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -11,9 +12,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.BasicCategoryMapper;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,7 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,12 +43,17 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Autowired
     private ProductInfoService productInfoService;
 
+    @Autowired
+    private SyncKingdeeCategoryService syncKingdeeCategoryService;
+
+
     /**
      * 保存 产品分类信息
      *
      * @param dto
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, null);
@@ -55,6 +63,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         entity.setName(categoryName);
         entity.setCode(dto.getCode());
         this.save(entity);
+        //code为空不发送金蝶
+        if (StringUtils.isBlank(dto.getCode())) {
+            return;
+        }
+        //组装数据发送到金蝶
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
     }
 
     /**
@@ -66,6 +80,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-13 14:08
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName, dto.getId());
@@ -74,11 +89,21 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             throw new ServiceException(ApiError.ERROR_95072);
         }
         checkCategoryCode(dto.getCode(), found.getPid(), dto.getId());
-        LambdaUpdateWrapper<BasicCategoryEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(BasicCategoryEntity::getName, categoryName);
-        updateWrapper.set(BasicCategoryEntity::getCode, dto.getCode());
-        updateWrapper.eq(BasicCategoryEntity::getId, dto.getId());
-        return this.update(updateWrapper);
+        BasicCategoryEntity entity = new BasicCategoryEntity();
+        BeanMapperUtils.copy(found,entity);
+        entity.setCode(dto.getCode());
+        entity.setName(categoryName);
+        this.updateById(entity);
+        //组装数据发送到金蝶
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode());
+        //编辑的时候如果变动了一级编码则需要更新金蝶二级类目编码
+        if ("0".equals(found.getPid()) && !StringUtils.equals(dto.getCode(),found.getCode())) {
+            List<BasicCategoryEntity> list = this.lambdaQuery().eq(BasicCategoryEntity::getPid, found.getId()).list();
+            if (CollectionUtils.isNotEmpty(list)) {
+                list.forEach(obj -> syncKingdeeCategoryService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode()));
+            }
+        }
+        return Boolean.TRUE;
     }
 
 
@@ -164,8 +189,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-16 15:11
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteById(String id) {
         checkId(id);
+        BasicCategoryEntity entity = this.getById(id);
+        //组装数据发送到金蝶
+        syncKingdeeCategoryService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
         return this.removeById(id);
     }
 
@@ -350,6 +379,16 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         }
         List<BasicCategoryTreeDTO> dbTreeList = getDbTree();
         return getChildCategory(dbTreeList, categoryId);
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String categoryId, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(BasicCategoryEntity::getId,categoryId)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),BasicCategoryEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),BasicCategoryEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     /**

@@ -37,6 +37,15 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
     List<SupplierAccountDTO.UpdateDTO> getBySupplierId(String supplierId);
 
     /**
+     * @description: 根据供应商id 获取到账户信息
+     * @author Will
+     * @date: 2023/4/26 10:07
+     * @param supplierId
+     * @return List<SupplierAccountEntity>
+     */
+    List<SupplierAccountEntity> listBySupplierId(String supplierId);
+
+    /**
      * 更改供应商账户信息
      * @author yl
      * @date 2023-03-20 11:28

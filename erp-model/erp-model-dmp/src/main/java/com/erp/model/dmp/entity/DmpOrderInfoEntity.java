@@ -289,7 +289,7 @@ public class DmpOrderInfoEntity implements Serializable {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
     /**
@@ -360,6 +360,11 @@ public class DmpOrderInfoEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public DmpOrderInfoEntity(DmpOrderInfoEntity entity, BigDecimal exchangeRate) {
+        this.id = entity.getId();
+        this.cnySettleRate = exchangeRate;
+    }
 
 
     @Override

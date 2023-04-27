@@ -1,17 +1,21 @@
 package com.erp.server.wms.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.service.RedisService;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.server.wms.mapper.DictBasicMapper;
 import com.erp.server.wms.service.DictBasicService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -22,8 +26,12 @@ import java.util.List;
  * @since 2023-03-16
  */
 @Service
+@Slf4j
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 保存或者修改字典信息
@@ -38,9 +46,14 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        List<DictBasicEntity> addList = new ArrayList<>(list.size());
-        addList = BeanMapper.copyList(list, DictBasicEntity.class);
-        return this.saveOrUpdateBatch(addList);
+        List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        Boolean result = this.saveOrUpdateBatch(addList);
+        //当保存成功
+//        if (result) {
+//            String redisKey = RedisCacheConstants.WMS_DICT_KEY;
+//            redisService.deleteObject(redisKey);
+//        }
+        return result;
     }
 
 
@@ -48,7 +61,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * 根据key 获取字典数据
      *
      * @param key
-     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     * @return
      * @author yl
      * @date 2023-03-17 14:16
      */
@@ -71,18 +84,40 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Override
     public List<DictBasicEntity> getByKeyList(List<String> keyList) {
         if (CollectionUtils.isEmpty(keyList)) {
-            return new ArrayList<>();
+            return listAll();
         }
-        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DictBasicEntity::getKey, keyList);
-        return this.list(queryWrapper);
+        List<DictBasicEntity> allList = listAll();
+        return allList.stream().filter(l -> keyList.contains(l.getType())).collect(Collectors.toList());
     }
 
 
-    private List<DictBasicEntity> listByKey(String key) {
-        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DictBasicEntity::getKey, key);
-        queryWrapper.orderByAsc(DictBasicEntity::getSort);
-        return this.list(queryWrapper);
+    private List<DictBasicEntity> listByKey(String type) {
+        if (StringUtils.isBlank(type)) {
+            return Collections.emptyList();
+        }
+        List<DictBasicEntity> allList = listAll();
+        return allList.stream().filter(l -> l.getType().equals(type)).collect(Collectors.toList());
     }
+
+    /**
+     * 获取 所有的
+     *
+     * @return
+     */
+    private List<DictBasicEntity> listAll() {
+
+//        String redisKey = RedisCacheConstants.WMS_DICT_KEY;
+//        List<DictBasicEntity> dictList = redisService.getCacheList(redisKey);
+//        if (CollectionUtils.isNotEmpty(dictList)) {
+//            return dictList;
+//        }
+        List<DictBasicEntity> list = this.list();
+//        if (CollectionUtils.isNotEmpty(list)) {
+//            redisService.setCacheList(redisKey, list);
+//        }
+        return list;
+
+    }
+
+
 }

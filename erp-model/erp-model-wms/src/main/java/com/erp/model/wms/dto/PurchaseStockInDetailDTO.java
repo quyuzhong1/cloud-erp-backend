@@ -21,41 +21,12 @@ public class PurchaseStockInDetailDTO implements Serializable {
     public static class AddDTO {
 
         /**
-         * skuId
-         */
-        @NotBlank(message = "SKU不能为空")
-        private String skuId;
-
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
-         * 入库数量
-         */
-        private String stockInQty;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 采购数量
-         */
-        @NotNull(message = "采购数量不能为空")
-        @Min(value = 1,message = "采购数量最小值为1")
-        @Max(value = 99999999,message = "采购数量最大值为99999999")
-        private Integer purchaseQty;
-
-        /**
          * 实收数量
          */
         @NotNull(message = "实收数量不能为空")
         @Min(value = 1,message = "实收数量最小值为1")
         @Max(value = 99999999,message = "实收数量最大值为99999999")
-        private Integer receiveQty;
+        private Integer stockInQty;
 
         /**
          * 超收数量
@@ -81,6 +52,12 @@ public class PurchaseStockInDetailDTO implements Serializable {
          */
         @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
+
+        /**
+         * 采购明细id
+         */
+        @NotBlank(message = "采购明细id不能为空")
+        private String purchaseOrderDetailId;
     }
 
     @Data
@@ -95,6 +72,42 @@ public class PurchaseStockInDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO extends  UpdateDTO{
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 入库数量
+         */
+        private Integer hasStockInQty;
+
         /**
          * 未入库数量
          */

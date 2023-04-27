@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -14,7 +15,11 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -26,10 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +49,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private PurchaseOrderService purchaseOrderService;
 
     @Resource
-    private SysUserFeign sysUserFeign;
+    private WmsTaskFeign wmsTaskFeign;
 
     @Resource
     private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
@@ -247,14 +249,19 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      */
     private void doOpHandleDetails (List<PurchaseOrderDetailEntity> newList, String purchaseOrderId) {
 
+        //添加操作日志
+        List<PurchaseOrderDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(purchaseOrderId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), addPairList, "编辑操作");
+        }
+
         for (PurchaseOrderDetailEntity entity : newList) {
             entity.setPurchaseOrderId(purchaseOrderId);
             entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
             entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
             //操作日志
-            if (StringUtils.isBlank(entity.getId())) {
-                moduleOperateLogService.addModuleOperateLog(String.format("新增了一条SKU【%s】",entity.getSkuNo()), ModuleTypeEnum.PURCHASE_ORDER.getCode(),purchaseOrderId,"编辑操作");
-            } else {
+            if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseOrderDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98026);
@@ -307,7 +314,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     /**
-     * 根据主键查询id查询明细
+     * 根据明细id查询明细
      * @Author Luo_WG
      * @Date 2023/4/13 14:00
      * @param ids ids
@@ -318,5 +325,73 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(PurchaseOrderDetailEntity::getId, ids);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 根据主表Id查询明细
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:37
+     * @param id id
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderDetailEntity>
+     **/
+    @Override
+    public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailByOrderId(String id) {
+        LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(PurchaseOrderDetailEntity::getPurchaseOrderId, id);
+        return this.list(queryWrapper);
+    }
+
+
+    @Override
+    public List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ViewProductDTO> list = baseMapper.viewProduct(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> purchaseDetailIds = list.stream().map(PurchaseOrderDetailDTO.ViewProductDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        //查询收货数据
+        List<WarehouseReceiveDetailEntity> receiveDetails = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(purchaseDetailIds);
+
+        //查询退货数据
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(purchaseDetailIds);
+
+        //查询入库数据
+        List<PurchaseStockInDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(purchaseDetailIds);
+
+        for (PurchaseOrderDetailDTO.ViewProductDTO viewProductDTO : list) {
+
+            Integer receiveQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(receiveDetails)) {
+                 receiveQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //收货数量
+            viewProductDTO.setReceiveQty(receiveQty);
+            //未收货数量
+            viewProductDTO.setUnReceiveQty(viewProductDTO.getPurchaseQty() - receiveQty);
+
+            //超收数量
+            Integer exceedQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(receiveDetails)) {
+                exceedQty = receiveDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            viewProductDTO.setExceedQty(exceedQty);
+
+            //退货数量
+            Integer realityReturnQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailEntities)) {
+                realityReturnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            }
+            viewProductDTO.setRealityReturnQty(realityReturnQty);
+            //已入库数量
+            Integer stockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                stockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            viewProductDTO.setHasStockInQty(stockInQty);
+            //未入库数量
+            viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - stockInQty);
+        }
+        return list;
     }
 }

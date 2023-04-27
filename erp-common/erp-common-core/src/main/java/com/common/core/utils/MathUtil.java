@@ -23,6 +23,7 @@ public class MathUtil {
     public final int scale = 4;
     public final BigDecimal BigDecimal_100 = new BigDecimal("100");
     public final BigDecimal BigDecimal__1 = new BigDecimal("-1");
+    public final BigDecimal BigDecimal_1 = new BigDecimal("1");
     public final BigDecimal BigDecimal_2 = new BigDecimal("2");
     public final BigDecimal BigDecimal_0_1 = new BigDecimal("0.1");
     public final BigDecimal OTHER_FEE_DEFAULT = new BigDecimal("0.0001");
@@ -328,7 +329,7 @@ public class MathUtil {
      * @return
      */
     public BigDecimal divide(BigDecimal d1, BigDecimal d2, int scale) {
-        if (d2 == null) {
+        if (d2 == null||d2.compareTo(BigDecimal.ZERO)==0) {
             return BigDecimal.ZERO;
         }
         BigDecimal newd1 = d1;

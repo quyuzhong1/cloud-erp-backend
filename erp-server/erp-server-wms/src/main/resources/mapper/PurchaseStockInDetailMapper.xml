@@ -2,5 +2,72 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.PurchaseStorageDetailMapper">
 
+    <select id="getStockInQty" resultType="int">
+        SELECT
+        SUM(psid.stock_in_qty) stockInQty
+        FROM purchase_stock_in_detail psid
+        LEFT JOIN purchase_stock_in psi ON psid.main_id = psi.id AND psid.is_deleted = FALSE
+        WHERE psi.approve_status = 'approve' AND psi..is_deleted = FALSE AND psi.invalid_status = FALSE
+        AND psid.purchase_order_detail_id = #{purchaseOrderDetailId}
+    </select>
 
+    <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.PurchaseStockInDetailEntity">
+        select
+            psi.approve_status,
+            psid.main_id,
+            psid.sku_id,
+            psid.sku_no,
+            psid.variant_property,
+            psid.stock_in_qty,
+            psid.purchase_qty,
+            psid.receive_qty,
+            psid.exceed_qty,
+            psid.warehouse_location_id,
+            psid.warehouse_location_name,
+            psid.remark,
+            psid.source_detail_id,
+            psid.purchase_order_detail_id
+        from
+        purchase_stock_in psi
+        inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        <where>
+            psi.is_deleted = false and psi.invalid_status = false
+            <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+                and psid.source_detail_id in
+                <foreach collection="sourceDetailIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="listDetailByPodIds" resultType="com.erp.model.wms.entity.PurchaseStockInDetailEntity">
+        select
+            psi.approve_status,
+            psid.main_id,
+            psid.sku_id,
+            psid.sku_no,
+            psid.variant_property,
+            psid.stock_in_qty,
+            psid.purchase_qty,
+            psid.receive_qty,
+            psid.exceed_qty,
+            psid.warehouse_location_id,
+            psid.warehouse_location_name,
+            psid.remark,
+            psid.source_detail_id,
+            psid.purchase_order_detail_id
+        from
+        purchase_stock_in psi
+        inner join purchase_stock_in_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        <where>
+            psi.is_deleted = false and psi.invalid_status = false
+            <if test="podIds != null and podIds.size > 0">
+                and psid.purchase_order_detail_id in
+                <foreach collection="podIds" separator="," item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>

@@ -24,4 +24,6 @@ public class ShopSiteVO implements Serializable {
     private String site;
 
     private List<String> shopNo;
+
+
 }

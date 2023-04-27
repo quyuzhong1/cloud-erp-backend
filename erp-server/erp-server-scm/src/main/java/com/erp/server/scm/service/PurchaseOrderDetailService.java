@@ -84,9 +84,8 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      */
     void updateCreatePoType (String purchaseOrderId);
 
-
     /**
-     * 根据主键查询id查询明细
+     * 根据明细id查询明细
      * @Author Luo_WG
      * @Date 2023/4/13 14:00
      * @param ids ids
@@ -94,4 +93,21 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      **/
     List<PurchaseOrderDetailEntity> listDetailByIds(List<String> ids);
 
+    /**
+     * 根据主表Id查询明细
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:37
+     * @param id id
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderDetailEntity>
+     **/
+    List<PurchaseOrderDetailEntity> listPurchaseOrderDetailByOrderId(String id);
+
+    /**
+     * @description: 添加产品数据显示
+     * @author Will
+     * @date: 2023/4/14 10:25
+     * @param dto
+     * @return ViewProductDTO
+     */
+    List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto);
 }

@@ -45,7 +45,7 @@ public class SalesVO implements Serializable {
 
 
     /**
-     * 客单假
+     * 客单价
      */
     private BigDecimal perCustomerTransaction=BigDecimal.ZERO;
 
@@ -69,5 +69,5 @@ public class SalesVO implements Serializable {
     /**
      * 销售趋势
      */
-    private List<BigDecimal> salesTrend;
+    private List<Integer> salesTrend;
 }

@@ -79,4 +79,12 @@ public interface PurchasePriceChangeDetailService extends SuperService<PurchaseP
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      */
     List<PurchasePriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/4/24 20:02
+     * @param purchasePriceChangeId
+     * @return List<PurchasePriceChangeDetailEntity>
+     */
+    List<PurchasePriceChangeDetailEntity> listByPurchasePriceChangeId(String purchasePriceChangeId);
 }

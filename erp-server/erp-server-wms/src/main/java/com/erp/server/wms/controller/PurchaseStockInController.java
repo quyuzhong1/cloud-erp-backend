@@ -1,13 +1,12 @@
 package com.erp.server.wms.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.server.wms.service.PurchaseStockInService;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +25,7 @@ import java.util.List;
  * @since 2023-04-10
  */
 @RestController
-@RequestMapping("/purchaseStorage")
+@RequestMapping("/purchaseStockIn")
 public class PurchaseStockInController extends BaseController {
 
     @Resource
@@ -81,8 +80,8 @@ public class PurchaseStockInController extends BaseController {
     */
     @PostMapping("/addAndSubmit")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseStockInDTO.AddDTO dto) {
-        Boolean flag = purchaseStorageService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+        String id = purchaseStorageService.addAndSubmit(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
     
     /**
@@ -221,12 +220,12 @@ public class PurchaseStockInController extends BaseController {
      * 下推退货单数据显示
      * @author Will
      * @date: 2023/4/11 20:30
-     * @param id
+     * @param dto
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
      */
-    @GetMapping("/viewGeneratePurchaseReturnOrder")
-    public ApiResult<List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestParam("id") String id) {
-        List<PurchaseStockInDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(id);
+    @PostMapping("/viewGeneratePurchaseReturnOrder")
+    public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
     }
 
@@ -238,9 +237,34 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = purchaseStorageService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
     }
 
+   /**
+    * 采购订单-关联入库单
+    * @author Will
+    * @date: 2023/4/19 16:28
+    * @param dto
+    * @return ApiResult<List<OrderRefStockInDTO>>
+    */
+    @PostMapping(value = "/purchaseOrderRefStockIn")
+    public ApiResult<List<PurchaseStockInDTO.OrderRefStockInDTO>> purchaseOrderRefStockIn(@RequestBody @Validated BaseIdDTO dto) {
+        List<PurchaseStockInDTO.OrderRefStockInDTO> list = purchaseStorageService.purchaseOrderRefStockIn(dto.getId());
+        return success(list);
+    }
+
+    /**
+     * 下推采购入库单保存
+     * @author Will
+     * @date: 2023/4/13 11:37
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/generateStockIn")
+    public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
+        Boolean flag = purchaseStorageService.generateStockIn(dto);
+        return flag == true ? success() : failure();
+    }
 }

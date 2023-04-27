@@ -13,7 +13,12 @@
             create_time,
             update_user_name,
             update_time
-         FROM qc_rule where is_deleted=false
+         FROM qc_rule
+         where is_deleted=false
+         <if test="params.searchKeyword!=null and params.searchKeyword !=''">
+            AND code LIKE concat('%',#{params.searchKeyword},'%')
+         </if>
+         ORDER BY create_time DESC
 
     </select>
 </mapper>

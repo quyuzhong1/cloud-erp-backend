@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.erp.model.plm.vo.ItemMemberVO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -204,6 +203,13 @@ public class ProductShowDTO implements Serializable {
      * 产品分类名
      */
     private String category;
+
+
+    /**
+     * spu no
+     *
+     */
+    private String spuNo;
 
 
     /**

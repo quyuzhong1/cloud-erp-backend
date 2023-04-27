@@ -8,14 +8,18 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.vo.MsgChannelConfigDTO;
+import com.erp.model.sys.vo.MsgConfigDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname 系统管理 服务
@@ -220,4 +224,53 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/accountingCompany/getCompanyById")
     SysAccountingCompanyEntity getCompanyById(@RequestBody String id);
+
+    /**
+     * 根据用户Id获取部门
+     * @Author Luo_WG
+     * @Date 2023/4/18 9:53
+     * @param userId userId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("feign/dept/getDeptByUserId")
+    SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId);
+
+    /**
+     * 更新业务单据状态
+     */
+    @PostMapping("feign/user/updateBusinessSyncKingdeeStatus")
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+
+    /**
+     * 批量根据用户id获取第三方平台账号信息
+     * @param platform
+     * @param userIds
+     * @return
+     */
+    @PostMapping("feign/user/getThirdUnionIdsByUserIds")
+    List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
+
+    /**
+     * 根据主键获取消息配置信息
+     * @param id
+     * @return
+     */
+    @GetMapping("feign/msgConfig/getById")
+     MsgConfigDTO getMsgConfigById(@RequestParam(value = "id")String id);
+
+    /**
+     * 根据主键获取消息配置信息
+     * @param msgConfigId
+     * @return
+     */
+    @GetMapping("feign/msgChannelConfig/findByMsgConfigId")
+    List<MsgChannelConfigDTO> findByMsgConfigId(@RequestParam(value = "msgConfigId")String msgConfigId);
+
+    /**
+     * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）
+     *
+     * @return
+     */
+    @PostMapping("feign/user/getUserSimpleInfoByIds")
+    List<SysUserSimpleDTO> getUserSimpleInfoByIds(@RequestParam(value = "userIds") List<String> userIds);
 }

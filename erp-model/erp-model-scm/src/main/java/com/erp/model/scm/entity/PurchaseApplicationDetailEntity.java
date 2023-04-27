@@ -115,18 +115,6 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     private String receiveOrgName;
 
     /**
-     * 签收数量
-     */
-    @TableField("receive_qty")
-    private Integer receiveQty;
-
-    /**
-     * 入库数量
-     */
-    @TableField("stock_in_qty")
-    private Integer stockInQty;
-
-    /**
      * 采购订单生成状态（0未生成，1部分生成，2已生成
      */
     @TableField("create_po_type")

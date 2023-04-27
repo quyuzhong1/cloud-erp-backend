@@ -1,18 +1,13 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,16 +32,6 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderId;
 
         /**
-         * 供应商id
-         */
-        private String supplierId;
-
-        /**
-         * 退货人id
-         */
-        private String returnUserId;
-
-        /**
          * 退货方式
          */
         private String returnMode;
@@ -57,19 +42,39 @@ public class PurchaseReturnOrderDTO {
         private String returnOrgId;
 
         /**
-         * 退货原因
+         * 退货仓库id
          */
-        private String receiceRemark;
+        private String returnWarehouseId;
 
         /**
-         * 退货日期
-         */
-        private LocalDate billTime;
-
-        /**
-         * 退货来源 （质检单，签收单，采购订单）
+         * 退货来源
          */
         private String sourceType;
+
+        /**
+         * 退货人id
+         */
+        private String returnUserId;
+
+        /**
+         * 退货原因
+         */
+        private String returnRemark;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商联系人id
+         */
+        private String supplierContactId;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
 
         /**
          * 来源id
@@ -102,9 +107,24 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderId;
 
         /**
+         * 采购订单编号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 退货来源
+         */
+        private String sourceType;
+
+        /**
          * 供应商id
          */
         private String supplierId;
+
+        /**
+         * 退货方式 退货扣款 退货补货
+         */
+        private String returnMode;
 
         /**
          * 退货人id
@@ -119,12 +139,28 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货原因
          */
-        private String receiceRemark;
+        private String returnRemark;
 
         /**
-         * 退货日期
+         * 退货仓库id
          */
-        private LocalDate billTime;
+        private String returnWarehouseId;
+
+        /**
+         * 退货仓库名称
+         */
+        private String returnWarehouseName;
+
+        /**
+         * 供应商联系人id
+         */
+        private String supplierContactId;
+
+        /**
+         * 采购用户id
+         */
+        private String purchaseUserId;
+
         /**
          * 签收单明细
          */
@@ -171,6 +207,11 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderCode;
 
         /**
+         * 退货方式
+         */
+        private String returnMode;
+
+        /**
          * 供应商id
          */
         private String supplierId;
@@ -181,6 +222,21 @@ public class PurchaseReturnOrderDTO {
         private String supplierName;
 
         /**
+         * 供应商联系人id
+         */
+        private String supplierContactId;
+
+        /**
+         * 供应商联系人名称
+         */
+        private String supplierContactName;
+
+        /**
+         * 供应商地址
+         */
+        private String supplierAddress;
+
+        /**
          * 退货人id
          */
         private String returnUserId;
@@ -189,11 +245,6 @@ public class PurchaseReturnOrderDTO {
          * 退货人名称
          */
         private String returnUserName;
-
-        /**
-         * 退货方式
-         */
-        private String returnMode;
 
         /**
          * 退货人组织id
@@ -208,12 +259,12 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货原因
          */
-        private String receiceRemark;
+        private String returnRemark;
 
         /**
          * 退货日期
          */
-        private LocalDate billTime;
+        private LocalDate billDate;
 
         /**
          * 作废状态（false未作废，true已作废）
@@ -221,9 +272,19 @@ public class PurchaseReturnOrderDTO {
         private Boolean invalidStatus;
 
         /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
          * 作废时间
          */
         private LocalDateTime invalidTime;
+
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
 
         /**
          * 审核人id
@@ -244,6 +305,41 @@ public class PurchaseReturnOrderDTO {
          * 退货来源
          */
         private String sourceType;
+
+        /**
+         * 退货来源名称
+         */
+        private String sourceTypeName;
+
+        /**
+         * 退货仓库id
+         */
+        private String returnWarehouseId;
+
+        /**
+         * 退货仓库名称
+         */
+        private String returnWarehouseName;
+
+        /**
+         * 采购用户id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购用户名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseUserDeptId;
+
+        /**
+         * 采购部门名称
+         */
+        private String purchaseUserDeptName;
 
         /**
          * 报价明细
@@ -276,6 +372,11 @@ public class PurchaseReturnOrderDTO {
         private String purchaseOrderCode;
 
         /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
          * 单据状态
          */
         private String approveStatus;
@@ -288,7 +389,17 @@ public class PurchaseReturnOrderDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * sku
@@ -303,12 +414,12 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货日期
          */
-        private LocalDate billTime;
+        private LocalDate billDate;
 
         /**
-         * 交货仓库
+         * 退货仓库
          */
-        private String deliveryWarehouseName;
+        private String returnWarehouseName;
 
         /**
          * 退货数量
@@ -318,17 +429,17 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货原因
          */
-        private String receiceRemark;
-
-        /**
-         * 供应商名称
-         */
-        private String supplierName;
+        private String returnRemark;
 
         /**
          * 退货方式
          */
         private String returnMode;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
 
         /**
          * 采购员名称
@@ -354,6 +465,11 @@ public class PurchaseReturnOrderDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
@@ -364,27 +480,125 @@ public class PurchaseReturnOrderDTO {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 单据状态
+         * 订单编号
+         */
+        private String code;
+
+        /**
+         * ids
+         */
+        private List<String> ids;
+
+        /**
+         * skuNo集合
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIdList;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 采购员id集合
+         */
+        private List<String> purchaseUserIdList;
+
+        /**
+         * 单据审核状态集合
          */
         private List<String> approveStatusList;
 
         /**
-         * 创建开始时间
+         * 作废状态（false未作废，true已作废）
          */
-        private List<LocalDate> createTime;
+        private Boolean invalidStatus;
 
         /**
-         * 计划交货时间
+         * 退货方式
          */
-        private List<LocalDate> planReceiveTime;
+        private String returnMode;
 
         /**
-         * 审核时间
+         * 退货日期
          */
-        private List<LocalDate> approveTime;
+        private List<LocalDate> billDateList;
 
         /**
-         * skuNo集合
+         * 退货创库id集合
+         */
+        private List<String> returnWarehouseIdList;
+
+        /**
+         * 创建人id集合
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+    }
+
+    /**
+     * 采购订单关联退货单的查询实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OrderRefReceiveDTO {
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * 退货单号
+         */
+        private String code;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
          */
         private String skuNo;
 
@@ -394,18 +608,220 @@ public class PurchaseReturnOrderDTO {
         private String productName;
 
         /**
-         * 采购订单编号
+         * 退货日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 退货仓库
+         */
+        private String returnWarehouseName;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 退货原因
+         */
+        private String returnRemark;
+
+        /**
+         * 退货方式
+         */
+        private String returnMode;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 退货人
+         */
+        private String returnUserName;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ReturnOrderCountDTO {
+
+        /**
+         * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    /**
+     * 获取签收数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GetReturnQtyDTO {
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQtyDTO;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGeneratePurchaseReturnOrderDTO {
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+        /**
+         * 采购订单单号
          */
         private String purchaseOrderCode;
 
         /**
-         * 交货仓库id
+         * 采购订单明细id
          */
-        private List<String> deliveryWarehouseIdList;
+        private String purchaseOrderDetailId;
 
         /**
-         * 是否加急（false否，true是）
+         * 供应商名称
          */
-        private Boolean isUrgent;
+        private String supplierName;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 交货仓库名称
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 实退数量
+         */
+        private Integer returnQty;
+
+
+        /**
+         * 扣款数量
+         */
+        private Integer deductAmountQty;
+
+        /**
+         * 退款单价
+         */
+        private BigDecimal taxPrice;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePurchaseOrderAmount {
+        /**
+         * 采购单详情表id
+         */
+        private String purchaseOrderDetailId;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal purchaseAmount; 
     }
 }

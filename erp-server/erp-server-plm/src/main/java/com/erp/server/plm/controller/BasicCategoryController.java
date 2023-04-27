@@ -1,10 +1,15 @@
 package com.erp.server.plm.controller;
 
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
+import com.erp.model.plm.dto.CategoryControllerDTO;
 import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.server.plm.service.BasicCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -12,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.common.core.controller.BaseController;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 公共接口
@@ -87,6 +94,26 @@ public class BasicCategoryController extends BaseController {
     public ApiResult remove(String id) {
         Boolean flag = categoryService.deleteById(id);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 品类下拉框
+     * @mock 2
+     * @param grade 0:全部分类 1:一级分类 2:二级分类 默认二级分类
+     */
+    @GetMapping("/drop/down")
+    public ApiResult<List<CategoryControllerDTO.CategoryDropDownDTO>> listCategoryDropDown(@RequestParam(name = "grade",defaultValue = "2", required = false) Integer grade){
+        List<BasicCategoryEntity> list = categoryService.lambdaQuery()
+                .ne(2 == grade, BasicCategoryEntity::getPid,"0")
+                .eq(1 == grade, BasicCategoryEntity::getPid,"0")
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<CategoryControllerDTO.CategoryDropDownDTO> result = list.stream()
+                .map(CategoryControllerDTO.CategoryDropDownDTO::new)
+                .collect(Collectors.toList());
+        return success(result);
     }
 
 }

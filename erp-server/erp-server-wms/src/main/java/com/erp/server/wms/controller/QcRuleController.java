@@ -1,24 +1,21 @@
 package com.erp.server.wms.controller;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcRuleDTO;
+import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.QcRuleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 质检规则
@@ -33,15 +30,19 @@ public class QcRuleController extends BaseController {
     @Resource
     private QcRuleService qcRuleService;
 
+    @Resource
+    private QcReportService qcReportService;
+
 
     /**
      * 分页
+     *
      * @param dto
      * @return
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
-        PagingVO<QcRuleDTO.PagingViewDTO> pagingVO=qcRuleService.paging(dto);
+        PagingVO<QcRuleDTO.PagingViewDTO> pagingVO = qcRuleService.paging(dto);
         return success(pagingVO);
     }
 
@@ -96,6 +97,7 @@ public class QcRuleController extends BaseController {
 
     /**
      * 修改
+     *
      * @param dto
      * @return
      */
@@ -107,6 +109,7 @@ public class QcRuleController extends BaseController {
 
     /**
      * 修改并提交
+     *
      * @param dto
      * @return
      */
@@ -143,7 +146,8 @@ public class QcRuleController extends BaseController {
     }
 
     /**
-     *撤销流程
+     * 撤销流程
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @author yl
@@ -158,6 +162,7 @@ public class QcRuleController extends BaseController {
 
     /**
      * 删除
+     *
      * @param dto
      * @return
      */
@@ -165,6 +170,31 @@ public class QcRuleController extends BaseController {
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 启用或者禁用
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = qcRuleService.updateDisabledState(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 根据质检类型获取到对应的 质检报告信息
+     *
+     * @param qcType
+     * @return
+     */
+    @GetMapping("/getByQcType")
+    public ApiResult<List<QcReportDTO.ListDTO>> getByQcType(@RequestParam("qcType") String qcType) {
+        List<QcReportDTO.ListDTO> list = qcReportService.getByQcType(qcType);
+        return success(list);
     }
 
 

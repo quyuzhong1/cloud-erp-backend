@@ -1,8 +1,18 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.ReturnOrderExcelDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
+import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +25,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrderEntity> {
 
+    IPage<PurchaseReturnOrderDTO.PagingViewDTO> paging(Page query, @Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+
+    List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(@Param("purchaseOrderId") String purchaseOrderId);
+
+    List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
+
+    List<ReturnOrderExcelDTO> returnOrderExportExcel(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+
+    Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 }

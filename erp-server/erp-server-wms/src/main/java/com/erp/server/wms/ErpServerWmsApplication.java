@@ -18,7 +18,7 @@ public class ErpServerWmsApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ErpServerWmsApplication.class, args);
-        log.info("================ SCM 启动成功 ================");
+        log.info("================ WMS 启动成功 ================");
     }
 
 }

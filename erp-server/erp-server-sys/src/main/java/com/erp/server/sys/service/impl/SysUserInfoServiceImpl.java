@@ -1,5 +1,7 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,7 +12,10 @@ import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
@@ -18,6 +23,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.Md5Util;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.dto.email.EmailDTO;
@@ -34,6 +41,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -80,15 +88,22 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private SysDepartmentService sysDepartmentService;
 
     @Resource
-    private SysRoleService sysRoleService;
+    private SyncKingdeeSysUserInfoService syncKingdeeSysUserInfoService;
+
+    @Resource
+    private SysCodeService sysCodeService;
 
     @Resource
     private SysDepartmentMapper sysDepartmentMapper;
+
+    @Resource
+    private CommonService commonService;
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(SysUserInfoDTO sysUserInfoDTO) {
         String mobile = sysUserInfoDTO.getMobile();
         //验证用户信息
@@ -110,7 +125,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserInfoEntity entity = new SysUserInfoEntity();
         //复制属性
         BeanMapperUtils.copy(sysUserInfoDTO, entity);
-
+        //编号
+        String code = sysCodeService.getSeqNo(new SysCodeDTO("", BusinessNoTypeEnum.CODE_USER.getCode()));
+        entity.setCode(code);
         PassEntity passEntity = PassHandler.buildPassword(password);
         entity.setPassword(passEntity.getPassword());
         //账号
@@ -123,11 +140,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (CollectionUtils.isNotEmpty(roleIds)) {
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
+            //同步金蝶员工数据
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
         }
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void update(SysUserInfoDTO sysUserInfoDTO) {
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
@@ -143,6 +162,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         boolean updateResult = this.updateById(entity);
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
+            //同步金蝶员工数据
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_UPDATE.getCode());
         }
 
     }
@@ -319,12 +340,21 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateState(UpdateUserStateDTO stateDTO) {
         LambdaUpdateWrapper<SysUserInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysUserInfoEntity::getUserState, stateDTO.getState());
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
 
+        List<SysUserInfoEntity> list = this.listByIds(stateDTO.getIds());
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (SysUserInfoEntity entity : list) {
+            String operate = MathUtil.ZERO.equals(stateDTO.getState()) ? SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode() : SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, operate);
+        }
     }
 
     /**
@@ -525,11 +555,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_1008);
         }
-//        String emailCodeKey = RedisKeyUtil.getEmailCodeCacheKey(email);
-//        String redisCode = redisService.getCacheObject(emailCodeKey);
-//        if (StringUtils.isNotBlank(redisCode)) {
-//            throw new ServiceException(ApiError.ERROR_1009);
-//        }
         EmailDTO<EmailVerifyCodeDTO> emailDTO = new EmailDTO();
         String code = RandomStringUtils.randomNumeric(4);
         LocalDateTime localDate = LocalDateTime.now();
@@ -608,7 +633,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public List<FindUserDTO>  getAuthorityUserList(BaseSearchDTO dto) {
+    public List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
         return resultList;
     }
@@ -672,19 +697,19 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
 
-   /**
-    * @description: 用户验证信息
-    * @author Will
-    * @date: 2023/3/2 10:37
-    * @param sysUserInfoDTO
-    * @return boolean
-    */
+    /**
+     * @param sysUserInfoDTO
+     * @return boolean
+     * @description: 用户验证信息
+     * @author Will
+     * @date: 2023/3/2 10:37
+     */
     private void checkUserInfo(SysUserInfoDTO sysUserInfoDTO) {
         //验证手机号是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
         mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
-            mobileQueryWrapper.ne(SysUserInfoEntity::getUid,sysUserInfoDTO.getUid());
+            mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
         int mobileCount = this.count(mobileQueryWrapper);
         if (mobileCount > 0) {
@@ -692,9 +717,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
-        userNameQueryWrapper.eq(SysUserInfoEntity::getUserName,sysUserInfoDTO.getUserName());
+        userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
-            userNameQueryWrapper.ne(SysUserInfoEntity::getUid,sysUserInfoDTO.getUid());
+            userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
         int userNameCount = this.count(userNameQueryWrapper);
         if (userNameCount > 0) {
@@ -710,24 +735,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @author yl
      * @date 2022-10-15 11:22
      */
+    @Override
     public List<UserRequestPermissionsDTO> getRequestPermissionsList(String userId) {
-
-//        //获取用户角色id
-//        List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(userId);
-//        //这个是查询角色与对应菜单的关系
-//        List<SysRoleMenuEntity> roleRefMenuList = sysRoleMenuService.getMenuRefRoleByRoleIds(roleIdList);
-//        //菜单id集合
-//        List<String> menuIdList = roleRefMenuList.stream().map(SysRoleMenuEntity::getMenuId).distinct().collect(Collectors.toList());
-//
-//        List<SysMenuEntity> menuList = sysMenuService.listByIds(menuIdList);
-//        List<UserRequestPermissionsDTO> resultList = new ArrayList<>(menuList.size());
-//        for (SysMenuEntity menu : menuList) {
-//            UserRequestPermissionsDTO result = new UserRequestPermissionsDTO();
-//            result.setPermissionsCode(menu.getMenuCode());
-//            Integer dataScope = roleRefMenuList.stream().filter(r -> r.getMenuId().equals(menu.getMenuId())).map(SysRoleMenuEntity::getDataScope).max(Integer::compareTo).get();
-//            result.setDataScope(dataScope);
-//            resultList.add(result);
-//        }
         return baseMapper.getRequestPermissionsList(userId);
     }
 
@@ -739,6 +748,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Author Luo_WG
      * @Date 2022/10/19 14:17
      **/
+    @Override
     public List<String> getDepUserList(String userId) {
         List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
         List<String> userDepList = baseMapper.getUserDepList(userId);
@@ -761,6 +771,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public List<FindUserDTO> getUserListByUserIds(List<String> userIds) {
+        if (CollectionUtils.isEmpty(userIds)) {
+            return Collections.EMPTY_LIST;
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SysUserInfoEntity::getUid, userIds);
         List<FindUserDTO> resultList = new LinkedList<>();
@@ -781,10 +794,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
-        if(!Objects.isNull(entity)){
+        if (!Objects.isNull(entity)) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
+            userDTO.setCode(entity.getCode());
             userDTO.setIsMyState(0);
             return userDTO;
         }
@@ -795,14 +809,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public FindUserDTO getUserByUserName(String userName) {
-        if(StringUtils.isBlank(userName)){
+        if (StringUtils.isBlank(userName)) {
             return new FindUserDTO();
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserName, userName);
         queryWrapper.last("limit 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
-        if(!Objects.isNull(entity)){
+        if (!Objects.isNull(entity)) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
@@ -815,12 +829,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 获取所有用户所在的部门
+     *
+     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
      * @Author Luo_WG
      * @Date 2022/12/13 17:12
-     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
      **/
     @Override
-    public List<SysUserDeptDTO> getUserDeptList(){
+    public List<SysUserDeptDTO> getUserDeptList() {
         return baseMapper.getUserDeptList();
     }
 
@@ -829,7 +844,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public List<UserSuperiorDTO> listSuperiorByUserIds(List<String> userIds) {
         List<UserSuperiorDTO> parentList = new ArrayList<>();
 
-        for (String userId: userIds) {
+        for (String userId : userIds) {
             // 部门负责人
             SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getByUserId(userId);
             if (ObjectUtils.isEmpty(dto) || StringUtils.isBlank(dto.getDepartmentId())) {
@@ -884,7 +899,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                                 List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(fiveDepart.getParentId());
                                 if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberDTOS)) {
                                     List<String> parentIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-                                    parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("four_department_charge"));
+                                    parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("five_department_charge"));
                                 }
                             }
                         }
@@ -894,19 +909,18 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 }
             }
         }
-            return  parentList;
+        return parentList;
     }
-
-
 
 
     /**
      * 根据用户id 获取用户登录的信息
      * 用于 token 获取用户信息内容
-     * @author yl
-     * @date 2023-01-14 9:45
+     *
      * @param userId
      * @return com.erp.model.sys.dto.SysUserDTO
+     * @author yl
+     * @date 2023-01-14 9:45
      */
     @Override
     public SysUserDTO getSysUserById(String userId) {
@@ -949,4 +963,208 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return vo;
     }
 
+    @Override
+    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId) {
+        return this.lambdaUpdate()
+                .in(SysUserInfoEntity::getUid, businessIds)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SysUserInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteByIds(List<String> uids) {
+        List<SysUserInfoEntity> list = this.listByIds(uids);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (SysUserInfoEntity entity : list) {
+            //同步金蝶员工数据
+            syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode());
+        }
+        this.removeByIds(uids);
+    }
+
+    /**
+     * 重置密码
+     *
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/20 9:46
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean resetPassword(String uid) {
+        if (StringUtils.isBlank(uid)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        SysUserInfoEntity userInfoEntity = this.getById(uid);
+        if (StringUtils.isBlank(userInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+        EmailVerifyCodeDTO emailVerifyCodeDTO = new EmailVerifyCodeDTO();
+        emailVerifyCodeDTO.setEmail(userInfoEntity.getEmail());
+        String num = RandomStringUtils.randomNumeric(8);
+        String password = Md5Util.md5(num);
+        SysUserInfoEntity entity = new SysUserInfoEntity();
+
+        PassEntity passEntity = PassHandler.buildPassword(password);
+        entity.setPassword(passEntity.getPassword());
+        entity.setSalt(passEntity.getSalt());
+        boolean flag = lambdaUpdate()
+                .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
+                .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
+                .eq(SysUserInfoEntity::getUid, userInfoEntity.getUid()).update();
+        if (flag) {
+            boolean emailFlag = ValidatorUtil.isEmail(emailVerifyCodeDTO.getEmail());
+            if (!emailFlag) {
+                throw new ServiceException(ApiError.ERROR_1008);
+            }
+            LocalDateTime localDate = LocalDateTime.now();
+            emailVerifyCodeDTO.setVerifyCode(num);
+            emailVerifyCodeDTO.setDate(DateUtil.getCnDate(localDate));
+            Boolean sendResult = sendingEmail(emailVerifyCodeDTO, "重置密码");
+            if (!sendResult) {
+                throw new ServiceException(ApiError.ERROR_1010);
+            }
+            redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
+        }
+        return flag;
+    }
+
+    /**
+     * 忘记密码
+     *
+     * @param forgotPasswordDTO forgotPasswordDTO
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:18
+     **/
+    @Override
+    public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).one();
+        if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9043);
+        }
+
+        if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+
+        String code = redisService.getCacheObject(RedisKeyUtil.getEmailCodeCacheKey(sysUserInfoEntity.getEmail()));
+        if (StringUtils.isBlank(code) || !forgotPasswordDTO.getVerificationCode().equals(code)) {
+            throw new ServiceException(ApiError.ERROR_1007);
+        }
+        SysUserInfoEntity entity = new SysUserInfoEntity();
+
+        PassEntity passEntity = PassHandler.buildPassword(forgotPasswordDTO.getPassword());
+        entity.setPassword(passEntity.getPassword());
+        entity.setSalt(passEntity.getSalt());
+        boolean flag = lambdaUpdate()
+                .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
+                .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
+                .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid()).update();
+        return flag;
+    }
+
+    /**
+     * 忘记密码-获取验证码
+     *
+     * @param userAccount userAccount
+     * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:45
+     **/
+    @Override
+    public Map<String, Object> forgotPasswordGetCode(String userAccount) {
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).one();
+        if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9043);
+        }
+
+        if (StringUtils.isBlank(sysUserInfoEntity.getEmail())) {
+            throw new ServiceException(ApiError.ERROR_9044);
+        }
+        EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
+        dto.setEmail(sysUserInfoEntity.getEmail());
+        sedEmail(dto);
+        Map<String, Object> map = new HashMap<>();
+        map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
+        return map;
+    }
+
+    @Override
+    public List<SysUserSimpleDTO> getUserSimpleInfoByIds(List<String> userIds) {
+        List<SysUserInfoEntity> users = this.lambdaQuery().eq(SysUserInfoEntity::getUserState, 1).in(SysUserInfoEntity::getUid, userIds).list();
+        if (CollUtil.isNotEmpty(users)) {
+            return BeanMapperUtils.copyList(SysUserSimpleDTO.class, users);
+        }
+        return null;
+    }
+
+
+    /**
+     * 根据搜索关键字 获取到用户信息
+     *
+     * @param searchKeyword
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     * @author yl
+     * @date 2023-04-26 18:14
+     */
+    @Override
+    public List<FindUserDTO> listBySearchKeyword(String searchKeyword) {
+
+        List<FindUserDTO> resultList = new LinkedList<>();
+        //先添加自己
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        Boolean flag = !Objects.isNull(loginUser);
+        if (flag) {
+            FindUserDTO user = new FindUserDTO();
+            user.setIsMyState(1);
+            user.setUserId(loginUser.getUid());
+            user.setUserName(loginUser.getUserName());
+            resultList.add(user);
+        }
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
+        queryWrapper.eq(SysUserInfoEntity::getUserState, SysConstant.YES_STATE);
+        queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
+        if (flag) {
+            queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
+        }
+        if (StringUtils.isNotBlank(searchKeyword)) {
+            queryWrapper.like(SysUserInfoEntity::getUserName, searchKeyword);
+        }
+        List<SysUserInfoEntity> list = this.list(queryWrapper);
+        for (SysUserInfoEntity item : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(item.getUid());
+            userDTO.setUserName(item.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
+    }
+
+    private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {
+        String email = dto.getEmail();
+        boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1014);
+        }
+        boolean flag = ValidatorUtil.isEmail(email);
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_1008);
+        }
+        EmailDTO<EmailVerifyCodeDTO> emailDTO = new EmailDTO();
+        emailDTO.setData(dto);
+        String[] recipients = {email};
+        emailDTO.setRecipients(recipients);
+        emailDTO.setSubject(subject);
+        emailDTO.setTemplate(EmailTemplate.RESETTING_PASSWORD);
+        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        return sendResult;
+    }
 }

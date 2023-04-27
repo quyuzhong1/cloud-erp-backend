@@ -168,6 +168,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 预计计划上市时间
      * product_detail
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDate planListingTime;
 
     /**
@@ -249,6 +250,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 退市时间
      * product_sale
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDate delistingTime;
 
     /**

@@ -6,6 +6,8 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.QcRuleEntity;
+import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.server.wms.service.QcRuleService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,14 +54,56 @@ public class DropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/qcType/list")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcTypeDropDown() {
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listQcTypeDropDown() {
         List<QcRuleEntity> list= qcRuleService.list();
-        List<String> qcTypes=list.stream().map(QcRuleEntity::getQcType).collect(Collectors.toList());
-        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcTypeEnum.values())
-                .filter(q->!qcTypes.contains(q.getType()))
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getType(), x.getName()))
+        List<String> qcTypes=list.stream().map(x -> x.getQcType().getCode()).collect(Collectors.toList());
+        List<BaseDropDownDTO.DisabledDTO> result = Arrays.stream(QcTypeEnum.values())
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getCode(), x.getName(),qcTypes.contains(x.getCode())))
                 .collect(Collectors.toList());
         return success(result);
     }
+
+
+    /**
+     * 质检状态下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/qcStatus/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcStatusDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcBillStatusEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 质检结果下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/qcResult/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listQcResultDropDown() {
+        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(QcResultEnum.values())
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
+    /**
+     * 质检信息 质检类型下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/qcInfo/qcType/list")
+    public ApiResult<List<BaseDropDownDTO.QcTypeDTO>> listQcInfoQcTypeDropDown() {
+        List<BaseDropDownDTO.QcTypeDTO> result = Arrays.stream(QcTypeEnum.values())
+                .map(x -> new BaseDropDownDTO.QcTypeDTO(x.getCode(), x.getName(),x.getIsInside()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
 
 }
