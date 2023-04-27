@@ -58,10 +58,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -529,7 +526,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个收货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "审核操作");
 
 
-
         return Boolean.TRUE;
     }
 
@@ -969,6 +965,23 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             orderRefReceiveDTO.setInvalidStatusName(InvalidStatusEnum.getName(orderRefReceiveDTO.getInvalidStatus()));
         }
         return orderRefReceiveDTOS;
+    }
+
+
+    /**
+     * 根据采购订单ids 获取收获数据
+     *
+     * @param purchaseOrderIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseReceiveEntity>
+     * @author yl
+     * @date 2023-04-27 18:31
+     */
+    @Override
+    public List<WarehouseReceiveEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        if (CollectionUtils.isEmpty(purchaseOrderIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(WarehouseReceiveEntity::getPurchaseOrderId,purchaseOrderIds).list();
     }
 
     /**

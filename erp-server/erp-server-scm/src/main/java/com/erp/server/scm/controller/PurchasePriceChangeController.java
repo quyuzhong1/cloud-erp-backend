@@ -124,7 +124,7 @@ public class PurchasePriceChangeController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
-            menuCode = "scm:purchase:price:change:view",
+            menuCode = "scm:purchase:price:change:priceChangeDetail",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
     public ApiResult<PurchasePriceChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {

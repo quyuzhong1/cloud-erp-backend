@@ -2,21 +2,14 @@ package com.erp.server.wms.service;
 
 
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -184,6 +177,15 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Integer
      **/
     List<WarehouseReceiveDTO.OrderRefReceiveDTO> purchaseOrderRefReceive(String purchaseOrderId);
+
+    /**
+     * 根据采购订单ids 获取收获数据
+     * @author yl
+     * @date 2023-04-27 18:31
+     * @param purchaseOrderIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseReceiveEntity>
+     */
+    List<WarehouseReceiveEntity> listByPurchaseOrderIds(List<String> purchaseOrderIds);
 
     /**
      * 采购订单-下推收货单保存按钮

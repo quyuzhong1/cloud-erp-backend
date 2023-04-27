@@ -5,10 +5,8 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.workflow.dto.WorkOptionDTO;
-import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
-import com.erp.model.workflow.enums.ModelTypeEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -19,9 +17,6 @@ import com.erp.server.workflow.service.CommonService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
-import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -30,7 +25,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
