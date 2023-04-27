@@ -593,19 +593,20 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
         }
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
-        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
+        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj-> obj.getSourceId().concat(obj.getReturnMode())));
         for (Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
-            String sourceId = entry.getKey();
             List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
             PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
+
+            PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
             //采购单
-            PurchaseStockInEntity purchaseStockInEntity = sourceList.stream().filter(obj -> obj.getId().equals(sourceId)).findFirst().orElse(null);
+            PurchaseStockInEntity purchaseStockInEntity = sourceList.stream().filter(obj -> obj.getId().equals(purchaseReturnOrderDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseStockInEntity)) {
                 throw new ServiceException(ApiError.ERROR_98050);
             }
             BeanMapperUtils.copy(purchaseStockInEntity, addDTO);
-            addDTO.setSourceType(value.get(0).getSourceType());
-            addDTO.setSourceId(sourceId);
+            addDTO.setSourceType(purchaseReturnOrderDTO.getSourceType());
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
@@ -622,7 +623,7 @@ public class PurchaseStockInServiceImpl extends SuperServiceImpl<PurchaseStorage
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
                 addDetailList.add(addDetailDTO);
             }
-            addDTO.setReturnMode(value.get(0).getReturnMode());
+            addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setPurchasePriceDetailList(addDetailList);
             addDTO.setReturnUserId(userInfo.getUid());
             addDTO.setReturnOrgId(purchaseStockInEntity.getReceiveOrgId());

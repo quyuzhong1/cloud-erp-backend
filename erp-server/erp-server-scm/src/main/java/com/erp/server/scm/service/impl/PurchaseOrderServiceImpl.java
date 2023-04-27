@@ -1089,25 +1089,25 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
-        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
+        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj-> obj.getSourceId().concat(obj.getReturnMode())));
         for (Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
-            String sourceId = entry.getKey();
             List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
+            PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
             PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
             //采购订单
-            PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO purchaseOrderEntity = sourceList.stream().filter(obj -> obj.getPurchaseOrderId().equals(sourceId)).findFirst().orElse(null);
+            PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO purchaseOrderEntity = sourceList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98025);
             }
             addDTO.setSourceType(type);
-            addDTO.setSourceId(sourceId);
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
             addDTO.setReturnWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
-            addDTO.setReturnUserId(value.get(0).getReturnUserId());
-            addDTO.setReturnRemark(value.get(0).getRemark());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
+            addDTO.setReturnRemark(purchaseReturnOrderDTO.getRemark());
             addDTO.setSupplierId(purchaseOrderEntity.getSupplierId());
-            addDTO.setReturnMode(value.get(0).getReturnMode());
-            addDTO.setSourceId(sourceId);
+            addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
