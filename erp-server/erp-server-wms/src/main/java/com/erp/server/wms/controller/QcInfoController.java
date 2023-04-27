@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -115,7 +116,7 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/exemption")
-    public ApiResult exemption(@RequestBody @Validated QcInfoDTO.SaveOrUpdateDTO dto) {
+    public ApiResult exemption(@RequestBody @Validated({UpdateGroup.class})  QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.exemption(dto);
         return result ? success() : failure();
     }
