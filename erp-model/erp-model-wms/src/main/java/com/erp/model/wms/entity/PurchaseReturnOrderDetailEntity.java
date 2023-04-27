@@ -99,6 +99,9 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     @TableField(exist = false)
     private String approveStatus;
 
+    @TableField(exist = false)
+    private String returnMode;
+
     @Override
     public Serializable pkVal() {
         return null;

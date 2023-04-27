@@ -613,9 +613,9 @@ public class PurchaseReturnOrderDTO {
         private LocalDate billDate;
 
         /**
-         * 交货仓库
+         * 退货仓库
          */
-        private String deliveryWarehouseName;
+        private String returnWarehouseName;
 
         /**
          * 退货数量

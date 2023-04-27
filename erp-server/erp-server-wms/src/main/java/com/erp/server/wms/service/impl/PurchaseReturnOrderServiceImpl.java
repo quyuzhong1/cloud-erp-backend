@@ -22,6 +22,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
@@ -477,8 +478,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     });
                     scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
                 }
+                updateArrivalState(purchaseReturnOrderEntity);
             }
-
         } else {
             //审核不通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -536,7 +537,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 });
                 scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
             }
+            updateArrivalState(purchaseReturnOrderEntity);
         }
+
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
@@ -817,5 +820,58 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
         }
         return true;
+    }
+
+    //修改到货状态
+    private void updateArrivalState(PurchaseReturnOrderEntity purchaseReturnOrderEntity) {
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(purchaseReturnOrderEntity.getPurchaseOrderId());
+        List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailEntities) {
+                    /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
+
+                    }*/
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
+            if (returnQty > receiveQty) {
+                throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
+            }
+            approveArrivalState(returnQty, receiveQty, purchaseQty, purchaseOrderDetailEntity.getId());
+        }
+    }
+
+    /**
+     * 判断到货状态
+     *
+     * @param returnQty  退货数量
+     * @param receiveQty 收货数量
+     * @param purchaseQty 采购数量
+     * @param id          采购明细id
+     * @return java.lang.Integer
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:47
+     **/
+    private Boolean approveArrivalState(Integer returnQty, Integer receiveQty, Integer purchaseQty, String id) {
+        String arrivalStatus = "";
+        //未到货
+        if (receiveQty - returnQty <= MathUtil.ZERO) {
+            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+        } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
+            //部分到货
+            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+        } else {
+            //已到货
+            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+        }
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
+        purchaseOrderDetailEntity.setId(id);
+        purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
+        purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+        Boolean flag = scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
+        return flag;
     }
 }

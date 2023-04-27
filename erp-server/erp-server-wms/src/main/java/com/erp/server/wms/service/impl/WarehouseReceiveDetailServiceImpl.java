@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -10,14 +11,13 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
-import com.erp.server.wms.service.WarehouseReceiveService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +51,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     private CommonService commonService;
 
     @Resource
-    private WarehouseReceiveService warehouseReceiveService;
+    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+
+
 
     /**
      * 新增
@@ -72,30 +74,37 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
 
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
+
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
         for (WarehouseReceiveDetailDTO.AddDTO addDTO : warehouseReceiveDetailList) {
+
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
             warehouseReceiveDetailEntity.setMainId(id);
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                if (purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
-                    throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
-                }
-                warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
-                warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
-                warehouseReceiveDetailEntity.setReceiveQty(addDTO.getReceiveQty());
-                warehouseReceiveDetailEntity.setExceedQty(addDTO.getExceedQty());
-                warehouseReceiveDetailEntity.setRemark(addDTO.getRemark());
-                warehouseReceiveDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
-                warehouseReceiveDetailEntity.setCreateUserId(dto.getCreateUserId());
-                warehouseReceiveDetailEntity.setCreateUserName(dto.getCreateUserId());
-                warehouseReceiveDetailEntity.setUpdateUserId(dto.getUpdateUserId());
-                warehouseReceiveDetailEntity.setUpdateUserName(dto.getUpdateUserName());
-            } else {
-                throw new ServiceException(ApiError.ERROR_99006);
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
+            warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
+            warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
+
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
+            if ((receiveQty - returnQty) > purchaseQty) {
+                throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
             }
+
+            warehouseReceiveDetailEntity.setReceiveQty(addDTO.getReceiveQty());
+            warehouseReceiveDetailEntity.setExceedQty(addDTO.getExceedQty());
+            warehouseReceiveDetailEntity.setRemark(addDTO.getRemark());
+            warehouseReceiveDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
+            warehouseReceiveDetailEntity.setCreateUserId(dto.getCreateUserId());
+            warehouseReceiveDetailEntity.setCreateUserName(dto.getCreateUserId());
+            warehouseReceiveDetailEntity.setUpdateUserId(dto.getUpdateUserId());
+            warehouseReceiveDetailEntity.setUpdateUserName(dto.getUpdateUserName());
+
 
             Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - receive)) {
@@ -124,6 +133,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
+
+        List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
             if (StringUtils.isNotBlank(updateDTO.getId())) {
@@ -135,6 +147,16 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                 warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
                 warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
+
+                Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
+                if ((receiveQty - returnQty) > purchaseQty) {
+                    throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
+                }
+
                 warehouseReceiveDetailEntity.setReceiveQty(updateDTO.getReceiveQty());
                 warehouseReceiveDetailEntity.setExceedQty(updateDTO.getExceedQty());
                 warehouseReceiveDetailEntity.setRemark(updateDTO.getRemark());
