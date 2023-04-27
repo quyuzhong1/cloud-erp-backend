@@ -6,6 +6,7 @@ import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -26,11 +27,11 @@ public class InStockOrOutStockDTO implements Serializable {
         @NotEmpty(message = "仓库组织不能为空")
         private String orgId;
 
-        @NotEmpty(message = "仓不能为空")
+        @NotEmpty(message = "仓库不能为空")
         private String warehouseId;
 
         @NotNull(message = "单据类型不能为空")
-        private SourceTypeEnum sourceTypeEnum;
+        private SourceTypeEnum sourceType;
 
         @NotEmpty(message = "单据id不能为空")
         private String sourceId;
@@ -59,17 +60,18 @@ public class InStockOrOutStockDTO implements Serializable {
          * 调拨用，出入库业务一般不用；特殊场景可以考虑使用（无法固化状态的）
          * 需要修改的库存状态（可以不传，默认会从配置中读取；如果指定了则更改指定的状态）
          */
-        private InventoryStatusEnum inventoryStatusEnum;
+        private InventoryStatusEnum inventoryStatus;
 
         /**
          * 库存增加或减少（如果指定了库存状态，此字段必填）
          */
-        private InventoryModeEnum inventoryModeEnum;
+        private InventoryModeEnum inventoryMode;
 
         /**
          * 增加或减少库存都传正数，程序判断正数或负数
          */
         @NotNull(message = "库存变更数量不能为空")
+        @Min(value = 1, message = "变更数量不能小于0")
         private Integer qty;
 
         /**

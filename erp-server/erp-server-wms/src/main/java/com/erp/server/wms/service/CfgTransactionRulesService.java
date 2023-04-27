@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.entity.TransactionRuleEntity;
+import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 
 import java.util.List;
 
@@ -11,13 +11,13 @@ import java.util.List;
  * @CreateTime: 2023-04-26  10:20
  * @Author: zhangchunlin
  */
-public interface TransactionRuleService  extends SuperService<TransactionRuleEntity> {
+public interface CfgTransactionRulesService extends SuperService<CfgTransactionRulesEntity> {
 
     /**
      * 根据业务类型获取库存交易规则
      * @param dictBizType
      * @return
      */
-    List<TransactionRuleEntity> findByDictBizType(String dictBizType);
+    List<CfgTransactionRulesEntity> findByDictBizType(String dictBizType);
 
 }

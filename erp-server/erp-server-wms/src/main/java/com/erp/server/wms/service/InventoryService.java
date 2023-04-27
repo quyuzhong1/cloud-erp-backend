@@ -2,7 +2,6 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -27,6 +26,39 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     InventoryEntity findInventoryByWareLocalSkuStatus(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+
+
+    /**
+     * 根据组织、仓库、库位、状态判断库存数据；如果库位为空，则不判断库位
+     * @param orgId
+     * @param warehouseId
+     * @param skuId
+     * @param warehouseLocationId
+     * @param status
+     * @return
+     */
+    List<InventoryEntity> findInventoryByWareSkuStatusCheckLocation(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+
+    /**
+     * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则不判断库位
+     * @param orgId
+     * @param warehouseId
+     * @param skuId
+     * @param warehouseLocationId
+     * @return
+     */
+    Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId);
+
+    /**
+     * 根据组织、仓库、库位、状态获取库存数量；如果库位为空，则不判断库位
+     * @param orgId
+     * @param warehouseId
+     * @param skuId
+     * @param warehouseLocationId
+     * @param status
+     * @return
+     */
+    Integer getInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
 
     /**
      * 出入库业务，审批出入库单据，按业务类型

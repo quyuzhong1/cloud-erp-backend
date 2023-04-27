@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.TransactionRuleEntity;
+import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +13,5 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 @Mapper
-public interface TransactionRuleMapper extends BaseMapper<TransactionRuleEntity> {
+public interface CfgTransactionRulesMapper extends BaseMapper<CfgTransactionRulesEntity> {
 }

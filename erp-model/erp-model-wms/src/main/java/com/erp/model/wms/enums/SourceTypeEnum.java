@@ -9,6 +9,7 @@ public enum SourceTypeEnum {
     QC_BILL("qcBill", "质检单"),
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
     WAREHOUSE_RECEIVE("warehouseReceive", "仓库收货单"),
+    SALES_STOCK_OUT("purchaseStockOut", "销售出库"),
     ;
 
     /**

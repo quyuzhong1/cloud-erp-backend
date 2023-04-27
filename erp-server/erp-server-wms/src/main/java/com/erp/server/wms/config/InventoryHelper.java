@@ -6,8 +6,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.entity.TransactionRuleEntity;
+import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
@@ -40,7 +41,7 @@ public class InventoryHelper {
      * @param param
      */
     public void checkCommonBiz(InStockOrOutStockDTO param) {
-        SourceTypeEnum sourceTypeEnum = param.getSourceTypeEnum();
+        SourceTypeEnum sourceTypeEnum = param.getSourceType();
         String sourceId = param.getSourceId();
         LocalDate billDate = param.getBillDate();
         log.info("开始检查是否关闭账套，单据类型：【{}】，单据id：【{}】，单据日期：【{}】", sourceTypeEnum.getName(), sourceId, billDate);
@@ -53,7 +54,7 @@ public class InventoryHelper {
      * @param param
      */
     public void checkAllowTrade(InStockOrOutStockDTO param) {
-        SourceTypeEnum sourceTypeEnum = param.getSourceTypeEnum();
+        SourceTypeEnum sourceTypeEnum = param.getSourceType();
         String sourceId = param.getSourceId();
         LocalDate billDate = param.getBillDate();
         // TODO 检查是否盘点中
@@ -64,19 +65,13 @@ public class InventoryHelper {
     /**
      * 出库检查库存是否足够
      */
-    public void checkEnoughStockIfNecessary(InStockOrOutStockDTO param, InventoryBusinessTypeEnum businessType, List<TransactionRuleEntity> transactionRules) {
-        SourceTypeEnum sourceTypeEnum = param.getSourceTypeEnum();
+    public void checkEnoughStockIfNecessary(InStockOrOutStockDTO param, InventoryBusinessTypeEnum businessType, List<CfgTransactionRulesEntity> transactionRules) {
+        SourceTypeEnum sourceTypeEnum = param.getSourceType();
         String sourceId = param.getSourceId();
         LocalDate billDate = param.getBillDate();
-
-        Boolean checkOutStock = businessType.getCheckOutStock();
-        if(Objects.isNull(checkOutStock) || Objects.equals(checkOutStock, Boolean.FALSE)) {
-            log.info("开始检查出库库存是否足够，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，不包含出库业务，不检查", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate);
-            return;
-        }
         // 状态
-        InventoryStatusEnum inventoryStatusEnum = param.getInventoryStatusEnum();
-        List<TransactionRuleEntity> outTransactionRules;
+        InventoryStatusEnum inventoryStatusEnum = param.getInventoryStatus();
+        List<CfgTransactionRulesEntity> outTransactionRules;
         if(Objects.isNull(inventoryStatusEnum)) { // 从配置中取，配置中也取不到则报错
             log.info("参数未传库存状态，从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】，不包含出库业务，不检查", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             if(CollUtil.isEmpty(transactionRules)) {
@@ -84,7 +79,7 @@ public class InventoryHelper {
             }
             outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK.getCode())).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(outTransactionRules)) {
-                for (TransactionRuleEntity rule : outTransactionRules) {
+                for (CfgTransactionRulesEntity rule : outTransactionRules) {
                     InventoryStatusEnum ruleInventoryStatusEnum = InventoryStatusEnum.of(rule.getInventoryStatus());
                     ValidatorUtil.isTrueCall(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
                     this.checkStockQtyByWareLocalSkuStatus(businessType, param, ruleInventoryStatusEnum);
@@ -92,10 +87,20 @@ public class InventoryHelper {
             }
         } else {
             log.info("参数已传库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
-            this.checkStockQtyByWareLocalSkuStatus(businessType, param, inventoryStatusEnum);
+            InventoryModeEnum inventoryModeEnum = param.getInventoryMode();
+            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_400.code, "交易类型不能为空"));
+            if(Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) { // 交易方向为-的检查
+                this.checkStockQtyByWareLocalSkuStatus(businessType, param, inventoryStatusEnum);
+            }
         }
     }
 
+    /**
+     * 检查库存是否足够
+     * @param businessType
+     * @param param
+     * @param status
+     */
     public void checkStockQtyByWareLocalSkuStatus(InventoryBusinessTypeEnum businessType, InStockOrOutStockDTO param, InventoryStatusEnum status) {
         // 仓库组织
         String orgId = param.getOrgId();
@@ -109,15 +114,47 @@ public class InventoryHelper {
         // 数量
         Integer qty = param.getQty();
         // 来源
-        SourceTypeEnum sourceTypeEnum = param.getSourceTypeEnum();
-        InventoryEntity inventoryEntity = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId, skuId, warehouseLocationId, status.getCode());
-        if(Objects.isNull(inventoryEntity)) {
-            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(), businessType.getName(), status.getName());
-            throw new ServiceException(ApiError.ERROR_99035);
-        }
-        log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
-                businessType.getName(), status.getName(), qty, inventoryEntity.getQty());
-        ValidatorUtil.isTrueCall(inventoryEntity.getQty() >= qty,()->new ServiceException(ApiError.ERROR_99035));
+        SourceTypeEnum sourceTypeEnum = param.getSourceType();
+        List<InventoryEntity> inventories = inventoryService.findInventoryByWareSkuStatusCheckLocation(orgId, warehouseId, skuId, warehouseLocationId, status.getCode());
+        Integer usableQty = inventoryService.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, status.getCode());
+        log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
+                businessType.getName(), status.getName(), qty, usableQty);
+        ValidatorUtil.isTrueCall(usableQty >= qty,()->new ServiceException(ApiError.ERROR_99035));
+    }
+
+    /**
+     * 出入库填充流水
+     * @param param
+     * @param inventoryId
+     * @param businessType
+     * @param inventoryDetailId
+     * @param inventoryStatusEnum
+     * @param instockBatchDate
+     * @return
+     */
+    public TransactionFlowDTO wrapTransactionFlowInOutStock(InStockOrOutStockDTO param, String inventoryId,InventoryBusinessTypeEnum businessType,
+                                                            String inventoryDetailId, InventoryStatusEnum inventoryStatusEnum, LocalDate instockBatchDate) {
+        TransactionFlowDTO transactionFlowDTO = new TransactionFlowDTO();
+        // 复制对象性能慢，改为手工赋值
+        transactionFlowDTO.setOrgId(param.getOrgId());
+        transactionFlowDTO.setWarehouseId(param.getWarehouseId());
+        transactionFlowDTO.setWarehouseLocation(param.getWarehouseLocation());
+        transactionFlowDTO.setSkuId(param.getSkuId());
+        transactionFlowDTO.setSkuNo(param.getSkuNo());
+        transactionFlowDTO.setSourceId(param.getSourceId());
+        transactionFlowDTO.setSourceCode(param.getSourceCode());
+        transactionFlowDTO.setSourceDetailId(param.getSourceDetailId());
+
+        transactionFlowDTO.setInventoryId(inventoryId);
+        transactionFlowDTO.setInventoryDetailId(inventoryDetailId);
+        transactionFlowDTO.setDictInventoryStatus(inventoryStatusEnum.getCode());
+        transactionFlowDTO.setDictBizType(businessType.getCode());
+        transactionFlowDTO.setInstockBatchDate(instockBatchDate);// 取库存明细上面的批次日期
+        transactionFlowDTO.setBillDate(param.getBillDate());
+        transactionFlowDTO.setSourceType(param.getSourceType().getCode());
+        transactionFlowDTO.setQty(param.getQty());
+        transactionFlowDTO.setOperationMode(Objects.nonNull(param.getOperationMode()) ? param.getOperationMode().getCode() : "");
+        return transactionFlowDTO;
     }
 
 }

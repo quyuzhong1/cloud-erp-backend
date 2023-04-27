@@ -18,8 +18,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("transaction_rule")
-public class TransactionRuleEntity extends BaseEntity<TransactionRuleEntity> implements Serializable {
+@TableName("cfg_transaction_rules")
+public class CfgTransactionRulesEntity extends BaseEntity<CfgTransactionRulesEntity> implements Serializable {
 
 
     /**
