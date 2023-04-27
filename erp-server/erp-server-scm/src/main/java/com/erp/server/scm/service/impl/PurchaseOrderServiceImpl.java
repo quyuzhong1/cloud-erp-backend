@@ -1416,9 +1416,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     Integer qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                             .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
-                    Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
-                    deliveryQty = obj.getPurchaseQty() - qty - returnQty;
+                    deliveryQty = obj.getPurchaseQty() - (qty - returnQty);
                 }
             }
             obj.setReceiveQty(receiveQty);
