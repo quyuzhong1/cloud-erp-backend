@@ -28,7 +28,7 @@ public class DictNodeEntity extends BaseEntity<DictNodeEntity> {
      * 节点key
      */
     @TableField("node_key")
-    private String nodeCode;
+    private String nodeKey;
 
     /**
      * 节点名称

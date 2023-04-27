@@ -47,22 +47,45 @@ public class CfgNodeMemberDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
 
-
+        /**
+         * 节点key
+         */
         private String nodeKey;
 
+        /**
+         * 类型
+         */
         private String type;
 
+        /**
+         * 类型名
+         */
         private String typeName;
 
+        /**
+         * 请求的url
+         */
         private String url;
 
+        /**
+         * 请求方式
+         */
         private String requestMethod;
 
+        /**
+         * 请求参数
+         */
         private String requestParam;
 
-
+        /**
+         * 值
+         */
         private String valueField;
 
+
+        /**
+         * label
+         */
         private String labelField;
 
 

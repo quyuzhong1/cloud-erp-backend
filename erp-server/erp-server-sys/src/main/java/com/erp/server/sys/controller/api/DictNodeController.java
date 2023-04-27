@@ -37,14 +37,14 @@ public class DictNodeController extends BaseController {
 
 
     /**
-     * businessType=qcInfo (质检单)
      * 通知节点列表
-     * @param businessType
+     * businessType=qcInfo (质检单)
+     * @param module
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<DictNodeDTO.ViewDTO>> add(@RequestParam(value = "module") String businessType) {
-        List<DictNodeDTO.ViewDTO> list = dictNodeService.listByBusinessType(businessType);
+    public ApiResult<List<DictNodeDTO.ViewDTO>> add(@RequestParam(value = "module") String module) {
+        List<DictNodeDTO.ViewDTO> list = dictNodeService.listByModule(module);
         return  success(list);
     }
 

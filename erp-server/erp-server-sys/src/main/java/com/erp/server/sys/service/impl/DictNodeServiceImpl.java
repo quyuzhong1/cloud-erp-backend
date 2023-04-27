@@ -53,7 +53,7 @@ public class DictNodeServiceImpl extends SuperServiceImpl<DictNodeMapper, DictNo
      * @date 2023-04-26 14:46
      */
     @Override
-    public List<DictNodeDTO.ViewDTO> listByBusinessType(String module) {
+    public List<DictNodeDTO.ViewDTO> listByModule(String module) {
         List<DictNodeEntity> list = this.lambdaQuery().eq(DictNodeEntity::getModule, module).list();
         List<DictNodeDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictNodeDTO.ViewDTO.class);
         List<String> nodeKeys = resultList.stream().map(DictNodeDTO.ViewDTO::getNodeKey).collect(Collectors.toList());

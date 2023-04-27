@@ -31,8 +31,8 @@ public interface DictNodeService extends SuperService<DictNodeEntity> {
      * 根据业务类型获取到通知节点
      * @author yl
      * @date 2023-04-26 14:46
-     * @param businessType
+     * @param module
      * @return java.util.List<com.erp.model.sys.dto.DictNodeDTO.ViewDTO>
      */
-    List<DictNodeDTO.ViewDTO> listByBusinessType(String businessType);
+    List<DictNodeDTO.ViewDTO> listByModule(String module);
 }
