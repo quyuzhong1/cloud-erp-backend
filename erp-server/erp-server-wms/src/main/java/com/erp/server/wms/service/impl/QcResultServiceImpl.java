@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcResultEntity;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
 import com.erp.server.wms.service.DictBasicService;
@@ -43,6 +45,10 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private DictBasicService dictBasicService;
+
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 质检信息 暂存
@@ -280,6 +286,20 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         queryWrapper.eq(QcResultEntity::getMainId, billId);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+
+    /**
+     * 发送质检结果消息
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-04-27 19:24
+     */
+    public void sendQcResultMsg() {
+        //新品质检
+        String qcNewProductCode = NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
 
     }
 }

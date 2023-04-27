@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -238,7 +239,7 @@ public class NoticeDTO implements Serializable {
          * 创建时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private String createTime;
+        private LocalDateTime createTime;
 
 
         /**
@@ -251,7 +252,7 @@ public class NoticeDTO implements Serializable {
          * 跟新时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        private String updateTime;
+        private LocalDateTime updateTime;
 
 
 

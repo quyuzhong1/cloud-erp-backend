@@ -5,6 +5,7 @@ import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -44,48 +45,56 @@ public class QcProductDTO {
          * 产品长
          */
         @NotNull(message = "产品尺寸长不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "产品尺寸长最小值必须大于0")
         private BigDecimal productLength;
 
         /**
          * 产品宽
          */
         @NotNull(message = "产品尺寸宽不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "产品尺寸宽最小值必须大于0")
         private BigDecimal productWidth;
 
         /**
          * 产品高
          */
         @NotNull(message = "产品尺寸高不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "产品尺寸高最小值必须大于0")
         private BigDecimal productHeight;
 
         /**
          * 箱长
          */
         @NotNull(message = "外箱尺寸长不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "外箱尺寸长最小值必须大于0")
         private BigDecimal boxLength;
 
         /**
          * 箱宽
          */
         @NotNull(message = "外箱尺寸宽不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "外箱尺寸宽最小值必须大于0")
         private BigDecimal boxWidth;
 
         /**
          * 箱高
          */
         @NotNull(message = "外箱尺寸高不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "外箱尺寸高最小值必须大于0")
         private BigDecimal boxHeight;
 
         /**
          * 产品净重
          */
         @NotNull(message = "产品净重不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "产品净重最小值必须大于0")
         private BigDecimal productNetWeight;
 
         /**
          * 外箱重量
          */
         @NotNull(message = "外箱重量不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "外箱重量最小值必须大于0")
         private BigDecimal boxWeight;
 
         /**
