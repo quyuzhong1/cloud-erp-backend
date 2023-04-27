@@ -5,6 +5,9 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 /**
  * @author Will
  * @version 1.0
@@ -20,7 +23,7 @@ public class ExportQcDocumentExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "日期", index = 0)
-    private String qcDate;
+    private LocalDate qcDate;
 
     /**
      * 质检员
@@ -76,7 +79,7 @@ public class ExportQcDocumentExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "质检结束时间", index = 8)
-    private String qcEndTime;
+    private LocalDateTime qcEndTime;
 
     /**
      * 质检耗时

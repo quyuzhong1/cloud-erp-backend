@@ -195,13 +195,13 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         List<?> list = null;
         if (QcReportExportExcelType.PERSONNEL.getCode().equals(type)) {
              list =  this.qcInfoMapper.viewExportQcForPersonnel(dto);
-             fileName = "采购入库单数据";
+             fileName = "按人员导出";
              clazz = ExportQcPersonnelExcelDTO.class;
              list =  BeanMapperUtils.copyList(ExportQcPersonnelExcelDTO.class,list);
         }
         if (QcReportExportExcelType.DOCUMENT.getCode().equals(type)) {
              list =  this.qcInfoMapper.viewExportQcForDocument(dto);
-             fileName = "采购入库单数据";
+             fileName = "按单据导出";
              clazz = ExportQcDocumentExcelDTO.class;
              doOpHandleQcForDocument((List<QcEffectivenessDTO.ViewQcForDocumentDTO>) list);
             list =  BeanMapperUtils.copyList(ExportQcDocumentExcelDTO.class,list);
@@ -231,6 +231,9 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         List<String> skuIds = records.stream().map(QcEffectivenessDTO.ViewQcForDocumentDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
         for (QcEffectivenessDTO.ViewQcForDocumentDTO documentDTO : records) {
+            //质检状态
+            documentDTO.setQcStatusName(QcBillStatusEnum.getByCode(documentDTO.getQcStatus()).getName());
+
             //产品名称
             if (CollectionUtils.isNotEmpty(productDetailList)) {
                 String productName = productDetailList.stream().filter(obj -> obj.getId().equals(documentDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
@@ -247,13 +250,13 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                 if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
                     nowTime = documentDTO.getQcEndTime();
                 }
-                Duration userTime = Duration.between(nowTime, approveTime);
+                Duration userTime = Duration.between(approveTime, nowTime);
                 long userHours = userTime.toHours();
                 documentDTO.setQcUseTime(userHours + "H");
 
                 //质检预警
                 if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
-                    Duration between = Duration.between(nowTime,approveTime);
+                    Duration between = Duration.between(approveTime,nowTime);
                     long hours = between.toHours();
                     if (hours > 24L) {
                         documentDTO.setWarnRemark("已超时24L");
