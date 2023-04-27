@@ -212,7 +212,7 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
             if (idFlagList.contains(id)) {
                 item.setNodeName("");
                 item.setNodeKey("");
-                item.setDisabled("");
+                item.setDisabled(null);
                 item.setCreateTime("");
                 item.setCreateUserName("");
                 item.setUpdateTime("");

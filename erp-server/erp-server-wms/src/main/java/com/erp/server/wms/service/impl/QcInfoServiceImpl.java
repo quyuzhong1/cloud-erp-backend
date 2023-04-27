@@ -9,6 +9,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -1056,6 +1057,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //获取到订单采购信息
         List<PurchaseOrderDTO.PurchaseOrderInfoDTO> purchaseOrderList = scmTaskFeign.getByOrderIds(poIdList);
         List<PurchaseStockInDetailEntity> stockInSkuList = purchaseStockInDetailService.listDetailByPodIds(podIds);
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
+
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -1079,7 +1084,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             dto.setCurrencySymbol(currencySymbol);
 
             //单价
-            BigDecimal taxPrice = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().flatMap(obj->Optional.ofNullable(obj.getTaxPrice())).orElse(BigDecimal.ZERO);
+            BigDecimal taxPrice = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getTaxPrice())).orElse(BigDecimal.ZERO);
             dto.setTaxPrice(taxPrice);
 
             //相同采购单号清空后面数据的采购单号和供应商
@@ -1245,15 +1250,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
             qcResult.setQcType(item.getQcType());
             qcResult.setIsInside(isInside);
+            qcResult.setTotalQty(item.getTotalQty());
             addQcResultList.add(qcResult);
 
             //质检产品
             QcProductEntity qcProduct = new QcProductEntity();
+            BeanMapper.copy(item,qcProduct);
             qcProduct.setMainId(id);
-            qcProduct.setProductGrade(item.getProductGrade());
-            qcProduct.setSkuNo(item.getSkuNo());
-            qcProduct.setSkuId(item.getSkuId());
-            qcProduct.setVariantProperty(item.getVariantProperty());
             addQcProductList.add(qcProduct);
 
             //质检报告信息

@@ -119,7 +119,10 @@ public class QcInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class ReceiveToQcDTO{
 
-
+        /**
+         * 是否新品
+         */
+        private Boolean isFirstMassProduct;
         /**
          * 质检类型
          */
@@ -165,6 +168,52 @@ public class QcInfoDTO implements Serializable {
          *变体属性
          */
         private String variantProperty;
+
+        /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight;
+
+        /**
+         * 产品净重
+         */
+        private BigDecimal productNetWeight;
+
+        /**
+         * 外箱重量
+         */
+        private BigDecimal boxWeight;
+
+        /**
+         * 质检总数量
+         */
+        private Integer totalQty;
+
 
     }
 

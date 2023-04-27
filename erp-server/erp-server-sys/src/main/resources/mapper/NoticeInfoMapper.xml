@@ -24,6 +24,7 @@
        <if test="params.nodeName !=null and params.nodeName!=''">
            AND dn.node_name ilike concat('%',#{params.nodeName},'%')
        </if>
+       ORDER BY ni.create_time DESC
 
 
     </select>

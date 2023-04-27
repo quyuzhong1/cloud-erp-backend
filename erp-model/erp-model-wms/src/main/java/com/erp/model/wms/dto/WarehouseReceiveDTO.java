@@ -115,44 +115,44 @@ public class WarehouseReceiveDTO {
     }
 
 
-    /**
-     * 质检需要的信息
-     */
-    @Data
-    @NoArgsConstructor
-    public static class QcDTO {
-
-
-        private Boolean isFirstMassProduct;
-        /**
-         * 交货仓库id
-         */
-        private String deliveryWarehouseId;
-
-        private String supplierId;
-
-        private String purchaseOrderId;
-
-        private String purchaseOrderCode;
-
-
-        private String skuId;
-
-
-        private String skuNo;
-
-
-        private String receiveQty;
-
-        private String productGrade;
-
-        /**
-         *变体属性
-         */
-        private String variantProperty;
-
-
-    }
+//    /**
+//     * 质检需要的信息
+//     */
+//    @Data
+//    @NoArgsConstructor
+//    public static class QcDTO {
+//
+//
+//        private Boolean isFirstMassProduct;
+//        /**
+//         * 交货仓库id
+//         */
+//        private String deliveryWarehouseId;
+//
+//        private String supplierId;
+//
+//        private String purchaseOrderId;
+//
+//        private String purchaseOrderCode;
+//
+//
+//        private String skuId;
+//
+//
+//        private String skuNo;
+//
+//
+//        private String receiveQty;
+//
+//        private String productGrade;
+//
+//        /**
+//         *变体属性
+//         */
+//        private String variantProperty;
+//
+//
+//    }
 
 
     /**

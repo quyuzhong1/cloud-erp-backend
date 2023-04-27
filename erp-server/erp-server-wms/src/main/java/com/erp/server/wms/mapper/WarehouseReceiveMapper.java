@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveExcelDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
@@ -34,5 +35,5 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
 
     List<WarehouseReceiveExcelDTO> warehouseReceiveExportExcel(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 
-    List<WarehouseReceiveDTO.QcDTO> getQcList(@Param("mainIds") List<String> mainIds);
+    List<QcInfoDTO.ReceiveToQcDTO> getQcList(@Param("mainIds") List<String> mainIds);
 }
