@@ -213,9 +213,9 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
                 item.setNodeName("");
                 item.setNodeKey("");
                 item.setDisabled(null);
-                item.setCreateTime("");
+                item.setCreateTime(null);
                 item.setCreateUserName("");
-                item.setUpdateTime("");
+                item.setUpdateTime(null);
                 item.setUpdateUserName("");
 
             }
