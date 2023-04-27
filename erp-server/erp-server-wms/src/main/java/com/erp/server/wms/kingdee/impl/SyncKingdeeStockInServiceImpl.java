@@ -139,7 +139,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //产品名称
             jsonObject.set("productName", productDetailEntity.getName());
             //实收数量
-            jsonObject.set("returnQty", detail.getStockInQty());
+            jsonObject.set("stockInQty", detail.getStockInQty());
             //供应商编码
             jsonObject.set("supplierCode", supplierEntity.getCode());
             //供应商编码
@@ -157,7 +157,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
 
             //计价数量
-            jsonObject.set("priceBaseQty", detail.getStockInQty());
+            jsonObject.set("priceBaseQty", purchaseOrderDetailEntity.getPurchaseQty());
 
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
