@@ -206,7 +206,7 @@ public class NoticeDTO implements Serializable {
          * false 启用
          * true 禁用
          */
-        private String disabled;
+        private Boolean disabled;
 
 
         /**

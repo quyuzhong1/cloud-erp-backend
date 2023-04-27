@@ -1042,6 +1042,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = baseMapper.viewGeneratePurchaseReturnOrder(ids);
         List<String> podIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseStockInDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        stockInSkuList = stockInSkuList.stream().filter(s ->approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO item : list) {
             item.setSourceType(type);
@@ -1093,7 +1096,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
-        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj-> obj.getSourceId().concat(obj.getReturnMode())));
+        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
         for (Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
             List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
             PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
@@ -1439,7 +1442,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
         });
     }
-
 
 
 }

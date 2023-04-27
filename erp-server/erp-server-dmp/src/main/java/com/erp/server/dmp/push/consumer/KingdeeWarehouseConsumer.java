@@ -3,6 +3,7 @@ package com.erp.server.dmp.push.consumer;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
@@ -78,6 +79,8 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
 
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
 
@@ -115,6 +118,32 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
+        }
+    }
+
+    /**
+     * 启用、禁用
+     */
+    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //仓库状态 true禁用,false启用
+        Object disabled = map.get("disabled");
+        if (ObjectUtils.isEmpty(disabled)) {
+            return;
+        }
+        String code = (String) map.get("code");
+        String operate = null;
+        //启用
+        if (!(Boolean) disabled) {
+            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+        }
+        //禁用
+        if ((Boolean) disabled) {
+            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        if (StringUtils.isNotBlank(operate)) {
+            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
         }
     }
 
