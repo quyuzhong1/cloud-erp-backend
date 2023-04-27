@@ -66,6 +66,7 @@
     <select id="viewQcForDocument" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
         select
         qb.id as qcId,
+        qb.source_id as sourceId,
         qb.qc_date as qcDate,
         qb.qc_user_name as qcUserName,
         qb.code as qcCode,
@@ -78,6 +79,7 @@
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
+        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -92,10 +94,10 @@
             </if>
             <if test="params.isTimeOut != null">
                 <if test="params.isTimeOut == false">
-                    and qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time
+                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
                 </if>
                 <if test="params.isTimeOut == true">
-                    and qb.qc_finish_time > qb.qc_date::timestamp + '1 day'
+                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
         </where>
@@ -125,6 +127,8 @@
     <select id="viewExportQcForDocument"
             resultType="com.erp.model.wms.dto.QcEffectivenessDTO$ViewQcForDocumentDTO">
         select
+            qb.id as qcId,
+            qb.source_id as sourceId,
             qb.qc_date as qcDate,
             qb.qc_user_name as qcUserName,
             qb.code as qcCode,
@@ -137,6 +141,7 @@
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
+        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -150,10 +155,10 @@
             </if>
             <if test="params.isTimeOut != null">
                 <if test="params.isTimeOut == false">
-                    and qb.qc_date::timestamp + '1 day' >= qb.qc_finish_time
+                    and wr.approve_time::timestamp + '1 day' >= qb.qc_finish_time::timestamp
                 </if>
                 <if test="params.isTimeOut == true">
-                    and qb.qc_finish_time > qb.qc_date::timestamp + '1 day'
+                    and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
         </where>

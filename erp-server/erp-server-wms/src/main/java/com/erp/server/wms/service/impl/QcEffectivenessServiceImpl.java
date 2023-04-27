@@ -11,17 +11,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.dto.excel.ExportQcDocumentExcelDTO;
 import com.erp.model.wms.dto.excel.ExportQcPersonnelExcelDTO;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcReportExportExcelType;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.QcEffectivenessService;
+import com.erp.server.wms.service.WarehouseReceiveService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -49,6 +50,11 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
+
+
 
 
     @Override
@@ -230,24 +236,34 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                 String productName = productDetailList.stream().filter(obj -> obj.getId().equals(documentDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 documentDTO.setProductName(productName);
             }
-            //质检耗时
-            if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
-                Duration between = Duration.between(documentDTO.getQcEndTime(), LocalDateUtil.endLocalDateTime(documentDTO.getQcDate()) );
-                long hours = between.toHours();
-                documentDTO.setQcUseTime(hours + "H");
-            }
-            //质检预警
-            if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
-                Duration between = Duration.between(LocalDateTime.now(), LocalDateUtil.endLocalDateTime(documentDTO.getQcDate()));
-                long hours = between.toHours();
-                if (hours > 24L) {
-                    documentDTO.setWarnRemark("已超时24L");
+            //订单收货时间
+            WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveService.getById(documentDTO.getSourceId());
+            if (ObjectUtils.isNotEmpty(warehouseReceiveEntity)) {
+
+                 LocalDateTime approveTime = warehouseReceiveEntity.getApproveTime();
+
+                //质检耗时
+                LocalDateTime nowTime = LocalDateTime.now();
+                if (ObjectUtils.isNotEmpty(documentDTO.getQcEndTime())) {
+                    nowTime = documentDTO.getQcEndTime();
                 }
-                if (hours > 48L) {
-                    documentDTO.setWarnRemark("已超时48L");
-                }
-                if (hours > 72L) {
-                    documentDTO.setWarnRemark("已超时72L");
+                Duration userTime = Duration.between(nowTime, approveTime);
+                long userHours = userTime.toHours();
+                documentDTO.setQcUseTime(userHours + "H");
+
+                //质检预警
+                if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
+                    Duration between = Duration.between(nowTime,approveTime);
+                    long hours = between.toHours();
+                    if (hours > 24L) {
+                        documentDTO.setWarnRemark("已超时24L");
+                    }
+                    if (hours > 48L) {
+                        documentDTO.setWarnRemark("已超时48L");
+                    }
+                    if (hours > 72L) {
+                        documentDTO.setWarnRemark("已超时72L");
+                    }
                 }
             }
         }

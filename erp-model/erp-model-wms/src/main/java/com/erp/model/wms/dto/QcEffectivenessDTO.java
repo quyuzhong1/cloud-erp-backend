@@ -201,6 +201,11 @@ public class QcEffectivenessDTO implements Serializable {
         private String qcId;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
          * 质检时间
          */
         private LocalDate qcDate;
