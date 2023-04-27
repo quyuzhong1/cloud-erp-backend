@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.List;
 
@@ -39,7 +38,6 @@ public class NoticeReceiverDTO implements Serializable {
         /**
          * 接收类型
          */
-        @NotEmpty(message = "接收类型值不能为空")
         private List<String> receiverValueList;
 
         /**
