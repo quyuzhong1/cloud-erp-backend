@@ -267,13 +267,13 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                     Duration between = Duration.between(approveTime,nowTime);
                     long hours = between.toHours();
                     if (hours > 24L) {
-                        documentDTO.setWarnRemark("已超时24L");
+                        documentDTO.setWarnRemark("已超时24H");
                     }
                     if (hours > 48L) {
-                        documentDTO.setWarnRemark("已超时48L");
+                        documentDTO.setWarnRemark("已超时48H");
                     }
                     if (hours > 72L) {
-                        documentDTO.setWarnRemark("已超时72L");
+                        documentDTO.setWarnRemark("已超时72H");
                     }
                 }
             }
