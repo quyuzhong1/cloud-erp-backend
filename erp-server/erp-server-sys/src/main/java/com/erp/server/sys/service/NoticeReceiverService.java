@@ -27,14 +27,7 @@ public interface NoticeReceiverService extends SuperService<NoticeReceiverEntity
      */
     void add(String id, List<NoticeDTO.CfgNodeDTO> receivedList);
 
-    /**
-     * 更改接收人
-     * @author yl
-     * @date 2023-04-26 16:01
-     * @param receivedList
-     * @return void
-     */
-    Boolean edit(String noticeId,List<NoticeReceiverDTO.UpdateDTO> receivedList);
+
 
     
     /**
@@ -45,4 +38,14 @@ public interface NoticeReceiverService extends SuperService<NoticeReceiverEntity
      * @return java.util.List<com.erp.model.sys.dto.NoticeReceiverDTO.UpdateDTO>
      */
     List<NoticeReceiverDTO.UpdateDTO> listByNoticeId(String noticeId);
+
+    
+    /**
+     * 根据通知节点 ids 获取数据
+     * @author yl
+     * @date 2023-04-27 14:39
+     * @param noticeIdList
+     * @return java.util.List<com.erp.model.sys.entity.NoticeReceiverEntity>
+     */
+    List<NoticeReceiverEntity> listByNoticeIds(List<String> noticeIdList);
 }

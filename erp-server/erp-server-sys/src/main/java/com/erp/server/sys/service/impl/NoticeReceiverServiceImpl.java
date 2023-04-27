@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.NoticeDTO;
@@ -12,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,43 +31,48 @@ public class NoticeReceiverServiceImpl extends SuperServiceImpl<NoticeReceivedMa
     @Override
     public void add(String noticeId, List<NoticeDTO.CfgNodeDTO> cfgNodeList) {
         if (CollectionUtils.isNotEmpty(cfgNodeList)) {
+            //先删除
+            this.delete(noticeId);
             List<NoticeReceiverEntity> addList = new ArrayList<>(10);
             for (NoticeDTO.CfgNodeDTO item : cfgNodeList) {
-                List<NoticeReceiverDTO.AddDTO> receiverList = item.getReceiverList();
-                for (NoticeReceiverDTO.AddDTO receiver : receiverList) {
+                NoticeReceiverDTO.AddDTO receiver = item.getReceiver();
+                String receiverType = receiver.getReceiverType();
+                List<String> valueList = receiver.getReceiverValueList();
+                List<String> nameList = receiver.getReceiverValueNameList();
+                int nameSize = CollectionUtils.isNotEmpty(nameList) ? nameList.size() : 0;
+                for (int i = 0; i < valueList.size(); i++) {
                     NoticeReceiverEntity addEntity = new NoticeReceiverEntity();
-                    BeanMapper.copy(receiver, addEntity);
+                    addEntity.setReceiverType(receiverType);
+                    addEntity.setReceiverValue(valueList.get(i));
+                    if(CollectionUtils.isNotEmpty(nameList)){
+                        if (nameSize > i) {
+                            addEntity.setReceiverValueName(nameList.get(i));
+                        }
+                    }
                     addEntity.setNoticeId(noticeId);
                     addList.add(addEntity);
                 }
+
             }
             this.saveBatch(addList);
         }
     }
 
+    
     /**
-     * 更改接收人
-     *
-     * @param receivedList
-     * @return void
+     * 根据通知节点id 删除
      * @author yl
-     * @date 2023-04-26 16:01
+     * @date 2023-04-27 16:11
+     * @param noticeId
+     * @return void
      */
-    @Override
-    public Boolean edit(String noticeId, List<NoticeReceiverDTO.UpdateDTO> receivedList) {
-        if (CollectionUtils.isEmpty(receivedList)) {
-            return Boolean.TRUE;
-        }
-        List<NoticeReceiverEntity> dbList = this.getByNoticeId(noticeId);
-        //获取到删除的 等级id
-        List<String> deleteIdList = getDeleteIds(receivedList, dbList);
-        if (CollectionUtils.isNotEmpty(deleteIdList)) {
-            this.removeByIds(deleteIdList);
-        }
-        List<NoticeReceiverEntity> batchReceivedList = BeanMapper.copyList(receivedList, NoticeReceiverEntity.class);
-
-        return this.saveOrUpdateBatch(batchReceivedList);
+    private void delete(String noticeId) {
+        LambdaQueryWrapper<NoticeReceiverEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(NoticeReceiverEntity::getNoticeId, noticeId);
+        this.remove(queryWrapper);
     }
+
+
 
 
     /**
@@ -79,7 +86,24 @@ public class NoticeReceiverServiceImpl extends SuperServiceImpl<NoticeReceivedMa
     @Override
     public List<NoticeReceiverDTO.UpdateDTO> listByNoticeId(String noticeId) {
         List<NoticeReceiverEntity> dbList = this.getByNoticeId(noticeId);
-        return BeanMapper.copyList(dbList,NoticeReceiverDTO.UpdateDTO.class);
+        return BeanMapper.copyList(dbList, NoticeReceiverDTO.UpdateDTO.class);
+    }
+
+
+    /**
+     * 根据通知节点 ids 获取数据
+     *
+     * @param noticeIdList
+     * @return java.util.List<com.erp.model.sys.entity.NoticeReceiverEntity>
+     * @author yl
+     * @date 2023-04-27 14:39
+     */
+    @Override
+    public List<NoticeReceiverEntity> listByNoticeIds(List<String> noticeIdList) {
+        if (CollectionUtils.isEmpty(noticeIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(NoticeReceiverEntity::getNoticeId, noticeIdList).list();
     }
 
 
