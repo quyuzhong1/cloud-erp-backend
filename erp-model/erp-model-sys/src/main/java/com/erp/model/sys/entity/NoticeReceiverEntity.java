@@ -41,8 +41,9 @@ public class NoticeReceiverEntity extends BaseEntity<NoticeReceiverEntity> {
     @TableField("receiver_value")
     private String receiverValue;
 
-    @TableField("receiver_type_name")
-    private String receiverTypeName;
+
+    @TableField("receiver_value_name")
+    private String receiverValueName;
 
 
     @Override

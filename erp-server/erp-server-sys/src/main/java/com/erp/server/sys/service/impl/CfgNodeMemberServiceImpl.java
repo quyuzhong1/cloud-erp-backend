@@ -55,6 +55,6 @@ public class CfgNodeMemberServiceImpl extends SuperServiceImpl<CfgNodeMemberMapp
     }
 
     public List<CfgNodeMemberEntity> getByNodeKey(String nodeKey) {
-        return this.lambdaQuery().eq(CfgNodeMemberEntity::getNodeKey, nodeKey).list();
+        return this.lambdaQuery().eq(CfgNodeMemberEntity::getNodeKey, nodeKey).orderByDesc(CfgNodeMemberEntity::getSort).list();
     }
 }

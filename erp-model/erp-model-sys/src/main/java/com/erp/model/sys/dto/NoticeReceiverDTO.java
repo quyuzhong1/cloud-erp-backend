@@ -4,7 +4,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 通知节点接收人
@@ -31,19 +33,19 @@ public class NoticeReceiverDTO implements Serializable {
          * 接收类型
          * 对应type
          */
-        @NotBlank(message = "接收类型")
+        @NotBlank(message = "接收类型不能为空")
         private String receiverType;
 
         /**
          * 接收类型
          */
-        @NotBlank(message = "接收类型值")
-        private String receiverValue;
+        @NotEmpty(message = "接收类型值不能为空")
+        private List<String> receiverValueList;
 
         /**
-         * 接收类型名
+         * 接收类型名称
          */
-        private String receiverTypeName;
+        private List<String> receiverValueNameList;
 
 
     }
@@ -67,6 +69,11 @@ public class NoticeReceiverDTO implements Serializable {
         @NotBlank(message = "接收类型值")
         private String receiverValue;
 
+        /**
+         * 接收值名
+         */
+        private String receiverValueName;
+
 
     }
 
@@ -89,6 +96,11 @@ public class NoticeReceiverDTO implements Serializable {
          */
         @NotBlank(message = "接收类型值")
         private String receiverValue;
+
+        /**
+         * 接收值名
+         */
+        private String receiverValueName;
 
 
     }

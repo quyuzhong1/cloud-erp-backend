@@ -1,8 +1,12 @@
 package com.erp.server.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.entity.NoticeInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -15,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface NoticeInfoMapper extends BaseMapper<NoticeInfoEntity> {
 
+    IPage<NoticeDTO.PagingViewDTO> paging(Page query, @Param("params")NoticeDTO.PagingParamDTO params);
 }

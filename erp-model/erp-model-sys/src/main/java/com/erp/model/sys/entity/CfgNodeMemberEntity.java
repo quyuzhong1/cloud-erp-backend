@@ -71,6 +71,12 @@ public class CfgNodeMemberEntity extends BaseEntity<CfgNodeMemberEntity> {
     @TableField("label_field")
     private String labelField;
 
+    /**
+     * 排序值
+     */
+    @TableField("sort")
+    private String sort;
+
 
     public static final String NODE_KEY = "node_key";
 

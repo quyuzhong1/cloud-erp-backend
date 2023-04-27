@@ -1,6 +1,8 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperServiceImpl;
@@ -12,10 +14,9 @@ import com.erp.model.sys.dto.CfgNodeMemberDTO;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
 import com.erp.model.sys.entity.NoticeInfoEntity;
+import com.erp.model.sys.entity.NoticeReceiverEntity;
 import com.erp.server.sys.mapper.NoticeInfoMapper;
-import com.erp.server.sys.service.CfgNodeMemberService;
-import com.erp.server.sys.service.NoticeInfoService;
-import com.erp.server.sys.service.NoticeReceiverService;
+import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,12 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
 
     @Resource
     private CfgNodeMemberService cfgNodeMemberService;
+
+    @Resource
+    private SysUserInfoService sysUserInfoService;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 添加通知
@@ -88,14 +95,10 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
         notice.setNodeKey(dto.getNodeKey());
         notice.setSystem(dto.getSystem());
         //通知接收人
-        List<NoticeDTO.UpdateCfgNodeDTO> cfgNodeList = dto.getCfgNodeList();
-        List<NoticeReceiverDTO.UpdateDTO> receivedList = new ArrayList<>(10);
-        for (NoticeDTO.UpdateCfgNodeDTO item : cfgNodeList) {
-            receivedList.addAll(item.getReceiverList());
-        }
+        List<NoticeDTO.CfgNodeDTO> cfgNodeList = dto.getCfgNodeList();
         Boolean result = this.updateById(notice);
         if (result) {
-            noticeReceiverService.edit(id, receivedList);
+            noticeReceiverService.add(id, cfgNodeList);
         }
         return result;
     }
@@ -112,12 +115,18 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
         //根据节点id获取到对应的接收人信息
         List<NoticeReceiverDTO.UpdateDTO> receiverList = noticeReceiverService.listByNoticeId(id);
         List<CfgNodeMemberDTO.ListDTO> cfgList = cfgNodeMemberService.listByNodeKey(nodeKey);
-        List<NoticeDTO.UpdateCfgNodeDTO> CfgNodeList = new ArrayList<>(cfgList.size());
+        List<NoticeDTO.CfgNodeDTO> CfgNodeList = new ArrayList<>(cfgList.size());
         for (CfgNodeMemberDTO.ListDTO item : cfgList) {
-            NoticeDTO.UpdateCfgNodeDTO cfgNodeDTO = new NoticeDTO.UpdateCfgNodeDTO();
+            NoticeDTO.CfgNodeDTO cfgNodeDTO = new NoticeDTO.CfgNodeDTO();
             String type = item.getType();
             cfgNodeDTO.setType(type);
-            cfgNodeDTO.setReceiverList(receiverList.stream().filter(r -> type.equals(r.getReceiverType())).collect(Collectors.toList()));
+            NoticeReceiverDTO.AddDTO viewReceiver = new NoticeReceiverDTO.AddDTO();
+            viewReceiver.setReceiverType(type);
+            List<String> valueList = receiverList.stream().filter(r -> r.getReceiverType().equals(type)).map(NoticeReceiverDTO.UpdateDTO::getReceiverValue).collect(Collectors.toList());
+            List<String> valueNameList = receiverList.stream().filter(r -> r.getReceiverType().equals(type)).map(NoticeReceiverDTO.UpdateDTO::getReceiverValueName).collect(Collectors.toList());
+            viewReceiver.setReceiverValueList(valueList);
+            viewReceiver.setReceiverValueNameList(valueNameList);
+            cfgNodeDTO.setReceiver(viewReceiver);
             CfgNodeList.add(cfgNodeDTO);
         }
         view.setCfgNodeList(CfgNodeList);
@@ -162,6 +171,58 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
 
     @Override
     public PagingVO<NoticeDTO.PagingViewDTO> paging(PagingDTO<NoticeDTO.PagingParamDTO> dto) {
-        return null;
+        NoticeDTO.PagingParamDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<NoticeDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        List<NoticeDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO(pageData);
+        }
+        //通知节点id
+        List<String> noticeIdList = list.stream().map(NoticeDTO.PagingViewDTO::getId).collect(Collectors.toList());
+
+        List<NoticeReceiverEntity> noticeReceiverList = noticeReceiverService.listByNoticeIds(noticeIdList);
+        //项目角色
+//        String itemRole = NoticeReceiverEnum.ITEM_ROLE.getCode();
+        //其它人员
+//        String otherPeople = NoticeReceiverEnum.OTHER_PEOPLE.getCode();
+        //人员id
+//        List<String> userIds = noticeReceiverList.stream().filter(n -> otherPeople.equals(n.getReceiverType())).map(NoticeReceiverEntity::getReceiverValue).collect(Collectors.toList());
+        //项目角色
+//        List<String> itemRoleValueList = noticeReceiverList.stream().filter(n -> itemRole.equals(n.getReceiverType())).map(NoticeReceiverEntity::getReceiverValue).collect(Collectors.toList());
+
+//        List<FindUserDTO> userInfoList = sysUserInfoService.getUserListByUserIds(userIds);
+//        List<DictBasicEntity> dictBasicList = dictBasicService.listByValues(itemRoleValueList);
+        List<String> idFlagList = new ArrayList<>(10);
+        for (NoticeDTO.PagingViewDTO item : list) {
+            String id = item.getId();
+            String type = item.getType();
+            String receiverValueName = noticeReceiverList.stream().
+                    filter(n -> n.getNoticeId().equals(id) && type.equals(n.getReceiverType())).
+                    map(NoticeReceiverEntity::getReceiverValueName).
+                    collect(Collectors.joining(","));
+
+            String receiverValue = noticeReceiverList.stream().
+                    filter(n -> n.getNoticeId().equals(id) && type.equals(n.getReceiverType())).
+                    map(NoticeReceiverEntity::getReceiverValue).
+                    collect(Collectors.joining(","));
+
+            item.setReceiverValue(receiverValue);
+            item.setReceiverValueName(receiverValueName);
+            if (idFlagList.contains(id)) {
+                item.setNodeName("");
+                item.setNodeKey("");
+                item.setDisabled("");
+                item.setCreateTime("");
+                item.setCreateUserName("");
+                item.setUpdateTime("");
+                item.setUpdateUserName("");
+
+            }
+
+            idFlagList.add(id);
+        }
+
+        return new PagingVO(pageData);
     }
 }
