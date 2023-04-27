@@ -725,6 +725,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(detailIdList);
+
+        //退货数量
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(detailIdList);
+
         //获取签收数量
         List<WarehouseReceiveDetailEntity> receiveQtyList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(detailIdList);
         for (PurchaseOrderDTO.ViewGenerateReceiveDTO viewGenerateReceiveDTO : viewGenerateReceiveDTOS) {
@@ -736,7 +742,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
-            viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() - viewGenerateReceiveDTO.getReceiveQty());
+
+            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            viewGenerateReceiveDTO.setUnReceiveQty(viewGenerateReceiveDTO.getPurchaseQty() + returnQty - receiveQty);
             viewGenerateReceiveDTO.setExceedQty(0);
         }
 
@@ -1421,12 +1430,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     Integer qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                             .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
-
-                    deliveryQty = obj.getPurchaseQty() - (qty - returnQty);
+                    deliveryQty = obj.getPurchaseQty() + returnQty - qty;
                 }
             }
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
+
+
 
             //入库数量
             Integer stockInQty = MathUtil.ZERO;

@@ -92,7 +92,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-            if ((receiveQty - returnQty) > purchaseQty) {
+            if (receiveQty > purchaseQty + returnQty) {
                 throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
             }
 

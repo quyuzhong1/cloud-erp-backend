@@ -238,9 +238,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(0);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
-//        pendingViewDetailDTO.setModuleUrl(getHttpGatewayIpPortUtils.IP+":"+getHttpGatewayIpPortUtils.PLM_PORT);
-
+        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT);
     }
 
     private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
@@ -250,8 +248,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
-//        pendingViewDetailDTO.setModuleUrl(IP+":"+SCM_PORT);
+        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT);
     }
 
     private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
@@ -259,8 +256,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
-//        pendingViewDetailDTO.setModuleUrl(getHttpGatewayIpPortUtils.getIP+":"+getHttpGatewayIpPortUtils.WMS_PORT);
+        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT);
     }
 
     /**
