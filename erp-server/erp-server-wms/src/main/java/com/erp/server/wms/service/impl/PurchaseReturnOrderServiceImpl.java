@@ -272,6 +272,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         purchaseReturnOrderEntity.setBillDate(LocalDate.now());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
+        purchaseReturnOrderEntity.setReturnMode(null);
         //更新收货单主表信息
         this.updateById(purchaseReturnOrderEntity);
 
@@ -308,9 +309,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
 
         if (SourceTypeEnum.QC_BILL.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
-            viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getCode());
+            viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
         } else {
-            viewDTO.setSourceTypeName(ReturnOrderSourceEnum.OTHER.getCode());
+            viewDTO.setSourceType(ReturnOrderSourceEnum.OTHER.getCode());
         }
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
@@ -472,9 +473,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 if (purchaseReturnOrderEntity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
                     List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
                     detailByMainId.forEach(returnOrderDetailEntity -> {
-                        PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-                        purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
-                        list.add(purchaseOrderDetailEntity);
+                        PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                        if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                            purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                            list.add(purchaseOrderDetailEntity);
+                        }
+
                     });
                     scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
                 }

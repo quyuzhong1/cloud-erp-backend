@@ -19,7 +19,9 @@ import com.erp.server.workflow.service.CommonService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
+import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, WorkOptionEntity> implements WorkOptionService {
+
 
     @Resource
     private ProcessTaskService workflowFeign;
@@ -241,17 +244,20 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(0);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
+//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
+//        pendingViewDetailDTO.setModuleUrl(getHttpGatewayIpPortUtils.IP+":"+getHttpGatewayIpPortUtils.PLM_PORT);
+
     }
 
     private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
         Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
                 .getRequestAttributes()).getRequest();
-        String localAddr = request.getLocalAddr();
-        int serverPort = request.getServerPort();
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
+//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
+//        pendingViewDetailDTO.setModuleUrl(IP+":"+SCM_PORT);
     }
 
     private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
@@ -259,6 +265,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
+//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
+//        pendingViewDetailDTO.setModuleUrl(getHttpGatewayIpPortUtils.getIP+":"+getHttpGatewayIpPortUtils.WMS_PORT);
     }
 
     /**

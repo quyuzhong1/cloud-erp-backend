@@ -141,6 +141,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //供应商地址
         resultMap.put("address", supplierEntity.getCompanyAddress());
 
+        //退货原因
+        resultMap.put("returnRemark", entity.getReturnRemark());
+
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {

@@ -93,7 +93,11 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("purchaseUserName", entity.getPurchaseUserName());
 
         //新品首批
-        resultMap.put("isFirstMassProduct", entity.getIsFirstMassProduct());
+        if (entity.getIsFirstMassProduct()) {
+            resultMap.put("isFirstMassProduct","是");
+        } else {
+            resultMap.put("isFirstMassProduct","否");
+        }
 
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
@@ -153,7 +157,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("purchaseQty", purchaseOrderDetailEntity.getPurchaseQty());
 
             //计价数量
-            jsonObject.set("priceBaseQty", purchaseOrderDetailEntity.getPurchaseQty());
+            jsonObject.set("priceBaseQty", detail.getStockInQty());
 
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
