@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -89,8 +90,10 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库日期
         resultMap.put("billDate", entity.getStockInDate());
         // TODO 单据状态
+
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         //采购员
-        resultMap.put("purchaseUserName", entity.getPurchaseUserName());
+        resultMap.put("purchaseUserCode", findUserDTO.getCode());
 
         //新品首批
         if (entity.getIsFirstMassProduct()) {

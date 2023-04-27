@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -104,8 +105,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //退货日期
         resultMap.put("billDate",entity.getBillDate());
         // TODO 单据状态
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         //采购员
-        resultMap.put("purchaseUserName",entity.getPurchaseUserName());
+        resultMap.put("purchaseUserCode", findUserDTO.getCode());
 
         //退货来源
         if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {
