@@ -1,7 +1,9 @@
 package com.erp.server.wms.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -67,6 +69,14 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("address",entity.getAddress());
         //仓库电话
         resultMap.put("tel",entity.getContactTelNumber());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
+        //非审核通过并且没有金蝶id则无需同步
+        if (!SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && StringUtils.isBlank(entity.getSyncKingdeeId())) {
+            return;
+        }
+
         //仓库类型
         DictBasicEntity type = dictBasicService.getById(entity.getTypeId());
         if (ObjectUtils.isNotEmpty(type)) {
@@ -77,9 +87,6 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         if (ObjectUtils.isNotEmpty(findUserDTO)) {
             resultMap.put("chargeCode",findUserDTO.getCode());
         }
-
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
