@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ServiceException.class})
     @ResponseStatus(HttpStatus.OK)
     public ApiResult resolveException(ServiceException e) {
-        log.error("系统异常：", e);
+        log.error("系统异常：{}", e.getMsg(), e);
         return new ApiResult(e);
     }
 

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * @Author: zhangchunlin
  */
 @RestController
-@RequestMapping("feign/inventory")
+@RequestMapping("inventory")
 public class InventoryFeignController extends BaseController {
 
     @Autowired
