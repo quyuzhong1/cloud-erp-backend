@@ -13,6 +13,9 @@ import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseChangeDetailMapper;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -51,6 +54,10 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
     @Resource
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PurchaseChangeDetailDTO.AddDTO> details, String purchaseChangeId) {
@@ -83,7 +90,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             this.removeByIds(deleteIds);
         }
         List<PurchaseChangeDetailEntity> newList = BeanMapperUtils.copyList(PurchaseChangeDetailEntity.class, details);
-        //验证验证数量、单价是否符合供应商报价
+        //验证数量、单价是否符合供应商报价
         checkPurchasePrice(newList,purchaseChangeId);
         //计算金额
         doOpCalculateAmount(newList,purchaseChangeId);
@@ -154,8 +161,35 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        List<String> podIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+
+        //入库信息
+        List<PurchaseStockInDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
 
         for (PurchaseChangeDetailEntity purchaseChangeDetailEntity : list) {
+            //变更后数量不能小于收货数量
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                Integer receiveQty = receiveDetailList.stream()
+                        .filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (receiveQty > purchaseChangeDetailEntity.getQty()) {
+                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于收货数量【%s】",purchaseChangeDetailEntity.getSkuNo(),receiveQty)));
+                }
+            }
+            //变更后数量不能小于入库数量
+            if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                Integer stockInQty = purchaseStockInDetailList.stream()
+                        .filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()))
+                        .map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (stockInQty > purchaseChangeDetailEntity.getQty()) {
+                    throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于入库数量【%s】",purchaseChangeDetailEntity.getSkuNo(),stockInQty)));
+                }
+            }
+
             //赠品无需判断供应商报价
             long count = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()) && obj.getIsGift()).count();
             if (count > 0) {
