@@ -218,7 +218,15 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             throw new ServiceException(ApiError.ERROR_99001);
         }
         warehouse.setDisabled(dto.getState());
-        return this.updateById(warehouse);
+        this.updateById(warehouse);
+
+        //发送金蝶
+        if (dto.getState()) {
+            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+        } else {
+            syncKingdeeWarehouseService.syncDataToKingdee(warehouse, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+        }
+        return Boolean.TRUE;
     }
 
     /**
