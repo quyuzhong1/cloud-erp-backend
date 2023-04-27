@@ -2,7 +2,9 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.CfgNodeMemberDTO;
@@ -30,6 +32,21 @@ public class NoticeController extends BaseController {
 
     @Resource
     private CfgNodeMemberService cfgNodeMemberService;
+
+
+
+
+    /**
+     * 通知节点分页
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<NoticeDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<NoticeDTO.PagingParamDTO> dto) {
+        PagingVO<NoticeDTO.PagingViewDTO> pagingVO = noticeInfoService.paging(dto);
+        return success(pagingVO);
+    }
 
 
     /**

@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -7,6 +8,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -123,7 +125,7 @@ public class NoticeDTO implements Serializable {
 
 
         /**
-         * 业务类型
+         * 业务模块
          */
         private String module;
 
@@ -161,4 +163,112 @@ public class NoticeDTO implements Serializable {
         private List<NoticeReceiverDTO.UpdateDTO>  receiverList;
 
     }
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
+        /**
+         * 业务模块
+         */
+        @NotBlank(message = "业务模块不能为空")
+        private String module;
+
+        /**
+         * 节点名称
+         */
+        private String nodeName;
+
+
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+
+
+        private String id;
+
+        /**
+         * 模块
+         */
+        private String module;
+
+
+        /**
+         * 节点key
+         */
+        private String nodeKey;
+        /**
+         * 节点名称
+         */
+        private String nodeName;
+
+
+        /**
+         * 接收类型
+         */
+        private String type;
+
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
+
+        /**
+         *接收类型
+         */
+        private String receiverType;
+
+        /**
+         *接收名
+         */
+        private String receiverTypeName;
+
+
+        /**
+         *接收值
+         */
+        private String receiverValue;
+
+        /**
+         *接收值名
+         */
+        private String receiverValueName;
+
+
+        /**
+         * 创建人名
+         */
+        private String createUserName;
+
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+
+        /**
+         * 更新人名
+         */
+        private String updateUserName;
+
+
+        /**
+         * 跟新时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime updateTime;
+
+
+
+    }
+
+
 }

@@ -1,8 +1,10 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -156,5 +158,10 @@ public class NoticeInfoServiceImpl extends SuperServiceImpl<NoticeInfoMapper, No
         }
         notice.setDisabled(dto.getState());
         return this.updateById(notice);
+    }
+
+    @Override
+    public PagingVO<NoticeDTO.PagingViewDTO> paging(PagingDTO<NoticeDTO.PagingParamDTO> dto) {
+        return null;
     }
 }

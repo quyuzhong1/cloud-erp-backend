@@ -1,7 +1,9 @@
 package com.erp.server.sys.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.entity.NoticeInfoEntity;
 
@@ -65,4 +67,6 @@ public interface NoticeInfoService extends SuperService<NoticeInfoEntity> {
      * @return
      */
     Boolean updateStatus(UpdateStateDTO dto);
+
+    PagingVO<NoticeDTO.PagingViewDTO> paging(PagingDTO<NoticeDTO.PagingParamDTO> dto);
 }
