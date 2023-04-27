@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1076,6 +1077,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //币种符号
             String currencySymbol = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getCurrencySymbol).findFirst().orElse(null);
             dto.setCurrencySymbol(currencySymbol);
+
+            //单价
+            BigDecimal taxPrice = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(dto.getPurchaseOrderDetailId())).findFirst().flatMap(obj->Optional.ofNullable(obj.getTaxPrice())).orElse(BigDecimal.ZERO);
+            dto.setTaxPrice(taxPrice);
+
             //相同采购单号清空后面数据的采购单号和供应商
             boolean contains = list.contains(dto.getPurchaseOrderId());
             if (contains) {

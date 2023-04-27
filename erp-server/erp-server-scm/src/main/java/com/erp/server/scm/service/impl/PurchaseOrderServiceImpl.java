@@ -1044,6 +1044,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     item.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
             item.setStockInQty(qty);
+
+
             //相同采购单号清空后面数据的采购单号和供应商
             boolean contains = list.contains(item.getPurchaseOrderId());
             if (contains) {
