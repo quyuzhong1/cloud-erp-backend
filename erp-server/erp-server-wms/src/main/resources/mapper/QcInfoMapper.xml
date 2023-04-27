@@ -36,7 +36,7 @@
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
         </where>
-        group by dateStr, qb.qc_status
+        group by dateStr, qb.qc_status order by dateStr asc
     </select>
 
     <select id="viewQcForPersonnel"

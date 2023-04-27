@@ -31,9 +31,8 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -104,15 +103,15 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     public QcEffectivenessDTO.ViewQcTrendDTO viewQcTrend(QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
         QcEffectivenessDTO.ViewQcTrendDTO result = new  QcEffectivenessDTO.ViewQcTrendDTO();
         //日期集合
-        List<String> dateList = new ArrayList<>();
+        List<String> dateList = new LinkedList<>();
         //暂存数量集合
-        List<Integer> waitSubmitQtyList = new ArrayList<>();
+        List<Integer> waitSubmitQtyList = new LinkedList<>();
         //待质检数量集合
-        List<Integer> waitQcQtyList = new ArrayList<>();
+        List<Integer> waitQcQtyList = new LinkedList<>();
         //质检（已质检、免检）数量集合
-        List<Integer> qcQtyList = new ArrayList<>();
+        List<Integer> qcQtyList = new LinkedList<>();
         //已取消数量集合
-        List<Integer> cancelQtyList = new ArrayList<>();
+        List<Integer> cancelQtyList = new LinkedList<>();
 
         //是否是时间段，非时间段则默认取最近15（日，周，月）数据，是时间段则按时间段取质检数据
         Boolean isTimeSlot = dto.getIsTimeSlot();
@@ -140,9 +139,18 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcInfoMapper.listQcBillGroupQcTrend(dto.getType(),beginDate,endDate);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> map = list.stream().collect(Collectors.groupingBy(QcEffectivenessDTO.GroupQcTrendDTO::getDateStr));
-            for (Map.Entry<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> entry : map.entrySet()) {
+            List<Map.Entry<String, List<QcEffectivenessDTO.GroupQcTrendDTO>>> mapList = map.entrySet().stream().sorted(Comparator.comparing(obj -> obj.getKey())).collect(Collectors.toList());
+            for (Map.Entry<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> entry : mapList) {
                 String key = entry.getKey();
                 List<QcEffectivenessDTO.GroupQcTrendDTO> value = entry.getValue();
+                if (ViewQcTrendEnum.WEEK.getCode().equals(dto.getType())) {
+                    //周开始日期
+                    LocalDate weekBegin = LocalDate.parse(key);
+                    //周结束日期
+                    LocalDate weekEnd = weekBegin.plusDays(6L);
+
+                    key =  weekBegin.format(DateTimeFormatter.ofPattern("MM-dd")) + "~" + weekEnd.format(DateTimeFormatter.ofPattern("MM-dd"));
+                }
                 dateList.add(key);
                 //暂存
                 Integer waitSubmitQty= value.stream().filter(obj -> QcBillStatusEnum.DRAFT.getCode().equals(obj.getStatus())).map(QcEffectivenessDTO.GroupQcTrendDTO::getCount).reduce(MathUtil.ZERO,Integer::sum);
