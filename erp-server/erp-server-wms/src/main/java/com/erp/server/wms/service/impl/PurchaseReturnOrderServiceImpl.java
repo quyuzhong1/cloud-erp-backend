@@ -21,7 +21,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.scm.entity.*;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.SupplierContactEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -33,7 +36,6 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
 import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
-import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -51,12 +53,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -195,10 +194,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
+        String purchaseUserId = dto.getPurchaseUserId();
+        if(StringUtils.isNotBlank(purchaseUserId)){
+            SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
+            purchaseReturnOrderEntity.setPurchaseUserId(dto.getPurchaseUserId());
+            purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
+        }
 
-        SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
-        purchaseReturnOrderEntity.setPurchaseUserId(dto.getPurchaseUserId());
-        purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
         purchaseReturnOrderEntity.setSupplierId(dto.getSupplierId());
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(dto.getSupplierId());
         purchaseReturnOrderEntity.setSupplierName(supplierEntity.getName());
@@ -207,7 +209,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             purchaseReturnOrderEntity.setSupplierContactName(supplierContactById.getPerson());
         }
-        purchaseReturnOrderEntity.setReturnUserName(userDTO.getUserName());
+        purchaseReturnOrderEntity.setReturnUserName(userDTO!=null?userDTO.getUserName():"");
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         purchaseReturnOrderEntity.setBillDate(LocalDate.now());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
@@ -851,8 +853,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     /**
      * 判断到货状态
      *
-     * @param returnQty  退货数量
-     * @param receiveQty 收货数量
+     * @param returnQty   退货数量
+     * @param receiveQty  收货数量
      * @param purchaseQty 采购数量
      * @param id          采购明细id
      * @return java.lang.Integer
