@@ -340,10 +340,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
                 BigDecimal qcGoodRate = item.getQcGoodRate();
-                excelDTO.setQcGoodRate(qcGoodRate!=null?qcGoodRate.toString()+"%":"");
+                excelDTO.setQcGoodRate(qcGoodRate != null ? qcGoodRate.toString() + "%" : "");
 
                 BigDecimal qcBadRate = item.getQcBadRate();
-                excelDTO.setQcBadRate(qcBadRate!=null?qcBadRate.toString()+"%":"");
+                excelDTO.setQcBadRate(qcBadRate != null ? qcBadRate.toString() + "%" : "");
                 QcBillStatusEnum billStatusEnum = item.getQcStatus();
                 excelDTO.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
                 QcTypeEnum qcTypeEnum = item.getQcType();
@@ -1282,6 +1282,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setQcDeptName(departName);
             qcInfo.setQcUserId(qcUserId);
             qcInfo.setQcUserName(qcUserName);
+            qcInfo.setSourceId(item.getSourceId());
+            qcInfo.setSourceType(item.getSourceType());
             addQcList.add(qcInfo);
             //质检结果
             QcResultEntity qcResult = new QcResultEntity();
@@ -1291,6 +1293,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcResult.setQcType(item.getQcType());
             qcResult.setIsInside(isInside);
             qcResult.setTotalQty(item.getTotalQty());
+            qcResult.setPurchaseOrderDetailId(item.getPurchaseOrderDetailId());
             addQcResultList.add(qcResult);
 
             //质检产品
