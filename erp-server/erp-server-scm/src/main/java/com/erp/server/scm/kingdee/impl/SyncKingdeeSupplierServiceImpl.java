@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -78,6 +80,13 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         resultMap.put("companyAddress",entity.getCompanyAddress());
         //公司网址
         resultMap.put("companyWebsite",entity.getCompanyWebsite());
+        //是否禁用
+        resultMap.put("disabled",entity.getDisabled());
+
+        //审核未通过、非反审核不推送
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            return;
+        }
 
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         if (ObjectUtils.isNotEmpty(findUserDTO)) {

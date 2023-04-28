@@ -13,6 +13,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
+import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
@@ -118,7 +119,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 查询配置的交易规则
         List<CfgTransactionRulesEntity> transactionRules = cfgTransactionRulesService.findByDictBizType(businessType.getCode());
         // 1.验证参数
-        this.checkInOutStockParam(paramList, businessType, transactionRules);
+        List<TransactionRuleDTO> transactionRuleParams = inventoryHelper.wrapTransactionRule(transactionRules);
+        inventoryHelper.checkInOutStockParam(paramList, businessType, transactionRuleParams);
         // 2.仓库集合
         Map<String, WarehouseEntity> warehouseMap = Maps.newHashMap();
         // 3.出入库业务处理
@@ -128,7 +130,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveTransferByType(List<InventoryTransferDTO> paramList, InventoryBusinessTypeEnum businessType) {
-
+        ValidatorUtil.isTrue(Objects.nonNull(businessType),()->new ServiceException(ApiError.ERROR_400.code, "业务类型不能为空"));
+        // 查询配置的交易规则
+        List<CfgTransactionRulesEntity> transactionRules = cfgTransactionRulesService.findByDictBizType(businessType.getCode());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -143,19 +147,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     }
 
-
-    /**
-     * 出入库业务验证参数
-     * @param paramLis
-     */
-    public void checkInOutStockParam(List<InStockOrOutStockDTO> paramLis, InventoryBusinessTypeEnum businessType, List<CfgTransactionRulesEntity> transactionRules) {
-        for(InStockOrOutStockDTO param : paramLis) {
-            ValidatorUtil.validateEntity(param);
-            inventoryHelper.checkCommonBiz(param);// 通用检查
-            inventoryHelper.checkAllowTrade(param);// 关账检查
-            inventoryHelper.checkEnoughStockIfNecessary(param, businessType, transactionRules);// 出库库存数量检查
-        }
-    }
 
     /**
      * 循环处理出入库业务

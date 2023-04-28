@@ -1,7 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -75,13 +74,8 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
-        //审核未通过不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-            return;
-        }
-
-        //非审核通过并且没有金蝶id则无需同步
-        if (!SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate) && StringUtils.isBlank(entity.getSyncKingdeeId())) {
+        //审核未通过、非反审核不推送
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             return;
         }
 

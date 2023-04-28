@@ -12,7 +12,7 @@ import java.time.LocalDate;
 
 /**
  * @Classname: InventoryTransferDTO
- * @Description: 调拨操作请求实体
+ * @Description: 调拨操作请求实体，一个操作会导致2个仓库的库存状态变化适合使用
  * @CreateTime: 2023-04-26  14:34
  * @Author: zhangchunlin
  */
@@ -64,7 +64,6 @@ public class InventoryTransferDTO implements Serializable {
     /**
      * 目的仓库位id（可以传输，某些单据没有库位信息）
      */
-    @NotEmpty(message = "目的仓库组织不能为空")
     private String targetWarehouseLocation;
 
     /**
