@@ -114,6 +114,9 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                 qcResultEntity.setQcGoodRate(qcGoodRate);
                 BigDecimal qcBadRate = MathUtil.divide(new BigDecimal(qcBadQty), new BigDecimal(qcQty));
                 qcResultEntity.setQcBadRate(qcBadRate);
+            }else{
+                qcResultEntity.setQcGoodRate(BigDecimal.ZERO);
+                qcResultEntity.setQcBadRate(BigDecimal.ZERO);
             }
         }
     }

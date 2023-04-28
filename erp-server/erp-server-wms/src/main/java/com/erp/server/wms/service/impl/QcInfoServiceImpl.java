@@ -665,16 +665,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Boolean isExist = StringUtils.isNotBlank(purchaseOrderId);
         //检查质检数量
         checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
-        //质检单
-        String billId = dto.getId();
-        if (StringUtils.isBlank(billId)) {
-            billId = IdWorker.getIdStr();
-        }
+
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
-        bill.setId(billId);
+        bill.setId(id);
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
         bill.setQcStatus(exemption);
@@ -694,13 +690,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
-            qcProductService.add(billId, dto.getQcProduct());
+            qcProductService.add(id, dto.getQcProduct());
             //质检信息 暂存
-            qcResultService.add(billId, qcInfo);
+            qcResultService.add(id, qcInfo);
             //质检报告 暂存
-            qcReportDetailService.add(billId, dto.getReportDetailList());
+            qcReportDetailService.add(id, dto.getReportDetailList());
             //质检备注暂存
-            qcRemarkService.add(billId, dto.getRemarkList());
+            qcRemarkService.add(id, dto.getRemarkList());
 
             //质检类型
             String qcType = qcInfo.getQcType();
@@ -708,11 +704,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //当是 b2b 质检的时候 生成入库单
             if (b2bQc.equals(qcType) && isExist) {
                 //生成入库单
-                autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
+                autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId);
             }
 
             //操作日志
-            moduleOperateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
+            moduleOperateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "新增操作");
         }
         return result;
     }
