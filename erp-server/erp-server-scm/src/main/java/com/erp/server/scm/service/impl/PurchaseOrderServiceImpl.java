@@ -886,6 +886,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //入库信息
         List<PurchaseStockInDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
+        //退货信息
+        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+
         for (PurchaseOrderDetailEntity detailEntity : list) {
             PurchaseOrderDTO.ViewGenerateStockInDTO viewGenerateStockInDTO = new PurchaseOrderDTO.ViewGenerateStockInDTO();
             BeanMapperUtils.copy(detailEntity, viewGenerateStockInDTO);
@@ -913,12 +916,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             viewGenerateStockInDTO.setReceiveQty(receiveQty);
             viewGenerateStockInDTO.setExceedQty(exceedQty);
-            //未入库数量
+            //已入库数量
             Integer hasStockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetailList)) {
                 hasStockInQty = stockInDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            viewGenerateStockInDTO.setUnStockInQty(detailEntity.getPurchaseQty() - hasStockInQty);
+            //已退货数量
+            Integer hasReturnQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
+                hasReturnQty = returnOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            //未入库数量
+            viewGenerateStockInDTO.setUnStockInQty(detailEntity.getPurchaseQty() - hasStockInQty - hasReturnQty);
             //入库数量
             viewGenerateStockInDTO.setStockInQty(viewGenerateStockInDTO.getUnStockInQty());
             resultList.add(viewGenerateStockInDTO);

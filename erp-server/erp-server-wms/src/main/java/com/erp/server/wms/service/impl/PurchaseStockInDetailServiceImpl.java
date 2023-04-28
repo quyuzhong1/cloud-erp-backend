@@ -10,10 +10,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
-import com.erp.model.wms.entity.PurchaseStockInEntity;
-import com.erp.model.wms.entity.QcInfoEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -57,6 +54,11 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
 
     @Resource
     private PurchaseStockInService purchaseStockInService;
+
+    @Resource
+    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -240,6 +242,9 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         if (CollectionUtils.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        //查询退货明细
+        List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(ids);
+
 
         for (PurchaseStockInDetailEntity detailEntity : list) {
 
@@ -256,8 +261,15 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
                 stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
-            if (thisStockInQty > purchaseQty - stockInQty) {
-                throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty)));
+            //退货单数量
+            Integer returnQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
+                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+
+            if (thisStockInQty > purchaseQty - stockInQty + returnQty) {
+                throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty + returnQty)));
             }
             //来源收货单
             if (SourceTypeEnum.WAREHOUSE_RECEIVE.getCode().equals(sourceType)) {
