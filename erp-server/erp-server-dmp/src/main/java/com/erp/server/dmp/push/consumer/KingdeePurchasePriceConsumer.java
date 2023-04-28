@@ -190,9 +190,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         JSONArray list = JSONUtil.parseArray(map.get("list"));
         String id = "";
 
-        JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
-        JSONObject newObj = new JSONObject();
-        JSONArray pkEntryIds = new JSONArray();
+
         List<String> disabledList = new ArrayList<>();
         List<String> unDisabledList = new ArrayList<>();
         for (Object obj : list ) {
@@ -241,25 +239,34 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
-            newObj.set("id",id);
-            newObj.set("EntryIds",String.join(",",disabledList));
-            pkEntryIds.put(newObj);
-            viewMap.set("PkEntryIds",pkEntryIds);
-            //启用禁用
-            apiUtils.excuteOperation(SyncKingdeeOperateEnum.getNameByCode(operate),JSONUtil.toJsonStr(viewMap));
+            excuteOperation(apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
         }
-
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
-            newObj.set("id",id);
-            newObj.set("EntryIds",String.join(",",disabledList));
-            pkEntryIds.put(newObj);
-            viewMap.set("PkEntryIds",pkEntryIds);
-            //启用禁用
-            apiUtils.excuteOperation(SyncKingdeeOperateEnum.getNameByCode(operate),JSONUtil.toJsonStr(viewMap));
+            excuteOperation(apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
         }
 
     }
 
+    /**
+     * @description: 启用或禁用
+     * @author Will
+     * @date: 2023/4/28 11:36
+     * @param apiUtils
+     * @param list
+     * @param id
+     * @param operate
+     */
+    private void excuteOperation(KingdeeApiUtils apiUtils, List<String> list,String id,String operate) {
+        JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
+        JSONObject newObj = new JSONObject();
+        JSONArray pkEntryIds = new JSONArray();
+        newObj.set("id",id);
+        newObj.set("EntryIds",String.join(",",list));
+        pkEntryIds.put(newObj);
+        viewMap.set("PkEntryIds",pkEntryIds);
+        //启用禁用
+        apiUtils.excuteOperation(SyncKingdeeOperateEnum.getNameByCode(operate),JSONUtil.toJsonStr(viewMap));
+    }
 
 }
