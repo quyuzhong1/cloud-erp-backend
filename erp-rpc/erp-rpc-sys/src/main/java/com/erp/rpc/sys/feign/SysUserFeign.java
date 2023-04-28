@@ -8,10 +8,7 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.sys.vo.MsgChannelConfigDTO;
-import com.erp.model.sys.vo.MsgConfigDTO;
-import com.erp.model.sys.vo.SysCalendarListVO;
-import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,6 +76,14 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
+
+    /**
+     * 查询左菜单栏
+     * @param roleIds
+     * @return
+     */
+    @PostMapping("feign/user/findLeftMenuByRoleIds")
+    List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds);
 
     /**
      *   根据第三方平台 以及union id 获取用户id

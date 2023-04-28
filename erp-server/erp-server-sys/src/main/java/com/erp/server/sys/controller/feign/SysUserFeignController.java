@@ -9,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -49,6 +50,9 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SyncKingdeeService syncKingdeeService;
+
+    @Autowired
+    private SysRoleMenuService sysRoleMenuService;
 
 
 
@@ -135,6 +139,16 @@ public class SysUserFeignController extends BaseController {
     public List<String> getRoleIdList(@RequestBody String userId) {
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
         return roleIds;
+    }
+
+    /**
+     * 查询左菜单栏
+     * @param roleIds
+     * @return
+     */
+    @PostMapping("/findLeftMenuByRoleIds")
+    public List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds) {
+        return sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
     }
 
 

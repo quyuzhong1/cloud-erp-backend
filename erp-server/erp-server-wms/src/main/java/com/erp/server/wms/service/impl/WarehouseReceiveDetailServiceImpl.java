@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +74,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+        //校验sku重复
+        checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
 
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
@@ -116,6 +120,19 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     }
 
     /**
+     * 新增验证sku是否重复
+     */
+    private void checkAddDetailsRepeatSku(List<PurchaseOrderDetailEntity> list) {
+        Map<String, List<PurchaseOrderDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+        for (Map.Entry<String, List<PurchaseOrderDetailEntity>> entry : map.entrySet()) {
+            List<PurchaseOrderDetailEntity> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+            }
+        }
+    }
+
+    /**
      * 修改
      * @Author Luo_WG
      * @Date 2023/4/13 15:22
@@ -131,6 +148,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+        //校验sku重复
+        checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
 
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);

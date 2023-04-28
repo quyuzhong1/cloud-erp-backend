@@ -4,12 +4,14 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
@@ -50,6 +52,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     private WorkMenuService workMenuService;
 
     @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
@@ -67,8 +72,14 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
-        List<String> collect = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
+        List<String> roleIds = sysUserFeign.getRoleIdList(userInfo.getUid());
+        List<SysMenuVO> leftMenuList = sysUserFeign.findLeftMenuByRoleIds(roleIds);
+        leftMenuList.forEach(req -> {
+            List<String> collect = req.getChildrenList().stream().map(SysMenuVO::getMenuUrl).distinct().collect(Collectors.toList());
+        });
+
+        List<String> collect = new ArrayList<>();
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listWaitDoMenu(sysClassify);
 
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());

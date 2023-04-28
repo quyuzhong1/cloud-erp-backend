@@ -484,7 +484,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     });
                     scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
                 }
-                updateArrivalState(purchaseReturnOrderEntity);
+
+                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
             }
         } else {
             //审核不通过
@@ -543,7 +544,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 });
                 scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
             }
-            updateArrivalState(purchaseReturnOrderEntity);
+            updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
         }
 
         //操作日志
@@ -624,6 +625,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .set(PurchaseReturnOrderEntity::getInvalidTime, LocalDateTime.now())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+        
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), pairList, "作废操作");
@@ -828,56 +830,46 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return true;
     }
 
-    //修改到货状态
-    private void updateArrivalState(PurchaseReturnOrderEntity purchaseReturnOrderEntity) {
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(purchaseReturnOrderEntity.getPurchaseOrderId());
+    /**
+     * 修改到货状态
+     * @Author Luo_WG
+     * @Date 2023/4/28 11:37
+     * @param PurchaseOrderId PurchaseOrderId
+     * @return void
+     **/
+    @Override
+    public void updateArrivalState(String PurchaseOrderId) {
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(PurchaseOrderId);
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailEntities) {
-                    /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
+        for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
 
-                    }*/
-            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
+            Integer purchaseQty = orderDetailEntity.getPurchaseQty();
             if (returnQty > receiveQty) {
-                throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
+                throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, orderDetailEntity.getSkuNo()));
             }
-            approveArrivalState(returnQty, receiveQty, purchaseQty, purchaseOrderDetailEntity.getId());
-        }
-    }
 
-    /**
-     * 判断到货状态
-     *
-     * @param returnQty   退货数量
-     * @param receiveQty  收货数量
-     * @param purchaseQty 采购数量
-     * @param id          采购明细id
-     * @return java.lang.Integer
-     * @Author Luo_WG
-     * @Date 2023/4/20 18:47
-     **/
-    private Boolean approveArrivalState(Integer returnQty, Integer receiveQty, Integer purchaseQty, String id) {
-        String arrivalStatus = "";
-        //未到货
-        if (receiveQty - returnQty <= MathUtil.ZERO) {
-            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
-        } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
-            //部分到货
-            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
-        } else {
-            //已到货
-            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+            String arrivalStatus = "";
+            //未到货
+            if (receiveQty - returnQty <= MathUtil.ZERO) {
+                arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+            } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
+                //部分到货
+                arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+            } else {
+                //已到货
+                arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+            }
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
+            purchaseOrderDetailEntity.setId(orderDetailEntity.getId());
+            purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
+            purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+            scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
         }
-        PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
-        purchaseOrderDetailEntity.setId(id);
-        purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
-        purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
-        Boolean flag = scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
-        return flag;
     }
 }

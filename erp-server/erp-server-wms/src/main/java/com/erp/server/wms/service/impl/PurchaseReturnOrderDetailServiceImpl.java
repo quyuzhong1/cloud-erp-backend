@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -91,6 +93,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+            checkAddDetailsRepeatSku(dto.getPurchasePriceDetailList());
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -155,6 +158,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     private List<PurchaseReturnOrderDetailEntity> notProductOrderAdd(PurchaseReturnOrderDTO.AddDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
+        checkAddDetailsRepeatSku(detailList);
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(addDTO, purchaseReturnOrderDetailEntity);
@@ -163,6 +167,20 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             listDetail.add(purchaseReturnOrderDetailEntity);
         }
         return listDetail;
+    }
+
+
+    /**
+     * 新增验证sku是否重复
+     */
+    private void checkAddDetailsRepeatSku(List<PurchaseReturnOrderDetailDTO.AddDTO> list) {
+        Map<String, List<PurchaseReturnOrderDetailDTO.AddDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId));
+        for (Map.Entry<String, List<PurchaseReturnOrderDetailDTO.AddDTO>> entry : map.entrySet()) {
+            List<PurchaseReturnOrderDetailDTO.AddDTO> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+            }
+        }
     }
 
 

@@ -196,4 +196,13 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.lang.Boolean
      */
     Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list);
+
+    /**
+     * 修改到货状态
+     * @Author Luo_WG
+     * @Date 2023/4/28 11:41
+     * @param PurchaseOrderId PurchaseOrderId
+     * @return void
+     **/
+    void updateArrivalState(String PurchaseOrderId);
 }
