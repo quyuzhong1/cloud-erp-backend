@@ -228,11 +228,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
                 String disablerId = (String)queryMap.get("FDisablerId");
                 if (StringUtils.equals(skuNo,number) && MathUtil.compareTo(minQty,fMinQty) == MathUtil.ZERO && MathUtil.compareTo(maxQty,fMaxQty) == MathUtil.ZERO ) {
                     //禁用
-                    if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) && StringUtils.equals("0",disablerId)) {
+                    if (SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate) && StringUtils.equals("0",disablerId)) {
                         disabledList.add(detailId);
                     }
                    //启用
-                    if (SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate) && !StringUtils.equals("0",disablerId)) {
+                    if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) && !StringUtils.equals("0",disablerId)) {
                         unDisabledList.add(detailId);
                     }
                 }
