@@ -149,6 +149,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         bill.setId(billId);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+        //检查质检数量
+        checkQcQty(dto.getQcInfo(), dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
 
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //检查采购价目明细
@@ -416,7 +418,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //检查质检数量
         checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
         //质检单
-
         String billId = dto.getId();
         if (StringUtils.isBlank(billId)) {
             billId = IdWorker.getIdStr();
@@ -1392,11 +1393,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private void checkQcQty(QcResultDTO.AddDTO qcInfo, String mainId, String purchaseOrderId, String skuId) {
         //校验质检不良+合格不能超过质检数量
         if (qcInfo != null) {
-            Integer goodQty = qcInfo.getQcGoodQty();
-            Integer badQty = qcInfo.getQcBadQty();
-            Integer qcQty = qcInfo.getQcQty();
+            Integer goodQty = qcInfo.getQcGoodQty()!=null?qcInfo.getQcGoodQty():0;
+            Integer badQty = qcInfo.getQcBadQty()!=null? qcInfo.getQcBadQty():0;
+            Integer qcQty = qcInfo.getQcQty()!=null?qcInfo.getQcQty():0;
             //质检总量
-            Integer totalQty = qcInfo.getTotalQty();
+            Integer totalQty = qcInfo.getTotalQty()!=null?qcInfo.getTotalQty():0;
             if (goodQty + badQty > qcQty) {
                 throw new ServiceException(ApiError.ERROR_99016);
             }
@@ -1404,9 +1405,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             String orderDetailId = qcInfo.getPurchaseOrderDetailId();
             //当采购订单不为空的时候
             if (StringUtils.isNotBlank(orderDetailId)) {
-                List<String> purOrderIds = Arrays.asList(orderDetailId);
+                List<String> podIds = Arrays.asList(orderDetailId);
                 //获取到对应的 订单明细
-                List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purOrderIds);
+                List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
                 //采购的订单数量
                 Integer purchaseSkuQty = purOrderDetailList.stream().filter(p -> p.getSkuId().equals(skuId)).
                         mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum();
@@ -1414,7 +1415,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                  * 根据采访订单id集合
                  * 获取到已质检数量
                  */
-                List<QcResultDTO.QcQtyDTO> qcQtyList = qcResultService.getPurOrderIds(purOrderIds);
+                List<QcResultDTO.QcQtyDTO> qcQtyList = qcResultService.getPurOrderIds(Arrays.asList(purchaseOrderId));
                 //已完成的质检
                 Integer finishQcQty = qcQtyList.stream().filter(q ->
                         q.getSkuId().equals(skuId) && !q.getMainId().equals(mainId)
