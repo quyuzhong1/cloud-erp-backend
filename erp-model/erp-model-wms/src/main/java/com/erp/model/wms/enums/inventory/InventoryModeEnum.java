@@ -1,5 +1,8 @@
 package com.erp.model.wms.enums.inventory;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -14,6 +17,9 @@ public enum InventoryModeEnum {
     OUT_STOCK("-1", "减少"),
     ;
 
+
+    @JsonValue
+    @EnumValue
     private String code;
 
     /**

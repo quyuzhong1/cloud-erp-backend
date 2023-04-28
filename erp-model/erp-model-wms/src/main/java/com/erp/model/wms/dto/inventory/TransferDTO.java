@@ -54,7 +54,7 @@ public class TransferDTO implements Serializable {
     private String curWarehouseLocation;
 
     /**
-     * 需要修改的库存状态（可以不传）
+     * 需要修改的库存状态（可以不传）;配置在规则中表的业务场景不要配置
      */
     private InventoryStatusEnum curInventoryStatus;
 
@@ -70,7 +70,7 @@ public class TransferDTO implements Serializable {
     private String targetWarehouseLocation;
 
     /**
-     * 需要修改的库存状态（可以不传）
+     * 需要修改的库存状态（可以不传）；配置在规则中表的业务场景不要配置
      */
     private InventoryStatusEnum targetCurInventoryStatus;
 

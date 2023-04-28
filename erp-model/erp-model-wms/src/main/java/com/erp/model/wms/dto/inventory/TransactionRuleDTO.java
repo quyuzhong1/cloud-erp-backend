@@ -6,6 +6,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryWarehouseOptionEnum;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -21,22 +22,26 @@ public class TransactionRuleDTO implements Serializable {
 
     /**
      * 业务类型
+     * 自定义规则请勿指定
      */
-    private InventoryBusinessTypeEnum dictBizType;
+    private transient InventoryBusinessTypeEnum dictBizType;
 
     /**
      * 仓库选项
      */
+    @NotNull(message = "仓库选项不能为空")
     private InventoryWarehouseOptionEnum warehouseOption;
 
     /**
      * 库存状态
      */
+    @NotNull(message = "库存状态不能为空")
     private InventoryStatusEnum inventoryStatus;
 
     /**
      * 交易方向；1-增加；-1减少
      */
+    @NotNull(message = "库存交易方向不能为空")
     private InventoryModeEnum transactionMode;
 
 }

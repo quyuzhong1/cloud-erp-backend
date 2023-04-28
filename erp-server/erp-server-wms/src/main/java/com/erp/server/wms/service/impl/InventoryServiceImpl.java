@@ -112,7 +112,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveInOutStockByType(List<InStockOrOutStockDTO> paramList, InventoryBusinessTypeEnum businessType) {
-        log.info("出入库库存交易，入参：{}，业务类型：{}", JSONObject.toJSONString(paramList), businessType.getName());
+        log.info("出入库库存交易按业务类型，入参：{}，业务类型：{}", JSONObject.toJSONString(paramList), businessType.getName());
         // 1.验证参数
         List<TransactionRuleDTO> transactionRuleParams = inventoryHelper.wrapTransactionRule(businessType);
         inventoryHelper.checkInOutStockParam(paramList, businessType, transactionRuleParams);
@@ -125,7 +125,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approveTransferByType(List<TransferDTO> paramList, InventoryBusinessTypeEnum businessType) {
-        log.info("调拨业务库存交易，入参：{}，业务类型：{}", JSONObject.toJSONString(paramList), businessType.getName());
+        log.info("调拨业务库存交易按业务类型，入参：{}，业务类型：{}", JSONObject.toJSONString(paramList), businessType.getName());
         // 1.验证参数
         List<TransactionRuleDTO> transactionRuleParams = inventoryHelper.wrapTransactionRule(businessType);
         inventoryHelper.checkTransferStockParam(paramList, businessType, transactionRuleParams);
@@ -136,8 +136,13 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void approveByRule(List<TransferDTO> paramList, List<TransferDTO> ruleList, InventoryBusinessTypeEnum businessType) {
-
+    public void approveByRule(List<TransferDTO> paramList, List<TransactionRuleDTO> ruleList, InventoryBusinessTypeEnum businessType) {
+        log.info("调拨业务库存交易按自定义规则，入参：{}，业务类型：{}", JSONObject.toJSONString(paramList), businessType.getName());
+        // 1.验证参数
+        inventoryHelper.checkTransferStockParam(paramList, businessType, ruleList);
+        // 2.调拨业务处理
+        String transactionNo = IdUtil.getSnowflake(1, 1).nextIdStr(); // 关联交易号
+        this.transferHandler(paramList, businessType, ruleList, transactionNo);
     }
 
     @Transactional(rollbackFor = Exception.class)

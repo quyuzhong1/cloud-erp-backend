@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -79,7 +80,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param paramList
      * @param businessType
      */
-    void approveByRule(List<TransferDTO> paramList, List<TransferDTO> ruleList, InventoryBusinessTypeEnum businessType);
+    void approveByRule(List<TransferDTO> paramList, List<TransactionRuleDTO> ruleList, InventoryBusinessTypeEnum businessType);
 
     /**
      * 按单据ID反审核
