@@ -287,4 +287,13 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserListByRoleIds")
     List<FindUserDTO> getUserListByRoleIds(@RequestBody @Valid SysFeignDTO.ListByRoleIdsDTO dto);
+
+
+    /**
+     * 根据node key 获取到接收信息
+     * @param
+     * @return
+     */
+    @PostMapping("feign/notice/listNoticeReceiver")
+    List<NoticeReceiverDTO.InfoDTO> listNoticeReceiverByNodeKey(@RequestBody String nodeKey);
 }

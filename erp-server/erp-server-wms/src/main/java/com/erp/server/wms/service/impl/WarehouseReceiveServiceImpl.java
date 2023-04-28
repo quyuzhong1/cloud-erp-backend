@@ -14,7 +14,6 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -24,7 +23,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
@@ -534,11 +532,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
+        String sourceType = SourceTypeEnum.WAREHOUSE_RECEIVE.getCode();
         for (QcInfoDTO.ReceiveToQcDTO item : qcList) {
             String skuId = item.getSkuId();
             String purchaseOrderId = item.getPurchaseOrderId();
             ProductVO.ProductPackVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(new ProductVO.ProductPackVO());
+            item.setSourceType(sourceType);
             item.setProductGrade(sku.getProductGrade());
             item.setVariantProperty(sku.getVariantProperty());
             item.setBoxHeight(sku.getBoxHeight());
@@ -835,8 +835,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 req.setUnStockInQty(0);
                 req.setStockInQty(0);
             } else {
-                req.setStockInQty(req.getReceiveQty() - (reduce-returnQty));
-                req.setUnStockInQty(req.getReceiveQty() - (reduce-returnQty));
+                req.setStockInQty(req.getReceiveQty() - (reduce - returnQty));
+                req.setUnStockInQty(req.getReceiveQty() - (reduce - returnQty));
             }
 
             req.setReceiveQty(req.getReceiveQty());
@@ -944,7 +944,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (CollectionUtils.isEmpty(purchaseOrderIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(WarehouseReceiveEntity::getPurchaseOrderId,purchaseOrderIds).list();
+        return this.lambdaQuery().in(WarehouseReceiveEntity::getPurchaseOrderId, purchaseOrderIds).list();
     }
 
     /**

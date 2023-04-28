@@ -47,4 +47,14 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      **/
     List<ProductInfoEntity> getProductInfoAll();
 
+    /**
+     * 根据sku id
+     * 获取产品 角色信息
+     * 质检通知 要发送信息
+     * @author yl
+     * @date 2023-04-28 12:24
+     * @param skuIdList
+     * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     */
+    List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeopleBySkuId(@Param("skuIdList") List<String> skuIdList);
 }
