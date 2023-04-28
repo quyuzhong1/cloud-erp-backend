@@ -89,11 +89,6 @@ public class PurchasePriceController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
-            menuCode = "scm:purchase:price:submit",
-            serviceClass = PurchasePriceService.class,
-            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
         Boolean result = purchasePriceService.addAndSubmit(dto);
         return result == true ? success() : failure();

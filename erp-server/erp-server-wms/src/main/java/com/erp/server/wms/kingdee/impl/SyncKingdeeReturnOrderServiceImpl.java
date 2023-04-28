@@ -128,9 +128,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //退货方式
         if (entity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
-            resultMap.put("returnMode", "退料并扣款");
+            resultMap.put("returnMode", "B");
         } else {
-            resultMap.put("returnMode", "退料补料");
+            resultMap.put("returnMode", "A");
         }
 
         if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {

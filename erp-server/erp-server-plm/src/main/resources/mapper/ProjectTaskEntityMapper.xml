@@ -641,12 +641,12 @@
                 AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
-                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id AND a.is_deleted = FALSE ) or not EXISTS (select
+                b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
                 = pt.id ))
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = pt.id)
             </if>
             <if test="params.taskSearchDTO != null">
                 <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">

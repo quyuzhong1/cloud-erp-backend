@@ -3,12 +3,18 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
+import com.erp.model.sys.enums.NoticeItemRoleEnum;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
@@ -17,6 +23,7 @@ import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.fs.utils.LarkCreateCardMsgUtil;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
 import com.erp.server.wms.service.DictBasicService;
@@ -24,6 +31,7 @@ import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +64,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
 
     /**
      * 质检信息 暂存
@@ -307,13 +316,23 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      * @author yl
      * @date 2023-04-27 19:24
      */
-    public void sendQcResultMsg() {
+    @Async
+    public void sendQcResultMsg(List<QcResultDTO.QcNoticeDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+
+        List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
+
         //新品质检
         String qcNewProductCode = NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
         List<NoticeReceiverDTO.InfoDTO> receiverList = sysUserFeign.listNoticeReceiverByNodeKey(qcNewProductCode);
         if (CollectionUtils.isEmpty(receiverList)) {
             return;
         }
+        //根据sku 获取角色的
+        List<ProductInfoDTO.ProductRolePeopleDTO> rolePeopleList = new ArrayList<>();
+
         List<String> userIdList = new ArrayList<>();
         //这个是项目角色
         String itemRole = NoticeReceiverEnum.ITEM_ROLE.getCode();
@@ -324,14 +343,59 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
         userIdList.addAll(otherUsers);
         //这个是项目角色的
-        List<String>  itemRoles=receiverList.stream().filter(r -> itemRole.equals(r.getReceiverType())).
+        List<String> itemRoles = receiverList.stream().filter(r -> itemRole.equals(r.getReceiverType())).
                 map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
         //当不为空
-        if(CollectionUtils.isNotEmpty(itemRoles)){
+        if (CollectionUtils.isNotEmpty(itemRoles)) {
+            //根据sku 获取角色的
+            rolePeopleList = plmTaskFeign.listProductRolePeople(skuIdList);
+        }
 
-            plmTaskFeign.listProductRolePeople(Arrays.asList(""));
+        //项目经理
+        String itemCharge = NoticeItemRoleEnum.ITEM_MANAGER.getCode();
+
+        //产品经理
+        String productCharge = NoticeItemRoleEnum.PRODUCT_MANAGER.getCode();
+        //是不是 包含项目经理
+        Boolean isItemCharge = itemRoles.contains(itemCharge);
+
+        //是不是 包含产品经理
+        Boolean isProductCharge = itemRoles.contains(productCharge);
+        //获取飞书的unionid 与用户关系
+        List<ThirdUnionDTO> unionUserList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+        for (QcResultDTO.QcNoticeDTO item : list) {
+            String msgHead = String.format(NoticeMsgConstant.QC_RESULT_HEAD, item.getUserName(), item.getSkuNo(), item.getQcTypeName());
+            String msgContent = String.format(NoticeMsgConstant.QC_RESULT_CONTENT, item.getPurchaseOrderCode(),
+                    item.getSkuName(), item.getQcUserName(), item.getQcFinishTime(), item.getHandleModeName());
+            String skuId = item.getSkuId();
+            //对应产品人员
+            List<ProductInfoDTO.ProductRolePeopleDTO> peopleList = rolePeopleList.stream().filter(r -> r.getSkuId().equals(skuId)).collect(Collectors.toList());
+            for (ProductInfoDTO.ProductRolePeopleDTO people : peopleList) {
+                if (isItemCharge) {
+                    userIdList.addAll(people.getProjectChargeIdList());
+                }
+                if (isProductCharge) {
+                    userIdList.addAll(people.getProductChargeIdList());
+                }
+            }
+
+            //获取飞书的
+            List<String> unionIds = getUserUnionIds(unionUserList, userIdList);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            sendMessage.setUnionIds(unionIds);
+            Map contentMap = LarkCreateCardMsgUtil.getQcResultMsg(msgHead, msgContent);
+
+
         }
 
 
+    }
+
+    private List<String> getUserUnionIds(List<ThirdUnionDTO> unionUserList, List<String> userIdList) {
+        List<String> unionIds = unionUserList.stream().
+                filter(u -> userIdList.contains(u.getUserId())).
+                map(ThirdUnionDTO::getThirdUnionId).
+                collect(Collectors.toList());
+        return unionIds;
     }
 }
