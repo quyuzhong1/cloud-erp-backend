@@ -108,7 +108,8 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         //采购员
         resultMap.put("purchaseUserCode", findUserDTO.getCode());
-
+        //采购员
+        resultMap.put("purchaseUserName", findUserDTO.getUserName());
         //退货来源
         if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {
             resultMap.put("sourceTypeName", ReturnOrderSourceEnum.QC.getCode());
