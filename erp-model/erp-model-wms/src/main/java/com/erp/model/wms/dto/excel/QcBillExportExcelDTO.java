@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -155,16 +154,16 @@ public class QcBillExportExcelDTO  implements Serializable {
     /**
      * 质检合格率
      */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "质检合格率", index = 16)
-    private BigDecimal qcGoodRate;
+    @ColumnWidth(20)
+    @ExcelProperty(value = "质检合格率(%)", index = 16)
+    private String qcGoodRate;
 
     /**
      * 质检不良率
      */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "质检不良率", index = 17)
-    private BigDecimal qcBadRate;
+    @ColumnWidth(20)
+    @ExcelProperty(value = "质检不良率(%)", index = 17)
+    private String qcBadRate;
 
 
     /**

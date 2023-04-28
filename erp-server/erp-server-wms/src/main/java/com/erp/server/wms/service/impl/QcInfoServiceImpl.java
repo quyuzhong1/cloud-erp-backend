@@ -339,6 +339,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             for (QcInfoDTO.PagingViewDTO item : viewList) {
                 QcBillExportExcelDTO excelDTO = new QcBillExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
+                BigDecimal qcGoodRate = item.getQcGoodRate();
+                excelDTO.setQcGoodRate(qcGoodRate!=null?qcGoodRate.toString()+"%":"");
+
+                BigDecimal qcBadRate = item.getQcBadRate();
+                excelDTO.setQcBadRate(qcBadRate!=null?qcBadRate.toString()+"%":"");
                 QcBillStatusEnum billStatusEnum = item.getQcStatus();
                 excelDTO.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
                 QcTypeEnum qcTypeEnum = item.getQcType();
@@ -527,6 +532,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         dto.setDeliveryWarehouseId(warehouseId);
         String userId = commonService.getUserInfo().getUid();
         dto.setStockInUserId(userId);
+        //获取部门信息
+        SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
+        dto.setStockInDeptId(depart.getDepartmentId());
         //生成结果
         String createResultId = purchaseStorageService.addAndSubmit(dto);
         if (StringUtils.isNotBlank(createResultId)) {
@@ -1204,8 +1212,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addDTO.setReturnRemark(purchaseReturnOrderDTO.getRemark());
             addDTO.setSupplierId(qcInfoEntity.getSupplierId());
 
-            String purchaseUserId = purchaseOrderDbList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getPurchaseUserId())).orElse("");
+            //采购订单
+            PurchaseOrderEntity purchaseOrderInfo = purchaseOrderDbList.stream().filter(p -> p.getId().equals(purchaseOrderId)).findFirst().orElse(null);
+            String purchaseUserId = "";
+            if (purchaseOrderInfo != null) {
+                purchaseUserId = purchaseOrderInfo.getPurchaseUserId();
+            }
             addDTO.setPurchaseUserId(purchaseUserId);
             addList.add(addDTO);
         }
@@ -1393,11 +1405,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private void checkQcQty(QcResultDTO.AddDTO qcInfo, String mainId, String purchaseOrderId, String skuId) {
         //校验质检不良+合格不能超过质检数量
         if (qcInfo != null) {
-            Integer goodQty = qcInfo.getQcGoodQty()!=null?qcInfo.getQcGoodQty():0;
-            Integer badQty = qcInfo.getQcBadQty()!=null? qcInfo.getQcBadQty():0;
-            Integer qcQty = qcInfo.getQcQty()!=null?qcInfo.getQcQty():0;
+            Integer goodQty = qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0;
+            Integer badQty = qcInfo.getQcBadQty() != null ? qcInfo.getQcBadQty() : 0;
+            Integer qcQty = qcInfo.getQcQty() != null ? qcInfo.getQcQty() : 0;
             //质检总量
-            Integer totalQty = qcInfo.getTotalQty()!=null?qcInfo.getTotalQty():0;
+            Integer totalQty = qcInfo.getTotalQty() != null ? qcInfo.getTotalQty() : 0;
             if (goodQty + badQty > qcQty) {
                 throw new ServiceException(ApiError.ERROR_99016);
             }

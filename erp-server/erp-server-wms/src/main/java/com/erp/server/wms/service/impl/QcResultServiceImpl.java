@@ -212,7 +212,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             updateWrapper.set(QcResultEntity::getQcBadRate, 0);
             updateWrapper.set(QcResultEntity::getQcGoodRate, 0);
             updateWrapper.set(QcResultEntity::getQcSampleRate, 0);
-            updateWrapper.eq(QcResultEntity::getMainId, ids);
+            updateWrapper.in(QcResultEntity::getMainId, ids);
             this.update(updateWrapper);
         }
 
