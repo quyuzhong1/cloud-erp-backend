@@ -98,9 +98,9 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("purchaseUserName", findUserDTO.getUserName());
         //新品首批
         if (entity.getIsFirstMassProduct()) {
-            resultMap.put("isFirstMassProduct","是");
+            resultMap.put("isFirstMassProduct", 1);
         } else {
-            resultMap.put("isFirstMassProduct","否");
+            resultMap.put("isFirstMassProduct", 2);
         }
 
         //查询供应商信息
