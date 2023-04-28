@@ -5,10 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBaseInfoDTO;
-import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
-import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -16,6 +13,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryWarehouseOptionEnum;
+import com.erp.server.wms.service.CfgTransactionRulesService;
 import com.erp.server.wms.service.InventoryService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +37,9 @@ public class InventoryHelper {
 
     @Autowired
     private InventoryService inventoryService;
+
+    @Autowired
+    private CfgTransactionRulesService cfgTransactionRulesService;
 
     /**
      * 通用业务验证
@@ -73,13 +74,19 @@ public class InventoryHelper {
         LocalDate billDate = param.getBillDate();
         // 状态
         InventoryStatusEnum inventoryStatusEnum = param.getInventoryStatus();
-        List<TransactionRuleDTO> outTransactionRules;
+        List<TransactionRuleDTO> outTransactionRules = null;
         if(Objects.isNull(inventoryStatusEnum)) { // 从配置中取，配置中也取不到则报错
-            log.info("参数未传库存状态，从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】，不包含出库业务，不检查", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
+            log.info("参数未传库存状态，从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             if(CollUtil.isEmpty(transactionRules)) {
                 throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
-            outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
+            if(Objects.nonNull(param.getWarehouseOption())) { // 调拨类业务，包含当前仓和目的仓
+                outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)
+                        && Objects.equals(r.getWarehouseOption(), param.getWarehouseOption().getCode())).collect(Collectors.toList());
+            } else {
+                // 直接过滤得到出库类型的数据
+                outTransactionRules = transactionRules.stream().filter(r->Objects.equals(r.getTransactionMode(), InventoryModeEnum.OUT_STOCK)).collect(Collectors.toList());
+            }
             if(CollUtil.isNotEmpty(outTransactionRules)) {
                 for (TransactionRuleDTO rule : outTransactionRules) {
                     InventoryStatusEnum ruleInventoryStatusEnum = rule.getInventoryStatus();
@@ -117,23 +124,27 @@ public class InventoryHelper {
         Integer qty = param.getQty();
         // 来源
         SourceTypeEnum sourceTypeEnum = param.getSourceType();
-        InventoryEntity inventoryEntity = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
-        Integer inventoryQty = inventoryEntity.getQty();
-        log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
+        InventoryEntity inventory = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
+        ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException(ApiError.ERROR_99035));
+        Integer inventoryQty = inventory.getQty();
+        log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
                 businessType.getName(), status.getName(), qty, inventoryQty);
         ValidatorUtil.isTrue(inventoryQty >= qty,()->new ServiceException(ApiError.ERROR_99035));
     }
 
     /**
      *
-     * @param transactionRulesEntities
+     * @param businessType
      * @return
      */
-    public List<TransactionRuleDTO> wrapTransactionRule(List<CfgTransactionRulesEntity> transactionRulesEntities) {
+    public List<TransactionRuleDTO> wrapTransactionRule(InventoryBusinessTypeEnum businessType) {
+        // 查询配置的交易规则
+        List<CfgTransactionRulesEntity> transactionRulesEntities = cfgTransactionRulesService.findByDictBizType(businessType.getCode());
         if(CollUtil.isNotEmpty(transactionRulesEntities)) {
             List<TransactionRuleDTO> transactionRuleDTOS = Lists.newArrayListWithExpectedSize(transactionRulesEntities.size());
             transactionRulesEntities.stream().forEach(r->{
                 TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();
+                transactionRuleDTO.setId(r.getId());
                 transactionRuleDTO.setDictBizType(InventoryBusinessTypeEnum.of(r.getDictBizType()));
                 transactionRuleDTO.setWarehouseOption(InventoryWarehouseOptionEnum.of(r.getWarehouseOption()));
                 transactionRuleDTO.setInventoryStatus(InventoryStatusEnum.of(r.getInventoryStatus()));
@@ -206,6 +217,91 @@ public class InventoryHelper {
 
             this.checkEnoughStockIfNecessary(inventoryBaseInfoDTO, businessType, transactionRules);// 出库库存数量检查
         }
+    }
+
+    /**
+     * 调拨业务验证参数
+     * @param paramLis
+     */
+    public void checkTransferStockParam(List<TransferDTO> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
+        for(TransferDTO param : paramLis) {
+            ValidatorUtil.validateEntity(param);
+
+            //当前仓和目的仓不能一样
+            ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
+
+            this.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
+            this.checkAllowTrade(param.getSourceType(), param.getCurWarehouseId(), param.getSkuNo());// 当前仓关账检查
+            this.checkAllowTrade(param.getSourceType(), param.getTargetWarehouseId(), param.getSkuNo());// 目的仓关账检查
+
+            InventoryBaseInfoDTO currInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
+            currInventoryBaseInfoDTO.setSourceType(param.getSourceType());
+            currInventoryBaseInfoDTO.setBillDate(param.getBillDate());
+            currInventoryBaseInfoDTO.setInventoryMode(param.getCurInventoryMode());
+            currInventoryBaseInfoDTO.setSourceId(param.getSourceId());
+            currInventoryBaseInfoDTO.setInventoryStatus(param.getCurInventoryStatus());
+            currInventoryBaseInfoDTO.setWarehouseId(param.getCurWarehouseId());
+            currInventoryBaseInfoDTO.setWarehouseLocation(param.getCurWarehouseLocation());
+            currInventoryBaseInfoDTO.setOrgId(param.getCurOrgId());
+            currInventoryBaseInfoDTO.setSkuId(param.getSkuId());
+            currInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
+            currInventoryBaseInfoDTO.setQty(param.getQty());
+            currInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);//当前仓
+
+            this.checkEnoughStockIfNecessary(currInventoryBaseInfoDTO, businessType, transactionRules);// 当前仓出库库存数量检查（因为有可能是当前仓入库）
+
+            InventoryBaseInfoDTO targetInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
+            targetInventoryBaseInfoDTO.setSourceType(param.getSourceType());
+            targetInventoryBaseInfoDTO.setBillDate(param.getBillDate());
+            targetInventoryBaseInfoDTO.setInventoryMode(param.getTargetInventoryMode());
+            targetInventoryBaseInfoDTO.setSourceId(param.getSourceId());
+            targetInventoryBaseInfoDTO.setInventoryStatus(param.getTargetCurInventoryStatus());
+            targetInventoryBaseInfoDTO.setWarehouseId(param.getTargetWarehouseId());
+            targetInventoryBaseInfoDTO.setWarehouseLocation(param.getTargetWarehouseLocation());
+            targetInventoryBaseInfoDTO.setOrgId(param.getTargetOrgId());
+            targetInventoryBaseInfoDTO.setSkuId(param.getSkuId());
+            targetInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
+            targetInventoryBaseInfoDTO.setQty(param.getQty());
+            targetInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET);//目的仓
+
+            this.checkEnoughStockIfNecessary(targetInventoryBaseInfoDTO, businessType, transactionRules);// 目的仓出库库存数量检查（因为有可能是目的仓出库）
+        }
+    }
+
+    /**
+     * 调拨参数转换成出入库参数
+     * @param param
+     * @param warehouseOption
+     * @return
+     */
+    public InStockOrOutStockTransformDTO wrapInOutStockByTransfer(TransferDTO param, InventoryWarehouseOptionEnum warehouseOption) {
+        InStockOrOutStockTransformDTO inOutStockParam = new InStockOrOutStockTransformDTO();
+
+        if(Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT)) {
+            inOutStockParam.setOrgId(param.getCurOrgId());
+            inOutStockParam.setWarehouseId(param.getCurWarehouseId());
+            inOutStockParam.setWarehouseLocation(param.getCurWarehouseLocation());
+            inOutStockParam.setInventoryStatus(param.getCurInventoryStatus());
+            inOutStockParam.setInventoryMode(param.getCurInventoryMode());
+        } else if (Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET)) {
+            inOutStockParam.setOrgId(param.getTargetOrgId());
+            inOutStockParam.setWarehouseId(param.getTargetWarehouseId());
+            inOutStockParam.setWarehouseLocation(param.getTargetWarehouseLocation());
+            inOutStockParam.setInventoryStatus(param.getTargetCurInventoryStatus());
+            inOutStockParam.setInventoryMode(param.getTargetInventoryMode());
+        }
+        inOutStockParam.setSourceType(param.getSourceType());
+        inOutStockParam.setSourceId(param.getSourceId());
+        inOutStockParam.setSourceDetailId(param.getSourceDetailId());
+        inOutStockParam.setSourceCode(param.getSourceCode());
+        inOutStockParam.setBillDate(param.getBillDate());
+        inOutStockParam.setSkuId(param.getSkuId());
+        inOutStockParam.setSkuNo(param.getSkuNo());
+
+        inOutStockParam.setQty(param.getQty());
+        inOutStockParam.setOperationMode(param.getOperationMode());
+        inOutStockParam.setWarehouseOptionEnum(warehouseOption);
+        return inOutStockParam;
     }
 
 }

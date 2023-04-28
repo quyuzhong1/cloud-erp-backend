@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.feign;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.server.wms.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,18 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveInOutStockByType")
-    public ApiResult<Void> listBySourceDetailIds(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
-        inventoryService.approveInOutStockByType(dto.getSkuParams(), InventoryBusinessTypeEnum.of(dto.getBusinessType()));
+    public ApiResult<Void> approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
+        inventoryService.approveInOutStockByType(dto.getSkus(), InventoryBusinessTypeEnum.of(dto.getBusinessType()));
+        return ApiResult.success();
+    }
+
+    /**
+     * 调拨业务，按业务类型
+     * @param dto
+     */
+    @PostMapping("/approveTransferByType")
+    public ApiResult<Void> approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
+        inventoryService.approveTransferByType(dto.getSkus(), InventoryBusinessTypeEnum.of(dto.getBusinessType()));
         return ApiResult.success();
     }
 

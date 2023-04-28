@@ -17,6 +17,7 @@ import java.io.Serializable;
 @Data
 public class TransactionRuleDTO implements Serializable {
 
+    private String id;
 
     /**
      * 业务类型
