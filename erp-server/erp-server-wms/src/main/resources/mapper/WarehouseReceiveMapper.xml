@@ -281,11 +281,14 @@
         </if>
         ORDER BY wr.create_time DESC, wr.id
     </select>
+
     <select id="getQcList" resultType="com.erp.model.wms.dto.QcInfoDTO$ReceiveToQcDTO">
        SELECT
+         wrd.main_id AS sourceId,
          wrd.sku_id,
          wrd.sku_no,
          wrd.receive_qty AS totalQty,
+         wrd.purchase_order_detail_id AS purchaseOrderDetailId,
          wr.supplier_id,
          wr.purchase_order_id,
          wr.purchase_order_code,
