@@ -182,4 +182,17 @@ public class ProductSkuFeignController {
         return workOptionService.stageView(optionUserId);
     }
 
+
+    /**
+     * 根据skuId 获取到产品的角色人员
+     * @author yl
+     * @date 2023-04-28 12:23
+     * @param skuIds
+     * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     */
+    @PostMapping("/getRolePeople")
+    public List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeople(@RequestBody List<String> skuIds) {
+        return productInfoService.getRolePeople(skuIds);
+    }
+
 }

@@ -102,4 +102,33 @@ public class NoticeReceiverDTO implements Serializable {
 
 
     }
+
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class InfoDTO {
+
+        /**
+         *  nodekey
+         */
+        private String nodeKey;
+
+
+        /**
+         *  接收类型
+         */
+        private String receiverType;
+
+
+        /**
+         *  接收值
+         */
+        private String receiverValue;
+
+
+
+
+    }
 }

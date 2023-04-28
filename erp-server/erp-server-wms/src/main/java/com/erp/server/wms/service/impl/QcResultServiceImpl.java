@@ -6,13 +6,16 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.erp.model.sys.dto.NoticeReceiverDTO;
 import com.erp.model.sys.enums.NoticeNodeEnum;
+import com.erp.model.sys.enums.NoticeReceiverEnum;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcResultEntity;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
@@ -49,6 +52,10 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 质检信息 暂存
@@ -114,7 +121,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                 qcResultEntity.setQcGoodRate(qcGoodRate);
                 BigDecimal qcBadRate = MathUtil.divide(new BigDecimal(qcBadQty), new BigDecimal(qcQty));
                 qcResultEntity.setQcBadRate(qcBadRate);
-            }else{
+            } else {
                 qcResultEntity.setQcGoodRate(BigDecimal.ZERO);
                 qcResultEntity.setQcBadRate(BigDecimal.ZERO);
             }
@@ -303,6 +310,28 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     public void sendQcResultMsg() {
         //新品质检
         String qcNewProductCode = NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
+        List<NoticeReceiverDTO.InfoDTO> receiverList = sysUserFeign.listNoticeReceiverByNodeKey(qcNewProductCode);
+        if (CollectionUtils.isEmpty(receiverList)) {
+            return;
+        }
+        List<String> userIdList = new ArrayList<>();
+        //这个是项目角色
+        String itemRole = NoticeReceiverEnum.ITEM_ROLE.getCode();
+        //其它人员
+        String otherPeople = NoticeReceiverEnum.OTHER_PEOPLE.getCode();
+        List<String> otherUsers = receiverList.stream().filter(r -> otherPeople.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+
+        userIdList.addAll(otherUsers);
+        //这个是项目角色的
+        List<String>  itemRoles=receiverList.stream().filter(r -> itemRole.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+        //当不为空
+        if(CollectionUtils.isNotEmpty(itemRoles)){
+
+            plmTaskFeign.listProductRolePeople(Arrays.asList(""));
+        }
+
 
     }
 }

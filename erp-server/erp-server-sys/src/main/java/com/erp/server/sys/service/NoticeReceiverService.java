@@ -48,4 +48,24 @@ public interface NoticeReceiverService extends SuperService<NoticeReceiverEntity
      * @return java.util.List<com.erp.model.sys.entity.NoticeReceiverEntity>
      */
     List<NoticeReceiverEntity> listByNoticeIds(List<String> noticeIdList);
+
+    
+    /**
+     * 根据节点id获取已开启接收人信息
+     * @author yl
+     * @date 2023-04-28 11:18
+     * @param nodeKey
+     * @return java.util.List<com.erp.model.sys.dto.NoticeReceiverDTO.InfoDTO>
+     */
+    List<NoticeReceiverDTO.InfoDTO> listNoticeReceiver(String nodeKey);
+
+    
+    /**
+     * 根据通知节点key 获取到接收的人员
+     * @author yl
+     * @date 2023-04-28 11:53
+     * @param nodeKey
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> listNoticeUser(String nodeKey);
 }

@@ -113,4 +113,14 @@ public interface PlmTaskFeign {
      **/
     @PostMapping("feign/product/stageView")
     List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId);
+
+    /**
+     * 根据skuid 获取到产品角色的 人员
+     * @author yl
+     * @date 2023-04-28 12:21
+     * @param skuIds
+     * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     */
+    @PostMapping("feign/product/getRolePeople")
+    List<ProductInfoDTO.ProductRolePeopleDTO> listProductRolePeople(@RequestBody List<String> skuIds);
 }

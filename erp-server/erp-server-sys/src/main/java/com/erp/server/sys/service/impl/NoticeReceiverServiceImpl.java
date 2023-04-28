@@ -6,6 +6,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.NoticeDTO;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
 import com.erp.model.sys.entity.NoticeReceiverEntity;
+import com.erp.model.sys.enums.NoticeReceiverEnum;
 import com.erp.server.sys.mapper.NoticeReceivedMapper;
 import com.erp.server.sys.service.NoticeReceiverService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,7 +45,7 @@ public class NoticeReceiverServiceImpl extends SuperServiceImpl<NoticeReceivedMa
                     NoticeReceiverEntity addEntity = new NoticeReceiverEntity();
                     addEntity.setReceiverType(receiverType);
                     addEntity.setReceiverValue(valueList.get(i));
-                    if(CollectionUtils.isNotEmpty(nameList)){
+                    if (CollectionUtils.isNotEmpty(nameList)) {
                         if (nameSize > i) {
                             addEntity.setReceiverValueName(nameList.get(i));
                         }
@@ -58,21 +59,20 @@ public class NoticeReceiverServiceImpl extends SuperServiceImpl<NoticeReceivedMa
         }
     }
 
-    
+
     /**
      * 根据通知节点id 删除
-     * @author yl
-     * @date 2023-04-27 16:11
+     *
      * @param noticeId
      * @return void
+     * @author yl
+     * @date 2023-04-27 16:11
      */
     private void delete(String noticeId) {
         LambdaQueryWrapper<NoticeReceiverEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(NoticeReceiverEntity::getNoticeId, noticeId);
         this.remove(queryWrapper);
     }
-
-
 
 
     /**
@@ -104,6 +104,49 @@ public class NoticeReceiverServiceImpl extends SuperServiceImpl<NoticeReceivedMa
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(NoticeReceiverEntity::getNoticeId, noticeIdList).list();
+    }
+
+
+    /**
+     * 根据节点id获取已开启接收人信息
+     *
+     * @param nodeKey
+     * @return java.util.List<com.erp.model.sys.dto.NoticeReceiverDTO.InfoDTO>
+     * @author yl
+     * @date 2023-04-28 11:18
+     */
+    @Override
+    public List<NoticeReceiverDTO.InfoDTO> listNoticeReceiver(String nodeKey) {
+        return baseMapper.listNoticeReceiver(nodeKey);
+    }
+
+
+    /**
+     * 根据通知节点key 获取到接收的人员
+     *
+     * @param nodeKey
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-04-28 11:53
+     */
+    @Override
+    public List<String> listNoticeUser(String nodeKey) {
+        List<NoticeReceiverDTO.InfoDTO> receiverList = baseMapper.listNoticeReceiver(nodeKey);
+
+        List<String> userIdList = new ArrayList<>();
+        //这个是项目角色
+        String itemRole = NoticeReceiverEnum.ITEM_ROLE.getCode();
+        //其它人员
+        String otherPeople = NoticeReceiverEnum.OTHER_PEOPLE.getCode();
+        List<String> otherUsers = receiverList.stream().filter(r -> otherPeople.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+
+        userIdList.addAll(otherUsers);
+        //这个是项目角色的
+        List<String>  itemRoles=receiverList.stream().filter(r -> itemRole.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+
+        return userIdList;
     }
 
 
