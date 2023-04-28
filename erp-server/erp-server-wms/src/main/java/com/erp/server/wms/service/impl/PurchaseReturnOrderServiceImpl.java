@@ -850,9 +850,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
             Integer purchaseQty = orderDetailEntity.getPurchaseQty();
-            if (returnQty > receiveQty) {
-                throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, orderDetailEntity.getSkuNo()));
-            }
 
             String arrivalStatus = "";
             //未到货
