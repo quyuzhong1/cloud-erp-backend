@@ -99,6 +99,9 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         for (PurchasePriceDetailDTO.ViewDTO detailEntity : details) {
             BigDecimal rate = MathUtil.divide(detailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             JSONObject jsonObject = new JSONObject();
+            //金蝶id
+            resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+
             jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
             jsonObject.set("taxRate",detailEntity.getTaxRate());
@@ -152,6 +155,8 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             }
             jsonObject.set("syncKingdeeId",syncKingdeeId);
             jsonObject.set("skuNo",entity.getSkuNo());
+            jsonObject.set("minQty",entity.getMinQty());
+            jsonObject.set("maxQty",entity.getMaxQty());
             jsonArray.put(jsonObject);
         }
         String operate;

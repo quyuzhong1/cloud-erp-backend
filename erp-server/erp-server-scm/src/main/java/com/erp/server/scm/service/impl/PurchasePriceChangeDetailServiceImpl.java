@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -368,8 +367,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         if (CollectionUtils.isEmpty(purchasePriceList)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-
     }
 
 
