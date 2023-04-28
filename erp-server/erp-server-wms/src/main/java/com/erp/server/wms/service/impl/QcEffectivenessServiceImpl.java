@@ -259,8 +259,10 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                     nowTime = documentDTO.getQcEndTime();
                 }
                 Duration userTime = Duration.between(approveTime, nowTime);
-                long userHours = userTime.toHours();
-                documentDTO.setQcUseTime(userHours + "H");
+                //分钟
+                long userMinutes = userTime.toMinutes();
+
+                documentDTO.setQcUseTime(MathUtil.divide(BigDecimal.valueOf(userMinutes),new BigDecimal(60),2).stripTrailingZeros().toPlainString()+ "H");
 
                 //质检预警
                 if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
