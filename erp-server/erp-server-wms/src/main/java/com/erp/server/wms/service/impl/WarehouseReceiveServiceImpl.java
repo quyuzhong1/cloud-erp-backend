@@ -154,7 +154,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     obj.setPurchaseOrderCode(null);
                     obj.setSupplierName(null);
                     obj.setApproveStatusName(null);
-                    obj.setApproveStatus(null);
+//                    obj.setApproveStatus(null);
                     obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
                 }
