@@ -75,7 +75,7 @@ public class InStockOrOutStockDTO implements Serializable {
         private Integer qty;
 
         /**
-         * 操作类型；默认为审核，后补单时需赋值
+         * 操作类型；默认为审核，后补单时需赋值，反审核有专门的方法入口
          */
         private InventoryOperationModeEnum operationMode =  InventoryOperationModeEnum.APPROVE;
 

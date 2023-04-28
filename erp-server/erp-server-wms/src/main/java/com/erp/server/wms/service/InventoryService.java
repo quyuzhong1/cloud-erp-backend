@@ -2,7 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
+import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 
@@ -68,18 +68,18 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     void approveInOutStockByType(List<InStockOrOutStockDTO> paramList, InventoryBusinessTypeEnum businessType);
 
     /**
-     * 调拨业务，审批出入库单据，按业务类型
+     * 调拨业务，审批出入库单据，按业务类型（直接调拨单、库存调整单）
      * @param paramList
      * @param businessType
      */
-    void approveTransferByType(List<InventoryTransferDTO> paramList, InventoryBusinessTypeEnum businessType);
+    void approveTransferByType(List<TransferDTO> paramList, InventoryBusinessTypeEnum businessType);
 
     /**
      * 调拨业务，按交易规则
      * @param paramList
      * @param businessType
      */
-    void approveByRule(List<InventoryTransferDTO> paramList, List<InventoryTransferDTO> ruleList, InventoryBusinessTypeEnum businessType);
+    void approveByRule(List<TransferDTO> paramList, List<TransferDTO> ruleList, InventoryBusinessTypeEnum businessType);
 
     /**
      * 按单据ID反审核

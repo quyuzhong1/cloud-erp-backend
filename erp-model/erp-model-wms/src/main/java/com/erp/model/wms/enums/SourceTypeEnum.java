@@ -2,7 +2,9 @@ package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public enum SourceTypeEnum {
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
@@ -10,6 +12,7 @@ public enum SourceTypeEnum {
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
     WAREHOUSE_RECEIVE("warehouseReceive", "仓库收货单"),
     SALES_STOCK_OUT("purchaseStockOut", "销售出库"),
+    INVENTORY_ADJUST("inventoryAdjust", "库存调整"),
     ;
 
     /**

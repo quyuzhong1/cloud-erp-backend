@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 public enum InventoryWarehouseOptionEnum {
     WAREHOUSE_CURRENT("current", "当前仓"),
-    WAREHOUSE_DEST("dest", "目的仓"),
+    WAREHOUSE_TARGET("target", "目的仓"),
     ;
 
     private String code;
