@@ -167,4 +167,10 @@ public class TransactionFlowEntity extends BaseEntity<TransactionFlowEntity> imp
     @TableField("operation_mode")
     private String operationMode;
 
+    /**
+     * 交易流水号（一个业务操作关联多个流水号）
+     */
+    @TableField("transaction_no")
+    private String transactionNo;
+
 }

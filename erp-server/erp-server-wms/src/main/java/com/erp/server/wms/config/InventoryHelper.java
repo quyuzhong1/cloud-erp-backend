@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.inventory.InventoryBaseInfoDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
+import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
@@ -82,7 +83,7 @@ public class InventoryHelper {
             if(CollUtil.isNotEmpty(outTransactionRules)) {
                 for (TransactionRuleDTO rule : outTransactionRules) {
                     InventoryStatusEnum ruleInventoryStatusEnum = rule.getInventoryStatus();
-                    ValidatorUtil.isTrueCall(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
+                    ValidatorUtil.isTrue(Objects.nonNull(ruleInventoryStatusEnum),()->new ServiceException(ApiError.ERROR_99036));
                     this.checkStockQtyByWareLocalSkuStatus(businessType, param, ruleInventoryStatusEnum);
                 }
             }
@@ -116,10 +117,11 @@ public class InventoryHelper {
         Integer qty = param.getQty();
         // 来源
         SourceTypeEnum sourceTypeEnum = param.getSourceType();
-        Integer usableQty = inventoryService.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, status.getCode());
+        InventoryEntity inventoryEntity = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
+        Integer inventoryQty = inventoryEntity.getQty();
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
-                businessType.getName(), status.getName(), qty, usableQty);
-        ValidatorUtil.isTrueCall(usableQty >= qty,()->new ServiceException(ApiError.ERROR_99035));
+                businessType.getName(), status.getName(), qty, inventoryQty);
+        ValidatorUtil.isTrue(inventoryQty >= qty,()->new ServiceException(ApiError.ERROR_99035));
     }
 
     /**
@@ -154,7 +156,8 @@ public class InventoryHelper {
      * @return
      */
     public TransactionFlowDTO wrapTransactionFlowInOutStock(InStockOrOutStockDTO param, String inventoryId,InventoryBusinessTypeEnum businessType,
-                                                            String inventoryDetailId, InventoryStatusEnum inventoryStatusEnum, LocalDate instockBatchDate) {
+                                                            String inventoryDetailId, InventoryStatusEnum inventoryStatusEnum, LocalDate instockBatchDate,
+                                                            Integer qty) {
         TransactionFlowDTO transactionFlowDTO = new TransactionFlowDTO();
         // 复制对象性能慢，改为手工赋值
         transactionFlowDTO.setOrgId(param.getOrgId());
@@ -173,7 +176,7 @@ public class InventoryHelper {
         transactionFlowDTO.setInstockBatchDate(instockBatchDate);// 取库存明细上面的批次日期
         transactionFlowDTO.setBillDate(param.getBillDate());
         transactionFlowDTO.setSourceType(param.getSourceType().getCode());
-        transactionFlowDTO.setQty(param.getQty());
+        transactionFlowDTO.setQty(qty);
         transactionFlowDTO.setOperationMode(Objects.nonNull(param.getOperationMode()) ? param.getOperationMode().getCode() : "");
         return transactionFlowDTO;
     }

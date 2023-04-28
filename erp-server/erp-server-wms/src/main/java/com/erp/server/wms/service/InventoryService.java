@@ -17,7 +17,7 @@ import java.util.List;
 public interface InventoryService extends SuperService<InventoryEntity> {
 
     /**
-     * 根据组织、仓库、库位、状态判断库存是否存在记录
+     * 根据组织、仓库、库位、状态判断库存是否存在记录（库位为空也作为条件）
      * @param orgId
      * @param warehouseId
      * @param skuId

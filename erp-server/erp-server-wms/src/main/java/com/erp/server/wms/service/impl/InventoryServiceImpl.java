@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.DistributedLockEnum;
@@ -23,6 +24,7 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,9 +96,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
                 .eq(InventoryEntity::getSkuId, skuId)
                 .eq(InventoryEntity::getDictInventoryStatus, status);
-        log.info("组织id：【{}】，仓库id：【{}】,SKU：【{}】，状态：【{}】，库位为空", orgId, warehouseId, skuId, status, warehouseLocationId);
         if(StrUtils.isNotEmpty(warehouseLocationId)) {
             queryWrapper.eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId));
+        } else {
+            log.info("组织id：【{}】，仓库id：【{}】,SKU：【{}】，状态：【{}】，库位为空，不作为查询条件", orgId, warehouseId, skuId, status, warehouseLocationId);
         }
         return baseMapper.selectList(queryWrapper);
     }
@@ -238,6 +241,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             // TODO 此处后续改成读写锁
+            // 此处注意，入库传不传仓位都带仓位条件查询
             InventoryEntity inventory =  this.findInventoryByWareLocalSkuStatus(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
             Integer originInventoryQty = 0; // 库存原数量
             if(Objects.isNull(inventory)) {
@@ -245,7 +249,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 inventory = new InventoryEntity();
                 inventory.setWarehouseId(warehouseId);
                 inventory.setOrgId(orgId);
-                inventory.setWarehouseLocation(param.getWarehouseLocation());
+                inventory.setWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()));
                 inventory.setSkuId(param.getSkuId());
                 inventory.setSkuNo(param.getSkuNo());
                 inventory.setDictInventoryStatus(inventoryStatusEnum.getCode());
@@ -286,7 +290,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
             String inventoryDetailId = inventoryDetail.getId();
             // 登记交易流水
-            TransactionFlowDTO transactionFlowDTO = inventoryHelper.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, inventoryDetail.getInstockBatchDate());
+            TransactionFlowDTO transactionFlowDTO = inventoryHelper.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, inventoryDetail.getInstockBatchDate(), qty);
+            transactionFlowDTO.setTransactionNo(IdUtil.getSnowflake(1, 1).nextIdStr());
             this.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQty, InventoryModeEnum.IN_STOCK, warehouseMap);
 
             // 创建/修改库存历史
@@ -355,6 +360,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 throw new ServiceException(ApiError.ERROR_1026);
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
+            // 为了防止库位数据不准，不做自动扣减
             InventoryEntity inventory = this.findInventoryByWareLocalSkuStatus(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
             if(Objects.isNull(inventory)) {
                 log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，无法出库", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
@@ -371,6 +377,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventoryDetails = inventoryDetails.stream().sorted(Comparator.comparing(InventoryDetailEntity::getCreateTime)).collect(Collectors.toList());
             // 循环扣减
             Integer waitOutQty = qty; // 待出库数量
+            // 交易流水号
+            String transactionNo = IdUtil.getSnowflake(1, 1).nextIdStr();
+            Integer transactionInventoryQty = originQty;
             for(InventoryDetailEntity inventoryDetailEntity : inventoryDetails) {
                 if (waitOutQty == 0) { // 已经足额扣减完成
                     break;
@@ -391,10 +400,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
                 // 本次更新后库存剩余数量
-                Integer afterInventoryQtyCur = inventory.getQty() - detailDeductQty;
-                // 登记交易流水
-                TransactionFlowDTO transactionFlowDTO = inventoryHelper.wrapTransactionFlowInOutStock(param, inventory.getId(), businessType, inventoryDetailEntity.getId(), inventoryStatusEnum, inventoryDetailEntity.getInstockBatchDate());
-                this.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQtyCur, InventoryModeEnum.OUT_STOCK, warehouseMap);
+                transactionInventoryQty = transactionInventoryQty - detailDeductQty;
+                // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
+                TransactionFlowDTO transactionFlowDTO = inventoryHelper.wrapTransactionFlowInOutStock(param, inventory.getId(), businessType, inventoryDetailEntity.getId(), inventoryStatusEnum, inventoryDetailEntity.getInstockBatchDate(), detailDeductQty);
+                transactionFlowDTO.setTransactionNo(transactionNo);
+                this.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, transactionInventoryQty, InventoryModeEnum.OUT_STOCK, warehouseMap);
             }
             if(waitOutQty > 0) {
                 throw new ServiceException(ApiError.ERROR_99035);
@@ -482,6 +492,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         transactionFlowEntity.setCurInventoryQty(afterInventoryQty);
         transactionFlowEntity.setOperationMode(StrUtils.null2EmptyWithTrim(param.getOperationMode()));
         transactionFlowEntity.setVersion(1);
+        transactionFlowEntity.setTransactionNo(param.getTransactionNo());
         transactionFlowService.save(transactionFlowEntity);
     }
 
