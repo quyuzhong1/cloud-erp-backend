@@ -60,7 +60,7 @@ public class KingdeeApiUtils {
 
     public KingdeeApiUtils(String formId){
         IdentifyInfo identifyInfo = new IdentifyInfo();
-        identifyInfo.setdCID("63dbab6c27dfab");
+        identifyInfo.setdCID(DCID);
         identifyInfo.setAppId(APPID);
         identifyInfo.setUserName(USERNAME);
         identifyInfo.setServerUrl(SERVERURL);
