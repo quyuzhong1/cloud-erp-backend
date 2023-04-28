@@ -134,9 +134,16 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public Boolean add(QcInfoDTO.SaveOrUpdateDTO dto) {
         //质检单
         QcInfoEntity bill = new QcInfoEntity();
+        String code = "";
         String billId = dto.getId();
         if (StringUtils.isBlank(billId)) {
             billId = IdWorker.getIdStr();
+        } else {
+            QcInfoEntity qc = this.getById(billId);
+            if (Objects.isNull(qc)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
+            code = qc.getCode();
         }
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
@@ -149,7 +156,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         QcBillStatusEnum waitQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.WAIT_QC.getCode());
         bill.setQcStatus(waitQc);
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+        if (StringUtils.isBlank(code)) {
+            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QC, BusinessNoTypeEnum.CODE_QC.getCode()));
+        }
         bill.setCode(code);
         //采购订单
         String purchaseOrderId = dto.getPurchaseOrderId();
@@ -1198,7 +1207,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addDTO.setReturnRemark(purchaseReturnOrderDTO.getRemark());
             addDTO.setSupplierId(qcInfoEntity.getSupplierId());
 
-            String purchaseUserId=purchaseOrderDbList.stream().filter(p->p.getId().equals(purchaseOrderId)).
+            String purchaseUserId = purchaseOrderDbList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getPurchaseUserId())).orElse("");
             addDTO.setPurchaseUserId(purchaseUserId);
             addList.add(addDTO);
@@ -1323,8 +1332,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //质检产品信息
             List<QcProductEntity> qcProductList = qcProductService.getByMainIdList(ids);
             List<String> purOrderIds = qcList.stream().map(QcInfoEntity::getPurchaseOrderId).collect(Collectors.toList());
+            //采购订单明细id集合
+            List<String> podIds = qcInfoList.stream().map(QcResultEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
             //获取到对应的 订单明细
-            List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purOrderIds);
+            List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
             /**
              * 根据采访订单id集合
              * 获取到已质检数量
