@@ -176,17 +176,31 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
     private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
         //仓库状态 true禁用,false启用
         Object disabled = map.get("disabled");
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
         if (ObjectUtils.isEmpty(disabled)) {
             return;
         }
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FSupplierId = '%s'", syncKingdeeId));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FForbiderId";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 1);
+        if (CollectionUtils.isEmpty(queryList)) {
+            return;
+        }
+        Map<String, Object> queryMap = queryList.get(0);
+        //禁用人
+        String disablerId = (String)queryMap.get("FForbiderId");
+
         String code = (String) map.get("code");
         String operate = null;
         //启用
-        if (!(Boolean) disabled) {
+        if (!(Boolean) disabled && !StringUtils.equals("0",disablerId)) {
             operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
-        if ((Boolean) disabled) {
+        if ((Boolean) disabled && StringUtils.equals("0",disablerId)) {
             operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
         if (StringUtils.isNotBlank(operate)) {

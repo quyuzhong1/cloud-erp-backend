@@ -186,16 +186,17 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
      */
     private void excuteOperation (KingdeeApiUtils apiUtils,Map<String, Object> map,String operate) {
 
-        List<JSONObject> operateJsonList = new ArrayList<>();
         JSONArray list = JSONUtil.parseArray(map.get("list"));
-        String id = "";
+        String id = (String)map.get("syncKingdeeId");
 
 
         List<String> disabledList = new ArrayList<>();
         List<String> unDisabledList = new ArrayList<>();
         for (Object obj : list ) {
+            JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(obj));
+
             //同步数据时禁用,需要考虑既有禁用又有启用的情况
-            Boolean disabled = (Boolean)map.get("disabled");
+            Boolean disabled = (Boolean)jsonObject.get("disabled");
             if (ObjectUtils.isNotEmpty(disabled)) {
                 //禁用
                 if (disabled) {
@@ -204,9 +205,10 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
                     operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
                 }
             }
+            if (StringUtils.isBlank(id)) {
+                id = (String)jsonObject.get("syncKingdeeId");
+            }
 
-            JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(obj));
-            id = (String)jsonObject.get("syncKingdeeId");
             String skuNo = (String)jsonObject.get("skuNo");
             BigDecimal minQty = MathUtil.valueOf(jsonObject.get("minQty")) ;
             BigDecimal maxQty = MathUtil.valueOf(jsonObject.get("maxQty"));
@@ -226,11 +228,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
                 String disablerId = (String)queryMap.get("FDisablerId");
                 if (StringUtils.equals(skuNo,number) && MathUtil.compareTo(minQty,fMinQty) == MathUtil.ZERO && MathUtil.compareTo(maxQty,fMaxQty) == MathUtil.ZERO ) {
                     //禁用
-                    if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) && StringUtils.isBlank(disablerId)) {
+                    if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) && StringUtils.equals("0",disablerId)) {
                         disabledList.add(detailId);
                     }
                    //启用
-                    if (SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate) && StringUtils.isNotBlank(disablerId)) {
+                    if (SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate) && !StringUtils.equals("0",disablerId)) {
                         unDisabledList.add(detailId);
                     }
                 }
@@ -239,11 +241,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
-            excuteOperation(apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+            excuteOperation(apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
-            excuteOperation(apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+            excuteOperation(apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
         }
 
     }
@@ -266,7 +268,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         pkEntryIds.put(newObj);
         viewMap.set("PkEntryIds",pkEntryIds);
         //启用禁用
-        apiUtils.excuteOperation(SyncKingdeeOperateEnum.getNameByCode(operate),JSONUtil.toJsonStr(viewMap));
+        apiUtils.excuteOperation(operate,JSONUtil.toJsonStr(viewMap));
     }
 
 }

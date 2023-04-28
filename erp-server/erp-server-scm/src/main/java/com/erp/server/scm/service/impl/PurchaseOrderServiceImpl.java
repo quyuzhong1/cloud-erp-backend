@@ -145,7 +145,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 obj.setCode(null);
                 obj.setSupplierName(null);
                 obj.setDeliveryWarehouseName(null);
-                obj.setApproveStatus(null);
                 obj.setApproveStatusName(null);
                 obj.setInvalidStatus(null);
                 obj.setInvalidStatusName(null);
