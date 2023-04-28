@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.dmp.pull.mapper.ProductDetailMapper;
@@ -30,11 +31,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean saveOrUpdateProductDetail(ProductDetailEntity productDetailEntity) {
         ProductDetailEntity entity = getProductDetailById(productDetailEntity.getId());
         //不存在需要新增，同时判断产品名称是否存在了,存在不同步
-        if (ObjectUtil.isEmpty(entity)) {
+        if (ObjectUtil.isNotEmpty(entity)) {
             if (entity.getSkuNo().equals(productDetailEntity.getSkuNo())) {
                 return false;
             }
+            return this.updateById(productDetailEntity);
+        } else {
+            return this.save(productDetailEntity);
         }
-        return this.saveOrUpdate(productDetailEntity);
     }
 }

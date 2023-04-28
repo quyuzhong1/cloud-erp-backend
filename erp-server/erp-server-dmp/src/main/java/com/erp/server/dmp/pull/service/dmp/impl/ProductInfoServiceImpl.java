@@ -29,11 +29,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean saveOrUpdateProductInfo(ProductInfoEntity productInfoEntity) {
         ProductInfoEntity entity = getProductInfoById(productInfoEntity.getId());
         //不存在需要新增，同时判断产品名称是否存在了,存在不同步
-        if (ObjectUtil.isEmpty(entity)) {
+        if (ObjectUtil.isNotEmpty(entity)) {
             if (entity.getName().equals(productInfoEntity.getName())) {
                 return false;
             }
+            return this.updateById(productInfoEntity);
+        } else {
+            return this.save(productInfoEntity);
         }
-        return this.saveOrUpdate(productInfoEntity);
+
     }
 }
