@@ -147,7 +147,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void unApprove(String billId) {
+    public void unApprove(InventoryUnApproveDTO dto) {
+        log.info("库存交易反审核，单据类型：{}, 单据id：{}", dto.getSourceType().getName(), dto.getBillId());
+        // 根据单据类型和单据id查询出对应的交易流水， 按创建时间正序排序
+        List<TransactionFlowEntity> txnFlows = transactionFlowService.getTxnFlowSCreatTimeSorted(dto.getSourceType().getCode(), dto.getBillId());
+        ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
 
     }
 

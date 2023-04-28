@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -84,8 +85,8 @@ public interface InventoryService extends SuperService<InventoryEntity> {
 
     /**
      * 按单据ID反审核
-     * @param billId
+     * @param dto
      */
-    void unApprove(String billId);
+    void unApprove(InventoryUnApproveDTO dto);
 
 }

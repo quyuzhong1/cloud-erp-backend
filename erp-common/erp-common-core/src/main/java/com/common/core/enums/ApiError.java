@@ -468,6 +468,7 @@ public enum ApiError implements Serializable {
     ERROR_99037(99037,"库存交易规则仓库选项配置错误或者调用方调用错误，请联系系统管理员"),
     ERROR_99038(99038,"库存交易规则交易类型配置错误，请联系系统管理员"),
     ERROR_99039(99039,"库存交易当前仓和目的仓不能一样"),
+    ERROR_99040(99040,"库存交易流水不存在，无法反审核"),
     ERROR_end(1000000, "系统错误");
 
     public Integer code;
