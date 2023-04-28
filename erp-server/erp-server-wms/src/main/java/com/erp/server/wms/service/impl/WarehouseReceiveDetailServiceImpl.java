@@ -105,11 +105,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setUpdateUserId(dto.getUpdateUserId());
             warehouseReceiveDetailEntity.setUpdateUserName(dto.getUpdateUserName());
 
-
-            Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+          /*  Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - receive)) {
                 throw new ServiceException(ApiError.ERROR_99013);
-            }
+            }*/
             listDetail.add(warehouseReceiveDetailEntity);
         }
         //保存详情信息
