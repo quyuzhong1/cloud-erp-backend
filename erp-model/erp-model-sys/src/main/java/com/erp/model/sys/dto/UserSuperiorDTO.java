@@ -18,7 +18,12 @@ import java.io.Serializable;
 public class UserSuperiorDTO implements Serializable {
 
     /**
-     * 用户id
+     * 当前用户id
+     */
+    private String currentUserId;
+
+    /**
+     * 上级用户id
      */
     private String userId;
 
@@ -31,4 +36,21 @@ public class UserSuperiorDTO implements Serializable {
      * 上级类型
      */
     private String superiorType;
+
+    /**
+     * 部门名称
+     */
+    private String deptName;
+
+    /**
+     * 部门id
+     */
+    private String deptId;
+
+    /**
+     * 上级级别
+     */
+    private Integer level;
+
+
 }

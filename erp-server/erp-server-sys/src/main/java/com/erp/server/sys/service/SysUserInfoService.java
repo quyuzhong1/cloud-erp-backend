@@ -169,6 +169,12 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<SysUserSimpleDTO> getUserSimpleInfoByIds(List<String> userIds);
 
     /**
+     * 根据角色id获取用户列表
+     * @param dto
+     * @return
+     */
+    List<FindUserDTO> getUserListByRoleIds(SysFeignDTO.ListByRoleIdsDTO dto);
+    /**
      * 根据搜索关键字 获取到用户信息
      * @author yl
      * @date 2023-04-26 18:14

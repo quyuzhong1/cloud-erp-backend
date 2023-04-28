@@ -9,10 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.sys.dto.BatchSysDepartUserDTO;
-import com.erp.model.sys.dto.DepartmentSearchDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
@@ -27,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @Classname SysDepartmentUserServiceImpl
@@ -175,6 +173,16 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         }
         SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO(list.get(0).getDepartmentId(), "", userId, userName);
         return dto;
+    }
+
+    @Override
+    public List<UserSuperiorDTO> listSuperiorByUserId(String userId) {
+        List<UserSuperiorDTO> resultList = baseMapper.listSuperiorByUserId(userId);
+        // 如果不包含自己, 则过滤掉包含自己的上级
+        if(CollectionUtils.isNotEmpty(resultList)){
+            resultList = resultList.stream().filter(x -> !userId.equals(x.getUserId())).collect(Collectors.toList());
+        }
+        return resultList;
     }
 
 

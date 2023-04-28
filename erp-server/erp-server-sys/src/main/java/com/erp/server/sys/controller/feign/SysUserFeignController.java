@@ -295,4 +295,13 @@ public class SysUserFeignController extends BaseController {
     public List<SysUserSimpleDTO> getUserSimpleInfoByIds(@RequestParam(value = "userIds") List<String> userIds) {
         return sysUserInfoService.getUserSimpleInfoByIds(userIds);
     }
+
+    /**
+     * 根据角色id获取对应用户列表
+     */
+    @PostMapping("/getUserListByRoleIds")
+    public List<FindUserDTO> getUserListByRoleIds(@RequestBody SysFeignDTO.ListByRoleIdsDTO dto) {
+        return sysUserInfoService.getUserListByRoleIds(dto);
+    }
+
 }

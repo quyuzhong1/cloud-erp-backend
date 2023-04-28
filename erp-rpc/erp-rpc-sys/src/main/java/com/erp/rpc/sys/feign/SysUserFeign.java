@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -273,4 +274,12 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserSimpleInfoByIds")
     List<SysUserSimpleDTO> getUserSimpleInfoByIds(@RequestParam(value = "userIds") List<String> userIds);
+
+    /**
+     * 根据角色id查询用户列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/user/getUserListByRoleIds")
+    List<FindUserDTO> getUserListByRoleIds(@RequestBody @Valid SysFeignDTO.ListByRoleIdsDTO dto);
 }

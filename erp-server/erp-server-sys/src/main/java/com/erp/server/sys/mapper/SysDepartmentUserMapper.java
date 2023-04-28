@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.sys.dto.DepartmentSearchDTO;
 import com.erp.model.sys.dto.SysDepartmentUserDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -26,4 +27,11 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
     IPage<SysDepartmentUserDTO> findDepartmentUser(Page query, @Param("params") DepartmentSearchDTO params, @Param("departmentIds") List<String> departmentIds);
 
     List<SysDepartmentUserNumberDTO> findUserNumber();
+
+    /**
+     * 根据用户id获取上级用户
+     * @param userId
+     * @return
+     */
+    List<UserSuperiorDTO> listSuperiorByUserId(@Param("userId") String userId);
 }
