@@ -1,15 +1,13 @@
 package com.erp.server.sys.controller.api;
 
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.server.sys.service.SysDepartmentService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,17 +59,8 @@ public class SysDepartmentController extends BaseController {
      * 保存
      */
     @RequestMapping("/saveOrUpdate")
-    public ApiResult save(@RequestBody SysDepartmentEntity sysDepartment) {
-        String id=sysDepartment.getId();
-        if(StringUtils.isBlank(id)){
-            id= IdWorker.getIdStr();
-        }
-        String parentId=sysDepartment.getParentId();
-        if(StringUtils.isBlank(parentId)){
-            sysDepartment.setParentId("0");
-        }
-        sysDepartment.setId(id);
-        sysDepartmentService.saveOrUpdate(sysDepartment);
+    public ApiResult saveOrUpdate(@RequestBody SysDepartmentEntity sysDepartment) {
+        sysDepartmentService.saveOrUpdateSysDept(sysDepartment);
         return success();
     }
 

@@ -3,12 +3,16 @@ package com.erp.server.scm.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.entity.*;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
 import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +53,13 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+
     /**
      * 组装数据发送到金蝶
      */
@@ -80,8 +91,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
         //采购部门
         resultMap.put("purchaseDeptName",entity.getPurchaseDeptName());
-        //采购员
-        resultMap.put("purchaseUserName",entity.getPurchaseUserName());
+        //采购员编码
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+        if (ObjectUtils.isNotEmpty(findUserDTO)) {
+            resultMap.put("purchaseUserCode",findUserDTO.getCode());
+        }
         //供应商联系人
         resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());
         //是否是新品首批
@@ -100,6 +114,9 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
+        //部门信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getDeliveryWarehouseId()));
+
         List<JSONObject> list = new ArrayList<>();
         for (PurchaseOrderDetailEntity detailEntity : details) {
             JSONObject jsonObject = new JSONObject();
@@ -108,7 +125,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
             jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
-            jsonObject.set("deliveryWarehouseName",entity.getDeliveryWarehouseName());
+            //部门编码
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
+                jsonObject.set("kingdeeWarehouseCode",kingdeeWarehouseCode);
+            }
             jsonObject.set("taxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             jsonObject.set("receiveOrgName",entity.getReceiveOrgName());
             jsonObject.set("isGift",detailEntity.getIsGift());

@@ -179,6 +179,10 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_WAREHOUSE_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_warehouse_tag"),
 
+    /**
+     * 部门同步金蝶
+     */
+    KINGDEE_SYS_DEPARTMENT_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
 
     //-----------------------------消息通知--------------------------------------------
 
