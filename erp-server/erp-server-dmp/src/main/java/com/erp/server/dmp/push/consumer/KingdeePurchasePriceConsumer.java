@@ -83,7 +83,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //操作项，分录禁用
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate)) {
-            excuteOperation(apiUtils,map,operate);
+            excuteOperation(platformEntity,apiUtils,map,operate);
             return;
         }
 
@@ -108,7 +108,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             //禁用启用
-            excuteOperation(apiUtils,map,operate);
+            excuteOperation(platformEntity,apiUtils,map,operate);
             return;
         }
 
@@ -132,7 +132,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             //禁用启用
-            excuteOperation(apiUtils,map,operate);
+            excuteOperation(platformEntity,apiUtils,map,operate);
         }
     }
 
@@ -184,7 +184,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
     /**
      * 启用、禁用
      */
-    private void excuteOperation (KingdeeApiUtils apiUtils,Map<String, Object> map,String operate) {
+    private void excuteOperation (PlatformEntity platformEntity,KingdeeApiUtils apiUtils,Map<String, Object> map,String operate) {
 
         JSONArray list = JSONUtil.parseArray(map.get("list"));
         String id = (String)map.get("syncKingdeeId");
@@ -241,11 +241,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
-            excuteOperation(apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
+            excuteOperation(platformEntity,apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
-            excuteOperation(apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
+            excuteOperation(platformEntity,apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
         }
 
     }
@@ -259,16 +259,23 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
      * @param id
      * @param operate
      */
-    private void excuteOperation(KingdeeApiUtils apiUtils, List<String> list,String id,String operate) {
+    private void excuteOperation(PlatformEntity platformEntity,KingdeeApiUtils apiUtils, List<String> list,String id,String operate) {
         JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
         JSONObject newObj = new JSONObject();
         JSONArray pkEntryIds = new JSONArray();
-        newObj.set("id",id);
-        newObj.set("EntryIds",String.join(",",list));
+        newObj.set("id", id);
+        newObj.set("EntryIds", String.join(",", list));
         pkEntryIds.put(newObj);
-        viewMap.set("PkEntryIds",pkEntryIds);
-        //启用禁用
-        apiUtils.excuteOperation(operate,JSONUtil.toJsonStr(viewMap));
+        viewMap.set("PkEntryIds", pkEntryIds);
+
+        try {
+            //启用禁用
+            apiUtils.excuteOperation(operate, JSONUtil.toJsonStr(viewMap));
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
     }
 
 }
