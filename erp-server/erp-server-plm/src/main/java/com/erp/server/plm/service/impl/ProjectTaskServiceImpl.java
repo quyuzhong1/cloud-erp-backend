@@ -3879,6 +3879,28 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
+        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+
+        for (TaskHandleDataDTO entity : taskDataList) {
+            String taskId = myToDoList.stream().filter(obj -> entity.getProcessId().equals(obj.getProcessInstanceId())).map(TaskShowDTO::getTaskId).findFirst().orElse("");
+            //审核不通过
+            if (StringUtils.isNotBlank(taskId)) {
+                ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+                approveProcess.setTaskId(taskId);
+                approveProcess.setProcessInstanceId(entity.getProcessId());
+                approveProcess.setUserId(loginUser.getUid());
+                approveProcess.setComment(dto.getComment());
+                workflowFeign.taskNoPass(approveProcess);
+            }
+
+            //添加评论
+            TaskCommentEntity comment = new TaskCommentEntity();
+            comment.setComment("[审核结果-审核不通过]" + dto.getComment());
+            comment.setTaskId(entity.getTaskId());
+            comment.setCreateUserName(loginUser.getUserName());
+            comment.setCreateUserId(loginUser.getUid());
+            taskCommentList.add(comment);
+        }
 
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
@@ -3892,16 +3914,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
 
-        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
-        for (String taskId : taskIds) {
-            //添加评论
-            TaskCommentEntity comment = new TaskCommentEntity();
-            comment.setComment("[审核结果-审核不通过]" + dto.getComment());
-            comment.setTaskId(taskId);
-            comment.setCreateUserName(loginUser.getUserName());
-            comment.setCreateUserId(loginUser.getUid());
-            taskCommentList.add(comment);
-        }
         taskCommentService.batchSaveTaskComment(taskCommentList);
         //发送通知
         noticeMessageService.approvalTaskNotice(loginUser.getUserName(), list, dto.getProductId());
