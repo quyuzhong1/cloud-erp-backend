@@ -22,8 +22,8 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_stock_in")
-public class PurchaseStockInEntity extends BaseEntity<PurchaseStockInEntity> {
+@TableName("po_instock")
+public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
 
     /**
      * 采购入库单号

@@ -1,7 +1,7 @@
 package com.erp.server.scm;
 
 import com.erp.model.wms.entity.CfgModuleOperateLogFieldEntity;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.service.CfgModuleOperateLogFieldService;
 import org.junit.Test;
@@ -34,7 +34,7 @@ public class ErpServerWmsApplicationTests {
     public void addLogField() {
 
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String classPath = String.valueOf(PurchaseStockInDetailEntity.class);
+        String classPath = String.valueOf(PoInstockDetailEntity.class);
         List<CfgModuleOperateLogFieldEntity> logFields = Arrays.asList(
                 new CfgModuleOperateLogFieldEntity().setField("stockInQty").setFieldName("入库数量").setClassPath(classPath).setType(0).setEnumClass(""),
                 new CfgModuleOperateLogFieldEntity().setField("exceedQty").setFieldName("超出数量").setClassPath(classPath).setType(0).setEnumClass(""),

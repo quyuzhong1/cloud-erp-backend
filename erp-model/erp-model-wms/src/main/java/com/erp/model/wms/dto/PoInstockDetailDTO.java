@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class PurchaseStockInDetailDTO implements Serializable {
+public class PoInstockDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor

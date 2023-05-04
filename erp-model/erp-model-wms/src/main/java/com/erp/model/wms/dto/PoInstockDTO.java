@@ -20,7 +20,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class PurchaseStockInDTO implements Serializable {
+public class PoInstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
@@ -282,7 +282,7 @@ public class PurchaseStockInDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<PurchaseStockInDetailDTO.AddDTO> details;
+        private List<PoInstockDetailDTO.AddDTO> details;
     }
 
 
@@ -301,7 +301,7 @@ public class PurchaseStockInDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<PurchaseStockInDetailDTO.UpdateDTO> details;
+        private List<PoInstockDetailDTO.UpdateDTO> details;
     }
 
     @Data
@@ -375,7 +375,7 @@ public class PurchaseStockInDTO implements Serializable {
         /**
          * 明细
          */
-        private List<PurchaseStockInDetailDTO.ViewDTO> details;
+        private List<PoInstockDetailDTO.ViewDTO> details;
     }
 
 

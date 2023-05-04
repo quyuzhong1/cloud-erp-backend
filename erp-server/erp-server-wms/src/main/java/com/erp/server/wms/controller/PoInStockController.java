@@ -1,14 +1,16 @@
 package com.erp.server.wms.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
-import com.erp.server.wms.service.PurchaseStockInService;
+import com.erp.server.wms.service.PoInstockService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +27,11 @@ import java.util.List;
  * @since 2023-04-10
  */
 @RestController
-@RequestMapping("/purchaseStockIn")
-public class PurchaseStockInController extends BaseController {
+@RequestMapping("/poInStock")
+public class PoInStockController extends BaseController {
 
     @Resource
-    private PurchaseStockInService purchaseStorageService;
+    private PoInstockService purchaseStorageService;
 
 
     /**
@@ -40,8 +42,13 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>> 
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<PurchaseStockInDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseStockInDTO.SearchParamDTO> dto) {
-        PagingVO<PurchaseStockInDTO.ListDTO> pagingVO = purchaseStorageService.paging(dto);
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:paging",
+            tableAlias = "psi"
+    )
+    public ApiResult<PagingVO<PoInstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoInstockDTO.SearchParamDTO> dto) {
+        PagingVO<PoInstockDTO.ListDTO> pagingVO = purchaseStorageService.paging(dto);
         return success(pagingVO);
     }
 
@@ -53,8 +60,13 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult<List<ListStatusCountDTO>>
      */
     @PostMapping("/listCount")
-    public ApiResult<List<PurchaseStockInDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<PurchaseStockInDTO.ListStatusCountDTO> list = purchaseStorageService.listCount(dto);
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:paging",
+            tableAlias = "psi"
+    )
+    public ApiResult<List<PoInstockDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<PoInstockDTO.ListStatusCountDTO> list = purchaseStorageService.listCount(dto);
         return success(list);
     }
 
@@ -66,7 +78,12 @@ public class PurchaseStockInController extends BaseController {
     * @return ApiResult 
     */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseStockInDTO.AddDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:add",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
+    public ApiResult add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
         String id = purchaseStorageService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -79,7 +96,12 @@ public class PurchaseStockInController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseStockInDTO.AddDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:addAndSubmit",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
+    public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
         String id = purchaseStorageService.addAndSubmit(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -92,7 +114,12 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult 
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated PurchaseStockInDTO.UpdateDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:update",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
+    public ApiResult update(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
         Boolean flag = purchaseStorageService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -105,7 +132,12 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult 
      */
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseStockInDTO.UpdateDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:updateAndSubmit",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
+    public ApiResult updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
         Boolean flag = purchaseStorageService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -118,6 +150,11 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult 
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:submit",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseStorageService.submit(dto.getIds());
         return flag == true ? success() : failure();
@@ -131,8 +168,13 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/view")
-    public ApiResult<PurchaseStockInDTO.ViewDTO> view(@RequestParam("id") String id) {
-        PurchaseStockInDTO.ViewDTO dto = purchaseStorageService.view(id);
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:view",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
+    public ApiResult<PoInstockDTO.ViewDTO> view(@RequestParam("id") String id) {
+        PoInstockDTO.ViewDTO dto = purchaseStorageService.view(id);
         return success(dto);
     }
 
@@ -145,6 +187,11 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:delete",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseStorageService.delete(dto.getIds());
         return flag == true ? success() : failure();
@@ -158,6 +205,11 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:invalid",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = purchaseStorageService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
@@ -171,6 +223,11 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:approve",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         purchaseStorageService.approve(baseApproveParamDTO);
         return success();
@@ -184,6 +241,11 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:disApprove",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseStorageService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -197,6 +259,11 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:cancelProcess",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseStorageService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
@@ -211,7 +278,12 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseStockInDTO.SearchParamDTO dto, HttpServletResponse response) {
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:paging",
+            tableAlias = "psi"
+    )
+    public ApiResult exportExcel(@RequestBody PoInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseStorageService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
@@ -237,7 +309,12 @@ public class PurchaseStockInController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:generatePurchaseReturnOrder",
+            serviceClass = PoInstockService.class,
+            keyIdName = "id")
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = purchaseStorageService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
     }
@@ -250,8 +327,8 @@ public class PurchaseStockInController extends BaseController {
     * @return ApiResult<List<OrderRefStockInDTO>>
     */
     @PostMapping(value = "/purchaseOrderRefStockIn")
-    public ApiResult<List<PurchaseStockInDTO.OrderRefStockInDTO>> purchaseOrderRefStockIn(@RequestBody @Validated BaseIdDTO dto) {
-        List<PurchaseStockInDTO.OrderRefStockInDTO> list = purchaseStorageService.purchaseOrderRefStockIn(dto.getId());
+    public ApiResult<List<PoInstockDTO.OrderRefStockInDTO>> purchaseOrderRefStockIn(@RequestBody @Validated BaseIdDTO dto) {
+        List<PoInstockDTO.OrderRefStockInDTO> list = purchaseStorageService.purchaseOrderRefStockIn(dto.getId());
         return success(list);
     }
 

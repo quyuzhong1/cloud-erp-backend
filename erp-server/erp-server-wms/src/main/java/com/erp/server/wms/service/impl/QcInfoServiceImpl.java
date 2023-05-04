@@ -100,7 +100,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private PurchaseStockInService purchaseStorageService;
+    private PoInstockService purchaseStorageService;
 
     @Resource
     private CommonService commonService;
@@ -110,7 +110,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource
-    private PurchaseStockInDetailService purchaseStockInDetailService;
+    private PoInstockDetailService poInstockDetailService;
 
 
     @Resource
@@ -517,9 +517,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @date 2023-04-20 14:55
      */
     private void autoStockInBill(String billId, QcResultDTO.AddDTO qcInfo, String purchaseOrderId, String warehouseId) {
-        PurchaseStockInDTO.AddDTO dto = new PurchaseStockInDTO.AddDTO();
-        List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>(1);
-        PurchaseStockInDetailDTO.AddDTO detail = new PurchaseStockInDetailDTO.AddDTO();
+        PoInstockDTO.AddDTO dto = new PoInstockDTO.AddDTO();
+        List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>(1);
+        PoInstockDetailDTO.AddDTO detail = new PoInstockDetailDTO.AddDTO();
         detail.setExceedQty(0);
         detail.setStockInQty(qcInfo.getTotalQty());
         detail.setSourceDetailId(qcInfo.getId());
@@ -569,20 +569,20 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         //以质检单
         Map<String, List<QcResultDTO.StockInDTO>> map = stockInList.stream().collect(Collectors.groupingBy(QcResultDTO.StockInDTO::getMainId));
-        List<PurchaseStockInDTO.AddDTO> addList = new ArrayList<>(map.size());
+        List<PoInstockDTO.AddDTO> addList = new ArrayList<>(map.size());
 
         for (Map.Entry<String, List<QcResultDTO.StockInDTO>> entry : map.entrySet()) {
             String mainId = entry.getKey();
             List<QcResultDTO.StockInDTO> qcList = entry.getValue();
-            PurchaseStockInDTO.AddDTO addStockIn = new PurchaseStockInDTO.AddDTO();
+            PoInstockDTO.AddDTO addStockIn = new PoInstockDTO.AddDTO();
             addStockIn.setSourceId(mainId);
             addStockIn.setSourceType(sourceType);
             addStockIn.setStockInUserId(userId);
             addStockIn.setStockInDeptId(depart.getDepartmentId());
             addStockIn.setPurchaseOrderId(qcList.get(0).getPurchaseOrderId());
-            List<PurchaseStockInDetailDTO.AddDTO> details = new ArrayList<>(qcList.size());
+            List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>(qcList.size());
             for (QcResultDTO.StockInDTO qcItem : qcList) {
-                PurchaseStockInDetailDTO.AddDTO detailAdd = new PurchaseStockInDetailDTO.AddDTO();
+                PoInstockDetailDTO.AddDTO detailAdd = new PoInstockDetailDTO.AddDTO();
                 detailAdd.setPurchaseOrderDetailId(qcItem.getPurchaseOrderDetailId());
                 detailAdd.setSourceDetailId(qcItem.getId());
                 detailAdd.setStockInQty(qcItem.getTotalQty());
@@ -911,7 +911,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99023);
         }
         //入库的
-        List<PurchaseStockInEntity> stockInList = purchaseStorageService.getStockInBySourceIds(ids);
+        List<PoInstockEntity> stockInList = purchaseStorageService.getStockInBySourceIds(ids);
         long stockInCount = stockInList.stream().filter(s -> !s.getInvalidStatus()).count();
         if (stockInCount > 0) {
             throw new ServiceException(ApiError.ERROR_99027);
@@ -1075,7 +1075,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         //获取到订单采购信息
         List<PurchaseOrderDTO.PurchaseOrderInfoDTO> purchaseOrderList = scmTaskFeign.getByOrderIds(poIdList);
-        List<PurchaseStockInDetailEntity> stockInSkuList = purchaseStockInDetailService.listDetailByPodIds(podIds);
+        List<PoInstockDetailEntity> stockInSkuList = poInstockDetailService.listDetailByPodIds(podIds);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
@@ -1129,8 +1129,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        List<String> ids = dto.getList().stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
+    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        List<String> ids = dto.getList().stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
         List<QcInfoEntity> qcInfoList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(qcInfoList)) {
             throw new ServiceException(ApiError.ERROR_99015);
@@ -1149,26 +1149,26 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
 
         LoginUser userInfo = commonService.getUserInfo();
-        List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
+        List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //采购订单明细id
-        List<String> podIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceDetailId).collect(Collectors.toList());
+        List<String> podIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceDetailId).collect(Collectors.toList());
         //采购订单id集合
-        List<String> poIds = list.stream().map(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
 
         List<PurchaseOrderEntity> purchaseOrderDbList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
         //收获
         List<WarehouseReceiveEntity> receiveList = warehouseReceiveService.listByPurchaseOrderIds(poIds);
 
-        List<PurchaseStockInDetailEntity> stockInSkuList = purchaseStockInDetailService.listDetailByPodIds(podIds);
+        List<PoInstockDetailEntity> stockInSkuList = poInstockDetailService.listDetailByPodIds(podIds);
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
         String qcBill = SourceTypeEnum.QC_BILL.getCode();
-        Map<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
+        Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
 
-        for (Map.Entry<String, List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
+        for (Map.Entry<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
             String sourceId = entry.getKey();
-            List<PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
+            List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
 
             PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
             //质检单
@@ -1181,11 +1181,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addDTO.setSourceId(sourceId);
             //退货详情
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
-            PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
+            PoInstockDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
             //采购订单id
             String purchaseOrderId = purchaseReturnOrderDTO.getPurchaseOrderId();
 
-            for (PurchaseStockInDTO.GeneratePurchaseReturnOrderDTO detail : value) {
+            for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
                 //验证退货数量
                 Integer stockInQty = stockInSkuList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getSourceDetailId())).map(e -> e.getStockInQty()).findFirst().orElse(null);

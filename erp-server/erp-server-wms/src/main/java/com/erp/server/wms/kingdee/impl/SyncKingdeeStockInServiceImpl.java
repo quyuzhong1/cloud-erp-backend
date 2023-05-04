@@ -1,6 +1,5 @@
 package com.erp.server.wms.kingdee.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
@@ -12,16 +11,10 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.model.wms.enums.ReturnOrderSourceEnum;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +48,10 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private PurchaseStockInService purchaseStockInService;
+    private PoInstockService poInstockService;
 
     @Resource
-    private PurchaseStockInDetailService purchaseStockInDetailService;
+    private PoInstockDetailService poInstockDetailService;
 
     @Resource
     private MQProducerService mQProducerService;
@@ -75,7 +68,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
      * @return void
      **/
     @Override
-    public void syncDataToKingdee(PurchaseStockInEntity entity, String operate) {
+    public void syncDataToKingdee(PoInstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -118,24 +111,24 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("address", supplierEntity.getCompanyAddress());
 
         //入库单明细
-        List<PurchaseStockInDetailEntity> detailList = purchaseStockInDetailService.listByMainId(entity.getId());
+        List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
 
         //获取sku的id集合
-        List<String> skuIdList = detailList.stream().map(PurchaseStockInDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
         //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = detailList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> orderDetailIds = detailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
         List<JSONObject> list = new ArrayList<>();
-        for (PurchaseStockInDetailEntity detail : detailList) {
+        for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
@@ -178,7 +171,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchaseStockInService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
+                return poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
             }
             return Boolean.TRUE;
         });

@@ -18,8 +18,8 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_stock_in_detail")
-public class PurchaseStockInDetailEntity extends BaseEntity<PurchaseStockInDetailEntity> {
+@TableName("po_instock_detail")
+public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
 
     /**
      * 主表id

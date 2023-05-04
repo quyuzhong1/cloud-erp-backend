@@ -13,7 +13,7 @@ import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseChangeDetailMapper;
@@ -167,7 +167,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
 
         //入库信息
-        List<PurchaseStockInDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
 
         for (PurchaseChangeDetailEntity purchaseChangeDetailEntity : list) {
@@ -184,7 +184,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
                 Integer stockInQty = purchaseStockInDetailList.stream()
                         .filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseChangeDetailEntity.getPurchaseOrderDetailId()))
-                        .map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (stockInQty > purchaseChangeDetailEntity.getQty()) {
                     throw new ServiceException(new ApiResult(1,String.format("SKU【%s】数量不能小于入库数量【%s】",purchaseChangeDetailEntity.getSkuNo(),stockInQty)));
                 }

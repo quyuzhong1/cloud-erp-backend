@@ -7,9 +7,8 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
-import com.erp.model.wms.entity.PurchaseStockInEntity;
+import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.entity.PoInstockEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -22,7 +21,7 @@ import java.util.List;
  * @author will
  * @since 2023-04-10
  */
-public interface PurchaseStockInService extends SuperService<PurchaseStockInEntity> {
+public interface PoInstockService extends SuperService<PoInstockEntity> {
     /**
      * @param dto
      * @return PagingVO<ListDTO>
@@ -30,7 +29,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:40
      */
-    PagingVO<PurchaseStockInDTO.ListDTO> paging(PagingDTO<PurchaseStockInDTO.SearchParamDTO> dto);
+    PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> dto);
 
     /**
      * @param dto
@@ -39,7 +38,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:43
      */
-    List<PurchaseStockInDTO.ListStatusCountDTO> listCount(PermissionsDTO dto);
+    List<PoInstockDTO.ListStatusCountDTO> listCount(PermissionsDTO dto);
 
     /**
      * @param dto
@@ -48,7 +47,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:41
      */
-    String add(PurchaseStockInDTO.AddDTO dto);
+    String add(PoInstockDTO.AddDTO dto);
 
     /**
      * @param dto
@@ -57,7 +56,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:44
      */
-    String addAndSubmit(PurchaseStockInDTO.AddDTO dto);
+    String addAndSubmit(PoInstockDTO.AddDTO dto);
 
 
     /**
@@ -69,7 +68,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author yl
      * @date 2023-04-24 15:08
      */
-    Boolean batchAdd(List<PurchaseStockInDTO.AddDTO> list);
+    Boolean batchAdd(List<PoInstockDTO.AddDTO> list);
 
     /**
      * @param dto
@@ -78,7 +77,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:45
      */
-    Boolean update(PurchaseStockInDTO.UpdateDTO dto);
+    Boolean update(PoInstockDTO.UpdateDTO dto);
 
     /**
      * @param dto
@@ -87,7 +86,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:46
      */
-    Boolean updateAndSubmit(PurchaseStockInDTO.UpdateDTO dto);
+    Boolean updateAndSubmit(PoInstockDTO.UpdateDTO dto);
 
     /**
      * @param ids
@@ -105,7 +104,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 11:55
      */
-    PurchaseStockInDTO.ViewDTO view(String id);
+    PoInstockDTO.ViewDTO view(String id);
 
     /**
      * @param ids
@@ -160,7 +159,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 12:00
      */
-    Boolean exportExcel(PurchaseStockInDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PoInstockDTO.SearchParamDTO dto, HttpServletResponse response);
 
     /**
      * @param ids
@@ -178,7 +177,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/12 12:02
      */
-    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
+    Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
 
     /**
      * 根据来源Id查询入库单
@@ -188,7 +187,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @Author Luo_WG
      * @Date 2023/4/18 10:30
      **/
-    List<PurchaseStockInEntity> getStockInBySourceId(String sourceId);
+    List<PoInstockEntity> getStockInBySourceId(String sourceId);
 
 
     /**
@@ -199,7 +198,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @Author Luo_WG
      * @Date 2023/4/18 10:30
      **/
-    List<PurchaseStockInEntity> getStockInBySourceIds(List<String> sourceIds);
+    List<PoInstockEntity> getStockInBySourceIds(List<String> sourceIds);
 
     /**
      * @param resultList
@@ -208,7 +207,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/18 10:48
      */
-    Boolean batchAddPurchaseStockIn(List<PurchaseStockInDTO.AddDTO> resultList);
+    Boolean batchAddPurchaseStockIn(List<PoInstockDTO.AddDTO> resultList);
 
     /**
      * 根据采购单获取入库数量
@@ -218,7 +217,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @Author Luo_WG
      * @Date 2023/4/18 19:36
      **/
-    List<PurchaseStockInDTO.GetStockInQty> getStockInQty(List<String> ids);
+    List<PoInstockDTO.GetStockInQty> getStockInQty(List<String> ids);
 
     /**
      * @param purchaseOrderId
@@ -227,7 +226,7 @@ public interface PurchaseStockInService extends SuperService<PurchaseStockInEnti
      * @author Will
      * @date: 2023/4/19 16:14
      */
-    List<PurchaseStockInDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(String purchaseOrderId);
+    List<PoInstockDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(String purchaseOrderId);
     /**
      * @description: 生成采购入库单
      * @author Will

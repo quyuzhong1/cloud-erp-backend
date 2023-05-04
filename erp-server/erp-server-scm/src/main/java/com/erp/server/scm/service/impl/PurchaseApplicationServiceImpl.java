@@ -39,7 +39,7 @@ import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -790,7 +790,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         searchParamDTO.setPurchaseApplicationDetailIds(detailIds);
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
         //入库信息
-        List<PurchaseStockInDetailEntity> purchaseStockInDetailList = new ArrayList<>();
+        List<PoInstockDetailEntity> purchaseStockInDetailList = new ArrayList<>();
         //收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList =  new ArrayList<>();
         if (CollectionUtils.isNotEmpty(refList)) {
@@ -811,7 +811,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
                 List<String> thisPodIds = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(thisPodIds)) {
-                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer stockInQty = purchaseStockInDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setStockInQty(stockInQty);
                 }
             }

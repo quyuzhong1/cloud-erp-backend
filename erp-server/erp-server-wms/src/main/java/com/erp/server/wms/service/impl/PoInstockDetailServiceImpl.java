@@ -9,12 +9,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
+import com.erp.model.wms.dto.PoInstockDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.server.wms.mapper.PurchaseStorageDetailMapper;
+import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * @since 2023-04-10
  */
 @Service
-public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseStorageDetailMapper, PurchaseStockInDetailEntity> implements PurchaseStockInDetailService {
+public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetailMapper, PoInstockDetailEntity> implements PoInstockDetailService {
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
@@ -53,7 +53,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     private QcInfoService qcInfoService;
 
     @Resource
-    private PurchaseStockInService purchaseStockInService;
+    private PoInstockService poInstockService;
 
     @Resource
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
@@ -62,12 +62,12 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId,String sourceType) {
+    public void add(List<PoInstockDetailDTO.AddDTO> details, String mainId, String sourceType) {
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
 
-        List<PurchaseStockInDetailEntity> list = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
+        List<PoInstockDetailEntity> list = BeanMapperUtils.copyList(PoInstockDetailEntity.class, details);
 
         //处理明细数据
         doOpHandleDetails(list,mainId,Boolean.FALSE);
@@ -81,21 +81,21 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId,String sourceType) {
+    public void update(List<PoInstockDetailDTO.UpdateDTO> details, String mainId, String sourceType) {
         if (details == null) {
             details = new ArrayList<>();
         }
         //原明细数据
-        List<PurchaseStockInDetailEntity> oldList = this.listByMainId(mainId);
+        List<PoInstockDetailEntity> oldList = this.listByMainId(mainId);
         List<String> deleteIds = getDeleteIds(details, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
-            List<PurchaseStockInDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            List<PoInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),pairList,"编辑操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        List<PurchaseStockInDetailEntity> newList = BeanMapperUtils.copyList(PurchaseStockInDetailEntity.class, details);
+        List<PoInstockDetailEntity> newList = BeanMapperUtils.copyList(PoInstockDetailEntity.class, details);
 
         //处理明细id及操作日志
         doOpHandleDetails(newList,mainId,Boolean.TRUE);
@@ -110,32 +110,32 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
     /**
      * 查询需要删除的数据
      */
-    private List<String> getDeleteIds(List<PurchaseStockInDetailDTO.UpdateDTO> newList, List<PurchaseStockInDetailEntity> oldList) {
+    private List<String> getDeleteIds(List<PoInstockDetailDTO.UpdateDTO> newList, List<PoInstockDetailEntity> oldList) {
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(PurchaseStockInDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(PurchaseStockInDetailEntity
+                map(PoInstockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PoInstockDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     @Override
     public void removeByMainIds(List<String> mainIds) {
-        lambdaUpdate().in(PurchaseStockInDetailEntity::getMainId,mainIds).remove();
+        lambdaUpdate().in(PoInstockDetailEntity::getMainId,mainIds).remove();
     }
 
     @Override
-    public List<PurchaseStockInDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(PurchaseStockInDetailEntity::getMainId,mainId).list();
+    public List<PoInstockDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(PoInstockDetailEntity::getMainId,mainId).list();
     }
 
     @Override
-    public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
+    public List<PoInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
     }
 
 
     @Override
-    public  List<PurchaseStockInDetailEntity> listDetailByPodIds(List<String> podIds) {
+    public  List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds) {
         return baseMapper.listDetailByPodIds(podIds);
     }
 
@@ -147,23 +147,23 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
      * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
      **/
     @Override
-    public List<PurchaseStockInDetailEntity> listDetailByMainId(String id) {
-        return lambdaQuery().eq(PurchaseStockInDetailEntity::getMainId, id).list();
+    public List<PoInstockDetailEntity> listDetailByMainId(String id) {
+        return lambdaQuery().eq(PoInstockDetailEntity::getMainId, id).list();
     }
 
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<PurchaseStockInDetailEntity> newList, String mainId,Boolean isUpdate) {
+    private void doOpHandleDetails (List<PoInstockDetailEntity> newList, String mainId, Boolean isUpdate) {
 
-        List<PurchaseStockInDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<PoInstockDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         //采购明细信息
-        List<String> podIds = newList.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> podIds = newList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        for (PurchaseStockInDetailEntity entity : newList) {
+        for (PoInstockDetailEntity entity : newList) {
             PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98026);
@@ -175,17 +175,17 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             entity.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
-                PurchaseStockInDetailEntity old = this.getById(entity.getId());
+                PoInstockDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);
                 }
-                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_INSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), addPairList, "编辑操作");
+            moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), addPairList, "编辑操作");
         }
     }
 
@@ -196,24 +196,24 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
      * @param list
      * @param sourceType
      */
-    private void checkStockInQty (List<PurchaseStockInDetailEntity> list ,String sourceType,String mainId) {
+    private void checkStockInQty (List<PoInstockDetailEntity> list , String sourceType, String mainId) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //来源ids
-        List<String> ids = list.stream().map(PurchaseStockInDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<String> ids = list.stream().map(PoInstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //采购订单明细ids
-        List<String> podIds = list.stream().map(PurchaseStockInDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<String> podIds = list.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
 
 
-        PurchaseStockInEntity entity = purchaseStockInService.getById(mainId);
+        PoInstockEntity entity = poInstockService.getById(mainId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98050);
         }
         //验证SKU是否重复
-        Map<String, List<PurchaseStockInDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseStockInDetailEntity::getSkuId));
-        for (Map.Entry<String, List<PurchaseStockInDetailEntity>> entry: map.entrySet()) {
-            List<PurchaseStockInDetailEntity> value = entry.getValue();
+        Map<String, List<PoInstockDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PoInstockDetailEntity::getSkuId));
+        for (Map.Entry<String, List<PoInstockDetailEntity>> entry: map.entrySet()) {
+            List<PoInstockDetailEntity> value = entry.getValue();
             if (value.size() > MathUtil.ONE) {
                 throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
             }
@@ -235,7 +235,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         }
 
         //下推单据明细id查询
-        List<PurchaseStockInDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
+        List<PoInstockDetailEntity> stockInDetails = this.listDetailByPodIds(ids);
 
         //查收货单明细
         List<WarehouseReceiveDetailEntity> receiveDetails = warehouseReceiveDetailService.listByIds(ids);
@@ -246,7 +246,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
         List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(ids);
 
 
-        for (PurchaseStockInDetailEntity detailEntity : list) {
+        for (PoInstockDetailEntity detailEntity : list) {
 
             //采购订单数量
             Integer purchaseQty = details.stream().filter(obj -> obj.getId().equals(detailEntity.getPurchaseOrderDetailId())).map(obj -> obj.getPurchaseQty()).findFirst().orElse(MathUtil.ZERO);
@@ -258,7 +258,7 @@ public class PurchaseStockInDetailServiceImpl extends SuperServiceImpl<PurchaseS
             Integer stockInQty = MathUtil.ZERO;
 
             if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //退货单数量

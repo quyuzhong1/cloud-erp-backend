@@ -96,10 +96,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Resource
-    private PurchaseStockInService purchaseStockInService;
+    private PoInstockService poInstockService;
 
     @Resource
-    private PurchaseStockInDetailService purchaseStockInDetailService;
+    private PoInstockDetailService poInstockDetailService;
 
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
@@ -613,7 +613,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //下推入库单不能反审核
         warehouseReceiveList.forEach(req -> {
-            List<PurchaseStockInEntity> stockInBySourceId = purchaseStockInService.getStockInBySourceId(req.getId());
+            List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(req.getId());
             if (CollectionUtils.isNotEmpty(stockInBySourceId)) {
                 throw new ServiceException(ApiError.ERROR_99011);
             }
@@ -807,7 +807,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //根据ids查询采购单详情
         List<ProductDetailEntity> byIdList = plmTaskFeign.getByIdList(skuIdList);
 
-        List<PurchaseStockInDetailEntity> stockInDetailEntityListBySource = purchaseStockInDetailService.listDetailBySourceDetailIds(ids);
+        List<PoInstockDetailEntity> stockInDetailEntityListBySource = poInstockDetailService.listDetailBySourceDetailIds(ids);
 
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listBySourceDetailIds(ids);
 
@@ -830,7 +830,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            Integer reduce = stockInDetailEntityListBySource.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer reduce = stockInDetailEntityListBySource.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getSkuId().equals(req.getSkuId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             if (req.getReceiveQty() - reduce <= 0) {
                 req.setUnStockInQty(0);
                 req.setStockInQty(0);
@@ -871,7 +871,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
                 throw new ServiceException(ApiError.ERROR_98057);
             }
-            PurchaseStockInDTO.AddDTO addDTO = new PurchaseStockInDTO.AddDTO();
+            PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(id);
             addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode());
             WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
@@ -881,10 +881,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
             //设置明细
-            List<PurchaseStockInDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
+            List<PoInstockDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
             dtos.forEach(req -> {
                 if (req.getMainId().equals(id)) {
-                    PurchaseStockInDetailDTO.AddDTO detailDTO = new PurchaseStockInDetailDTO.AddDTO();
+                    PoInstockDetailDTO.AddDTO detailDTO = new PoInstockDetailDTO.AddDTO();
                     detailDTO.setStockInQty(req.getStockInQty());
                     detailDTO.setExceedQty(req.getExceedQty());
                     detailDTO.setWarehouseLocationId(req.getDeliveryWarehouseId());
@@ -895,7 +895,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             });
             addDTO.setDetails(detailDTOList);
-            purchaseStockInService.add(addDTO);
+            poInstockService.add(addDTO);
         }
         return true;
     }

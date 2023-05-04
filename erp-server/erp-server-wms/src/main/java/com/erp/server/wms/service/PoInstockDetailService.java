@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.PurchaseStockInDetailDTO;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
+import com.erp.model.wms.dto.PoInstockDetailDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * @author will
  * @since 2023-04-10
  */
-public interface PurchaseStockInDetailService extends SuperService<PurchaseStockInDetailEntity> {
+public interface PoInstockDetailService extends SuperService<PoInstockDetailEntity> {
     /**
      * @description: 新增明细
      * @author Will
@@ -22,7 +22,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param details
      * @param mainId
      */
-    void add(List<PurchaseStockInDetailDTO.AddDTO> details, String mainId ,String sourceType);
+    void add(List<PoInstockDetailDTO.AddDTO> details, String mainId , String sourceType);
     /**
      * @description: 修改明细
      * @author Will
@@ -30,7 +30,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param details
      * @param mainId
      */
-    void update(List<PurchaseStockInDetailDTO.UpdateDTO> details, String mainId,String sourceType);
+    void update(List<PoInstockDetailDTO.UpdateDTO> details, String mainId, String sourceType);
     /**
      * @description: 根据主表ids删除
      * @author Will
@@ -45,7 +45,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param mainId
      * @return List<PurchaseStockInDetailEntity>
      */
-    List<PurchaseStockInDetailEntity> listByMainId(String mainId);
+    List<PoInstockDetailEntity> listByMainId(String mainId);
     /**
      * @description: 根据来源ids查询明细
      * @author Will
@@ -53,7 +53,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param sourceDetailIds
      * @return List<PurchaseStockInDetailEntity>
      */
-    List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
+    List<PoInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
 
     /**
      * @description: 
@@ -62,7 +62,7 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param podIds 
      * @return List<PurchaseStockInDetailEntity> 
      */
-    List<PurchaseStockInDetailEntity> listDetailByPodIds(List<String> podIds);
+    List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds);
 
     /**
      * 根据主表id查询明细
@@ -71,5 +71,5 @@ public interface PurchaseStockInDetailService extends SuperService<PurchaseStock
      * @param id id
      * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
      **/
-    List<PurchaseStockInDetailEntity> listDetailByMainId(String id);
+    List<PoInstockDetailEntity> listDetailByMainId(String id);
 }
