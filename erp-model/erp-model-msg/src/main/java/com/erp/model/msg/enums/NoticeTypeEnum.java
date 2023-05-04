@@ -23,6 +23,7 @@ public enum NoticeTypeEnum {
 
     SCM_TASK("SCM_TASK", "供应链系统任务通知"),
     PLM_TASK("PLM_TASK", "产品研发系统任务通知"),
+    WMS_TASK("WMS_TASK", "仓储系统任务通知"),
     ;
 
     /**
