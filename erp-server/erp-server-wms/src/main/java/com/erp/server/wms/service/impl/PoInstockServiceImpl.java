@@ -36,9 +36,9 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PurchaseStockExportExcelDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -756,6 +756,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         entity.setPurchaseDeptName(purchaseOrderEntity.getPurchaseDeptName());
         entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
+        entity.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderId);
