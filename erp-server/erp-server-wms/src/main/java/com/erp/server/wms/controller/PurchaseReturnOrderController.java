@@ -62,7 +62,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "return_user_id",
-            menuCode = "scm:purchaseReturnOrder:paging",
+            menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro")
     public ApiResult<List<PurchaseReturnOrderDTO.ReturnOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> warehouseReceiveCountDTOS = purchaseReturnOrderService.listCount(dto);
