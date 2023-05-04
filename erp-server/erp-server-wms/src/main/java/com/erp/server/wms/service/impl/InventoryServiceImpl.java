@@ -59,7 +59,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
-            Thread.sleep(20000);
             LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
                     .eq(InventoryEntity::getSkuId, skuId)
