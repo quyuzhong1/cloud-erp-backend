@@ -24,7 +24,7 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
     /**
      * 修改库存历史表数量
      * @param id
-     * @param qty（操作的数量，如果是扣减需传负数）
+     * @param qty（当日历史库存数量）
      * @param version
      * @return
      */

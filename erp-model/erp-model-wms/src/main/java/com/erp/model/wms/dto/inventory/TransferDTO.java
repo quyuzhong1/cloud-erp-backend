@@ -20,7 +20,7 @@ import java.time.LocalDate;
  * @Author: zhangchunlin
  */
 @Data
-public class TransferDTO implements Serializable {
+public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
 
     /**
      * 提示：远程调用需增加分布式锁 @GlobalTransactional(rollBack=Exception.class)

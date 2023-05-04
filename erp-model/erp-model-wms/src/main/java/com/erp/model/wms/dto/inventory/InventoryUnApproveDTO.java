@@ -21,6 +21,9 @@ public class InventoryUnApproveDTO implements Serializable {
     @StateEnumValue(clazz = SourceTypeEnum.class, message = "单据来源错误")
     private SourceTypeEnum sourceType;
 
+    /**
+     * 待反审核的原建议单据id
+     */
     @NotEmpty(message = "单据id不能为空")
     private String billId;
 

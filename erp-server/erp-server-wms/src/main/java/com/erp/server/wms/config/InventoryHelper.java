@@ -9,20 +9,24 @@ import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryModeEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.model.wms.enums.inventory.InventoryWarehouseOptionEnum;
+import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.service.CfgTransactionRulesService;
 import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.InventoryStockService;
+import com.erp.server.wms.service.impl.AbstractInventoryServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +44,22 @@ public class InventoryHelper {
 
     @Autowired
     private CfgTransactionRulesService cfgTransactionRulesService;
+
+    @Resource
+    private ApplicationContext applicationContext;
+
+    private static Map<InventoryBizTypeEnum, InventoryStockService> inventoryServiceMap;
+
+    @PostConstruct
+    public void init() {
+        Map<String,InventoryStockService> springInventoryServiceMap  = applicationContext.getBeansOfType(InventoryStockService.class);
+        inventoryServiceMap = new ConcurrentHashMap<>();
+        springInventoryServiceMap.forEach((key,value) -> inventoryServiceMap.put(value.handlerType(),value));
+    }
+
+    public AbstractInventoryServiceImpl getInventoryService(InventoryBizTypeEnum inventoryBizTypeEnum) {
+        return (AbstractInventoryServiceImpl)inventoryServiceMap.get(inventoryBizTypeEnum);
+    }
 
     /**
      * 通用业务验证
@@ -74,7 +94,7 @@ public class InventoryHelper {
         LocalDate billDate = param.getBillDate();
         // 状态
         InventoryStatusEnum inventoryStatusEnum = param.getInventoryStatus();
-        List<TransactionRuleDTO> outTransactionRules = null;
+        List<TransactionRuleDTO> outTransactionRules;
         if(Objects.isNull(inventoryStatusEnum)) { // 从配置中取，配置中也取不到则报错
             log.info("参数未传库存状态，从配置中取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】，SKU编号：【{}】", businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             if(CollUtil.isEmpty(transactionRules)) {
@@ -120,7 +140,7 @@ public class InventoryHelper {
         String skuNo = param.getSkuNo();
         // 库位
         String warehouseLocationId = param.getWarehouseLocation();
-        // 数量
+        // 操作数量
         Integer qty = param.getQty();
         // 来源
         SourceTypeEnum sourceTypeEnum = param.getSourceType();
@@ -133,7 +153,7 @@ public class InventoryHelper {
     }
 
     /**
-     *
+     * 查询配置的交易规则
      * @param businessType
      * @return
      */
@@ -196,8 +216,9 @@ public class InventoryHelper {
      * 出入库业务验证参数
      * @param paramLis
      */
-    public void checkInOutStockParam(List<InStockOrOutStockDTO> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
-        for(InStockOrOutStockDTO param : paramLis) {
+    public <T extends InventoryStockBaseDTO> void checkInOutStockParam(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
+        for(InventoryStockBaseDTO baseParam : paramLis) {
+            InStockOrOutStockDTO param = (InStockOrOutStockDTO)baseParam;
             ValidatorUtil.validateEntity(param);
             this.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
             this.checkAllowTrade(param.getSourceType(), param.getWarehouseId(), param.getSkuNo());// 关账检查
@@ -223,8 +244,9 @@ public class InventoryHelper {
      * 调拨业务验证参数
      * @param paramLis
      */
-    public void checkTransferStockParam(List<TransferDTO> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
-        for(TransferDTO param : paramLis) {
+    public <T extends InventoryStockBaseDTO> void checkTransferStockParam(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
+        for(InventoryStockBaseDTO baseParam : paramLis) {
+            TransferDTO param = (TransferDTO)baseParam;
             ValidatorUtil.validateEntity(param);
 
             //当前仓和目的仓不能一样

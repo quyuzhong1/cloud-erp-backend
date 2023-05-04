@@ -173,4 +173,10 @@ public class TransactionFlowEntity extends BaseEntity<TransactionFlowEntity> imp
     @TableField("transaction_no")
     private String transactionNo;
 
+    /**
+     * 是否已经反审核
+     */
+    @TableField("is_unapproved")
+    private Boolean isUnapproved;
+
 }

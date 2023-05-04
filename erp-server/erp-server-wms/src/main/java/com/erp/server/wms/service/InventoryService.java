@@ -63,30 +63,12 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     Integer getInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
 
     /**
-     * 出入库业务，审批出入库单据，按业务类型
-     * @param paramList
-     * @param businessType
+     * 修改库存表数量
+     * @param id
+     * @param qty
+     * @param version
+     * @return
      */
-    void approveInOutStockByType(List<InStockOrOutStockDTO> paramList, InventoryBusinessTypeEnum businessType);
-
-    /**
-     * 调拨业务，审批出入库单据，按业务类型（直接调拨单、库存调整单）
-     * @param paramList
-     * @param businessType
-     */
-    void approveTransferByType(List<TransferDTO> paramList, InventoryBusinessTypeEnum businessType);
-
-    /**
-     * 调拨业务，按交易规则
-     * @param paramList
-     * @param businessType
-     */
-    void approveByRule(List<TransferDTO> paramList, List<TransactionRuleDTO> ruleList, InventoryBusinessTypeEnum businessType);
-
-    /**
-     * 按单据ID反审核
-     * @param dto
-     */
-    void unApprove(InventoryUnApproveDTO dto);
+    int updateQtyById(String id, Integer qty, Integer version);
 
 }

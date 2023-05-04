@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 @NoArgsConstructor
 public enum SourceTypeEnum {
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
@@ -46,5 +49,9 @@ public enum SourceTypeEnum {
             }
         }
         return "";
+    }
+
+    public static SourceTypeEnum of(String code) {
+        return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }

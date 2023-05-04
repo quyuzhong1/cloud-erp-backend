@@ -1,15 +1,19 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * @Classname: InventoryFeignController
@@ -24,14 +28,16 @@ public class InventoryFeignController extends BaseController {
     @Autowired
     private InventoryService inventoryService;
 
+    @Resource
+    private InventoryHelper inventoryHelper;
+
     /**
      * 出入库业务，按业务类型
      * @param dto
      */
     @PostMapping("/approveInOutStockByType")
-    public ApiResult<Void> approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
-        inventoryService.approveInOutStockByType(dto.getSkus(), InventoryBusinessTypeEnum.of(dto.getBusinessType()));
-        return ApiResult.success();
+    public void approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
+        inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).approve(dto.getSkus(), null, InventoryBusinessTypeEnum.of(dto.getBusinessType()), true);
     }
 
     /**
@@ -39,9 +45,8 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveTransferByType")
-    public ApiResult<Void> approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
-        inventoryService.approveTransferByType(dto.getSkus(), InventoryBusinessTypeEnum.of(dto.getBusinessType()));
-        return ApiResult.success();
+    public void approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
+        inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK).approve(dto.getSkus(), null, InventoryBusinessTypeEnum.of(dto.getBusinessType()), true);
     }
 
     /**
@@ -49,9 +54,17 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveByRule")
-    public ApiResult<Void> approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
-        inventoryService.approveByRule(dto.getSkus(), dto.getRules(), InventoryBusinessTypeEnum.of(dto.getBusinessType()));
-        return ApiResult.success();
+    public void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
+        inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK).approve(dto.getSkus(), dto.getRules(), InventoryBusinessTypeEnum.of(dto.getBusinessType()), false);
+    }
+
+    /**
+     * 反审核
+     * @param dto
+     */
+    @PostMapping("/unApprove")
+    public void unApprove(@RequestBody @Validated InventoryUnApproveDTO dto) {
+        inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).unApprove(dto);
     }
 
 
