@@ -79,6 +79,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
 
+        log.info("采购价目表推送金蝶 map = {}",JSONUtil.toJsonStr(map));
 
         //操作项，分录禁用
         String operate = (String) map.get("operate");
