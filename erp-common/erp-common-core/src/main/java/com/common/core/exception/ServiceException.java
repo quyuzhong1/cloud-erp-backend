@@ -27,6 +27,8 @@ public class ServiceException extends RuntimeException {
      * @param apiResult
      */
     public ServiceException(ApiResult apiResult) {
+        // 加上super，否则会显示null
+        super(apiResult.getMsg());
         this.code = apiResult.getCode();
         this.msg = apiResult.getMsg();
     }
@@ -37,6 +39,8 @@ public class ServiceException extends RuntimeException {
      * @param apiError
      */
     public ServiceException(ApiError apiError) {
+        // 加上super，否则会显示null
+        super(apiError.msg);
         this.code = apiError.code;
         this.msg = apiError.msg;
     }
@@ -47,6 +51,8 @@ public class ServiceException extends RuntimeException {
      * @param
      */
     public ServiceException(int code, String msg) {
+        // 加上super，否则会显示null
+        super(msg);
         this.code = code;
         this.msg = msg;
     }

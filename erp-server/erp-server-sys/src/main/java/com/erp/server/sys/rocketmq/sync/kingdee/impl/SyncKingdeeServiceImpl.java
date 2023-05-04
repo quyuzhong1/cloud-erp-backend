@@ -2,6 +2,7 @@ package com.erp.server.sys.rocketmq.sync.kingdee.impl;
 
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
+import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private SysUserInfoService sysUserInfoService;
 
+    @Resource
+    private SysDepartmentService sysDepartmentService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, String> params) {
         //模块类型编码
@@ -36,6 +40,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.SYS_USER_INFO.getCode().toString().equals(code)) {
             sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
         }
-
+        //部门
+        if (ApiModuleTypeEnum.SYS_DEPARTMENT.getCode().toString().equals(code)) {
+            sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+        }
     }
 }
