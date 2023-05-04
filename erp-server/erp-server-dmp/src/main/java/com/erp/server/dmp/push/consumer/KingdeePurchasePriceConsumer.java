@@ -220,6 +220,8 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             //查询子单据id
             String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber,FFROMQTY,FToQty,FDisablerId";
             List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+
+            log.info("价目明细数据 queryList = {}",JSONUtil.toJsonStr(queryList));
             //比较
             for (Map<String, Object> queryMap: queryList) {
                 String number = (String)queryMap.get("FMaterialId.FNumber");
@@ -242,10 +244,12 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
+            log.info("禁用价目数据 ids = {}",JSONUtil.toJsonStr(disabledList));
             excuteOperation(platformEntity,apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
+            log.info("启用价目数据 ids = {}",JSONUtil.toJsonStr(disabledList));
             excuteOperation(platformEntity,apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
         }
 
