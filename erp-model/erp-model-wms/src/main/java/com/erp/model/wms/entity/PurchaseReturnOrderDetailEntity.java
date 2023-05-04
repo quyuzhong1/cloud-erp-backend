@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_return_order_detail")
+@TableName("po_return_detail")
 public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOrderDetailEntity> {
 
     /**

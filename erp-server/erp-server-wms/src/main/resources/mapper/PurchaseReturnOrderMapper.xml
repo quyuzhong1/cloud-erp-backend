@@ -24,8 +24,8 @@
         pro.create_user_name,
         pro.create_time,
         prod.remark
-        FROM purchase_return_order_detail prod
-        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        FROM po_return_detail prod
+        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="params.code != null and params.code != ''">
             and pro.code = #{params.code}
@@ -110,8 +110,8 @@
             prod.sku_no,
             pro.purchase_order_id,
             SUM(wrd.return_qty) AS returnQty
-        FROM purchase_return_order_detail prod
-        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        FROM po_return_detail prod
+        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="purchaseOrderId != null and purchaseOrderId != ''">
             AND wr.purchase_order_id = #{purchaseOrderId}
@@ -144,8 +144,8 @@
         pro.create_user_name,
         pro.create_time,
         prod.purchase_order_detail_id
-        FROM purchase_return_order_detail prod
-        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        FROM po_return_detail prod
+        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         AND pro.purchase_order_id = #{purchaseOrderId}
     </select>
@@ -171,8 +171,8 @@
         pro.approve_user_name,
         pro.create_user_name,
         pro.create_time
-        FROM purchase_return_order_detail prod
-        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        FROM po_return_detail prod
+        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size != ''">
             and wr.id in
@@ -259,8 +259,8 @@
     <select id="listCount" resultType="java.lang.Integer">
         select
         count(distinct pro.id)
-        FROM purchase_return_order_detail prod
-        LEFT JOIN purchase_return_order pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        FROM po_return_detail prod
+        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and pro.approve_status in

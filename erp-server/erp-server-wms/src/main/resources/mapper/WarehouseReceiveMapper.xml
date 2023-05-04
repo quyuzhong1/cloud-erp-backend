@@ -25,8 +25,8 @@
             wrd.purchase_order_detail_id,
             wrd.remark,
             wr.create_time
-        FROM warehouse_receive_detail wrd
-        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         <if test="params.code != null and params.code != ''">
             and wr.code = #{params.code}
@@ -104,8 +104,8 @@
     <select id="listCount" resultType="java.lang.Integer">
         select
         count(distinct wr.id)
-        FROM warehouse_receive_detail wrd
-        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and wr.approve_status in
@@ -125,8 +125,8 @@
             wrd.sku_no,
             wr.purchase_order_id,
             SUM(wrd.receive_qty) AS receiveQty
-        FROM warehouse_receive_detail wrd
-        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE and wr.invalid_status = FALSE
         <if test="purchaseOrderId != null and purchaseOrderId != ''">
             AND wr.purchase_order_id = #{purchaseOrderId}
@@ -154,8 +154,8 @@
             wr.purchase_user_name,
             wrd.remark,
             wrd.purchase_order_detail_id
-        FROM warehouse_receive_detail wrd
-        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         AND wr.purchase_order_id = #{purchaseOrderId}
     </select>
@@ -174,8 +174,8 @@
             wrd.purchase_order_detail_id,
             wrd.exceed_qty,
             wrd.receive_qty
-        FROM warehouse_receive_detail wrd
-        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wrd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND wr.id in
@@ -209,8 +209,8 @@
         wrd.purchase_order_detail_id,
         wr.create_time,
         wrd.remark
-        FROM warehouse_receive_detail wrd
-        INNER JOIN warehouse_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
+        FROM po_receive_detail wrd
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size != ''">
             and wr.id in
@@ -293,8 +293,8 @@
          wr.purchase_order_id,
          wr.purchase_order_code,
          wr.delivery_warehouse_id
-       FROM  warehouse_receive_detail wrd
-       LEFT JOIN warehouse_receive wr
+       FROM  po_receive_detail wrd
+       LEFT JOIN po_receive wr
        ON wrd.main_id=wr.id AND wr.is_deleted = FALSE
        WHERE wrd.is_deleted = FALSE
        AND wrd.main_id IN
