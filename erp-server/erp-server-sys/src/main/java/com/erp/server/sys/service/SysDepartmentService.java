@@ -19,6 +19,13 @@ import java.util.List;
  */
 public interface SysDepartmentService extends IService<SysDepartmentEntity> {
 
+    /**
+     * @description: 新增或修改
+     * @author Will
+     * @date: 2023/5/4 10:01
+     * @param sysDepartment
+     */
+    void saveOrUpdateSysDept(SysDepartmentEntity sysDepartment);
 
     /**
      * 根据id 集合 删除部门信息
@@ -67,5 +74,16 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     List<SysUserDeptDTO> getByDeptNames(List<String> deptNames);
 
     SysDepartmentEntity getParentDepartmentById(String departmentId);
+    /**
+     * @description: 更新金蝶id、状态
+     * @author Will
+     * @date: 2023/5/4 9:57
+     * @param ids
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @return Boolean
+     */
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId);
+
 }
 

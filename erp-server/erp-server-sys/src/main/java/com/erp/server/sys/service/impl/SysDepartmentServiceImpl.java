@@ -4,19 +4,26 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
+import com.erp.server.sys.service.SysCodeService;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -30,7 +37,41 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Autowired
     private SysDepartmentUserService sysDepartmentUserService;
 
+    @Autowired
+    private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
+
+    @Autowired
+    private SysCodeService sysCodeService;
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveOrUpdateSysDept(SysDepartmentEntity sysDepartment) {
+        String id = sysDepartment.getId();
+        if(StringUtils.isBlank(id)){
+            id = IdWorker.getIdStr();
+        }
+        String parentId = sysDepartment.getParentId();
+        if(StringUtils.isBlank(parentId)){
+            sysDepartment.setParentId("0");
+        }
+        sysDepartment.setId(id);
+
+        SysDepartmentEntity entity = this.getById(id);
+
+        //编号赋值，为兼容历史数据修改数据无编码时也重新生成编码
+        if (ObjectUtils.isEmpty(entity) || StringUtils.isBlank(entity.getCode())) {
+            //编号
+            String code = sysCodeService.getSeqNo(new SysCodeDTO(BusinessNoConstant.BM, BusinessNoTypeEnum.CODE_USER.getCode()));
+            sysDepartment.setCode(code);
+        }
+        this.saveOrUpdate(sysDepartment);
+
+        //金蝶推送
+        syncKingdeeSysDeptService.syncDataToKingdee(id, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByIdList(List<String> ids) {
         LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SysDepartmentEntity::getParentId, ids);
@@ -39,10 +80,15 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_9013);
         }
+
         boolean flag = this.removeByIds(ids);
         //删除成功就要去移除对应的员工
         if (flag) {
             sysDepartmentUserService.removeByDepartmentIds(ids);
+            if (CollectionUtils.isNotEmpty(ids)) {
+                //金蝶删除
+                ids.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+            }
         }
     }
 
@@ -242,6 +288,16 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 return sysDepartmentEntity;
         }
         return this.getById(sysDepartmentEntity.getParentId());
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .in(SysDepartmentEntity::getId,ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysDepartmentEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),SysDepartmentEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     @Override
