@@ -105,7 +105,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "return_user_id",
-            menuCode = "scm:purchaseReturnOrder:view",
+            menuCode = "wms:purchaseReturnOrder:view",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult<PurchaseReturnOrderDTO.ViewDTO> view(@Param("id") String id) {

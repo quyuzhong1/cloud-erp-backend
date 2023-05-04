@@ -108,7 +108,7 @@ public class WarehouseReceiveController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "receive_user_id",
-            menuCode = "scm:warehouseReceive:view",
+            menuCode = "wms:warehouseReceive:view",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@RequestParam("id") String id) {
