@@ -105,11 +105,12 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
-
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            //禁用启用
-            excuteOperation(platformEntity,apiUtils,map,operate);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isAdd) {
+                //禁用启用
+                excuteOperation(platformEntity,apiUtils,map,operate);
+            }
             return;
         }
 
@@ -131,9 +132,11 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            //禁用启用
-            excuteOperation(platformEntity,apiUtils,map,operate);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isAdd) {
+                //禁用启用
+                excuteOperation(platformEntity,apiUtils,map,operate);
+            }
         }
     }
 
@@ -249,7 +252,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
         //启用
         if (CollectionUtils.isNotEmpty(unDisabledList)) {
-            log.info("启用价目数据 ids = {}",JSONUtil.toJsonStr(disabledList));
+            log.info("启用价目数据 ids = {}",JSONUtil.toJsonStr(unDisabledList));
             excuteOperation(platformEntity,apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
         }
 
@@ -277,6 +280,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             //启用禁用
             apiUtils.excuteOperation(operate, JSONUtil.toJsonStr(viewMap));
         } catch (Exception e) {
+            log.info("启用、禁用价目数据失败 jsonStr = {},error = {}",JSONUtil.toJsonStr(viewMap),e.getMessage());
             //新增失败时添加日志及定时任务
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
             return;
