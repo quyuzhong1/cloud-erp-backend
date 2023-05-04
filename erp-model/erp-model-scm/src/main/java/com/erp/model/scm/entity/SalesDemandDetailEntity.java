@@ -1,5 +1,6 @@
 package com.erp.model.scm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -63,7 +64,7 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     /**
      * 计划交期
      */
-    @TableField("plan_delivery_date")
+    @TableField(value = "plan_delivery_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate planDeliveryDate;
 
     /**
