@@ -1,10 +1,12 @@
 package com.erp.server.wms.controller;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -40,6 +42,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>>
      **/
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "return_user_id",
+            menuCode = "wms:purchaseReturnOrder:paging",
+            tableAlias = "pro"
+    )
     public ApiResult<PagingVO<PurchaseReturnOrderDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> pagingVO = purchaseReturnOrderService.paging(dto);
         return success(pagingVO);
@@ -53,6 +60,10 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
      **/
     @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "return_user_id",
+            menuCode = "scm:purchaseReturnOrder:paging",
+            tableAlias = "pro")
     public ApiResult<List<PurchaseReturnOrderDTO.ReturnOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> warehouseReceiveCountDTOS = purchaseReturnOrderService.listCount(dto);
         return success(warehouseReceiveCountDTOS);
@@ -92,6 +103,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO>
      **/
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "return_user_id",
+            menuCode = "scm:purchaseReturnOrder:view",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseReturnOrderDTO.ViewDTO> view(@Param("id") String id) {
         PurchaseReturnOrderDTO.ViewDTO dto = purchaseReturnOrderService.view(id);
         return success(dto);
@@ -223,6 +239,10 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
     public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseReturnOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();

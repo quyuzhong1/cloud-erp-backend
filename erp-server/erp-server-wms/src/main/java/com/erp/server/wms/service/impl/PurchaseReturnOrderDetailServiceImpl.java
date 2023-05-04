@@ -112,7 +112,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     purchaseReturnOrderDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
                     purchaseReturnOrderDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
 
-                    if (dto.getSourceType().equals(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode())) {
+                    if (dto.getSourceType().equals(SourceTypeEnum.QC_BILL.getCode())) {
                         Integer receiveQty = detailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (addDTO.getReturnQty() > receiveQty) {
                             throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));

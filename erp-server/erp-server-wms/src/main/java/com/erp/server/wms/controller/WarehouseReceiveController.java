@@ -1,13 +1,16 @@
 package com.erp.server.wms.controller;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.server.wms.service.PurchaseReturnOrderService;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
@@ -41,6 +44,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>>
      **/
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            menuCode = "wms:warehouseReceive:paging",
+            tableAlias = "wr"
+    )
     public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = warehouseReceiveService.paging(dto);
         return success(pagingVO);
@@ -54,6 +62,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>>
      **/
     @PostMapping("/listCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            menuCode = "wms:warehouseReceive:paging",
+            tableAlias = "wr"
+    )
     public ApiResult<List<WarehouseReceiveDTO.WarehouseReceiveCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> warehouseReceiveCountDTOS = warehouseReceiveService.listCount(dto);
         return success(warehouseReceiveCountDTOS);
@@ -93,6 +106,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO>
      **/
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "receive_user_id",
+            menuCode = "scm:warehouseReceive:view",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "id")
     public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@RequestParam("id") String id) {
         WarehouseReceiveDTO.ViewDTO dto = warehouseReceiveService.view(id);
         return success(dto);
@@ -211,6 +229,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            menuCode = "wms:warehouseReceive:paging",
+            tableAlias = "wr"
+    )
     public ApiResult exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = warehouseReceiveService.exportExcel(dto, response);
         return flag == true ? success() : failure();
