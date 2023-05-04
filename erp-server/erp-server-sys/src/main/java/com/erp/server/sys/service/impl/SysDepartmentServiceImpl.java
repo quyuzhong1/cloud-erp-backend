@@ -80,14 +80,15 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_9013);
         }
+        List<SysDepartmentEntity> list = this.listByIds(ids);
 
         boolean flag = this.removeByIds(ids);
         //删除成功就要去移除对应的员工
         if (flag) {
             sysDepartmentUserService.removeByDepartmentIds(ids);
-            if (CollectionUtils.isNotEmpty(ids)) {
+            if (CollectionUtils.isNotEmpty(list)) {
                 //金蝶删除
-                ids.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+                list.forEach(obj -> syncKingdeeSysDeptService.deleteDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
             }
         }
     }
