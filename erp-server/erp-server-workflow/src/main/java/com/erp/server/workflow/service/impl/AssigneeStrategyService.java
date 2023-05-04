@@ -3,12 +3,12 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
-import org.jvnet.hk2.annotations.Service;
+import com.erp.model.workflow.enums.DictBasicEnum;
+import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 
@@ -55,6 +55,31 @@ public class AssigneeStrategyService {
             return candidateUserList;
         }
         return assignees;
+    }
+
+    /**
+     * 无审批人处理
+     *
+     * @param assigneeEmpty 审批为空处理方式
+     * @param task          任务
+     * @param startUserId
+     * @return 审批人
+     */
+    public List<String> assigneeEmptyHandler(String assigneeEmpty, TaskEntity task, String startUserId) {
+        // 审批为空处理方式为空
+        if(StrUtil.isEmpty(assigneeEmpty)){
+            return Collections.EMPTY_LIST;
+        }
+        if(DictBasicEnum.REJECT_APPLICANT.getCode().equals(assigneeEmpty)) {
+            // 审批为空处理方式驳回审批人 返回空审核人列表，在层方法处理驳回操作
+            return Collections.EMPTY_LIST;
+        } else if(DictBasicEnum.ESCALATE.getCode().equals(assigneeEmpty)){
+            // 审批为空处理方式转上级审批
+            List<String> result  = assigneeStrategyTypeService.superiorAssignee(new CamundaDTO.StrategyParamDTO(startUserId));
+            return result;
+        }
+        return Collections.EMPTY_LIST;
+
     }
 
 

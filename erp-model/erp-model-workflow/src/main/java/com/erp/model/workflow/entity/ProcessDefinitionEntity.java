@@ -7,6 +7,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -59,7 +60,7 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
      * 审核人设置
      */
     @TableField("review_setting")
-    private String reviewSetting;
+    private DictBasicEnum reviewSetting;
 
     /**
      * 流程部署ID

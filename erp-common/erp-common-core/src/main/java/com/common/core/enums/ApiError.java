@@ -132,7 +132,7 @@ public enum ApiError implements Serializable {
     PROCESS_DEFINITION_DEPLOY_DELETE(94016,"流程定义已部署，不可删除"),
     PROCESS_DEFINITION_NOT_BIND(94017,"业务未绑定流程定义"),
     PROCESS_DEFINITION_NODE_NOT_EXIST(94018,"节点已审核或不存在"),
-
+    PROCESS_ALREADY_START(94019,"流程已启动"),
 
 
 

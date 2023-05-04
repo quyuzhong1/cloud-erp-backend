@@ -1,8 +1,11 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.workflow.enums.ProcessStatusEnum;
+import org.camunda.bpm.engine.delegate.DelegateTask;
 
 /**
  * <p>
@@ -26,4 +29,27 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param dto
      */
     void approveProcess(ProcessManagementDTO.ApproveDTO dto);
+
+    /**
+     * 流程创建监听服务处理
+     * @param taskDelegate
+     */
+    void createTaskHandle(DelegateTask taskDelegate);
+
+    /**
+     * 流程完成监听服务处理
+     * @param taskDelegate
+     */
+    void completeTaskHandle(DelegateTask taskDelegate);
+
+    /**
+     * 更新审批状态
+     *
+     * @param taskId
+     * @param approveType
+     * @param managementId
+     * @param processInstanceId
+     * @return
+     */
+    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String remark);
 }

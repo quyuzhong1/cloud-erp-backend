@@ -69,6 +69,14 @@ public class CamundaDTO {
             this.assignee = value;
             this.startUserId = startUserId;
         }
+
+        /**
+         * 不设置等级默认获取直属上级
+         * @param startUserId
+         */
+        public StrategyParamDTO(String startUserId) {
+            this.startUserId = startUserId;
+        }
     }
 
 }

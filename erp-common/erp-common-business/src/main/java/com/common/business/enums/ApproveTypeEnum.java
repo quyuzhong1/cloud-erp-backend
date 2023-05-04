@@ -1,5 +1,6 @@
 package com.common.business.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -13,6 +14,7 @@ public enum ApproveTypeEnum {
     PASS("pass", "审核通过"),
     REJECT("reject", "审核不通过");
 
+    @EnumValue
     private String status;
     private String name;
 
