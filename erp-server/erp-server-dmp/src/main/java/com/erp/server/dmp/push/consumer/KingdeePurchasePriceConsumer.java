@@ -72,14 +72,14 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //业务id
         String  businessId = String.valueOf(map.get("id"));
 
+        log.info("采购价目表开始推送金蝶 map = {}",JSONUtil.toJsonStr(map));
+
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
-
-        log.info("采购价目表推送金蝶 map = {}",JSONUtil.toJsonStr(map));
 
         //操作项，分录禁用
         String operate = (String) map.get("operate");
@@ -105,9 +105,13 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
+
+            log.error("采购价目表查看失败 map = {}",JSONUtil.toJsonStr(map));
             //更新数据
             Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
+                //更新明细id
+                //updateKingdeeDetailId(map);
                 //禁用启用
                 excuteOperation(platformEntity,apiUtils,map,operate);
             }
@@ -285,6 +289,10 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
+    }
+
+    private void updateKingdeeDetailId() {
+
     }
 
 }
