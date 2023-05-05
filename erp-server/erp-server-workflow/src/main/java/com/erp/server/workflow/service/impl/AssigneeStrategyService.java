@@ -5,10 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 
@@ -20,7 +20,7 @@ import java.util.function.Function;
  **/
 @Component
 public class AssigneeStrategyService {
-    @Autowired
+    @Resource
     private AssigneeStrategyTypeService assigneeStrategyTypeService;
 
 

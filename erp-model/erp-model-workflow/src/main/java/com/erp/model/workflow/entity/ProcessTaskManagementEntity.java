@@ -107,6 +107,9 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("pre_activity_id")
     private String preActivityId;
 
+    @TableField("execution_id")
+    private String executionId;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
@@ -136,7 +139,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId) {
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId, String executionId) {
         this.processInstanceId = processInstanceId;
         this.currentActivityId = activityId;
         this.taskId = taskId;
@@ -146,6 +149,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
         this.timeoutWarnInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutWarnInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutWarnInterval()) : 0;
         this.currentApproveId = userId;
+        this.executionId = executionId;
     }
 
     @Override
