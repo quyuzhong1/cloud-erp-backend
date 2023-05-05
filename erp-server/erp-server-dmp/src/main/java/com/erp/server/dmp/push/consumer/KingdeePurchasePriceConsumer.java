@@ -17,6 +17,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -45,6 +46,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
 
     public static void main(String[] args) {
 
@@ -52,7 +56,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CGJM23042700003"));
+        queryFilters.add(String.format("FNumber = '%s'", "CGJM23050400004"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FPriceListEntry_FEntryID,FFROMQTY,FToQty,FDisablerId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
@@ -110,10 +114,10 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             //更新数据
             Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
-                //更新明细id
-                //updateKingdeeDetailId(map);
                 //禁用启用
-                excuteOperation(platformEntity,apiUtils,map,operate);
+                JSONArray jsonArray = excuteOperation(platformEntity, apiUtils, map, operate);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
             }
             return;
         }
@@ -139,7 +143,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             if (isAdd) {
                 //禁用启用
-                excuteOperation(platformEntity,apiUtils,map,operate);
+                JSONArray jsonArray = excuteOperation(platformEntity, apiUtils, map, operate);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
             }
         }
     }
@@ -192,17 +198,18 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
     /**
      * 启用、禁用
      */
-    private void excuteOperation (PlatformEntity platformEntity,KingdeeApiUtils apiUtils,Map<String, Object> map,String operate) {
+    private JSONArray excuteOperation (PlatformEntity platformEntity,KingdeeApiUtils apiUtils,Map<String, Object> map,String operate) {
 
         JSONArray list = JSONUtil.parseArray(map.get("list"));
         String id = (String)map.get("syncKingdeeId");
 
-
         List<String> disabledList = new ArrayList<>();
         List<String> unDisabledList = new ArrayList<>();
+        JSONArray removeObj = new JSONArray();
+        JSONArray addObj = new JSONArray();
         for (Object obj : list ) {
             JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(obj));
-
+            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
             //同步数据时禁用,需要考虑既有禁用又有启用的情况
             Boolean disabled = (Boolean)jsonObject.get("disabled");
             if (ObjectUtils.isNotEmpty(disabled)) {
@@ -245,10 +252,16 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
                     if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) && !StringUtils.equals("0",disablerId)) {
                         unDisabledList.add(detailId);
                     }
+                    //金蝶明细id赋值
+                    newJson.set("kingdeeDetailId",detailId);
                 }
             }
-
+            newJson.putAll(jsonObject);
+            removeObj.set(obj);
+            addObj.set(newJson);
         }
+        list.removeAll(removeObj);
+        list.addAll(addObj);
         //禁用
         if (CollectionUtils.isNotEmpty(disabledList)) {
             log.info("禁用价目数据 ids = {}",JSONUtil.toJsonStr(disabledList));
@@ -259,7 +272,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             log.info("启用价目数据 ids = {}",JSONUtil.toJsonStr(unDisabledList));
             excuteOperation(platformEntity,apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
         }
-
+        return list;
     }
 
     /**
@@ -291,8 +304,16 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
     }
 
-    private void updateKingdeeDetailId() {
-
+    /**
+     * 更新明细id
+     */
+    private void updateKingdeeDetailId (JSONArray jsonArray) {
+        //更新业务单据状态
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",ApiModuleTypeEnum.PURCHASE_PRICE.getCode().toString());
+        params.put("details",jsonArray);
+        scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
+
 
 }

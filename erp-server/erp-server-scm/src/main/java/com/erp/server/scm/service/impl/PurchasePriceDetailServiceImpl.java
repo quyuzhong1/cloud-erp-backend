@@ -1,5 +1,8 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -603,6 +606,23 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             resultList.add(result);
         }
         return resultList;
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String)jsonObject.get("detailId");
+            String kingdeeDetailId = (String)jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PurchasePriceDetailEntity::getKingdeeDetailId,kingdeeDetailId)
+                    .eq(PurchasePriceDetailEntity::getId,detailId)
+                    .update();
+        }
+
     }
 
 

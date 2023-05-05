@@ -29,7 +29,7 @@ public class ScmSyncKingdeeFeignController {
      * @date: 2023/3/10 15:46
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
-    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params) {
+    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 

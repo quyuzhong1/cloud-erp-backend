@@ -245,7 +245,7 @@ public interface SysUserFeign {
      * 更新业务单据状态
      */
     @PostMapping("feign/user/updateBusinessSyncKingdeeStatus")
-    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
     /**
      * 批量根据用户id获取第三方平台账号信息

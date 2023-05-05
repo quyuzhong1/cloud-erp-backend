@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -286,7 +285,7 @@ public class SysUserFeignController extends BaseController {
      * @date: 2023/3/10 15:46
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
-    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params) {
+    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 

@@ -109,6 +109,11 @@ public class PurchasePriceDetailEntity extends BaseEntity<PurchasePriceDetailEnt
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 金蝶明细id
+     */
+    @TableField("kingdee_detail_id")
+    private String kingdeeDetailId;
 
     @Override
     public Serializable pkVal() {

@@ -66,7 +66,7 @@ public interface KingdeeCommonService {
      * @param json
      * @param param
      */
-    void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
+    Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
 
     /**
      * 提交及审核

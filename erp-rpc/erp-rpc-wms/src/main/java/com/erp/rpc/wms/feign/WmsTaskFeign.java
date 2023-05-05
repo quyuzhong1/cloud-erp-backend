@@ -1,11 +1,11 @@
 package com.erp.rpc.wms.feign;
 
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -103,5 +103,5 @@ public interface WmsTaskFeign {
      * 更新业务单据状态
      */
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
-    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 }

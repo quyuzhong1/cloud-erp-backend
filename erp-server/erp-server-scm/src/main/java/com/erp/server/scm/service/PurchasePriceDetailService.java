@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -147,4 +148,11 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
      */
     List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId);
+    /**
+     * @description: 更新明细金蝶id
+     * @author Will
+     * @date: 2023/5/4 18:36
+     * @param list
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }

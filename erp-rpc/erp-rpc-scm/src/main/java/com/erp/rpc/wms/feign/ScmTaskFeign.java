@@ -165,5 +165,5 @@ public interface ScmTaskFeign {
      * 更新业务单据状态
      */
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
-    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 }

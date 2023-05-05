@@ -111,6 +111,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             JSONObject jsonObject = new JSONObject();
             //采购价目编号
             jsonObject.set("CGJM_code",detailEntity.getCJJMCode());
+            //采购价目明细金蝶id
+            jsonObject.set("kingdeeDetailId",purchasePriceDetailEntity.getKingdeeDetailId());
             //供应商编号
             jsonObject.set("supplierCode",supplierEntity.getCode());
             //从

@@ -62,7 +62,7 @@ public interface PlmTaskFeign {
      * 更新业务单据状态
      */
     @PostMapping("feign/product/updateBusinessSyncKingdeeStatus")
-    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
     /**
      * 根据skuid集合获取到sku 信息

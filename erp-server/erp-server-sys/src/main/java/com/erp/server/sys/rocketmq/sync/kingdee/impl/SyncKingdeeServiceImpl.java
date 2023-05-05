@@ -26,15 +26,15 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private SysDepartmentService sysDepartmentService;
 
     @Override
-    public void updateBusinessSyncKingdeeStatus(Map<String, String> params) {
+    public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
-        String code = params.get("code");
+        String code = (String)params.get("code");
         //业务id
-        String businessId = params.get("businessId");
+        String businessId = (String)params.get("businessId");
         //更新状态
-        String status = params.get("status");
+        String status = (String)params.get("status");
         //金蝶id
-        String syncKingdeeId = params.get("kingdeeId");
+        String syncKingdeeId = (String)params.get("kingdeeId");
 
         //系统用户
         if (ApiModuleTypeEnum.SYS_USER_INFO.getCode().toString().equals(code)) {
