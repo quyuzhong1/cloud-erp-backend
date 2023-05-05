@@ -510,6 +510,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("仓库导入错误！", e);
+            return Boolean.FALSE;
         }
         List<WarehouseExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (errorList.size() > 0) {
