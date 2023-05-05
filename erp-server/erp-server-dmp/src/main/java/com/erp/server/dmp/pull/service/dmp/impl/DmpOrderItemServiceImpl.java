@@ -182,15 +182,6 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             this.update(updateWrapper);
         });
     }
-
-    /**
-     * 清洗订单上市时间
-     * @return
-     */
-    @Override
-    public void cleanOrderListingTime() {
-
-    }
 }
 
 

@@ -73,10 +73,4 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @return void
      **/
     void updateNewSign(NewProductDTO dto);
-
-    /**
-     * 清洗订单上市时间
-     * @return
-     */
-    void cleanOrderListingTime();
 }

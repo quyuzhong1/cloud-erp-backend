@@ -34,9 +34,4 @@ public class RocketMqTopic {
      */
     public static final String DMP_ERP_ORDER_UPDATE_TOPIC = "${spring.profiles.active}-dmp_erp_order_update_topic";
 
-    /**
-     * 产品上市时间更新
-     */
-    public static final String PRODUCT_LISTING_UPDATE_TOPIC = "${spring.profiles.active}-product_listing_update_topic";
-
 }
