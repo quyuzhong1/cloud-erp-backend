@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Entity com.erp.model.plm.entity.DmpOrderItem
@@ -21,7 +22,7 @@ public interface DmpOrderItemMapper extends BaseMapper<DmpOrderItemEntity> {
     List<String> getItemIdBySkuAndYear(@Param("year") String year, @Param("skuNo") String skuNo);
 
 
-    LocalDateTime getOrderListingTime(@Param("skuNo") String skuNo);
+    List<Map<String,String>> getOrderListingTime(@Param("skuNoList") List<String> skuNoList);
 }
 
 

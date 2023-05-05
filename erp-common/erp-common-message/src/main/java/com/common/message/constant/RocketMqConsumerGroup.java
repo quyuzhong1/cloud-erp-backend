@@ -83,7 +83,7 @@ public class RocketMqConsumerGroup {
     /**
      * 产品上市时间
      */
-    public static final String PRODUCT_LISTING_UPDATE = "${spring.profiles.active}-PRODUCT_LISTING_UPDATE";
+    public static final String PRODUCT_LISTING_UPDATE = "${spring.profiles.active}-product_listing_update";
 
 
 

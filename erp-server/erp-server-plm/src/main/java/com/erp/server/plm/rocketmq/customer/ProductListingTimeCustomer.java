@@ -1,5 +1,6 @@
 package com.erp.server.plm.rocketmq.customer;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.utils.RedisUtil;
 import com.common.message.constant.RedisKeyConstant;
@@ -15,6 +16,8 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Service
@@ -36,13 +39,16 @@ public class ProductListingTimeCustomer implements RocketMQListener<Map<String, 
         String skuNo = String.valueOf(stringObjectMap.get("skuNo"));
         String listingTime = String.valueOf(stringObjectMap.get("listingTime"));
         ProductDetailEntity productIdBySku = productDetailService.getProductIdBySku(skuNo);
-
+        if (ObjectUtil.isEmpty(productIdBySku)) {
+            return;
+        }
         ProductSaleEntity bySkuId = productSaleService.getBySkuId(productIdBySku.getId());
         if (bySkuId.getListingTime() != null) {
             listingTime = bySkuId.getListingTime().toString();
         }
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         productSaleService.lambdaUpdate()
-                .set(ProductSaleEntity::getListingTime, listingTime)
+                .set(ProductSaleEntity::getListingTime, LocalDate.parse(listingTime, dateTimeFormatter))
                 .eq(ProductSaleEntity::getSkuId, productIdBySku.getId())
                 .update();
         redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, skuNo, listingTime, 30 * 24 * 3600);

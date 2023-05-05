@@ -11,20 +11,24 @@
         LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
         WHERE 1 = 1
         AND poit.sku_no = #{skuNo}
+        AND poit.new_sign NOT IN (1)
         <if test="year != null and year != ''">
             AND to_char(platform_create_time, 'yyyy') = #{year}
         </if>
     </select>
 
-    <select id="getOrderListingTime" resultType="java.time.LocalDateTime">
+    <select id="getOrderListingTime" resultType="map">
         SELECT
-        poi.platform_create_time
+        poit.sku_no AS skuNo,
+        min(to_char(platform_create_time, 'yyyy-MM-dd')) AS listingTime
         FROM dmp_order_info poi
         LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
         WHERE 1 = 1
-        AND poit.sku_no = #{skuNo}
-        ORDER BY poi.platform_create_time ASC
-        LIMIT 1
+        AND poit.sku_no IN
+        <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
+            #{skuNo}
+        </foreach>
+        group by poit.sku_no
     </select>
 
 </mapper>

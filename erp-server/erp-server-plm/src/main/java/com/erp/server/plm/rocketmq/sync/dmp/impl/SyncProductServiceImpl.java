@@ -15,7 +15,10 @@ import com.erp.server.plm.service.ProductSaleService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -76,11 +79,17 @@ public class SyncProductServiceImpl implements SyncProductService {
      **/
     @Override
     public void syncNewProductToDmp() {
-        List<NewProductDTO> list = productSaleService.getListingProductAll();
-        // 异步推送到MQ
-        list.forEach(req -> {
+        List<NewProductDTO> listingNotNullList = productSaleService.getListingProductAll(Boolean.TRUE);
+        List<NewProductDTO> listingNullList = productSaleService.getListingProductAll(Boolean.FALSE);
+
+        Map<String,List<NewProductDTO>> map = new HashMap<>();
+        map.put("listingNotNullList", listingNotNullList);
+        map.put("listingNullList", listingNullList);
+        listingNotNullList.forEach(req -> {
             redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600);
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(),req, req.getId());
         });
+
+        // 异步推送到MQ
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, UUID.randomUUID().toString());
     }
 }
