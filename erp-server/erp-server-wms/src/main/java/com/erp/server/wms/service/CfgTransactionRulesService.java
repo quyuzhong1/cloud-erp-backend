@@ -20,4 +20,10 @@ public interface CfgTransactionRulesService extends SuperService<CfgTransactionR
      */
     List<CfgTransactionRulesEntity> findByDictBizType(String dictBizType);
 
+    /**
+     * 临时用，初始化配置
+     * @return
+     */
+    void initRules();
+
 }

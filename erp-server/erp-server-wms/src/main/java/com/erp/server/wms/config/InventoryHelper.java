@@ -143,7 +143,7 @@ public class InventoryHelper {
         Integer qty = param.getQty();
         // 来源
         InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
-        InventoryEntity inventory = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
+        InventoryEntity inventory = inventoryService.findInventoryByWareLocalSkuStatusWithLock(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
         ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException(ApiError.ERROR_99035));
         Integer inventoryQty = inventory.getQty();
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),

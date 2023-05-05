@@ -44,7 +44,7 @@ public class CfgTransactionRulesEntity extends BaseEntity<CfgTransactionRulesEnt
      * 交易方向；1-增加；-1减少
      */
     @TableField("transaction_mode")
-    private String transactionMode;
+    private Integer transactionMode;
 
     /**
      * 备注

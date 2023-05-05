@@ -31,6 +31,18 @@ public interface InventoryService extends SuperService<InventoryEntity> {
 
 
     /**
+     * 根据组织、仓库、库位、状态判断库存是否存在记录（库位为空也作为条件）带分布式锁
+     * @param orgId
+     * @param warehouseId
+     * @param skuId
+     * @param warehouseLocationId
+     * @param status
+     * @return
+     */
+    InventoryEntity findInventoryByWareLocalSkuStatusWithLock(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+
+
+    /**
      * 根据组织、仓库、库位、状态判断库存数据；如果库位为空，则不判断库位
      * @param orgId
      * @param warehouseId

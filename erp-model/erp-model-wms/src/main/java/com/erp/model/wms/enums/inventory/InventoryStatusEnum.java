@@ -17,9 +17,9 @@ public enum InventoryStatusEnum {
     FROZEN("frozen", "冻结"),
     IN_TRANSIT("inTransit", "在途"),
     WAIT_QC("waitQc", "待检"),
-    DEFECTIVE("defective", "不良"),
-    WASTE("waste", "废品"),
-    LEND("lend", "外借"),
+    DEFECTIVE("defective", "不良"), // TODO 待确认去掉
+    WASTE("waste", "废品"), // TODO 待确认去掉
+    LEND("lend", "外借"), // TODO 待确认去掉
     ;
 
     //实际库存=可用库存+冻结库存+不良库存+废品库存+外借库存，待检库存和在途库存不计入。
