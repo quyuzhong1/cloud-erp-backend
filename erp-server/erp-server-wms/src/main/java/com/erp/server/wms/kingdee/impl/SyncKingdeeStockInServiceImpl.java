@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
@@ -12,13 +13,17 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.PoInstockDetailService;
+import com.erp.server.wms.service.PoInstockService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -80,17 +85,17 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("code", entity.getCode());
         //入库组织
         resultMap.put("receiveOrgName", entity.getReceiveOrgName());
+
         //获取用户部门id
-        SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
-        //采购部门
-        if (ObjectUtil.isEmpty(departmentDTO)) {
-            resultMap.put("productDept", departmentDTO.getCode());
-        } else {
-            resultMap.put("productDept", "");
+        if (StringUtils.isNotBlank(entity.getPurchaseDeptId())) {
+            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(entity.getPurchaseDeptId());
+            //采购部门
+            if (ObjectUtil.isNotEmpty(departmentDTO)) {
+                resultMap.put("purchaseDeptCode", departmentDTO.getCode());
+            }
         }
         //入库日期
         resultMap.put("billDate", entity.getStockInDate());
-        // TODO 单据状态
 
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         //采购员

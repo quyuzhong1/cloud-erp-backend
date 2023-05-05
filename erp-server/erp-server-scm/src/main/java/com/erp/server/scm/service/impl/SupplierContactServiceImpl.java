@@ -85,7 +85,7 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
      * @date 2023-03-20 10:07
      */
     @Override
-    public List<SupplierContactDTO.UpdateDTO> getBySupplierId(String supplierId) {
+    public List<SupplierContactDTO.UpdateDTO> listBySupplierId(String supplierId) {
         List<SupplierContactEntity> list = this.getList(supplierId);
         return BeanMapper.copyList(list, SupplierContactDTO.UpdateDTO.class);
 

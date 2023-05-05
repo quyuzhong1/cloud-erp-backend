@@ -43,7 +43,7 @@ public interface SupplierContactService extends SuperService<SupplierContactEnti
      * @param supplierId
      * @return java.util.List<com.erp.model.scm.dto.SupplierContactDTO.UpdateDTO>
      */
-    List<SupplierContactDTO.UpdateDTO> getBySupplierId(String supplierId);
+    List<SupplierContactDTO.UpdateDTO> listBySupplierId(String supplierId);
 
     
     /**

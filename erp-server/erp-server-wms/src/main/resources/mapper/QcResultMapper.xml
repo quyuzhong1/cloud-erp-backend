@@ -39,4 +39,25 @@
            </foreach>
        </if>
     </select>
+
+    <select id="listQcResultMsg" resultType="com.erp.model.wms.dto.QcResultDTO$QcNoticeDTO">
+
+      SELECT
+      qi.id,
+      qi.purchase_order_code,
+      qi.purchase_order_id,
+      qi.qc_user_name,qr.qc_type,
+      to_char(qi.qc_finish_time,'yyyy-MM-dd HH:mm:ss') AS qcFinishTime,
+      qr.handle_mode_dict,
+      qp.sku_id,qp.sku_no
+      FROM  qc_info qi INNER JOIN
+      qc_result qr ON qr.main_id=qi.id AND qr.is_deleted=FALSE
+      INNER JOIN qc_product qp ON qp.main_id=qi.id AND qp.is_deleted=FALSE
+      WHERE qi.is_deleted=FALSE
+      AND qi.id IN
+        <foreach collection="mainIdList" item="mainId" open="(" separator="," close=")">
+            #{mainId}
+        </foreach>
+
+    </select>
 </mapper>

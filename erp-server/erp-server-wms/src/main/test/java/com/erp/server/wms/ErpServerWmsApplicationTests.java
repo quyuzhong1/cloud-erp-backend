@@ -4,7 +4,8 @@ import com.erp.model.wms.entity.CfgModuleOperateLogFieldEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.service.CfgModuleOperateLogFieldService;
-import org.junit.Test;
+import com.erp.server.wms.service.QcResultService;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
@@ -29,8 +30,11 @@ public class ErpServerWmsApplicationTests {
     @Resource
     private CfgModuleOperateLogFieldService logFieldService;
 
+    @Resource
+    private QcResultService qcResultService;
 
-    @Test
+
+    //  @Test
     public void addLogField() {
 
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
@@ -45,6 +49,12 @@ public class ErpServerWmsApplicationTests {
         System.out.println("sss");
     }
 
+
+    @Test
+    public void testSendMsg() {
+
+        qcResultService.sendQcResultMsg(Arrays.asList("1653969938324520962"));
+    }
 
 
 }

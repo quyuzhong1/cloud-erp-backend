@@ -53,9 +53,9 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      */
     Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String remark);
 
-    /**
-     * 驳回流程
-     * @param dto
-     */
-    void rejectProcess(ProcessManagementDTO.RejectDTO dto);
+//    /**
+//     * 驳回流程
+//     * @param dto
+//     */
+//    void rejectProcess(ProcessManagementDTO.ApproveDTO dto);
 }

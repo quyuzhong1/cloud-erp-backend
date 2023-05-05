@@ -388,10 +388,22 @@ public class QcResultDTO {
 
         private String id;
 
+
+        /**
+         * 是否新品首批
+         * true 是
+         */
+        private Boolean isFirstMassProduct;
+
         /**
          * 采购订单code
          */
         private String purchaseOrderCode;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
 
 
         /**
@@ -435,7 +447,7 @@ public class QcResultDTO {
         /**
          * 质检完成时间
          */
-        private LocalDateTime qcFinishTime;
+        private String qcFinishTime;
 
         /**
          * 处理措施

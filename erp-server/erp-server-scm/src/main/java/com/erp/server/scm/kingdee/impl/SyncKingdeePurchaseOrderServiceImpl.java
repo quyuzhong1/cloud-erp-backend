@@ -1,8 +1,10 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
@@ -10,6 +12,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.entity.*;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -89,8 +92,19 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("supplierCode",supplierEntity.getCode());
         //采购组织
         resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
+
         //采购部门
         resultMap.put("purchaseDeptName",entity.getPurchaseDeptName());
+
+        //获取用户部门id
+        if (StringUtils.isNotBlank(entity.getPurchaseDeptId())) {
+            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(entity.getPurchaseDeptId());
+            //采购部门
+            if (ObjectUtil.isNotEmpty(departmentDTO)) {
+                resultMap.put("purchaseDeptCode", departmentDTO.getCode());
+            }
+        }
+
         //采购员编码
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         if (ObjectUtils.isNotEmpty(findUserDTO)) {

@@ -193,6 +193,7 @@ public class ProductInfoDTO {
 
         private String skuId;
 
+
         /**
          * 产品负责人集合
          */

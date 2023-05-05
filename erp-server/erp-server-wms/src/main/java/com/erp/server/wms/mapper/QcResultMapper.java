@@ -29,4 +29,13 @@ public interface QcResultMapper extends BaseMapper<QcResultEntity> {
      * @return java.util.List<com.erp.model.wms.dto.QcInfoDTO.StockInDTO>
      */
     List<QcResultDTO.StockInDTO> getStockIn(@Param("mainIdList") List<String> mainIdList);
+
+    /**
+     * 获取质检结果发送消息
+     * @author yl
+     * @date 2023-05-05 11:33
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.wms.dto.QcResultDTO.QcNoticeDTO>
+     */
+    List<QcResultDTO.QcNoticeDTO> listQcResultMsg(@Param("mainIdList") List<String> mainIdList);
 }

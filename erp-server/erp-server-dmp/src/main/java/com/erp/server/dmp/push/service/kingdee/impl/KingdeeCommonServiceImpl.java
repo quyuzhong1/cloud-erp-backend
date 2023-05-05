@@ -445,7 +445,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                     .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(String.valueOf(map.get(cfgApiFieldMapDTO.getSelfField()))))
                     .map(CfgApiFieldMapValueEntity::getApiValue)
                     .findFirst()
-                    .orElse(null);
+                    .orElse("");
             KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",apiValue);
         }
     }

@@ -478,6 +478,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
             }
+            //异步发送通知
+            qcResultService.sendQcResultMsg(Arrays.asList(billId));
             moduleOperateLogService.addModuleOperateLog(String.format("新增了一个质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
         }
         return result;
@@ -723,6 +725,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 autoStockInBill(id, qcInfo, purchaseOrderId, warehouseId);
             }
 
+            //异步发送通知
+            qcResultService.sendQcResultMsg(Arrays.asList(id));
             //操作日志
             moduleOperateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "新增操作");
         }
@@ -782,6 +786,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (result) {
             //自动完成入库单
             this.autoBatchStockInBill(ids);
+
+            //异步发送通知
+            qcResultService.sendQcResultMsg(ids);
         }
         return result;
 
@@ -827,6 +834,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //自动完成入库单
             this.autoBatchStockInBill(ids);
+
+            //异步发送通知
+            qcResultService.sendQcResultMsg(ids);
         }
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

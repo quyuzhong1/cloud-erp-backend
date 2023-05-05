@@ -173,7 +173,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             JSONArray removeObj = new JSONArray();
             JSONArray addObj = new JSONArray();
             for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
+                JSONObject jsonObject = JSONUtil.parseObj(o);
                 JSONObject newJson = new JSONObject(new LinkedHashMap<>());
                 Object o1 = queryMap.get("FMaterialId.FNumber");
                 JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
@@ -208,7 +208,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         JSONArray removeObj = new JSONArray();
         JSONArray addObj = new JSONArray();
         for (Object obj : list ) {
-            JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(obj));
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
             JSONObject newJson = new JSONObject(new LinkedHashMap<>());
             //同步数据时禁用,需要考虑既有禁用又有启用的情况
             Boolean disabled = (Boolean)jsonObject.get("disabled");
@@ -302,6 +302,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
+        log.info("启用、禁用价目数据成功 jsonStr = {}",JSONUtil.toJsonStr(viewMap));
+        //新增失败时添加日志及定时任务
+        kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), "启禁用成功，operate = " + operate, ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.SUCCESS.getCode());
     }
 
     /**

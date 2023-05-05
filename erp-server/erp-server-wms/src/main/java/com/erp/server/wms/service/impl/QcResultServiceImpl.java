@@ -1,36 +1,48 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
 import com.erp.model.sys.enums.NoticeItemRoleEnum;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
-import com.erp.model.sys.vo.FsBatchSendMessageDTO;
-import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.QcResultEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.sdk.fs.utils.LarkCreateCardMsgUtil;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
+import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.WmsAttachmentService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +61,7 @@ import java.util.stream.Collectors;
  * @since 2023-04-14
  */
 @Service
+@Slf4j
 public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResultEntity> implements QcResultService {
 
     @Resource
@@ -64,6 +77,15 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private CommonService commonService;
+
+    @Autowired
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
 
     /**
@@ -316,16 +338,64 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      * @author yl
      * @date 2023-04-27 19:24
      */
+    @Override
     @Async
-    public void sendQcResultMsg(List<QcResultDTO.QcNoticeDTO> list) {
+    public void sendQcResultMsg(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        //根据主表id 获取到发送质检的信息
+        List<QcResultDTO.QcNoticeDTO> list = baseMapper.listQcResultMsg(ids);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
+        List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //采购订单id
+        List<String> poIds = list.stream().map(QcResultDTO.QcNoticeDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
+        String userName = commonService.getUserInfo().getUserName();
+        for (QcResultDTO.QcNoticeDTO item : list) {
+            String qcType = item.getQcType();
+            String qcTypeName = QcTypeEnum.getByCode(qcType);
+            item.setQcTypeName(qcTypeName);
+            item.setUserName(userName);
+            String handleModeName = dictList.stream().filter(r -> r.getValue().equals(item.getHandleModeDict())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setHandleModeName(handleModeName);
+            String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            item.setSkuName(skuName);
+            Boolean isFirstMassProduct = poList.stream().filter(p -> p.getId().equals(item.getPurchaseOrderId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(Boolean.FALSE);
+            item.setIsFirstMassProduct(isFirstMassProduct);
+        }
+        //以新 老品分组
+        Map<Boolean, List<QcResultDTO.QcNoticeDTO>> map = list.stream().collect(Collectors.groupingBy(QcResultDTO.QcNoticeDTO::getIsFirstMassProduct));
+        for (Map.Entry<Boolean, List<QcResultDTO.QcNoticeDTO>> entry : map.entrySet()) {
+            //是否新品 true 是
+            Boolean isFirstMassProduct = entry.getKey();
+            List<QcResultDTO.QcNoticeDTO> value = entry.getValue();
+            sendMsg(isFirstMassProduct, value);
+        }
+
+    }
+
+    /**
+     * 发送消息 根据新老品
+     * @param isFirstMassProduct
+     */
+    private void sendMsg(Boolean isFirstMassProduct, List<QcResultDTO.QcNoticeDTO> list) {
+        //老品质检
+        String qcNewProductCode = NoticeNodeEnum.QC_OLD_PRODUCT.getCode();
+        //表示新品
+        if(isFirstMassProduct){
+            qcNewProductCode=NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
+        }
         List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
 
-        //新品质检
-        String qcNewProductCode = NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
         List<NoticeReceiverDTO.InfoDTO> receiverList = sysUserFeign.listNoticeReceiverByNodeKey(qcNewProductCode);
         if (CollectionUtils.isEmpty(receiverList)) {
             return;
@@ -353,16 +423,13 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
         //项目经理
         String itemCharge = NoticeItemRoleEnum.ITEM_MANAGER.getCode();
-
         //产品经理
         String productCharge = NoticeItemRoleEnum.PRODUCT_MANAGER.getCode();
         //是不是 包含项目经理
         Boolean isItemCharge = itemRoles.contains(itemCharge);
-
         //是不是 包含产品经理
         Boolean isProductCharge = itemRoles.contains(productCharge);
-        //获取飞书的unionid 与用户关系
-        List<ThirdUnionDTO> unionUserList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         for (QcResultDTO.QcNoticeDTO item : list) {
             String msgHead = String.format(NoticeMsgConstant.QC_RESULT_HEAD, item.getUserName(), item.getSkuNo(), item.getQcTypeName());
             String msgContent = String.format(NoticeMsgConstant.QC_RESULT_CONTENT, item.getPurchaseOrderCode(),
@@ -378,24 +445,20 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                     userIdList.addAll(people.getProductChargeIdList());
                 }
             }
-
-            //获取飞书的
-            List<String> unionIds = getUserUnionIds(unionUserList, userIdList);
-            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
-            sendMessage.setUnionIds(unionIds);
-            Map contentMap = LarkCreateCardMsgUtil.getQcResultMsg(msgHead, msgContent);
-
+            userIdList = userIdList.stream().filter(u -> StringUtils.isNotBlank(u)).collect(Collectors.toList());
+            NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+            noticeMsgInfoDTO.setReceiverUserIds(userIdList);
+            noticeMsgInfoDTO.setTitle(msgHead);
+            noticeMsgInfoDTO.setContent(msgContent);
+            noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                    noticeMsgInfoDTO, IdUtil.simpleUUID());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+            }
 
         }
-
-
     }
 
-    private List<String> getUserUnionIds(List<ThirdUnionDTO> unionUserList, List<String> userIdList) {
-        List<String> unionIds = unionUserList.stream().
-                filter(u -> userIdList.contains(u.getUserId())).
-                map(ThirdUnionDTO::getThirdUnionId).
-                collect(Collectors.toList());
-        return unionIds;
-    }
+
 }

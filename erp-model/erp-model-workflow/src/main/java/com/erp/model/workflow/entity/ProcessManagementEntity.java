@@ -98,8 +98,8 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     /**
      * 流程引擎流程实例ID
      */
-    @TableField("act_process_instance_id")
-    private String actProcessInstanceId;
+    @TableField("act_process_definition_id")
+    private String actProcessDefinitionId;
 
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -124,7 +124,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String BUSINESS_KEY = "business_key";
 
-    public static final String ACT_PROCESS_INSTANCE_ID = "act_process_instance_id";
+    public static final String ACT_PROCESS_DEFINITION_ID = "act_process_definition_id";
 
     public ProcessManagementEntity(String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId, String definitionId) {
         this.processDefinitionId = processDefinitionId;
@@ -137,7 +137,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
         this.approveStatus = ApproveStatusEnum.APPROVE_ING;
         this.businessName = dto.getBusinessName();
         this.businessKey = dto.getBusinessKey();
-        this.actProcessInstanceId = definitionId;
+        this.actProcessDefinitionId = definitionId;
     }
 
     @Override

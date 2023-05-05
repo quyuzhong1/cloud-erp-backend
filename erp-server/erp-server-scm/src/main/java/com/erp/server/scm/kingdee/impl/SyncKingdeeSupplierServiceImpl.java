@@ -11,16 +11,14 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
-import com.erp.server.scm.service.DictBasicService;
-import com.erp.server.scm.service.SupplierAccountService;
-import com.erp.server.scm.service.SupplierGradeService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -59,6 +57,8 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
     @Resource
     private SupplierGradeService supplierGradeService;
 
+    @Resource
+    private SupplierContactService supplierContactService;
 
 
     /**
@@ -138,6 +138,24 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
                 blankList.add(bank);
             }
             resultMap.put("blankList",blankList);
+        }
+
+        //联系人信息
+        List<SupplierContactDTO.UpdateDTO> contacts = supplierContactService.listBySupplierId(entity.getId());
+        if (CollectionUtils.isNotEmpty(contacts)) {
+            List<JSONObject>  contactList = new ArrayList<>();
+            for (SupplierContactDTO.UpdateDTO updateDTO : contacts) {
+                JSONObject contact = new JSONObject();
+                contact.set("person",updateDTO.getPerson());
+                contact.set("email",updateDTO.getEmail());
+                contact.set("telNumber",updateDTO.getTelNumber());
+                contact.set("isDefault",updateDTO.getIsDefault());
+                contact.set("position",updateDTO.getPosition());
+                contact.set("disabled",updateDTO.getDisabled());
+                contact.set("remark",updateDTO.getRemark());
+                contactList.add(contact);
+            }
+            resultMap.put("contactList",contactList);
         }
 
         //操作（枚举SyncKingdeeOperateEnum）
