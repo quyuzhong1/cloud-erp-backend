@@ -9,7 +9,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
@@ -18,7 +17,10 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
+import com.erp.server.wms.service.WarehouseReceiveDetailService;
+import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -194,6 +196,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
      * @param mainIds mainIds
      * @return java.lang.Boolean
      **/
+    @Override
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(WarehouseReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
                 .in(WarehouseReceiveDetailEntity::getMainId, mainIds)
@@ -207,6 +210,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
      * @param mainId mainId
      * @return java.lang.Boolean
      **/
+    @Override
     public List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId) {
         LambdaQueryWrapper<WarehouseReceiveDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WarehouseReceiveDetailEntity::getMainId, mainId);

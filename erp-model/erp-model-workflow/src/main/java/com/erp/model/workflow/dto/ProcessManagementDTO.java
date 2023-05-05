@@ -1,6 +1,7 @@
 package com.erp.model.workflow.dto;
 
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.enums.RejectTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -41,6 +42,11 @@ public class ProcessManagementDTO {
          * 业务单号
          */
         private String businessCode;
+
+        /**
+         * 业务名称 用于流程图显示   任务审核: 产品名称+任务名称  其他申请单: 单据编号
+         */
+        private String businessName;
 
         /**
          * 流程参数map
@@ -128,39 +134,49 @@ public class ProcessManagementDTO {
     @NoArgsConstructor
     public static class RejectDTO {
 
-    /**
-            * 业务类型
-            */
-            @NotBlank(message = "业务类型不能为空")
-            private String businessKey;
+        /**
+         * 业务类型
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
 
-            /**
-            * 业务表id
-            */
-            @NotBlank(message = "业务表id不能为空")
-            private String businessId;
+        /**
+         * 业务表id
+         */
+        @NotBlank(message = "业务表id不能为空")
+        private String businessId;
 
-            /**
-            * 审批人
-            */
-            @NotBlank(message = "审批人不能为空")
-            private String userId;
+        /**
+         * 审批人
+         */
+        @NotBlank(message = "审批人不能为空")
+        private String userId;
 
-            /**
-            * 驳回原因
-            */
-            private String rejectReason;
+        /**
+         * 驳回原因
+         */
+        private String rejectReason;
 
-            /**
-            * 审批结果
-            */
-            @NotBlank(message = "审批结果不能为空")
-            private ApproveTypeEnum rejectType;
+        /**
+         * 审批结果
+         */
+        @NotBlank(message = "审批结果不能为空")
+        private RejectTypeEnum rejectType;
 
-            /**
-            * 流程参数map
-            */
-            private Map<String,Object> variablesMap;
+        /**
+         * 驳回的目标节点 ID
+         */
+        private String previousTaskId;
+
+        /**
+         * 驳回备注
+         */
+        private String comment;
+
+        /**
+         * 流程参数map
+         */
+        private Map<String,Object> variablesMap;
 
     }
 }

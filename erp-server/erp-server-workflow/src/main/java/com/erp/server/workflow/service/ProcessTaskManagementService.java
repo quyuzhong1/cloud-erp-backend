@@ -35,4 +35,10 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @return 以节点id为key，任务列表为value的map
      */
     LinkedHashMap<String, List<ProcessTaskManagementEntity>> listHisByProcessInstanceId(String processInstanceId, Integer num);
+
+    /**
+     * 保存流程任务
+     * @param insertTask
+     */
+    void saveProcessTask(ProcessTaskManagementEntity insertTask);
 }
