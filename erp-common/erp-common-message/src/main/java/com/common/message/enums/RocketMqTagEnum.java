@@ -179,6 +179,10 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_WAREHOUSE_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_warehouse_tag"),
 
+    /**
+     * 部门同步金蝶
+     */
+    KINGDEE_SYS_DEPARTMENT_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
 
     //-----------------------------消息通知--------------------------------------------
 
@@ -201,9 +205,15 @@ public enum RocketMqTagEnum {
      * 汇率更新
      */
     CHANGE_CURRENCY_TAG(35, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
+
+
+    //-----------------------------plm数据更新--------------------------------------------
+    /**
+     * 修改上市时间
+     */
+    PRODUCT_LISTING_UPDATE_TAG(36, RocketMqTagEnum.SKU_INFO,"product_listing_update_tag"),
+
     ;
-    
-    
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
     public static final String REFUND_ORDER = "refund";

@@ -6,7 +6,7 @@
 
     <select id="getItemIdBySkuAndYear" resultType="string">
         SELECT
-            poit.id
+        poit.id
         FROM dmp_order_info poi
         LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
         WHERE 1 = 1
@@ -15,4 +15,16 @@
             AND to_char(platform_create_time, 'yyyy') = #{year}
         </if>
     </select>
+
+    <select id="getOrderListingTime" resultType="java.time.LocalDateTime">
+        SELECT
+        poi.platform_create_time
+        FROM dmp_order_info poi
+        LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
+        WHERE 1 = 1
+        AND poit.sku_no = #{skuNo}
+        ORDER BY poi.platform_create_time ASC
+        LIMIT 1
+    </select>
+
 </mapper>

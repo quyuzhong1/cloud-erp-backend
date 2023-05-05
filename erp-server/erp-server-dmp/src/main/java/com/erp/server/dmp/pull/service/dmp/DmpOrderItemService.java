@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +64,7 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @Date 2022/11/14 21:25
      * @return void
      **/
-    void checkOrderItem(List<DmpOrderItemEntity> orderItem);
+    void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime);
 
     /**
      * 同步PLM的到货时间更新新老品

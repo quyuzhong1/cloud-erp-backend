@@ -25,6 +25,10 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_SYS_USER_INFO = "${spring.profiles.active}-sync_kingdee_sys_user_info";
     /**
+     * 金蝶部门（部门管理）
+     */
+    public static final String SYNC_KINGDEE_SYS_DEPARTMENT = "${spring.profiles.active}-sync_kingdee_sys_department";
+    /**
      * 金蝶采购订单（采购订单）
      */
     public static final String SYNC_KINGDEE_PURCHASE_ORDER = "${spring.profiles.active}-sync_kingdee_purchase_order";
@@ -75,5 +79,12 @@ public class RocketMqConsumerGroup {
      * 汇率变更
      */
     public static final String CHANGE_CURRENCY = "${spring.profiles.active}-change_currency";
+
+    /**
+     * 产品上市时间
+     */
+    public static final String PRODUCT_LISTING_UPDATE = "${spring.profiles.active}-PRODUCT_LISTING_UPDATE";
+
+
 
 }

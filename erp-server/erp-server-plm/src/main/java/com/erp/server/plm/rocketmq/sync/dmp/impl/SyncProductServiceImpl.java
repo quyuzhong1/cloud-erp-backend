@@ -1,5 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.dmp.impl;
 
+import com.common.business.utils.RedisUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -35,6 +37,9 @@ public class SyncProductServiceImpl implements SyncProductService {
 
     @Resource
     private ProductSaleService productSaleService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 同步产品信息表数据到中台表
@@ -74,6 +79,7 @@ public class SyncProductServiceImpl implements SyncProductService {
         List<NewProductDTO> list = productSaleService.getListingProductAll();
         // 异步推送到MQ
         list.forEach(req -> {
+            redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600);
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(),req, req.getId());
         });
     }

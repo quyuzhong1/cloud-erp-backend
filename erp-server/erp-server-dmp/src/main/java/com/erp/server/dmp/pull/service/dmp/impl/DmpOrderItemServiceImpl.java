@@ -4,18 +4,28 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.utils.RedisUtil;
+import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +34,14 @@ import java.util.Map;
  */
 @Service
 public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, DmpOrderItemEntity>
-    implements DmpOrderItemService {
+        implements DmpOrderItemService {
+
+    @Resource
+    private MQProducerService mQProducerService;
+
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 添加订单商品详细信息
@@ -100,9 +117,16 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void checkOrderItem(List<DmpOrderItemEntity> orderItem) {
+    public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime) {
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
         for (DmpOrderItemEntity orderItemBean : orderItem) {
+/*            String skuListing = String.valueOf(redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo()));
+            if (StringUtils.isBlank(skuListing)) {
+                Map<String, Object> resultMap = new HashMap<>();
+                resultMap.put("skuNo", orderItemBean.getSkuNo());
+                resultMap.put("listingTime", platformCreateTime);
+                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, orderItemBean.getId());
+            }*/
             DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
             if (null != dmpOrderItemEntity) {
                 //如果数据有变动需要更新数据库订单商品信息
@@ -139,7 +163,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             LocalDate date = LocalDate.parse(String.valueOf(map.get("pastListingTime")), fmt);
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
-        }*/
+        }*/ else {
+            LocalDateTime orderListingTime = baseMapper.getOrderListingTime(dto.getSkuNo());
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("skuNo", dto.getSkuNo());
+            resultMap.put("listingTime", orderListingTime.toLocalDate());
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, dto.getId());
+        }
         if (StringUtils.isBlank(year)) {
             return;
         }
