@@ -302,6 +302,8 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
+        //新增失败时添加日志及定时任务
+        kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), "启禁用成功，operate = " + operate, ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.SUCCESS.getCode());
     }
 
     /**
