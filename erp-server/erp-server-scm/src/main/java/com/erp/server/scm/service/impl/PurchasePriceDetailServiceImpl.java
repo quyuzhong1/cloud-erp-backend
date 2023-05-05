@@ -192,6 +192,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             }
 
 
+            //这个是要检查的
+            checkList = new ArrayList<>(10);
+            checkList.addAll(purchasePriceDetailList);
             checkList.addAll(historyList);
             //参数 以sku 分组 这个是添加了供应商的
             Map<String, List<PurchasePriceDetailDTO.AddDTO>> historyMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceDetailDTO.AddDTO::getSkuId));
@@ -515,7 +518,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         this.updateBatchById(detailList);
 
         //金蝶更新分录禁用
-        syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList,disabled);
+        syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
 
         return Boolean.TRUE;
     }
@@ -615,14 +618,31 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         for (Object obj : list) {
             JSONObject jsonObject = JSONUtil.parseObj(obj);
-            String detailId = (String)jsonObject.get("detailId");
-            String kingdeeDetailId = (String)jsonObject.get("kingdeeDetailId");
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
             this.lambdaUpdate()
-                    .set(PurchasePriceDetailEntity::getKingdeeDetailId,kingdeeDetailId)
-                    .eq(PurchasePriceDetailEntity::getId,detailId)
+                    .set(PurchasePriceDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(PurchasePriceDetailEntity::getId, detailId)
                     .update();
         }
 
+    }
+
+
+    /**
+     * 获取根据主表id
+     *
+     * @param mainId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-05 16:41
+     */
+    @Override
+    public List<PurchasePriceDetailEntity> listDetailByMainId(String mainId) {
+        if (StringUtils.isBlank(mainId)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(PurchasePriceDetailEntity::getPurchasePriceId,mainId).list();
     }
 
 

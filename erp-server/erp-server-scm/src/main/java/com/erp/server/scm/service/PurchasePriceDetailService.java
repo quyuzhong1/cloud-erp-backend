@@ -155,4 +155,14 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param list
      */
     void updateKingdeeDetailId(JSONArray list);
+
+    
+    /**
+     * 获取根据主表id
+     * @author yl
+     * @date 2023-05-05 16:41
+     * @param id
+     * @return java.util.List<java.lang.String>
+     */
+    List<PurchasePriceDetailEntity> listDetailByMainId(String id);
 }
