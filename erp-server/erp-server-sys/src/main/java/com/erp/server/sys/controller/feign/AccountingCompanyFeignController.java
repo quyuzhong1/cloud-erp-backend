@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.server.sys.service.SysAccountingCompanyService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -28,11 +29,12 @@ public class AccountingCompanyFeignController extends BaseController {
         List<BaseIdDTO> list = sysAccountingCompanyService.getByIds(ids);
         return list;
     }
+
     /**
+     * @return List<BaseIdDTO>
      * @description: 查询所有已启用组织
      * @author Will
      * @date: 2023/3/22 16:37
-     * @return List<BaseIdDTO>
      */
     @GetMapping("/list")
     public List<BaseIdDTO> listAccountingCompany() {
@@ -42,15 +44,21 @@ public class AccountingCompanyFeignController extends BaseController {
 
     /**
      * 根据主键id查询组织信息
-     * @Author Luo_WG
-     * @Date 2023/4/13 12:19
+     *
      * @param id id:组织id
      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @Author Luo_WG
+     * @Date 2023/4/13 12:19
      **/
     @PostMapping("/getCompanyById")
     public SysAccountingCompanyEntity getCompanyById(@RequestBody String id) {
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getById(id);
-        return sysAccountingCompanyEntity;
+        if (StringUtils.isBlank(id)) {
+            return new SysAccountingCompanyEntity();
+        } else {
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getById(id);
+            return sysAccountingCompanyEntity;
+        }
+
     }
 
 }

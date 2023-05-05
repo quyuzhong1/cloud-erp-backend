@@ -1108,7 +1108,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<PoInstockDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
-
+        LoginUser userInfo = commonService.getUserInfo();
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
         Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
@@ -1121,11 +1121,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98025);
             }
+
+            String orgId = entityList.stream().filter(r -> r.getId().equals(purchaseReturnOrderDTO.getSourceId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getReceiveOrgId())).orElse("");
+            addDTO.setReturnOrgId(orgId);
             addDTO.setSourceType(type);
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
             addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
             addDTO.setReturnWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
-            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
             addDTO.setReturnRemark(purchaseReturnOrderDTO.getRemark());
             addDTO.setSupplierId(purchaseOrderEntity.getSupplierId());
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
@@ -1144,9 +1147,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
                 }
                 BeanMapperUtils.copy(detail, addDetailDTO);
+                addDetailDTO.setReturnQty(detail.getRealityReturnQty());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
+            addDTO.setReturnUserId(userInfo.getUid());
+
             addList.add(addDTO);
         }
 
