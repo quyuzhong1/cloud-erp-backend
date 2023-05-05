@@ -172,6 +172,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
         }*/ else {
             LocalDateTime orderListingTime = baseMapper.getOrderListingTime(dto.getSkuNo());
+            if (orderListingTime == null) {
+                return;
+            }
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("skuNo", dto.getSkuNo());
             resultMap.put("listingTime", orderListingTime.toLocalDate());
