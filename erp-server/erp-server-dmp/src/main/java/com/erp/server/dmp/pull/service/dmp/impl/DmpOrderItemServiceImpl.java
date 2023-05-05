@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -120,8 +121,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime) {
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
         for (DmpOrderItemEntity orderItemBean : orderItem) {
-/*            String skuListing = String.valueOf(redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo()));
-            if (StringUtils.isBlank(skuListing)) {
+/*            Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
+            if (ObjectUtil.isEmpty(skuListing)) {
                 Map<String, Object> resultMap = new HashMap<>();
                 resultMap.put("skuNo", orderItemBean.getSkuNo());
                 resultMap.put("listingTime", platformCreateTime);
@@ -171,8 +172,8 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
         }*/ else {
-            String sku = String.valueOf(redisUtil.hget(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo));
-            if (StringUtils.isNotBlank(sku)) {
+            Object sku = redisUtil.hget(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo);
+            if (ObjectUtil.isNotEmpty(sku)) {
                 return;
             }
             LocalDateTime orderListingTime = baseMapper.getOrderListingTime(dto.getSkuNo());
