@@ -120,6 +120,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             } else {
                 req.setSign(0);
             }
+            if (req.getModuleClassify().equals("质检单")) {
+                waitDoMenus.remove(req);
+            }
         }
         return waitDoMenus;
     }
