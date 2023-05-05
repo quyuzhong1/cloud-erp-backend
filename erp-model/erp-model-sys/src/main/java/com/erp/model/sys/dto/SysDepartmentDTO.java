@@ -23,6 +23,8 @@ public class SysDepartmentDTO {
      */
     private String name;
 
+    private String code;
+
     //1 部门  2  小组
     private Integer type;
 
