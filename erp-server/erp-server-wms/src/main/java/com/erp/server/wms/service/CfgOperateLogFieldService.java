@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.entity.CfgModuleOperateLogFieldEntity;
+import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-03-17
  */
-public interface CfgModuleOperateLogFieldService extends SuperService<CfgModuleOperateLogFieldEntity> {
+public interface CfgOperateLogFieldService extends SuperService<CfgOperateLogFieldEntity> {
     /**
      * @description: 根据类路径查询配置的字段
      * @author Will
@@ -21,7 +21,7 @@ public interface CfgModuleOperateLogFieldService extends SuperService<CfgModuleO
      * @param classPaths
      * @return List<CfgModuleOperateLogFieldEntity>
      */
-    List<CfgModuleOperateLogFieldEntity> listByClassPaths(List<String> classPaths);
+    List<CfgOperateLogFieldEntity> listByClassPaths(List<String> classPaths);
 
     /**
      * @description: 新增配置信息

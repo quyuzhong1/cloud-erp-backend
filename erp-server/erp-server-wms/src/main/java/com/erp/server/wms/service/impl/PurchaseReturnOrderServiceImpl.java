@@ -104,7 +104,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     private PoInstockDetailService poInstockDetailService;
 
     @Resource
-    private ModuleOperateLogService moduleOperateLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private SyncKingdeeReturnOrderService syncKingdeeReturnOrderService;
@@ -218,7 +218,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         this.save(purchaseReturnOrderEntity);
 
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "新增操作");
 
         //保存详情信息
         purchaseReturnOrderDetailService.add(dto, purchaseReturnOrderEntity.getId());
@@ -280,7 +280,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         PurchaseReturnOrderEntity byId = this.getById(dto.getId());
-        moduleOperateLogService.addModuleOperateLogByObj(byId, purchaseReturnOrderEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(byId, purchaseReturnOrderEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "", "");
 
         //更新收货单详情表信息
         return purchaseReturnOrderDetailService.update(dto, purchaseReturnOrderEntity.getId());
@@ -391,7 +391,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "提交操作");
+        operateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "提交操作");
 
         return Boolean.TRUE;
     }
@@ -495,7 +495,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
         //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         return Boolean.TRUE;
@@ -549,7 +549,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
+        operateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
@@ -588,7 +588,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "取消流程操作");
 
         return Boolean.TRUE;
     }
@@ -628,7 +628,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
+        operateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
 
         //审核通过发送金蝶
         warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));

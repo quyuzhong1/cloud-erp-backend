@@ -3,8 +3,8 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
-import com.erp.model.wms.entity.ModuleOperateLogEntity;
+import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.wms.entity.OperateLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -16,7 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-03-17
  */
 @Mapper
-public interface ModuleOperateLogMapper extends BaseMapper<ModuleOperateLogEntity> {
+public interface OperateLogMapper extends BaseMapper<OperateLogEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -25,5 +25,5 @@ public interface ModuleOperateLogMapper extends BaseMapper<ModuleOperateLogEntit
      * @param params
      * @return IPage<listDTO>
      */
-    IPage<ModuleOperateLogDTO.ListDTO> paging(Page query, ModuleOperateLogDTO.SearchDTO params);
+    IPage<OperateLogDTO.ListDTO> paging(Page query, OperateLogDTO.SearchDTO params);
 }

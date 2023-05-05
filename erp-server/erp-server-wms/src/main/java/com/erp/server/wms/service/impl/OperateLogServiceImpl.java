@@ -14,16 +14,16 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
-import com.erp.model.wms.entity.CfgModuleOperateLogFieldEntity;
+import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.ModuleOperateLogEntity;
+import com.erp.model.wms.entity.OperateLogEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.mapper.ModuleOperateLogMapper;
-import com.erp.server.wms.service.CfgModuleOperateLogFieldService;
+import com.erp.server.wms.mapper.OperateLogMapper;
+import com.erp.server.wms.service.CfgOperateLogFieldService;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.ModuleOperateLogService;
+import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
  * @since 2023-03-17
  */
 @Service
-public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateLogMapper, ModuleOperateLogEntity> implements ModuleOperateLogService {
+public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, OperateLogEntity> implements OperateLogService {
 
     @Resource
-    private CfgModuleOperateLogFieldService cfgModuleOperateLogFieldService;
+    private CfgOperateLogFieldService cfgOperateLogFieldService;
 
     @Resource
     private CommonService commonService;
@@ -55,9 +55,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     private SysUserFeign sysUserFeign;
 
     @Override
-    public PagingVO<ModuleOperateLogDTO.ListDTO> paging(PagingDTO<ModuleOperateLogDTO.SearchDTO> dto) {
+    public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ModuleOperateLogDTO.SearchDTO params = dto.getParams();
+        OperateLogDTO.SearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }
@@ -72,11 +72,11 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             return Boolean.TRUE;
         }
         List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
-        List<CfgModuleOperateLogFieldEntity> fieldList = cfgModuleOperateLogFieldService.listByClassPaths(classPaths);
+        List<CfgOperateLogFieldEntity> fieldList = cfgOperateLogFieldService.listByClassPaths(classPaths);
         if (CollectionUtils.isEmpty(fieldList)) {
             return Boolean.TRUE;
         }
-        List<ModuleOperateLogEntity> list = new LinkedList<>();
+        List<OperateLogEntity> list = new LinkedList<>();
         for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
             //Pair<字段名称, 类路径>
             Pair<String, String> keyPair = entry.getKey();
@@ -84,7 +84,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             String fieldClass = keyPair.getValue();
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
-            CfgModuleOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
+            CfgOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
             if (ObjectUtils.isEmpty(fieldEntity)) {
                 continue;
             }
@@ -118,7 +118,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             } else {
                 content = concat.concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
-            ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+            OperateLogEntity entity = new OperateLogEntity();
             entity.setModuleType(moduleType)
                     .setBusinessId(businessId)
                     .setPid(pid)
@@ -134,7 +134,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
 
     @Override
     public Boolean addModuleOperateLog(String content, String moduleType, String businessId,String operation) {
-        ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+        OperateLogEntity entity = new OperateLogEntity();
         entity.setModuleType(moduleType)
                 .setBusinessId(businessId)
                 .setContent(content)
@@ -148,9 +148,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
         if (CollectionUtils.isEmpty(pairList)) {
             return Boolean.TRUE;
         }
-        List<ModuleOperateLogEntity> list = new ArrayList<>();
+        List<OperateLogEntity> list = new ArrayList<>();
         for (Pair<String, String> pair : pairList) {
-            ModuleOperateLogEntity entity = new ModuleOperateLogEntity();
+            OperateLogEntity entity = new OperateLogEntity();
             entity.setModuleType(moduleType)
                     .setBusinessId(pair.getKey())
                     .setContent(String.format(content,pair.getValue()))
@@ -162,14 +162,14 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
 
     @Override
     public void removeByBusinessIds(List<String> businessIds) {
-        lambdaUpdate().in(ModuleOperateLogEntity::getBusinessId,businessIds).remove();
+        lambdaUpdate().in(OperateLogEntity::getBusinessId,businessIds).remove();
     }
 
 
     /**
      * 设置布尔值
      */
-    private Pair<String,String> setBooleanValue (CfgModuleOperateLogFieldEntity fieldEntity,Pair<String, String> valuePair) {
+    private Pair<String,String> setBooleanValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         String trueValue = "是";
         String falseValue = "否";
         String booleanValue = fieldEntity.getBooleanValue();
@@ -220,7 +220,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     /**
      * 设置枚举值
      */
-    private Pair<String,String> setEnumValue (CfgModuleOperateLogFieldEntity fieldEntity,Pair<String, String> valuePair) {
+    private Pair<String,String> setEnumValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
             throw new ServiceException(ApiError.ERROR_9028);
         }

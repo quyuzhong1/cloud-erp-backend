@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class ModuleOperateLogDTO implements Serializable {
+public class OperateLogDTO implements Serializable {
 
     @Data
     @NoArgsConstructor

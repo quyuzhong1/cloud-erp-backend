@@ -3,8 +3,8 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
-import com.erp.model.wms.entity.ModuleOperateLogEntity;
+import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.wms.entity.OperateLogEntity;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-03-17
  */
-public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEntity> {
+public interface OperateLogService extends SuperService<OperateLogEntity> {
     /**
      * @description: 分页查询
      * @author Will
@@ -25,7 +25,7 @@ public interface ModuleOperateLogService extends SuperService<ModuleOperateLogEn
      * @param dto
      * @return PagingVO<listDTO>
      */
-    PagingVO<ModuleOperateLogDTO.ListDTO> paging(PagingDTO<ModuleOperateLogDTO.SearchDTO> dto);
+    PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto);
     /**
      * @description: 生成
      * @author Will

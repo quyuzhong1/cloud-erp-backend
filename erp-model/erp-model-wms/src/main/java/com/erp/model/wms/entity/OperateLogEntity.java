@@ -18,8 +18,8 @@ import java.io.Serializable;
  */
 @Data
 @Accessors(chain = true)
-@TableName("module_operate_log")
-public class ModuleOperateLogEntity extends BaseEntity<ModuleOperateLogEntity> {
+@TableName("operate_log")
+public class OperateLogEntity extends BaseEntity<OperateLogEntity> {
 
     /**
      * 类型
