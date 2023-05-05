@@ -1,7 +1,7 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.SourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
@@ -18,8 +18,8 @@ import java.io.Serializable;
 public class InventoryUnApproveDTO implements Serializable {
 
     @NotNull(message = "单据来源不能为空")
-    @StateEnumValue(clazz = SourceTypeEnum.class, message = "单据来源错误")
-    private SourceTypeEnum sourceType;
+    @StateEnumValue(clazz = InventorySourceTypeEnum.class, message = "单据来源错误")
+    private InventorySourceTypeEnum sourceType;
 
     /**
      * 待反审核的原建议单据id

@@ -130,6 +130,16 @@ public class GlobalExceptionHandler {
         }
     }
 
+    @ExceptionHandler(value = RuntimeException.class)
+    public ApiResult resolveException(RuntimeException ex) {
+        log.error("系统异常:", ex);
+        if (StrUtils.isNotEmpty(ex.getMessage()) && ex.getMessage().contains("Load balancer does not have available server for client")) {
+            return ApiResult.error(ApiError.ERROR_1023);
+        } else {
+            return ApiResult.error(ApiError.Default);
+        }
+    }
+
 
     /**
      * 兜底的异常

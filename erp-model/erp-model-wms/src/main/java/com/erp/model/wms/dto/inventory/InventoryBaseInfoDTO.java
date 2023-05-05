@@ -1,7 +1,7 @@
 package com.erp.model.wms.dto.inventory;
 
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryWarehouseOptionEnum;
 import lombok.Data;
@@ -26,7 +26,7 @@ public class InventoryBaseInfoDTO implements Serializable {
 
     private String skuNo;
 
-    private SourceTypeEnum sourceType;
+    private InventorySourceTypeEnum sourceType;
 
     private String warehouseLocation;
 

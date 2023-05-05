@@ -22,7 +22,7 @@ import javax.annotation.Resource;
  * @Author: zhangchunlin
  */
 @RestController
-@RequestMapping("inventory")
+@RequestMapping("/feign/inventory")
 public class InventoryFeignController extends BaseController {
 
     @Autowired
@@ -36,8 +36,9 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveInOutStockByType")
-    public void approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
+    public Boolean approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
         inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).approve(dto.getSkus(), null, InventoryBusinessTypeEnum.of(dto.getBusinessType()), true);
+        return Boolean.TRUE;
     }
 
     /**
@@ -45,8 +46,9 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveTransferByType")
-    public void approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
+    public Boolean approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
         inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK).approve(dto.getSkus(), null, InventoryBusinessTypeEnum.of(dto.getBusinessType()), true);
+        return Boolean.TRUE;
     }
 
     /**
@@ -54,8 +56,9 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveByRule")
-    public void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
+    public Boolean approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
         inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK).approve(dto.getSkus(), dto.getRules(), InventoryBusinessTypeEnum.of(dto.getBusinessType()), false);
+        return Boolean.TRUE;
     }
 
     /**
@@ -63,8 +66,9 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/unApprove")
-    public void unApprove(@RequestBody @Validated InventoryUnApproveDTO dto) {
+    public Boolean unApprove(@RequestBody @Validated InventoryUnApproveDTO dto) {
         inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).unApprove(dto);
+        return Boolean.TRUE;
     }
 
 

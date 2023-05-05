@@ -8,7 +8,6 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.service.CfgTransactionRulesService;
 import com.erp.server.wms.service.InventoryService;
@@ -67,7 +66,7 @@ public class InventoryHelper {
      * @param sourceId
      * @param billDate
      */
-    public void checkCommonBiz(SourceTypeEnum sourceTypeEnum, String sourceId, LocalDate billDate) {
+    public void checkCommonBiz(InventorySourceTypeEnum sourceTypeEnum, String sourceId, LocalDate billDate) {
         log.info("开始检查是否关闭账套，单据类型：【{}】，单据id：【{}】，单据日期：【{}】", sourceTypeEnum.getName(), sourceId, billDate);
         // TODO 1.检查是否关账
         log.info("通过检查是否关闭账套，单据类型：【{}】，单据id：【{}】，单据日期：【{}】", sourceTypeEnum.getName(), sourceId, billDate);
@@ -79,7 +78,7 @@ public class InventoryHelper {
      * @param warehouseId
      * @param skuNo
      */
-    public void checkAllowTrade(SourceTypeEnum sourceTypeEnum, String warehouseId, String skuNo) {
+    public void checkAllowTrade(InventorySourceTypeEnum sourceTypeEnum, String warehouseId, String skuNo) {
         // TODO 检查是否盘点中
         log.info("开始检查是否盘点中，仓库：【{}】，单据类型：【{}】，SKU：【{}】", warehouseId, sourceTypeEnum.getName(), skuNo);
         log.info("通过检查是否盘点中，仓库：【{}】，单据类型：【{}】，SKU：【{}】", warehouseId, sourceTypeEnum.getName(), skuNo);
@@ -89,7 +88,7 @@ public class InventoryHelper {
      * 出库检查库存是否足够
      */
     public void checkEnoughStockIfNecessary(InventoryBaseInfoDTO param, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
-        SourceTypeEnum sourceTypeEnum = param.getSourceType();
+        InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         String sourceId = param.getSourceId();
         LocalDate billDate = param.getBillDate();
         // 状态
@@ -143,7 +142,7 @@ public class InventoryHelper {
         // 操作数量
         Integer qty = param.getQty();
         // 来源
-        SourceTypeEnum sourceTypeEnum = param.getSourceType();
+        InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         InventoryEntity inventory = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
         ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException(ApiError.ERROR_99035));
         Integer inventoryQty = inventory.getQty();

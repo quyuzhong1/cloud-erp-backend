@@ -1,9 +1,9 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
@@ -26,8 +26,8 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
      * 提示：远程调用需增加分布式锁 @GlobalTransactional(rollBack=Exception.class)
      */
     @NotNull(message = "单据类型不能为空")
-    @StateEnumValue(clazz = SourceTypeEnum.class,message = "单据类型有误")
-    private SourceTypeEnum sourceType;
+    @StateEnumValue(clazz = InventorySourceTypeEnum.class,message = "单据类型有误")
+    private InventorySourceTypeEnum sourceType;
 
     @NotEmpty(message = "单据id不能为空")
     private String sourceId;

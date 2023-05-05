@@ -12,40 +12,58 @@ import java.util.Objects;
 public enum InventoryBusinessTypeEnum {
 
     INVENTORY_INIT("inventory_init", "00","期初库存"),
-    PO_RECEIVE("po_receive", "01","采购收货（采购签收）"),
-    QC_INFO("qc_info", "02","采购质检（签收质检）"),
+    PO_RECEIVE("po_receive", "01","采购签收（采购收货）"),
 
-    PO_INSTOCK("po_instock", "03","采购入库"),
-    PO_RETURN("po_return", "04","采购退货"),
-    INVENTORY_OUT("inventory_out", "05","库存调出"),
-    INVENTORY_IN("inventory_in", "06","库存调入"),
-    OTHER_IN("other_in", "08","其他入库"),
-    OTHER_OUT("other_out", "09","其他出库"),
+    PO_INSTOCK_REC("po_instock_rec", "02","采购入库（有收货单）"),
+    PO_INSTOCK_UNREC("po_instock_unrec", "03","采购入库（无收货单）"),
 
-    INVENTORY_PROFIT("inventory_profit", "10","盘盈"),
-    INVENTORY_LOSS("inventory_loss", "11","盘亏"),
-    SALES_ORDER_SHIP("sales_order_ship", "14","销售出库"),
-    SALES_ORDER_RETURN("sales_order_return", "16","销售退货"),
-    ASSEMBLE_PICK("assemble_pick", "25","领料"),
-    ASSEMBLE_IN("assemble_in", "26","组装"),
-    ASSEMBLE_RETURN("assemble_return", "27","退料"),
-    INVENTORY_PREDICTION("inventory_prediction", "28","入库预报"),
-    QC_OUT("qc_out", "29","外检"),
-    INVENTOR_ALLOCATE("inventory_allocate", "30","调拨申请单"),
-    DIRECT_ALLOCATE("direct_allocate", "31","直接调拨单"),// 无法确定状态
-    SALES_SEND_GOODS("sales_send_goods", "32","销售发货通知单"),
-    DISASSEMBLE("disassemble", "33","拆卸"),
-    INVENTORY_ADJUST("inventory_adjust", "34","库存调整单"),// 无法确定状态
+    PO_RETURN_REP("po_return_rep", "04","采购退货（退货补货）"),
+    PO_RETURN_REF("po_return_ref", "05","采购退货（退货退款）"),
+
+    INVENTOR_ALLOCATE("inventory_allocate", "06","调拨申请单"),
+    DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单"),// 无法确定状态
+
+    STEP_INVENTORY_OUT("step_inventory_out", "08","分步式调拨调出"),// TODO 待确认是否可以选择状态
+    STEP_INVENTORY_IN("step_inventory_in", "09","分步式调拨调入"),// TODO 待确认是否可以选择状态
+
+    SHIP_NOTICE("ship_notice", "10","销售发货通知单"),
+    SALES_DELIVERY_ORDER("sales_delivery_order", "11","销售出库"),
+    SALES_RETURN_RECEIPT("sales_return_receipt", "12","销售退货"),// TODO 待确认，无法确定状态
+
+    INVENTORY_PROFIT("inventory_profit", "13","盘盈"),
+    INVENTORY_LOSS("inventory_loss", "14","盘亏"),
+
+    ASSEMBLE_PICK("assemble_pick", "15","领料"),
+    ASSEMBLE_RETURN("assemble_return", "16","退料"),
+    ASSEMBLE_IN("assemble_in", "17","组装"),
+    DISASSEMBLE("disassemble", "18","拆卸"),
+
+    OTHER_IN("other_in", "19","其他入库"),// 无法确定状态
+    OTHER_OUT("other_out", "20","其他出库"),// 无法确定状态
+
+
+    INVENTORY_PREDICTION("inventory_prediction", "21","入库预报"),// TODO 待确认是否补充该单据
+
+    INVENTORY_ADJUST("inventory_adjust", "22","库存调整单"),// TODO 暂不确定是否需要该业务，无法确定状态
     ;
 
     private String code;
 
     private String type;
 
-    /**
-     * 名称
-     */
     private String name;
+
+    /**
+    可以确定能固化走交易配置的业务有:
+     01-采购签收
+     02-采购入库（有收货单）
+     03-采购入库（无收货单）
+     04-采购退货（退货补货）
+     05-采购退货（退货退款）
+     06-调拨申请单
+     10-销售发货通知单
+     11-销售出库
+    */
 
     InventoryBusinessTypeEnum(String type, String code, String name) {
         this.type = type;

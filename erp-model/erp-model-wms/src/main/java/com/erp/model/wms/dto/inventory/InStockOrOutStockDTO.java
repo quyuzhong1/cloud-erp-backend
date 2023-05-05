@@ -1,8 +1,8 @@
 package com.erp.model.wms.dto.inventory;
 
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
@@ -31,7 +31,7 @@ public class InStockOrOutStockDTO extends InventoryStockBaseDTO implements Seria
         private String warehouseId;
 
         @NotNull(message = "单据类型不能为空")
-        private SourceTypeEnum sourceType;
+        private InventorySourceTypeEnum sourceType;
 
         @NotEmpty(message = "单据id不能为空")
         private String sourceId;

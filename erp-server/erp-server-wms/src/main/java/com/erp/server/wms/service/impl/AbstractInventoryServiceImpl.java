@@ -11,11 +11,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SourceTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryModeEnum;
-import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.InventoryDetailService;
 import com.erp.server.wms.service.InventoryHisService;
@@ -149,7 +145,7 @@ public abstract class AbstractInventoryServiceImpl {
             param.setSourceCode(txnFlow.getSourceCode());
             param.setSourceDetailId(txnFlow.getSourceDetailId());
             param.setBillDate(txnFlow.getBillDate());
-            param.setSourceType(SourceTypeEnum.of(txnFlow.getSourceType()));
+            param.setSourceType(InventorySourceTypeEnum.of(txnFlow.getSourceType()));
             param.setOperationMode(InventoryOperationModeEnum.UN_APPROVE);//反审核
 
             InventoryBusinessTypeEnum inventoryBusinessType = InventoryBusinessTypeEnum.of(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -164,7 +160,7 @@ public abstract class AbstractInventoryServiceImpl {
             boolean isLock;
             try {
                 isLock = rlock.tryLock(5, TimeUnit.SECONDS);
-                log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), SourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), isLock);
+                log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), isLock);
                 if (!isLock) {
                     throw new ServiceException(ApiError.ERROR_1026);
                 }
@@ -175,7 +171,7 @@ public abstract class AbstractInventoryServiceImpl {
                 InventoryDetailEntity inventoryDetail = inventoryDetailService.getById(txnFlow.getInventoryDetailId());
                 if(Objects.equals(inventoryModeCur, InventoryModeEnum.OUT_STOCK)) {
                     if(inventoryDetail.getQty() < txnFlow.getQty()) {
-                        log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存明细数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), SourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventoryDetail.getQty(), txnFlow.getQty());
+                        log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存明细数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventoryDetail.getQty(), txnFlow.getQty());
                         throw new ServiceException(ApiError.ERROR_99035);
                     }
                 }
@@ -187,7 +183,7 @@ public abstract class AbstractInventoryServiceImpl {
                 } else {
                     // 检查库存数量是否足够反审核，否则会出现负库存数
                     if(inventory.getQty() < txnFlow.getQty()) {
-                        log.info("反审核》》》，仓库：{}，组织：{}，SKU ID：{}，SKU编号：{}, 交易业务：{}，来源单据类型：{}, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), SourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventory.getQty(), txnFlow.getQty());
+                        log.info("反审核》》》，仓库：{}，组织：{}，SKU ID：{}，SKU编号：{}, 交易业务：{}，来源单据类型：{}, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventory.getQty(), txnFlow.getQty());
                         throw new ServiceException(ApiError.ERROR_99035);
                     }
                     transactionInventoryQty = transactionInventoryQty - operationQty;
@@ -216,7 +212,7 @@ public abstract class AbstractInventoryServiceImpl {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
             }  catch (Exception e) {
-                log.error("反审核》》》，交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存操作异常", inventoryBusinessType.getName(), SourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(),e );
+                log.error("反审核》》》，交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存操作异常", inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(),e );
                 if(e instanceof ServiceException) {
                     ServiceException serviceException = (ServiceException) e;
                     throw serviceException;
@@ -250,7 +246,7 @@ public abstract class AbstractInventoryServiceImpl {
         // 数量
         Integer qty = param.getQty();
         // 来源
-        SourceTypeEnum sourceTypeEnum = param.getSourceType();
+        InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         // 单据信息
         String sourceId = param.getSourceId();
         // 单据日期
@@ -371,7 +367,7 @@ public abstract class AbstractInventoryServiceImpl {
         // 数量
         Integer qty = param.getQty();
         // 来源
-        SourceTypeEnum sourceTypeEnum = param.getSourceType();
+        InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         // 单据信息
         String sourceId = param.getSourceId();
         // 单据日期
