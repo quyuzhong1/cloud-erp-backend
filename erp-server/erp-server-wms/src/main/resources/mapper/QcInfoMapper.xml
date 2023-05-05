@@ -53,7 +53,7 @@
         sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status = 'waitQc' then 1 else 0
         end) as unQcTimeOutQty
         from qc_info qb
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -80,7 +80,7 @@
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -118,7 +118,7 @@
             sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status = 'waitQc' then 1 else 0
             end) as unQcTimeOutQty
         from qc_info qb
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -146,7 +146,7 @@
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">

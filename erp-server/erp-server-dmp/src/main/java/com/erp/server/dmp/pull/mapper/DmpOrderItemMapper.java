@@ -5,6 +5,7 @@ import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -18,6 +19,9 @@ public interface DmpOrderItemMapper extends BaseMapper<DmpOrderItemEntity> {
      * @Date 2023/4/19 18:30
      **/
     List<String> getItemIdBySkuAndYear(@Param("year") String year, @Param("skuNo") String skuNo);
+
+
+    LocalDateTime getOrderListingTime(@Param("skuNo") String skuNo);
 }
 
 

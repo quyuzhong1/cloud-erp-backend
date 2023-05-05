@@ -80,4 +80,11 @@ public class RocketMqConsumerGroup {
      */
     public static final String CHANGE_CURRENCY = "${spring.profiles.active}-change_currency";
 
+    /**
+     * 产品上市时间
+     */
+    public static final String PRODUCT_LISTING_UPDATE = "${spring.profiles.active}-PRODUCT_LISTING_UPDATE";
+
+
+
 }

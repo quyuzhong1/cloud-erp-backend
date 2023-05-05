@@ -144,7 +144,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         String orderId = orderInfoId;
         itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
-        dmpOrderItemService.checkOrderItem(itemList);
+        dmpOrderItemService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate());
         return orderInfoId;
     }
 
