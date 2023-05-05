@@ -1,9 +1,14 @@
 package com.erp.model.workflow.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ModelTypeEnum {
     OFTEN("1", "常用模块"),
     WAITDO("2", "代办模块");
 
+    @EnumValue
+    @JsonValue
     private String code;
     private String name;
 

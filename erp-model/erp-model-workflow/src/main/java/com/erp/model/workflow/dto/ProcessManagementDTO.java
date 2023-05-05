@@ -123,4 +123,44 @@ public class ProcessManagementDTO {
             */
             private Map<String,Object> variablesMap;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class RejectDTO {
+
+    /**
+            * 业务类型
+            */
+            @NotBlank(message = "业务类型不能为空")
+            private String businessKey;
+
+            /**
+            * 业务表id
+            */
+            @NotBlank(message = "业务表id不能为空")
+            private String businessId;
+
+            /**
+            * 审批人
+            */
+            @NotBlank(message = "审批人不能为空")
+            private String userId;
+
+            /**
+            * 驳回原因
+            */
+            private String rejectReason;
+
+            /**
+            * 审批结果
+            */
+            @NotBlank(message = "审批结果不能为空")
+            private ApproveTypeEnum rejectType;
+
+            /**
+            * 流程参数map
+            */
+            private Map<String,Object> variablesMap;
+
+    }
 }

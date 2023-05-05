@@ -50,4 +50,14 @@ public class ProcessManagementController extends BaseController {
         processManagementService.approveProcess(dto);
         return success();
     }
+
+    /**
+     * 驳回流程
+     * @param dto
+     */
+    @PostMapping("/reject")
+    public ApiResult rejectProcess(@RequestBody @Valid ProcessManagementDTO.RejectDTO dto) {
+        processManagementService.rejectProcess(dto);
+        return success();
+    }
 }
