@@ -10,6 +10,7 @@ import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -56,7 +57,25 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             return new LinkedHashMap<>();
         }
         LinkedHashMap<String, List<ProcessTaskManagementEntity>> nodeMap = list.stream()
-                .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurrentNodeId, LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurrentActivityId, LinkedHashMap::new, Collectors.toList()));
         return nodeMap;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveProcessTask(ProcessTaskManagementEntity insertTask) {
+        // 赋值上级节点id
+        ProcessTaskManagementEntity entity = lambdaQuery()
+                .eq(ProcessTaskManagementEntity::getProcessInstanceId, insertTask.getProcessInstanceId())
+                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
+                .ne(ProcessTaskManagementEntity::getCurrentActivityId, insertTask.getCurrentActivityId())
+                .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
+                .last("limit 1")
+                .one();
+        insertTask.setPreActivityId(entity.getCurrentActivityId());
+        boolean save = save(insertTask);
+        if (!save) {
+            throw new RuntimeException("保存流程任务失败");
+        }
     }
 }

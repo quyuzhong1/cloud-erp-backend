@@ -120,7 +120,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<TaskEntity> tasks = executionEntity.getTasks();
         String processInstanceId = processInstance.getProcessInstanceId();
         // 保存审批节点数据
-        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity("", processInstanceId, dto, activity.getActivityId(), processStartTime, processDefinition.getId(),processInstance.getProcessDefinitionId());
+        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activity.getActivityId(), processStartTime, processDefinition.getId(),processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
@@ -230,6 +230,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String comment) {
         // 查询下一个任务
@@ -254,11 +255,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .set(ProcessManagementEntity::getProcessStatus, statusEnum)
                 .set(ProcessManagementEntity::getCurrentNodeId, nextNodeId)
                 .set(null != endTime, ProcessManagementEntity::getEndTime, endTime)
+                .set(null != endTime && ApproveTypeEnum.PASS.equals(approveType) , ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
+                .set(null != endTime && ApproveTypeEnum.REJECT.equals(approveType) , ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.REJECT)
                 .eq(ProcessManagementEntity::getId, managementId)
                 .update();
         // 更新流程任务数据
         processTaskManagementService.updateApprove(taskId, approveType, comment);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void rejectProcess(ProcessManagementDTO.RejectDTO dto) {
+
     }
 
     @Override
@@ -286,7 +294,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
             Optional<ProcessTaskManagementEntity> approveUserId = Optional.empty();
             ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, userId);
-            processTaskManagementService.save(insertTask);
+            processTaskManagementService.saveProcessTask(insertTask);
             // 审核人配置
             if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
                 // 相邻节点去重

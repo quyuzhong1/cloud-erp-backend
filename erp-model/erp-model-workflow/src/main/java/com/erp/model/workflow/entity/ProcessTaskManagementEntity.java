@@ -39,8 +39,8 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前节点ID
      */
-    @TableField("current_node_id")
-    private String currentNodeId;
+    @TableField("current_activity_id")
+    private String currentActivityId;
 
     /**
      * 任务ID
@@ -90,11 +90,22 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("timeout_handle_type")
     private String timeoutHandleType;
 
+    /**
+     * 审批时间
+     */
     @TableField("approve_time")
     private LocalDateTime approveTime;
 
+    /**
+     * 备注
+     */
     @TableField("remark")
     private String remark;
+    /**
+     * 上一节点ID
+     */
+    @TableField("pre_activity_id")
+    private String preActivityId;
 
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -121,11 +132,13 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
     public static final String REMARK = "remark";
 
+    public static final String PRE_ACTIVITY_ID = "pre_activity_id";
+
 
 
     public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId) {
         this.processInstanceId = processInstanceId;
-        this.currentNodeId = activityId;
+        this.currentActivityId = activityId;
         this.taskId = taskId;
         this.startTime = startTime;
         this.taskStatus = approveStatus;

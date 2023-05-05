@@ -126,7 +126,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String ACT_PROCESS_INSTANCE_ID = "act_process_instance_id";
 
-    public ProcessManagementEntity(String businessName, String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId, String definitionId) {
+    public ProcessManagementEntity(String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId, String definitionId) {
         this.processDefinitionId = processDefinitionId;
         this.processInstanceId = processInstanceId;
         this.businessId = dto.getBusinessId();
@@ -135,7 +135,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
         this.startTime = startTime;
         this.processStatus = ProcessStatusEnum.RUNNING;
         this.approveStatus = ApproveStatusEnum.APPROVE_ING;
-        this.businessName = businessName;
+        this.businessName = dto.getBusinessName();
         this.businessKey = dto.getBusinessKey();
         this.actProcessInstanceId = definitionId;
     }
