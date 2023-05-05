@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -162,17 +163,11 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     public SysDepartmentUserNumberDTO getDeptByUserId(String userId) {
-        List<SysDepartmentUserEntity> list = lambdaQuery().eq(SysDepartmentUserEntity::getUserId, userId).list();
-        if (CollectionUtils.isEmpty(list)) {
+        SysDepartmentUserNumberDTO deptByUserId = baseMapper.getDeptByUserId(userId);
+        if (ObjectUtils.isEmpty(deptByUserId)) {
             return new SysDepartmentUserNumberDTO();
         }
-        SysUserInfoEntity userInfo = sysUserInfoService.getById(userId);
-        String userName = "";
-        if (userInfo != null) {
-            userName = userInfo.getUserName();
-        }
-        SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO(list.get(0).getDepartmentId(), "", userId, userName);
-        return dto;
+        return deptByUserId;
     }
 
     @Override

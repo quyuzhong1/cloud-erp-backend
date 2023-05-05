@@ -95,9 +95,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
         //采购部门
         if (ObjectUtil.isEmpty(departmentDTO)) {
-            //获取用户部门信息
-            SysDepartmentDTO department = sysUserFeign.getUserDeptById(departmentDTO.getDepartmentId());
-            resultMap.put("productDept", department.getName());
+            resultMap.put("productDept", departmentDTO.getCode());
         } else {
             resultMap.put("productDept", "");
         }

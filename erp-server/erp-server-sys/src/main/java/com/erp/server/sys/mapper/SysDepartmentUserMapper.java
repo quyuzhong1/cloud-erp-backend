@@ -28,6 +28,8 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
 
     List<SysDepartmentUserNumberDTO> findUserNumber();
 
+    SysDepartmentUserNumberDTO getDeptByUserId(@Param("userId") String userId);
+
     /**
      * 根据用户id获取上级用户
      * @param userId

@@ -27,10 +27,16 @@
     </select>
 
     <select id="findUserNumber" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
-        SELECT sdu.department_id,sdu.user_id,sui.user_name
-        FROM sys_department_user  sdu INNER
-        JOIN sys_user_info sui ON sdu.user_id = sui.uid
-        WHERE sui.delete_state=1;
+        SELECT
+        sdu.department_id,
+        sd.name AS departmentName,
+        sdu.user_id,
+        sui.user_name,
+        sd.code
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        WHERE sui.delete_state=1
     </select>
     <select id="listSuperiorByUserId" resultType="com.erp.model.sys.dto.UserSuperiorDTO">
         SELECT
@@ -58,5 +64,20 @@
             ) AS dept
         LEFT JOIN sys_department_user sdu on dept.id = sdu.department_id and sdu.lead_state = 1
         LEFT JOIN sys_user_info sui on sdu.user_id = sui.uid
+    </select>
+
+    <select id="getDeptByUserId" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
+        SELECT
+        sdu.department_id,
+        sd.name AS departmentName,
+        sdu.user_id,
+        sui.user_name,
+        sd.code
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        WHERE sui.delete_state=1
+        AND sdu.user_id = #{userId}
+        LIMIT 1
     </select>
 </mapper>
