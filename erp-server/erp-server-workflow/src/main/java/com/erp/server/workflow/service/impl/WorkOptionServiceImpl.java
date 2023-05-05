@@ -186,6 +186,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 WorkOptionDTO.TableNumDTO tableNumDTO = new WorkOptionDTO.TableNumDTO();
                 tableNumDTO.setTableName(myWorkOptionDTO.getModuleCode());
                 tableNumDTO.setApproveStatus(myWorkOptionDTO.getModuleStatus());
+                myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
                 switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
                     case PLM:
                         getPlmModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
@@ -218,6 +219,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         frequentlyViewDTOS.forEach(req -> {
+            req.setPathUrl(req.getModuleUrl());
             switch (SysClassifyEnum.getEnumByCode(req.getSysClassify())) {
                 case PLM:
                     req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
