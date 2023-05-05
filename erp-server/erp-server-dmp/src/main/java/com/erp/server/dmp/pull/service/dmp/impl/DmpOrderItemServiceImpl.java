@@ -126,6 +126,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 resultMap.put("skuNo", orderItemBean.getSkuNo());
                 resultMap.put("listingTime", platformCreateTime);
                 mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, orderItemBean.getId());
+            } else {
+                // 新品标识 1为新品 0 为非新品
+                if (platformCreateTime.getYear() == LocalDate.now().getYear()) {
+                    orderItemBean.setNewSign(1);
+                } else {
+                    orderItemBean.setNewSign(2);
+                }
             }*/
             DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
             if (null != dmpOrderItemEntity) {
