@@ -117,21 +117,4 @@ public class PullTaskCreateJob {
         XxlJobHelper.log("cleanRefundTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
-
-    /**
-     * 清洗订单上市时间
-     * @Author Luo_WG
-     * @Date 2023/5/4 17:16
-     * @return com.xxl.job.core.biz.model.ReturnT<java.lang.String>
-     **/
-    //@Scheduled(cron = "0/10 * * * * ?")
-    @XxlJob("cleanOrderListingTime")
-    public ReturnT<String>  cleanOrderListingTime() {
-        XxlJobHelper.log("cleanOrderListingTime 任务开始执行");
-        String jobParam = XxlJobHelper.getJobParam();
-        Integer pageSize = StrUtil.isNotBlank(jobParam) ? Integer.valueOf(jobParam) : 100;
-        dmpOrderItemService.cleanOrderListingTime();
-        XxlJobHelper.log("cleanOrderListingTime 任务开始完成");
-        return ReturnT.SUCCESS;
-    }
 }
