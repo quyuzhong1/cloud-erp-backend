@@ -189,7 +189,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             return;
         }
         List<String> ids = baseMapper.getItemIdBySkuAndYear(year, skuNo);
-        List<List<String>> partition = Lists.partition(ids, 1000);
+        List<List<String>> partition = Lists.partition(ids, 200);
         partition.forEach(req -> {
             LambdaUpdateWrapper<DmpOrderItemEntity> updateWrapper = new LambdaUpdateWrapper<>();
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
