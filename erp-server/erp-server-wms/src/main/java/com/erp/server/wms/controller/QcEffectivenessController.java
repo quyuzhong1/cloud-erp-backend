@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -36,6 +38,11 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<ViewQcOverviewDTO>
      */
     @PostMapping("/viewQcOverview")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcEffectiveness:viewQcOverview",
+            tableAlias = "qb"
+    )
     public ApiResult<QcEffectivenessDTO.ViewQcOverviewDTO> viewQcOverview(@RequestBody @Validated QcEffectivenessDTO.CommonSearchParamDTO dto) {
         QcEffectivenessDTO.ViewQcOverviewDTO result = qcEffectivenessService.viewQcOverview(dto);
         return success(result);
@@ -49,6 +56,11 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcTrend")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcEffectiveness:viewQcTrend",
+            tableAlias = "qb"
+    )
     public ApiResult<QcEffectivenessDTO.ViewQcTrendDTO> viewQcTrend(@RequestBody @Validated QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
         QcEffectivenessDTO.ViewQcTrendDTO result = qcEffectivenessService.viewQcTrend(dto);
         return success(result);
@@ -62,6 +74,11 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcForPersonnel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcEffectiveness:viewQcForPersonnel",
+            tableAlias = "qb"
+    )
     public ApiResult<PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO>> viewQcForPersonnel(@RequestBody @Validated PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> dto) {
         PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> list = qcEffectivenessService.viewQcForPersonnel(dto);
         return success(list);
@@ -75,6 +92,11 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult<List<ViewQcTrendDTO>>
      */
     @PostMapping("/viewQcForDocument")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcEffectiveness:viewQcForDocument",
+            tableAlias = "qb"
+    )
     public ApiResult<PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO>> viewQcForDocument(@RequestBody @Validated PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> dto) {
         PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> list = qcEffectivenessService.viewQcForDocument(dto);
         return success(list);
@@ -89,6 +111,11 @@ public class QcEffectivenessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcEffectiveness:exportExcel",
+            tableAlias = "qb"
+    )
     public ApiResult exportExcel(@RequestBody QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = qcEffectivenessService.exportExcel(dto, response);
         return flag == true ? success() : failure();

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcReportExportExcelType;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
@@ -26,7 +27,7 @@ public class QcEffectivenessDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonSearchParamDTO {
+    public static class CommonSearchParamDTO extends PermissionsDTO {
         /**
          * 时间集合
          */
