@@ -5,6 +5,7 @@ import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
+import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.delegate.TaskListener;
 import org.camunda.bpm.engine.impl.history.event.HistoryEvent;
 import org.camunda.bpm.spring.boot.starter.event.ExecutionEvent;
@@ -13,6 +14,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Locale;
 
 
 /**
@@ -47,6 +49,7 @@ public class CamundaGlobalListener {
 //      processManagementService.completeTaskHandle(taskDelegate);
     }
 
+
   }
 
   /**
@@ -71,6 +74,9 @@ public class CamundaGlobalListener {
   @EventListener
   public void onExecutionEvent(DelegateExecution executionDelegate) {
     log.info("Handle mutable execution event: {}",  executionDelegate.toString());
+    String activityId = executionDelegate.getCurrentActivityId();
+
+
   }
 
   /**
