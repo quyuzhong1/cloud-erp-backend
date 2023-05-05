@@ -45,6 +45,7 @@
       SELECT
       qi.id,
       qi.purchase_order_code,
+      qi.purchase_order_id,
       qi.qc_user_name,qr.qc_type,
       to_char(qi.qc_finish_time,'yyyy-MM-dd HH:mm:ss') AS qcFinishTime,
       qr.handle_mode_dict,

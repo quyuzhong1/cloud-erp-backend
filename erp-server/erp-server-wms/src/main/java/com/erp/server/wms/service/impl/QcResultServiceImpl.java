@@ -16,6 +16,7 @@ import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
 import com.erp.model.sys.enums.NoticeItemRoleEnum;
 import com.erp.model.sys.enums.NoticeNodeEnum;
@@ -29,6 +30,7 @@ import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
 import com.erp.server.wms.service.CommonService;
@@ -75,6 +77,9 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @Resource
     private CommonService commonService;
@@ -347,6 +352,10 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
         List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //采购订单id
+        List<String> poIds = list.stream().map(QcResultDTO.QcNoticeDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(poIds);
+
         String userName = commonService.getUserInfo().getUserName();
         for (QcResultDTO.QcNoticeDTO item : list) {
             String qcType = item.getQcType();
@@ -359,9 +368,34 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setSkuName(skuName);
+            Boolean isFirstMassProduct = poList.stream().filter(p -> p.getId().equals(item.getPurchaseOrderId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(Boolean.FALSE);
+            item.setIsFirstMassProduct(isFirstMassProduct);
         }
-        //新品质检
-        String qcNewProductCode = NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
+        //以新 老品分组
+        Map<Boolean, List<QcResultDTO.QcNoticeDTO>> map = list.stream().collect(Collectors.groupingBy(QcResultDTO.QcNoticeDTO::getIsFirstMassProduct));
+        for (Map.Entry<Boolean, List<QcResultDTO.QcNoticeDTO>> entry : map.entrySet()) {
+            //是否新品 true 是
+            Boolean isFirstMassProduct = entry.getKey();
+            List<QcResultDTO.QcNoticeDTO> value = entry.getValue();
+            sendMsg(isFirstMassProduct, value);
+        }
+
+    }
+
+    /**
+     * 发送消息 根据新老品
+     * @param isFirstMassProduct
+     */
+    private void sendMsg(Boolean isFirstMassProduct, List<QcResultDTO.QcNoticeDTO> list) {
+        //老品质检
+        String qcNewProductCode = NoticeNodeEnum.QC_OLD_PRODUCT.getCode();
+        //表示新品
+        if(isFirstMassProduct){
+            qcNewProductCode=NoticeNodeEnum.QC_NEW_PRODUCT.getCode();
+        }
+        List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
+
         List<NoticeReceiverDTO.InfoDTO> receiverList = sysUserFeign.listNoticeReceiverByNodeKey(qcNewProductCode);
         if (CollectionUtils.isEmpty(receiverList)) {
             return;
@@ -411,7 +445,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                     userIdList.addAll(people.getProductChargeIdList());
                 }
             }
-            userIdList=userIdList.stream().filter(u->StringUtils.isNotBlank(u)).collect(Collectors.toList());
+            userIdList = userIdList.stream().filter(u -> StringUtils.isNotBlank(u)).collect(Collectors.toList());
             NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
             noticeMsgInfoDTO.setReceiverUserIds(userIdList);
             noticeMsgInfoDTO.setTitle(msgHead);
@@ -419,13 +453,11 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                     noticeMsgInfoDTO, IdUtil.simpleUUID());
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
             }
 
         }
-
-
     }
 
 
