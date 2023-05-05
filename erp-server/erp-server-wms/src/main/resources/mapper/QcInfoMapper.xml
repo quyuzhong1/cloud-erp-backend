@@ -16,15 +16,18 @@
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         group by qb.qc_status
     </select>
 
     <select id="listQcBillGroupQcTrend" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$GroupQcTrendDTO">
         select
-        case when #{type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
-            when #{type} = 'week' then to_char(qb.qc_date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,'YYYY-mm-dd')
-            when #{type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
+        case when #{params.type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
+            when #{params.type} = 'week' then to_char(qb.qc_date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,'YYYY-mm-dd')
+            when #{params.type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
             else ''
             end as dateStr,
             qb.qc_status as status,
@@ -34,6 +37,9 @@
             qb.is_deleted = false and qb.qc_date is not null
             <if test="beginDate != null and endDate != null">
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         group by dateStr, qb.qc_status order by dateStr asc
@@ -59,6 +65,9 @@
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -101,6 +110,9 @@
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
 
@@ -124,6 +136,12 @@
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -166,6 +184,9 @@
                 <if test="params.isTimeOut == true">
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>

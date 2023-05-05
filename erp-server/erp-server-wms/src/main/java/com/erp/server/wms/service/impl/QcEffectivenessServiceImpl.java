@@ -136,7 +136,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                 beginDate = endDate.minusMonths(15);
             }
         }
-        List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcInfoMapper.listQcBillGroupQcTrend(dto.getType(),beginDate,endDate);
+        List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcInfoMapper.listQcBillGroupQcTrend(dto,beginDate,endDate);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> map = list.stream().collect(Collectors.groupingBy(QcEffectivenessDTO.GroupQcTrendDTO::getDateStr));
             List<Map.Entry<String, List<QcEffectivenessDTO.GroupQcTrendDTO>>> mapList = map.entrySet().stream().sorted(Comparator.comparing(obj -> obj.getKey())).collect(Collectors.toList());
