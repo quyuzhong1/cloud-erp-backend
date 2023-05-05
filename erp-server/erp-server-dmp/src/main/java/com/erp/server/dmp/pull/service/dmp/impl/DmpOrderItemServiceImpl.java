@@ -177,6 +177,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             }
             LocalDateTime orderListingTime = baseMapper.getOrderListingTime(dto.getSkuNo());
             if (orderListingTime == null) {
+                redisUtil.hset(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo, null, 24 * 3600);
                 return;
             }
             Map<String, Object> resultMap = new HashMap<>();
