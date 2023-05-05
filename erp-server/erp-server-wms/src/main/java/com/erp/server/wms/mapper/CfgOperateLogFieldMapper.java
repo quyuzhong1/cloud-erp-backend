@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.CfgModuleOperateLogFieldEntity;
+import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-03-17
  */
 @Mapper
-public interface CfgModuleOperateLogFieldMapper extends BaseMapper<CfgModuleOperateLogFieldEntity> {
+public interface CfgOperateLogFieldMapper extends BaseMapper<CfgOperateLogFieldEntity> {
 
 }

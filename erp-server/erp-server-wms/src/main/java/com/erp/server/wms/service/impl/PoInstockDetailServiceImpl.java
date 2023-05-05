@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetailMapper, PoInstockDetailEntity> implements PoInstockDetailService {
 
     @Resource
-    private ModuleOperateLogService moduleOperateLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
@@ -92,7 +92,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             List<PoInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<PoInstockDetailEntity> newList = BeanMapperUtils.copyList(PoInstockDetailEntity.class, details);
@@ -179,13 +179,13 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);
                 }
-                moduleOperateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_INSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old,entity, ModuleTypeEnum.PO_INSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), addPairList, "编辑操作");
         }
     }
 

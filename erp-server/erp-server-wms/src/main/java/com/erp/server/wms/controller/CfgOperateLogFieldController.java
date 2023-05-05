@@ -3,7 +3,7 @@ package com.erp.server.wms.controller;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.server.wms.service.CfgModuleOperateLogFieldService;
+import com.erp.server.wms.service.CfgOperateLogFieldService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,10 +18,10 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("/moduleOperateLogField")
-public class CfgModuleOperateLogFieldController extends BaseController {
+public class CfgOperateLogFieldController extends BaseController {
 
     @Resource
-    private CfgModuleOperateLogFieldService cfgModuleOperateLogFieldService;
+    private CfgOperateLogFieldService cfgOperateLogFieldService;
 
     /**
      * 操作日志-操作日志字段新增
@@ -31,7 +31,7 @@ public class CfgModuleOperateLogFieldController extends BaseController {
      */
     @PostMapping("/saveBatchSysLogField")
     public ApiResult saveBatchSysLogField() {
-        Boolean flag = cfgModuleOperateLogFieldService.saveBatchSysLogField();
+        Boolean flag = cfgOperateLogFieldService.saveBatchSysLogField();
         return flag == true ? success() : failure();
     }
 }

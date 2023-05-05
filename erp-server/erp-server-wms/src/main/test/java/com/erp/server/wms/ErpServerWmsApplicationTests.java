@@ -1,9 +1,9 @@
 package com.erp.server.scm;
 
-import com.erp.model.wms.entity.CfgModuleOperateLogFieldEntity;
+import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.server.wms.ErpServerWmsApplication;
-import com.erp.server.wms.service.CfgModuleOperateLogFieldService;
+import com.erp.server.wms.service.CfgOperateLogFieldService;
 import com.erp.server.wms.service.QcResultService;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +28,7 @@ import java.util.List;
 public class ErpServerWmsApplicationTests {
 
     @Resource
-    private CfgModuleOperateLogFieldService logFieldService;
+    private CfgOperateLogFieldService logFieldService;
 
     @Resource
     private QcResultService qcResultService;
@@ -39,11 +39,11 @@ public class ErpServerWmsApplicationTests {
 
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
         String classPath = String.valueOf(PoInstockDetailEntity.class);
-        List<CfgModuleOperateLogFieldEntity> logFields = Arrays.asList(
-                new CfgModuleOperateLogFieldEntity().setField("stockInQty").setFieldName("入库数量").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("exceedQty").setFieldName("超出数量").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("warehouseLocationName").setFieldName("库位").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgModuleOperateLogFieldEntity().setField("remark").setFieldName("入库备注").setClassPath(classPath).setType(0).setEnumClass("")
+        List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
+                new CfgOperateLogFieldEntity().setField("stockInQty").setFieldName("入库数量").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("exceedQty").setFieldName("超出数量").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("warehouseLocationName").setFieldName("库位").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("remark").setFieldName("入库备注").setClassPath(classPath).setType(0).setEnumClass("")
         );
         logFieldService.saveBatch(logFields);
         System.out.println("sss");

@@ -1,16 +1,10 @@
 package com.erp.server.scm.controller;
 
 
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
 import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

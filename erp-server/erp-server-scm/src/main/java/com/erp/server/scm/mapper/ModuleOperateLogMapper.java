@@ -3,7 +3,7 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
+import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -25,5 +25,5 @@ public interface ModuleOperateLogMapper extends BaseMapper<ModuleOperateLogEntit
      * @param params
      * @return IPage<listDTO>
      */
-    IPage<ModuleOperateLogDTO.ListDTO> paging(Page query, ModuleOperateLogDTO.SearchDTO params);
+    IPage<OperateLogDTO.ListDTO> paging(Page query, OperateLogDTO.SearchDTO params);
 }

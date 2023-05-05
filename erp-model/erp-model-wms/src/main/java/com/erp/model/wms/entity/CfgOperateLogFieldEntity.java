@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("cfg_module_operate_log_field")
-public class CfgModuleOperateLogFieldEntity extends BaseEntity<CfgModuleOperateLogFieldEntity> {
+@TableName("cfg_operate_log_field")
+public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntity> {
 
     /**
      * 字段

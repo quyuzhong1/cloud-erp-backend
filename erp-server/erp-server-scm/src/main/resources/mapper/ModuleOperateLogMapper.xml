@@ -23,7 +23,7 @@
         <result column="pid" property="pid" />
     </resultMap>
 
-    <select id="paging" resultType="com.erp.model.scm.dto.ModuleOperateLogDTO$ListDTO">
+    <select id="paging" resultType="com.erp.model.scm.dto.OperateLogDTO$ListDTO">
         select
         sol.module_type,
         sol.business_id,

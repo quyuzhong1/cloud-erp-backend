@@ -14,7 +14,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
+import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.entity.CfgModuleOperateLogFieldEntity;
 import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.ModuleOperateLogEntity;
@@ -55,9 +55,9 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     private SysUserFeign sysUserFeign;
 
     @Override
-    public PagingVO<ModuleOperateLogDTO.ListDTO> paging(PagingDTO<ModuleOperateLogDTO.SearchDTO> dto) {
+    public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ModuleOperateLogDTO.SearchDTO params = dto.getParams();
+        OperateLogDTO.SearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }

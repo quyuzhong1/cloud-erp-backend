@@ -5,8 +5,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.ModuleOperateLogDTO;
-import com.erp.server.wms.service.ModuleOperateLogService;
+import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.server.wms.service.OperateLogService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,7 +26,7 @@ import javax.annotation.Resource;
 public class ModuleOperateLogController extends BaseController {
 
     @Resource
-    private ModuleOperateLogService moduleOperateLogService;
+    private OperateLogService operateLogService;
 
    /**
     * 操作日志-列表查询
@@ -36,8 +36,8 @@ public class ModuleOperateLogController extends BaseController {
     * @return ApiResult<PagingVO<listDTO>>
     */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<ModuleOperateLogDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ModuleOperateLogDTO.SearchDTO> dto){
-        PagingVO<ModuleOperateLogDTO.ListDTO> pagingVO = moduleOperateLogService.paging(dto);
+    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OperateLogDTO.SearchDTO> dto){
+        PagingVO<OperateLogDTO.ListDTO> pagingVO = operateLogService.paging(dto);
         return success(pagingVO);
     }
 }
