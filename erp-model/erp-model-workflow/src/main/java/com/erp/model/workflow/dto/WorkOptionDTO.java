@@ -229,6 +229,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleStatusId;
 
         /**
+         * 模块分类 plm wms scm
+         */
+        public String sysClassify;
+
+        /**
          * 菜单id
          */
         private String menuId;

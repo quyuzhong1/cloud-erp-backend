@@ -65,6 +65,7 @@
         SELECT
         wo.id,
         wmrs.id AS moduleStatusId,
+        wm.sys_classify AS sysClassify,
         wm.id AS menu_id,
         wm.module_classify AS name,
         wmrs.module_url AS moduleUrl,

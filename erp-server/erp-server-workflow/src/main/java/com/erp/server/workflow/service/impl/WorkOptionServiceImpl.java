@@ -217,6 +217,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     public List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView() {
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+        frequentlyViewDTOS.forEach(req -> {
+            switch (SysClassifyEnum.getEnumByCode(req.getSysClassify())) {
+                case PLM:
+                    req.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
+                    break;
+                case SCM:
+                    req.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
+                    break;
+                case WMS:
+                    req.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
+                    break;
+                default:
+                    break;
+            }
+        });
         return frequentlyViewDTOS;
     }
 
@@ -250,7 +265,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(0);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT);
+        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
     }
 
     private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
@@ -260,7 +275,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT);
+        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
     }
 
     private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
@@ -268,7 +283,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT);
+        pendingViewDetailDTO.setModuleUrl(GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
     }
 
     /**
