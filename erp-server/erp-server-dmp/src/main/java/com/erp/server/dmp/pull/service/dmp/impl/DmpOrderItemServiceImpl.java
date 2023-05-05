@@ -171,6 +171,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
         }*/ else {
+            String sku = String.valueOf(redisUtil.hget(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo));
+            if (StringUtils.isNotBlank(sku)) {
+                return;
+            }
             LocalDateTime orderListingTime = baseMapper.getOrderListingTime(dto.getSkuNo());
             if (orderListingTime == null) {
                 return;
