@@ -291,7 +291,7 @@ public interface SysUserFeign {
 
     /**
      * 根据node key 获取到接收信息
-     * @param
+     * @param nodeKey 节点key
      * @return
      */
     @PostMapping("feign/notice/listNoticeReceiver")

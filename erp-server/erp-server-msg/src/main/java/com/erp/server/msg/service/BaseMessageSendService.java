@@ -38,6 +38,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
     /**
      * 初始化时把平台对应的处理类放到一个map中
      */
+    @Override
     public void afterPropertiesSet() throws Exception {
         msgContext.put(channel(), this);
     }

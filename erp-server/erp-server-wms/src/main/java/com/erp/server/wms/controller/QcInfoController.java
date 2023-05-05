@@ -9,8 +9,12 @@ import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
+import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.server.wms.service.QcInfoService;
+import com.erp.server.wms.service.QcResultService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +36,8 @@ public class QcInfoController extends BaseController {
 
     @Resource
     private QcInfoService qcInfoService;
-
-
+    @Resource
+    private QcResultService qcResultService;
 
 
     /**
@@ -116,7 +120,7 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/exemption")
-    public ApiResult exemption(@RequestBody @Validated({UpdateGroup.class})  QcInfoDTO.SaveOrUpdateDTO dto) {
+    public ApiResult exemption(@RequestBody @Validated({UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
         Boolean result = qcInfoService.exemption(dto);
         return result ? success() : failure();
     }
@@ -220,10 +224,11 @@ public class QcInfoController extends BaseController {
 
     /**
      * 下推退货单数据显示
-     * @author yl
-     * @date: 2023/4/11 20:30
+     *
      * @param dto
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
+     * @author yl
+     * @date: 2023/4/11 20:30
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
     public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -234,15 +239,23 @@ public class QcInfoController extends BaseController {
 
     /**
      * 下推退货单数据保存
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>>
      * @author yl
      * @date 2023-04-24 9:25
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>>
      */
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = qcInfoService.generatePurchaseReturnOrder(dto);
-        return flag?success():failure();
+        return flag ? success() : failure();
+    }
+
+
+    @PostMapping("/test")
+    public ApiResult test(@RequestBody List<String> ids) {
+        qcResultService.sendQcResultMsg(ids);
+        return success();
     }
 
 

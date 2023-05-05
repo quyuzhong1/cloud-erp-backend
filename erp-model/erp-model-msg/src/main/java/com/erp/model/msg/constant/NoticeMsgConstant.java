@@ -18,5 +18,5 @@ public interface NoticeMsgConstant {
     /**
      * 质检结果消息内容
      */
-    String QC_RESULT_CONTENT = "**采购订单：**%s\n**产品名称：**%s\n**质检人员：%s\n**完成时间：**%s\n**处理措施：**%s";
+    String QC_RESULT_CONTENT = "**采购订单：**%s\n**产品名称：**%s\n**质检人员：**%s\n**完成时间：**%s\n**处理措施：**%s";
 }

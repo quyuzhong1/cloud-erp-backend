@@ -9,18 +9,20 @@ package com.erp.model.wms.enums;
  */
 public enum DictBasicEnum {
 
-    WAREHOUSE_TYPE("warehouseType", "warehouseType", "仓库类型"),
-    QC_REPORT_RESULT("qcReportResult", "qcReportResult", "质检单质检结果");
+    WAREHOUSE_TYPE("warehouseType", "", "仓库类型"),
+    QC_REPORT_RESULT("qcReportResult", "", "质检单质检结果"),
+    HANDLE_MODE_TYPE("handleModeType", "", "质检单处理措施"),
+    ;
 
 
     private String key;
-    private String type;
+    private String remark;
     private String desc;
 
 
-    DictBasicEnum(String key, String type, String desc) {
+    DictBasicEnum(String key, String remark, String desc) {
         this.key = key;
-        this.type = type;
+        this.remark = remark;
         this.desc = desc;
     }
 
@@ -28,8 +30,8 @@ public enum DictBasicEnum {
         return key;
     }
 
-    public String getType() {
-        return type;
+    public String getRemark() {
+        return remark;
     }
 
     public String getDesc() {

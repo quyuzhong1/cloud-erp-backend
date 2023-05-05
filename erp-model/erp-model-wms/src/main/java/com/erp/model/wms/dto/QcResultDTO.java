@@ -435,7 +435,7 @@ public class QcResultDTO {
         /**
          * 质检完成时间
          */
-        private LocalDateTime qcFinishTime;
+        private String qcFinishTime;
 
         /**
          * 处理措施
