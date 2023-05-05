@@ -56,7 +56,7 @@ public class ProcessDefinitionDTO {
         /**
          * 审核人设置
          */
-        @NotBlank(message = "审核人设置不能为空")
+        @NotNull(message = "审核人设置不能为空")
         private DictBasicEnum reviewSetting;
 
         /**
