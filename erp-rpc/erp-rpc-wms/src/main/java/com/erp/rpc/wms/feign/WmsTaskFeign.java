@@ -1,6 +1,5 @@
 package com.erp.rpc.wms.feign;
 
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -78,7 +77,7 @@ public interface WmsTaskFeign {
      * 批量新增退货单
      */
     @PostMapping("feign/purchaseReturnOrder/addReturnOrder")
-    ApiResult batchAddReturnOrder(List<PurchaseReturnOrderDTO.AddDTO> dto);
+    Boolean batchAddReturnOrder(List<PurchaseReturnOrderDTO.AddDTO> dto);
 
     /**
      * 获取入库数量

@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.StringUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.FeignServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.util.List;
 
 /**
@@ -31,7 +33,7 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages= {"com.erp.server.*.controller.api","com.erp.server.scm.config"})
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
@@ -43,6 +45,19 @@ public class GlobalExceptionHandler {
         result.setMsg(e.getMsg());
         return result;
     }
+
+
+    @ExceptionHandler({FeignServiceException.class})
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResult resolveException(FeignServiceException  e) {
+        log.error("系统异常：{}", e.getMsg(), e);
+        ApiResult result = new ApiResult();
+        result.setCode(e.getCode());
+        result.setMsg(e.getMsg());
+        return result;
+    }
+
+
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -132,17 +147,6 @@ public class GlobalExceptionHandler {
             return ApiResult.error(ApiError.Default);
         }
     }
-
-    @ExceptionHandler(value = RuntimeException.class)
-    public ApiResult resolveException(RuntimeException ex) {
-        log.error("系统异常:", ex);
-        if (StrUtils.isNotEmpty(ex.getMessage()) && ex.getMessage().contains("Load balancer does not have available server for client")) {
-            return ApiResult.error(ApiError.ERROR_1023);
-        } else {
-            return ApiResult.error(ApiError.Default);
-        }
-    }
-
 
 
 

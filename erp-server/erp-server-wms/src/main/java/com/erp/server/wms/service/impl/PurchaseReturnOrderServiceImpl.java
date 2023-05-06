@@ -15,7 +15,6 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -196,7 +195,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         String purchaseUserId = dto.getPurchaseUserId();
-        if(StringUtils.isNotBlank(purchaseUserId)){
+        if (StringUtils.isNotBlank(purchaseUserId)) {
             SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
             purchaseReturnOrderEntity.setPurchaseUserId(dto.getPurchaseUserId());
             purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
@@ -210,7 +209,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             purchaseReturnOrderEntity.setSupplierContactName(supplierContactById.getPerson());
         }
-        purchaseReturnOrderEntity.setReturnUserName(userDTO!=null?userDTO.getUserName():"");
+        purchaseReturnOrderEntity.setReturnUserName(userDTO != null ? userDTO.getUserName() : "");
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         purchaseReturnOrderEntity.setBillDate(LocalDate.now());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
@@ -626,7 +625,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .set(PurchaseReturnOrderEntity::getInvalidTime, LocalDateTime.now())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
-        
+
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
@@ -822,27 +821,33 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @date 2023-04-25 11:09
      */
     @Override
-    public ApiResult batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
+    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
         if (CollectionUtils.isNotEmpty(list)) {
-            try {
-                for (PurchaseReturnOrderDTO.AddDTO item : list) {
-                    this.add(item);
-                }
-            } catch (ServiceException e) {
-                return ApiResult.error(e.getCode(), e.getMsg());
+            //  try {
+            for (PurchaseReturnOrderDTO.AddDTO item : list) {
+                this.add(item);
             }
+//            } catch (Exception e) {
+//                if (e instanceof ServiceException) {
+//                    return ApiResult.error(((ServiceException) e).getCode(), ((ServiceException) e).getMsg());
+//                }
+//                return ApiResult.error(ApiError.Default);
+//            }
 
         }
-        return ApiResult.error(ApiError.Default);
+//        return ApiResult.error(ApiError.Default);
+
+        return Boolean.TRUE;
 
     }
 
     /**
      * 修改到货状态
-     * @Author Luo_WG
-     * @Date 2023/4/28 11:37
+     *
      * @param PurchaseOrderId PurchaseOrderId
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/4/28 11:37
      **/
     @Override
     public void updateArrivalState(String PurchaseOrderId) {

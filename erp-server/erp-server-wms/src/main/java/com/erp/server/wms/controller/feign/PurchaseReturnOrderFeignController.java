@@ -1,12 +1,10 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,10 +56,10 @@ public class PurchaseReturnOrderFeignController extends BaseController {
     }
 
     @PostMapping("/addReturnOrder")
-    public ApiResult addReturnOrder(@RequestBody List<PurchaseReturnOrderDTO.AddDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return failure();
-        }
+    public Boolean addReturnOrder(@RequestBody List<PurchaseReturnOrderDTO.AddDTO> list) {
+//        if (CollectionUtils.isEmpty(list)) {
+//            return failure();
+//        }
         return  purchaseReturnOrderService.batchAdd(list);
 
 

@@ -1154,12 +1154,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
-            try {
-              return  wmsTaskFeign.batchAddReturnOrder(addList);
-            } catch (ServiceException e) {
-                return ApiResult.error(e.getCode(), e.getMessage());
-            }
-
+            wmsTaskFeign.batchAddReturnOrder(addList);
         }
         return ApiResult.success();
     }
