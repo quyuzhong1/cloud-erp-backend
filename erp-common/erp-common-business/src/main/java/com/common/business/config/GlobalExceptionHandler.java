@@ -38,7 +38,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.OK)
     public ApiResult resolveException(ServiceException e) {
         log.error("系统异常：{}", e.getMsg(), e);
-        return new ApiResult(e);
+        ApiResult result = new ApiResult();
+        result.setCode(e.getCode());
+        result.setMsg(e.getMsg());
+        return result;
     }
 
 
@@ -139,6 +142,8 @@ public class GlobalExceptionHandler {
             return ApiResult.error(ApiError.Default);
         }
     }
+
+
 
 
     /**

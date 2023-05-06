@@ -50,12 +50,13 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     private String curWarehouseId;
 
     /**
-     * 当前仓库位id（可以传输，某些单据没有库位信息）
+     * 当前仓库位id（没有不用传输，某些单据不需要选择库位信息）
      */
     private String curWarehouseLocation;
 
     /**
-     * 需要修改的库存状态（可以不传）;配置在规则中表的业务场景不要配置
+     * 配置在规则中表的业务场景不要配置
+     * 需要修改的库存状态（可以不传，默认会从配置中读取；如果指定了则取指定的状态）
      */
     private InventoryStatusEnum curInventoryStatus;
 
@@ -66,7 +67,7 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     private String targetWarehouseId;
 
     /**
-     * 目的仓库位id（可以传输，某些单据没有库位信息）
+     * 目的仓库位id（没有不用传输，某些单据不需要选择库位信息）
      */
     private String targetWarehouseLocation;
 
@@ -83,11 +84,13 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
 
     /**
      * 当前仓库存增加或减少（如果指定了库存状态，此字段必填）
+     * 从规则中配置的交易不用配置，特殊情况需要人工指定库存状态的则需要传输，库存增加或减少（如果指定了库存状态，此字段必填）
      */
     private InventoryModeEnum curInventoryMode;
 
     /**
      * 目的仓库存增加或减少（如果指定了库存状态，此字段必填）
+     * 从规则中配置的交易不用配置，特殊情况需要人工指定库存状态的则需要传输，库存增加或减少（如果指定了库存状态，此字段必填）
      */
     private InventoryModeEnum targetInventoryMode;
 

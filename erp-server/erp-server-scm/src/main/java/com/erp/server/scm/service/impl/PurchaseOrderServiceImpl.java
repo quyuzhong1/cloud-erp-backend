@@ -1059,7 +1059,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PoInstockDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        stockInSkuList = stockInSkuList.stream().filter(s ->approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
+        stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO item : list) {
             item.setSourceType(type);
@@ -1091,7 +1091,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date 2023-04-25 10:32
      */
     @Override
-    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //查询实退数量
         List<String> sourceIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
@@ -1107,8 +1107,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_99059);
         }
         List<PoInstockDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-
-        LoginUser userInfo = commonService.getUserInfo();
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
         Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
@@ -1133,6 +1131,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setSupplierId(purchaseOrderEntity.getSupplierId());
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
@@ -1151,15 +1150,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
-            addDTO.setReturnUserId(userInfo.getUid());
-
             addList.add(addDTO);
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
-            wmsTaskFeign.batchAddReturnOrder(addList);
+            try {
+              return  wmsTaskFeign.batchAddReturnOrder(addList);
+            } catch (ServiceException e) {
+                return ApiResult.error(e.getCode(), e.getMessage());
+            }
+
         }
-        return Boolean.TRUE;
+        return ApiResult.success();
     }
 
 
@@ -1447,7 +1449,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
-
 
 
             //入库数量

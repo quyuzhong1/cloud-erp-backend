@@ -48,6 +48,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryEntity findInventoryByWareLocalSkuStatus(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
+                .eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId))
+                .eq(InventoryEntity::getDictInventoryStatus, status);
+        InventoryEntity inventory = baseMapper.selectOne(queryWrapper);
+        return inventory;
+    }
+
+    @Override
+    public InventoryEntity findInventoryByWareLocalSkuStatusWithLock(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
+        // 组织+仓库+库位+SKU+状态 确定唯一一条记录
         // 此处使用读写锁，避免并发情况下读取的数据不一致，读跟读之间不冲突，读写或写写冲突，暂不考虑库位
         String lockKey = StrUtil.format( "{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);

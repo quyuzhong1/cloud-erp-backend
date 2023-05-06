@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
@@ -19,31 +20,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface InventoryFeign {
 
     /**
+     * 调用说明：
+     * 1.调用方如果不是wms，需使用feign远程调用，同时使用seata分布式事务
+     * 2.由于存在全局异常拦截，需拦截远程调用方的异常信息，使用ResultUtil.checkRemoteResult
+     */
+
+    /**
      * 出入库业务，按业务类型
      * @param dto
      */
     @PostMapping("/feign/inventory/approveInOutStockByType")
-    Boolean approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto);
+    ApiResult<Void> approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto);
 
     /**
      * 调拨业务，按业务类型
      * @param dto
      */
     @PostMapping("/feign/inventory/approveTransferByType")
-    Boolean approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto);
+    ApiResult<Void> approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto);
 
     /**
      * 调拨业务，自定义规则
      * @param dto
      */
     @PostMapping("/feign/inventory/approveByRule")
-    Boolean approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto);
+    ApiResult<Void> approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto);
 
     /**
      * 反审核
      * @param dto
      */
     @PostMapping("/feign/inventory/unApprove")
-    Boolean unApprove(@RequestBody @Validated InventoryUnApproveDTO dto);
+    ApiResult<Void> unApprove(@RequestBody @Validated InventoryUnApproveDTO dto);
 
 }

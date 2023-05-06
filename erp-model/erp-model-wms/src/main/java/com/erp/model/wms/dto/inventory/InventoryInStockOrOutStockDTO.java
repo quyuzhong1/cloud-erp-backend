@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * @Classname: InventoryInStockOrOutStock
- * @Description: 出入库业务按业务类型，规则配置在表中，适应于在2个仓库中出入，即一个仓库出一个仓库进
+ * @Description: 出入库业务按业务类型，规则配置在表中，出入库只针对一个仓库的操作
  * @CreateTime: 2023-04-27  10:35
  * @Author: zhangchunlin
  */
