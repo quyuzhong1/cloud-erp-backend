@@ -1107,8 +1107,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_99059);
         }
         List<PoInstockDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-
-        LoginUser userInfo = commonService.getUserInfo();
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
         Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
@@ -1133,6 +1131,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             addDTO.setSupplierId(purchaseOrderEntity.getSupplierId());
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
             addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
             List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
@@ -1151,16 +1150,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setPurchasePriceDetailList(addDetailList);
-            addDTO.setReturnUserId(userInfo.getUid());
-
             addList.add(addDTO);
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
             try {
               return  wmsTaskFeign.batchAddReturnOrder(addList);
-            } catch (Exception e) {
-                return ApiResult.error(1, e.getMessage());
+            } catch (ServiceException e) {
+                return ApiResult.error(e.getCode(), e.getMessage());
             }
 
         }

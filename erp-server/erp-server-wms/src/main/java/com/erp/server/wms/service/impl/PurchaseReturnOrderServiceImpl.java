@@ -828,8 +828,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 for (PurchaseReturnOrderDTO.AddDTO item : list) {
                     this.add(item);
                 }
-            } catch (Exception e) {
-                return ApiResult.error(1, e.getMessage());
+            } catch (ServiceException e) {
+                return ApiResult.error(e.getCode(), e.getMsg());
             }
 
         }
