@@ -47,7 +47,7 @@
       qi.purchase_order_code,
       qi.purchase_order_id,
       qi.qc_user_name,qr.qc_type,
-      to_char(qi.qc_finish_time,'yyyy-MM-dd HH:mm:ss') AS qcFinishTime,
+      to_char(qi.qc_finish_time,'yyyy-MM-dd HH24:MI:ss') AS qcFinishTime,
       qr.handle_mode_dict,
       qp.sku_id,qp.sku_no
       FROM  qc_info qi INNER JOIN

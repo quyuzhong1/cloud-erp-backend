@@ -15,6 +15,7 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -821,13 +822,19 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @date 2023-04-25 11:09
      */
     @Override
-    public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
+    public ApiResult batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
         if (CollectionUtils.isNotEmpty(list)) {
-            for (PurchaseReturnOrderDTO.AddDTO item : list) {
-                this.add(item);
+            try {
+                for (PurchaseReturnOrderDTO.AddDTO item : list) {
+                    this.add(item);
+                }
+            } catch (Exception e) {
+                return ApiResult.error(1, e.getMessage());
             }
+
         }
-        return true;
+        return ApiResult.error(ApiError.Default);
+
     }
 
     /**

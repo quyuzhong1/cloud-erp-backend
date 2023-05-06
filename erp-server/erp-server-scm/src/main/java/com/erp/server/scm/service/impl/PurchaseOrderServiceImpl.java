@@ -1059,7 +1059,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PoInstockDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        stockInSkuList = stockInSkuList.stream().filter(s ->approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
+        stockInSkuList = stockInSkuList.stream().filter(s -> approveStatus.equals(s.getApproveStatus())).collect(Collectors.toList());
         String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO item : list) {
             item.setSourceType(type);
@@ -1091,7 +1091,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date 2023-04-25 10:32
      */
     @Override
-    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //查询实退数量
         List<String> sourceIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
@@ -1157,9 +1157,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
-            wmsTaskFeign.batchAddReturnOrder(addList);
+            try {
+              return  wmsTaskFeign.batchAddReturnOrder(addList);
+            } catch (Exception e) {
+                return ApiResult.error(1, e.getMessage());
+            }
+
         }
-        return Boolean.TRUE;
+        return ApiResult.success();
     }
 
 
@@ -1447,7 +1452,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
-
 
 
             //入库数量

@@ -1171,17 +1171,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         LoginUser userInfo = commonService.getUserInfo();
         List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
-        //采购订单明细id
-        List<String> podIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceDetailId).collect(Collectors.toList());
         //采购订单id集合
         List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
 
         List<PurchaseOrderEntity> purchaseOrderDbList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
-        //收获
+        //收货数量
         List<WarehouseReceiveEntity> receiveList = warehouseReceiveService.listByPurchaseOrderIds(poIds);
+        //收货单ids
+        List<String> receiveIds=receiveList.stream().map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
         //收货sku 明细信息
-        List<WarehouseReceiveDetailEntity> receiveSkuList = warehouseReceiveDetailService.listDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveSkuList = warehouseReceiveDetailService.listDetailByMainIds(receiveIds);
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
         String qcBill = SourceTypeEnum.QC_BILL.getCode();
@@ -1208,9 +1208,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
-                //验证收货数量
-                Integer receiveQty = receiveSkuList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getSourceDetailId())).map(e -> e.getReceiveQty()).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(receiveQty)) {
+                //收货单的ids
+                List<String> receiveIdList= receiveList.stream().filter(r->r.getPurchaseOrderId().equals(detail.getPurchaseOrderId())).map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
+                //验证 sku 收货数量
+                Integer receiveQty = receiveSkuList.stream().filter(
+                        obj -> obj.getSkuId().equals(detail.getSkuId())&&
+                                receiveIdList.contains(obj.getMainId())
+                ).mapToInt(e -> e.getReceiveQty()).sum();
+                if (receiveQty==0) {
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应收货数量", detail.getSkuNo()));
                 }
                 if (MathUtil.compareTo(detail.getRealityReturnQty(), receiveQty) > 0) {
@@ -1242,9 +1247,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addDTO.setPurchaseUserId(purchaseUserId);
             addList.add(addDTO);
         }
-        if (CollectionUtils.isNotEmpty(addList)) {
-            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
-        }
+//        if (CollectionUtils.isNotEmpty(addList)) {
+//            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
+//        }
         return Boolean.TRUE;
     }
 

@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -195,7 +196,7 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @param list
      * @return java.lang.Boolean
      */
-    Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list);
+    ApiResult batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list);
 
     /**
      * 修改到货状态

@@ -67,4 +67,13 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * @return List<WarehouseReceiveDetailEntity>
      */
     List<WarehouseReceiveDetailEntity> listDetailByPodIds(List<String> podIds);
+
+    /**
+     * 根据主表集合获取详情
+     * @author yl
+     * @date 2023-05-05 17:38
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseReceiveDetailEntity>
+     */
+    List<WarehouseReceiveDetailEntity> listDetailByMainIds(List<String> mainIds);
 }

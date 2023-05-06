@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.*;
@@ -31,7 +30,9 @@ import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.SysRoleUserEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
 import com.erp.model.sys.entity.password.PassHandler;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
@@ -639,7 +640,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public List<FindUserDTO>  getAuthorityUserList(BaseSearchDTO dto) {
+    public List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
         return resultList;
     }
@@ -703,19 +704,19 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
 
-   /**
-    * @description: 用户验证信息
-    * @author Will
-    * @date: 2023/3/2 10:37
-    * @param sysUserInfoDTO
-    * @return boolean
-    */
+    /**
+     * @param sysUserInfoDTO
+     * @return boolean
+     * @description: 用户验证信息
+     * @author Will
+     * @date: 2023/3/2 10:37
+     */
     private void checkUserInfo(SysUserInfoDTO sysUserInfoDTO) {
         //验证手机号是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
         mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
-            mobileQueryWrapper.ne(SysUserInfoEntity::getUid,sysUserInfoDTO.getUid());
+            mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
         int mobileCount = this.count(mobileQueryWrapper);
         if (mobileCount > 0) {
@@ -723,9 +724,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
-        userNameQueryWrapper.eq(SysUserInfoEntity::getUserName,sysUserInfoDTO.getUserName());
+        userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
-            userNameQueryWrapper.ne(SysUserInfoEntity::getUid,sysUserInfoDTO.getUid());
+            userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
         int userNameCount = this.count(userNameQueryWrapper);
         if (userNameCount > 0) {
@@ -815,7 +816,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
-        if(!Objects.isNull(entity)){
+        if (!Objects.isNull(entity)) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
@@ -830,14 +831,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public FindUserDTO getUserByUserName(String userName) {
-        if(StringUtils.isBlank(userName)){
+        if (StringUtils.isBlank(userName)) {
             return new FindUserDTO();
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserName, userName);
         queryWrapper.last("limit 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
-        if(!Objects.isNull(entity)){
+        if (!Objects.isNull(entity)) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
@@ -850,12 +851,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 获取所有用户所在的部门
+     *
+     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
      * @Author Luo_WG
      * @Date 2022/12/13 17:12
-     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
      **/
     @Override
-    public List<SysUserDeptDTO> getUserDeptList(){
+    public List<SysUserDeptDTO> getUserDeptList() {
         return baseMapper.getUserDeptList();
     }
 
@@ -864,7 +866,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public List<UserSuperiorDTO> listSuperiorByUserIds(List<String> userIds) {
         List<UserSuperiorDTO> parentList = new ArrayList<>();
 
-        for (String userId: userIds) {
+        for (String userId : userIds) {
             List<UserSuperiorDTO> superList = sysDepartmentUserService.listSuperiorByUserId(userId);
             List<UserSuperiorDTO> collect = superList.stream().map(entity -> entity.setSuperiorType(ChargeSuperiorEnum.getName(entity.getLevel()))).collect(Collectors.toList());
             parentList.addAll(collect);
@@ -935,29 +937,31 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 //                }
 //            }
         }
-            return  parentList;
+        return parentList;
     }
-
-
 
 
     /**
      * 根据用户id 获取用户登录的信息
      * 用于 token 获取用户信息内容
-     * @author yl
-     * @date 2023-01-14 9:45
+     *
      * @param userId
      * @return com.erp.model.sys.dto.SysUserDTO
+     * @author yl
+     * @date 2023-01-14 9:45
      */
     @Override
     public SysUserDTO getSysUserById(String userId) {
+        if (StringUtils.isBlank(userId)) {
+            return new SysUserDTO();
+        }
         SysUserInfoEntity entity = this.getById(userId);
         if (Objects.isNull(entity)) {
             return null;
         }
         Integer userState = entity.getUserState();
         //表示禁用
-        if (UserStateConstants.USER_DISABLE == userState) {
+        if (UserStateConstants.USER_DISABLE.equals(userState)) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
@@ -992,11 +996,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .in(SysUserInfoEntity::getUid,businessIds)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysUserInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),SysUserInfoEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .in(SysUserInfoEntity::getUid, businessIds)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SysUserInfoEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -1016,9 +1020,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 重置密码
+     *
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/20 9:46
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1062,10 +1067,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 忘记密码
-     * @Author Luo_WG
-     * @Date 2023/4/20 11:18
+     *
      * @param forgotPasswordDTO forgotPasswordDTO
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:18
      **/
     public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).one();
@@ -1095,12 +1101,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 忘记密码-获取验证码
-     * @Author Luo_WG
-     * @Date 2023/4/20 11:45
+     *
      * @param userAccount userAccount
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/20 11:45
      **/
-    public Map<String,Object> forgotPasswordGetCode(String userAccount) {
+    public Map<String, Object> forgotPasswordGetCode(String userAccount) {
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
@@ -1112,15 +1119,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
         dto.setEmail(sysUserInfoEntity.getEmail());
         sedEmail(dto);
-        Map<String,Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
         return map;
     }
 
     @Override
     public List<SysUserSimpleDTO> getUserSimpleInfoByIds(List<String> userIds) {
-        List<SysUserInfoEntity> users = this.lambdaQuery().eq(SysUserInfoEntity::getUserState, 1).in(SysUserInfoEntity::getUid,userIds).list();
-        if(CollUtil.isNotEmpty(users)) {
+        List<SysUserInfoEntity> users = this.lambdaQuery().eq(SysUserInfoEntity::getUserState, 1).in(SysUserInfoEntity::getUid, userIds).list();
+        if (CollUtil.isNotEmpty(users)) {
             return BeanMapperUtils.copyList(SysUserSimpleDTO.class, users);
         }
         return null;

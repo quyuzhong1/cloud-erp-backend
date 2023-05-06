@@ -21,19 +21,21 @@ import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -58,14 +60,14 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
 
-
     /**
      * 新增
+     *
+     * @param dto dto
+     * @param id  id:主表id
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/13 14:43
-     * @param dto dto
-     * @param id id:主表id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -136,10 +138,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     /**
      * 修改
-     * @Author Luo_WG
-     * @Date 2023/4/13 15:22
+     *
      * @param dto dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:22
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -191,10 +194,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     /**
      * 根据主表id删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param mainIds mainIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     public Boolean delete(List<String> mainIds) {
@@ -205,10 +209,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     /**
      * 根据主表id查询详情表信息
-     * @Author Luo_WG
-     * @Date 2023/4/13 17:44
+     *
      * @param mainId mainId
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
      **/
     @Override
     public List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId) {
@@ -219,7 +224,24 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Override
     public List<WarehouseReceiveDetailEntity> listDetailByPodIds(List<String> podIds) {
-        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId,podIds).list();
+        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId, podIds).list();
+    }
+
+
+    /**
+     * 根据主表集合获取详情
+     *
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseReceiveDetailEntity>
+     * @author yl
+     * @date 2023-05-05 17:38
+     */
+    @Override
+    public List<WarehouseReceiveDetailEntity> listDetailByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(WarehouseReceiveDetailEntity::getMainId,mainIds).list();
     }
 
     @Override
