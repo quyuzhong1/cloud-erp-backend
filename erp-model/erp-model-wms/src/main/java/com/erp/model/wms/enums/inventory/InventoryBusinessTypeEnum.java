@@ -21,10 +21,10 @@ public enum InventoryBusinessTypeEnum {
     PO_RETURN_REF("po_return_ref", "05","采购退货（退货退款）"),
 
     INVENTOR_ALLOCATE("inventory_allocate", "06","调拨申请单"),
-    DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单"),// 无法确定状态
+    DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单"),
 
-    STEP_INVENTORY_OUT("step_inventory_out", "08","分步式调拨调出"),// TODO 待确认是否可以选择状态
-    STEP_INVENTORY_IN("step_inventory_in", "09","分步式调拨调入"),// TODO 待确认是否可以选择状态
+    STEP_INVENTORY_OUT("step_inventory_out", "08","分步式调拨调出"),
+    STEP_INVENTORY_IN("step_inventory_in", "09","分步式调拨调入"),
 
     SHIP_NOTICE("ship_notice", "10","销售发货通知单"),
     SALES_DELIVERY_ORDER("sales_delivery_order", "11","销售出库"),
@@ -63,6 +63,9 @@ public enum InventoryBusinessTypeEnum {
      06-调拨申请单
      10-销售发货通知单
      11-销售出库
+     07-直接调拨单
+     08-分布式调拨调出
+     09-分布式调拨调入
     */
 
     InventoryBusinessTypeEnum(String type, String code, String name) {
