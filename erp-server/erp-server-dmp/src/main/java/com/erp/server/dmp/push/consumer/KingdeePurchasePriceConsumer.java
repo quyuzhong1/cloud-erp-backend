@@ -215,9 +215,9 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             if (ObjectUtils.isNotEmpty(disabled)) {
                 //禁用
                 if (disabled) {
-                    operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+                    operate = SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode();
                 } else {
-                    operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+                    operate = SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode();
                 }
             }
             if (StringUtils.isBlank(id)) {
