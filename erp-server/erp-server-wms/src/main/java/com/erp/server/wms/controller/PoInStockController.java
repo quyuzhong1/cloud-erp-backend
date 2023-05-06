@@ -31,7 +31,7 @@ import java.util.List;
 public class PoInStockController extends BaseController {
 
     @Resource
-    private PoInstockService purchaseStorageService;
+    private PoInstockService poInstockService;
 
 
     /**
@@ -48,7 +48,7 @@ public class PoInStockController extends BaseController {
             tableAlias = "psi"
     )
     public ApiResult<PagingVO<PoInstockDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PoInstockDTO.SearchParamDTO> dto) {
-        PagingVO<PoInstockDTO.ListDTO> pagingVO = purchaseStorageService.paging(dto);
+        PagingVO<PoInstockDTO.ListDTO> pagingVO = poInstockService.paging(dto);
         return success(pagingVO);
     }
 
@@ -66,7 +66,7 @@ public class PoInStockController extends BaseController {
             tableAlias = "psi"
     )
     public ApiResult<List<PoInstockDTO.ListStatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
-        List<PoInstockDTO.ListStatusCountDTO> list = purchaseStorageService.listCount(dto);
+        List<PoInstockDTO.ListStatusCountDTO> list = poInstockService.listCount(dto);
         return success(list);
     }
 
@@ -84,7 +84,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = purchaseStorageService.add(dto);
+        String id = poInstockService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -102,7 +102,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = purchaseStorageService.addAndSubmit(dto);
+        String id = poInstockService.addAndSubmit(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
     
@@ -120,7 +120,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
-        Boolean flag = purchaseStorageService.update(dto);
+        Boolean flag = poInstockService.update(dto);
         return flag == true ? success() : failure();
     }
     
@@ -138,7 +138,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
-        Boolean flag = purchaseStorageService.updateAndSubmit(dto);
+        Boolean flag = poInstockService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
 
@@ -154,9 +154,9 @@ public class PoInStockController extends BaseController {
             tableField = "purchase_user_id,stock_in_user_id",
             menuCode = "wms:poInStock:submit",
             serviceClass = PoInstockService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseStorageService.submit(dto.getIds());
+        Boolean flag = poInstockService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -174,7 +174,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult<PoInstockDTO.ViewDTO> view(@RequestParam("id") String id) {
-        PoInstockDTO.ViewDTO dto = purchaseStorageService.view(id);
+        PoInstockDTO.ViewDTO dto = poInstockService.view(id);
         return success(dto);
     }
 
@@ -191,9 +191,9 @@ public class PoInStockController extends BaseController {
             tableField = "purchase_user_id,stock_in_user_id",
             menuCode = "wms:poInStock:delete",
             serviceClass = PoInstockService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseStorageService.delete(dto.getIds());
+        Boolean flag = poInstockService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -209,9 +209,9 @@ public class PoInStockController extends BaseController {
             tableField = "purchase_user_id,stock_in_user_id",
             menuCode = "wms:poInStock:invalid",
             serviceClass = PoInstockService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = purchaseStorageService.invalid(dto.getIds(),dto.getRemark());
+        Boolean flag = poInstockService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
     }
 
@@ -227,9 +227,9 @@ public class PoInStockController extends BaseController {
             tableField = "purchase_user_id,stock_in_user_id",
             menuCode = "wms:poInStock:approve",
             serviceClass = PoInstockService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        purchaseStorageService.approve(baseApproveParamDTO);
+        poInstockService.approve(baseApproveParamDTO);
         return success();
     }
 
@@ -245,9 +245,9 @@ public class PoInStockController extends BaseController {
             tableField = "purchase_user_id,stock_in_user_id",
             menuCode = "wms:poInStock:disApprove",
             serviceClass = PoInstockService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseStorageService.disApprove(dto.getIds());
+        Boolean flag = poInstockService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
@@ -263,9 +263,9 @@ public class PoInStockController extends BaseController {
             tableField = "purchase_user_id,stock_in_user_id",
             menuCode = "wms:poInStock:cancelProcess",
             serviceClass = PoInstockService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchaseStorageService.cancelProcess(dto.getIds());
+        Boolean result = poInstockService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
 
@@ -284,7 +284,7 @@ public class PoInStockController extends BaseController {
             tableAlias = "psi"
     )
     public ApiResult exportExcel(@RequestBody PoInstockDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = purchaseStorageService.exportExcel(dto, response);
+        Boolean flag = poInstockService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
 
@@ -297,7 +297,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
     public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseStorageService.viewGeneratePurchaseReturnOrder(dto.getIds());
+        List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = poInstockService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
     }
 
@@ -315,7 +315,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        Boolean flag = purchaseStorageService.generatePurchaseReturnOrder(dto);
+        Boolean flag = poInstockService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
     }
 
@@ -328,7 +328,7 @@ public class PoInStockController extends BaseController {
     */
     @PostMapping(value = "/purchaseOrderRefStockIn")
     public ApiResult<List<PoInstockDTO.OrderRefStockInDTO>> purchaseOrderRefStockIn(@RequestBody @Validated BaseIdDTO dto) {
-        List<PoInstockDTO.OrderRefStockInDTO> list = purchaseStorageService.purchaseOrderRefStockIn(dto.getId());
+        List<PoInstockDTO.OrderRefStockInDTO> list = poInstockService.purchaseOrderRefStockIn(dto.getId());
         return success(list);
     }
 
@@ -341,7 +341,7 @@ public class PoInStockController extends BaseController {
      */
     @PostMapping("/generateStockIn")
     public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
-        Boolean flag = purchaseStorageService.generateStockIn(dto);
+        Boolean flag = poInstockService.generateStockIn(dto);
         return flag == true ? success() : failure();
     }
 }

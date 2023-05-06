@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
@@ -1071,14 +1072,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 List<FindUserDTO> chargeNameList = listApiResult.getData();
                 info.setChargeId(chargeNameList.get(0).getUserId());
 
-              /*  String platformCreateTimeStr = mainEntity.getPlatformCreateTimeStr();
+                String platformCreateTimeStr = mainEntity.getPlatformCreateTimeStr();
                 if (StringUtils.isNotBlank(platformCreateTimeStr)) {
                     info.setPlatformCreateTime(LocalDateUtil.stringToLocalDateTime(platformCreateTimeStr));
                 }
                 String deliveryTimeStr = mainEntity.getDeliveryTimeStr();
                 if (StringUtils.isNotBlank(deliveryTimeStr)) {
                     info.setDeliveryTime(LocalDateUtil.stringToLocalDateTime(deliveryTimeStr));
-                }*/
+                }
                 BigDecimal orderFee = mainEntity.getOrderFee();
                 mainEntity.setOrderFee(MathUtil.multiply(orderFee,ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
 

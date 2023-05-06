@@ -2,14 +2,14 @@ package com.erp.rpc.sys.feign.aspect;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.core.utils.ObjectUtils;
-import com.common.core.utils.StrUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
+import com.common.core.utils.ObjectUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -365,11 +365,18 @@ public class DataPermissionAspect {
         List<?> objects = service.listByIds(inputIdList);
         for (Object object : objects) {
             JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
-            Object o = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true));
-            if (o == null) {
+
+            if (StringUtils.isBlank(dataPermission.tableField())) {
                 return;
             }
-            users.addAll(Arrays.asList(o.toString().split(",")));
+            String[] tableFields = dataPermission.tableField().split(",");
+            for (String tableField : tableFields) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
         }
 
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
