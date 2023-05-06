@@ -44,10 +44,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 添加订单商品详细信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:10
+     *
      * @param dmpOrderInfoEntity 订单商品信息集合
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
      **/
     @Override
     public Boolean add(DmpOrderItemEntity dmpOrderInfoEntity) {
@@ -56,10 +57,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 批量添加订单商品详细信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:10
+     *
      * @param dmpOrderInfoEntityList 订单商品信息集合
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:10
      **/
     @Override
     public Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList) {
@@ -68,10 +70,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 根据erp平台商品id查询订单商品信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 22:11
+     *
      * @param erpOrderItemId erp平台商品id
      * @return com.erp.model.dmp.entity.DmpOrderItemEntity
+     * @Author Luo_WG
+     * @Date 2022/11/14 22:11
      **/
     @Override
     public DmpOrderItemEntity getByErpOrderItemId(String erpOrderItemId) {
@@ -82,10 +85,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 根据订单表id查询订单商品信息
-     * @Author Luo_WG
-     * @Date 2022/12/14 16:10
+     *
      * @param orderId 订单表id
      * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     * @Author Luo_WG
+     * @Date 2022/12/14 16:10
      **/
     @Override
     public List<DmpOrderItemEntity> getByOrderId(String orderId) {
@@ -96,10 +100,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 根据erp平台商品id修改订单商品信息
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:39
+     *
      * @param dmpOrderItemEntity 订单商品信息
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:39
      **/
     @Override
     public Boolean updateOrderItemByErpOrderItemId(DmpOrderItemEntity dmpOrderItemEntity) {
@@ -110,9 +115,10 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 21:25
-     * @return void
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -144,20 +150,21 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 insertList.add(orderItemBean);
             }
         }
-        if(CollectionUtil.isNotEmpty(insertList)){
+        if (CollectionUtil.isNotEmpty(insertList)) {
             saveBatch(insertList);
         }
     }
 
     /**
      * 同步PLM的到货时间更新新老品
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 21:25
-     * @return void
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateNewSign(Map<String,List<NewProductDTO>> dto) {
+    public void updateNewSign(Map<String, List<NewProductDTO>> dto) {
         List<NewProductDTO> listingNotNullList = dto.get("listingNotNullList");
         listingNotNullList.forEach(req -> {
             LocalDate date = req.getNewListingTime();
@@ -172,6 +179,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 this.update(updateWrapper);
             });
         });
+/*
         List<NewProductDTO> listingNullList = dto.get("listingNullList");
 
         List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
@@ -183,6 +191,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             resultMap.put("listingTime", stringStringMap.get("listingtime"));
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
         }
+*/
 
       /*  String year = "";
         String skuNo = String.valueOf(dto.getSkuNo());
@@ -221,8 +230,28 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             this.update(updateWrapper);
         });*/
     }
-}
 
+    /**
+     * 同步PLM的到货时间更新新老品
+     *
+     * @return void
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void getProductListing(Map<String, List<NewProductDTO>> dto) {
+        List<NewProductDTO> listingNullList = dto.get("listingNullList");
+        List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
+        List<Map<String, String>> orderListingTime1 = baseMapper.getOrderListingTime(skuNoList);
+        for (Map<String, String> stringStringMap : orderListingTime1) {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("skuNo", stringStringMap.get("skuno"));
+            resultMap.put("listingTime", stringStringMap.get("listingtime"));
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
+        }
+    }
+}
 
 
 

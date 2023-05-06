@@ -84,12 +84,15 @@ public class SyncProductServiceImpl implements SyncProductService {
 
         Map<String,List<NewProductDTO>> map = new HashMap<>();
         map.put("listingNotNullList", listingNotNullList);
-        map.put("listingNullList", listingNullList);
         listingNotNullList.forEach(req -> {
             redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600);
         });
-
         // 异步推送到MQ
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, UUID.randomUUID().toString());
+
+        Map<String,List<NewProductDTO>> listingNullMap = new HashMap<>();
+        listingNullMap.put("listingNullList", listingNullList);
+        // 异步推送到MQ
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.GET_DMP_PRODUCT_LISTING_TAG.getName(), listingNullMap, UUID.randomUUID().toString());
     }
 }

@@ -73,4 +73,12 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @return void
      **/
     void updateNewSign(Map<String,List<NewProductDTO>> dto);
+
+    /**
+     * 同步PLM的到货时间更新新老品
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     * @return void
+     **/
+    void getProductListing(Map<String,List<NewProductDTO>> dto);
 }

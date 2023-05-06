@@ -180,4 +180,15 @@ public class MQConsumerService {
             dmpOrderItemService.updateNewSign(ext);
         }
     }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+            selectorExpression = "get_dmp_product_listing_tag",
+            consumerGroup = "${spring.profiles.active}-get_product_listing_consumer")
+    public class ConsumerGetProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
+        @Override
+        public void onMessage(Map<String,List<NewProductDTO>> ext) {
+            dmpOrderItemService.getProductListing(ext);
+        }
+    }
 }
