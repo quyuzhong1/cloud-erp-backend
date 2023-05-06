@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -173,10 +174,21 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_listing_tag",
             consumerGroup = "${spring.profiles.active}-plm_product_listing_consumer")
-    public class ConsumerPlmProductListing implements RocketMQListener<NewProductDTO>  {
+    public class ConsumerPlmProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
         @Override
-        public void onMessage(NewProductDTO ext) {
+        public void onMessage(Map<String,List<NewProductDTO>> ext) {
             dmpOrderItemService.updateNewSign(ext);
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+            selectorExpression = "get_dmp_product_listing_tag",
+            consumerGroup = "${spring.profiles.active}-get_product_listing_consumer")
+    public class ConsumerGetProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
+        @Override
+        public void onMessage(Map<String,List<NewProductDTO>> ext) {
+            dmpOrderItemService.getProductListing(ext);
         }
     }
 }

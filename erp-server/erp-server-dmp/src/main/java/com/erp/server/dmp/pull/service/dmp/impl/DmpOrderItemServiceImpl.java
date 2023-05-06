@@ -151,13 +151,14 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     /**
      * 同步PLM的到货时间更新新老品
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 21:25
-     * @return void
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateNewSign(Map<String,List<NewProductDTO>> dto) {
+    public void updateNewSign(Map<String, List<NewProductDTO>> dto) {
         List<NewProductDTO> listingNotNullList = dto.get("listingNotNullList");
         listingNotNullList.forEach(req -> {
             LocalDate date = req.getNewListingTime();
@@ -172,6 +173,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 this.update(updateWrapper);
             });
         });
+/*
         List<NewProductDTO> listingNullList = dto.get("listingNullList");
 
         List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
@@ -183,6 +185,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             resultMap.put("listingTime", stringStringMap.get("listingtime"));
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
         }
+*/
 
       /*  String year = "";
         String skuNo = String.valueOf(dto.getSkuNo());
@@ -220,6 +223,27 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             updateWrapper.in(DmpOrderItemEntity::getId, req);
             this.update(updateWrapper);
         });*/
+    }
+
+    /**
+     * 同步PLM的到货时间更新新老品
+     *
+     * @return void
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void getProductListing(Map<String, List<NewProductDTO>> dto) {
+        List<NewProductDTO> listingNullList = dto.get("listingNullList");
+        List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
+        List<Map<String, String>> orderListingTime1 = baseMapper.getOrderListingTime(skuNoList);
+        for (Map<String, String> stringStringMap : orderListingTime1) {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("skuNo", stringStringMap.get("skuno"));
+            resultMap.put("listingTime", stringStringMap.get("listingtime"));
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
+        }
     }
 }
 

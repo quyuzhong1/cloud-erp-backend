@@ -138,7 +138,10 @@ public enum RocketMqTagEnum {
      * 同步产品sku变更新老品
      */
     SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
-
+    /**
+     * 获取上市时间
+     */
+    GET_DMP_PRODUCT_LISTING_TAG(38,RocketMqTagEnum.SYNC_DMP,"get_dmp_product_listing_tag"),
     /**
      * 系统用户同步金蝶
      */
