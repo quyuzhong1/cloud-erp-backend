@@ -13,8 +13,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import org.apache.ibatis.annotations.Param;
@@ -87,6 +87,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:add",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
         purchaseOrderService.add(dto);
         return  success();
@@ -100,6 +105,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:update",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseOrderService.update(dto);
         return flag == true ? success() : failure();
@@ -113,6 +123,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:addAndSubmit",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
         Boolean flag = purchaseOrderService.addAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -126,6 +141,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:updateAndSubmit",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseOrderService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -158,6 +178,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:delete",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseOrderService.delete(dto.getIds());
         return flag == true ? success() : failure();
@@ -171,6 +196,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:submit",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseOrderService.submit(dto.getIds());
         return flag == true ? success() : failure();
@@ -184,6 +214,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:invalid",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = purchaseOrderService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
@@ -197,6 +232,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:approve",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         purchaseOrderService.approve(baseApproveParamDTO);
         return success();
@@ -210,6 +250,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:disApprove",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseOrderService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -224,6 +269,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:cancelProcess",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseOrderService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
@@ -291,6 +341,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/finishDelivery")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:finishDelivery",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseOrderService.finishDelivery(dto.getIds());
         return result == true ? success() : failure();
@@ -304,6 +359,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/exportPurchaseContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:exportPurchaseContractPdf",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
     public ApiResult<PurchaseOrderDTO.ExportPdfDTO> exportPurchaseContractPdf(@RequestParam("id") String id) {
         PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.exportPurchaseContractPdf(id);
         return success(exportPdfDTO);

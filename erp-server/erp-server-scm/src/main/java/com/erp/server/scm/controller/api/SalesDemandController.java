@@ -85,6 +85,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:add",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "id")
     public ApiResult add(@RequestBody @Validated SalesDemandDTO.AddDTO dto) {
         salesDemandService.add(dto);
         return success();
@@ -98,6 +103,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:update",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SalesDemandDTO.UpdateDTO dto) {
         Boolean flag = salesDemandService.update(dto);
         return flag == true ? success() : failure();
@@ -111,6 +121,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:addAndSubmit",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated SalesDemandDTO.AddDTO dto) {
         Boolean flag = salesDemandService.addAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -124,6 +139,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:updateAndSubmit",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated SalesDemandDTO.UpdateDTO dto) {
         Boolean flag = salesDemandService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -155,6 +175,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:delete",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = salesDemandService.delete(dto.getIds());
         return flag == true ? success() : failure();
@@ -169,6 +194,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:invalid",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = salesDemandService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
@@ -182,6 +212,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:submit",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = salesDemandService.submit(dto.getIds());
         return flag == true ? success() : failure();
@@ -195,6 +230,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:approve",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         salesDemandService.approve(baseApproveParamDTO);
         return success();
@@ -208,7 +248,12 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/disApprove")
-    public ApiResult unAudit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:disApprove",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "ids")
+    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = salesDemandService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -222,6 +267,11 @@ public class SalesDemandController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:salesDemand:cancelProcess",
+            serviceClass = SalesDemandService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = salesDemandService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();

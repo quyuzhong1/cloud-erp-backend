@@ -72,6 +72,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:add",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         purchaseChangeService.add(dto);
         return success();
@@ -85,6 +90,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:update",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
         Boolean flag = purchaseChangeService.update(dto);
         return flag == true ? success() : failure();
@@ -98,6 +108,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:addAndSubmit",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         Boolean flag = purchaseChangeService.addAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -111,6 +126,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:updateAndSubmit",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
         Boolean flag = purchaseChangeService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -142,6 +162,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:cancelProcess",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseChangeService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
@@ -155,6 +180,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:invalid",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = purchaseChangeService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
@@ -169,6 +199,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:submit",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseChangeService.submit(dto.getIds());
         return flag == true ? success() : failure();
@@ -182,6 +217,11 @@ public class PurchaseChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "change_user_id",
+            menuCode = "scm:purchaseChange:approve",
+            serviceClass = PurchaseChangeService.class,
+            keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         purchaseChangeService.approve(baseApproveParamDTO);
         return success();
