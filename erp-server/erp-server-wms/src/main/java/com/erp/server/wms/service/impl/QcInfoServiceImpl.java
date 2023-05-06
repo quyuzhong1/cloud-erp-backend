@@ -1247,9 +1247,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             addDTO.setPurchaseUserId(purchaseUserId);
             addList.add(addDTO);
         }
-//        if (CollectionUtils.isNotEmpty(addList)) {
-//            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
-//        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            addList.forEach(obj -> purchaseReturnOrderService.add(obj));
+        }
         return Boolean.TRUE;
     }
 

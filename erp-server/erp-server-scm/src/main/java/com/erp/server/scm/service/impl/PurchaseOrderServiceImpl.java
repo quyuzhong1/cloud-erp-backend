@@ -1091,7 +1091,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date 2023-04-25 10:32
      */
     @Override
-    public ApiResult generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //查询实退数量
         List<String> sourceIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId).collect(Collectors.toList());
@@ -1154,9 +1154,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         if (CollectionUtils.isNotEmpty(addList)) {
-            wmsTaskFeign.batchAddReturnOrder(addList);
+          return   wmsTaskFeign.batchAddReturnOrder(addList);
         }
-        return ApiResult.success();
+        return Boolean.FALSE;
     }
 
 

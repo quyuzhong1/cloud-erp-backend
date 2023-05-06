@@ -5,7 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -251,5 +250,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return java.lang.Boolean
      */
-    ApiResult generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
+    Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
 }

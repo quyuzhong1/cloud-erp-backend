@@ -495,8 +495,8 @@ public class PurchaseOrderController extends BaseController {
      */
     @PostMapping("/generatePurchaseReturnOrder")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-        ApiResult flag = purchaseOrderService.generatePurchaseReturnOrder(dto);
-        return flag;
+       Boolean  flag = purchaseOrderService.generatePurchaseReturnOrder(dto);
+        return flag?success():failure();
     }
 
 

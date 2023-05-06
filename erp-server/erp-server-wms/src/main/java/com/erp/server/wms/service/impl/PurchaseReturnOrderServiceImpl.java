@@ -823,20 +823,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     @Override
     public Boolean batchAdd(List<PurchaseReturnOrderDTO.AddDTO> list) {
         if (CollectionUtils.isNotEmpty(list)) {
-            //  try {
             for (PurchaseReturnOrderDTO.AddDTO item : list) {
                 this.add(item);
             }
-//            } catch (Exception e) {
-//                if (e instanceof ServiceException) {
-//                    return ApiResult.error(((ServiceException) e).getCode(), ((ServiceException) e).getMsg());
-//                }
-//                return ApiResult.error(ApiError.Default);
-//            }
-
         }
-//        return ApiResult.error(ApiError.Default);
-
         return Boolean.TRUE;
 
     }

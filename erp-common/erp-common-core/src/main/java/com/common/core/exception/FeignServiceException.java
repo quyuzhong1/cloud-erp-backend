@@ -3,7 +3,6 @@ package com.common.core.exception;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * @author Lambda
@@ -13,7 +12,6 @@ import lombok.NoArgsConstructor;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class FeignServiceException extends RuntimeException {
     /**
      * 错误码

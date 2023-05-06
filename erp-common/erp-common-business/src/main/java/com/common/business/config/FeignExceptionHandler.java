@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice(basePackages={"com.erp.server.*.controller.feign","com.erp.server.*.config"} )
+@RestControllerAdvice
 public class FeignExceptionHandler {
 
     @ExceptionHandler({FeignServiceException.class})

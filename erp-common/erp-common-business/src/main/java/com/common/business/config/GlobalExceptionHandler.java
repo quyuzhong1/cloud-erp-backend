@@ -33,7 +33,7 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice(basePackages= {"com.erp.server.*.controller.api","com.erp.server.scm.config"})
+@RestControllerAdvice(basePackages= "com.erp.server.*.controller.api")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ServiceException.class})
