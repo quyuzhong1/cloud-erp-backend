@@ -72,5 +72,5 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @Date 2022/11/14 21:25
      * @return void
      **/
-    void updateNewSign(NewProductDTO dto);
+    void updateNewSign(Map<String,List<NewProductDTO>> dto);
 }

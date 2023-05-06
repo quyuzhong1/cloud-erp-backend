@@ -72,5 +72,5 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @Date 2023/4/19 16:12
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
-    List<NewProductDTO> getListingProductAll();
+    List<NewProductDTO> getListingProductAll(Boolean sign);
 }

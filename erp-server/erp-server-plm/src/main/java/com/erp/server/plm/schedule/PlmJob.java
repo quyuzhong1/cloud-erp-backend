@@ -59,7 +59,7 @@ public class PlmJob {
      */
     @XxlJob("newProductToDmp")
 //    @Scheduled(cron = “0 0 2 * * ?"")
-//    @PostConstruct
+    //   @PostConstruct
     public void newProductToDmp() {
         syncProductService.syncNewProductToDmp();
     }

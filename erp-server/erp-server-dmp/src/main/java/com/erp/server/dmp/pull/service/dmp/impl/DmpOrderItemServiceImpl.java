@@ -25,10 +25,8 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 订单商品详细信息
@@ -121,7 +119,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime) {
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
         for (DmpOrderItemEntity orderItemBean : orderItem) {
-/*            Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
+            Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
             if (ObjectUtil.isEmpty(skuListing)) {
                 Map<String, Object> resultMap = new HashMap<>();
                 resultMap.put("skuNo", orderItemBean.getSkuNo());
@@ -134,7 +132,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 } else {
                     orderItemBean.setNewSign(2);
                 }
-            }*/
+            }
             DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
             if (null != dmpOrderItemEntity) {
                 //如果数据有变动需要更新数据库订单商品信息
@@ -159,19 +157,44 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateNewSign(NewProductDTO dto) {
+    public void updateNewSign(Map<String,List<NewProductDTO>> dto) {
+        List<NewProductDTO> listingNotNullList = dto.get("listingNotNullList");
+        listingNotNullList.forEach(req -> {
+            LocalDate date = req.getNewListingTime();
+            String year = String.valueOf(date.getYear());
+            List<String> ids = baseMapper.getItemIdBySkuAndYear(year, req.getSkuNo());
 
-        String year = "";
+            List<List<String>> partition = Lists.partition(ids, 200);
+            partition.forEach(obj -> {
+                LambdaUpdateWrapper<DmpOrderItemEntity> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
+                updateWrapper.in(DmpOrderItemEntity::getId, obj);
+                this.update(updateWrapper);
+            });
+        });
+        List<NewProductDTO> listingNullList = dto.get("listingNullList");
+
+        List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
+        List<Map<String, String>> orderListingTime1 = baseMapper.getOrderListingTime(skuNoList);
+
+        for (Map<String, String> stringStringMap : orderListingTime1) {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("skuNo", stringStringMap.get("skuno"));
+            resultMap.put("listingTime", stringStringMap.get("listingtime"));
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
+        }
+
+      /*  String year = "";
         String skuNo = String.valueOf(dto.getSkuNo());
         if (dto.getNewListingTime() != null) {
             LocalDate date = dto.getNewListingTime();
             year = String.valueOf(date.getYear());
 
-        }/* else if (map.get("pastListingTime") != null) {
+        }*//* else if (map.get("pastListingTime") != null) {
             LocalDate date = LocalDate.parse(String.valueOf(map.get("pastListingTime")), fmt);
             year = String.valueOf(date.getYear());
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 2);
-        }*/ else {
+        }*//* else {
             Object sku = redisUtil.hget(RedisKeyConstant.SKU_NOT_LISTING_TIME, skuNo);
             if (ObjectUtil.isNotEmpty(sku)) {
                 return;
@@ -196,7 +219,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             updateWrapper.set(DmpOrderItemEntity::getNewSign, 1);
             updateWrapper.in(DmpOrderItemEntity::getId, req);
             this.update(updateWrapper);
-        });
+        });*/
     }
 }
 

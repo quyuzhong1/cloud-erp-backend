@@ -172,8 +172,8 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     @Override
-    public List<NewProductDTO> getListingProductAll() {
-        return baseMapper.getListingProductAll();
+    public List<NewProductDTO> getListingProductAll(Boolean sign) {
+        return baseMapper.getListingProductAll(sign);
     }
 }
 
