@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -66,7 +67,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void recordFlowTransaction(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum, Map<String, WarehouseEntity> warehouseMap) {
+    public void recordFlowTransaction(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum) {
         // 记录交易流水
         TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
         transactionFlowEntity.setBillDate(param.getBillDate());
@@ -74,10 +75,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setInventoryDetailId(param.getInventoryDetailId());
         transactionFlowEntity.setOrgId(param.getOrgId());
         // 获取仓库名称
-        WarehouseEntity warehouseEntity = warehouseMap.computeIfAbsent(param.getWarehouseId(),(v)->warehouseService.getById(v));
-        ValidatorUtil.isTrue(Objects.nonNull(warehouseEntity),()->new ServiceException(ApiError.ERROR_99002));
+        WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(param.getWarehouseId());
+        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()),()->new ServiceException(ApiError.ERROR_99002));
+
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
-        transactionFlowEntity.setWarehouseName(warehouseEntity.getName());
+        transactionFlowEntity.setWarehouseName(warehouse.getName());
         transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
         // TODO 暂时还没有库位表
         transactionFlowEntity.setWarehouseLocationName("");

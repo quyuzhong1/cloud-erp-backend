@@ -49,21 +49,20 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
      */
     @Override
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
-        Map<String, WarehouseEntity> warehouseMap = Maps.newHashMap();// TODO 仓库集合，后续改成从redis缓存中读取
         for(InventoryStockBaseDTO baseParam : paramLis) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;
             InStockOrOutStockTransformDTO curWareInOrOutStock = inventoryHelper.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);
-            this.singleHandler(curWareInOrOutStock, businessType, transactionRuleParams, warehouseMap, transactionNo);
+            this.singleHandler(curWareInOrOutStock, businessType, transactionRuleParams, transactionNo);
             // 目的仓出入库业务处理
             InStockOrOutStockTransformDTO targetWareInOrOutStock = inventoryHelper.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET);
-            this.singleHandler(targetWareInOrOutStock, businessType, transactionRuleParams, warehouseMap, transactionNo);
+            this.singleHandler(targetWareInOrOutStock, businessType, transactionRuleParams, transactionNo);
         }
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public <T extends InventoryStockBaseDTO> void singleHandler(T baseParam, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, Map<String, WarehouseEntity> warehouseMap, String transactionNo) {
+    public <T extends InventoryStockBaseDTO> void singleHandler(T baseParam, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
         InStockOrOutStockTransformDTO param = (InStockOrOutStockTransformDTO)baseParam;
         // 状态
         if(Objects.nonNull(param.getInventoryStatus())) { // 参数传输了要改的状态
@@ -71,9 +70,9 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
             InventoryModeEnum inventoryModeEnum = param.getInventoryMode();
             ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_400.code, "交易类型不能为空"));
             if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) { //入库
-                this.inStockCore(param, businessType, param.getInventoryStatus(), "", warehouseMap, transactionNo);
+                this.inStockCore(param, businessType, param.getInventoryStatus(), "",  transactionNo);
             } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) { // 出库
-                this.outStockCore(param, businessType, param.getInventoryStatus(), "", warehouseMap, transactionNo);
+                this.outStockCore(param, businessType, param.getInventoryStatus(), "", transactionNo);
             }
         } else {
             if(CollUtil.isEmpty(transactionRuleParams)) {
@@ -94,9 +93,9 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.ERROR_99038));
                 // 可能某个业务类型在同一个仓库即需要做入也需要做出，分别调用逻辑
                 if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) { // 入库
-                    this.inStockCore(param, businessType, inventoryStatusEnum, transactionRule.getId(), warehouseMap, transactionNo);
+                    this.inStockCore(param, businessType, inventoryStatusEnum, transactionRule.getId(), transactionNo);
                 } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) { // 出库
-                    this.outStockCore(param, businessType, inventoryStatusEnum,  transactionRule.getId(), warehouseMap, transactionNo);
+                    this.outStockCore(param, businessType, inventoryStatusEnum,  transactionRule.getId(), transactionNo);
                 }
             }
         }

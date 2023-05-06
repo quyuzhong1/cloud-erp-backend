@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.service.RedisService;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -18,12 +19,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
@@ -31,10 +34,12 @@ import com.erp.server.wms.listener.WarehouseExcelListener;
 import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseService;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -47,6 +52,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +76,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private SyncKingdeeWarehouseService syncKingdeeWarehouseService;
+
+    @Autowired
+    private RedisService redisService;
 
 
     @Override
@@ -128,6 +137,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public String updateWarehouse(WarehouseDTO.UpdateDTO dto) {
+        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
+        redisService.deleteObject(redisKey);
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -211,6 +222,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
+        // 删除缓存
+        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
+        redisService.deleteObject(redisKey);
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -240,6 +254,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
+        // 删除缓存
+        Collection<String> redisKeys = Lists.newArrayList();
+        warehouseIds.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
+        redisService.deleteObject(redisKeys);
+
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99002);
@@ -278,6 +297,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public Boolean disApprove(List<String> warehouseIds) {
+        // 删除缓存
+        Collection<String> redisKeys = Lists.newArrayList();
+        warehouseIds.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
+        redisService.deleteObject(redisKeys);
+
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
 
 
@@ -312,6 +336,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
+        // 删除缓存
+        Collection<String> redisKeys = Lists.newArrayList();
+        ids.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
+        redisService.deleteObject(redisKeys);
+
         List<WarehouseEntity> list = this.listByIds(ids);
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -537,6 +566,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
+        // 删除缓存
+        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
+        redisService.deleteObject(redisKey);
+
         return this.submit(Arrays.asList(id));
 
     }
@@ -549,6 +582,38 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),WarehouseEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),WarehouseEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
+    }
+
+    @Override
+    public WarehouseDTO.UpdateDTO detailWithCache(String id) {
+        if(StrUtils.isEmpty(id)) {
+            return null;
+        }
+        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(id);
+        Object obj = redisService.getCacheObject(redisKey);
+        if(Objects.nonNull(obj)) {
+            // 判断是否空缓存
+            if(Objects.equals(RedisService.EMPTY_CACHE_VALUE,obj)) {
+                log.info("从redis缓存中查询到仓库信息，仓库id:{}，内容为空",id);
+                return new WarehouseDTO.UpdateDTO();
+            }
+            log.info("从redis缓存中查询到仓库信息，仓库id:{}，内容:{}",id,obj);
+            WarehouseDTO.UpdateDTO warehouseDTO = (WarehouseDTO.UpdateDTO) obj;
+            return warehouseDTO;
+        }
+        // 从数据库中查询
+        WarehouseEntity warehouse = this.getById(id);
+        if (Objects.isNull(warehouse)) {
+            log.info("从数据库中没有查询到仓库信息，仓库id:{}，缓存空",id);
+            redisService.setCacheObject(redisKey,RedisService.EMPTY_CACHE_VALUE, RedisService.ONE_DAY_CACHE_TIME, TimeUnit.SECONDS);
+            return new WarehouseDTO.UpdateDTO();
+        }
+        WarehouseDTO.UpdateDTO dto = new WarehouseDTO.UpdateDTO();
+        BeanMapper.copy(warehouse, dto);
+        ApproveStatusEnum approveStatusEnum = warehouse.getApproveStatus();
+        dto.setApproveStatusCode(approveStatusEnum.getStatus());
+        redisService.setCacheObject(redisKey, dto, RedisService.ONE_DAY_CACHE_TIME, TimeUnit.SECONDS);
+        return dto;
     }
 
     /**

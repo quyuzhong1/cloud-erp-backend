@@ -111,11 +111,10 @@ public abstract class AbstractInventoryServiceImpl {
      * @param baseParam
      * @param businessType
      * @param transactionRuleParams
-     * @param warehouseMap
      * @param transactionNo
      */
     public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
-                              Map<String, WarehouseEntity> warehouseMap, String transactionNo);
+                               String transactionNo);
 
     /**
      * 反审核
@@ -131,7 +130,6 @@ public abstract class AbstractInventoryServiceImpl {
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
         txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getCreateTime)).collect(Collectors.toList());
         String transactionNo = IdUtil.getSnowflake(1, 1).nextIdStr(); // 关联交易号
-        Map<String,WarehouseEntity> warehouseMap = Maps.newHashMap();
         txnFlows.stream().forEach(txnFlow->{
             // 此处需注意：1.已经反审核过的单据不允许再次反审核，以免库存数据错乱（前面查询条件已过滤）；2.可能会出现负数，如入库后被出库了反审核后仓库数量不够反审核，增加验证不允许反审核
             // 登记反审核的交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
@@ -195,7 +193,7 @@ public abstract class AbstractInventoryServiceImpl {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
                 // 记录交易流水
-                transactionFlowService.recordFlowTransaction(transactionFlowDTO, inventoryBusinessType, txnFlow.getTransactionRuleId(), transactionInventoryQty, inventoryModeCur, warehouseMap);
+                transactionFlowService.recordFlowTransaction(transactionFlowDTO, inventoryBusinessType, txnFlow.getTransactionRuleId(), transactionInventoryQty, inventoryModeCur);
                 // 更新原交易流水为已反审核
                 transactionFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
                 // 更新实时库存表数量
@@ -233,7 +231,7 @@ public abstract class AbstractInventoryServiceImpl {
      * 入库核心业务逻辑处理
      */
     @SneakyThrows
-    public void inStockCore(InStockOrOutStockDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId, Map<String, WarehouseEntity> warehouseMap, String transactionNo) {
+    public void inStockCore(InStockOrOutStockDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId, String transactionNo) {
         // 仓库组织
         String orgId = param.getOrgId();
         // 仓库
@@ -314,7 +312,7 @@ public abstract class AbstractInventoryServiceImpl {
             // 登记交易流水
             TransactionFlowDTO transactionFlowDTO = inventoryHelper.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, inventoryDetail.getInstockBatchDate(), qty);
             transactionFlowDTO.setTransactionNo(transactionNo);
-            transactionFlowService.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQty, InventoryModeEnum.IN_STOCK, warehouseMap);
+            transactionFlowService.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQty, InventoryModeEnum.IN_STOCK);
 
             // 创建/修改库存历史
             InventoryHisEntity inventoryHis = inventoryHisService.findByInfoIdAndBillDate(inventoryInfoId, param.getBillDate());
@@ -353,7 +351,7 @@ public abstract class AbstractInventoryServiceImpl {
      */
     @SneakyThrows
     public void outStockCore (InStockOrOutStockDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId,
-                              Map<String, WarehouseEntity> warehouseMap, String transactionNo) {
+                              String transactionNo) {
         // 仓库组织
         String orgId = param.getOrgId();
         // 仓库
@@ -426,7 +424,7 @@ public abstract class AbstractInventoryServiceImpl {
                 // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
                 TransactionFlowDTO transactionFlowDTO = inventoryHelper.wrapTransactionFlowInOutStock(param, inventory.getId(), businessType, inventoryDetailEntity.getId(), inventoryStatusEnum, inventoryDetailEntity.getInstockBatchDate(), detailDeductQty);
                 transactionFlowDTO.setTransactionNo(transactionNo);
-                transactionFlowService.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, transactionInventoryQty, InventoryModeEnum.OUT_STOCK, warehouseMap);
+                transactionFlowService.recordFlowTransaction(transactionFlowDTO, businessType, tansactionRuleId, transactionInventoryQty, InventoryModeEnum.OUT_STOCK);
             }
             if(waitOutQty > 0) {
                 throw new ServiceException(ApiError.ERROR_99035);

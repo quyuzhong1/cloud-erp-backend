@@ -184,4 +184,13 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param syncKingdeeStatus
      */
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId);
+
+    /**
+     * 根据id获取仓库详情带缓存
+     * @param id
+     * @return
+     */
+    WarehouseDTO.UpdateDTO detailWithCache(String id);
+
+
 }
