@@ -239,10 +239,12 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
         List<Map<String, String>> orderListingTime1 = baseMapper.getOrderListingTime(skuNoList);
         for (Map<String, String> stringStringMap : orderListingTime1) {
-            Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("skuNo", stringStringMap.get("skuno"));
-            resultMap.put("listingTime", stringStringMap.get("listingtime"));
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
+            if (StringUtils.isNotBlank(stringStringMap.get("listingtime"))) {
+                Map<String, Object> resultMap = new HashMap<>();
+                resultMap.put("skuNo", stringStringMap.get("skuno"));
+                resultMap.put("listingTime", stringStringMap.get("listingtime"));
+                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
+            }
         }
     }
 }
