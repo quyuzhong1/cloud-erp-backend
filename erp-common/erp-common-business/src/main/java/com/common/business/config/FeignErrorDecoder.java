@@ -1,4 +1,4 @@
-package com.erp.server.wms.config;
+package com.common.business.config;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
@@ -18,8 +18,9 @@ import org.springframework.context.annotation.Configuration;
  * @Date 2023-05-06 10:13
  * @Created by yl
  */
-@Configuration
+
 @Slf4j
+@Configuration
 public class FeignErrorDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {

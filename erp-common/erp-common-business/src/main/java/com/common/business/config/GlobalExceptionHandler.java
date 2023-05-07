@@ -9,7 +9,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -33,9 +32,8 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice(basePackages= "com.erp.server.*.controller.api")
+@RestControllerAdvice(basePackages = {"com.erp.server.scm.controller.api","com.erp.server.wms.controller.api"})
 public class GlobalExceptionHandler {
-
     @ExceptionHandler({ServiceException.class})
     @ResponseStatus(HttpStatus.OK)
     public ApiResult resolveException(ServiceException e) {
@@ -47,17 +45,15 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler({FeignServiceException.class})
+    @ExceptionHandler(value = FeignServiceException.class)
     @ResponseStatus(HttpStatus.OK)
-    public ApiResult resolveException(FeignServiceException  e) {
+    public ApiResult resolveException(FeignServiceException e) {
         log.error("系统异常：{}", e.getMsg(), e);
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
         return result;
     }
-
-
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -96,7 +92,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = DataIntegrityViolationException.class)
     public ApiResult resolveException(DataIntegrityViolationException e) {
         log.error("系统异常：", e);
-        if(e.getMessage().contains("value too long")) {
+        if (e.getMessage().contains("value too long")) {
             return ApiResult.error(ApiError.ERROR_1025);
         } else {
             return ApiResult.error(ApiError.ERROR_1002);
@@ -131,8 +127,8 @@ public class GlobalExceptionHandler {
         log.error("系统异常:", e);
         if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().contains("Duplicate entry")
                 && e.getMessage().contains("for key")) {
-            String duplicateKey = e.getMessage().substring(e.getMessage().indexOf("Duplicate entry") + 15,e.getMessage().indexOf("for key"));
-            return ApiResult.error(ApiError.ERROR_1024.code, StrUtil.format("数据【{}】重复，请修改后再提交",duplicateKey));
+            String duplicateKey = e.getMessage().substring(e.getMessage().indexOf("Duplicate entry") + 15, e.getMessage().indexOf("for key"));
+            return ApiResult.error(ApiError.ERROR_1024.code, StrUtil.format("数据【{}】重复，请修改后再提交", duplicateKey));
         } else {
             return ApiResult.error(ApiError.ERROR_1024);
         }
@@ -149,17 +145,18 @@ public class GlobalExceptionHandler {
     }
 
 
-
     /**
      * 兜底的异常
+     *
      * @param e
      * @return
      */
-    @Profile(value = {"uat", "prod"})
-    @ExceptionHandler(Exception.class)
-    public ApiResult resolveException(Exception e) {
-        log.error("系统异常：", e);
-        return ApiResult.error(ApiError.Default);
-    }
+//    @Profile(value = {"uat", "prod"})
+//    @ExceptionHandler(Exception.class)
+//    public ApiResult resolveException(Exception e) {
+//        log.error("系统异常：", e);
+//       return ApiResult.error(ApiError.Default);
+//    }
+
 
 }

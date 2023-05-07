@@ -12,7 +12,7 @@ import lombok.Data;
  * @Created by yl
  */
 @Data
-public class FeignServiceException extends RuntimeException {
+public class FeignServiceException extends Exception {
     /**
      * 错误码
      */

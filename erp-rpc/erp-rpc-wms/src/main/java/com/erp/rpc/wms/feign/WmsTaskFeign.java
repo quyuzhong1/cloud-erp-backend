@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -22,7 +23,7 @@ import java.util.Map;
  * @description: TODO
  * @date 2023/3/17 15:56
  */
-@FeignClient(name = "erp-wms")
+@FeignClient(name = "erp-wms",configuration = {FeignErrorDecoder.class})
 public interface WmsTaskFeign {
 
     /**

@@ -61,8 +61,8 @@ public class PurchaseReturnOrderFeignController extends BaseController {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
-        return  purchaseReturnOrderService.batchAdd(list);
-
+        Boolean flag = purchaseReturnOrderService.batchAdd(list);
+        return flag ;
 
     }
 

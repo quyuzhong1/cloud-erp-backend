@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -15,7 +16,7 @@ import java.util.Map;
  * @Author Luo_WG
  * @Date 2023/4/13 11:41
  **/
-@FeignClient(name = "erp-scm")
+@FeignClient(name = "erp-scm",configuration = {FeignErrorDecoder.class})
 public interface ScmTaskFeign {
 
     /**
