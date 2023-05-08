@@ -149,7 +149,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:addAndSubmit",
+            menuCode = "wms:warehouseReceive:add",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
@@ -167,7 +167,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:updateAndSubmit",
+            menuCode = "wms:warehouseReceive:update",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
@@ -203,7 +203,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:approve",
+            menuCode = "wms:warehouseReceive:disApprove",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -221,7 +221,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:approve",
+            menuCode = "wms:warehouseReceive:cancelProcess",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -239,7 +239,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:approve",
+            menuCode = "wms:warehouseReceive:invalid",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
@@ -300,6 +300,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockIn")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:generateStockIn",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "id")
     public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.ListGenerateStockInDTO dtos) {
         Boolean flag = warehouseReceiveService.generateStockIn(dtos.getList());
         return flag == true ? success() : failure();

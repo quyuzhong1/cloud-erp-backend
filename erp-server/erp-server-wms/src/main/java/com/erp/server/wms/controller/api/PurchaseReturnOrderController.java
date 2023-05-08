@@ -146,7 +146,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:addAndSubmit",
+            menuCode = "wms:purchaseReturnOrder:add",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
@@ -164,7 +164,7 @@ public class PurchaseReturnOrderController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,return_user_id",
-            menuCode = "wms:purchaseReturnOrder:updateAndSubmit",
+            menuCode = "wms:purchaseReturnOrder:update",
             serviceClass = PurchaseReturnOrderService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
