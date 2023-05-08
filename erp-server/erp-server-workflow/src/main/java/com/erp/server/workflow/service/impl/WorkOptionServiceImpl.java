@@ -110,7 +110,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         if (ObjectUtil.isNotEmpty(frequentlyViewDTOS)) {
-            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getId).collect(Collectors.toList());
+            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getModuleStatusId).collect(Collectors.toList());
         }
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listOftenMenu(sysClassify);
         for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
