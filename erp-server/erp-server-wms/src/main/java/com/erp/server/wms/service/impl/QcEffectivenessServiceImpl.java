@@ -177,6 +177,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     @Override
     public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
         IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcInfoMapper.viewQcForPersonnel(query, pagingDTO.getParams());
         return new PagingVO(pageData);
     }
@@ -184,6 +185,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     @Override
     public PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
         IPage<QcEffectivenessDTO.ViewQcForDocumentDTO> pageData = this.qcInfoMapper.viewQcForDocument(query, pagingDTO.getParams());
         List<QcEffectivenessDTO.ViewQcForDocumentDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
