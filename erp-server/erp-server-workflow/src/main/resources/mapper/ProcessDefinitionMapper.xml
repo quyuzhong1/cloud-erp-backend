@@ -18,6 +18,7 @@
         <result column="bpmn_xml" property="bpmnXml" />
         <result column="is_deploy" property="isDeploy" />
         <result column="remark" property="remark" />
+        <result column="review_setting" property="reviewSetting" />
     </resultMap>
     <sql id="query_list_sql">
         <if test="null != params and params.processName != null and params.processName != ''">
@@ -34,6 +35,8 @@
         </if>
         order by pd.create_time desc
     </sql>
+
+
     <select id="paging" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$ListDTO">
         SELECT
         pd.id,

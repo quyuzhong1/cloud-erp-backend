@@ -130,7 +130,7 @@ public class ProcessManagementDTO {
             /**
              * 驳回的目标节点 ID
              */
-            private String previousActivityId;
+            private String activityId;
 
             /**
             * 流程参数map
