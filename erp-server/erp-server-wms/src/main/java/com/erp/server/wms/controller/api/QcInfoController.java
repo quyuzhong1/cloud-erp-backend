@@ -164,6 +164,11 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/batchFinish")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:batchFinish",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
     public ApiResult actionFinish(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcInfoService.batchFinish(dto.getIds());
         return result ? success() : failure();
@@ -177,6 +182,11 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/batchExemption")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:batchExemption",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
     public ApiResult batchExemption(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcInfoService.batchExemption(dto.getIds());
         return result ? success() : failure();
@@ -190,6 +200,11 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/batchCancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:batchCancel",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
     public ApiResult batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcInfoService.batchCancel(dto.getIds());
         return result ? success() : failure();
@@ -251,6 +266,11 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/assign")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:assign",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
     public ApiResult assign(@RequestBody @Valid QcInfoDTO.AssignDTO dto) {
         Boolean result = qcInfoService.assign(dto);
         return result ? success() : failure();
@@ -262,6 +282,11 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/updateHandleMode")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:updateHandleMode",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
     public ApiResult updateHandleMode(@RequestBody @Valid QcResultDTO.UpdateHandleModeDTO dto) {
         Boolean result = qcInfoService.updateHandleMode(dto);
         return result ? success() : failure();
@@ -276,6 +301,11 @@ public class QcInfoController extends BaseController {
      * @date: 2023/4/11 20:30
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:generatePurchaseReturnOrder",
+            serviceClass = QcInfoService.class,
+            keyIdName = "ids")
     public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = qcInfoService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);

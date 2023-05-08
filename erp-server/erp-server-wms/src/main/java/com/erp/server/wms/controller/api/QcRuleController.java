@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -41,6 +43,10 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:paging",
+            tableAlias = "qc_rule")
     public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
         PagingVO<QcRuleDTO.PagingViewDTO> pagingVO = qcRuleService.paging(dto);
         return success(pagingVO);
@@ -54,6 +60,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:add",
+            serviceClass = QcRuleService.class,
+            keyIdName = "id")
     public ApiResult add(@RequestBody @Validated QcRuleDTO.AddDTO dto) {
         String id = qcRuleService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -66,6 +77,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:add",
+            serviceClass = QcRuleService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated QcRuleDTO.AddDTO dto) {
         Boolean result = qcRuleService.addAndSubmit(dto);
         return result ? success() : failure();
@@ -78,6 +94,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:submit",
+            serviceClass = QcRuleService.class,
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.submit(dto.getIds());
         return result == true ? success() : failure();
@@ -102,6 +123,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:update",
+            serviceClass = QcRuleService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated QcRuleDTO.UpdateDTO dto) {
         String id = qcRuleService.updateQcRule(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -114,6 +140,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:update",
+            serviceClass = QcRuleService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated QcRuleDTO.UpdateDTO dto) {
         Boolean result = qcRuleService.updateAndSubmit(dto);
         return result ? success() : failure();
@@ -126,6 +157,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:approve",
+            serviceClass = QcRuleService.class,
+            keyIdName = "ids")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = qcRuleService.approve(dto);
         return result == true ? success() : failure();
@@ -140,6 +176,11 @@ public class QcRuleController extends BaseController {
      * @date 2023-03-22 11:56
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:disApprove",
+            serviceClass = QcRuleService.class,
+            keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = qcRuleService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -154,6 +195,11 @@ public class QcRuleController extends BaseController {
      * @date 2023-03-22 11:56
      */
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:cancelProcess",
+            serviceClass = QcRuleService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = qcRuleService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
@@ -167,6 +213,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:delete",
+            serviceClass = QcRuleService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = qcRuleService.deleteByIds(dto.getIds());
         return result == true ? success() : failure();
@@ -180,6 +231,11 @@ public class QcRuleController extends BaseController {
      * @return
      */
     @PostMapping("/updateStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcRule:updateStatus",
+            serviceClass = QcRuleService.class,
+            keyIdName = "id")
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = qcRuleService.updateDisabledState(dto);
         return result == true ? success() : failure();

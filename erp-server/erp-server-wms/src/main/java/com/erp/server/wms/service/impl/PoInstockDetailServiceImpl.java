@@ -258,13 +258,13 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             Integer stockInQty = MathUtil.ZERO;
 
             if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                stockInQty = stockInDetails.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                stockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getPurchaseOrderDetailId()) && !obj.getId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
             //退货单数量
             Integer returnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
-                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId()) && !obj.getId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                returnQty = returnOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
 
