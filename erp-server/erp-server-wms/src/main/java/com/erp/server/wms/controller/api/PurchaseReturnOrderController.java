@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.server.wms.service.PoInstockService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
@@ -88,6 +89,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:update",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseReturnOrderService.update(dto);
         return flag == true ? success() : failure();
@@ -119,6 +125,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:submit",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseReturnOrderService.submit(dto.getIds());
         return flag == true ? success() : failure();
@@ -132,6 +143,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:addAndSubmit",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
         Boolean flag = purchaseReturnOrderService.addAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -145,6 +161,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:updateAndSubmit",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseReturnOrderService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -158,6 +179,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:approve",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         Boolean flag = purchaseReturnOrderService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
@@ -171,6 +197,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:disApprove",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseReturnOrderService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -184,6 +215,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:cancelProcess",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseReturnOrderService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
@@ -197,6 +233,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:invalid",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
         Boolean flag = purchaseReturnOrderService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
         return flag == true ? success() : failure();
@@ -210,6 +251,11 @@ public class PurchaseReturnOrderController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,return_user_id",
+            menuCode = "wms:purchaseReturnOrder:delete",
+            serviceClass = PurchaseReturnOrderService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = purchaseReturnOrderService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();

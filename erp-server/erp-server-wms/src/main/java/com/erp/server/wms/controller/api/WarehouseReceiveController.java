@@ -93,6 +93,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:update",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean flag = warehouseReceiveService.update(dto);
         return flag == true ? success() : failure();
@@ -124,6 +129,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:submit",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = warehouseReceiveService.submit(dto.getIds());
         return flag == true ? success() : failure();
@@ -137,6 +147,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:addAndSubmit",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
         Boolean flag = warehouseReceiveService.addAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -150,6 +165,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:updateAndSubmit",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean flag = warehouseReceiveService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
@@ -163,6 +183,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:approve",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         Boolean flag = warehouseReceiveService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
@@ -176,6 +201,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:approve",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = warehouseReceiveService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
@@ -189,6 +219,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:approve",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = warehouseReceiveService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
@@ -202,6 +237,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:approve",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
         Boolean flag = warehouseReceiveService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
         return flag == true ? success() : failure();
