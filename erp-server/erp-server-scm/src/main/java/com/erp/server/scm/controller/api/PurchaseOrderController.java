@@ -301,6 +301,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/viewGenerateReceive")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:viewGenerateReceive",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult<List<PurchaseOrderDTO.ViewGenerateReceiveDTO>> viewGenerateReceive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseOrderDTO.ViewGenerateReceiveDTO> list = purchaseOrderService.viewGenerateReceive(dto.getIds());
         return success(list);
@@ -328,6 +333,11 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<List<ViewGenerateReceiveDTO>>
      */
     @PostMapping("/viewGenerateStockIn")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:viewGenerateStockIn",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult<List<PurchaseOrderDTO.ViewGenerateStockInDTO>> viewGenerateStockIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseOrderDTO.ViewGenerateStockInDTO> list = purchaseOrderService.viewGenerateStockIn(dto.getIds());
         return success(list);
@@ -481,6 +491,11 @@ public class PurchaseOrderController extends BaseController {
      * @return
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:viewGeneratePurchaseReturnOrder",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "ids")
     public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = purchaseOrderService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
