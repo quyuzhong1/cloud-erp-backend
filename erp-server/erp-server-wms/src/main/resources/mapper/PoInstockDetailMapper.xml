@@ -43,6 +43,7 @@
 
     <select id="listDetailByPodIds" resultType="com.erp.model.wms.entity.PoInstockDetailEntity">
         select
+            psid.id,
             psi.approve_status,
             psid.main_id,
             psid.sku_id,
