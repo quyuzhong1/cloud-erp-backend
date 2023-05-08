@@ -186,13 +186,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     CleanSkuDto getProductIdBySkuClean(String sku);
-    
+
     /**
      * 方法说明
      * @author yl
      * @date 2022-11-21 17:13
      * @param productId
-     * @return 
+     * @return
      */
     List<ProductDetailEntity> getSkuListByProductId(String productId);
     /**
@@ -332,7 +332,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     ProductSmallestUnitDTO getSkuBySkuId(String skuId);
 
-    
+
     /**
      * 变更管理 审核通过后
      * 变更sku
@@ -343,7 +343,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void changeSku(ProductSmallestUnitDTO sku);
 
-    
+
     /**
      * 根据sku ids 获取到产品经理
      * @author yl

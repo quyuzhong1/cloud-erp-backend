@@ -42,7 +42,7 @@ public class ProductListingTimeCustomer implements RocketMQListener<Map<String, 
         if (ObjectUtil.isEmpty(productIdBySku)) {
             return;
         }
-        /*ProductSaleEntity bySkuId = productSaleService.getBySkuId(productIdBySku.getId());
+/*        ProductSaleEntity bySkuId = productSaleService.getBySkuId(productIdBySku.getId());
         if (bySkuId.getListingTime() != null) {
             listingTime = bySkuId.getListingTime().toString();
         }*/

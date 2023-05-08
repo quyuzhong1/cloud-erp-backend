@@ -33,7 +33,7 @@ public class CleanSkuDto {
     /**
      * 产品上市时间
      */
-    private LocalDateTime listingTime;
+    private LocalDate listingTime;
 
 
 }

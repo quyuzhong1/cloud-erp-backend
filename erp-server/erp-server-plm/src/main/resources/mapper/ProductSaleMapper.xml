@@ -30,9 +30,9 @@
 
     <select id="getListingProductAll" resultType="com.erp.model.plm.dto.NewProductDTO">
         SELECT
-            ps.id,
-            pd.sku_no,
-            ps.listing_time AS newListingTime
+        ps.id,
+        pd.sku_no,
+        ps.listing_time AS newListingTime
         FROM product_sale ps
         INNER JOIN product_detail pd ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
         INNER JOIN product_info pi ON pi.id = pd.product_id AND pd.is_deleted = FALSE

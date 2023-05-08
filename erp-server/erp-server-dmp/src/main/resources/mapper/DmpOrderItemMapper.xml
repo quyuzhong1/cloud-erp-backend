@@ -6,7 +6,7 @@
 
     <select id="getItemIdBySkuAndYear" resultType="string">
         SELECT
-            poit.id
+        poit.id
         FROM dmp_order_info poi
         LEFT JOIN dmp_order_item poit ON poi.id = poit.order_id
         WHERE 1 = 1

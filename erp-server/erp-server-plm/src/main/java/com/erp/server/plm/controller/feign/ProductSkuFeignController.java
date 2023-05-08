@@ -66,7 +66,7 @@ public class ProductSkuFeignController {
                 .eq(ProductSaleEntity::getSkuId, sku)
                 .oneOpt();
         if (productSaleEntity.isPresent()) {
-            productIdBySkuClean.setListingTime(LocalDateTimeUtil.of(productSaleEntity.get().getListingTime()));
+            productIdBySkuClean.setListingTime(LocalDateTimeUtil.of(productSaleEntity.get().getListingTime()).toLocalDate());
         }
         return productIdBySkuClean;
     }

@@ -55,7 +55,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean saveTemplate(SaveProductTemplateDTO dto);
-     
+
     /**
      * 更改项目状态
      * @author yl
@@ -142,7 +142,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     List<ProductInfoEntity> getByCategoryIds(List<String> categoryIds,Integer isFinishedProductDev);
 
-    
+
     /**
      * 查询产品列表 和产品开发列表的分类产品
      * @author yl
