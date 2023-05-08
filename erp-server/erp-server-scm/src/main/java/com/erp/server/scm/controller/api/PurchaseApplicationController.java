@@ -247,6 +247,11 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/viewGeneratePurchaseOrder")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "scm:purchaseApplication:viewGeneratePurchaseOrder",
+            serviceClass = PurchaseApplicationService.class,
+            keyIdName = "ids")
     public ApiResult<List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO>> viewGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO> list = purchaseApplicationService.viewGeneratePurchaseOrder(dto.getIds());
         return success(list);
