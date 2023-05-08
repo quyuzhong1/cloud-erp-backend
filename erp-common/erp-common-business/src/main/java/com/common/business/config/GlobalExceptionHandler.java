@@ -37,8 +37,9 @@ import java.util.List;
         "com.erp.server.wms.controller.api",
         "com.erp.server.workflow.controller.api",
         "com.erp.server.auth.controller.api",
-        "com.erp.server.bi.controller",
-        "com.erp.server.plm.controller"
+        "com.erp.server.bi.controller.api",
+        "com.erp.server.plm.controller.api",
+        "com.erp.server.sys.controller.api"
 
 })
 public class GlobalExceptionHandler {
