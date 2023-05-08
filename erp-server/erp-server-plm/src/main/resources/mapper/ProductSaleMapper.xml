@@ -40,8 +40,6 @@
         <if test="sign == true ">
             AND ps.listing_time IS NOT NULL
         </if>
-        <if test="sign == false ">
-            AND ps.listing_time IS NULL
-        </if>
+
     </select>
 </mapper>
