@@ -175,7 +175,7 @@
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size != ''">
-            and wr.id in
+            and pro.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
