@@ -25,14 +25,22 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 
-/**
+/** 
+ *
  * @Classname: GlobalExceptionHandler
  * @Description: TODO
  * @CreateTime: 2023-04-13  19:34
  * @Author: zhangchunlin
  */
 @Slf4j
-@RestControllerAdvice(basePackages = {"com.erp.server.scm.controller.api","com.erp.server.wms.controller.api"})
+@RestControllerAdvice(basePackages = {"com.erp.server.scm.controller.api",
+        "com.erp.server.wms.controller.api",
+        "com.erp.server.workflow.controller.api",
+        "com.erp.server.auth.controller.api",
+        "com.erp.server.bi.controller",
+        "com.erp.server.plm.controller"
+
+})
 public class GlobalExceptionHandler {
     @ExceptionHandler({ServiceException.class})
     @ResponseStatus(HttpStatus.OK)
@@ -143,6 +151,7 @@ public class GlobalExceptionHandler {
             return ApiResult.error(ApiError.Default);
         }
     }
+
 
 
     /**
