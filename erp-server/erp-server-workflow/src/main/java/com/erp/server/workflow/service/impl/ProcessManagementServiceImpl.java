@@ -227,13 +227,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
             // 审核不通过
             // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
-            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
-            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
-            // 取消流程实例中所有的当前任务
-            runtimeService
-                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
+//            taskService.createComment(currentTask.getId(), processInstanceId, dto.getComment());
+//            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
+//            // 取消流程实例中所有的当前任务
+//            runtimeService
+//                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
+//                    .cancelTransitionInstance(currentTask.getProcessInstanceId())
+//                    .startBeforeActivity("reviewFailed")
+//                    .execute();
+            runtimeService.createProcessInstanceModification(processInstanceId)
+                    //关闭相关任务
                     .cancelAllForActivity(currentTask.getTaskDefinitionKey())
-                    .startBeforeActivity("reviewFailed")
+                    .setAnnotation(dto.getComment())
                     .execute();
             // TODO 保存流程任务数据 终止流程
 
@@ -339,8 +344,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String startUserId = (String) executionDelegate.getVariable("creator");
         // 获取当前节点的候选人
         List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
-        executionDelegate.setVariableLocal("camunda:candidateUsers", candidateUsers);
-        executionDelegate.setVariable("assignee", "user1,user2");
         // 填充用户变量
         executionDelegate.setVariableLocal("userList", candidateUsers);
     }

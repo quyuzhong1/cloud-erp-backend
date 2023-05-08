@@ -73,10 +73,10 @@ public enum DictBasicEnum {
 
     @EnumValue
     @JsonValue
-    private String code;
-    private String type;
-    private String name;
-    private String desc;
+    private final String code;
+    private final String type;
+    private final String name;
+    private final String desc;
 
     DictBasicEnum(String code, String name, String type, String desc) {
         this.code = code;
