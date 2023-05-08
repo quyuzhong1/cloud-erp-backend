@@ -123,7 +123,7 @@ public class SalesDemandController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
-            menuCode = "scm:salesDemand:addAndSubmit",
+            menuCode = "scm:salesDemand:add",
             serviceClass = SalesDemandService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated SalesDemandDTO.AddDTO dto) {
@@ -141,7 +141,7 @@ public class SalesDemandController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id",
-            menuCode = "scm:salesDemand:updateAndSubmit",
+            menuCode = "scm:salesDemand:update",
             serviceClass = SalesDemandService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated SalesDemandDTO.UpdateDTO dto) {

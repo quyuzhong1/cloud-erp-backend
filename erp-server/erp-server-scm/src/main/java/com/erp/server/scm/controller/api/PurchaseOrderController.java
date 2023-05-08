@@ -125,7 +125,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:addAndSubmit",
+            menuCode = "scm:purchaseOrder:add",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
@@ -143,7 +143,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:updateAndSubmit",
+            menuCode = "scm:purchaseOrder:update",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {

@@ -98,7 +98,7 @@ public class PoInStockController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:addAndSubmit",
+            menuCode = "wms:poInStock:add",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
@@ -134,7 +134,7 @@ public class PoInStockController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:updateAndSubmit",
+            menuCode = "wms:poInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
