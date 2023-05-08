@@ -77,7 +77,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     @Transactional(rollbackFor = Exception.class)
     public void add(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList) {
         if (CollectionUtils.isEmpty(reportDetailList)) {
-            return;
+            reportDetailList = new ArrayList<>();
         }
         List<QcReportDetailEntity> dbList = this.findByMainId(billId);
         List<QcReportDetailEntity> saveOrUpdateList = new ArrayList<>(reportDetailList.size());
