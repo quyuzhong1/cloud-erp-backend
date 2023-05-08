@@ -58,7 +58,7 @@ public class QcEffectivenessController extends BaseController {
     @PostMapping("/viewQcTrend")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
-            menuCode = "wms:qcEffectiveness:viewQcTrend",
+            menuCode = "wms:qcEffectiveness:viewQcOverview",
             tableAlias = "qb"
     )
     public ApiResult<QcEffectivenessDTO.ViewQcTrendDTO> viewQcTrend(@RequestBody @Validated QcEffectivenessDTO.ViewQcTrendSearchParamDTO dto) {
@@ -76,7 +76,7 @@ public class QcEffectivenessController extends BaseController {
     @PostMapping("/viewQcForPersonnel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
-            menuCode = "wms:qcEffectiveness:viewQcForPersonnel",
+            menuCode = "wms:qcEffectiveness:viewQcOverview",
             tableAlias = "qb"
     )
     public ApiResult<PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO>> viewQcForPersonnel(@RequestBody @Validated PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> dto) {
@@ -94,7 +94,7 @@ public class QcEffectivenessController extends BaseController {
     @PostMapping("/viewQcForDocument")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
-            menuCode = "wms:qcEffectiveness:viewQcForDocument",
+            menuCode = "wms:qcEffectiveness:viewQcOverview",
             tableAlias = "qb"
     )
     public ApiResult<PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO>> viewQcForDocument(@RequestBody @Validated PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> dto) {
@@ -113,7 +113,7 @@ public class QcEffectivenessController extends BaseController {
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
-            menuCode = "wms:qcEffectiveness:exportExcel",
+            menuCode = "wms:qcEffectiveness:viewQcOverview",
             tableAlias = "qb"
     )
     public ApiResult exportExcel(@RequestBody QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response) {
