@@ -296,6 +296,11 @@ public class PoInStockController extends BaseController {
      * @return ApiResult<ViewGeneratePurchaseReturnOrderDTO>
      */
     @PostMapping("/viewGeneratePurchaseReturnOrder")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,stock_in_user_id",
+            menuCode = "wms:poInStock:viewGeneratePurchaseReturnOrder",
+            serviceClass = PoInstockService.class,
+            keyIdName = "ids")
     public ApiResult<List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>> viewGeneratePurchaseReturnOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> list = poInstockService.viewGeneratePurchaseReturnOrder(dto.getIds());
         return success(list);
@@ -309,11 +314,6 @@ public class PoInStockController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generatePurchaseReturnOrder")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:generatePurchaseReturnOrder",
-            serviceClass = PoInstockService.class,
-            keyIdName = "id")
     public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = poInstockService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
