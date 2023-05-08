@@ -4,7 +4,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.common.business.service.SuperService;
-import com.erp.model.workflow.enums.ProcessStatusEnum;
+import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 
 /**
@@ -52,6 +52,12 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return
      */
     Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String remark);
+
+    /**
+     * 执行流程开始监听服务处理
+     * @param executionDelegate
+     */
+    void startExecutionHandle(DelegateExecution executionDelegate);
 
 //    /**
 //     * 驳回流程

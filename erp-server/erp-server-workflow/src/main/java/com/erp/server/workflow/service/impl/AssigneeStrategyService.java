@@ -65,7 +65,7 @@ public class AssigneeStrategyService {
      * @param startUserId
      * @return 审批人
      */
-    public List<String> assigneeEmptyHandler(String assigneeEmpty, TaskEntity task, String startUserId) {
+    public List<String> assigneeEmptyHandler(String assigneeEmpty, String startUserId) {
         // 审批为空处理方式为空
         if(StrUtil.isEmpty(assigneeEmpty)){
             return Collections.EMPTY_LIST;

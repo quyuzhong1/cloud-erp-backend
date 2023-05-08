@@ -32,12 +32,17 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Override
     public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment) {
+        ProcessTaskManagementEntity entity = getById(taskId);
         // 更新任务审批状态
         boolean update = lambdaUpdate()
                 .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
                 .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
                 .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
-                .eq(ProcessTaskManagementEntity::getId, taskId)
+                .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
+                .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
+                .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
+                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
+                .eq(ProcessTaskManagementEntity::getCurrentActivityId, entity.getCurrentActivityId())
                 .update();
         if (!update) {
             throw new RuntimeException("更新任务审批状态失败");
@@ -72,7 +77,9 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
                 .last("limit 1")
                 .one();
-        insertTask.setPreActivityId(entity.getCurrentActivityId());
+        if(null != entity){
+            insertTask.setPreActivityId(entity.getCurrentActivityId());
+        }
         boolean save = save(insertTask);
         if (!save) {
             throw new RuntimeException("保存流程任务失败");

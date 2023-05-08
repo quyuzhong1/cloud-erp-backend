@@ -1,6 +1,5 @@
 package com.erp.server.workflow.listeners;
 
-import cn.hutool.json.JSONUtil;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -14,7 +13,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Locale;
 
 
 /**
@@ -43,10 +41,10 @@ public class CamundaGlobalListener {
       // 任务创建时的逻辑处理
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", taskDelegate.getName());
       processManagementService.createTaskHandle(taskDelegate);
-    } else if (TaskListener.EVENTNAME_COMPLETE.equals(taskDelegate.getEventName())) {
+    }else if (TaskListener.EVENTNAME_COMPLETE.equals(taskDelegate.getEventName())) {
       // 任务完成时的逻辑处理
       log.info("CamundaGlobalListener onTaskEvent Task completed: {}", taskDelegate.getName());
-//      processManagementService.completeTaskHandle(taskDelegate);
+      processManagementService.completeTaskHandle(taskDelegate);
     }
 
 
@@ -61,7 +59,7 @@ public class CamundaGlobalListener {
   @EventListener
   public void onTaskEvent(TaskEvent taskEvent) {
     // 任务完成时，会触发该事件 eventType = complete create
-    log.info("Handle immutable task event = {}", taskEvent.toString());
+//    log.info("Handle immutable task event = {}", taskEvent.toString());
 
   }
 
@@ -74,9 +72,12 @@ public class CamundaGlobalListener {
   @EventListener
   public void onExecutionEvent(DelegateExecution executionDelegate) {
     log.info("Handle mutable execution event: {}",  executionDelegate.toString());
-    String activityId = executionDelegate.getCurrentActivityId();
+    if (executionDelegate.getEventName().equals(ExecutionListener.EVENTNAME_START)) {
+      // 任务创建时的逻辑处理
+      log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
+      processManagementService.startExecutionHandle(executionDelegate);
 
-
+    }
   }
 
   /**
@@ -86,7 +87,8 @@ public class CamundaGlobalListener {
    */
   @EventListener
   public void onExecutionEvent(ExecutionEvent executionEvent) {
-    log.info("Handle immutable execution event: {}",  executionEvent.toString());
+//    log.info("Handle immutable execution event: {}",  executionEvent.toString());
+
   }
 
   /**
@@ -97,7 +99,7 @@ public class CamundaGlobalListener {
   @EventListener
   public void onHistoryEvent(HistoryEvent historyEvent) {
     // 任务完成后，会触发该事件 eventType = complete
-    log.info("History event: {}",  JSONUtil.toJsonStr(historyEvent));
+//    log.info("History event: {}",  JSONUtil.toJsonStr(historyEvent));
   }
  
 }

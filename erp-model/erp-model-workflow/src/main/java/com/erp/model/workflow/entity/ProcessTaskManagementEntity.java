@@ -110,6 +110,9 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("execution_id")
     private String executionId;
 
+    @TableField("approve_id")
+    private String approveId;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
@@ -136,6 +139,10 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     public static final String REMARK = "remark";
 
     public static final String PRE_ACTIVITY_ID = "pre_activity_id";
+
+    public static final String EXECUTION_ID = "execution_id";
+
+    public static final String APPROVE_ID = "approve_id";
 
 
 

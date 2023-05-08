@@ -155,7 +155,7 @@ public class ProcessDefinitionDTO {
         /**
          * 审核人设置
          */
-        private String reviewSetting;
+        private DictBasicEnum reviewSetting;
 
         /**
          * 业务类型

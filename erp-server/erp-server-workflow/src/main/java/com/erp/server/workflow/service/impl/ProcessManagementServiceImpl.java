@@ -27,6 +27,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
@@ -41,9 +42,11 @@ import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.IdentityLinkType;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.camunda.bpm.model.bpmn.instance.UserTask;
+import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
+import org.camunda.bpm.model.xml.Model;
+import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -141,25 +144,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param task
      * @param propertiesDTO
      */
-    private List<String> addApproveInfo(TaskEntity task, CamundaDTO.PropertiesDTO propertiesDTO ) {
-        if (ObjectUtil.isEmpty(task)) {
-            return Collections.emptyList();
-        }
+    private List<String> addApproveInfo(String startUserId, CamundaDTO.PropertiesDTO propertiesDTO ) {
         // 获取审批人
-        // 候选人
-        String startUserId = task.getVariable("creator").toString();
         String candidateUsers = propertiesDTO.getCandidateUsers();
         // 使用策略模式获取审批人
         List<String> userIds = assigneeStrategyService.getResult(propertiesDTO.getAssigneeOption(), propertiesDTO.getAssignee(),startUserId,candidateUsers);
         // 无审批人处理
         if (CollectionUtil.isEmpty(userIds)) {
-            log.warn("任务节点无审批人处理  ProcessInstanceId = {} taskId={}", task.getProcessInstanceId(), task.getId());
+            log.warn("任务节点无审批人,开始空审核人处理 startUserId={}", startUserId);
             // 无审批人处理
-            userIds = assigneeStrategyService.assigneeEmptyHandler(propertiesDTO.getAssigneeEmpty(), task, startUserId);
+            userIds = assigneeStrategyService.assigneeEmptyHandler(propertiesDTO.getAssigneeEmpty(), startUserId);
         }
         if(CollectionUtil.isEmpty(userIds)){
+            log.warn("任务节点无审批人为空 startUserId={}", startUserId);
             // TODO 无审批人终止流程
-
         }
         return userIds;
     }
@@ -200,7 +198,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程任务数据
         ProcessTaskManagementEntity taskManagement = processTaskManagementService.lambdaQuery()
                 .eq(ProcessTaskManagementEntity::getProcessInstanceId, processManagement.getProcessInstanceId())
+                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
                 .eq(ProcessTaskManagementEntity::getCurrentApproveId, dto.getUserId())
+                .orderByAsc(ProcessTaskManagementEntity::getCreateTime)
+                .last("limit 1")
                 .one();
         // 审核人校验
         if (null == taskManagement) {
@@ -214,10 +215,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         //添加审批意见
         String processInstanceId = processManagement.getProcessInstanceId();
+        identityService.setAuthenticatedUserId(dto.getUserId());
         if(ApproveTypeEnum.PASS.equals(dto.getApproveType())) {
             // 审核通过
             taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
-            taskService.complete(taskManagement.getTaskId(), dto.getVariablesMap());
+            Map<String, Object> variablesMap = dto.getVariablesMap();
+            taskService.complete(taskManagement.getTaskId(), variablesMap);
             updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
         }
 
@@ -287,12 +290,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String comment) {
-        // 查询下一个任务
-        List<String> activeActivityIds = runtimeService.getActiveActivityIds(processInstanceId);
-        String nextNodeId = "";
-        if(CollectionUtil.isNotEmpty(activeActivityIds)) {
-            nextNodeId = activeActivityIds.get(0);
-        }
         // 流程状态 此处传参支持后续其他状态的传入
         ProcessStatusEnum statusEnum =  ApproveTypeEnum.REJECT.equals(approveType) ? ProcessStatusEnum.TERMINATION : ProcessStatusEnum.RUNNING;
         // 根据流程结束时间判定流程是否结束
@@ -300,11 +297,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .processInstanceId(processInstanceId).singleResult();
         Date endTimeDate = processInstance.getEndTime();
         LocalDateTime endTime = null;
+        String nextNodeId = "";
         if(null != endTimeDate){
             // 流程结束
             statusEnum = ProcessStatusEnum.FINISH;
             endTime = LocalDateUtil.date2LocalDateTime(endTimeDate);
+        }else {
+            // 查询下一个任务
+            ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
+            if(null != activityInstance) {
+                nextNodeId = activityInstance.getActivityId();
+            }
         }
+
         boolean update = lambdaUpdate()
                 .set(ProcessManagementEntity::getProcessStatus, statusEnum)
                 .set(ProcessManagementEntity::getCurrentNodeId, nextNodeId)
@@ -316,6 +321,28 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 更新流程任务数据
         processTaskManagementService.updateApprove(taskId, approveType, comment);
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void startExecutionHandle(DelegateExecution executionDelegate) {
+        // 获取当前节点的 CamundaProperty
+        FlowElement flowElement = executionDelegate.getBpmnModelElementInstance();
+        ExtensionElements extensionElements = flowElement.getExtensionElements();
+        if(null == extensionElements){
+            return;
+        }
+        Collection<CamundaProperty> camundaProperties = extensionElements.getElementsQuery().filterByType(CamundaProperties.class).singleResult().getCamundaProperties();
+        Map<String, String> propertiesMap = camundaProperties.stream()
+                .collect(Collectors.toMap(CamundaProperty::getCamundaName, CamundaProperty::getCamundaValue));
+        CamundaDTO.PropertiesDTO propertiesDTO = BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
+        String startUserId = (String) executionDelegate.getVariable("creator");
+        // 获取当前节点的候选人
+        List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
+        executionDelegate.setVariableLocal("camunda:candidateUsers", candidateUsers);
+        executionDelegate.setVariable("assignee", "user1,user2");
+        // 填充用户变量
+        executionDelegate.setVariableLocal("userList", candidateUsers);
     }
 
 //    @Override
@@ -368,23 +395,32 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String processDefinitionId = task.getExecution().getProcessDefinitionId();
         String taskDefinitionKey = task.getTaskDefinitionKey();
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);
-        List<String> candidateUsers = addApproveInfo((TaskEntity) task, propertiesDTO);
-        // 设置候选人列表
-//        task.setVariable("camunda:candidateUsers", candidateUsers);
-//        List<IdentityLinkEntity> identityLinks = ((TaskEntity) task).getIdentityLinks();
-        candidateUsers.forEach(userId -> {
-            taskService.addCandidateUser(userId, task.getId());
-        });
+//        List<String> candidateUsers = addApproveInfo((TaskEntity) task, propertiesDTO);
+//        // 设置候选人列表
+//        FlowElement flowElement = task.getExecution().getBpmnModelElementInstance();
+//        if(flowElement instanceof UserTask){
+//            UserTask userTask = (UserTask) flowElement;
+//            MultiInstanceLoopCharacteristics loopCharacteristics = (MultiInstanceLoopCharacteristics) userTask.getLoopCharacteristics();
+//            if(loopCharacteristics != null){
+//                task.setVariable("userList", candidateUsers);
+//            }else {
+//                candidateUsers.forEach(userId -> {
+//                    taskService.addCandidateUser(task.getId(),userId);
+//                });
+//            }
+//        }
+
         // 保存流程任务数据
         String processInstanceId = task.getExecution().getProcessInstance().getId();
         String activityId = task.getTaskDefinitionKey();
         LocalDateTime processStartTime = LocalDateUtil.date2LocalDateTime(task.getCreateTime());
         String executionId = task.getExecutionId();
         // 查询流程设计审核人处理方式
-        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId.split(":")[0]);
         if(null == processDefinition) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
+        List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
         candidateUsers.forEach(userId -> {
             // 对去重类型做处理，自动审核通过
             DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
