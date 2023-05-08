@@ -287,6 +287,11 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockInView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id,receive_user_id",
+            menuCode = "wms:warehouseReceive:generateStockIn",
+            serviceClass = WarehouseReceiveService.class,
+            keyIdName = "ids")
     public ApiResult<List<WarehouseReceiveDTO.GenerateStockInViewDTO>> generateStockInView(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<WarehouseReceiveDTO.GenerateStockInViewDTO> generateStockInViewDTOS = warehouseReceiveService.generateStockInView(dto.getIds());
         return success(generateStockInViewDTOS);
@@ -300,11 +305,6 @@ public class WarehouseReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateStockIn")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:warehouseReceive:generateStockIn",
-            serviceClass = WarehouseReceiveService.class,
-            keyIdName = "id")
     public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.ListGenerateStockInDTO dtos) {
         Boolean flag = warehouseReceiveService.generateStockIn(dtos.getList());
         return flag == true ? success() : failure();
