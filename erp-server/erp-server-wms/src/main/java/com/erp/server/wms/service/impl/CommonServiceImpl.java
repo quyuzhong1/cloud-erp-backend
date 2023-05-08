@@ -18,8 +18,8 @@ import java.util.Objects;
 public class CommonServiceImpl  implements CommonService {
     @Override
     public LoginUser getUserInfo() {
-        String userId = "1";
-        String userName = "admin";
+        String userId = "";
+        String userName = "";
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (Objects.isNull(loginUser)) {
             loginUser = new LoginUser();
