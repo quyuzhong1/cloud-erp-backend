@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcTypeEnum;
 import lombok.Data;
@@ -219,7 +220,7 @@ public class QcRuleDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
 
 
         private String searchKeyword;
