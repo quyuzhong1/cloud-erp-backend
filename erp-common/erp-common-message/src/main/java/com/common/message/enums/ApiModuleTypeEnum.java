@@ -23,6 +23,7 @@ public enum ApiModuleTypeEnum {
     WAREHOUSE_INFO(12, "warehouseManage", "仓库管理","wms"),
     SUPPLIER(13, "supplier", "供应商管理","scm"),
     PURCHASE_STOCK_IN(14, "purchaseStockIn", "入库单","wms"),
+    SYS_DEPARTMENT(15, "sys_department", "部门","sys"),
 
     ;
     private Integer code;

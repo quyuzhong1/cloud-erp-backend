@@ -111,8 +111,15 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             JSONObject jsonObject = new JSONObject();
             //采购价目编号
             jsonObject.set("CGJM_code",detailEntity.getCJJMCode());
+            //采购价目明细金蝶id
+            jsonObject.set("kingdeeDetailId",purchasePriceDetailEntity.getKingdeeDetailId());
             //供应商编号
-            resultMap.put("supplierCode",supplierEntity.getCode());
+            jsonObject.set("supplierCode",supplierEntity.getCode());
+            //从
+            jsonObject.set("minQty",detailEntity.getMinQty());
+            //至
+            jsonObject.set("maxQty",detailEntity.getMaxQty());
+
             jsonObject.set("skuNo",detailEntity.getSkuNo());
             jsonObject.set("beforeTaxPrice",purchasePriceDetailEntity.getTaxPrice());
             jsonObject.set("afterTaxPrice",detailEntity.getTaxPrice());

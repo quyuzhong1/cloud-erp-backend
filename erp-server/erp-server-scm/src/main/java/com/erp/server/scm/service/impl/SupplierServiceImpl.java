@@ -209,7 +209,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
         //根据供应商id 查询 联系人信息
-        List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.getBySupplierId(supplierId);
+        List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         result.setContactList(contactList);
 
         //根据供应商id 查询账户信息

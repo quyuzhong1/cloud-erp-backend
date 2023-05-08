@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("feign/purchaseReturnOrder")
-public class PurchaseReturnOrderFeignController {
+public class PurchaseReturnOrderFeignController extends BaseController {
 
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
@@ -58,9 +59,11 @@ public class PurchaseReturnOrderFeignController {
     @PostMapping("/addReturnOrder")
     public Boolean addReturnOrder(@RequestBody List<PurchaseReturnOrderDTO.AddDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            return true;
+            return Boolean.FALSE;
         }
-        return purchaseReturnOrderService.batchAdd(list);
+        Boolean flag = purchaseReturnOrderService.batchAdd(list);
+        return flag ;
+
     }
 
 }

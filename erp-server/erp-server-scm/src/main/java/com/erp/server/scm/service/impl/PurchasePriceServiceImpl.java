@@ -23,6 +23,7 @@ import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -210,6 +211,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (Objects.isNull(purchasePrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
+        List<PurchasePriceDetailEntity> detailList = priceDetailService.listDetailByMainId(id);
+        List<String> detailIds = detailList.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
         ApproveStatusEnum status = purchasePrice.getApproveStatus();
 
         PurchasePriceEntity old = new PurchasePriceEntity();
@@ -226,7 +229,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         BeanMapper.copy(dto, purchasePrice);
         //根据供应商 获取到 对应 已有的区间
-        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), new ArrayList<>());
+        List<PurchasePriceDetailDTO.AddDTO> supplierPriceDetailList = priceDetailService.getBySupplierId(purchasePrice.getSupplierId(), detailIds);
         //历史报价
         List<PurchasePriceDetailDTO.AddDTO> historyList = purchasePriceHistoryService.getBySupplierId(purchasePrice.getSupplierId());
         //检查sku 区间报价
@@ -594,11 +597,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Override
     public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .in(PurchasePriceEntity::getId,ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),PurchasePriceEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .in(PurchasePriceEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchasePriceEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 

@@ -27,9 +27,57 @@
     </select>
 
     <select id="findUserNumber" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
-        SELECT sdu.department_id,sdu.user_id,sui.user_name
-        FROM sys_department_user  sdu INNER
-        JOIN sys_user_info sui ON sdu.user_id = sui.uid
-        WHERE sui.delete_state=1;
+        SELECT
+        sdu.department_id,
+        sd.name AS departmentName,
+        sdu.user_id,
+        sui.user_name,
+        sd.code
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        WHERE sui.delete_state=1
+    </select>
+    <select id="listSuperiorByUserId" resultType="com.erp.model.sys.dto.UserSuperiorDTO">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY level) AS level,
+            dept.id as deptId,
+            dept.name as deptName,
+            dept.create_time,
+            dept.update_time,
+            dept.parent_id,
+            dept.type,
+            sdu.user_id,
+            sui.user_name,
+            #{userId} as currentUserId
+        FROM (
+         -- This subquery selects all ancestors of the given department ID using a recursive CTE
+            WITH RECURSIVE department_tree AS (
+            SELECT id, name, remark, create_time, update_time, parent_id, type, 1 AS level
+            FROM sys_department
+            WHERE id = (SELECT department_id from sys_department_user where user_id = #{userId} limit 1)   -- Replace with the desired department ID
+            UNION ALL
+            SELECT d.id, d.name, d.remark, d.create_time, d.update_time, d.parent_id, d.type, dt.level + 1
+            FROM sys_department d JOIN department_tree dt ON d.id = dt.parent_id
+            )
+            SELECT * FROM department_tree
+            ) AS dept
+        LEFT JOIN sys_department_user sdu on dept.id = sdu.department_id and sdu.lead_state = 1
+        LEFT JOIN sys_user_info sui on sdu.user_id = sui.uid
+    </select>
+
+    <select id="getDeptByUserId" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
+        SELECT
+        sdu.department_id,
+        sd.name AS departmentName,
+        sdu.user_id,
+        sui.user_name,
+        sd.code
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        INNER JOIN sys_department sd ON sdu.department_id = sd.id
+        WHERE sui.delete_state=1
+        AND sdu.user_id = #{userId}
+        LIMIT 1
     </select>
 </mapper>

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.erp.model.sys.dto.SysLoginIpDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -47,4 +48,11 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
     List<String> getUserDepList(@Param("userId") String userId);
 
     List<SysUserDeptDTO> getUserDeptList();
+
+    /**
+     * 根据角色id获取用户列表
+     * @param roleIds
+     * @return
+     */
+    List<FindUserDTO> getListByRoleIds(List<String> roleIds);
 }

@@ -1,11 +1,12 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -22,7 +23,7 @@ import java.util.Map;
  * @description: TODO
  * @date 2023/3/17 15:56
  */
-@FeignClient(name = "erp-wms")
+@FeignClient(name = "erp-wms",configuration = {FeignErrorDecoder.class})
 public interface WmsTaskFeign {
 
     /**
@@ -53,19 +54,19 @@ public interface WmsTaskFeign {
      * 根据来源明细ids查询入库明细
      */
     @PostMapping("feign/purchaseStockIn/listDetailBySourceDetailIds")
-    List<PurchaseStockInDetailEntity> listPurchaseStockInDetailBySourceDetailIds(List<String> sourceDetailIds);
+    List<PoInstockDetailEntity> listPurchaseStockInDetailBySourceDetailIds(List<String> sourceDetailIds);
 
     /**
      * 根据来采购订单明细ids查询入库明细
      */
     @PostMapping("feign/purchaseStockIn/listDetailByPodIds")
-    List<PurchaseStockInDetailEntity> listPurchaseStockInDetailByPodIds(List<String> PodIds);
+    List<PoInstockDetailEntity> listPurchaseStockInDetailByPodIds(List<String> PodIds);
 
     /**
      * 批量新增入库单
      */
     @PostMapping("feign/purchaseStockIn/batchAddPurchaseStockIn")
-    Boolean batchAddPurchaseStockIn(List<PurchaseStockInDTO.AddDTO> resultList);
+    Boolean batchAddPurchaseStockIn(List<PoInstockDTO.AddDTO> resultList);
 
     /**
      * 批量新增入库单
@@ -83,7 +84,7 @@ public interface WmsTaskFeign {
      * 获取入库数量
      **/
     @PostMapping("feign/purchaseStockIn/getStockInQty")
-    List<PurchaseStockInDTO.GetStockInQty> getStockInQty(@RequestBody List<String> ids);
+    List<PoInstockDTO.GetStockInQty> getStockInQty(@RequestBody List<String> ids);
 
     /**
      * 获取退货数量
@@ -103,5 +104,5 @@ public interface WmsTaskFeign {
      * 更新业务单据状态
      */
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
-    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 }

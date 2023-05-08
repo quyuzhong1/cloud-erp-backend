@@ -1489,10 +1489,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 根据名称查询产品信息
-     * @Author Luo_WG
-     * @Date 2023/3/29 14:26
+     *
      * @param name 产品名称
      * @return com.erp.model.plm.entity.ProductInfoEntity
+     * @Author Luo_WG
+     * @Date 2023/3/29 14:26
      **/
     public ProductInfoEntity getProductByName(String name) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
@@ -1503,11 +1504,55 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 获取所有产品信息包括删除，用来同步到DMP
+     *
+     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      * @Author Luo_WG
      * @Date 2023/4/19 16:22
-     * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      **/
+    @Override
     public List<ProductInfoEntity> getProductInfoAll() {
         return baseMapper.getProductInfoAll();
+    }
+
+
+    /**
+     * 根据sku id
+     * 获取产品 角色信息
+     * 质检通知 要发送信息
+     *
+     * @param skuIds
+     * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     * @author yl
+     * @date 2023-04-28 12:24
+     */
+    @Override
+    public List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeople(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        List<ProductInfoDTO.ProductRolePeopleDTO> resultList = new ArrayList<>(skuIds.size());
+        List<ProductInfoDTO.ProductRolePeopleDTO> list = baseMapper.getRolePeopleBySkuId(skuIds);
+        Map<String, List<ProductInfoDTO.ProductRolePeopleDTO>> map = list.stream().
+                collect(Collectors.groupingBy(ProductInfoDTO.ProductRolePeopleDTO::getSkuId));
+        //以sku 分组
+        for (Map.Entry<String, List<ProductInfoDTO.ProductRolePeopleDTO>> entry : map.entrySet()) {
+            ProductInfoDTO.ProductRolePeopleDTO addRolePeople = new ProductInfoDTO.ProductRolePeopleDTO();
+            addRolePeople.setSkuId(entry.getKey());
+            List<ProductInfoDTO.ProductRolePeopleDTO> valueList = entry.getValue();
+            //产品经理
+            List<String> productChargeIdList = new ArrayList<>(10);
+            //项目经理
+            List<String> projectChargeIdList = new ArrayList<>(10);
+            for (ProductInfoDTO.ProductRolePeopleDTO item : valueList) {
+                String productChargeId = item.getProductChargeId();
+                String projectChargeId = item.getProjectChargeId();
+                productChargeIdList.addAll(Arrays.asList(productChargeId.split(",")));
+                projectChargeIdList.addAll(Arrays.asList(projectChargeId.split(",")));
+            }
+            addRolePeople.setProductChargeIdList(productChargeIdList);
+            addRolePeople.setProjectChargeIdList(projectChargeIdList);
+            resultList.add(addRolePeople);
+        }
+        return resultList;
     }
 }

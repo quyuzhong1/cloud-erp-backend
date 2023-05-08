@@ -1,11 +1,13 @@
 package com.erp.model.workflow.dto;
 
-import com.common.business.enums.ApproveStatusEnum;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.enums.RejectTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -42,6 +44,12 @@ public class ProcessManagementDTO {
          * 业务单号
          */
         private String businessCode;
+
+        /**
+         * 业务名称 用于流程图显示   任务审核: 产品名称+任务名称  其他申请单: 单据编号
+         */
+        @NotBlank(message = "业务名称不能为空")
+        private String businessName;
 
         /**
          * 流程参数map
@@ -116,12 +124,22 @@ public class ProcessManagementDTO {
             /**
             * 审批结果
             */
-            @NotBlank(message = "审批结果不能为空")
+            @NotNull(message = "审批结果不能为空")
             private ApproveTypeEnum approveType;
+
+            /**
+             * 驳回的目标节点 ID
+             */
+            private String activityId;
 
             /**
             * 流程参数map
             */
             private Map<String,Object> variablesMap;
+
+            public String getComment() {
+                return StrUtil.isNotBlank(comment) ? comment : approveType.getName();
+            }
+
     }
 }

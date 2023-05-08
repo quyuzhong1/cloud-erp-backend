@@ -4,7 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.PurchaseStockInDTO;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
@@ -182,7 +182,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean generatePurchaseReturnOrder(PurchaseStockInDTO.ListGeneratePurchaseReturnOrderDTO dto);
+    Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
     
     /**
      * 入库单自动下推质检单

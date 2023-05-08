@@ -16,13 +16,12 @@
         <result column="process_instance_id" property="processInstanceId" />
         <result column="current_node_id" property="currentNodeId" />
         <result column="task_id" property="taskId" />
-        <result column="current_approver_id" property="currentApproverId" />
-        <result column="current_task_start_time" property="currentTaskStartTime" />
+        <result column="current_approve_id" property="currentApproveId" />
+        <result column="start_time" property="startTime" />
         <result column="task_status" property="taskStatus" />
         <result column="timeout_warn_status" property="timeoutWarnStatus" />
         <result column="timeout_warn_interval" property="timeoutWarnInterval" />
-        <result column="timeout_deal_interval" property="timeoutDealInterval" />
-        <result column="timeout_deal_type" property="timeoutDealType" />
+
     </resultMap>
 
 </mapper>

@@ -136,7 +136,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                 beginDate = endDate.minusMonths(15);
             }
         }
-        List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcInfoMapper.listQcBillGroupQcTrend(dto.getType(),beginDate,endDate);
+        List<QcEffectivenessDTO.GroupQcTrendDTO> list =  qcInfoMapper.listQcBillGroupQcTrend(dto,beginDate,endDate);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<QcEffectivenessDTO.GroupQcTrendDTO>> map = list.stream().collect(Collectors.groupingBy(QcEffectivenessDTO.GroupQcTrendDTO::getDateStr));
             List<Map.Entry<String, List<QcEffectivenessDTO.GroupQcTrendDTO>>> mapList = map.entrySet().stream().sorted(Comparator.comparing(obj -> obj.getKey())).collect(Collectors.toList());
@@ -177,6 +177,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     @Override
     public PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> viewQcForPersonnel(PagingDTO<QcEffectivenessDTO.CommonSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
         IPage<QcEffectivenessDTO.ViewQcForPersonnelDTO> pageData = this.qcInfoMapper.viewQcForPersonnel(query, pagingDTO.getParams());
         return new PagingVO(pageData);
     }
@@ -184,6 +185,7 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
     @Override
     public PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
         IPage<QcEffectivenessDTO.ViewQcForDocumentDTO> pageData = this.qcInfoMapper.viewQcForDocument(query, pagingDTO.getParams());
         List<QcEffectivenessDTO.ViewQcForDocumentDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -259,20 +261,22 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
                     nowTime = documentDTO.getQcEndTime();
                 }
                 Duration userTime = Duration.between(approveTime, nowTime);
-                long userHours = userTime.toHours();
-                documentDTO.setQcUseTime(userHours + "H");
+                //分钟
+                long userMinutes = userTime.toMinutes();
+
+                documentDTO.setQcUseTime(MathUtil.divide(BigDecimal.valueOf(userMinutes),new BigDecimal(60),2).stripTrailingZeros().toPlainString()+ "H");
 
                 //质检预警
                 if (QcBillStatusEnum.WAIT_QC.getCode().equals(documentDTO.getQcStatus())) {
                     Duration between = Duration.between(approveTime,nowTime);
                     long hours = between.toHours();
-                    if (hours > 24L) {
+                    if (hours >= 24L) {
                         documentDTO.setWarnRemark("已超时24H");
                     }
-                    if (hours > 48L) {
+                    if (hours >= 48L) {
                         documentDTO.setWarnRemark("已超时48H");
                     }
-                    if (hours > 72L) {
+                    if (hours >= 72L) {
                         documentDTO.setWarnRemark("已超时72H");
                     }
                 }

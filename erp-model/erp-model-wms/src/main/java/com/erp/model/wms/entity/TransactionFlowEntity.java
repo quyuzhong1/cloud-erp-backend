@@ -167,4 +167,16 @@ public class TransactionFlowEntity extends BaseEntity<TransactionFlowEntity> imp
     @TableField("operation_mode")
     private String operationMode;
 
+    /**
+     * 关联交易号（一个业务操作产生的交易流水关联交易号一样）
+     */
+    @TableField("transaction_no")
+    private String transactionNo;
+
+    /**
+     * 是否已经反审核
+     */
+    @TableField("is_unapproved")
+    private Boolean isUnapproved;
+
 }

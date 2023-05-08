@@ -9,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -17,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +49,9 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SyncKingdeeService syncKingdeeService;
+
+    @Autowired
+    private SysRoleMenuService sysRoleMenuService;
 
 
 
@@ -135,6 +138,16 @@ public class SysUserFeignController extends BaseController {
     public List<String> getRoleIdList(@RequestBody String userId) {
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
         return roleIds;
+    }
+
+    /**
+     * 查询左菜单栏
+     * @param roleIds
+     * @return
+     */
+    @PostMapping("/findLeftMenuByRoleIds")
+    public List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds) {
+        return sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
     }
 
 
@@ -272,7 +285,7 @@ public class SysUserFeignController extends BaseController {
      * @date: 2023/3/10 15:46
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
-    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params) {
+    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 
@@ -295,4 +308,13 @@ public class SysUserFeignController extends BaseController {
     public List<SysUserSimpleDTO> getUserSimpleInfoByIds(@RequestParam(value = "userIds") List<String> userIds) {
         return sysUserInfoService.getUserSimpleInfoByIds(userIds);
     }
+
+    /**
+     * 根据角色id获取对应用户列表
+     */
+    @PostMapping("/getUserListByRoleIds")
+    public List<FindUserDTO> getUserListByRoleIds(@RequestBody SysFeignDTO.ListByRoleIdsDTO dto) {
+        return sysUserInfoService.getUserListByRoleIds(dto);
+    }
+
 }

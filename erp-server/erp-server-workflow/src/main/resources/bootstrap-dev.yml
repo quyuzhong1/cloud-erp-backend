@@ -16,7 +16,12 @@ sfs:
     server-addr: 172.16.100.12:8848
     namespace: seata-server
     group: SEATA_GROUP
-
+camunda:
+  bpm:
+    eventing:
+      execution: true
+      history: true
+      task: true
 
 
 

@@ -114,7 +114,7 @@ public class ProductSkuFeignController {
      * @date: 2023/3/10 15:46
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
-    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params) {
+    public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 
@@ -180,6 +180,19 @@ public class ProductSkuFeignController {
     @PostMapping("/stageView")
     public List<WorkOptionDTO.StageViewDTO> stageView(@RequestBody String optionUserId) {
         return workOptionService.stageView(optionUserId);
+    }
+
+
+    /**
+     * 根据skuId 获取到产品的角色人员
+     * @author yl
+     * @date 2023-04-28 12:23
+     * @param skuIds
+     * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
+     */
+    @PostMapping("/getRolePeople")
+    public List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeople(@RequestBody List<String> skuIds) {
+        return productInfoService.getRolePeople(skuIds);
     }
 
 }

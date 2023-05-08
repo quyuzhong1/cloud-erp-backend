@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
@@ -48,9 +49,9 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_SUPPLIER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "GYS23041400017"));
+        queryFilters.add(String.format("FNumber = '%s'", "GYS23041400015"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FNumber,FFinanceInfo_FEntryID,FPayCondition.FNumber";
+        String fieldKeys = "FNumber,FFinanceInfo_FEntryID,FPayCondition.FNumber,FContact,FTel,FCommonContactId.FNumber,FsupplierId,FConForbidStatus";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
@@ -99,6 +100,8 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
 
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
 
@@ -132,6 +135,8 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
         }
     }
 
@@ -163,6 +168,44 @@ public class KingdeeSupplierConsumer implements RocketMQListener<Map<String, Obj
             business.set("FEntryId",queryMap.get("FBusinessInfo_FEntryID"));
         }
 
+    }
+
+    /**
+     * 启用、禁用
+     */
+    private void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //仓库状态 true禁用,false启用
+        Object disabled = map.get("disabled");
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        if (ObjectUtils.isEmpty(disabled)) {
+            return;
+        }
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FSupplierId = '%s'", syncKingdeeId));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FForbiderId";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 1);
+        if (CollectionUtils.isEmpty(queryList)) {
+            return;
+        }
+        Map<String, Object> queryMap = queryList.get(0);
+        //禁用人
+        String disablerId = (String)queryMap.get("FForbiderId");
+
+        String code = (String) map.get("code");
+        String operate = null;
+        //启用
+        if (!(Boolean) disabled && !StringUtils.equals("0",disablerId)) {
+            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+        }
+        //禁用
+        if ((Boolean) disabled && StringUtils.equals("0",disablerId)) {
+            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        if (StringUtils.isNotBlank(operate)) {
+            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+        }
     }
 
 }

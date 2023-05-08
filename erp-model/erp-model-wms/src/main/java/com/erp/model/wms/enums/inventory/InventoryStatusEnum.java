@@ -1,5 +1,8 @@
 package com.erp.model.wms.enums.inventory;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -14,13 +17,16 @@ public enum InventoryStatusEnum {
     FROZEN("frozen", "冻结"),
     IN_TRANSIT("inTransit", "在途"),
     WAIT_QC("waitQc", "待检"),
+    /*
     DEFECTIVE("defective", "不良"),
     WASTE("waste", "废品"),
     LEND("lend", "外借"),
+     */
     ;
 
     //实际库存=可用库存+冻结库存+不良库存+废品库存+外借库存，待检库存和在途库存不计入。
-
+    @JsonValue
+    @EnumValue
     private String code;
 
     /**

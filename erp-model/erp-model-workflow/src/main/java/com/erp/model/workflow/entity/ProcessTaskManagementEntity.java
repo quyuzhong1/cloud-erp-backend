@@ -1,5 +1,6 @@
 package com.erp.model.workflow.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
@@ -7,8 +8,10 @@ import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
+
+import com.erp.model.workflow.dto.CamundaDTO;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -24,6 +27,7 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(chain = true)
 @TableName("process_task_management")
+@NoArgsConstructor
 public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagementEntity> {
 
     /**
@@ -35,8 +39,8 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前节点ID
      */
-    @TableField("current_node_id")
-    private String currentNodeId;
+    @TableField("current_activity_id")
+    private String currentActivityId;
 
     /**
      * 任务ID
@@ -47,14 +51,14 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前审批人ID
      */
-    @TableField("current_approver_id")
-    private String currentApproverId;
+    @TableField("current_approve_id")
+    private String currentApproveId;
 
     /**
      * 当前节点开始时间
      */
-    @TableField("current_task_start_time")
-    private LocalDateTime currentTaskStartTime;
+    @TableField("start_time")
+    private LocalDateTime startTime;
 
     /**
      * 任务状态
@@ -75,16 +79,39 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     private Integer timeoutWarnInterval;
 
     /**
-     * 超时处理时间
+     * 超时时间
      */
-    @TableField("timeout_deal_interval")
-    private Integer timeoutDealInterval;
+    @TableField("timeout_interval")
+    private Integer timeoutInterval;
 
     /**
      * 超时处理方式
      */
-    @TableField("timeout_deal_type")
-    private String timeoutDealType;
+    @TableField("timeout_handle_type")
+    private String timeoutHandleType;
+
+    /**
+     * 审批时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    /**
+     * 上一节点ID
+     */
+    @TableField("pre_activity_id")
+    private String preActivityId;
+
+    @TableField("execution_id")
+    private String executionId;
+
+    @TableField("approve_id")
+    private String approveId;
 
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -93,7 +120,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
     public static final String TASK_ID = "task_id";
 
-    public static final String CURRENT_APPROVER_ID = "current_approver_id";
+    public static final String CURRENT_APPROVE_ID = "current_approve_id";
 
     public static final String CURRENT_TASK_START_TIME = "current_task_start_time";
 
@@ -103,18 +130,33 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
     public static final String TIMEOUT_WARN_INTERVAL = "timeout_warn_interval";
 
-    public static final String TIMEOUT_DEAL_INTERVAL = "timeout_deal_interval";
+    public static final String TIMEOUT_HANDLE_INTERVAL = "timeout_handle_interval";
 
-    public static final String TIMEOUT_DEAL_TYPE = "timeout_deal_type";
+    public static final String TIMEOUT_HANDLE_TYPE = "timeout_handle_type";
+
+    public static final String APPROVE_TIME = "approve_time";
+
+    public static final String REMARK = "remark";
+
+    public static final String PRE_ACTIVITY_ID = "pre_activity_id";
+
+    public static final String EXECUTION_ID = "execution_id";
+
+    public static final String APPROVE_ID = "approve_id";
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus) {
+
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId, String executionId) {
         this.processInstanceId = processInstanceId;
-        this.currentNodeId = activityId;
+        this.currentActivityId = activityId;
         this.taskId = taskId;
-        this.currentTaskStartTime = startTime;
+        this.startTime = startTime;
         this.taskStatus = approveStatus;
-
+        this.timeoutInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutInterval()) : 0;
+        this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
+        this.timeoutWarnInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutWarnInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutWarnInterval()) : 0;
+        this.currentApproveId = userId;
+        this.executionId = executionId;
     }
 
     @Override

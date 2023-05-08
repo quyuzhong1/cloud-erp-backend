@@ -109,7 +109,7 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         //禁用日期（用于判断是否禁用）
-        String FForbidDate = (String)model.get("ForbidDate");
+        String forbidDate = (String)model.get("ForbidDate");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
 
@@ -121,7 +121,7 @@ public class KingdeeSysUserInfoConsumer implements RocketMQListener<Map<String, 
             return;
         }
         //禁用的需要先反禁用
-        if (StringUtils.isNotBlank(FForbidDate)) {
+        if (StringUtils.isNotBlank(forbidDate)) {
             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
         }
         //审核中或已审核则要先反审

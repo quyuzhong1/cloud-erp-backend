@@ -25,7 +25,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("warehouse_receive")
+@TableName("po_receive")
 public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
 
     /**

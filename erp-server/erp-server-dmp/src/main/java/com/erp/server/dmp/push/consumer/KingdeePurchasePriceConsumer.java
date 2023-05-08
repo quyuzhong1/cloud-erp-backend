@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -16,6 +17,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,23 +46,26 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
 
     public static void main(String[] args) {
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_STOCK.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "001"));
+        queryFilters.add(String.format("FNumber = '%s'", "CGJM23050400004"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FStockProperty";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        String fieldKeys = "FPriceListEntry_FEntryID,FFROMQTY,FToQty,FDisablerId";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
-
+/*
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","001");
+        viewMap.put("Number","CGJM23042700003");
         JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);
+        System.out.println(viewJson);*/
     }
 
     @Override
@@ -70,6 +76,8 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //业务id
         String  businessId = String.valueOf(map.get("id"));
 
+        log.info("采购价目表开始推送金蝶 map = {}",JSONUtil.toJsonStr(map));
+
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
@@ -77,40 +85,10 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PRICECATEGORY.getCode());
 
-
         //操作项，分录禁用
         String operate = (String) map.get("operate");
         if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate)) {
-            JSONArray list = JSONUtil.parseArray(map.get("list"));
-            JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
-            JSONArray pkEntryIds = new JSONArray();
-            for (Object obj : list ) {
-                JSONObject newObj = new JSONObject();
-                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(obj));
-                String id = (String)jsonObject.get("syncKingdeeId");
-                String skuNo = (String)jsonObject.get("skuNo");
-
-                LinkedList<String> queryFilters = new LinkedList<>();
-                queryFilters.add(String.format("FId = '%s'", id));
-                String filterStr = String.join(" and ", queryFilters);
-                //查询子单据id
-                String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber";
-                List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-                newObj.set("id",id);
-                List<String> entryIds = new ArrayList<>();
-                //比较
-                for (Map<String, Object> queryMap: queryList) {
-                    String number = (String)queryMap.get("FMaterialId.FNumber");
-                    String detailId =  (String)queryMap.get("FPriceListEntry_FEntryID");
-                    if (StringUtils.equals(skuNo,number)) {
-                        entryIds.add(detailId);
-                    }
-                }
-                newObj.set("EntryIds",String.join(",",entryIds));
-                pkEntryIds.put(newObj);
-            }
-            viewMap.set("PkEntryIds",pkEntryIds);
-            apiUtils.excuteOperation(SyncKingdeeOperateEnum.getNameByCode(operate),JSONUtil.toJsonStr(viewMap));
+            excuteOperation(platformEntity,apiUtils,map,operate);
             return;
         }
 
@@ -132,8 +110,15 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
 
+            log.error("采购价目表查看失败 map = {}",JSONUtil.toJsonStr(map));
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isAdd) {
+                //禁用启用
+                JSONArray jsonArray = excuteOperation(platformEntity, apiUtils, map, operate);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
             return;
         }
 
@@ -155,7 +140,13 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isAdd) {
+                //禁用启用
+                JSONArray jsonArray = excuteOperation(platformEntity, apiUtils, map, operate);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
         }
     }
 
@@ -167,7 +158,7 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         queryFilters.add(String.format("FId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
         //查询子单据id
-        String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber";
+        String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber,FFROMQTY,FToQty";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
@@ -182,12 +173,16 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
             JSONArray removeObj = new JSONArray();
             JSONArray addObj = new JSONArray();
             for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
+                JSONObject jsonObject = JSONUtil.parseObj(o);
                 JSONObject newJson = new JSONObject(new LinkedHashMap<>());
                 Object o1 = queryMap.get("FMaterialId.FNumber");
                 JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
                 Object fNumber = o2.get("FNumber");
-                if (o1.equals(fNumber)) {
+                BigDecimal minQty = MathUtil.valueOf(jsonObject.get("FFROMQTY"));
+                BigDecimal maxQty = MathUtil.valueOf(jsonObject.get("FToQty"));
+                BigDecimal fMinQty = MathUtil.valueOf(queryMap.get("FFROMQTY"));
+                BigDecimal fMaxQty = MathUtil.valueOf(queryMap.get("FToQty"));
+                if (o1.equals(fNumber) && MathUtil.compareTo(minQty,fMinQty) == MathUtil.ZERO && MathUtil.compareTo(maxQty,fMaxQty) == MathUtil.ZERO ) {
                     newJson.set("FEntryId",queryMap.get("FPriceListEntry_FEntryID"));
                 }
                 newJson.putAll(jsonObject);
@@ -199,5 +194,129 @@ public class KingdeePurchasePriceConsumer implements RocketMQListener<Map<String
         }
 
     }
+
+    /**
+     * 启用、禁用
+     */
+    private JSONArray excuteOperation (PlatformEntity platformEntity,KingdeeApiUtils apiUtils,Map<String, Object> map,String operate) {
+
+        JSONArray list = JSONUtil.parseArray(map.get("list"));
+        String id = (String)map.get("syncKingdeeId");
+
+        List<String> disabledList = new ArrayList<>();
+        List<String> unDisabledList = new ArrayList<>();
+        JSONArray removeObj = new JSONArray();
+        JSONArray addObj = new JSONArray();
+        for (Object obj : list ) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
+            //同步数据时禁用,需要考虑既有禁用又有启用的情况
+            Boolean disabled = (Boolean)jsonObject.get("disabled");
+            if (ObjectUtils.isNotEmpty(disabled)) {
+                //禁用
+                if (disabled) {
+                    operate = SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode();
+                } else {
+                    operate = SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode();
+                }
+            }
+            if (StringUtils.isBlank(id)) {
+                id = (String)jsonObject.get("syncKingdeeId");
+            }
+
+            String skuNo = (String)jsonObject.get("skuNo");
+            BigDecimal minQty = MathUtil.valueOf(jsonObject.get("minQty")) ;
+            BigDecimal maxQty = MathUtil.valueOf(jsonObject.get("maxQty"));
+
+            LinkedList<String> queryFilters = new LinkedList<>();
+            queryFilters.add(String.format("FId = '%s'", id));
+            String filterStr = String.join(" and ", queryFilters);
+            //查询子单据id
+            String fieldKeys = "FPriceListEntry_FEntryID,FMaterialId.FNumber,FFROMQTY,FToQty,FDisablerId";
+            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+
+            log.info("价目明细数据 queryList = {}",JSONUtil.toJsonStr(queryList));
+            //比较
+            for (Map<String, Object> queryMap: queryList) {
+                String number = (String)queryMap.get("FMaterialId.FNumber");
+                String detailId =  (String)queryMap.get("FPriceListEntry_FEntryID");
+                BigDecimal fMinQty = MathUtil.valueOf(queryMap.get("FFROMQTY"));
+                BigDecimal fMaxQty = MathUtil.valueOf(queryMap.get("FToQty"));
+                String disablerId = (String)queryMap.get("FDisablerId");
+                if (StringUtils.equals(skuNo,number) && MathUtil.compareTo(minQty,fMinQty) == MathUtil.ZERO && MathUtil.compareTo(maxQty,fMaxQty) == MathUtil.ZERO ) {
+                    //禁用
+                    if (SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getCode().equals(operate) && StringUtils.equals("0",disablerId)) {
+                        disabledList.add(detailId);
+                    }
+                   //启用
+                    if (SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getCode().equals(operate) && !StringUtils.equals("0",disablerId)) {
+                        unDisabledList.add(detailId);
+                    }
+                    //金蝶明细id赋值
+                    newJson.set("kingdeeDetailId",detailId);
+                }
+            }
+            newJson.putAll(jsonObject);
+            removeObj.set(obj);
+            addObj.set(newJson);
+        }
+        list.removeAll(removeObj);
+        list.addAll(addObj);
+        //禁用
+        if (CollectionUtils.isNotEmpty(disabledList)) {
+            log.info("禁用价目数据 ids = {}",JSONUtil.toJsonStr(disabledList));
+            excuteOperation(platformEntity,apiUtils,disabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_UN_EFFECTIVE.getName());
+        }
+        //启用
+        if (CollectionUtils.isNotEmpty(unDisabledList)) {
+            log.info("启用价目数据 ids = {}",JSONUtil.toJsonStr(unDisabledList));
+            excuteOperation(platformEntity,apiUtils,unDisabledList,id,SyncKingdeeOperateEnum.OPERATE_SUB_EFFECTIVE.getName());
+        }
+        return list;
+    }
+
+    /**
+     * @description: 启用或禁用
+     * @author Will
+     * @date: 2023/4/28 11:36
+     * @param apiUtils
+     * @param list
+     * @param id
+     * @param operate
+     */
+    private void excuteOperation(PlatformEntity platformEntity,KingdeeApiUtils apiUtils, List<String> list,String id,String operate) {
+        JSONObject viewMap = new JSONObject(new LinkedHashMap<>());
+        JSONObject newObj = new JSONObject();
+        JSONArray pkEntryIds = new JSONArray();
+        newObj.set("id", id);
+        newObj.set("EntryIds", String.join(",", list));
+        pkEntryIds.put(newObj);
+        viewMap.set("PkEntryIds", pkEntryIds);
+
+        try {
+            //启用禁用
+            apiUtils.excuteOperation(operate, JSONUtil.toJsonStr(viewMap));
+        } catch (Exception e) {
+            log.info("启用、禁用价目数据失败 jsonStr = {},error = {}",JSONUtil.toJsonStr(viewMap),e.getMessage());
+            //新增失败时添加日志及定时任务
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), e.getMessage(), ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        log.info("启用、禁用价目数据成功 jsonStr = {}",JSONUtil.toJsonStr(viewMap));
+        //新增失败时添加日志及定时任务
+        kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, id, JSONUtil.toJsonStr(viewMap), "启禁用成功，operate = " + operate, ApiModuleTypeEnum.PURCHASE_PRICE.getCode(), ApiSendStatusEnum.SUCCESS.getCode());
+    }
+
+    /**
+     * 更新明细id
+     */
+    private void updateKingdeeDetailId (JSONArray jsonArray) {
+        //更新业务单据状态
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",ApiModuleTypeEnum.PURCHASE_PRICE.getCode().toString());
+        params.put("details",jsonArray);
+        scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
+    }
+
 
 }

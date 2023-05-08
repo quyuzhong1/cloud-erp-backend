@@ -33,4 +33,6 @@ public interface BusinessNoConstant {
     String CGTH = "CGTH";
 
     String QC = "QC";
+
+    String BM = "BM";
 }

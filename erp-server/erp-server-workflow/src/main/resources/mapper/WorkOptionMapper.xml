@@ -54,7 +54,7 @@
         LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
-        WHERE wo.is_deleted = FALSE AND wo.type = '1'
+        WHERE wo.is_deleted = FALSE AND wo.type = '1' AND wm.module_code NOT IN ('qc_info')
             <if test="optionUserId != null and optionUserId != ''">
                 AND wo.option_user_id = #{optionUserId}
             </if>
@@ -65,6 +65,7 @@
         SELECT
         wo.id,
         wmrs.id AS moduleStatusId,
+        wm.sys_classify AS sysClassify,
         wm.id AS menu_id,
         wm.module_classify AS name,
         wmrs.module_url AS moduleUrl,

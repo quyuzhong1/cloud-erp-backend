@@ -19,8 +19,8 @@
             wrd.remark,
             wrd.purchase_order_detail_id
         from
-        warehouse_receive wr
-        inner join warehouse_receive_detail wrd on wr.id = wrd.main_id and wrd.is_deleted = false
+        po_receive wr
+        inner join po_receive_detail wrd on wr.id = wrd.main_id and wrd.is_deleted = false
         <where>
             wr.is_deleted = false and wr.invalid_status = false
             <if test="purchaseDetailIds != null and purchaseDetailIds.size > 0">
@@ -33,3 +33,4 @@
         order by wr.create_time asc
     </select>
 </mapper>
+        

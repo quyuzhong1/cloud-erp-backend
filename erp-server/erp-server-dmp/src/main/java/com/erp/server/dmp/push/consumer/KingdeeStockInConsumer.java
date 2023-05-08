@@ -151,7 +151,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
             JSONArray removeObj = new JSONArray();
             JSONArray addObj = new JSONArray();
             for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(o));
+                JSONObject jsonObject = JSONUtil.parseObj(o);
                 JSONObject newJson = new JSONObject(new LinkedHashMap<>());
                 Object o1 = queryMap.get("FMaterialId.FNumber");
                 JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");

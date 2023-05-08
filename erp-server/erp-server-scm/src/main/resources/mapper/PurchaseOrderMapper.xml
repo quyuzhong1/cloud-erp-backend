@@ -313,6 +313,7 @@
             SELECT
             po.id AS purchaseOrderId,
             ps.supplier_id,
+            po.receive_org_id,
             ps.supplier_name,
             po.delivery_warehouse_id,
             po.delivery_warehouse_name

@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("warehouse_receive_detail")
+@TableName("po_receive_detail")
 public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDetailEntity> {
 
     /**

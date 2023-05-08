@@ -8,16 +8,14 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.sys.vo.MsgChannelConfigDTO;
-import com.erp.model.sys.vo.MsgConfigDTO;
-import com.erp.model.sys.vo.SysCalendarListVO;
-import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -78,6 +76,14 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
+
+    /**
+     * 查询左菜单栏
+     * @param roleIds
+     * @return
+     */
+    @PostMapping("feign/user/findLeftMenuByRoleIds")
+    List<SysMenuVO> findLeftMenuByRoleIds(@RequestBody List<String> roleIds);
 
     /**
      *   根据第三方平台 以及union id 获取用户id
@@ -239,7 +245,7 @@ public interface SysUserFeign {
      * 更新业务单据状态
      */
     @PostMapping("feign/user/updateBusinessSyncKingdeeStatus")
-    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, String> params);
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
     /**
      * 批量根据用户id获取第三方平台账号信息
@@ -273,4 +279,21 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserSimpleInfoByIds")
     List<SysUserSimpleDTO> getUserSimpleInfoByIds(@RequestParam(value = "userIds") List<String> userIds);
+
+    /**
+     * 根据角色id查询用户列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/user/getUserListByRoleIds")
+    List<FindUserDTO> getUserListByRoleIds(@RequestBody @Valid SysFeignDTO.ListByRoleIdsDTO dto);
+
+
+    /**
+     * 根据node key 获取到接收信息
+     * @param nodeKey 节点key
+     * @return
+     */
+    @PostMapping("feign/notice/listNoticeReceiver")
+    List<NoticeReceiverDTO.InfoDTO> listNoticeReceiverByNodeKey(@RequestBody String nodeKey);
 }

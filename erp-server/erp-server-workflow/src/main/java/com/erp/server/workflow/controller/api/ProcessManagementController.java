@@ -41,13 +41,23 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
-     * 流程审核
+     * 流程审核通过
      * @param dto
      * @return
      */
     @PostMapping("/approve")
     public ApiResult approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
         processManagementService.approveProcess(dto);
+        return success();
+    }
+
+    /**
+     * 驳回流程
+     * @param dto
+     */
+    @PostMapping("/reject")
+    public ApiResult rejectProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
+        processManagementService.rollback(dto);
         return success();
     }
 }

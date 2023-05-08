@@ -65,6 +65,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             }
         }else {
             processDefinitionEntity.setId(entity.getId());
+            processDefinitionEntity.setIsDeploy(Boolean.FALSE);
             // 更新 processDefinitionEntity
             if (!updateById(processDefinitionEntity)) {
                 throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);

@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -94,9 +95,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
         //采购部门
         if (ObjectUtil.isEmpty(departmentDTO)) {
-            //获取用户部门信息
-            SysDepartmentDTO department = sysUserFeign.getUserDeptById(departmentDTO.getDepartmentId());
-            resultMap.put("productDept", department.getName());
+            resultMap.put("productDept", departmentDTO.getCode());
         } else {
             resultMap.put("productDept", "");
         }
@@ -104,9 +103,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //退货日期
         resultMap.put("billDate",entity.getBillDate());
         // TODO 单据状态
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
         //采购员
-        resultMap.put("purchaseUserName",entity.getPurchaseUserName());
-
+        resultMap.put("purchaseUserCode", findUserDTO.getCode());
+        //采购员
+        resultMap.put("purchaseUserName", findUserDTO.getUserName());
         //退货来源
         if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {
             resultMap.put("sourceTypeName", ReturnOrderSourceEnum.QC.getCode());
@@ -125,9 +126,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //退货方式
         if (entity.getReturnMode().equals(ReturnModeEnum.DEDUCTION.getCode())) {
-            resultMap.put("returnMode", "退料并扣款");
+            resultMap.put("returnMode", "B");
         } else {
-            resultMap.put("returnMode", "退料补料");
+            resultMap.put("returnMode", "A");
         }
 
         if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {

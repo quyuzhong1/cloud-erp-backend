@@ -1,7 +1,6 @@
 package com.erp.server.wms.kingdee;
 
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
-import com.erp.model.wms.entity.PurchaseStockInEntity;
+import com.erp.model.wms.entity.PoInstockEntity;
 
 public interface SyncKingdeeStockInService {
 
@@ -13,5 +12,5 @@ public interface SyncKingdeeStockInService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(PurchaseStockInEntity entity, String operate);
+    void syncDataToKingdee(PoInstockEntity entity, String operate);
 }

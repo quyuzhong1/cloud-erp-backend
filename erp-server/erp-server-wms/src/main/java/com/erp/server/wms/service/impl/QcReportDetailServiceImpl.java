@@ -76,10 +76,15 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(String billId, List<QcReportDetailDTO.AddDTO> reportDetailList) {
+        List<QcReportDetailEntity> dbList = this.findByMainId(billId);
         if (CollectionUtils.isEmpty(reportDetailList)) {
+            List<String> deleteIdList = dbList.stream().map(QcReportDetailEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(deleteIdList)) {
+                this.removeByIds(deleteIdList);
+            }
             return;
         }
-        List<QcReportDetailEntity> dbList = this.findByMainId(billId);
+
         List<QcReportDetailEntity> saveOrUpdateList = new ArrayList<>(reportDetailList.size());
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         //获取到删除的id

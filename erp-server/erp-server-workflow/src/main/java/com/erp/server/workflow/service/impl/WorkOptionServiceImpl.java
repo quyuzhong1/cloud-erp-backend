@@ -4,12 +4,14 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
@@ -17,6 +19,7 @@ import com.erp.server.workflow.service.CommonService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
+import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -49,6 +52,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     private WorkMenuService workMenuService;
 
     @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
@@ -66,8 +72,14 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
-        List<String> collect = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
+        List<String> roleIds = sysUserFeign.getRoleIdList(userInfo.getUid());
+        List<SysMenuVO> leftMenuList = sysUserFeign.findLeftMenuByRoleIds(roleIds);
+        leftMenuList.forEach(req -> {
+            List<String> collect = req.getChildrenList().stream().map(SysMenuVO::getMenuUrl).distinct().collect(Collectors.toList());
+        });
+
+        List<String> collect = new ArrayList<>();
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listWaitDoMenu(sysClassify);
 
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
@@ -98,7 +110,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         if (ObjectUtil.isNotEmpty(frequentlyViewDTOS)) {
-            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getId).collect(Collectors.toList());
+            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getModuleStatusId).collect(Collectors.toList());
         }
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listOftenMenu(sysClassify);
         for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
@@ -107,6 +119,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 req.setSign(1);
             } else {
                 req.setSign(0);
+            }
+        }
+        for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
+            if (req.getModuleClassify().equals("质检单")) {
+                waitDoMenus.remove(req);
             }
         }
         return waitDoMenus;
@@ -174,6 +191,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 WorkOptionDTO.TableNumDTO tableNumDTO = new WorkOptionDTO.TableNumDTO();
                 tableNumDTO.setTableName(myWorkOptionDTO.getModuleCode());
                 tableNumDTO.setApproveStatus(myWorkOptionDTO.getModuleStatus());
+                myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
                 switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
                     case PLM:
                         getPlmModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
@@ -205,6 +223,22 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     public List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView() {
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+        frequentlyViewDTOS.forEach(req -> {
+            req.setPathUrl(req.getModuleUrl());
+            switch (SysClassifyEnum.getEnumByCode(req.getSysClassify())) {
+                case PLM:
+                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
+                    break;
+                case SCM:
+                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
+                    break;
+                case WMS:
+                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
+                    break;
+                default:
+                    break;
+            }
+        });
         return frequentlyViewDTOS;
     }
 
@@ -238,20 +272,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(0);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
-//        pendingViewDetailDTO.setModuleUrl(getHttpGatewayIpPortUtils.IP+":"+getHttpGatewayIpPortUtils.PLM_PORT);
-
+        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
     }
 
     private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
         Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
-                .getRequestAttributes()).getRequest();
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
-//        pendingViewDetailDTO.setModuleUrl(IP+":"+SCM_PORT);
+        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
     }
 
     private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
@@ -259,8 +288,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-//        GetHttpGatewayIpPortUtils getHttpGatewayIpPortUtils = new GetHttpGatewayIpPortUtils();
-//        pendingViewDetailDTO.setModuleUrl(getHttpGatewayIpPortUtils.getIP+":"+getHttpGatewayIpPortUtils.WMS_PORT);
+        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
     }
 
     /**

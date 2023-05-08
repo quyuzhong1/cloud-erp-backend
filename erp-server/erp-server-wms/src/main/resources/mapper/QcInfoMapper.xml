@@ -16,15 +16,18 @@
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         group by qb.qc_status
     </select>
 
     <select id="listQcBillGroupQcTrend" resultType="com.erp.model.wms.dto.QcEffectivenessDTO$GroupQcTrendDTO">
         select
-        case when #{type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
-            when #{type} = 'week' then to_char(qb.qc_date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,'YYYY-mm-dd')
-            when #{type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
+        case when #{params.type} = 'day' then to_char(qb.qc_date::DATE, 'YYYY-MM-DD')
+            when #{params.type} = 'week' then to_char(qb.qc_date::DATE-(extract(dow from qb.qc_date::TIMESTAMP)-1||'day')::interval,'YYYY-mm-dd')
+            when #{params.type} = 'month' then to_char(qb.qc_date::DATE, 'YYYY-MM')
             else ''
             end as dateStr,
             qb.qc_status as status,
@@ -34,6 +37,9 @@
             qb.is_deleted = false and qb.qc_date is not null
             <if test="beginDate != null and endDate != null">
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         group by dateStr, qb.qc_status order by dateStr asc
@@ -53,12 +59,15 @@
         sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status = 'waitQc' then 1 else 0
         end) as unQcTimeOutQty
         from qc_info qb
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -80,7 +89,7 @@
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -101,6 +110,9 @@
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
 
@@ -118,12 +130,18 @@
             sum (case when now() > wr.approve_time::timestamp + INTERVAL '1 DAY' and qb.qc_status = 'waitQc' then 1 else 0
             end) as unQcTimeOutQty
         from qc_info qb
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -146,7 +164,7 @@
         from qc_info qb
         inner join qc_result qi on qb.id = qi.main_id and qi.is_deleted = false
         inner join qc_product qp on qb.id = qp.main_id and qp.is_deleted = false
-        left join warehouse_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
+        left join po_receive wr on qb.source_id = wr.id and  wr.is_deleted = false
         <where>
             qb.is_deleted = false and qb.qc_date is not null
             <if test="params.dateList != null and params.dateList.size > 0">
@@ -166,6 +184,9 @@
                 <if test="params.isTimeOut == true">
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>
@@ -260,6 +281,10 @@
         <if test="params.createTimeList!=null and params.createTimeList.size>0">
             AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > qb.create_time
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
         </if>
         ORDER BY qb.create_time DESC
     </select>
@@ -362,8 +387,13 @@
                     INTERVAL '1
                     DAY' ) > qb.create_time
                 </if>
+
             </otherwise>
         </choose>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
         ORDER BY qb.create_time DESC
     </select>
     <select id="viewGeneratePurchaseReturnOrder"

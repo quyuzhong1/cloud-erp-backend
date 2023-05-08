@@ -138,6 +138,12 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 地址（预留）
          */
         private String moduleUrl;
+
+        /**
+         * 路径
+         */
+        private String path;
+
         /**
          * 入参（预留）
          */
@@ -207,6 +213,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleUrl;
 
         /**
+         * 路径
+         */
+        private String path;
+
+        /**
          * 入参（预留）
          */
         private String moduleParam;
@@ -229,6 +240,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleStatusId;
 
         /**
+         * 模块分类 plm wms scm
+         */
+        public String sysClassify;
+
+        /**
          * 菜单id
          */
         private String menuId;
@@ -242,6 +258,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 地址（预留）
          */
         private String moduleUrl;
+
+        /**
+         * 路径
+         */
+        private String pathUrl;
 
         /**
          * 入参（预留）

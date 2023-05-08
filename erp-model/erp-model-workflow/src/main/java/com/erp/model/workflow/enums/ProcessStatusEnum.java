@@ -1,5 +1,8 @@
 package com.erp.model.workflow.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Arrays;
 
 /**
@@ -20,7 +23,8 @@ public enum ProcessStatusEnum {
     // 挂起
     HANGUP("hangup", "挂起"),
     ;
-
+    @EnumValue
+    @JsonValue
     private String code;
     private String name;
 

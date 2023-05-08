@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -26,6 +27,7 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(chain = true)
 @TableName("process_management")
+@NoArgsConstructor
 public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity> {
 
     /**
@@ -84,7 +86,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     /**
      * 审核状态 approveStatus
      */
-    @TableField("approve_Status")
+    @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
 
     /**
@@ -92,6 +94,12 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
      */
     @TableField("business_key")
     private String businessKey;
+
+    /**
+     * 流程引擎流程实例ID
+     */
+    @TableField("act_process_definition_id")
+    private String actProcessDefinitionId;
 
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -116,7 +124,9 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String BUSINESS_KEY = "business_key";
 
-    public ProcessManagementEntity(String businessName, String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId) {
+    public static final String ACT_PROCESS_DEFINITION_ID = "act_process_definition_id";
+
+    public ProcessManagementEntity(String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId, String definitionId) {
         this.processDefinitionId = processDefinitionId;
         this.processInstanceId = processInstanceId;
         this.businessId = dto.getBusinessId();
@@ -125,8 +135,9 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
         this.startTime = startTime;
         this.processStatus = ProcessStatusEnum.RUNNING;
         this.approveStatus = ApproveStatusEnum.APPROVE_ING;
-        this.businessName = businessName;
+        this.businessName = dto.getBusinessName();
         this.businessKey = dto.getBusinessKey();
+        this.actProcessDefinitionId = definitionId;
     }
 
     @Override

@@ -1,5 +1,8 @@
 package com.erp.model.workflow.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +18,8 @@ public enum ApproveSearchOptionEnum {
     CARBONCOPY("carbonCopy", "抄送我"),
     INITIATE("initiate", "已发起");
 
+    @EnumValue
+    @JsonValue
     private String code;
     private String name;
 

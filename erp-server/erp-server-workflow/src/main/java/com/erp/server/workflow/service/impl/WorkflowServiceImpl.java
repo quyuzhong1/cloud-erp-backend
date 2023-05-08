@@ -72,8 +72,6 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Autowired
     private WorkflowBusinessProcessService workflowBusinessProcessService;
-    @Autowired
-    private ProcessDefinitionService processDefinitionService;
 
     /**
      * 撤回流程

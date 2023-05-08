@@ -1,10 +1,12 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
@@ -42,16 +44,21 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 实退数量
          */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 0, message = "实退数量最小值为0")
+        @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer returnQty;
 
         /**
          * 补货数量
          */
+        @Max(value = 999999999, message = "补货数量最大值为999999999")
         private Integer replenishQty;
 
         /**
          * 扣款数量
          */
+        @Max(value = 999999999, message = "扣款数量最大值为999999999")
         private Integer deductAmountQty;
 
         /**
@@ -114,16 +121,21 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 实退数量
          */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 0, message = "实退数量最小值为0")
+        @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer returnQty;
 
         /**
          * 补货数量
          */
+        @Max(value = 999999999, message = "补货数量最大值为999999999")
         private Integer replenishQty;
 
         /**
          * 扣款数量
          */
+        @Max(value = 999999999, message = "扣款数量最大值为999999999")
         private Integer deductAmountQty;
 
         /**

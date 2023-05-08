@@ -86,8 +86,8 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isEmpty(keyList)) {
             return listAll();
         }
-        List<DictBasicEntity> allList = listAll();
-        return allList.stream().filter(l -> keyList.contains(l.getType())).collect(Collectors.toList());
+        List<DictBasicEntity> allList = this.lambdaQuery().in(DictBasicEntity::getType, keyList).list();
+        return allList;
     }
 
 

@@ -123,4 +123,9 @@ public class TransactionFlowDTO implements Serializable {
      */
     private String operationMode;
 
+    /**
+     * 交易流水号
+     */
+    private String transactionNo;
+
 }

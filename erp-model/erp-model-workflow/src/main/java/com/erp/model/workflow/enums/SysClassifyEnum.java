@@ -1,5 +1,8 @@
 package com.erp.model.workflow.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +11,8 @@ public enum SysClassifyEnum {
     SCM("scm", "SCM系统"),
     WMS("wms", "WMS系统");
 
+    @EnumValue
+    @JsonValue
     private String code;
     private String name;
 

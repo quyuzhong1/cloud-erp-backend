@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @Description 产品基础信息请求参数
@@ -25,13 +26,13 @@ public class ProductInfoDTO {
     /**
      * 产品名
      */
-    @Size(max = 50,message = "产品名最大50字符")
+    @Size(max = 50, message = "产品名最大50字符")
     private String name;
 
     /**
      * 产品名称（英文）
      */
-    @Size(max = 200,message = "产品名称（英文）最大200字符")
+    @Size(max = 200, message = "产品名称（英文）最大200字符")
     private String nameEn;
 
     /**
@@ -87,25 +88,25 @@ public class ProductInfoDTO {
     /**
      * spuNo
      */
-    @Size(max = 50,message = "SPU最大50字符")
+    @Size(max = 50, message = "SPU最大50字符")
     private String spuNo;
 
     /**
      * 产品卖点
      */
-    @Size(max = 500,message = "产品卖点最大500字符")
+    @Size(max = 500, message = "产品卖点最大500字符")
     private String sellSpot;
 
     /**
      * 产品功能描述
      */
-    @Size(max = 500,message = "产品功能描述最大500字符")
+    @Size(max = 500, message = "产品功能描述最大500字符")
     private String functionDesc;
 
     /**
      * 产品用途
      */
-    @Size(max = 500,message = "产品用途最大500字符")
+    @Size(max = 500, message = "产品用途最大500字符")
     private String usageDesc;
 
     /**
@@ -116,7 +117,7 @@ public class ProductInfoDTO {
     /**
      * 主要材质
      */
-    @Size(max = 500,message = "主要材质最大500字符")
+    @Size(max = 500, message = "主要材质最大500字符")
     private String materials;
 
     /**
@@ -183,4 +184,37 @@ public class ProductInfoDTO {
      * 是否是无规格新增
      */
     private Integer isNoSpecAdd;
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductRolePeopleDTO {
+
+
+        private String skuId;
+
+
+        /**
+         * 产品负责人集合
+         */
+        private List<String> productChargeIdList;
+
+        /**
+         * 项目负责人集合
+         */
+        private List<String> projectChargeIdList;
+
+
+        /**
+         * 产品负责人
+         */
+        private String productChargeId;
+
+        /**
+         * 项目负责人
+         */
+        private String projectChargeId;
+    }
+
+
 }

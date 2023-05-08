@@ -4,10 +4,7 @@ package com.erp.server.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.sys.dto.BatchSysDepartUserDTO;
-import com.erp.model.sys.dto.DepartmentSearchDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 
 import java.util.List;
@@ -60,4 +57,12 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * 根据人员id查询部门id
      */
     SysDepartmentUserNumberDTO getDeptByUserId(String userId);
+
+    /**
+     * 根据人员id查询所有上级
+     *
+     * @param userId 人员id
+     * @return
+     */
+    List<UserSuperiorDTO> listSuperiorByUserId(String userId);
 }

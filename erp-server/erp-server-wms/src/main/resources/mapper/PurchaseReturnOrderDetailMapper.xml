@@ -17,8 +17,8 @@
             prod.source_detail_id,
             prod.purchase_order_detail_id
         from
-        purchase_return_order pro
-        inner join purchase_return_order_detail prod on pro.id = prod.main_id and prod.is_deleted = false
+        po_return pro
+        inner join po_return_detail prod on pro.id = prod.main_id and prod.is_deleted = false
         <where>
             pro.is_deleted = false and pro.invalid_status = false
             <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
@@ -47,8 +47,8 @@
         prod.purchase_order_detail_id,
         pro.return_mode
         from
-        purchase_return_order pro
-        inner join purchase_return_order_detail prod on pro.id = prod.main_id and prod.is_deleted = false
+        po_return pro
+        inner join po_return_detail prod on pro.id = prod.main_id and prod.is_deleted = false
         <where>
             pro.is_deleted = false and pro.invalid_status = false
             <if test="podIds != null and podIds.size > 0">

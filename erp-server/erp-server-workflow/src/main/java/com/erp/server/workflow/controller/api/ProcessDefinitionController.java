@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.server.workflow.service.ProcessDefinitionService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +25,7 @@ import javax.validation.Valid;
  * @author Cloud
  * @since 2023-04-21
  */
+@Slf4j
 @RestController
 @RequestMapping("/process/definition")
 public class ProcessDefinitionController extends BaseController {
@@ -78,6 +80,7 @@ public class ProcessDefinitionController extends BaseController {
             ProcessDTO.DeployResultDTO resultDTO= processDefinitionService.deploy(dto);
             return success(resultDTO);
         }catch (Exception e){
+            log.error("流程定义发布失败",e);
             return failure(e.getMessage());
         }
     }

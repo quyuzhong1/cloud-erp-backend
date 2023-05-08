@@ -223,7 +223,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type) {
+    public Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type) {
         SaveResult save;
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
@@ -234,7 +234,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //新增失败时添加日志及定时任务
             insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONUtil.toJsonStr(json),msg.concat("；").concat(e.getMessage()),type,ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            return Boolean.FALSE;
         }
         //数据id
         String id = save.getResult().getId();
@@ -246,6 +246,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(json),msg,type,ApiSendStatusEnum.SUCCESS.getCode());
         //提交
         submit(platformEntity, map,apiUtils,id,type);
+
+        return Boolean.TRUE;
     }
 
     /**
@@ -378,7 +380,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Override
     public void updateBusinessSyncKingdeeStatus(Integer code,String businessId,String status,String kingdeeId){
         //更新业务单据状态
-        Map<String,String> params = new HashMap<>(MathUtil.THREE);
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
         params.put("code",code.toString());
         params.put("businessId",businessId);
         params.put("status", status);
@@ -443,7 +445,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                     .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(String.valueOf(map.get(cfgApiFieldMapDTO.getSelfField()))))
                     .map(CfgApiFieldMapValueEntity::getApiValue)
                     .findFirst()
-                    .orElse(null);
+                    .orElse("");
             KingdeeUtils.makeFieldJson(json,cfgApiFieldMapDTO.getApiField(),".",apiValue);
         }
     }

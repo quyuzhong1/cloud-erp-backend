@@ -49,7 +49,7 @@ public class QcResultDTO {
          */
         @NotNull(message = "总量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "1", message = "最小值必须大于0",groups ={AddGroup.class})
+        @DecimalMin(value = "1", message = "质检总量必须大于0", groups = {AddGroup.class})
         private Integer totalQty;
 
         /**
@@ -57,7 +57,7 @@ public class QcResultDTO {
          */
         @NotNull(message = "质检量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "1", message = "最小值必须大于0",groups ={AddGroup.class})
+        @DecimalMin(value = "1", message = "质检量必须大于0", groups = {AddGroup.class})
         private Integer qcQty;
 
         /**
@@ -65,7 +65,7 @@ public class QcResultDTO {
          */
         @NotNull(message = "质检合格量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "1", message = "最小值必须大于0",groups ={AddGroup.class})
+        @DecimalMin(value = "0", message = "最小值必须大于0", groups = {AddGroup.class})
         private Integer qcGoodQty;
 
         /**
@@ -73,7 +73,7 @@ public class QcResultDTO {
          */
         @NotNull(message = "质检不良量不能为空")
         @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0", message = "最小值为0",groups ={AddGroup.class})
+        @DecimalMin(value = "0", message = "最小值为0", groups = {AddGroup.class})
         private Integer qcBadQty;
 
 
@@ -250,7 +250,6 @@ public class QcResultDTO {
 
         /**
          * 质检完成时间
-         *
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime qcFinishTime;
@@ -374,6 +373,93 @@ public class QcResultDTO {
          * 质检类型
          */
         private String qcType;
+
+
+    }
+
+
+    /**
+     * 质检通知内容
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcNoticeDTO {
+
+
+        private String id;
+
+
+        /**
+         * 是否新品首批
+         * true 是
+         */
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 采购订单code
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+
+        /**
+         * skuid
+         */
+        private String skuId;
+
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * sku名称
+         */
+        private String skuName;
+
+        /**
+         * 质检人员
+         */
+        private String qcUserName;
+
+        /**
+         * 操作人
+         */
+        private String userName;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+        /**
+         * 质检类型名
+         */
+        private String qcTypeName;
+
+
+
+        /**
+         * 质检完成时间
+         */
+        private String qcFinishTime;
+
+        /**
+         * 处理措施
+         */
+        private String handleModeName;
+
+        /**
+         * 处理措施
+         */
+        private String handleModeDict;
+
+
 
 
     }

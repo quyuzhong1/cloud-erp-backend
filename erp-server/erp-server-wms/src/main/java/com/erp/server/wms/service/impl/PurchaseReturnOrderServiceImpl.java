@@ -21,6 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
@@ -32,6 +33,7 @@ import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
@@ -59,9 +61,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -98,13 +98,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
     @Resource
-    private PurchaseStockInService purchaseStockInService;
+    private PoInstockService poInstockService;
 
     @Resource
-    private PurchaseStockInDetailService purchaseStockInDetailService;
+    private PoInstockDetailService poInstockDetailService;
 
     @Resource
-    private ModuleOperateLogService moduleOperateLogService;
+    private OperateLogService operateLogService;
 
     @Resource
     private SyncKingdeeReturnOrderService syncKingdeeReturnOrderService;
@@ -195,7 +195,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         //获取采购单供应商信息
 //        PurchaseOrderSupplierEntity orderSupplierByOrderId = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderEntity.getId());
         String purchaseUserId = dto.getPurchaseUserId();
-        if(StringUtils.isNotBlank(purchaseUserId)){
+        if (StringUtils.isNotBlank(purchaseUserId)) {
             SysUserDTO purchaseUser = sysUserFeign.getSysUserById(dto.getPurchaseUserId());
             purchaseReturnOrderEntity.setPurchaseUserId(dto.getPurchaseUserId());
             purchaseReturnOrderEntity.setPurchaseUserName(purchaseUser.getUserName());
@@ -209,7 +209,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(dto.getSupplierContactId());
             purchaseReturnOrderEntity.setSupplierContactName(supplierContactById.getPerson());
         }
-        purchaseReturnOrderEntity.setReturnUserName(userDTO!=null?userDTO.getUserName():"");
+        purchaseReturnOrderEntity.setReturnUserName(userDTO != null ? userDTO.getUserName() : "");
         purchaseReturnOrderEntity.setReturnOrgName(sysAccountingCompanyEntity.getCompanyName());
         purchaseReturnOrderEntity.setBillDate(LocalDate.now());
         purchaseReturnOrderEntity.setReturnWarehouseName(warehouseEntity.getName());
@@ -218,7 +218,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         this.save(purchaseReturnOrderEntity);
 
         //操作日志
-        moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "新增操作");
 
         //保存详情信息
         purchaseReturnOrderDetailService.add(dto, purchaseReturnOrderEntity.getId());
@@ -280,7 +280,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         PurchaseReturnOrderEntity byId = this.getById(dto.getId());
-        moduleOperateLogService.addModuleOperateLogByObj(byId, purchaseReturnOrderEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(byId, purchaseReturnOrderEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), purchaseReturnOrderEntity.getId(), "", "");
 
         //更新收货单详情表信息
         return purchaseReturnOrderDetailService.update(dto, purchaseReturnOrderEntity.getId());
@@ -327,9 +327,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> detailId = detail.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
 
-        List<PurchaseStockInDetailEntity> stockInDetailEntityList = purchaseStockInDetailService.listDetailByPodIds(detailId);
+        List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailByPodIds(detailId);
         for (PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity : detail) {
-            Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseStockInDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(purchaseReturnOrderDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             PurchaseReturnOrderDetailDTO.ViewDTO detailView = new PurchaseReturnOrderDetailDTO.ViewDTO();
             BeanMapperUtils.copy(purchaseReturnOrderDetailEntity, detailView);
             //获取采购单详情
@@ -391,7 +391,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntities.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "提交操作");
+        operateLogService.batchAddModuleOperateLog("提交了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "提交操作");
 
         return Boolean.TRUE;
     }
@@ -484,7 +484,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     });
                     scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
                 }
-                updateArrivalState(purchaseReturnOrderEntity);
+
+                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
             }
         } else {
             //审核不通过
@@ -494,7 +495,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购退货单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "审核操作");
         //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         return Boolean.TRUE;
@@ -543,12 +544,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 });
                 scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
             }
-            updateArrivalState(purchaseReturnOrderEntity);
+            updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
         }
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
+        operateLogService.batchAddModuleOperateLog("反审核了一个采购退货单【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "反审核操作");
         //审核通过发送金蝶
         purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         return Boolean.TRUE;
@@ -587,7 +588,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("采购退货单【%s】取消流程", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "取消流程操作");
 
         return Boolean.TRUE;
     }
@@ -624,9 +625,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .set(PurchaseReturnOrderEntity::getInvalidTime, LocalDateTime.now())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
+
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PURCHASE_STOCK_IN.getCode(), pairList, "作废操作");
+        operateLogService.batchAddModuleOperateLog("作废了一个采购退货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "作废操作");
 
         //审核通过发送金蝶
         warehouseReceiveList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
@@ -825,59 +827,121 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 this.add(item);
             }
         }
-        return true;
-    }
+        return Boolean.TRUE;
 
-    //修改到货状态
-    private void updateArrivalState(PurchaseReturnOrderEntity purchaseReturnOrderEntity) {
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(purchaseReturnOrderEntity.getPurchaseOrderId());
-        List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
-        List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-        for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailEntities) {
-                    /*if (!purchaseOrderDetailEntity.getArrivalStatus().equals(ArrivalStatusEnum.ARRIVED.getCode())) {
-
-                    }*/
-            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-            if (returnQty > receiveQty) {
-                throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, purchaseOrderDetailEntity.getSkuNo()));
-            }
-            approveArrivalState(returnQty, receiveQty, purchaseQty, purchaseOrderDetailEntity.getId());
-        }
     }
 
     /**
-     * 判断到货状态
+     * 修改到货状态
      *
-     * @param returnQty   退货数量
-     * @param receiveQty  收货数量
-     * @param purchaseQty 采购数量
-     * @param id          采购明细id
-     * @return java.lang.Integer
+     * @param PurchaseOrderId PurchaseOrderId
+     * @return void
      * @Author Luo_WG
-     * @Date 2023/4/20 18:47
+     * @Date 2023/4/28 11:37
      **/
-    private Boolean approveArrivalState(Integer returnQty, Integer receiveQty, Integer purchaseQty, String id) {
-        String arrivalStatus = "";
-        //未到货
-        if (receiveQty - returnQty <= MathUtil.ZERO) {
-            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
-        } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
-            //部分到货
-            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
-        } else {
-            //已到货
-            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+    @Override
+    public void updateArrivalState(String PurchaseOrderId) {
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(PurchaseOrderId);
+        List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
+
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer receiveQty = receiveDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(orderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer purchaseQty = orderDetailEntity.getPurchaseQty();
+
+            String arrivalStatus = "";
+            //未到货
+            if (receiveQty - returnQty <= MathUtil.ZERO) {
+                arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+            } else if (receiveQty - returnQty > MathUtil.ZERO && receiveQty - returnQty < purchaseQty) {
+                //部分到货
+                arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+            } else {
+                //已到货
+                arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+            }
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
+            purchaseOrderDetailEntity.setId(orderDetailEntity.getId());
+            purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
+            purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+            scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
         }
-        PurchaseOrderDetailEntity purchaseOrderDetailEntity = new PurchaseOrderDetailEntity();
-        purchaseOrderDetailEntity.setId(id);
-        purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
-        purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
-        Boolean flag = scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
-        return flag;
+    }
+
+
+    /**
+     * 下推 退货单
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-08 11:05
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
+        //查询实退数量
+        List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<String> podIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PoInstockDetailEntity> stockInSkuList = poInstockDetailService.listDetailByPodIds(podIds);
+
+        List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
+        String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
+        List<PurchaseOrderDTO.PurchaseOrderInfoDTO> entityList = scmTaskFeign.getByOrderIds(poIds);
+
+        Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
+        for (Map.Entry<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
+            List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
+            PoInstockDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
+            PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
+            //采购订单
+            PurchaseOrderDTO.PurchaseOrderInfoDTO purchaseOrderEntity = entityList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+
+            String orgId = entityList.stream().filter(r -> r.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getReceiveOrgId())).orElse("");
+            addDTO.setReturnOrgId(orgId);
+            addDTO.setSourceType(type);
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
+            addDTO.setReturnWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+            addDTO.setReturnRemark(purchaseReturnOrderDTO.getRemark());
+            addDTO.setSupplierId(purchaseOrderEntity.getSupplierId());
+            addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
+            List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
+                PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                //验证退货数量
+                Integer stockInQty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(detail.getSkuId()) &&
+                        detail.getSourceDetailId().equals(s.getPurchaseOrderDetailId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
+                if (ObjectUtils.isEmpty(stockInQty)) {
+                    throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
+                }
+                if (MathUtil.compareTo(detail.getRealityReturnQty(), stockInQty) > 0) {
+                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
+                }
+                BeanMapperUtils.copy(detail, addDetailDTO);
+                addDetailDTO.setReturnQty(detail.getRealityReturnQty());
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setPurchasePriceDetailList(addDetailList);
+            addList.add(addDTO);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            for (PurchaseReturnOrderDTO.AddDTO item : addList) {
+                this.add(item);
+            }
+        }
+        return Boolean.TRUE;
     }
 }

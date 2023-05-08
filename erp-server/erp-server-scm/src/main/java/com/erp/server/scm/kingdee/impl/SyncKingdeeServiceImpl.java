@@ -1,11 +1,11 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.scm.kingdee.SyncKingdeeService;
-import com.erp.server.scm.service.PurchaseOrderService;
-import com.erp.server.scm.service.PurchasePriceChangeService;
-import com.erp.server.scm.service.PurchasePriceService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -33,16 +33,24 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
+
     @Override
-    public void updateBusinessSyncKingdeeStatus(Map<String, String> params) {
+    public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
-        String code = params.get("code");
+        String code = (String) params.get("code");
         //业务id
-        String businessId = params.get("businessId");
+        String businessId = (String)params.get("businessId");
         //更新状态
-        String status = params.get("status");
+        String status = (String)params.get("status");
         //金蝶id
-        String syncKingdeeId = params.get("kingdeeId");
+        String syncKingdeeId = (String)params.get("kingdeeId");
+        //明细数据
+        Object details = params.get("details");
+        if (ObjectUtils.isNotEmpty(details)) {
+           JSONArray JSONArray = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+        }
 
         //采购订单
         if (ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString().equals(code)) {
@@ -50,6 +58,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //采购价目表
         if (ApiModuleTypeEnum.PURCHASE_PRICE.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                purchasePriceDetailService.updateKingdeeDetailId(list);
+                return;
+            }
             purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
         }
         //采购调价表

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 数据结果返回的封装
@@ -41,7 +42,7 @@ public class ApiResult<T>  implements Serializable {
      * @return
      */
     public boolean isSuccess() {
-        return code.equals(200);
+        return Objects.equals(code, 200);
     }
 
 
@@ -90,6 +91,13 @@ public class ApiResult<T>  implements Serializable {
         apiResult.setCode(code);
         apiResult.setMsg(msg);
         return apiResult;
+    }
+
+    /**
+     * 成功时候的调用
+     */
+    public static ApiResult<Void> success() {
+        return new ApiResult<Void>(200, "操作成功");
     }
 
 

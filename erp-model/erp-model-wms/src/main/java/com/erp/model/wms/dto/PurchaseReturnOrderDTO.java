@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,21 +35,25 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货方式
          */
+        @NotBlank(message = "退货方式不能为空")
         private String returnMode;
 
         /**
          * 退货人组织id
          */
+        @NotBlank(message = "退货人组织不能为空")
         private String returnOrgId;
 
         /**
          * 退货仓库id
          */
+        @NotBlank(message = "退货仓库不能为空")
         private String returnWarehouseId;
 
         /**
          * 退货来源
          */
+        @NotBlank(message = "退货来源不能为空")
         private String sourceType;
 
         /**
@@ -64,6 +69,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 供应商id
          */
+        @NotBlank(message = "供应商不能为空")
         private String supplierId;
 
         /**
@@ -114,26 +120,31 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货来源
          */
+        @NotBlank(message = "退货来源不能为空")
         private String sourceType;
 
         /**
          * 供应商id
          */
+        @NotBlank(message = "供应商不能为空")
         private String supplierId;
 
         /**
          * 退货方式 退货扣款 退货补货
          */
+        @NotBlank(message = "退货方式不能为空")
         private String returnMode;
 
         /**
          * 退货人id
          */
+        @NotBlank(message = "退货人不能为空")
         private String returnUserId;
 
         /**
          * 退货人组织id
          */
+        @NotBlank(message = "退货人组织不能为空")
         private String returnOrgId;
 
         /**
@@ -144,6 +155,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 退货仓库id
          */
+        @NotBlank(message = "退货仓库不能为空")
         private String returnWarehouseId;
 
         /**

@@ -554,5 +554,19 @@
             version
         FROM product_info
     </select>
+    <select id="getRolePeopleBySkuId" resultType="com.erp.model.plm.dto.ProductInfoDTO$ProductRolePeopleDTO">
+       SELECT
+         pi.project_charge_id,
+         pi.charge_id AS productChargeId,
+         pd.id AS skuId
+       FROM product_info pi
+       INNER JOIN  product_detail pd
+       ON pi.id=pd.product_id AND pd.is_deleted=FALSE
+       WHERE pi.is_deleted=FALSE
+       AND  pd.id IN
+        <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+            #{skuId}
+        </foreach>
+    </select>
 
 </mapper>

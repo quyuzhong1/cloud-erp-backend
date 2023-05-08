@@ -26,5 +26,7 @@ public class SysDepartmentUserNumberDTO implements Serializable {
 
     private String userName;
 
+    private String code;
+
 
 }

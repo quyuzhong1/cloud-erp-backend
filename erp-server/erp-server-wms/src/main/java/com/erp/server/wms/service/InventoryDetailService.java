@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.InventoryDetailEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @Classname: InventoryDetailService
@@ -20,5 +21,21 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      * @return
      */
     InventoryDetailEntity findByInfoIdAndInstockBatchDate(String inventoryInfoId, LocalDate instockBatchDate);
+
+    /**
+     * 根据库存表id+qty>0获取库存明细数据
+     * @param inventoryInfoId
+     * @return
+     */
+    List<InventoryDetailEntity> findByInventoryIdAndQtyGreatZero(String inventoryInfoId);
+
+    /**
+     * 修改库存明细表数量
+     * @param id
+     * @param qty（操作的数量，如果是扣减需传负数）
+     * @param version
+     * @return
+     */
+    int updateQtyById(String id, Integer qty, Integer version);
 
 }

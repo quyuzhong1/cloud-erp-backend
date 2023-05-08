@@ -24,6 +24,7 @@ public enum BusinessNoTypeEnum {
     CODE_CGTH(14, "cgth","采购退货单"),
     CODE_USER(15, "user_no","用户编号"),
     CODE_QC(16, "qc","质检单"),
+    CODE_DEPT(17, "bm","部门编号"),
 
     ;
 

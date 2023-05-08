@@ -1,5 +1,8 @@
 package com.erp.model.wms.enums.inventory;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -10,11 +13,14 @@ import java.util.Objects;
  * @Author: zhangchunlin
  */
 public enum InventoryModeEnum {
-    IN_STOCK("1", "增加"),
-    OUT_STOCK("-1", "减少"),
+    IN_STOCK(1, "增加"),
+    OUT_STOCK(-1, "减少"),
     ;
 
-    private String code;
+
+    @JsonValue
+    @EnumValue
+    private Integer code;
 
     /**
      * 名称
@@ -22,12 +28,12 @@ public enum InventoryModeEnum {
     private String name;
 
 
-    InventoryModeEnum(String code, String name) {
+    InventoryModeEnum(Integer code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    public String getCode() {
+    public Integer getCode() {
         return code;
     }
 
@@ -41,7 +47,7 @@ public enum InventoryModeEnum {
      * @param code
      * @return
      */
-    public static InventoryModeEnum of(String code) {
+    public static InventoryModeEnum of(Integer code) {
         return Arrays.stream(InventoryModeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

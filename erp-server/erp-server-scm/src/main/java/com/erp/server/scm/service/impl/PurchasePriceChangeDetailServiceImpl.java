@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -65,7 +64,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     @Resource
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
 
-    
+
     /**
      * 检查区间报价是否重叠
      *
@@ -173,10 +172,13 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             List<PurchasePriceChangeDetailDTO.AddDTO> historyFlagList = BeanMapper.copyList(historyList, PurchasePriceChangeDetailDTO.AddDTO.class);
 
+
+            checkList = new ArrayList<>(10);
+            checkList.addAll(purchasePriceChangeDetailList);
             checkList.addAll(historyFlagList);
             //以sku 分组
             Map<String, List<PurchasePriceChangeDetailDTO.AddDTO>> historyMap = checkList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailDTO.AddDTO::getSkuId));
-            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : supplierMap.entrySet()) {
+            for (Map.Entry<String, List<PurchasePriceChangeDetailDTO.AddDTO>> item : historyMap.entrySet()) {
                 //对应的报价
                 List<PurchasePriceChangeDetailDTO.AddDTO> skuPriceList = item.getValue();
                 skuPriceList = skuPriceList.stream().sorted(Comparator.comparing(PurchasePriceChangeDetailDTO.AddDTO::getMinQty)).collect(Collectors.toList());
@@ -368,8 +370,6 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         if (CollectionUtils.isEmpty(purchasePriceList)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        purchasePriceList.forEach(obj -> syncKingdeePurchasePriceService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-
     }
 
 

@@ -1,9 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
-import com.erp.model.wms.dto.PurchaseStockInDTO;
-import com.erp.model.wms.entity.PurchaseStockInDetailEntity;
-import com.erp.server.wms.service.PurchaseStockInDetailService;
-import com.erp.server.wms.service.PurchaseStockInService;
+import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.server.wms.service.PoInstockDetailService;
+import com.erp.server.wms.service.PoInstockService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,10 +24,10 @@ import java.util.List;
 public class PurchaseStockInFeignController {
 
     @Resource
-    private PurchaseStockInDetailService purchaseStockInDetailService;
+    private PoInstockDetailService poInstockDetailService;
 
     @Resource
-    private PurchaseStockInService purchaseStockInService;
+    private PoInstockService poInstockService;
 
     /**
      * @description: 根据来源明细id查询
@@ -37,8 +37,8 @@ public class PurchaseStockInFeignController {
      * @return List<PurchaseStockInDetailEntity>
      */
     @PostMapping("/listDetailBySourceDetailIds")
-    public List<PurchaseStockInDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
-        return purchaseStockInDetailService.listDetailBySourceDetailIds(sourceDetailIds);
+    public List<PoInstockDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
+        return poInstockDetailService.listDetailBySourceDetailIds(sourceDetailIds);
     }
 
     /**
@@ -49,8 +49,8 @@ public class PurchaseStockInFeignController {
      * @return List<PurchaseStockInDetailEntity>
      */
     @PostMapping("/listDetailByPodIds")
-    public List<PurchaseStockInDetailEntity> listDetailByPodIds(@RequestBody List<String> podIds) {
-        return purchaseStockInDetailService.listDetailByPodIds(podIds);
+    public List<PoInstockDetailEntity> listDetailByPodIds(@RequestBody List<String> podIds) {
+        return poInstockDetailService.listDetailByPodIds(podIds);
     }
 
 
@@ -62,8 +62,8 @@ public class PurchaseStockInFeignController {
      * @return Boolean
      */
     @PostMapping("/batchAddPurchaseStockIn")
-    public Boolean batchAddPurchaseStockIn(@RequestBody @Validated List<PurchaseStockInDTO.AddDTO> resultList) {
-        return purchaseStockInService.batchAddPurchaseStockIn(resultList);
+    public Boolean batchAddPurchaseStockIn(@RequestBody @Validated List<PoInstockDTO.AddDTO> resultList) {
+        return poInstockService.batchAddPurchaseStockIn(resultList);
     }
 
     /**
@@ -74,8 +74,8 @@ public class PurchaseStockInFeignController {
      * @return java.util.List<com.erp.model.wms.dto.PurchaseStockInDTO.GetStockInQty>
      **/
     @PostMapping("/getStockInQty")
-    public List<PurchaseStockInDTO.GetStockInQty> getStockInQty(@RequestBody  List<String> ids) {
-        return purchaseStockInService.getStockInQty(ids);
+    public List<PoInstockDTO.GetStockInQty> getStockInQty(@RequestBody  List<String> ids) {
+        return poInstockService.getStockInQty(ids);
     }
 
 }

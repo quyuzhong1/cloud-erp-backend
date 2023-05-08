@@ -75,6 +75,13 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            warehouseExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(warehouseExcelDTO);
+            return;
+        }
         //类型名称
         String typeName = warehouseExcelDTO.getTypeName();
         String typeId = dictBasicList.stream().filter(d -> d.getName().equals(typeName)).findFirst().

@@ -26,7 +26,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("purchase_return_order")
+@TableName("po_return")
 public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEntity> {
 
     /**

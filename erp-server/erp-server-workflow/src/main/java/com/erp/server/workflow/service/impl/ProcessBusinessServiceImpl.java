@@ -40,6 +40,8 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
         ProcessBusinessEntity processBusiness = lambdaQuery()
                 .eq(ProcessBusinessEntity::getBusinessKey, businessKey)
                 .eq(ProcessBusinessEntity::getDisabled, Boolean.FALSE)
+                .orderByDesc(ProcessBusinessEntity::getUpdateTime)
+                .last("limit 1")
                 .one();
         return processBusiness;
     }

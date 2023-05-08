@@ -130,6 +130,22 @@
         LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
         LEFT JOIN sys_department sd ON sd."id" = sdu.department_id
     </select>
+    <select id="getListByRoleIds" resultType="com.common.business.dto.FindUserDTO">
+        SELECT
+            sui.uid userId,
+            sui.code,
+            sui.email,
+            sui.mobile,
+            sui.real_name,
+            sui.user_account,
+            sui.user_name,
+            sr."id" roleId,
+            sr.role_name
+        from sys_user_info sui
+                 LEFT JOIN sys_role_user sru on sui.uid = sru.user_id
+                 LEFT JOIN sys_role sr on sr."id" = sru.role_id
+        where sr.role_id in (role_id)
+    </select>
 
 
 </mapper>

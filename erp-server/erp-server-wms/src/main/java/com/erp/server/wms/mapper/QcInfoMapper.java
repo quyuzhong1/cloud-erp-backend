@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -39,7 +39,7 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @param endDate 
      * @return List<GroupQcTrendDTO> 
      */
-    List<QcEffectivenessDTO.GroupQcTrendDTO> listQcBillGroupQcTrend(@Param("type")String type, @Param("beginDate")LocalDate beginDate,@Param("endDate") LocalDate endDate);
+    List<QcEffectivenessDTO.GroupQcTrendDTO> listQcBillGroupQcTrend(@Param("params")QcEffectivenessDTO.ViewQcTrendSearchParamDTO params, @Param("beginDate")LocalDate beginDate,@Param("endDate") LocalDate endDate);
     /**
      * @description: 按人员查询
      * @author Will

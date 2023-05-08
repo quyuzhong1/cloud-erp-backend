@@ -60,6 +60,12 @@ public class QcInfoDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
          * 质检员id
          */
         private String qcUserId;
@@ -117,7 +123,23 @@ public class QcInfoDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ReceiveToQcDTO{
+    public static class ReceiveToQcDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+
+        /**
+         * 来源type
+         */
+        private String sourceType;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
 
         /**
          * 是否新品
@@ -165,7 +187,7 @@ public class QcInfoDTO implements Serializable {
 
 
         /**
-         *变体属性
+         * 变体属性
          */
         private String variantProperty;
 
@@ -325,7 +347,6 @@ public class QcInfoDTO implements Serializable {
         private String qcDeptName;
 
 
-
         /**
          * 产品信息
          * 从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
@@ -376,7 +397,7 @@ public class QcInfoDTO implements Serializable {
 
 
         /**
-         *质检单号
+         * 质检单号
          */
         private String code;
 

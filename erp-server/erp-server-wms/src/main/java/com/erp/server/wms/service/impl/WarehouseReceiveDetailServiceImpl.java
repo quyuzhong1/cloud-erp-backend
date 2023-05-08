@@ -4,11 +4,11 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
@@ -17,19 +17,25 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
+import com.erp.server.wms.service.WarehouseReceiveDetailService;
+import com.erp.server.wms.service.WarehouseService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -54,14 +60,14 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
 
-
     /**
      * 新增
+     *
+     * @param dto dto
+     * @param id  id:主表id
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/13 14:43
-     * @param dto dto
-     * @param id id:主表id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -72,6 +78,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+        //校验sku重复
+        checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
 
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
@@ -92,7 +100,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-            if ((receiveQty - returnQty) > purchaseQty) {
+            if (receiveQty > purchaseQty + returnQty) {
                 throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
             }
 
@@ -105,11 +113,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setUpdateUserId(dto.getUpdateUserId());
             warehouseReceiveDetailEntity.setUpdateUserName(dto.getUpdateUserName());
 
-
-            Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+          /*  Integer receive = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(addDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (addDTO.getReceiveQty() > (purchaseOrderDetailEntity.getPurchaseQty() - receive)) {
                 throw new ServiceException(ApiError.ERROR_99013);
-            }
+            }*/
             listDetail.add(warehouseReceiveDetailEntity);
         }
         //保存详情信息
@@ -117,11 +124,25 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     }
 
     /**
+     * 新增验证sku是否重复
+     */
+    private void checkAddDetailsRepeatSku(List<PurchaseOrderDetailEntity> list) {
+        Map<String, List<PurchaseOrderDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+        for (Map.Entry<String, List<PurchaseOrderDetailEntity>> entry : map.entrySet()) {
+            List<PurchaseOrderDetailEntity> value = entry.getValue();
+            if (value.size() > MathUtil.ONE) {
+                throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+            }
+        }
+    }
+
+    /**
      * 修改
-     * @Author Luo_WG
-     * @Date 2023/4/13 15:22
+     *
      * @param dto dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:22
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -132,6 +153,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<String> orderDetailIds = dto.getWarehouseReceiveDetailList().stream().map(WarehouseReceiveDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         //根据ids查询采购单详情
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
+        //校验sku重复
+        checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
 
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
@@ -171,11 +194,13 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     /**
      * 根据主表id删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param mainIds mainIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
+    @Override
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(WarehouseReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
                 .in(WarehouseReceiveDetailEntity::getMainId, mainIds)
@@ -184,11 +209,13 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     /**
      * 根据主表id查询详情表信息
-     * @Author Luo_WG
-     * @Date 2023/4/13 17:44
+     *
      * @param mainId mainId
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
      **/
+    @Override
     public List<WarehouseReceiveDetailEntity> getDetailByMainId(String mainId) {
         LambdaQueryWrapper<WarehouseReceiveDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WarehouseReceiveDetailEntity::getMainId, mainId);
@@ -197,7 +224,24 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Override
     public List<WarehouseReceiveDetailEntity> listDetailByPodIds(List<String> podIds) {
-        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId,podIds).list();
+        return lambdaQuery().in(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId, podIds).list();
+    }
+
+
+    /**
+     * 根据主表集合获取详情
+     *
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseReceiveDetailEntity>
+     * @author yl
+     * @date 2023-05-05 17:38
+     */
+    @Override
+    public List<WarehouseReceiveDetailEntity> listDetailByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(WarehouseReceiveDetailEntity::getMainId,mainIds).list();
     }
 
     @Override
