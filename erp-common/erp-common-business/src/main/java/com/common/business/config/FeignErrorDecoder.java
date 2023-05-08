@@ -44,6 +44,6 @@ public class FeignErrorDecoder implements ErrorDecoder {
             log.error("FeignErrorDecoder 出错了 {}", e);
         }
 
-        return null;
+         return  new FeignServiceException(ApiError.Default);
     }
 }
