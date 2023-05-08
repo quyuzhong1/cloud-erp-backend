@@ -9,32 +9,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>erp-model</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>erp-model-auth</module>
-        <module>erp-model-admin</module>
-        <module>erp-model-sys</module>
-        <module>erp-model-merchant</module>
-        <module>erp-model-workflow</module>
-        <module>erp-model-plm</module>
-        <module>erp-model-bi</module>
-        <module>erp-model-dmp</module>
-        <module>erp-model-scm</module>
-        <module>erp-model-wms</module>
-        <module>erp-model-msg</module>
-        <module>erp-model-oms</module>
-    </modules>
+    <groupId>com.erp.server</groupId>
+    <artifactId>erp-server-oms</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>erp-server-oms</name>
+    <description>订单系统</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-business</artifactId>
+            <artifactId>erp-model-oms</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -77,5 +68,16 @@
             <url>${repository.url}</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <build>
+        <finalName>${project.name}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 
 </project>
