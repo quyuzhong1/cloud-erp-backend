@@ -1090,7 +1090,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @author yl
      * @date 2023-04-25 10:32
      */
-    @Override
     public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
         //查询实退数量

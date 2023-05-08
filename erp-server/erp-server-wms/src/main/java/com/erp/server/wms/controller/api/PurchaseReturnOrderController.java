@@ -10,6 +10,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.wms.service.PoInstockService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
@@ -291,4 +292,19 @@ public class PurchaseReturnOrderController extends BaseController {
         Boolean flag = purchaseReturnOrderService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
+
+    /**
+     * 采购订单下推退货单
+     * @author yl
+     * @date 2023-05-08 11:03
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @PostMapping("/generatePurchaseReturnOrder")
+    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        Boolean  flag = purchaseReturnOrderService.generatePurchaseReturnOrder(dto);
+        return flag?success():failure();
+    }
+
 }

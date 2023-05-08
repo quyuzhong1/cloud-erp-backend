@@ -10,7 +10,6 @@ import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -243,12 +242,5 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
 
-    /**
-     * 下推退货单
-     * @author yl
-     * @date 2023-04-25 10:32
-     * @param dto
-     * @return java.lang.Boolean
-     */
-    Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
+
 }

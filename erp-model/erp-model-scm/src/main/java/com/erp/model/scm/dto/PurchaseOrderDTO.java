@@ -859,6 +859,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 收料组织
+         */
+        private String ReceiveOrgId;
+
+        /**
          * 供应商id
          */
         private String supplierId;

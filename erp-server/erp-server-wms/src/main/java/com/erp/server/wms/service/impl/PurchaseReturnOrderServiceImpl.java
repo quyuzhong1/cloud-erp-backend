@@ -15,13 +15,13 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
@@ -33,6 +33,7 @@ import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
@@ -60,9 +61,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -871,5 +870,78 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
             scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
         }
+    }
+
+
+    /**
+     * 下推 退货单
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-08 11:05
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+        List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> list = dto.getList();
+        //查询实退数量
+        List<String> poIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<String> podIds = list.stream().map(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PoInstockDetailEntity> stockInSkuList = poInstockDetailService.listDetailByPodIds(podIds);
+
+        List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
+        String type = SourceTypeEnum.PURCHASE_ORDER.getCode();
+        List<PurchaseOrderDTO.PurchaseOrderInfoDTO> entityList = scmTaskFeign.getByOrderIds(poIds);
+
+        Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getReturnMode())));
+        for (Map.Entry<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
+            List<PoInstockDTO.GeneratePurchaseReturnOrderDTO> value = entry.getValue();
+            PoInstockDTO.GeneratePurchaseReturnOrderDTO purchaseReturnOrderDTO = value.get(0);
+            PurchaseReturnOrderDTO.AddDTO addDTO = new PurchaseReturnOrderDTO.AddDTO();
+            //采购订单
+            PurchaseOrderDTO.PurchaseOrderInfoDTO purchaseOrderEntity = entityList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+
+            String orgId = entityList.stream().filter(r -> r.getPurchaseOrderId().equals(purchaseReturnOrderDTO.getPurchaseOrderId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getReceiveOrgId())).orElse("");
+            addDTO.setReturnOrgId(orgId);
+            addDTO.setSourceType(type);
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setPurchaseOrderId(purchaseOrderEntity.getPurchaseOrderId());
+            addDTO.setReturnWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+            addDTO.setReturnRemark(purchaseReturnOrderDTO.getRemark());
+            addDTO.setSupplierId(purchaseOrderEntity.getSupplierId());
+            addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
+            addDTO.setSourceId(purchaseReturnOrderDTO.getSourceId());
+            addDTO.setReturnUserId(purchaseReturnOrderDTO.getReturnUserId());
+            List<PurchaseReturnOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
+                PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
+                //验证退货数量
+                Integer stockInQty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(detail.getSkuId()) &&
+                        detail.getSourceDetailId().equals(s.getPurchaseOrderDetailId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getStockInQty())).orElse(0);
+                if (ObjectUtils.isEmpty(stockInQty)) {
+                    throw new ServiceException(1, String.format("SKU【%s】未找到对应数量", detail.getSkuNo()));
+                }
+                if (MathUtil.compareTo(detail.getRealityReturnQty(), stockInQty) > 0) {
+                    throw new ServiceException(1, String.format("SKU【%s】实退数量不能大于【%s】", detail.getSkuNo(), stockInQty));
+                }
+                BeanMapperUtils.copy(detail, addDetailDTO);
+                addDetailDTO.setReturnQty(detail.getRealityReturnQty());
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setPurchasePriceDetailList(addDetailList);
+            addList.add(addDTO);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            for (PurchaseReturnOrderDTO.AddDTO item : addList) {
+                this.add(item);
+            }
+        }
+        return Boolean.TRUE;
     }
 }

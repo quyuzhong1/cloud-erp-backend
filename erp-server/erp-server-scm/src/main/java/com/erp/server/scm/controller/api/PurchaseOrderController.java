@@ -13,7 +13,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
-import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
@@ -501,18 +500,8 @@ public class PurchaseOrderController extends BaseController {
         return success(list);
     }
 
-    /**
-     * 下推退货单数据保存
-     * @author Will
-     * @date: 2023/4/11 20:33
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
-       Boolean  flag = purchaseOrderService.generatePurchaseReturnOrder(dto);
-        return flag?success():failure();
-    }
+
+
 
 
 

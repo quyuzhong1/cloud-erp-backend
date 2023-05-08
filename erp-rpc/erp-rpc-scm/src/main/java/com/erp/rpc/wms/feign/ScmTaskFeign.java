@@ -112,7 +112,7 @@ public interface ScmTaskFeign {
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO
      */
     @PostMapping("feign/purchaseOrder/getByOrderIds")
-    List<PurchaseOrderDTO.PurchaseOrderInfoDTO >getByOrderIds(@RequestBody List<String> purchaseOrderIds);
+    List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getByOrderIds(@RequestBody List<String> purchaseOrderIds);
 
     /**
      * @description: 根据采购订单ids查询详情信息
