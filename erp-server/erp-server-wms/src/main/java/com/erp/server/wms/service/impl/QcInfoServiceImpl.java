@@ -250,6 +250,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     public PagingVO<QcInfoDTO.PagingViewDTO> paging(PagingDTO<QcInfoDTO.PagingParamDTO> dto) {
         QcInfoDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
         String searchType = params.getSearchType();
         //如果等于所有
         if (searchType.equals(SearchType.ALL)) {
@@ -446,7 +447,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum finishQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.FINISH_QC.getCode());
         bill.setQcStatus(finishQc);
-        String warehouseId = "";
+        String warehouseId = dto.getWarehouseId();
         if (isExist) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
@@ -454,8 +455,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
                 }
-                warehouseId = purchaseOrder.getDeliveryWarehouseId();
-                bill.setWarehouseId(warehouseId);
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }
@@ -633,7 +632,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
                 }
-                bill.setWarehouseId(purchaseOrder.getDeliveryWarehouseId());
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }
@@ -692,7 +690,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         bill.setQcFinishTime(LocalDateTime.now());
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
         bill.setQcStatus(exemption);
-        String warehouseId = "";
+        String warehouseId = dto.getWarehouseId();
         if (isExist) {
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
@@ -700,8 +698,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 if (supplierInfo != null) {
                     bill.setSupplierId(supplierInfo.getSupplierId());
                 }
-                warehouseId = purchaseOrder.getDeliveryWarehouseId();
-                bill.setWarehouseId(warehouseId);
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }

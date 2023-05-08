@@ -282,6 +282,10 @@
             AND qb.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > qb.create_time
         </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
         ORDER BY qb.create_time DESC
     </select>
 
@@ -383,8 +387,13 @@
                     INTERVAL '1
                     DAY' ) > qb.create_time
                 </if>
+
             </otherwise>
         </choose>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
         ORDER BY qb.create_time DESC
     </select>
     <select id="viewGeneratePurchaseReturnOrder"
