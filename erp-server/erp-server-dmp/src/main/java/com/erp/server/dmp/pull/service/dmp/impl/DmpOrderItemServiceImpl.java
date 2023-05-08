@@ -130,7 +130,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 if (platformCreateTime.getYear() == LocalDate.now().getYear()) {
                     orderItemBean.setNewSign(1);
                 } else {
-                    orderItemBean.setNewSign(2);
+                    orderItemBean.setNewSign(0);
                 }
             }
             DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
