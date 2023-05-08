@@ -59,6 +59,12 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      */
     void startExecutionHandle(DelegateExecution executionDelegate);
 
+    /**
+     * 退回流程
+     * @param dto
+     */
+    void rollback(ProcessManagementDTO.ApproveDTO dto);
+
 //    /**
 //     * 驳回流程
 //     * @param dto

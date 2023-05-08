@@ -2,10 +2,9 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -18,36 +17,31 @@ import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
-import com.erp.model.workflow.enums.RejectTypeEnum;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
 import com.erp.server.workflow.service.ProcessManagementService;
-import com.common.business.service.SuperServiceImpl;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
-import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
+import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.IdentityLinkEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessInstanceWithVariablesImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.IdentityLink;
-import org.camunda.bpm.engine.task.IdentityLinkType;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.camunda.bpm.model.bpmn.instance.*;
+import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
+import org.camunda.bpm.model.bpmn.instance.FlowElement;
+import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
-import org.camunda.bpm.model.xml.Model;
-import org.camunda.bpm.model.xml.instance.ModelElementInstance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -220,76 +214,21 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 审核通过
             taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
             Map<String, Object> variablesMap = dto.getVariablesMap();
+            variablesMap.put("ApproveStatus", "approved");
             taskService.complete(taskManagement.getTaskId(), variablesMap);
             updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
         }
 
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
             // 审核不通过
-            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
-//            taskService.createComment(currentTask.getId(), processInstanceId, dto.getComment());
-//            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
-//            // 取消流程实例中所有的当前任务
-//            runtimeService
-//                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
-//                    .cancelTransitionInstance(currentTask.getProcessInstanceId())
-//                    .startBeforeActivity("reviewFailed")
-//                    .execute();
             runtimeService.createProcessInstanceModification(processInstanceId)
                     //关闭相关任务
                     .cancelAllForActivity(currentTask.getTaskDefinitionKey())
                     .setAnnotation(dto.getComment())
                     .execute();
             // TODO 保存流程任务数据 终止流程
-
             updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
         }
-        if(ApproveTypeEnum.REJECT_START.equals(dto.getApproveType())) {
-            // 审核不通过
-            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
-            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
-            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
-            // 取消流程实例中所有的当前任务
-            runtimeService
-                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
-                    .cancelAllForActivity(currentTask.getTaskDefinitionKey())
-                    .startBeforeActivity("reviewFailed")
-                    .execute();
-            // TODO 保存流程任务数据 终止流程
-
-            updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
-        }
-        if(ApproveTypeEnum.REJECT_PREVIOUS.equals(dto.getApproveType())) {
-            // 审核不通过
-            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
-            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
-            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
-            // 取消流程实例中所有的当前任务
-            runtimeService
-                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
-                    .cancelAllForActivity(currentTask.getTaskDefinitionKey())
-                    .startBeforeActivity("reviewFailed")
-                    .execute();
-            // TODO 保存流程任务数据 终止流程
-
-            updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
-        }
-        if(ApproveTypeEnum.REJECT_APPOINT.equals(dto.getApproveType())) {
-            // 审核不通过
-            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
-            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
-            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
-            // 取消流程实例中所有的当前任务
-            runtimeService
-                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
-                    .cancelAllForActivity(currentTask.getTaskDefinitionKey())
-                    .startBeforeActivity("reviewFailed")
-                    .execute();
-            // TODO 保存流程任务数据 终止流程
-
-            updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
-        }
-
     }
 
     @Override
@@ -346,6 +285,78 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
         // 填充用户变量
         executionDelegate.setVariableLocal("userList", candidateUsers);
+    }
+
+    @Override
+    public void rollback(ProcessManagementDTO.ApproveDTO dto) {
+//        // 查询历史任务
+//        List<HistoricTaskInstance> taskInstances = historyService.createHistoricTaskInstanceQuery()
+//                .processInstanceId(processInstanceId)
+//                .taskDefinitionKey(currentTask.getTaskDefinitionKey())
+//                .orderByHistoricTaskInstanceEndTime()
+//                .asc()
+//                .list();
+//        // 获取驳回节点
+//        TaskEntity taskEntity = (TaskEntity) taskService.createTaskQuery().taskId(dto.getPreTaskId()).singleResult();
+//
+//
+//        for (HistoricTaskInstance historicTaskInstance : taskInstances) {
+//            String nowTask = historicTaskInstance.getTaskDefinitionKey();
+//            if (taskDefinitionKey.equals(nowTask)) {
+//                break;
+//            }
+//            backTask.set(nowTask);
+//        }
+//        taskInstances.stream().filter(x -> x.getTaskDefinitionKey().equals())
+//
+//        if (StringUtils.isEmpty(backTask.get())) {
+//            R.errorDefinition("错误");
+//        }
+//        if(ApproveTypeEnum.REJECT_START.equals(dto.getApproveType())) {
+//            // 审核不通过
+//            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
+//            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
+//            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
+//            // 取消流程实例中所有的当前任务
+//            runtimeService
+//                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
+//                    .cancelAllForActivity(currentTask.getTaskDefinitionKey())
+//                    .startBeforeActivity("reviewFailed")
+//                    .execute();
+//            // TODO 保存流程任务数据 终止流程
+//
+//            updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
+//        }
+//        if(ApproveTypeEnum.REJECT_PREVIOUS.equals(dto.getApproveType())) {
+//            // 审核不通过
+//            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
+//            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
+//            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
+//            // 取消流程实例中所有的当前任务
+//            runtimeService
+//                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
+//                    .cancelAllForActivity(currentTask.getTaskDefinitionKey())
+//                    .startBeforeActivity("reviewFailed")
+//                    .execute();
+//            // TODO 保存流程任务数据 终止流程
+//
+//            updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
+//        }
+//        if(ApproveTypeEnum.REJECT_APPOINT.equals(dto.getApproveType())) {
+//            // 审核不通过
+//            // 将任务状态设置为失败，并引发reviewFailed异常事件，这将触发流程的异常处理路径
+//            taskService.createComment(taskManagement.getTaskId(), processInstanceId, dto.getComment());
+//            taskService.handleBpmnError(currentTask.getId(), "reviewFailed");
+//            // 取消流程实例中所有的当前任务
+//            runtimeService
+//                    .createProcessInstanceModification(taskManagement.getProcessInstanceId())
+//                    .cancelAllForActivity(currentTask.getTaskDefinitionKey())
+//                    .startBeforeActivity("reviewFailed")
+//                    .execute();
+//            // TODO 保存流程任务数据 终止流程
+//
+//            updateApprove(taskManagement.getId(), dto.getApproveType(), processManagement.getId(), processInstanceId,dto.getComment());
+//        }
     }
 
 //    @Override

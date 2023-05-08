@@ -15,8 +15,8 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
@@ -378,18 +378,22 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             //退货数量
             Integer realityReturnQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailEntities)) {
-                realityReturnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                realityReturnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
             }
             viewProductDTO.setRealityReturnQty(realityReturnQty);
-            //已入库数量
-            Integer stockInQty = MathUtil.ZERO;
+            //有效入库数量（未审核通过）
+            Integer effectiveStockInQty = MathUtil.ZERO;
+            //已入库数量（审核通过）
+            Integer hasStockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(stockInDetails)) {
-                stockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                effectiveStockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                hasStockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            viewProductDTO.setHasStockInQty(stockInQty);
+            viewProductDTO.setHasStockInQty(hasStockInQty);
+            viewProductDTO.setEffectiveStockInQty(effectiveStockInQty);
             //未入库数量
-            viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - stockInQty);
+            viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - effectiveStockInQty);
         }
         return list;
     }
