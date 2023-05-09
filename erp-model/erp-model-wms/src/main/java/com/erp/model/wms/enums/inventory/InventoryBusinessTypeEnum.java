@@ -11,6 +11,10 @@ import java.util.Objects;
  */
 public enum InventoryBusinessTypeEnum {
 
+    /**
+     * 调用方需请传输code
+     */
+
     INVENTORY_INIT("inventory_init", "00","期初库存"),
     PO_RECEIVE("po_receive", "01","采购签收（采购收货）"),
 
@@ -42,7 +46,7 @@ public enum InventoryBusinessTypeEnum {
     OTHER_OUT("other_out", "20","其他出库"),
 
 
-    INVENTORY_PREDICTION("inventory_prediction", "21","入库预报"),// TODO 待确认是否补充该单据
+    INSTOCK_FORCAST("instock_forcast", "21","入库预报"),
 
     INVENTORY_ADJUST("inventory_adjust", "22","库存调整单"),// TODO 暂不确定是否需要该业务，无法确定状态
     ;

@@ -30,8 +30,8 @@ public enum InventorySourceTypeEnum {
     MACHINE("machine", "加工单"),
     OTHER_IN_RECEIPT("other_in_receipt", "其他入库单"),
     OTHER_OUT_RECEIPT("other_out_receipt", "其他出库单"),
+    INSTOCK_FORCAST("instock_forcast", "入库预报"),
 
-    // TODO 缺盘盈、盘亏、领料、退料
     ;
 
     /**

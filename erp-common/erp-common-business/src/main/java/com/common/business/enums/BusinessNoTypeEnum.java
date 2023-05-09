@@ -25,7 +25,7 @@ public enum BusinessNoTypeEnum {
     CODE_USER(15, "user_no","用户编号"),
     CODE_QC(16, "qc","质检单"),
     CODE_DEPT(17, "bm","部门编号"),
-
+    CODE_RKYB(18, "rkyb","入库预报"),
     ;
 
 

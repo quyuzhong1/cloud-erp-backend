@@ -8,6 +8,7 @@ import com.common.core.exception.FeignServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.netflix.client.ClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -157,6 +158,13 @@ public class GlobalExceptionHandler {
     public ApiResult resolveException(NullPointerException ex) {
         log.error("系统异常:", ex);
         return ApiResult.error(ApiError.Default);
+    }
+
+    @ExceptionHandler(value = ClientException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResult resolveException(ClientException ex) {
+        log.error("系统异常:", ex);
+        return ApiResult.error(ApiError.ERROR_1023);
     }
 
 

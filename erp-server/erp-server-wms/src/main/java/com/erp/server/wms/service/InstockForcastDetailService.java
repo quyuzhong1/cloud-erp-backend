@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.entity.InstockForcastDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,13 @@ import com.erp.model.wms.entity.InstockForcastDetailEntity;
  * @since 2023-05-09
  */
 public interface InstockForcastDetailService extends SuperService<InstockForcastDetailEntity> {
+
+    /**
+     * 新增入库预报详情
+     * @param dto
+     * @param id
+     * @return
+     */
+    List<InstockForcastDetailEntity> add(InstockForcastDTO.AddDTO dto, String id);
 
 }

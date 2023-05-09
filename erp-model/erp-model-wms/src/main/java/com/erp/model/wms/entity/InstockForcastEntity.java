@@ -8,6 +8,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -52,7 +54,7 @@ public class InstockForcastEntity extends BaseEntity<InstockForcastEntity> {
      * 单据日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 审核状态
@@ -76,7 +78,7 @@ public class InstockForcastEntity extends BaseEntity<InstockForcastEntity> {
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
     /**
      * 作废状态 true已作废，false未作废

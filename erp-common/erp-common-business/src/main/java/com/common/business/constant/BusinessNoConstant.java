@@ -35,4 +35,7 @@ public interface BusinessNoConstant {
     String QC = "QC";
 
     String BM = "BM";
+
+    // 入库预报
+    String RKYB = "RKYB";
 }

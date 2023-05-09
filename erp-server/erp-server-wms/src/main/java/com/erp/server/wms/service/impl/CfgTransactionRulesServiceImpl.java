@@ -31,14 +31,39 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
     @Override
     public void initRules() {
         List<CfgTransactionRulesEntity> rules = Lists.newArrayList();
-        //01-采购签收 待检增加
+        // 21-入库预报
+        // 在途增加
         CfgTransactionRulesEntity cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        InventoryBusinessTypeEnum businessType = InventoryBusinessTypeEnum.PO_RECEIVE;
+        InventoryBusinessTypeEnum businessType = InventoryBusinessTypeEnum.INSTOCK_FORCAST;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
-        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.WAIT_QC;
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.IN_TRANSIT;
         cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
         InventoryModeEnum inventoryMode = InventoryModeEnum.IN_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
+
+        // 01-采购签收
+        // 在途减少
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.PO_RECEIVE;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
+        inventoryStatus = InventoryStatusEnum.IN_TRANSIT;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.OUT_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
+        // 待检增加
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.PO_RECEIVE;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
+        inventoryStatus = InventoryStatusEnum.WAIT_QC;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.IN_STOCK;
         cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
         cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
         rules.add(cfgTransactionRulesEntity);
