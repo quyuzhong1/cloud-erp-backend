@@ -300,15 +300,19 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         PurchaseReturnOrderDTO.ViewDTO viewDTO = new PurchaseReturnOrderDTO.ViewDTO();
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = this.getById(id);
         BeanMapperUtils.copy(purchaseReturnOrderEntity, viewDTO);
-        //获取采购订单主表信息
-        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
+
 
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(purchaseReturnOrderEntity.getSupplierId());
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
-        viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
-        viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
+        //获取采购订单主表信息
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(purchaseReturnOrderEntity.getPurchaseOrderId());
+
+        if (ObjectUtil.isNotEmpty(purchaseOrderEntity)) {
+            viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
+            viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
+        }
 
         if (SourceTypeEnum.QC_BILL.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
@@ -334,21 +338,21 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             BeanMapperUtils.copy(purchaseReturnOrderDetailEntity, detailView);
             //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_99006);
+            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
+                detailView.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
+                detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
+                detailView.setCurrency(purchaseOrderDetailEntity.getCurrency());
+                detailView.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
             }
             detailView.setHasStockInQty(stockInQty);
             detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getReturnQty()))));
-            detailView.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
+
             //获取sku信息
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
             }
-            detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setProductName(productDetailEntity.getName());
-            detailView.setCurrency(purchaseOrderDetailEntity.getCurrency());
-            detailView.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             detailViewDTOS.add(detailView);
         }

@@ -37,18 +37,17 @@ public class WarehouseReceiveDTO {
         /**
          * 采购订单编号
          */
+        @NotNull(message = "采购订单编号不能为空")
         private String purchaseOrderCode;
 
         /**
          * 收货人id
          */
-        @NotBlank(message = "收货人不能为空")
         private String receiveUserId;
 
         /**
          * 收货人部门id
          */
-        @NotBlank(message = "收货人部门不能为空")
         private String receiveDeptId;
 
         /**
@@ -60,6 +59,7 @@ public class WarehouseReceiveDTO {
         /**
          * 交货仓库id
          */
+        @NotNull(message = "交货仓库不能为空")
         private String deliveryWarehouseId;
 
         /**

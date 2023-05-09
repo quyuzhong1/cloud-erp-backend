@@ -153,6 +153,12 @@ public class GlobalExceptionHandler {
         }
     }
 
+    @ExceptionHandler(value = NullPointerException.class)
+    public ApiResult resolveException(NullPointerException ex) {
+        log.error("系统异常:", ex);
+        return ApiResult.error(ApiError.Default);
+    }
+
 
 
     /**
