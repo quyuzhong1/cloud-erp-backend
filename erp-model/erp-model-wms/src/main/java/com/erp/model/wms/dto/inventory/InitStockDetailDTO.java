@@ -134,10 +134,6 @@ public class InitStockDetailDTO implements Serializable {
          */
         private String warehouseLocation;
 
-        /**
-         * 库位名称
-         */
-        private String warehouseLocationName;
 
         /**
          * 备注

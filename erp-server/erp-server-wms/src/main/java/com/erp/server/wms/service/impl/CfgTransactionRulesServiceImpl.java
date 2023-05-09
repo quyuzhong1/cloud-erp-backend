@@ -251,6 +251,47 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), InventoryWarehouseOptionEnum.WAREHOUSE_TARGET.getName(), inventoryStatus.getName(), inventoryMode.getName()));
         rules.add(cfgTransactionRulesEntity);
 
+        // 19-其他入库单
+        // 当前仓可用增加
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.OTHER_IN;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
+        inventoryStatus = InventoryStatusEnum.USABLE;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.IN_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
+
+        // 20-其他出库单
+        // 当前仓可用减少
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.OTHER_OUT;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum = InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT;
+        cfgTransactionRulesEntity.setWarehouseOption(inventoryWarehouseOptionEnum.getCode());
+        inventoryStatus = InventoryStatusEnum.USABLE;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.OUT_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), inventoryWarehouseOptionEnum.getName(), inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
+
+        // 12-销售退货
+        // 当前仓可用增加
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.SALES_RETURN_RECEIPT;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        inventoryWarehouseOptionEnum = InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT;
+        cfgTransactionRulesEntity.setWarehouseOption(inventoryWarehouseOptionEnum.getCode());
+        inventoryStatus = InventoryStatusEnum.USABLE;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.IN_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(), inventoryWarehouseOptionEnum.getName(), inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
+
         super.saveBatch(rules);
     }
 

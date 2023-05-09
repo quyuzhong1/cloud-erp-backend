@@ -172,6 +172,11 @@ public class InitStockDTO implements Serializable {
         /**
          * 审核状态
          */
+        private String approveStatus;
+
+        /**
+         * 审核状态
+         */
         private String approveStatusName;
 
         /**
@@ -190,6 +195,11 @@ public class InitStockDTO implements Serializable {
         private String orgName;
 
         /**
+         * 销售状态编码
+         */
+        private String saleStatus;
+
+        /**
          * 销售状态名称
          */
         private String saleStatusName;
@@ -204,11 +214,6 @@ public class InitStockDTO implements Serializable {
          */
         private Integer qty;
 
-
-        /**
-         * 仓位名称
-         */
-        private String warehouseLocationName;
     }
 
     /**
@@ -240,9 +245,49 @@ public class InitStockDTO implements Serializable {
         private List<String> warehouseIdList;
 
         /**
-         * 品牌集合
+         * 销售状态集合
          */
-        private List<String> brandList;
+        private List<String> saleStatusList;
+
+        /**
+         * 库存组织集合
+         */
+        private List<String> orgIdLList;
+
+    }
+
+    /**
+     * 导出Excel查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportSearchParamDTO extends SortDTO {
+
+        /**
+         * 勾选的单据id集合
+         */
+        private List<String> ids;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+
+        /**
+         * spu编码
+         */
+        private List<String> spuNoList;
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
 
         /**
          * 销售状态集合
@@ -278,9 +323,9 @@ public class InitStockDTO implements Serializable {
         private Integer qty;
 
         /**
-         * 库位名称
+         * 库位
          */
-        private String warehouseLocationName;
+        private String warehouseLocation;
 
 
         @Size(max = 255, message = "备注长度不能超过19位")

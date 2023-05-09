@@ -28,7 +28,7 @@ public enum InventoryBusinessTypeEnum {
 
     SHIP_NOTICE("ship_notice", "10","销售发货通知单"),
     SALES_DELIVERY_ORDER("sales_delivery_order", "11","销售出库"),
-    SALES_RETURN_RECEIPT("sales_return_receipt", "12","销售退货"),// TODO 待确认，无法确定状态
+    SALES_RETURN_RECEIPT("sales_return_receipt", "12","销售退货"),
 
     INVENTORY_PROFIT("inventory_profit", "13","盘盈"),
     INVENTORY_LOSS("inventory_loss", "14","盘亏"),
@@ -38,8 +38,8 @@ public enum InventoryBusinessTypeEnum {
     ASSEMBLE_IN("assemble_in", "17","组装"),
     DISASSEMBLE("disassemble", "18","拆卸"),
 
-    OTHER_IN("other_in", "19","其他入库"),// 无法确定状态
-    OTHER_OUT("other_out", "20","其他出库"),// 无法确定状态
+    OTHER_IN("other_in", "19","其他入库"),
+    OTHER_OUT("other_out", "20","其他出库"),
 
 
     INVENTORY_PREDICTION("inventory_prediction", "21","入库预报"),// TODO 待确认是否补充该单据

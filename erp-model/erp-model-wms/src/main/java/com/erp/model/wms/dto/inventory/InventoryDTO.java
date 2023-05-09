@@ -59,6 +59,50 @@ public class InventoryDTO {
     }
 
     /**
+     * 即时库存导出查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportSearchParamDTO extends SortDTO {
+
+        private List<String> ids;
+
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+
+        /**
+         * spu编码
+         */
+        private List<String> spuNoList;
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 销售状态集合
+         */
+        private List<String> saleStatusList;
+
+        /**
+         * 库存组织集合
+         */
+        private List<String> orgIdLList;
+
+        /**
+         * 是否显示0库存，默认不显示
+         */
+        private Boolean showZeroInventory;
+
+    }
+
+
+    /**
      * 即时库存分页列表
      */
     @Data
@@ -100,6 +144,11 @@ public class InventoryDTO {
          * 库存组织名称
          */
         private String orgName;
+
+        /**
+         * 销售状态编码
+         */
+        private String saleStatus;
 
         /**
          * 销售状态名称
@@ -165,15 +214,21 @@ public class InventoryDTO {
          */
         private String warehouseId;
 
-        /**
-         * 单据日期
-         */
-        private LocalDate billDate;
 
         /**
-         * 单据状态
+         * 单据日期范围
          */
-        private String sourceStatus;
+        private List<String> dateList;
+
+        /**
+         * 操作类型
+         */
+        private String operationMode;
+
+        /**
+         * 库存状态
+         */
+        private String inventoryStatus;
     }
 
 
@@ -215,9 +270,14 @@ public class InventoryDTO {
         private String sourceCode;
 
         /**
-         * 单据状态名称
+         * 操作类型编码
          */
-        private String sourceStatusName;
+        private String operationMode;
+
+        /**
+         * 操作类型名称
+         */
+        private String operationModeName;
 
         /**
          * 产品名称
@@ -322,6 +382,58 @@ public class InventoryDTO {
 
     }
 
+    /**
+     * 出入库流水查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportInOutStockTransFlowSearchParamDTO extends SortDTO {
+
+        /**
+         * 出入库流水id集合
+         */
+        private List<String> ids;
+
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 日期范围
+         */
+        private List<String> dateList;
+
+        /**
+         * 单据类型集合
+         */
+        private List<String> sourceTypeList;
+
+
+        /**
+         * spu编码
+         */
+        private List<String> spuNoList;
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 销售状态集合
+         */
+        private List<String> saleStatusList;
+
+        /**
+         * 库存组织集合
+         */
+        private List<String> orgIdLList;
+
+    }
+
+
 
     /**
      * 出入库流水分页列表
@@ -329,6 +441,11 @@ public class InventoryDTO {
     @Data
     @NoArgsConstructor
     public static class InOutStockTransFlowPagingViewDTO {
+
+        /**
+         * 出入库流水id
+         */
+        private String id;
 
         /**
          * 出入库时间
@@ -351,19 +468,26 @@ public class InventoryDTO {
         private String sourceTypeName;
 
         /**
-         * sku编号
-         */
-        private String skuNo;
-
-        /**
          * 单据编号
          */
         private String sourceCode;
 
+
         /**
-         * 单据状态名称
+         * 操作类型编码
          */
-        private String sourceStatusName;
+        private String operationMode;
+
+        /**
+         * 操作类型名称
+         */
+        private String operationModeName;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
 
         /**
          * 库存组织id
@@ -401,11 +525,6 @@ public class InventoryDTO {
          */
         private String warehouseLocation;
 
-        /**
-         * 仓位名称
-         */
-        private String warehouseLocationName;
-
 
         /**
          * 库存状态
@@ -441,6 +560,11 @@ public class InventoryDTO {
     @NoArgsConstructor
     public static class InOutStockSummarySearchParamDTO extends SortDTO {
 
+        /**
+         * 流水id集合
+         */
+        private List<String> ids;
+
 
         /**
          * sku编码
@@ -471,6 +595,11 @@ public class InventoryDTO {
     @Data
     @NoArgsConstructor
     public static class InOutStockSummaryPagingViewDTO {
+
+        /**
+         * 库存id集合
+         */
+        private List<String> ids;
 
         /**
          * sku编号
@@ -520,7 +649,7 @@ public class InventoryDTO {
         /**
          * 盘盈入库数量
          */
-        private Integer checkProfitInstockQty;
+        private Integer inventoryProfitInstockQty;
 
 
         /**
@@ -557,7 +686,7 @@ public class InventoryDTO {
         /**
          * 盘亏出库数量
          */
-        private Integer checkLossOutstockQty;
+        private Integer inventoryLossOutstockQty;
 
         /**
          * 调拨出库数量

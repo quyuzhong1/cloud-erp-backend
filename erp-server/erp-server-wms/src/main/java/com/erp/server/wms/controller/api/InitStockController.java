@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * 期初库存管理
  * @Classname: InitStockController
  * @Description: 期初库存控制器
  * @CreateTime: 2023-05-08  17:43
@@ -154,7 +155,7 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         return success();
     }
 

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * 库存报表管理
  * @Classname: InventoryController
  * @Description: TODO
  * @CreateTime: 2023-05-08  18:52
@@ -40,7 +41,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult<Void> exportExcel(@RequestBody InventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         return success();
     }
 
@@ -72,7 +73,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping(value = "/exportExcelInOutStock")
-    public ApiResult<Void> exportExcelInOutStock(@RequestBody InventoryDTO.InOutStockTransFlowSearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcelInOutStock(@RequestBody InventoryDTO.ExportInOutStockTransFlowSearchParamDTO dto, HttpServletResponse response) {
         return success();
     }
 
