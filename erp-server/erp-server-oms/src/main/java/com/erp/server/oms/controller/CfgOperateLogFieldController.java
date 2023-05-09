@@ -1,10 +1,9 @@
 package com.erp.server.oms.controller;
 
 
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
@@ -15,7 +14,7 @@ import com.common.core.controller.BaseController;
  * @since 2023-05-08
  */
 @RestController
-@RequestMapping("/cfg-operate-log-field-entity")
+@RequestMapping("/cfgOperateLogField")
 public class CfgOperateLogFieldController extends BaseController {
 
 }
