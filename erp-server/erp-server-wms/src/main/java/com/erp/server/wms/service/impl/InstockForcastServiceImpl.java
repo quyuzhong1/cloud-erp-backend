@@ -3,23 +3,25 @@ package com.erp.server.wms.service.impl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.InstockForcastDetailEntity;
 import com.erp.model.wms.entity.InstockForcastEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
+import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InstockForcastDetailService;
 import com.erp.server.wms.service.InstockForcastService;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -36,6 +39,7 @@ import java.util.List;
  * @author lambda
  * @since 2023-05-09
  */
+@Slf4j
 @Service
 public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMapper, InstockForcastEntity> implements InstockForcastService {
 
@@ -48,6 +52,12 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
 
+    @Autowired
+    private CommonService commonService;
+
+    @Autowired
+    private InstockForcastMapper instockForcastMapper;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void generateByPurchaseOrder(InstockForcastDTO.AddDTO dto) {
@@ -55,7 +65,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
         // feign调用取不到登录人信息，已解决
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        LoginUser loginUser = commonService.getUserInfo();
         instockForcastEntity.setCreateUserId(loginUser.getUid());
         instockForcastEntity.setCreateUserName(loginUser.getUserName());
         instockForcastEntity.setUpdateUserId(loginUser.getUid());
@@ -97,6 +107,29 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         });
         inventoryDto.setSkus(inventorySkus);
         inventoryTransCoreService.approveInOutStockByType(inventoryDto);
+    }
+
+    @Override
+    public InstockForcastEntity findByPurchaseOrderId(String purchaseOrderId) {
+        InstockForcastEntity instockForcastEntity = lambdaQuery().eq(InstockForcastEntity::getPurchaseOrderId, purchaseOrderId).eq(InstockForcastEntity::getIsDeleted, Boolean.FALSE).one();
+        return instockForcastEntity;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void purchaseOrderUnApprove(String purchaseOrderId) {
+        // TODO 采购订单反审核对入库预报单有影响吗？只会存在一个，因为是审核通过触发会把所有的明细都一次性传过来的
+        InstockForcastEntity instockForcastEntity = findByPurchaseOrderId(purchaseOrderId);
+        if(Objects.isNull(instockForcastEntity)) {
+            log.warn("采购订单id：【{}】未找到未删除的入库预报，不做库存反审核", purchaseOrderId);
+            return;
+        }
+        InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
+        inventoryUnApproveDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+        inventoryUnApproveDTO.setBillId(instockForcastEntity.getId());
+        inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
+        // 更新入库预报为已删除
+        instockForcastMapper.updateDeletedById(instockForcastEntity.getId());
     }
 
 

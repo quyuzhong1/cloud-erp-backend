@@ -21,4 +21,20 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void generateByPurchaseOrder(InstockForcastDTO.AddDTO dto);
 
+    /**
+     * 根据采购订单id查询入库预报
+     * @param purchaseOrderId
+     * @return
+     */
+    InstockForcastEntity findByPurchaseOrderId(String purchaseOrderId);
+
+    /**
+     * 采购订单反审核（把入库预报置为已删除）
+     * @param purchaseOrderId
+     */
+    void purchaseOrderUnApprove(String purchaseOrderId);
+
+
+
+
 }

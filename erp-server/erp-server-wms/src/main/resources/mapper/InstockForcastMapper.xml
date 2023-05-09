@@ -27,4 +27,8 @@
         <result column="invalid_remark" property="invalidRemark" />
     </resultMap>
 
+    <update id="updateDeletedById">
+        update instock_forcast set is_deleted = true where id = #{id}
+    </update>
+
 </mapper>

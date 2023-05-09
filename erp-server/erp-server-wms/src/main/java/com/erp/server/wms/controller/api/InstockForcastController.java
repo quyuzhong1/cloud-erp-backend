@@ -5,11 +5,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.server.wms.service.InstockForcastService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 import javax.validation.Valid;
@@ -36,6 +33,16 @@ public class InstockForcastController extends BaseController {
     @PostMapping(value = "/generateByPurchaseOrder")
     public ApiResult<Void> generateByPurchaseOrder(@RequestBody @Valid InstockForcastDTO.AddDTO dto) {
         instockForcastService.generateByPurchaseOrder(dto);
+        return success();
+    }
+
+    /**
+     * 采购订单反审核
+     * @param purchaseOrderId
+     */
+    @PostMapping(value = "/purchaseOrderUnApprove")
+    public ApiResult<Void> purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId")String purchaseOrderId) {
+        instockForcastService.purchaseOrderUnApprove(purchaseOrderId);
         return success();
     }
 
