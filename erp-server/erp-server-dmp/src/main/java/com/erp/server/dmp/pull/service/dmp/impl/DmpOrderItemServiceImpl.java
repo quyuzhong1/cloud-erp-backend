@@ -42,13 +42,6 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Resource
     private RedisUtil redisUtil;
 
-    @Resource
-    private MQProducerService mQProducerService;
-
-
-    @Resource
-    private RedisUtil redisUtil;
-
     /**
      * 添加订单商品详细信息
      *
@@ -236,29 +229,6 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             updateWrapper.in(DmpOrderItemEntity::getId, req);
             this.update(updateWrapper);
         });*/
-    }
-
-    /**
-     * 同步PLM的到货时间更新新老品
-     *
-     * @return void
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     **/
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void getProductListing(Map<String, List<NewProductDTO>> dto) {
-        List<NewProductDTO> listingNullList = dto.get("listingNullList");
-        List<String> skuNoList = listingNullList.stream().map(NewProductDTO::getSkuNo).collect(Collectors.toList());
-        List<Map<String, String>> orderListingTime1 = baseMapper.getOrderListingTime(skuNoList);
-        for (Map<String, String> stringStringMap : orderListingTime1) {
-            if (StringUtils.isNotBlank(stringStringMap.get("listingtime"))) {
-                Map<String, Object> resultMap = new HashMap<>();
-                resultMap.put("skuNo", stringStringMap.get("skuno"));
-                resultMap.put("listingTime", stringStringMap.get("listingtime"));
-                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.PRODUCT_LISTING_UPDATE_TAG.getName(), resultMap, UUID.randomUUID().toString());
-            }
-        }
     }
 
     /**

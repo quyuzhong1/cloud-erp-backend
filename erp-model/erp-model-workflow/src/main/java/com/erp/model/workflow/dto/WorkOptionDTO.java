@@ -401,6 +401,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 状态
          */
         private String approveStatus;
+
+        /**
+         * 参数
+         */
+        private String moduleParam;
     }
 
 }

@@ -123,4 +123,12 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getRolePeople")
     List<ProductInfoDTO.ProductRolePeopleDTO> listProductRolePeople(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据入参查询单据数量
+     * @Author Luo_WG
+     * @Date 2023/4/21 15:34
+     **/
+    @PostMapping("feign/plmWorkOption/getTableNum")
+    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
 }

@@ -191,6 +191,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 WorkOptionDTO.TableNumDTO tableNumDTO = new WorkOptionDTO.TableNumDTO();
                 tableNumDTO.setTableName(myWorkOptionDTO.getModuleCode());
                 tableNumDTO.setApproveStatus(myWorkOptionDTO.getModuleStatus());
+                tableNumDTO.setModuleParam(myWorkOptionDTO.getModuleParam());
                 myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
                 switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
                     case PLM:
@@ -268,7 +269,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        //Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
+        Integer tableNum = plmTaskFeign.getTableNum(tableNumDTO);
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
         pendingViewDetailDTO.setCount(0);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
