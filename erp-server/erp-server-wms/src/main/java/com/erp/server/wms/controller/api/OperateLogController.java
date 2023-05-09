@@ -23,7 +23,7 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("/moduleOperateLog")
-public class ModuleOperateLogController extends BaseController {
+public class OperateLogController extends BaseController {
 
     @Resource
     private OperateLogService operateLogService;

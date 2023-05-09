@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.server.oms.mapper.CfgOperateLogFieldMapper;
@@ -22,6 +23,8 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
 
     @Override
     public List<CfgOperateLogFieldEntity> listByClassPaths(List<String> classPaths) {
-        return null;
+        LambdaQueryWrapper<CfgOperateLogFieldEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(CfgOperateLogFieldEntity::getClassPath,classPaths);
+        return this.list(queryWrapper);
     }
 }

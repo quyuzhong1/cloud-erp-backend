@@ -23,6 +23,13 @@
     <dependencies>
         <dependency>
             <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-model-scm</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-oms</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
