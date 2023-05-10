@@ -113,7 +113,7 @@ public class SoDeliveryNoticeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "receive_user_id",
             menuCode = "wms:soDeliveryNotice:view",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "id")
     public ApiResult<SoDeliveryNoticeDTO.View> view(@RequestParam("id") String id) {
         SoDeliveryNoticeDTO.View dto = soDeliveryNoticeService.view(id);
