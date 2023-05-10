@@ -129,6 +129,11 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     }
 
     @Override
+    public List<PoInstockDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(PoInstockDetailEntity::getMainId,mainIds).list();
+    }
+
+    @Override
     public List<PoInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
     }
@@ -137,18 +142,6 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     @Override
     public  List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds) {
         return baseMapper.listDetailByPodIds(podIds);
-    }
-
-    /**
-     * 根据主表id查询明细
-     * @Author Luo_WG
-     * @Date 2023/4/25 16:41
-     * @param id id
-     * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
-     **/
-    @Override
-    public List<PoInstockDetailEntity> listDetailByMainId(String id) {
-        return lambdaQuery().eq(PoInstockDetailEntity::getMainId, id).list();
     }
 
     /**

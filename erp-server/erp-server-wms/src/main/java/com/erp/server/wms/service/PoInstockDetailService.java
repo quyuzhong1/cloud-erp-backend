@@ -46,6 +46,15 @@ public interface PoInstockDetailService extends SuperService<PoInstockDetailEnti
      * @return List<PurchaseStockInDetailEntity>
      */
     List<PoInstockDetailEntity> listByMainId(String mainId);
+
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/4/13 17:35
+     * @param mainIds
+     * @return List<PurchaseStockInDetailEntity>
+     */
+    List<PoInstockDetailEntity> listByMainIds(List<String> mainIds);
     /**
      * @description: 根据来源ids查询明细
      * @author Will
@@ -64,12 +73,4 @@ public interface PoInstockDetailService extends SuperService<PoInstockDetailEnti
      */
     List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds);
 
-    /**
-     * 根据主表id查询明细
-     * @Author Luo_WG
-     * @Date 2023/4/25 16:41
-     * @param id id
-     * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
-     **/
-    List<PoInstockDetailEntity> listDetailByMainId(String id);
 }

@@ -17,6 +17,7 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -36,10 +37,8 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PurchaseStockExportExcelDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -103,6 +102,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Resource
     private SyncKingdeeStockInService syncKingdeeStockInService;
+
+    @Resource
+    private QcInfoService qcInfoService;
+
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -284,6 +287,22 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(poInstockDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98051);
+        }
+        List<String> podIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+
+        //质检单未质检完成则不允许提交
+        List<QcInfoEntity> qcInfoList = qcInfoService.listByPodIds(podIds);
+        if (CollectionUtils.isNotEmpty(qcInfoList)) {
+            List<QcInfoEntity> qcList = qcInfoList.stream().filter(obj -> obj.getQcStatus().equals(QcBillStatusEnum.DRAFT) || obj.getQcStatus().equals(QcBillStatusEnum.WAIT_QC)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(qcList)) {
+                String qcCodes = qcList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
+                throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持提交",qcCodes)));
+            }
+        }
+
         log.info("采购入库单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //启动流程 TODO

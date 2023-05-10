@@ -3,8 +3,8 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
@@ -192,4 +192,12 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return 
      */
     Boolean autoReceiveToQcDTO(List<QcInfoDTO.ReceiveToQcDTO>  dto);
+    /**
+     * @description: 根据采购明细id查询
+     * @author Will
+     * @date: 2023/5/10 17:56
+     * @param podIds
+     * @return List<QcInfoEntity>
+     */
+    List<QcInfoEntity> listByPodIds(List<String> podIds);
 }
