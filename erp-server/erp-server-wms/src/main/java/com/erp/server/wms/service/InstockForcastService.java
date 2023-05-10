@@ -34,6 +34,12 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void purchaseOrderUnApprove(String purchaseOrderId);
 
+    /**
+     * 采购订单结束交货
+     * @param dto
+     */
+    void finishDelivery(InstockForcastDTO.FinishDeliveryDTO dto);
+
 
 
 

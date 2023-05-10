@@ -17,13 +17,19 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 @Data
-public class InventoryInStockOrOutStockDTO implements Serializable {
+public class InventoryInOutStockDTO implements Serializable {
 
-    @NotNull(message = "sku信息不能为空")
-    @Size(min = 1, message = "请至少传输一个sku信息")
+    /**
+     * 库存交易信息
+     */
+    @NotNull(message = "库存交易信息不能为空")
+    @Size(min = 1, message = "请至少传输一个库存交易信息")
     @Valid
-    private List<InStockOrOutStockDTO> skus;
+    private List<InOutStockDTO> members;
 
+    /**
+     * 业务类型
+     */
     @NotNull(message = "业务类型不能为空")
     @StateEnumValue(clazz = InventoryBusinessTypeEnum.class,message = "业务类型有误")
     private String businessType;

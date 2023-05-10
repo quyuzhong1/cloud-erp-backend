@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     private RedissonClient redisson;
 
     @Override
-    public InventoryEntity findInventoryByWareLocalSkuStatus(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
+    public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
@@ -58,9 +59,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public InventoryEntity findInventoryByWareLocalSkuStatusWithLock(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
+    public InventoryEntity findInventoryLock(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
         // 此处使用读写锁，避免并发情况下读取的数据不一致，读跟读之间不冲突，读写或写写冲突，暂不考虑库位
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(status);
         String lockKey = StrUtil.format( "{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.readLock();
@@ -71,11 +73,19 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
+            String qWarehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
             LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
                     .eq(InventoryEntity::getSkuId, skuId)
-                    .eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId))
                     .eq(InventoryEntity::getDictInventoryStatus, status);
+            /**
+             * 不控制库位把库位条件置位空字符串（从空库位查询）；
+             * 其他控制库位的如果传了则从指定库位出，没传则从空库位出
+             */
+            if(Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
+                qWarehouseLocationId = "";
+            }
+            queryWrapper.eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId).last("limit 1");
             InventoryEntity inventory = baseMapper.selectOne(queryWrapper);
             return inventory;
         } catch (InterruptedException e) {
@@ -90,7 +100,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public List<InventoryEntity> findInventoryByWareSkuStatusCheckLocation(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
+    public List<InventoryEntity> findInventoryCheckLocation(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
                 .eq(InventoryEntity::getSkuId, skuId)
@@ -110,7 +120,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public Integer getInventoryTotal(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
-        List<InventoryEntity> inventories = this.findInventoryByWareSkuStatusCheckLocation(orgId, warehouseId, skuId, warehouseLocationId, status);
+        List<InventoryEntity> inventories = this.findInventoryCheckLocation(orgId, warehouseId, skuId, warehouseLocationId, status);
         return CollUtil.isEmpty(inventories) ? 0 : inventories.stream().collect(Collectors.summingInt(InventoryEntity::getQty));
     }
 

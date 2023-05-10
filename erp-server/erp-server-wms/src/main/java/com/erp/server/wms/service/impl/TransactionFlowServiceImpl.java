@@ -65,7 +65,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void recordFlowTransaction(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum) {
+    public void add(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType, String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum) {
         // 记录交易流水
         TransactionFlowEntity transactionFlowEntity = new TransactionFlowEntity();
         transactionFlowEntity.setBillDate(param.getBillDate());

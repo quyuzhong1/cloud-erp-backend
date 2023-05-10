@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.InstockForcastEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
 
 /**
  * <p>
@@ -14,6 +15,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 2023-05-09
  */
 @Mapper
+@Repository
 public interface InstockForcastMapper extends BaseMapper<InstockForcastEntity> {
 
     int updateDeletedById(@Param(value = "id")String id);

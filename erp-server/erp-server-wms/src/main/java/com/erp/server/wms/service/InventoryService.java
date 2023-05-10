@@ -1,12 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
-import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
-import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 
 import java.util.List;
 
@@ -27,11 +22,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param status
      * @return
      */
-    InventoryEntity findInventoryByWareLocalSkuStatus(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    InventoryEntity findInventory(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
 
 
     /**
-     * 根据组织、仓库、库位、状态判断库存是否存在记录（库位为空也作为条件）带分布式锁
+     * 根据组织、仓库、库位、状态判断库存是否存在记录，带分布式锁，会根据是否控制库位查询（不控制库位则将库位查询条件置为空字符串）
      * @param orgId
      * @param warehouseId
      * @param skuId
@@ -39,7 +34,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param status
      * @return
      */
-    InventoryEntity findInventoryByWareLocalSkuStatusWithLock(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    InventoryEntity findInventoryLock(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
 
 
     /**
@@ -51,7 +46,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param status
      * @return
      */
-    List<InventoryEntity> findInventoryByWareSkuStatusCheckLocation(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    List<InventoryEntity> findInventoryCheckLocation(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
 
     /**
      * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则不判断库位

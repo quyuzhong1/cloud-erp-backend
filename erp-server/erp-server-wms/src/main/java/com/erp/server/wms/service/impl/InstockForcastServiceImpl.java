@@ -5,10 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.wms.dto.inventory.InStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InstockForcastDTO;
-import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InstockForcastDetailEntity;
 import com.erp.model.wms.entity.InstockForcastEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -88,25 +85,25 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         // 保存入库预报明细
         List<InstockForcastDetailEntity> instockForcastDetails = instockForcastDetailService.add(dto, instockForcastEntity.getId());
         // 调用库存组件，更新库存信息
-        InventoryInStockOrOutStockDTO inventoryDto = new InventoryInStockOrOutStockDTO();
+        InventoryInOutStockDTO inventoryDto = new InventoryInOutStockDTO();
         inventoryDto.setBusinessType(InventoryBusinessTypeEnum.INSTOCK_FORCAST.getCode());
-        List<InStockOrOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(instockForcastDetails.size());
+        List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(instockForcastDetails.size());
         instockForcastDetails.stream().forEach(instockForcastDetailEntity -> {
-            InStockOrOutStockDTO inStockOrOutStockDTO = new InStockOrOutStockDTO();
-            inStockOrOutStockDTO.setOrgId(instockForcastEntity.getOrgId());
-            inStockOrOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
-            inStockOrOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
-            inStockOrOutStockDTO.setSourceId(instockForcastEntity.getId());
-            inStockOrOutStockDTO.setSourceCode(instockForcastEntity.getCode());
-            inStockOrOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
-            inStockOrOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
-            inStockOrOutStockDTO.setSkuId(instockForcastDetailEntity.getSkuId());
-            inStockOrOutStockDTO.setSkuNo(instockForcastDetailEntity.getSkuNo());
-            inStockOrOutStockDTO.setQty(instockForcastDetailEntity.getQty());
-            inventorySkus.add(inStockOrOutStockDTO);
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setOrgId(instockForcastEntity.getOrgId());
+            inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+            inOutStockDTO.setSourceId(instockForcastEntity.getId());
+            inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
+            inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
+            inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
+            inOutStockDTO.setSkuId(instockForcastDetailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(instockForcastDetailEntity.getSkuNo());
+            inOutStockDTO.setQty(instockForcastDetailEntity.getQty());
+            inventorySkus.add(inOutStockDTO);
         });
-        inventoryDto.setSkus(inventorySkus);
-        inventoryTransCoreService.approveInOutStockByType(inventoryDto);
+        inventoryDto.setMembers(inventorySkus);
+        inventoryTransCoreService.approveByType(inventoryDto);
     }
 
     @Override
@@ -118,7 +115,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void purchaseOrderUnApprove(String purchaseOrderId) {
-        // TODO 采购订单反审核对入库预报单有影响吗？只会存在一个，因为是审核通过触发会把所有的明细都一次性传过来的
+        // 采购订单反审核对入库预报单的影响，只会存在一个，因为是审核通过触发会把所有的明细都一次性传过来的
         InstockForcastEntity instockForcastEntity = findByPurchaseOrderId(purchaseOrderId);
         if(Objects.isNull(instockForcastEntity)) {
             log.warn("采购订单id：【{}】未找到未删除的入库预报，不做库存反审核", purchaseOrderId);
@@ -130,6 +127,40 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         // 更新入库预报为已删除
         instockForcastMapper.updateDeletedById(instockForcastEntity.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void finishDelivery(InstockForcastDTO.FinishDeliveryDTO dto) {
+        String purchaseOrderId = dto.getPurchaseOrderId();
+        InstockForcastEntity instockForcastEntity = findByPurchaseOrderId(purchaseOrderId);
+        if(Objects.isNull(instockForcastEntity)) {
+            log.warn("采购订单id：【{}】未找到未删除的入库预报，不做结束交货处理", purchaseOrderId);
+            return;
+        }
+        // TODO 下推收货单的时候是否需要更新入库预报明细数量
+        // 调用库存组件，更新库存信息
+        InventoryInOutStockDTO inventoryDto = new InventoryInOutStockDTO();
+        inventoryDto.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER_FINISH.getCode());
+        List<InventoryFinishDeliveryDetailDTO.AddDTO> members = dto.getMembers();
+        List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(members.size());
+        members.stream().forEach(member -> {
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setOrgId(instockForcastEntity.getOrgId());
+            inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+            inOutStockDTO.setSourceId(instockForcastEntity.getId());
+            inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
+            inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
+            inOutStockDTO.setSourceDetailId("");
+            inOutStockDTO.setSkuId(member.getSkuId());
+            inOutStockDTO.setSkuNo(member.getSkuNo());
+            inOutStockDTO.setQty(member.getQty());
+            inventorySkus.add(inOutStockDTO);
+        });
+        inventoryDto.setMembers(inventorySkus);
+        inventoryTransCoreService.approveByType(inventoryDto);
+
     }
 
 

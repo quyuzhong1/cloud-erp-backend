@@ -20,14 +20,14 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      * @param instockBatchDate
      * @return
      */
-    InventoryDetailEntity findByInfoIdAndInstockBatchDate(String inventoryInfoId, LocalDate instockBatchDate);
+    InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate);
 
     /**
      * 根据库存表id+qty>0获取库存明细数据
      * @param inventoryInfoId
      * @return
      */
-    List<InventoryDetailEntity> findByInventoryIdAndQtyGreatZero(String inventoryInfoId);
+    List<InventoryDetailEntity> findListQtyGreatZero(String inventoryInfoId);
 
     /**
      * 修改库存明细表数量
