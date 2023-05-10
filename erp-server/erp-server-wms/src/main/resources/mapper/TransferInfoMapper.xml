@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.TransferInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.TransferInfoEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="code" property="code" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="bill_date" property="billDate" />
+        <result column="type" property="type" />
+        <result column="in_warehouse_id" property="inWarehouseId" />
+        <result column="in_warehouse_name" property="inWarehouseName" />
+        <result column="out_warehouse_id" property="outWarehouseId" />
+        <result column="out_warehouse_name" property="outWarehouseName" />
+        <result column="in_org_id" property="inOrgId" />
+        <result column="in_org_name" property="inOrgName" />
+        <result column="out_org_id" property="outOrgId" />
+        <result column="out_org_name" property="outOrgName" />
+        <result column="warehouse_keeper_id" property="warehouseKeeperId" />
+        <result column="warehouse_keeper_name" property="warehouseKeeperName" />
+        <result column="transfer_direction" property="transferDirection" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_remark" property="invalidRemark" />
+        <result column="approve_time" property="approveTime" />
+        <result column="approve_user_name" property="approveUserName" />
+        <result column="approve_user_id" property="approveUserId" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+</mapper>
