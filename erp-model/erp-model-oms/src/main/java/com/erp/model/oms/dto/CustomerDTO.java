@@ -179,4 +179,404 @@ public class CustomerDTO implements Serializable {
         private LocalDateTime createTime;
 
     }
+
+    /**
+     * 新增加
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO {
+
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
+
+
+        /**
+         * 内部组织id
+         */
+        private String innerOrgId;
+
+        /**
+         * 分组id
+         */
+        private String groupId;
+
+        /**
+         * 国家id
+         */
+        @NotBlank(message = "国家不能为空")
+        private String countryId;
+
+        /**
+         * 省id
+         */
+        private String provinceId;
+
+
+        /**
+         * 城市id
+         */
+        private String cityId;
+
+
+        /**
+         * 客户名称
+         */
+        @NotBlank(message = "客户名称不能为空")
+        private String name;
+
+        /**
+         * 客户简称
+         */
+        private String shortName;
+
+        /**
+         * 付款方
+         */
+        private String payId;
+
+
+        /**
+         * 结算方
+         */
+        private String settleId;
+
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
+        /**
+         * 条件
+         */
+        private String conditionDict;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+
+        /**
+         * 联系人信息
+         */
+        private List<CustomerContactDTO.AddDTO> contactList;
+
+        /**
+         * 地址信息
+         */
+        private List<CustomerAddressDTO.AddDTO> addressList;
+
+
+        /**
+         * 发票信息
+         */
+        private List<InvoiceDTO.AddDTO> invoiceList;
+
+        /**
+         * 销售员信息
+         */
+        private List<SellerDTO.AddDTO> sellerList;
+
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 审核状态code
+         */
+        private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+
+
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
+
+
+        /**
+         * 使用组织名
+         */
+        private String useOrgName;
+
+        /**
+         * 内部组织id
+         */
+        private String innerOrgId;
+
+
+        /**
+         * 内部组织
+         */
+        private String innerOrgName;
+
+        /**
+         * 分组id
+         */
+        private String groupId;
+
+        /**
+         * 国家id
+         */
+        @NotBlank(message = "国家不能为空")
+        private String countryId;
+
+        /**
+         * 省id
+         */
+        private String provinceId;
+
+
+        /**
+         * 城市id
+         */
+        private String cityId;
+
+
+        /**
+         * 客户名称
+         */
+        @NotBlank(message = "客户名称不能为空")
+        private String name;
+
+        /**
+         * 客户简称
+         */
+        private String shortName;
+
+        /**
+         * 付款方
+         */
+        private String payId;
+
+
+        /**
+         * 结算方
+         */
+        private String settleId;
+
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
+        /**
+         * 条件
+         */
+        private String conditionDict;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+
+        /**
+         * 联系人信息
+         */
+        private List<CustomerContactDTO.ViewDTO> contactList;
+
+        /**
+         * 地址信息
+         */
+        private List<CustomerAddressDTO.ViewDTO> addressList;
+
+
+        /**
+         * 发票信息
+         */
+        private List<InvoiceDTO.ViewDTO> invoiceList;
+
+        /**
+         * 销售员信息
+         */
+        private List<SellerDTO.ViewDTO> sellerList;
+    }
+
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 审核状态code
+         */
+        private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+
+
+        /**
+         * 使用组织
+         */
+        private String useOrgId;
+
+
+        /**
+         * 内部组织id
+         */
+        private String innerOrgId;
+
+        /**
+         * 分组id
+         */
+        private String groupId;
+
+        /**
+         * 国家id
+         */
+        @NotBlank(message = "国家不能为空")
+        private String countryId;
+
+        /**
+         * 省id
+         */
+        private String provinceId;
+
+
+        /**
+         * 城市id
+         */
+        private String cityId;
+
+
+        /**
+         * 客户名称
+         */
+        @NotBlank(message = "客户名称不能为空")
+        private String name;
+
+        /**
+         * 客户简称
+         */
+        private String shortName;
+
+        /**
+         * 付款方
+         */
+        private String payId;
+
+
+        /**
+         * 结算方
+         */
+        private String settleId;
+
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
+        /**
+         * 条件
+         */
+        private String conditionDict;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+
+        /**
+         * 联系人信息
+         */
+        private List<CustomerContactDTO.ViewDTO> contactList;
+
+        /**
+         * 地址信息
+         */
+        private List<CustomerAddressDTO.ViewDTO> addressList;
+
+
+        /**
+         * 发票信息
+         */
+        private List<InvoiceDTO.ViewDTO> invoiceList;
+
+        /**
+         * 销售员信息
+         */
+        private List<SellerDTO.ViewDTO> sellerList;
+    }
 }
