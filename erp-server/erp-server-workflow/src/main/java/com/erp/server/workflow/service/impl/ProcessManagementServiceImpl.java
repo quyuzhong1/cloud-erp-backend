@@ -239,7 +239,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
         boolean update = lambdaUpdate()
                 .set(ProcessManagementEntity::getProcessStatus, statusEnum)
-                .set(ProcessManagementEntity::getCurrentNodeId, nextNodeId)
+                .set(ProcessManagementEntity::getCurActivityId, nextNodeId)
                 .set(null != endTime, ProcessManagementEntity::getEndTime, endTime)
                 .set(null != endTime && ApproveTypeEnum.PASS.equals(approveType) , ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.APPROVE)
                 .set(null != endTime && ApproveTypeEnum.REJECT.equals(approveType) , ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.REJECT)
@@ -330,7 +330,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public Boolean backUpdateApprove(String taskId, String managementId, ApproveTypeEnum approveType, String activityId, String comment) {
         // 更新流程数据
         lambdaUpdate()
-                .set(ProcessManagementEntity::getCurrentNodeId, activityId)
+                .set(ProcessManagementEntity::getCurActivityId, activityId)
                 .eq(ProcessManagementEntity::getId, managementId)
                 .update();
         // 更新流程任务数据
@@ -348,8 +348,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);
 
         // 保存流程任务数据
-        String processInstanceId = task.getExecution().getProcessInstance().getId();
-        String activityId = task.getTaskDefinitionKey();
+        DelegateExecution processInstance = task.getExecution().getProcessInstance();
+        String processInstanceId = processInstance.getId();
+        String activityName = processInstance.getCurrentActivityName();
+        String activityId = processInstance.getCurrentActivityId();
         LocalDateTime processStartTime = LocalDateUtil.date2LocalDateTime(task.getCreateTime());
         String executionId = task.getExecutionId();
         // 查询流程设计审核人处理方式
@@ -362,7 +364,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 对去重类型做处理，自动审核通过
             DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
             Optional<ProcessTaskManagementEntity> approveUserId = Optional.empty();
-            ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, userId, executionId);
+            ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, userId, executionId, activityName);
             processTaskManagementService.saveProcessTask(insertTask);
             // 审核人配置
             if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
@@ -372,14 +374,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 approveUserId = processTaskManagementList.entrySet().stream()
                         .findFirst()
                         .get()
-                        .getValue().stream().filter(item -> item.getCurrentApproveId().equals(userId))
+                        .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
                         .findFirst();
             }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
                 // 全局去重
                 // 查询已完成审核节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
                 approveUserId = processTaskManagementList.values().stream().flatMap(List::stream)
-                        .filter(item -> item.getCurrentApproveId().equals(userId))
+                        .filter(item -> item.getCurApproveId().equals(userId))
                         .findFirst();
             }
             if (approveUserId.isPresent()) {

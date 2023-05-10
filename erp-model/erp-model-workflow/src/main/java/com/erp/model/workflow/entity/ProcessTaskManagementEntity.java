@@ -39,8 +39,8 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前节点ID
      */
-    @TableField("current_activity_id")
-    private String currentActivityId;
+    @TableField("cur_activity_id")
+    private String curActivityId;
 
     /**
      * 任务ID
@@ -51,8 +51,8 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前审批人ID
      */
-    @TableField("current_approve_id")
-    private String currentApproveId;
+    @TableField("cur_approve_id")
+    private String curApproveId;
 
     /**
      * 当前节点开始时间
@@ -113,17 +113,13 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("approve_id")
     private String approveId;
 
+    @TableField("cur_activity_name")
+    private String curActivityName;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
-    public static final String CURRENT_NODE_ID = "current_node_id";
-
     public static final String TASK_ID = "task_id";
-
-    public static final String CURRENT_APPROVE_ID = "current_approve_id";
-
-    public static final String CURRENT_TASK_START_TIME = "current_task_start_time";
-
     public static final String TASK_STATUS = "task_status";
 
     public static final String TIMEOUT_WARN_STATUS = "timeout_warn_status";
@@ -146,17 +142,18 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId, String executionId) {
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId, String executionId, String activityName) {
         this.processInstanceId = processInstanceId;
-        this.currentActivityId = activityId;
+        this.curActivityId = activityId;
         this.taskId = taskId;
         this.startTime = startTime;
         this.taskStatus = approveStatus;
         this.timeoutInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutInterval()) : 0;
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
         this.timeoutWarnInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutWarnInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutWarnInterval()) : 0;
-        this.currentApproveId = userId;
+        this.curApproveId = userId;
         this.executionId = executionId;
+        this.curActivityName = activityName;
     }
 
     @Override

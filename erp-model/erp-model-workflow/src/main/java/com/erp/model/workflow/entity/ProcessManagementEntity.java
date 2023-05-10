@@ -57,8 +57,8 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     /**
      * 当前节点ID
      */
-    @TableField("current_node_id")
-    private String currentNodeId;
+    @TableField("cur_activity_id")
+    private String curActivityId;
 
     /**
      * 流程状态
@@ -110,7 +110,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String BUSINESS_CODE = "business_code";
 
-    public static final String CURRENT_NODE_ID = "current_node_id";
+    public static final String CUR_ACTIVITY_ID = "cur_activity_id";
 
     public static final String PROCESS_STATUS = "process_status";
 
@@ -131,7 +131,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
         this.processInstanceId = processInstanceId;
         this.businessId = dto.getBusinessId();
         this.businessCode = dto.getBusinessCode();
-        this.currentNodeId = activityId;
+        this.curActivityId = activityId;
         this.startTime = startTime;
         this.processStatus = ProcessStatusEnum.RUNNING;
         this.approveStatus = ApproveStatusEnum.APPROVE_ING;

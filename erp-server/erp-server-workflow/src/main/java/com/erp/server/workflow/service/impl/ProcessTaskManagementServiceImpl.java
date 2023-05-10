@@ -37,9 +37,9 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.REJECT)
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
                     .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
-                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
                     .eq(ProcessTaskManagementEntity::getProcessInstanceId, entity.getProcessInstanceId())
-                    .ne(ProcessTaskManagementEntity::getCurrentActivityId, activityId)
+                    .ne(ProcessTaskManagementEntity::getCurActivityId, activityId)
                     .update();
         }else {
             // 更新任务审批状态
@@ -47,11 +47,11 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
                     .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
-                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
                     .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
                     .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
                     .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
-                    .eq(ProcessTaskManagementEntity::getCurrentActivityId, entity.getCurrentActivityId())
+                    .eq(ProcessTaskManagementEntity::getCurActivityId, entity.getCurActivityId())
                     .update();
         }
         if (!update) {
@@ -72,7 +72,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             return new LinkedHashMap<>();
         }
         LinkedHashMap<String, List<ProcessTaskManagementEntity>> nodeMap = list.stream()
-                .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurrentActivityId, LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurActivityId, LinkedHashMap::new, Collectors.toList()));
         return nodeMap;
     }
 
@@ -83,12 +83,12 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         ProcessTaskManagementEntity entity = lambdaQuery()
                 .eq(ProcessTaskManagementEntity::getProcessInstanceId, insertTask.getProcessInstanceId())
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
-                .ne(ProcessTaskManagementEntity::getCurrentActivityId, insertTask.getCurrentActivityId())
+                .ne(ProcessTaskManagementEntity::getCurActivityId, insertTask.getCurActivityId())
                 .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
                 .last("limit 1")
                 .one();
         if(null != entity){
-            insertTask.setPreActivityId(entity.getCurrentActivityId());
+            insertTask.setPreActivityId(entity.getCurActivityId());
         }
         boolean save = save(insertTask);
         if (!save) {
