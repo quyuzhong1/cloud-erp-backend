@@ -1,4 +1,4 @@
-package com.erp.server.oms.controller;
+package com.erp.server.oms.controller.api;
 
 
 import com.common.core.controller.BaseController;

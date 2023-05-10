@@ -1,4 +1,4 @@
-package com.erp.server.oms.controller;
+package com.erp.server.oms.controller.api;
 
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- *  前端控制器
+ * 客户销售员信息 前端控制器
  * </p>
  *
- * @author LUO_WG
+ * @author lambda
  * @since 2023-05-10
  */
 @RestController
-@RequestMapping("/soReturn")
-public class SoReturnController extends BaseController {
+@RequestMapping("/customer-seller-entity")
+public class CustomerSellerController extends BaseController {
 
 }

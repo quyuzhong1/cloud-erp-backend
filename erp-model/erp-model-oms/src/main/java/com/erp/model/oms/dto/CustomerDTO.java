@@ -1,0 +1,182 @@
+package com.erp.model.oms.dto;
+
+import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * @author Lambda
+ * @Classname CustomerDTO
+ * @Description TODO
+ * @Date 2023-05-10 15:43
+ * @Created by yl
+ */
+@Data
+@NoArgsConstructor
+public class CustomerDTO implements Serializable {
+
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * waitSubmit 待提交
+         * approveIng 审核中
+         * approve 已审核
+         * reject 审核不通过
+         */
+        @StateEnumValue(strValues = {"waitSubmit", "approveIng", "approve", "reject"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
+
+
+        /**
+         * 单号
+         */
+        private String code;
+
+        /**
+         * 客户名称
+         */
+        private String name;
+
+        /**
+         * 客户简称
+         */
+        private String shortName;
+
+
+        /**
+         * 审核列表集合
+         */
+        private List<String> approveStatusList;
+
+
+        /**
+         * 使用组织集合
+         */
+        private List<String> useOrgidList;
+
+
+        /**
+         * 创建人 id 集合
+         */
+        private List<String> createUserIdList;
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+    }
+
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String searchType;
+
+
+        private Integer count;
+
+    }
+
+
+    /**
+     * 分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 客户名称
+         */
+        private String name;
+
+        /**
+         * 简称
+         */
+        private String shortName;
+
+
+        /**
+         * 审核状态code
+         */
+        private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
+
+        /**
+         * 禁用状态 true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+
+        /**
+         * 使用组织名
+         */
+        private String useOrgName;
+
+        /**
+         * 客户分组id
+         */
+        private String groupId;
+
+        /**
+         * 客户分组
+         */
+        private String groupName;
+
+
+        /**
+         * 最新审核人
+         */
+        private String approveUserName;
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+    }
+}
