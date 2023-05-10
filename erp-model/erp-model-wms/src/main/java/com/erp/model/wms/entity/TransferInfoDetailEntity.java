@@ -54,12 +54,6 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     private String unit;
 
     /**
-     * 即时库存
-     */
-    @TableField("cur_inventory_qty")
-    private Integer curInventoryQty;
-
-    /**
      * 备注
      */
     @TableField("remark")
@@ -81,8 +75,6 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     public static final String QTY = "qty";
 
     public static final String UNIT = "unit";
-
-    public static final String CUR_INVENTORY_QTY = "cur_inventory_qty";
 
     public static final String REMARK = "remark";
 
