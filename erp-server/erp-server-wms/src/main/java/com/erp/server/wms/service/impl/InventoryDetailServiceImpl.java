@@ -30,7 +30,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     private CommonService commonService;
 
     @Override
-    public InventoryDetailEntity findByInfoIdAndInstockBatchDate(String inventoryInfoId, LocalDate instockBatchDate) {
+    public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate) {
         LambdaQueryWrapper<InventoryDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(InventoryDetailEntity::getInfoId, inventoryInfoId)
         .eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate);
@@ -38,7 +38,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     }
 
     @Override
-    public List<InventoryDetailEntity> findByInventoryIdAndQtyGreatZero(String inventoryInfoId) {
+    public List<InventoryDetailEntity> findListQtyGreatZero(String inventoryInfoId) {
         return lambdaQuery().eq(InventoryDetailEntity::getInfoId, inventoryInfoId).gt(InventoryDetailEntity::getQty, 0).list();
     }
 

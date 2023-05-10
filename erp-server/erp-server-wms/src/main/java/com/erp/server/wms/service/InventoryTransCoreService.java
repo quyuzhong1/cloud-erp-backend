@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
@@ -17,13 +17,13 @@ public interface InventoryTransCoreService {
      * 出入库业务，按业务类型（走配置的交易规则）
      * @param dto
      */
-    void approveInOutStockByType(InventoryInStockOrOutStockDTO dto);
+    void approveByType(InventoryInOutStockDTO dto);
 
     /**
      * 调拨业务，按业务类型（走配置的交易规则）
      * @param dto
      */
-    void approveTransferByType(InventoryTransferDTO dto);
+    void approveByType(InventoryTransferDTO dto);
 
     /**
      * 调拨业务，自定义规则

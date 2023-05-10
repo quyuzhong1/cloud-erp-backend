@@ -39,8 +39,8 @@ public enum InventoryBusinessTypeEnum {
 
     ASSEMBLE_PICK("assemble_pick", "15","领料"),
     ASSEMBLE_RETURN("assemble_return", "16","退料"),
-    ASSEMBLE_IN("assemble_in", "17","组装"),
-    DISASSEMBLE("disassemble", "18","拆卸"),
+    ASSEMBLE_IN_PARENT("assemble_in_parent", "17","加工单组装（父SKU增加）"),
+    DISASSEMBLE_IN_PARENT("disassemble_in_parent", "18","加工单拆卸（父SKU减少）"),
 
     OTHER_IN("other_in", "19","其他入库"),
     OTHER_OUT("other_out", "20","其他出库"),
@@ -49,6 +49,11 @@ public enum InventoryBusinessTypeEnum {
     INSTOCK_FORCAST("instock_forcast", "21","入库预报"),
 
     INVENTORY_ADJUST("inventory_adjust", "22","库存调整单"),// TODO 暂不确定是否需要该业务，无法确定状态
+
+    ASSEMBLE_IN_CHILDD("assemble_in_child", "23","加工单组装（子SKU减少）"),
+    DISASSEMBLE_IN_CHILD("disassemble_in_child", "24","加工单拆卸（子SKU增加）"),
+
+    PURCHASE_ORDER_FINISH("purchase_order_finish", "25","采购订单结束交货"),
     ;
 
     private String code;

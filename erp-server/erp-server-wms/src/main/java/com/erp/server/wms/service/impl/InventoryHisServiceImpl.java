@@ -29,7 +29,7 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
     private CommonService commonService;
 
     @Override
-    public InventoryHisEntity findByInfoIdAndBillDate(String infoId, LocalDate billDate) {
+    public InventoryHisEntity findInventory(String infoId, LocalDate billDate) {
         LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(InventoryHisEntity::getInfoId, infoId)
                 .eq(InventoryHisEntity::getBillDate, billDate);

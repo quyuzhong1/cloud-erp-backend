@@ -2,7 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
@@ -33,8 +33,8 @@ public class InventoryFeignController extends BaseController {
      * @param dto
      */
     @PostMapping("/approveInOutStockByType")
-    public ApiResult<Void> approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
-        inventoryTransCoreService.approveInOutStockByType(dto);
+    public ApiResult<Void> approveInOutStockByType(@RequestBody @Validated InventoryInOutStockDTO dto) {
+        inventoryTransCoreService.approveByType(dto);
         return success();
     }
 
@@ -44,7 +44,7 @@ public class InventoryFeignController extends BaseController {
      */
     @PostMapping("/approveTransferByType")
     public ApiResult<Void> approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
-        inventoryTransCoreService.approveTransferByType(dto);
+        inventoryTransCoreService.approveByType(dto);
         return success();
     }
 

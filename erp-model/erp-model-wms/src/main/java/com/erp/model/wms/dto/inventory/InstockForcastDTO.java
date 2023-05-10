@@ -55,12 +55,37 @@ public class InstockForcastDTO implements Serializable {
         private LocalDate billDate;
 
         /**
-         * 期初库存产品明细
+         * 入库预报库存产品明细
          */
         @Valid
         @NotNull(message = "产品明细不能为空")
         @Size(min = 1, message = "请至少录入一条产品明细")
         private List<InstockForcastDetailDTO.AddDTO> details;
+
+    }
+
+
+    /**
+     * 结束交货
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FinishDeliveryDTO  {
+
+        /**
+         * 采购订单id
+         */
+        @NotEmpty(message = "采购订单id不能为空")
+        private String purchaseOrderId;
+
+
+        /**
+         * 结束交货产品明细
+         */
+        @Valid
+        @NotNull(message = "产品明细不能为空")
+        @Size(min = 1, message = "请至少录入一条产品明细")
+        private List<InventoryFinishDeliveryDetailDTO.AddDTO> members;
 
     }
 

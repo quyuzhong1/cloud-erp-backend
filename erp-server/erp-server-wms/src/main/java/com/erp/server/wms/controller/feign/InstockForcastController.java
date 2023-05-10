@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.api;
+package com.erp.server.wms.controller.feign;
 
 
 import com.common.core.controller.vo.ApiResult;
@@ -21,7 +21,7 @@ import javax.validation.Valid;
  */
 @AllArgsConstructor
 @RestController
-@RequestMapping("/instockForcast")
+@RequestMapping("/feign/instockForcast")
 public class InstockForcastController extends BaseController {
 
     private final InstockForcastService instockForcastService;
@@ -31,9 +31,8 @@ public class InstockForcastController extends BaseController {
      * @param dto
      */
     @PostMapping(value = "/generateByPurchaseOrder")
-    public ApiResult<Void> generateByPurchaseOrder(@RequestBody @Valid InstockForcastDTO.AddDTO dto) {
+    public void generateByPurchaseOrder(@RequestBody @Valid InstockForcastDTO.AddDTO dto) {
         instockForcastService.generateByPurchaseOrder(dto);
-        return success();
     }
 
     /**
@@ -41,9 +40,17 @@ public class InstockForcastController extends BaseController {
      * @param purchaseOrderId
      */
     @PostMapping(value = "/purchaseOrderUnApprove")
-    public ApiResult<Void> purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId")String purchaseOrderId) {
+    public void purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId")String purchaseOrderId) {
         instockForcastService.purchaseOrderUnApprove(purchaseOrderId);
-        return success();
+    }
+
+    /**
+     * 采购订单结束交货
+     * @param dto
+     */
+    @PostMapping(value = "/finishDelivery")
+    public void finishDelivery(@RequestBody @Valid InstockForcastDTO.FinishDeliveryDTO dto) {
+        instockForcastService.finishDelivery(dto);
     }
 
 }
