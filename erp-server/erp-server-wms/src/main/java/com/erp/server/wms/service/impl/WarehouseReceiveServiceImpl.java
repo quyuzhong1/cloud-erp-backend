@@ -48,6 +48,7 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -601,6 +602,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+
         //已审核支持反审核
         long count = warehouseReceiveList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
@@ -616,6 +618,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             List<PoInstockEntity> stockInBySourceId = poInstockService.getStockInBySourceId(req.getId());
             if (CollectionUtils.isNotEmpty(stockInBySourceId)) {
                 throw new ServiceException(ApiError.ERROR_99011);
+            }
+            List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceId(req.getId());
+            if (CollectionUtils.isNotEmpty(qcBySourceId)) {
+                throw new ServiceException(ApiError.ERROR_99042);
             }
         });
 
@@ -867,6 +873,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取用户部门
         SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(userInfo.getUid());
         for (String id : collect) {
+
+            List<WarehouseReceiveDetailEntity> detailEntityList = warehouseReceiveDetailService.listDetailByMainIds(Arrays.asList(id));
+
             WarehouseReceiveEntity entity = this.getById(id);
             if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
                 throw new ServiceException(ApiError.ERROR_98057);
@@ -880,10 +889,18 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
             addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
+            List<String> detailList = dtos.stream().filter(req -> req.getMainId().equals(id)).map(WarehouseReceiveDTO.GenerateStockInDTO::getId).collect(Collectors.toList());
+            List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailBySourceDetailIds(detailList);
             //设置明细
             List<PoInstockDetailDTO.AddDTO> detailDTOList = new ArrayList<>();
             dtos.forEach(req -> {
                 if (req.getMainId().equals(id)) {
+                    Integer stockInQty = stockInDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = detailEntityList.stream().filter(obj -> obj.getId().equals(req.getId())).findFirst().orElse(null);
+
+                    if (stockInQty + req.getStockInQty() > warehouseReceiveDetailEntity.getReceiveQty()) {
+                        throw new ServiceException(ApiError.ERROR_99041.code, String.format(ApiError.ERROR_99041.msg, warehouseReceiveDetailEntity.getSkuNo()));
+                    }
                     PoInstockDetailDTO.AddDTO detailDTO = new PoInstockDetailDTO.AddDTO();
                     detailDTO.setStockInQty(req.getStockInQty());
                     detailDTO.setExceedQty(req.getExceedQty());
@@ -895,6 +912,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 }
             });
             addDTO.setDetails(detailDTOList);
+
             poInstockService.add(addDTO);
         }
         return true;
@@ -964,7 +982,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //采购订单明细Ids
         List<String> purchaseOrderDetailIds = list.stream().map(PurchaseOrderDTO.GenerateReceiveDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(purchaseOrderDetailIds);
-        ;
+
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98017);
         }
@@ -995,7 +1013,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
                 addDTO.setBillDate(generateReceiveDTO.getBillDate());
                 addDTO.setDeliveryWarehouseId(generateReceiveDTO.getDeliveryWarehouseId());
-
                 List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = new ArrayList<>();
                 for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
                     if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {

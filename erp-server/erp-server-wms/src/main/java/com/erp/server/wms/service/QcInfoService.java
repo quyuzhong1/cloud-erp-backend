@@ -192,6 +192,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return 
      */
     Boolean autoReceiveToQcDTO(List<QcInfoDTO.ReceiveToQcDTO>  dto);
+
     /**
      * @description: 根据采购明细id查询
      * @author Will
@@ -200,4 +201,13 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return List<QcInfoEntity>
      */
     List<QcInfoEntity> listByPodIds(List<String> podIds);
+
+    /**
+     * 根据来源id查询质检单
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
+     * @param sourceId
+     * @return java.lang.Boolean
+     **/
+    List<QcInfoEntity> listQCBySourceId(String sourceId);
 }
