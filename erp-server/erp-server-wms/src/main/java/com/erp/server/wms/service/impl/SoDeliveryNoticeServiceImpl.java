@@ -32,7 +32,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public List<SoDeliveryNoticeDTO.SoDeliveryNoticeCount> listCount(PermissionsDTO dto) {
+    public List<SoDeliveryNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         return null;
     }
 

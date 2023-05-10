@@ -38,7 +38,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param dto dto
      * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
      **/
-    List<SoDeliveryNoticeDTO.SoDeliveryNoticeCount> listCount(PermissionsDTO dto);
+    List<SoDeliveryNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto);
 
     /**
      * 新增

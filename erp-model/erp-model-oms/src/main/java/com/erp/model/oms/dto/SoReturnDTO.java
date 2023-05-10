@@ -1,4 +1,4 @@
-package com.erp.model.wms.dto;
+package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
 
-public class SoDeliveryNoticeDTO {
-
+public class SoReturnDTO {
     /**
      * 分页参数
      */
@@ -32,14 +31,6 @@ public class SoDeliveryNoticeDTO {
          */
         private List<String> skuNoList;
         /**
-         * 客户id
-         */
-        private List<String> customerIdList;
-        /**
-         * 库存组织
-         */
-        private List<String> inventoryOrgIdList;
-        /**
          * 销售单号
          */
         private String sourceCode;
@@ -50,23 +41,23 @@ public class SoDeliveryNoticeDTO {
         /**
          * 审核状态
          */
-        private List<String> approveStatusList;
+        private List<String> approveStatusLis;
         /**
          * 作废状态
          */
         private String invalidStatus;
         /**
+         * 客户id
+         */
+        private List<String> customerIdList;
+        /**
          * 销售员id
          */
         private List<String> sellerIdList;
         /**
-         * 要货日期
+         * 退货日期
          */
-        private List<String> requireDataList;
-        /**
-         * 出货仓库
-         */
-        private List<String> warehouseIdList;
+        private List<String> billDateList;
         /**
          * 创建人id
          */
@@ -80,7 +71,11 @@ public class SoDeliveryNoticeDTO {
     @NoArgsConstructor
     public static class PagingView {
         /**
-         * 发货通知单号
+         * 创建时间
+         */
+        private String createTime;
+        /**
+         * 退货订单号
          */
         private String code;
         /**
@@ -88,15 +83,11 @@ public class SoDeliveryNoticeDTO {
          */
         private String sourceCode;
         /**
-         * 客户
+         * 单据类型
          */
-        private String customerName;
+        private String type;
         /**
-         * 发货组织
-         */
-        private String deliveryOrgName;
-        /**
-         * 单据状态
+         * 单据状态编号
          */
         private String approveStatus;
         /**
@@ -112,13 +103,17 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidStatusName;
         /**
-         * 发货状态
+         * 客户名称
          */
-        private String deliveryStatus;
+        private String customerName;
         /**
-         * 发货状态名称
+         * 销售组织
          */
-        private String deliveryStatusName;
+        private String salesOrgName;
+        /**
+         * 销售员
+         */
+        private String sellerName;
         /**
          * SKU
          */
@@ -132,33 +127,29 @@ public class SoDeliveryNoticeDTO {
          */
         private String salesQty;
         /**
-         * 发货数量
+         * 退货数量
+         */
+        private String returnQty;
+        /**
+         * 已出库数量
          */
         private String deliveryQty;
         /**
-         * 销售单位
+         * 剩余未出数量
+         */
+        private String unDeliveryQty;
+        /**
+         * 单位
          */
         private String unit;
         /**
-         * 销售员
+         * 销售金额
          */
-        private String sellerName;
+        private String salesAmount;
         /**
-         * 要货日期
+         * 退货日期
          */
-        private String requireDate;
-        /**
-         * 预计发货日期
-         */
-        private String planDeliveryDate;
-        /**
-         * 完成打包日期
-         */
-        private String packDate;
-        /**
-         * 实际发货日期
-         */
-        private String actualDeliveryDate;
+        private String billDate;
         /**
          * 审核人
          */
@@ -167,10 +158,6 @@ public class SoDeliveryNoticeDTO {
          * 创建人
          */
         private String createUserName;
-        /**
-         * 创建时间
-         */
-        private String createTime;
     }
 
     /**
@@ -197,34 +184,15 @@ public class SoDeliveryNoticeDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * 来源id（销售单id）
+         * 销售单id
          */
-        @NotBlank(message = "来源id不能为空")
         private String sourceId;
         /**
-         * 发货组织
+         * 退货日期
          */
-        @NotBlank(message = "发货组织不能为空")
-        private String deliveryOrgId;
+        private String billDate;
         /**
-         * 要货日期
-         */
-        private String requireDate;
-        /**
-         * 预计发货日期
-         */
-        private String planDeliveryDate;
-        /**
-         * 承运商id
-         */
-        @NotBlank(message = "承运商不能为空")
-        private String carrierId;
-        /**
-         * 运输单号
-         */
-        private String trackNo;
-        /**
-         * 收货人
+         * 联系人
          */
         private String receiverName;
         /**
@@ -232,18 +200,35 @@ public class SoDeliveryNoticeDTO {
          */
         private String telNumber;
         /**
+         * 收货地址
+         */
+        private String receiveAddress;
+        /**
          * 交货方式 wms/common/enumDropDown?type=deliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;
         /**
-         * 收货地址
+         * 币别
          */
-        private String receiveAddress;
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 是否含税
+         */
+        private String isTax;
+        /**
+         * 地址类型 oms/common/enumDropDown?type=addressType
+         * 地址类型：forwarder 货代地址  deliverGoods 发货地址
+         */
+        private String addressType;
         /**
          * 明细信息
          */
-        private List<SoDeliveryNoticeDetailDTO.Add> detailList;
+        private List<SoReturnDetailDTO.Add> detailList;
     }
 
     /**
@@ -253,40 +238,19 @@ public class SoDeliveryNoticeDTO {
     @NoArgsConstructor
     public static class Update {
         /**
-         * 主键id
+         * id
          */
-        @NotBlank(message = "主键id不能为空")
         private String id;
-
         /**
-         * 来源id（销售单id）
+         * 销售单id
          */
-        @NotBlank(message = "来源id不能为空")
         private String sourceId;
         /**
-         * 发货组织
+         * 退货日期
          */
-        @NotBlank(message = "发货组织不能为空")
-        private String deliveryOrgId;
+        private String billDate;
         /**
-         * 要货日期
-         */
-        private String requireDate;
-        /**
-         * 预计发货日期
-         */
-        private String planDeliveryDate;
-        /**
-         * 承运商id
-         */
-        @NotBlank(message = "承运商不能为空")
-        private String carrierId;
-        /**
-         * 运输单号
-         */
-        private String trackNo;
-        /**
-         * 收货人
+         * 联系人
          */
         private String receiverName;
         /**
@@ -294,18 +258,35 @@ public class SoDeliveryNoticeDTO {
          */
         private String telNumber;
         /**
+         * 收货地址
+         */
+        private String receiveAddress;
+        /**
          * 交货方式 wms/common/enumDropDown?type=deliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;
         /**
-         * 收货地址
+         * 币别
          */
-        private String receiveAddress;
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 是否含税
+         */
+        private String isTax;
+        /**
+         * 地址类型 oms/common/enumDropDown?type=addressType
+         * 地址类型：forwarder 货代地址  deliverGoods 发货地址
+         */
+        private String addressType;
         /**
          * 明细信息
          */
-        private List<SoDeliveryNoticeDetailDTO.Update> detailList;
+        private List<SoReturnDetailDTO.Update> detailList;
     }
 
     /**
@@ -314,6 +295,10 @@ public class SoDeliveryNoticeDTO {
     @Data
     @NoArgsConstructor
     public static class View {
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * 单据编号
          */
@@ -326,6 +311,14 @@ public class SoDeliveryNoticeDTO {
          * 单据类型
          */
         private String type;
+        /**
+         * 销售单id
+         */
+        private String sourceId;
+        /**
+         * 销售单编号
+         */
+        private String sourceCode;
         /**
          * 销售组织id
          */
@@ -351,41 +344,9 @@ public class SoDeliveryNoticeDTO {
          */
         private String sellerName;
         /**
-         * 发货组织id
+         * 退货日期
          */
-        private String deliveryOrgId;
-        /**
-         * 发货组织名称
-         */
-        private String deliveryOrgName;
-        /**
-         * 要货日期
-         */
-        private String requireDate;
-        /**
-         * 预计发货日期
-         */
-        private String planDeliveryDate;
-        /**
-         * 完成打包日期
-         */
-        private String packDate;
-        /**
-         * 实际发货日期
-         */
-        private String actualDeliveryDate;
-        /**
-         * 承运商id
-         */
-        private String carrierId;
-        /**
-         * 承运商名称
-         */
-        private String carrierName;
-        /**
-         * 运输单号
-         */
-        private String trackNo;
+        private String returnDate;
         /**
          * 客户id
          */
@@ -411,10 +372,25 @@ public class SoDeliveryNoticeDTO {
          */
         private String receiveAddress;
         /**
-         * 交货方式 wms/common/enumDropDown?type=deliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
+         * 交货方式
          */
         private String deliveryModeDict;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 是否含税
+         */
+        private Boolean isTax;
+        /**
+         * 地址类型
+         */
+        private String addressType;
         /**
          * 作废状态
          */
@@ -424,8 +400,20 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidRemark;
         /**
-         * 明细信息
+         * 审核人id
          */
-        private List<SoDeliveryNoticeDetailDTO.View> detailList;
+        private String approveUserId;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 审核时间
+         */
+        private String approveTime;
+        /**
+         * 详情信息
+         */
+        private List<SoReturnDetailDTO.View> detailList;
     }
 }

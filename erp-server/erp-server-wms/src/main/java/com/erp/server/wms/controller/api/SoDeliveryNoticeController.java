@@ -66,8 +66,8 @@ public class SoDeliveryNoticeController extends BaseController {
             menuCode = "wms:soDeliveryNotice:paging",
             tableAlias = "sdn"
     )
-    public ApiResult<List<SoDeliveryNoticeDTO.SoDeliveryNoticeCount>> listCount(@RequestBody PermissionsDTO dto) {
-        List<SoDeliveryNoticeDTO.SoDeliveryNoticeCount> soDeliveryNoticeCountDTOS = soDeliveryNoticeService.listCount(dto);
+    public ApiResult<List<SoDeliveryNoticeDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
+        List<SoDeliveryNoticeDTO.StatusCountDTO> soDeliveryNoticeCountDTOS = soDeliveryNoticeService.listCount(dto);
         return success(soDeliveryNoticeCountDTOS);
     }
 
