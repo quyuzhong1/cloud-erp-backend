@@ -47,7 +47,7 @@ public class TaskDeliveryDocsController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "plm:taskDocs:paging",
-            tableAlias = "f"
+            tableAlias = "pt"
     )
     public ApiResult<PagingVO<List<DeliveryDocsDTO>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<List<DeliveryDocsDTO>> pagingVO = taskDeliveryService.paging(dto);

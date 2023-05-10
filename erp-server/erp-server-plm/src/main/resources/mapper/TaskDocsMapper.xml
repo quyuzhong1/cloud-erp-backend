@@ -23,7 +23,9 @@
        COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
-       FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id AND f.is_deleted = FALSE
+       FROM  task_delivery_docs d
+       LEFT JOIN  task_finish_docs f on f.task_docs_id=d.id AND f.is_deleted = FALSE
+       INNER JOIN project_task pt ON pt.id=f.task_id AND pt.is_deleted=FALSE
        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
             AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
@@ -34,8 +36,6 @@
                #{id}
            </foreach>
        </if>
-
-
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
             ${params.param}
