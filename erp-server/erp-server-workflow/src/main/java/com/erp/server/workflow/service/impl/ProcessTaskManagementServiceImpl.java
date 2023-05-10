@@ -2,7 +2,6 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -13,10 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -31,19 +28,32 @@ import java.util.stream.Collectors;
 public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTaskManagementMapper, ProcessTaskManagementEntity> implements ProcessTaskManagementService {
 
     @Override
-    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment) {
+    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId) {
         ProcessTaskManagementEntity entity = getById(taskId);
-        // 更新任务审批状态
-        boolean update = lambdaUpdate()
-                .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
-                .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
-                .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
-                .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
-                .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
-                .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
-                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
-                .eq(ProcessTaskManagementEntity::getCurrentActivityId, entity.getCurrentActivityId())
-                .update();
+        boolean update;
+        if(ApproveTypeEnum.REJECT_APPOINT.equals(approveType)) {
+            // 驳回到指定节点
+            update = lambdaUpdate()
+                    .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.REJECT)
+                    .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
+                    .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
+                    .eq(ProcessTaskManagementEntity::getProcessInstanceId, entity.getProcessInstanceId())
+                    .ne(ProcessTaskManagementEntity::getCurrentActivityId, activityId)
+                    .update();
+        }else {
+            // 更新任务审批状态
+            update = lambdaUpdate()
+                    .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
+                    .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
+                    .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
+                    .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
+                    .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
+                    .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
+                    .eq(ProcessTaskManagementEntity::getCurrentActivityId, entity.getCurrentActivityId())
+                    .update();
+        }
         if (!update) {
             throw new RuntimeException("更新任务审批状态失败");
         }

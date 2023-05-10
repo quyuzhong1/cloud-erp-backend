@@ -382,7 +382,15 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
-            // 为了防止库位数据不准，不做自动扣减
+            // TODO 疑问点
+            /**
+             * 1.在途/待检   扣减查询库存数量时 直接指定库位等于空的
+             * 2.采购入库（有收货单）时，假设传了库位，库位需明确是入库用还是出库用，否则出库和入库都会带上库位条件查询（在途/待检可以忽略库位）
+             * 3.调拨申请单（不需要选库位）：现假设空库位可用20，有仓位可用80，需冻结50个，出可用怎么出（按照之前讲的假设空库位批次日期早，出库库存验证时库位条件传空，从空库位出，提示库存不足）？
+             * 另外页面上展示的即时库存是包含空库位和非空的
+             * 4.发货通知单  同  调拨申请单
+             * 5.销售出库（可以选库位）：出冻结，发货通知单时是没有库位的，假设销售出库选了库位，则出库时带库位条件，不选时，则从空库位出
+             */
             InventoryEntity inventory = inventoryService.findInventoryByWareLocalSkuStatus(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
             if(Objects.isNull(inventory)) {
                 log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，无法出库", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());

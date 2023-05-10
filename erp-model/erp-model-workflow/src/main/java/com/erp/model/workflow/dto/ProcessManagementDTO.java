@@ -1,7 +1,10 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.enums.ProcessStatusEnum;
 import com.erp.model.workflow.enums.RejectTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -128,11 +131,6 @@ public class ProcessManagementDTO {
             private ApproveTypeEnum approveType;
 
             /**
-             * 驳回的目标节点 ID
-             */
-            private String activityId;
-
-            /**
             * 流程参数map
             */
             private Map<String,Object> variablesMap;
@@ -141,5 +139,157 @@ public class ProcessManagementDTO {
                 return StrUtil.isNotBlank(comment) ? comment : approveType.getName();
             }
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BackDTO extends ApproveDTO {
+        /**
+         * 驳回的目标节点 ID
+         */
+        private String activityId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ManagementTaskDTO {
+
+        /**
+         * 流程管理ID
+         */
+        private String managementId;
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程定义ID
+         */
+        private String processDefinitionId;
+
+        /**
+         * 业务ID
+         */
+        private String businessId;
+
+        /**
+         * 业务编码
+         */
+        private String businessCode;
+
+        /**
+         * 当前节点ID
+         */
+        private String currentNodeId;
+
+        /**
+         * 流程状态
+         */
+        private ProcessStatusEnum processStatus;
+
+        /**
+         * 开始时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 结束时间
+         */
+        private LocalDateTime endTime;
+        /**
+         * 业务名称
+         */
+        private String businessName;
+
+        /**
+         * 审核状态 approveStatus
+         */
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 业务类型KEY
+         */
+        private String businessKey;
+
+        /**
+         * 流程引擎流程实例ID
+         */
+        private String actProcessDefinitionId;
+
+        /**
+         * 流程引擎任务ID
+         */
+        private String taskManagementId;
+
+        /**
+         * 当前节点ID
+         */
+        private String currentActivityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String currentActivityName;
+
+        /**
+         * 任务ID
+         */
+        private String taskId;
+
+        /**
+         * 当前审批人ID
+         */
+        private String currentApproveId;
+
+        /**
+         * 任务状态
+         */
+        private ApproveStatusEnum taskStatus;
+
+        /**
+         * 超时预警状态
+         */
+        private Integer timeoutWarnStatus;
+
+        /**
+         * 超时预警时间
+         */
+        private Integer timeoutWarnInterval;
+
+        /**
+         * 超时时间
+         */
+        private Integer timeoutInterval;
+
+        /**
+         * 超时处理方式
+         */
+        private String timeoutHandleType;
+
+        /**
+         * 审批时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 上一节点ID
+         */
+        private String preActivityId;
+
+        /**
+         * 执行id
+         */
+        private String executionId;
+
+        /**
+         * 申请人id
+         */
+        private String approveId;
     }
 }
