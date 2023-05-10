@@ -134,6 +134,8 @@ public enum ApiError implements Serializable {
     PROCESS_DEFINITION_NODE_NOT_EXIST(94018,"节点已审核或不存在"),
     PROCESS_ALREADY_START(94019,"流程已启动"),
     PROCESS_ACTIVITY_ID_NOT_NULL(94020,"节点id不能为空"),
+    // 当前任务无法驳回
+    PROCESS_TASK_NOT_REJECT(94021,"当前任务无法驳回"),
 
 
 

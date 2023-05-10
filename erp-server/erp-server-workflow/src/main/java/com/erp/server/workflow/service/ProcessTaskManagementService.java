@@ -23,9 +23,10 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param taskId
      * @param approveType
      * @param comment
+     * @param activityId
      * @return Boolean
      */
-    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment);
+    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId);
 
     /**
      * 根据流程实例id查询历史任务

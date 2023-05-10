@@ -55,9 +55,9 @@ public class ProcessManagementController extends BaseController {
      * 驳回流程
      * @param dto
      */
-    @PostMapping("/reject")
-    public ApiResult rejectProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
-        processManagementService.rollback(dto);
+    @PostMapping("/back")
+    public ApiResult backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
+        processManagementService.back(dto);
         return success();
     }
 }

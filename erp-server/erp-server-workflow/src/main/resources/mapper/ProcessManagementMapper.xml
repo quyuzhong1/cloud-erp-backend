@@ -22,5 +22,42 @@
         <result column="start_time" property="startTime" />
         <result column="end_time" property="endTime" />
     </resultMap>
+    <select id="getTaskByBusiness"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        SELECT
+            pm.id as managementId,
+            pm.process_instance_id,
+            pm.process_definition_id,
+            pm.business_id,
+            pm.business_code,
+            pm.business_key,
+            pm.current_node_id,
+            pm.process_status,
+            pm.start_time,
+            pm.end_time,
+            pm.business_name,
+            pm.approve_status,
+            pm.act_process_definition_id,
+            ptm.id AS taskManagementId,
+            ptm.current_activity_id,
+            ptm.task_id,
+            ptm.current_approve_id,
+            ptm.task_status,
+            ptm.timeout_warn_status,
+            ptm.timeout_warn_interval,
+            ptm.timeout_handle_type,
+            ptm.approve_time,
+            ptm.remark,
+            ptm.pre_activity_id,
+            ptm.execution_id,
+            ptm.current_activity_name
+        from process_management pm , process_task_management ptm
+        where pm.process_instance_id = ptm.process_instance_id AND approve_status = 'approveIng'
+          AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey}
+          AND ptm.task_status = 'approveIng' AND user_id = #{userId}
+        ORDER BY ptm.create_time ASC
+            LIMIT 1
+
+    </select>
 
 </mapper>

@@ -63,11 +63,25 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 退回流程
      * @param dto
      */
-    void rollback(ProcessManagementDTO.ApproveDTO dto);
+    void back(ProcessManagementDTO.BackDTO dto);
 
-//    /**
-//     * 驳回流程
-//     * @param dto
-//     */
-//    void rejectProcess(ProcessManagementDTO.ApproveDTO dto);
+    /**
+     * 根据业务id获取任务
+     * @param businessId
+     * @param businessKey
+     * @param userId
+     * @return
+     */
+    ProcessManagementDTO.ManagementTaskDTO getTaskByBusiness(String businessId, String businessKey, String userId);
+
+    /**
+     * 更新审批状态
+     *
+     * @param taskId
+     * @param managementId
+     * @param activityId
+     * @param comment
+     * @return
+     */
+    Boolean backUpdateApprove(String taskId, String managementId, ApproveTypeEnum approveType, String activityId, String comment);
 }
