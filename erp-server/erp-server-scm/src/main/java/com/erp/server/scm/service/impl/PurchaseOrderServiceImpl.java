@@ -1445,6 +1445,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setDeliveryQty(deliveryQty);
 
 
+
             //入库数量
             Integer stockInQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
