@@ -37,7 +37,6 @@ public class WarehouseReceiveDTO {
         /**
          * 采购订单编号
          */
-        @NotNull(message = "采购订单编号不能为空")
         private String purchaseOrderCode;
 
         /**
