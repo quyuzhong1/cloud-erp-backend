@@ -1,0 +1,16 @@
+package com.erp.server.wms.service;
+
+import com.common.business.service.SuperService;
+import com.erp.model.wms.entity.DistributionOutEntity;
+
+/**
+ * <p>
+ * 分布式调出单 服务类
+ * </p>
+ *
+ * @author lambda
+ * @since 2023-05-10
+ */
+public interface DistributionOutService extends SuperService<DistributionOutEntity> {
+
+}
