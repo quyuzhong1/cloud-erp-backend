@@ -567,32 +567,26 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
             //查询当前用户的角色
             List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
-            //是否是项目成员
-            Boolean isItemMember = CollectionUtils.isNotEmpty(userRoleIds);
             //获取所有的设置文档的权限的文档id
             List<DocsPermissionEntity> allPermissionDeliveryDocsList = docsPermissionService.getAllDeliveryDocsIds(productId);
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
-                //表示 是项目成员，未设置文档权限可以看所有
-                if (isItemMember) {
-                    DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
-                            findFirst().orElse(null);
-                    //表示有权限
-                    if (permission != null) {
-                        if (userRoleIds.contains(permission.getQueryRoleId())) {
-                            findDeliveryDocsIds.add(deliveryDocsId);
-                        }
-                        if (StringUtils.isBlank(permission.getQueryRoleId())) {
-                            findDeliveryDocsIds.add(deliveryDocsId);
-                        }
-                    } else {
-                        //没有设置权限 也应该看到
+                //未设置文档权限可以看所有
+                DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
+                        findFirst().orElse(null);
+                //表示有权限
+                if (permission != null) {
+                    if (userRoleIds.contains(permission.getQueryRoleId())) {
+                        findDeliveryDocsIds.add(deliveryDocsId);
+                    }
+                    if (StringUtils.isBlank(permission.getQueryRoleId())) {
                         findDeliveryDocsIds.add(deliveryDocsId);
                     }
                 } else {
-                    //不是项目成员 可以设置看  2023-05-10 修改  加了数据权限
+                    //没有设置权限 也应该看到
                     findDeliveryDocsIds.add(deliveryDocsId);
                 }
+
 
             }
 
