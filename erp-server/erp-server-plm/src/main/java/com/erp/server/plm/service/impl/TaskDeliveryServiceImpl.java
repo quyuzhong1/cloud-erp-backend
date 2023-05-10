@@ -146,9 +146,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
         List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
         IPage pageData = new Page();
         if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
