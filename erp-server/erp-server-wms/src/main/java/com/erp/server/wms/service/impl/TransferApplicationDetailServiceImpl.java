@@ -1,10 +1,13 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.service.SuperServiceImpl;
+import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.entity.TransferApplicationDetailEntity;
 import com.erp.server.wms.mapper.TransferApplicationDetailMapper;
 import com.erp.server.wms.service.TransferApplicationDetailService;
-import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<TransferApplicationDetailMapper, TransferApplicationDetailEntity> implements TransferApplicationDetailService {
 
+    @Override
+    public void add(List<TransferApplicationDetailDTO.AddDTO> details, String mainId) {
+
+    }
 }

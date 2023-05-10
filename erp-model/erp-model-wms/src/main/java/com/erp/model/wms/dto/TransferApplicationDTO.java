@@ -59,6 +59,10 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String invalidStatusName;
         /**
+         * skuId
+         */
+        private String  skuId;
+        /**
          * sku编码
          */
         private String  skuNo;
@@ -261,6 +265,72 @@ public class TransferApplicationDTO implements Serializable {
          * 明细
          */
         private List<TransferApplicationDetailDTO.ViewDTO> details;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateTransferInfoDTO {
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 调拨申请单号
+         */
+        private String code;
+
+        /**
+         * 调拨方向名称
+         */
+        private String transferDirectionName;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 调拨数量
+         */
+        private String qty;
+
+        /**
+         * 调拨日期
+         */
+        private String billDate;
+
+        /**
+         * 调出仓库id
+         */
+        private String   outWarehouseId;
+
+        /**
+         * 调入仓库id
+         */
+        private String  inWarehouseId;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 }

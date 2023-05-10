@@ -38,4 +38,6 @@ public interface BusinessNoConstant {
 
     // 入库预报
     String RKYB = "RKYB";
+
+    String DBSQ = "DBSQ";
 }

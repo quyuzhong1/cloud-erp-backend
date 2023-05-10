@@ -288,4 +288,41 @@ public class TransferApplicationController extends BaseController {
         Boolean flag = transferApplicationService.exportExcel(dto, response);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 下推直接调拨单
+     * @author Will
+     * @date: 2023/5/10 18:39
+     * @param dto
+     * @return ApiResult<List<ViewGenerateTransferInfoDTO>>
+     */
+    @PostMapping(value = "/viewGenerateTransferInfo")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "wms:transferApplication:viewGenerateTransferInfo",
+            tableAlias = "ta"
+    )
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferInfo(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推分布式调出
+     * @author Will
+     * @date: 2023/5/10 18:39
+     * @param dto
+     * @return ApiResult<List<ViewGenerateTransferInfoDTO>>
+     */
+    @PostMapping(value = "/viewGenerateTransferOut")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "apply_user_id",
+            menuCode = "wms:transferApplication:viewGenerateTransferOut",
+            tableAlias = "ta"
+    )
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateTransferInfoDTO>> viewGenerateTransferOut(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = transferApplicationService.viewGenerateTransferOut(dto.getIds());
+        return success(list);
+    }
+
 }

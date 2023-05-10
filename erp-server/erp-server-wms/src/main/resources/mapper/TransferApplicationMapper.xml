@@ -37,4 +37,12 @@
         <result column="remark" property="remark" />
     </resultMap>
 
+    <select id="paging" resultType="com.erp.model.wms.dto.TransferApplicationDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+
+    </select>
+
 </mapper>

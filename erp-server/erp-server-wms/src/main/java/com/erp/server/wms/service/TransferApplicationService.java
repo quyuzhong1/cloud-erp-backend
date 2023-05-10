@@ -20,32 +20,133 @@ import java.util.List;
  * @since 2023-05-10
  */
 public interface TransferApplicationService extends SuperService<TransferApplicationEntity> {
-
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/5/10 18:52
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
     PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> dto);
-
+    /**
+     * @description: 列表数据查询
+     * @author Will
+     * @date: 2023/5/10 18:52
+     * @param dto
+     * @return List<ListStatusCountDTO>
+     */
     List<TransferApplicationDTO.ListStatusCountDTO> listCount(PermissionsDTO dto);
-
+    /**
+     * @description: 新增
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return String 
+     */
     String add(TransferApplicationDTO.AddDTO dto);
-
+    /**
+     * @description: 新增并提交
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return String 
+     */
     String addAndSubmit(TransferApplicationDTO.AddDTO dto);
-
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return Boolean 
+     */
     Boolean update(TransferApplicationDTO.UpdateDTO dto);
-
+    /**
+     * @description: 修改并提交
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return Boolean 
+     */
     Boolean updateAndSubmit(TransferApplicationDTO.UpdateDTO dto);
-
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param ids 
+     * @return Boolean 
+     */
     Boolean submit(List<String> ids);
-
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param id 
+     * @return ViewDTO 
+     */
     TransferApplicationDTO.ViewDTO view(String id);
-
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @return Boolean 
+     */
     Boolean delete(List<String> ids);
-
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
     Boolean invalid(List<String> ids, String remark);
-
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param baseApproveParamDTO
+     */
     void approve(BaseApproveParamDTO baseApproveParamDTO);
-
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @return Boolean
+     */
     Boolean disApprove(List<String> ids);
-
+    /**
+     * @description: 取消流程
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param ids
+     * @return Boolean
+     */
     Boolean cancelProcess(List<String> ids);
-
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
     Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 下推直接调拨单
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param ids
+     * @return List<ViewGenerateTransferInfoDTO>
+     */
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids);
+    /**
+     * @description: 下推分布式调出
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param ids
+     * @return List<ViewGenerateTransferInfoDTO>
+     */
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids);
 }

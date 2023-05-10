@@ -26,6 +26,8 @@ public enum BusinessNoTypeEnum {
     CODE_QC(16, "qc","质检单"),
     CODE_DEPT(17, "bm","部门编号"),
     CODE_RKYB(18, "rkyb","入库预报"),
+    CODE_DBSQ(19, "dbsq","调拨申请"),
+
     ;
 
 
