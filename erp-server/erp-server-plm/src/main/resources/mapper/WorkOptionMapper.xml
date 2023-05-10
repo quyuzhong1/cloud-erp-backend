@@ -10,18 +10,16 @@
     <select id="stageView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$StageViewDTO">
         SELECT
         COUNT(*),
-        pt.phase_name AS stageName
-        FROM
-        project_task pt
-        INNER JOIN project_info pi ON pt.product_id = pi.product_id AND pi.is_deleted = FALSE
-        LEFT JOIN project_phase pp ON pt.phase_id = pp."id" AND pt.is_deleted = FALSE
-        WHERE pi.project_status NOT IN (3) AND pp.is_deleted = FALSE
-        AND pt.product_id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted = FALSE)
-        <if test="optionUserId != null and optionUserId != ''">
-            AND pt.charge_id = #{optionUserId}
-        </if>
-        GROUP BY
-        pt.phase_name ,
-        pp.is_deleted
+        pph.name as stageName
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE AND pph.name IS NOT NULL
+        GROUP BY pph.name
     </select>
 </mapper>
