@@ -3,7 +3,9 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -15,10 +17,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class MachineInfoDetailDTO implements Serializable {
 
+
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
-
+    public static class CommonDTO {
 
         /**
          * skuId
@@ -52,16 +54,33 @@ public class MachineInfoDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO{
+
+        /**
+         * 子件信息
+         */
+        @Valid
+        private List<MachineSubComponentsDTO.AddDTO> subComponentsDetailList;
 
     }
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends AddDTO {
+    public static class UpdateDTO extends CommonDTO {
         /**
          * 主键id
          */
         private String id;
+
+        /**
+         * 子件信息
+         */
+        @Valid
+        private List<MachineSubComponentsDTO.UpdateDTO> subComponentsDetailList;
     }
 
     @Data

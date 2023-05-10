@@ -9,16 +9,15 @@ import java.io.Serializable;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2023/5/10 14:11
+ * @date 2023/5/10 15:45
  */
 @Data
 @NoArgsConstructor
-public class TransferApplicationDetailDTO implements Serializable {
-
+public class MachineSubComponentsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO  {
 
         /**
          * skuId
@@ -32,11 +31,19 @@ public class TransferApplicationDetailDTO implements Serializable {
          * 数量
          */
         private Integer qty;
-
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 库位id
+         */
+        private String warehouseLocation;
         /**
          * 备注
          */
         private String remark;
+
     }
 
     @Data
@@ -47,16 +54,4 @@ public class TransferApplicationDetailDTO implements Serializable {
          */
         private String id;
     }
-
-    @Data
-    @NoArgsConstructor
-    public static class ViewDTO extends UpdateDTO {
-
-        /**
-         * 及时库存
-         */
-        private String curInventoryQty;
-
-    }
-
 }

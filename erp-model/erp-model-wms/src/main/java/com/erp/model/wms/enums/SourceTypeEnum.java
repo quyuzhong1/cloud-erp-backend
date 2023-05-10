@@ -9,6 +9,7 @@ import java.util.Objects;
 
 @NoArgsConstructor
 public enum SourceTypeEnum {
+    SELF_ADD("selfAdd", "手动新增"),
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     QC_BILL("qcBill", "质检单"),

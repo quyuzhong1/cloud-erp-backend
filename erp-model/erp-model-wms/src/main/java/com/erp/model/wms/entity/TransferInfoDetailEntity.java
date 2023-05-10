@@ -65,6 +65,12 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     @TableField("remark")
     private String remark;
 
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -79,6 +85,9 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     public static final String CUR_INVENTORY_QTY = "cur_inventory_qty";
 
     public static final String REMARK = "remark";
+
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
 
     @Override
     public Serializable pkVal() {

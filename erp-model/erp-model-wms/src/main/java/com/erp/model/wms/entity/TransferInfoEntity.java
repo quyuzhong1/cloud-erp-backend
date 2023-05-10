@@ -3,12 +3,12 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * <p>
@@ -150,6 +150,18 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
 
     public static final String CODE = "code";
 
@@ -192,6 +204,11 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     public static final String APPROVE_USER_ID = "approve_user_id";
 
     public static final String REMARK = "remark";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_TYPE = "source_type";
+
 
     @Override
     public Serializable pkVal() {

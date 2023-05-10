@@ -231,6 +231,7 @@ public class MachineInfoDTO implements Serializable {
         @NotEmpty(message = "明细不能为空")
         @Valid
         private List<MachineInfoDetailDTO.UpdateDTO> details;
+
     }
 
     @Data

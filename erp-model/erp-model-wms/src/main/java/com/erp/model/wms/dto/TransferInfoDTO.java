@@ -137,9 +137,13 @@ public class TransferInfoDTO implements Serializable {
          */
         private List<LocalDate>  billDateList;
         /**
-         * 收货仓库id集合
+         * 入库仓库id集合
          */
-        private List<String>  warehouseIdList;
+        private List<String>  inWarehouseIdList;
+        /**
+         * 调出仓库id集合
+         */
+        private List<String>  outWarehouseIdList;
         /**
          * 创建人id集合
          */
@@ -172,14 +176,19 @@ public class TransferInfoDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+         * 调拨类型
+         */
+        private String  type;
+
+        /**
          * 入库日期
          */
         private LocalDate billDate;
 
         /**
-         * 库存方向
+         * 调拨方向
          */
-        private String   inventoryDirection;
+        private String   transferDirection;
 
         /**
          * 仓管员id
@@ -187,26 +196,29 @@ public class TransferInfoDTO implements Serializable {
         private String   warehouseKeeperId;
 
         /**
-         * 验收员id
+         * 调出仓库id
          */
-        private String   receiverId;
+        private String  outWarehouseId;
 
         /**
-         * 库存组织id
+         * 调入仓库id
          */
-        private String  orgId;
+        private String  inWarehouseId;
 
         /**
-         * 入库类型
+         * 来源id
          */
-        private String   type;
+        private String sourceId;
 
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
 
         /**
          * 明细
@@ -255,10 +267,9 @@ public class TransferInfoDTO implements Serializable {
          */
         private String  approveStatus;
 
-
         /**
          * 明细
          */
-        private List<PoInstockDetailDTO.ViewDTO> details;
+        private List<TransferInfoDetailDTO.ViewDTO> details;
     }
 }

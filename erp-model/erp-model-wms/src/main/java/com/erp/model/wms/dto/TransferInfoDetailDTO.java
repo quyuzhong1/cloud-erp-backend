@@ -3,7 +3,6 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
 import java.io.Serializable;
 
 /**
@@ -22,48 +21,44 @@ public class TransferInfoDetailDTO implements Serializable {
     public static class AddDTO {
 
         /**
-         * 实收数量
+         * skuId
          */
-        @NotNull(message = "实收数量不能为空")
-        @Min(value = 1,message = "实收数量最小值为1")
-        @Max(value = 99999999,message = "实收数量最大值为99999999")
-        private Integer stockInQty;
+        private String  skuId;
 
         /**
-         * 超收数量
+         * SKU
          */
-        @NotNull(message = "超收数量不能为空")
-        @Min(value = 0,message = "超收数量最小值为0")
-        @Max(value = 99999999,message = "超收数量最大值为99999999")
-        private Integer exceedQty;
+        private String  skuNo;
 
         /**
-         * 库位id
+         * 数量
          */
-        private String warehouseLocationId;
+        private String  qty;
+
+        /**
+         * 调入仓位id
+         */
+        private String  inWarehouseLocation;
+
+        /**
+         * 调出仓位id
+         */
+        private String  outWarehouseLocation;
 
         /**
          * 备注
          */
-        @Size(max = 255,message = "备注不能大于255字符")
-        private String remark;
+        private String  remark;
 
         /**
          * 来源明细id
          */
-        @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
-
-        /**
-         * 采购明细id
-         */
-        @NotBlank(message = "采购明细id不能为空")
-        private String purchaseOrderDetailId;
     }
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends PoInstockDetailDTO.AddDTO {
+    public static class UpdateDTO extends AddDTO {
         /**
          * 主键id
          */
@@ -72,22 +67,8 @@ public class TransferInfoDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends PoInstockDetailDTO.UpdateDTO {
+    public static class ViewDTO extends UpdateDTO {
 
-        /**
-         * skuId
-         */
-        private String skuId;
-
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
-         * 变体信息
-         */
-        private String variantProperty;
 
         /**
          * 产品名称
@@ -95,24 +76,10 @@ public class TransferInfoDetailDTO implements Serializable {
         private String productName;
 
         /**
-         * 采购数量
+         * 即时库存
          */
-        private Integer purchaseQty;
+        private Integer curInventoryQty;
 
-        /**
-         * 收货数量
-         */
-        private Integer receiveQty;
-
-        /**
-         * 入库数量
-         */
-        private Integer hasStockInQty;
-
-        /**
-         * 未入库数量
-         */
-        private Integer unStockInQty;
     }
 
 }
