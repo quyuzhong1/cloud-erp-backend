@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -10,15 +11,23 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
 import com.erp.server.oms.service.SoDetailService;
+import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnService;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,6 +36,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,7 +54,13 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private SoInfoService soInfoService;
+
+    @Resource
     private SoDetailService soDetailService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
@@ -62,7 +78,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
@@ -82,6 +97,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+                obj.setTypeName(BillTypeEnum.getName(obj.getType()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(productDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_95107);
@@ -92,19 +108,55 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 }
                 obj.setSalesQty(soDetailEntity.getQty());
                 obj.setProductName(productDetailEntity.getName());
+                obj.setUnit(productDetailEntity.getUnitName());
+                obj.setSalesAmount(soDetailEntity.getAmount());
                 list.add(obj.getId());
             });
         }
         return new PagingVO(pageData);
     }
 
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2023/5/11 18:28
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.StatusCountDTO>
+     **/
     @Override
     public List<SoReturnDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
-        return null;
+        PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
+        List<SoReturnDTO.StatusCountDTO> list = new ArrayList<>();
+        for (PurchaseChangeListTypeEnum item : values) {
+            SoReturnDTO.PagingParam pagingParam = new SoReturnDTO.PagingParam();
+            pagingParam.setParam(dto.getParam());
+            SoReturnDTO.StatusCountDTO resultDTO = new SoReturnDTO.StatusCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
+            if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
+            if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
     public String add(SoReturnDTO.Add dto) {
+        SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
+        SoReturnEntity soReturnEntity = new SoReturnEntity();
+        BeanMapperUtils.copy(soInfoEntity, soReturnEntity);
+        
         return null;
     }
 

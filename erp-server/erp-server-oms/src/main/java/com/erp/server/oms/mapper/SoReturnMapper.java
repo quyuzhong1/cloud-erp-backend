@@ -6,6 +6,7 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -26,5 +27,14 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SoReturnDTO.PagingParam>
      **/
-    IPage<SoReturnDTO.PagingView> paging(Page query, SoReturnDTO.PagingParam params);
+    IPage<SoReturnDTO.PagingView> paging(Page query, @Param("params") SoReturnDTO.PagingParam params);
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/5/11 18:32
+     * @param pagingParam pagingParam
+     * @return java.lang.Integer
+     **/
+    Integer listCount(@Param("params") SoReturnDTO.PagingParam pagingParam);
 }

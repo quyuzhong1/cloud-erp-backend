@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,7 +44,7 @@ public class SoReturnDTO {
         /**
          * 审核状态
          */
-        private List<String> approveStatusLis;
+        private List<String> approveStatusList;
         /**
          * 作废状态
          */
@@ -101,6 +102,10 @@ public class SoReturnDTO {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 单据状态编号
          */
         private String approveStatus;
@@ -117,15 +122,27 @@ public class SoReturnDTO {
          */
         private String invalidStatusName;
         /**
+         * 客户名称id
+         */
+        private String customerId;
+        /**
          * 客户名称
          */
         private String customerName;
         /**
-         * 销售组织
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
          */
         private String salesOrgName;
         /**
-         * 销售员
+         * 销售员Id
+         */
+        private String sellerId;
+        /**
+         * 销售员名称
          */
         private String sellerName;
         /**
@@ -163,7 +180,7 @@ public class SoReturnDTO {
         /**
          * 销售金额
          */
-        private String salesAmount;
+        private BigDecimal salesAmount;
         /**
          * 退货日期
          */
@@ -348,11 +365,11 @@ public class SoReturnDTO {
         /**
          * 销售部门id
          */
-        private String deptId;
+        private String salesDeptId;
         /**
          * 销售部门名称
          */
-        private String deptName;
+        private String salesDeptName;
         /**
          * 销售员id
          */

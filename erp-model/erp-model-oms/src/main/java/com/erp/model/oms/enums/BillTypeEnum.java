@@ -1,12 +1,14 @@
-package com.erp.model.wms.enums;
+package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum AddressTypeEnum {
-    FORWARDER("forwarder","货代地址"),
-    DELIVER("deliver","发货地址"),
-    COMPANY("company","公司地址"),
+/**
+ * 单据类型
+ */
+public enum BillTypeEnum {
+    B2B("B2B","B2B订单"),
+    B2C("B2C","B2C订单"),
     ;
     /**
      * 类型
@@ -20,7 +22,7 @@ public enum AddressTypeEnum {
     private String name;
 
 
-    AddressTypeEnum(String code, String name) {
+    BillTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -34,9 +36,9 @@ public enum AddressTypeEnum {
     }
 
     public static String getName(String code) {
-        for (ReturnModeEnum returnModeEnum : ReturnModeEnum.values()) {
-            if (code.equals(returnModeEnum.getCode())) {
-                return returnModeEnum.getName();
+        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
+            if (code.equals(billTypeEnum.getCode())) {
+                return billTypeEnum.getName();
             }
         }
         return "";

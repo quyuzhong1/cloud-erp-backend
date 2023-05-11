@@ -2,6 +2,45 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SoReturnMapper">
     <select id="paging" resultType="com.erp.model.oms.dto.SoReturnDTO$PagingView">
+        SELECT
+           sr.id,
+           sr.create_time,
+           sr.code,
+           sr.source_id,
+           srd.source_detail_id,
+           sr.source_code,
+           sr.type,
+           sr.approve_status,
+           sr.invalid_status,
+           sr.customer_id,
+           sr.sales_org_id,
+           sr.seller_id,
+           srd.sku_id,
+           srd.sku_no,
+           srd.sales_qty,
+           srd.return_qty,
+           sr.bill_date,
+           sr.approve_user_name,
+           sr.create_user_name
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+    </select>
 
+    <select id="listCount" resultType="java.lang.Integer">
+        SELECT
+        count(distinct sr.id)
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON sr.main_id = srd.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and sr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
     </select>
 </mapper>

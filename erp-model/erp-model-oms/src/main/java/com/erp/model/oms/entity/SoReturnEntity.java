@@ -59,13 +59,13 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     /**
      * 销售部门id
      */
-    @TableField("dept_id")
-    private String deptId;
+    @TableField("sales_dept_id")
+    private String salesDeptId;
 
     /**
      * 销售部门名称
      */
-    @TableField("dept_name")
+    @TableField("sales_dept_name")
     private String deptName;
 
     /**
