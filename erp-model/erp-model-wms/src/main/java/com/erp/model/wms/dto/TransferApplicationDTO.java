@@ -350,6 +350,11 @@ public class TransferApplicationDTO implements Serializable {
         private String code;
 
         /**
+         * 调拨方向
+         */
+        private String transferDirection;
+
+        /**
          * 调拨方向名称
          */
         private String transferDirectionName;

@@ -45,4 +45,12 @@ public interface TransferApplicationMapper extends BaseMapper<TransferApplicatio
      * @return List<ListDTO>
      */
     List<TransferApplicationDTO.ListDTO> listExportExcel(@Param("params") TransferApplicationDTO.SearchParamDTO params);
+    /**
+     * @description: 查询调拨申请单数据
+     * @author Will
+     * @date: 2023/5/11 16:08
+     * @param ids
+     * @return List<ViewGenerateTransferInfoDTO>
+     */
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(@Param("ids") List<String> ids);
 }

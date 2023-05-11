@@ -32,7 +32,7 @@ public class MachineInfoDTO implements Serializable {
          */
         private String  id;
         /**
-         * 入库单号
+         * 加工单号
          */
         private String  code;
         /**
@@ -111,7 +111,7 @@ public class MachineInfoDTO implements Serializable {
          */
         private String  searchType;
         /**
-         * 其他出库编号
+         * 加工编号
          */
         private String  code;
         /**
@@ -146,7 +146,6 @@ public class MachineInfoDTO implements Serializable {
          * 创建时间集合
          */
         private List<LocalDate>   createTimeList;
-
 
 
     }

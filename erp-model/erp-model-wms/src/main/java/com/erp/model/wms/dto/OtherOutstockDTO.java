@@ -31,7 +31,7 @@ public class OtherOutstockDTO implements Serializable {
          */
         private String  id;
         /**
-         * 入库单号
+         * 其他出库编号
          */
         private String  code;
         /**
@@ -67,7 +67,7 @@ public class OtherOutstockDTO implements Serializable {
          */
         private String  productName;
         /**
-         * 入库日期
+         * 出库日期
          */
         private LocalDate billDate;
         /**
@@ -173,7 +173,7 @@ public class OtherOutstockDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 入库日期
+         * 出库日期
          */
         private LocalDate billDate;
 
@@ -262,7 +262,7 @@ public class OtherOutstockDTO implements Serializable {
         private String id;
 
         /**
-         * 入库单号
+         * 其他出库编号
          */
         private String  code;
 

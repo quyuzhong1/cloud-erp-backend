@@ -38,4 +38,21 @@ public interface TransferApplicationDetailService extends SuperService<TransferA
      * @param mainIds
      */
     void removeByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据主表id查询
+     * @author Will
+     * @date: 2023/4/13 17:35
+     * @param mainId
+     * @return List<TransferApplicationDetailEntity>
+     */
+    List<TransferApplicationDetailEntity> listByMainId(String mainId);
+
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/4/13 17:35
+     * @param mainIds
+     * @return List<TransferApplicationDetailEntity>
+     */
+    List<TransferApplicationDetailEntity> listByMainIds(List<String> mainIds);
 }

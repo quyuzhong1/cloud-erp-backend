@@ -84,7 +84,6 @@ public class SkuVO implements Serializable {
      */
     private String productGrade;
 
-
     /**
      * 产品品牌
      */
@@ -94,4 +93,9 @@ public class SkuVO implements Serializable {
      * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
      */
     private Integer saleState;
+
+    /**
+     * 单位
+     */
+    private String unitName;
 }

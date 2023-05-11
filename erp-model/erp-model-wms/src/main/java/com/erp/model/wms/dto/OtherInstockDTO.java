@@ -30,7 +30,7 @@ public class OtherInstockDTO implements Serializable {
          */
         private String  id;
         /**
-         * 入库单号
+         * 其他入库编号
          */
         private String  code;
         /**

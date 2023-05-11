@@ -378,6 +378,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     public List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids) {
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> list = baseMapper.viewGenerateTransferInfo(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+
         return null;
     }
 

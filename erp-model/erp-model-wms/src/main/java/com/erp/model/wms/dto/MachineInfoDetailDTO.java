@@ -43,10 +43,6 @@ public class MachineInfoDetailDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
-         * 及时库存
-         */
-        private String curInventoryQty;
-        /**
          * 参照版本
          */
         private String referenceVersion;
