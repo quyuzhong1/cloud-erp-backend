@@ -1,7 +1,11 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
+import com.erp.model.oms.dto.CustomerGroupDTO;
 import com.erp.model.oms.entity.CustomerGroupEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +17,22 @@ import com.erp.model.oms.entity.CustomerGroupEntity;
  */
 public interface CustomerGroupService extends SuperService<CustomerGroupEntity> {
 
+    /**
+     * 保存或者修改分组
+     * @author yl
+     * @date 2023-05-11 17:48
+     * @param groupList
+     * @return java.lang.Boolean
+     */
+    Boolean saveOrUpdateBatchGroup(ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList);
+
+    
+    /**
+     * 获取客户分组列表
+     * @author yl
+     * @date 2023-05-11 18:21
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CustomerGroupDTO.ListDTO>
+     */
+    List<CustomerGroupDTO.ListDTO> listCustomer();
 }

@@ -56,10 +56,22 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private String salesOrgId;
 
     /**
+     * 销售组织id
+     */
+    @TableField("sales_org_name")
+    private String salesOrgName;
+
+    /**
      * 销售部门id
      */
     @TableField("sales_dept_id")
     private String salesDeptId;
+
+    /**
+     * 销售部门名
+     */
+    @TableField("sales_dept_name")
+    private String salesDeptName;
 
     /**
      * 销售员id
