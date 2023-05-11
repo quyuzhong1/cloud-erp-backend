@@ -5,10 +5,9 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-public class SoDeliveryNoticeDetailDTO {
+public class SoReturnNoticeDetailDTO {
     /**
      * 添加
      */
@@ -16,20 +15,21 @@ public class SoDeliveryNoticeDetailDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * 发货数量
+         * 退货数量
          */
-        @NotNull(message = "发货数量不能为空")
-        @Min(value = 1, message = "发货数量最小值为1")
-        @Max(value = 999999999, message = "发货数量最大值为999999999")
-        private Integer deliveryQty;
+        @NotNull(message = "退货数量不能为空")
+        @Min(value = 1, message = "退货数量最小值为1")
+        @Max(value = 999999999, message = "退货数量最大值为999999999")
+        private Integer returnQty;
         /**
-         * 出货仓库
+         * 退货类型 wms/common/enumDropDown?type=returnType
+         * 描述：退货扣款 退货补货
          */
-        private String warehouseId;
+        private String returnType;
         /**
-         * 是否关闭
+         * 退货原因 调用字典接口 类型=returnReason
          */
-        private Boolean isClose;
+        private String returnReasonDict;
         /**
          * 备注
          */
@@ -51,20 +51,21 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private String id;
         /**
-         * 发货数量
+         * 退货数量
          */
-        @NotNull(message = "发货数量不能为空")
-        @Min(value = 1, message = "发货数量最小值为1")
-        @Max(value = 999999999, message = "发货数量最大值为999999999")
-        private Integer deliveryQty;
+        @NotNull(message = "退货数量不能为空")
+        @Min(value = 1, message = "退货数量最小值为1")
+        @Max(value = 999999999, message = "退货数量最大值为999999999")
+        private Integer returnQty;
         /**
-         * 出货仓库
+         * 退货类型 wms/common/enumDropDown?type=returnType
+         * 描述：退货扣款 退货补货
          */
-        private String warehouseId;
+        private String returnType;
         /**
-         * 是否关闭
+         * 退货原因 调用字典接口 类型=returnReason
          */
-        private Boolean isClose;
+        private String returnReasonDict;
         /**
          * 备注
          */
@@ -88,9 +89,9 @@ public class SoDeliveryNoticeDetailDTO {
         /**
          * 主表id
          */
-         private String mainId;
+        private String mainId;
         /**
-         * sku表id
+         * skuId
          */
         private String skuId;
         /**
@@ -98,32 +99,32 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private String skuNo;
         /**
-         * 产品名称
-         */
-        private String productName;
-        /**
          * 销售数量
          */
         private Integer salesQty;
         /**
-         * 发货数量
+         * 已出库数量
          */
         private Integer deliveryQty;
         /**
-         * 仓库id
+         * 退货数量
          */
-        private String warehouseId;
+        private Integer returnQty;
         /**
-         * 仓库名称
+         * 退货类型
          */
-        private String warehouseName;
+        private String returnType;
         /**
-         * 是否关闭
+         * 退货原因 调用字典接口 类型=returnReason
          */
-        private Boolean isClose;
+        private String returnReasonDict;
         /**
          * 备注
          */
         private String remark;
+        /**
+         * 销售单明细表id
+         */
+        private String sourceDetailId;
     }
 }

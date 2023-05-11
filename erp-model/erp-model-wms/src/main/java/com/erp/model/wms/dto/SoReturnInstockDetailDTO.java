@@ -1,0 +1,178 @@
+package com.erp.model.wms.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
+public class SoReturnInstockDetailDTO {
+    /**
+     * 添加
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Add {
+        /**
+         * 应退数量
+         */
+        @NotNull(message = "应退数量不能为空")
+        @Min(value = 1, message = "应退数量最小值为1")
+        @Max(value = 999999999, message = "应退数量最大值为999999999")
+        private Integer mustQty;
+        /**
+         * 签收数量
+         */
+        @NotNull(message = "签收数量不能为空")
+        @Min(value = 1, message = "签收数量最小值为1")
+        @Max(value = 999999999, message = "签收数量最大值为999999999")
+        private Integer receiveQty;
+        /**
+         * 实退数量
+         */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 1, message = "实退数量最小值为1")
+        @Max(value = 999999999, message = "实退数量最大值为999999999")
+        private Integer realQty;
+        /**
+         * 退货类型 wms/common/enumDropDown?type=returnType
+         * 描述：退货扣款 退货补货
+         */
+        private String returnType;
+        /**
+         * 退货原因
+         */
+        private String returnReason;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 退货单明细表id
+         */
+        private String sourceDetailId;
+    }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Update {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 应退数量
+         */
+        @NotNull(message = "应退数量不能为空")
+        @Min(value = 1, message = "应退数量最小值为1")
+        @Max(value = 999999999, message = "应退数量最大值为999999999")
+        private Integer mustQty;
+        /**
+         * 签收数量
+         */
+        @NotNull(message = "签收数量不能为空")
+        @Min(value = 1, message = "签收数量最小值为1")
+        @Max(value = 999999999, message = "签收数量最大值为999999999")
+        private Integer receiveQty;
+        /**
+         * 实退数量
+         */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 1, message = "实退数量最小值为1")
+        @Max(value = 999999999, message = "实退数量最大值为999999999")
+        private Integer realQty;
+        /**
+         * 退货类型 wms/common/enumDropDown?type=returnType
+         * 描述：退货扣款 退货补货
+         */
+        private String returnType;
+        /**
+         * 退货原因 调用字典接口 类型=returnReason
+         */
+        private String returnReasonDict;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 退货单明细表id
+         */
+        private String sourceDetailId;
+    }
+
+    /**
+     * 查询详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class View {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 应退数量
+         */
+        private Integer mustQty;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+        /**
+         * 实退数量
+         */
+        private Integer realQty;
+        /**
+         * 退货类型
+         */
+        private String returnType;
+        /**
+         * 退货原因 调用字典接口 类型=returnReason
+         */
+        private String returnReasonDict;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 销售单明细表id
+         */
+        private String sourceDetailId;
+    }
+}

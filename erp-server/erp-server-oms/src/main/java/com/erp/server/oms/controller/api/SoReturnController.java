@@ -22,10 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * <p>
- *  前端控制器
- * </p>
- *
+ * 销售退货单
  * @author LUO_WG
  * @since 2023-05-10
  */
@@ -276,5 +273,18 @@ public class SoReturnController extends BaseController {
     public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推退货通知单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/generateSoReturnNoticeView")
+    public ApiResult<List<SoReturnDTO.GenerateSoReturnNoticeView>> generateSoReturnNoticeView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeViews = soReturnService.generateSoReturnNoticeView(dto.getIds());
+        return success(generateSoReturnNoticeViews);
     }
 }

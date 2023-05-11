@@ -149,4 +149,13 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.lang.Boolean
      **/
     Boolean exportExcel(@RequestBody SoReturnDTO.PagingParam dto, HttpServletResponse response);
+
+    /**
+     * 下推退货通知单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/11 11:20
+     * @param ids
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
+     **/
+    List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(List<String> ids);
 }

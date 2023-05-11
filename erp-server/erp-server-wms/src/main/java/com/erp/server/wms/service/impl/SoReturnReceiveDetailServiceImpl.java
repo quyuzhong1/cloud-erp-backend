@@ -7,10 +7,7 @@ import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**
- * <p>
  * 销售退货签收单明细表 服务实现类
- * </p>
- *
  * @author LUO_WG
  * @since 2023-05-10
  */

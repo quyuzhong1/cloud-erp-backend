@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class SoDeliveryNoticeDTO {
@@ -22,7 +24,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 创建时间
          */
-        private List<String> createTimeList;
+        private List<LocalDateTime> createTimeList;
         /**
          * 单据编号
          */
@@ -62,7 +64,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 要货日期
          */
-        private List<String> requireDataList;
+        private List<LocalDate> requireDataList;
         /**
          * 出货仓库
          */
@@ -130,11 +132,11 @@ public class SoDeliveryNoticeDTO {
         /**
          * 销售数量
          */
-        private String salesQty;
+        private Integer salesQty;
         /**
          * 发货数量
          */
-        private String deliveryQty;
+        private Integer deliveryQty;
         /**
          * 销售单位
          */
@@ -146,19 +148,19 @@ public class SoDeliveryNoticeDTO {
         /**
          * 要货日期
          */
-        private String requireDate;
+        private LocalDate requireDate;
         /**
          * 预计发货日期
          */
-        private String planDeliveryDate;
+        private LocalDate planDeliveryDate;
         /**
          * 完成打包日期
          */
-        private String packDate;
+        private LocalDate packDate;
         /**
          * 实际发货日期
          */
-        private String actualDeliveryDate;
+        private LocalDate actualDeliveryDate;
         /**
          * 审核人
          */
@@ -170,7 +172,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
     }
 
     /**
@@ -209,11 +211,11 @@ public class SoDeliveryNoticeDTO {
         /**
          * 要货日期
          */
-        private String requireDate;
+        private LocalDate requireDate;
         /**
          * 预计发货日期
          */
-        private String planDeliveryDate;
+        private LocalDate planDeliveryDate;
         /**
          * 承运商id
          */
@@ -271,11 +273,11 @@ public class SoDeliveryNoticeDTO {
         /**
          * 要货日期
          */
-        private String requireDate;
+        private LocalDate requireDate;
         /**
          * 预计发货日期
          */
-        private String planDeliveryDate;
+        private LocalDate planDeliveryDate;
         /**
          * 承运商id
          */
@@ -361,19 +363,19 @@ public class SoDeliveryNoticeDTO {
         /**
          * 要货日期
          */
-        private String requireDate;
+        private LocalDate requireDate;
         /**
          * 预计发货日期
          */
-        private String planDeliveryDate;
+        private LocalDate planDeliveryDate;
         /**
          * 完成打包日期
          */
-        private String packDate;
+        private LocalDate packDate;
         /**
          * 实际发货日期
          */
-        private String actualDeliveryDate;
+        private LocalDate actualDeliveryDate;
         /**
          * 承运商id
          */
@@ -427,5 +429,62 @@ public class SoDeliveryNoticeDTO {
          * 明细信息
          */
         private List<SoDeliveryNoticeDetailDTO.View> detailList;
+    }
+
+    /**
+     * 下推发货出库单列表集合
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListGenerateSoDeliveryView {
+        private List<GenerateSoDeliveryView> list;
+    }
+
+    /**
+     * 下推发货出库单列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSoDeliveryView {
+        /**
+         * 销售单号
+         */
+        private String sourceCode;
+        /**
+         * 客户
+         */
+        private String customerName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 要货日期
+         */
+        private LocalDate requireDate;
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+        /**
+         * 备注
+         */
+        private String remark;
     }
 }

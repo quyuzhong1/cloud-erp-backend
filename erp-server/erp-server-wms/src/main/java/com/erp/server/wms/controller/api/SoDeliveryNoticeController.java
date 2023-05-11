@@ -9,23 +9,19 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
+import com.erp.server.wms.service.WarehouseReceiveService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import com.common.core.controller.BaseController;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * <p>
- * 发货通知单主表明细表 前端控制器
- * </p>
- *
+ * 发货通知单
  * @author LUO_WG
  * @since 2023-05-10
  */
@@ -268,13 +264,34 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
-            menuCode = "wms:soDeliveryNotice:paging",
-            tableAlias = "sdn"
-    )
     public ApiResult exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soDeliveryNoticeService.exportExcel(dto, response);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推销售出库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/generateSoDeliveryView")
+    public ApiResult<List<SoDeliveryNoticeDTO.GenerateSoDeliveryView>> generateSoDeliveryView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateSoDeliveryViews = soDeliveryNoticeService.generateStockInView(dto.getIds());
+        return success(generateSoDeliveryViews);
+    }
+
+    /**
+     * 下推销售出库单-保存
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/generateSoDeliverySave")
+    public ApiResult generateSoDeliverySave(@RequestBody SoDeliveryNoticeDTO.ListGenerateSoDeliveryView dto) {
+        Boolean flag = soDeliveryNoticeService.generateSoDeliverySave(dto.getList());
         return flag == true ? success() : failure();
     }
 }

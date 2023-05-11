@@ -1,15 +1,14 @@
-package com.erp.model.oms.dto;
+package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class SoReturnDTO {
+public class SoReturnReceiveDTO {
     /**
      * 分页参数
      */
@@ -59,7 +58,11 @@ public class SoReturnDTO {
         /**
          * 退货日期
          */
-        private List<String> billDateList;
+        private List<LocalDate> returnDateList;
+        /**
+         * 签收日期
+         */
+        private List<LocalDate> billDateList;
         /**
          * 创建人id
          */
@@ -73,21 +76,21 @@ public class SoReturnDTO {
     @NoArgsConstructor
     public static class PagingView {
         /**
-         * 创建时间
-         */
-        private LocalDateTime createTime;
-        /**
          * 退货订单号
          */
         private String code;
         /**
-         * 销售单号
+         * 退货单号
          */
         private String sourceCode;
         /**
-         * 单据类型
+         * 客户名称
          */
-        private String type;
+        private String customerName;
+        /**
+         * 库存组织
+         */
+        private String inventoryOrgName;
         /**
          * 单据状态编号
          */
@@ -105,14 +108,6 @@ public class SoReturnDTO {
          */
         private String invalidStatusName;
         /**
-         * 客户名称
-         */
-        private String customerName;
-        /**
-         * 销售组织
-         */
-        private String salesOrgName;
-        /**
          * 销售员
          */
         private String sellerName;
@@ -125,6 +120,10 @@ public class SoReturnDTO {
          */
         private String productName;
         /**
+         * 退货类型
+         */
+        private String returnType;
+        /**
          * 销售数量
          */
         private Integer salesQty;
@@ -133,23 +132,15 @@ public class SoReturnDTO {
          */
         private Integer returnQty;
         /**
-         * 已出库数量
+         * 签收数量
          */
-        private Integer deliveryQty;
-        /**
-         * 剩余未出数量
-         */
-        private Integer unDeliveryQty;
-        /**
-         * 单位
-         */
-        private String unit;
-        /**
-         * 销售金额
-         */
-        private String salesAmount;
+        private Integer receiveQty;
         /**
          * 退货日期
+         */
+        private LocalDate returnDate;
+        /**
+         * 签收日期
          */
         private LocalDate billDate;
         /**
@@ -160,6 +151,10 @@ public class SoReturnDTO {
          * 创建人
          */
         private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -168,7 +163,6 @@ public class SoReturnDTO {
     @Data
     @NoArgsConstructor
     public static class StatusCountDTO {
-
         /**
          * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
          */
@@ -186,51 +180,29 @@ public class SoReturnDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * 销售单id
+         * 退货单id
          */
         private String sourceId;
         /**
          * 退货日期
          */
-        private String billDate;
+        private LocalDate returnDate;
         /**
-         * 联系人
+         * 库存组织id
          */
-        private String receiverName;
+        private String inventoryOrgId;
         /**
-         * 联系电话
+         * 仓管员
          */
-        private String telNumber;
+        private String warehouseKeeperId;
         /**
-         * 收货地址
+         * 签收日期
          */
-        private String receiveAddress;
-        /**
-         * 交货方式 wms/common/enumDropDown?type=deliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
-         */
-        private String deliveryModeDict;
-        /**
-         * 币别
-         */
-        private String currency;
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         * 是否含税
-         */
-        private String isTax;
-        /**
-         * 地址类型 oms/common/enumDropDown?type=addressType
-         * 地址类型：forwarder 货代地址  deliverGoods 发货地址
-         */
-        private String addressType;
+        private LocalDate billDate;
         /**
          * 明细信息
          */
-        private List<SoReturnDetailDTO.Add> detailList;
+        private List<SoReturnReceiveDetailDTO.Add> detailList;
     }
 
     /**
@@ -244,51 +216,29 @@ public class SoReturnDTO {
          */
         private String id;
         /**
-         * 销售单id
+         * 退货单id
          */
         private String sourceId;
         /**
          * 退货日期
          */
-        private String billDate;
+        private LocalDate returnDate;
         /**
-         * 联系人
+         * 库存组织id
          */
-        private String receiverName;
+        private String inventoryOrgId;
         /**
-         * 联系电话
+         * 仓管员
          */
-        private String telNumber;
+        private String warehouseKeeperId;
         /**
-         * 收货地址
+         * 签收日期
          */
-        private String receiveAddress;
-        /**
-         * 交货方式 wms/common/enumDropDown?type=deliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
-         */
-        private String deliveryModeDict;
-        /**
-         * 币别
-         */
-        private String currency;
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         * 是否含税
-         */
-        private String isTax;
-        /**
-         * 地址类型 oms/common/enumDropDown?type=addressType
-         * 地址类型：forwarder 货代地址  deliverGoods 发货地址
-         */
-        private String addressType;
+        private LocalDate billDate;
         /**
          * 明细信息
          */
-        private List<SoReturnDetailDTO.Update> detailList;
+        private List<SoReturnReceiveDetailDTO.Update> detailList;
     }
 
     /**
@@ -297,10 +247,6 @@ public class SoReturnDTO {
     @Data
     @NoArgsConstructor
     public static class View {
-        /**
-         * 主键id
-         */
-        private String id;
         /**
          * 单据编号
          */
@@ -314,13 +260,13 @@ public class SoReturnDTO {
          */
         private String type;
         /**
-         * 销售单id
+         * 客户id
          */
-        private String sourceId;
+        private String customerId;
         /**
-         * 销售单编号
+         * 客户名称
          */
-        private String sourceCode;
+        private String customerName;
         /**
          * 销售组织id
          */
@@ -348,51 +294,35 @@ public class SoReturnDTO {
         /**
          * 退货日期
          */
-        private String returnDate;
+        private LocalDate returnDate;
         /**
-         * 客户id
+         * 签收日期
          */
-        private String customerId;
+        private LocalDate receiveDate;
         /**
-         * 客户名称
+         * 库存组织
          */
-        private String customerName;
+        private String inventoryOrgId;
         /**
-         * 联系人id
+         * 库存组织名称
          */
-        private String contactsUserId;
+        private String inventoryOrgName;
         /**
-         * 联系人名称
+         * 仓管员id
          */
-        private String contactsUserName;
+        private String warehouseKeeperId;
         /**
-         * 联系电话
+         * 仓管员名称
          */
-        private String telNumber;
+        private String warehouseKeeperName;
         /**
-         * 收货地址
+         * 退货单id
          */
-        private String receiveAddress;
+        private String sourceId;
         /**
-         * 交货方式
+         * 退货单编号
          */
-        private String deliveryModeDict;
-        /**
-         * 币别
-         */
-        private String currency;
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         * 是否含税
-         */
-        private Boolean isTax;
-        /**
-         * 地址类型
-         */
-        private String addressType;
+        private String sourceCode;
         /**
          * 作废状态
          */
@@ -414,35 +344,32 @@ public class SoReturnDTO {
          */
         private LocalDateTime approveTime;
         /**
-         * 详情信息
+         * 明细信息
          */
-        private List<SoReturnDetailDTO.View> detailList;
+        private List<SoReturnReceiveDetailDTO.View> detailList;
     }
 
     /**
-     * 下推退货通知单列表集合
+     * 下推退货入库单列表集合
      */
     @Data
     @NoArgsConstructor
-    public static class ListGenerateSoReturnNoticeView {
-        /**
-         * 销售单号
-         */
-        private List<GenerateSoReturnNoticeView> list;
+    public static class ListGenerateSoReturnInstockView {
+        private List<GenerateSoReturnInstockView> list;
     }
-    
+
     /**
-     * 下推退货通知单-列表查询
+     * 下推退货入库单-列表查询
      */
     @Data
     @NoArgsConstructor
-    public static class GenerateSoReturnNoticeView {
+    public static class GenerateSoReturnInstockView {
         /**
-         * 销售单号
+         * 退货单id
          */
         private String sourceId;
         /**
-         * 销售单号
+         * 退货单号
          */
         private String sourceCode;
         /**
@@ -454,7 +381,7 @@ public class SoReturnDTO {
          */
         private String skuId;
         /**
-         * SKU
+         * sku
          */
         private String skuNo;
         /**
@@ -466,21 +393,25 @@ public class SoReturnDTO {
          */
         private Integer salesQty;
         /**
-         * 已出库数量
+         * 应退数量
          */
-        private Integer deliveryQty;
+        private Integer mustQty;
         /**
-         * 退货数量
+         * 签收数量
          */
-        private Integer returnQty;
+        private Integer receiveQty;
         /**
-         * 退货类型
+         * 入库数量
          */
-        private String returnType;
+        private Integer stockInQty;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 不良品数量
          */
-        private String returnReasonDict;
+        private Integer unSellableQty;
+        /**
+         * 良品数量
+         */
+        private Integer sellableQty;
         /**
          * 备注
          */

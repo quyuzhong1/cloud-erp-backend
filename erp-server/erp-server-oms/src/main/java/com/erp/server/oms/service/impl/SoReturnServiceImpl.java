@@ -94,4 +94,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean exportExcel(SoReturnDTO.PagingParam dto, HttpServletResponse response) {
         return null;
     }
+
+    @Override
+    public List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(List<String> ids) {
+        return null;
+    }
 }

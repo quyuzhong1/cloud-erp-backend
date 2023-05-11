@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
@@ -94,7 +96,7 @@ public class SoReturnReceiveEntity extends BaseEntity<SoReturnReceiveEntity> {
      * 退货日期
      */
     @TableField("return_date")
-    private Date returnDate;
+    private LocalDate returnDate;
 
     /**
      * 库存组织id
@@ -121,10 +123,10 @@ public class SoReturnReceiveEntity extends BaseEntity<SoReturnReceiveEntity> {
     private String warehouseKeeperName;
 
     /**
-     * 退货日期
+     * 签收日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 作废状态
@@ -154,7 +156,7 @@ public class SoReturnReceiveEntity extends BaseEntity<SoReturnReceiveEntity> {
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
     /**
      * 来源id

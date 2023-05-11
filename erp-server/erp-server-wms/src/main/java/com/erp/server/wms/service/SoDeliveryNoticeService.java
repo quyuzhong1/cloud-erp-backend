@@ -5,7 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +27,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @Author Luo_WG
      * @Date 2023/4/13 15:41
      * @param pagingParamDTO pagingParamDTO
-     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.WarehouseReceiveDTO.PagingViewDTO>
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingViewDTO>
      **/
     PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO);
 
@@ -36,7 +36,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @Author Luo_WG
      * @Date 2023/4/17 13:13
      * @param dto dto
-     * @return java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WarehouseReceiveCountDTO>
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.WarehouseReceiveCountDTO>
      **/
     List<SoDeliveryNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto);
 
@@ -63,7 +63,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @Author Luo_WG
      * @Date 2023/4/13 17:10
      * @param id id
-     * @return com.erp.model.wms.dto.WarehouseReceiveDTO.ViewDTO
+     * @return com.erp.model.wms.dto.SoDeliveryNoticeDTO.ViewDTO
      **/
     SoDeliveryNoticeDTO.View view(String id);
 
@@ -149,4 +149,22 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return com.common.core.controller.vo.ApiResult
      **/
     Boolean exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response);
+
+    /**
+     * 下推销售出库单列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/11 11:06
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.GenerateSoDeliveryView>
+     **/
+    List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateStockInView(List<String> ids);
+
+    /**
+     * 下推销售出库单-保存
+     * @Author Luo_WG
+     * @Date 2023/5/11 11:11
+     * @param list
+     * @return void
+     **/
+    Boolean generateSoDeliverySave(List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> list);
 }
