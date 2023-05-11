@@ -33,6 +33,7 @@ import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -382,8 +383,30 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
+        //产品信息
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
 
-        return null;
+        //调拨方向
+        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+
+        for (TransferApplicationDTO.ViewGenerateTransferInfoDTO dto : list ) {
+
+            //产品名称
+            if (CollectionUtils.isNotEmpty(productDetailList)) {
+                String productName = productDetailList.stream().filter(e -> e.getId().equals(dto.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                dto.setProductName(productName);
+            }
+            //调拨方向名称
+            if (CollectionUtils.isNotEmpty(transferDirectionList)) {
+                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(dto.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+                dto.setTransferDirectionName(transferDirectionName);
+            }
+
+            dto.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+        }
+
+
+        return list;
     }
 
     @Override
