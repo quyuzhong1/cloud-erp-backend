@@ -146,9 +146,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
         List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
         IPage pageData = new Page();
         if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
@@ -419,8 +419,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public List<TaskDeliveryDocsEntity> getByProductId(String productId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDeliveryDocsEntity::getProductId, productId);
-        List<TaskDeliveryDocsEntity> list=this.list(queryWrapper);
-        return list.stream().filter(t->StringUtils.isNotBlank(t.getTaskId())).collect(Collectors.toList());
+        List<TaskDeliveryDocsEntity> list = this.list(queryWrapper);
+        return list.stream().filter(t -> StringUtils.isNotBlank(t.getTaskId())).collect(Collectors.toList());
     }
 
     /**
@@ -548,6 +548,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
         String productId = params.getFlagId();
         List<String> findDeliveryDocsIds = new ArrayList<>();
+        //这个是所有的
         List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(productId);
         List<String> allDeliveryDocsIds = deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
 
@@ -566,13 +567,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
             //查询当前用户的角色
             List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
-
             //获取所有的设置文档的权限的文档id
             List<DocsPermissionEntity> allPermissionDeliveryDocsList = docsPermissionService.getAllDeliveryDocsIds(productId);
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
-                //表示 是项目成员，未设置文档权限可以看所有
-                if (CollectionUtils.isNotEmpty(userRoleIds)) {
+                //未设置文档权限可以看所有
                     DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
                             findFirst().orElse(null);
                     //表示有权限
@@ -587,7 +586,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                         //没有设置权限 也应该看到
                         findDeliveryDocsIds.add(deliveryDocsId);
                     }
-                }
 
 
             }

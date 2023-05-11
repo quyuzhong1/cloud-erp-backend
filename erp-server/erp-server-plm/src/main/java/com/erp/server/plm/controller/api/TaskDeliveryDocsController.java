@@ -1,8 +1,10 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -42,6 +44,11 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:taskDocs:paging",
+            tableAlias = "pt"
+    )
     public ApiResult<PagingVO<List<DeliveryDocsDTO>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<List<DeliveryDocsDTO>> pagingVO = taskDeliveryService.paging(dto);
         return success(pagingVO);
