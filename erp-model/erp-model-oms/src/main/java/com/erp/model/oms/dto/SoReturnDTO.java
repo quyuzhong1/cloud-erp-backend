@@ -224,7 +224,7 @@ public class SoReturnDTO {
         private String isTax;
         /**
          * 地址类型 oms/common/enumDropDown?type=addressType
-         * 地址类型：forwarder 货代地址  deliverGoods 发货地址
+         * 地址类型：forwarder 货代地址  deliver 发货地址 company 公司地址
          */
         private String addressType;
         /**
@@ -282,7 +282,7 @@ public class SoReturnDTO {
         private String isTax;
         /**
          * 地址类型 oms/common/enumDropDown?type=addressType
-         * 地址类型：forwarder 货代地址  deliverGoods 发货地址
+         * 地址类型：forwarder 货代地址  deliver 发货地址 company 公司地址
          */
         private String addressType;
         /**

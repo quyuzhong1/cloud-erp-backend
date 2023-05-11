@@ -141,7 +141,7 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     private Boolean isTax;
 
     /**
-     * 地址类型：forwarder 货代地址  deliverGoods 发货地址
+     * 地址类型：forwarder 货代地址  deliver 发货地址 company 公司地址
      */
     @TableField("address_type_dict")
     private String addressTypeDict;
