@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgTransactionRulesEntity;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -12,6 +13,7 @@ import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.service.CfgTransactionRulesService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryStockService;
+import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.impl.AbstractInventoryServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,9 @@ public class InventoryHelper {
 
     @Autowired
     private CfgTransactionRulesService cfgTransactionRulesService;
+
+    @Autowired
+    private WarehouseService warehouseService;
 
     @Resource
     private ApplicationContext applicationContext;
@@ -151,7 +156,13 @@ public class InventoryHelper {
         // 来源
         InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         InventoryEntity inventory = inventoryService.findInventoryLock(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
-        ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException(ApiError.ERROR_99035));
+
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+            ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName())));
+        } else {
+            ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException("仓库库存数量不足"));
+        }
         Integer inventoryQty = inventory.getQty();
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
                 businessType.getName(), status.getName(), qty, inventoryQty);

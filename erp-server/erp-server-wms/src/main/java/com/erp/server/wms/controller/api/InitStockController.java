@@ -8,6 +8,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
+import com.erp.server.wms.service.InitStockService;
+import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,11 +23,12 @@ import javax.servlet.http.HttpServletResponse;
  * @CreateTime: 2023-05-08  17:43
  * @Author: zhangchunlin
  */
+@AllArgsConstructor
 @RestController
 @RequestMapping(value = "/initStock")
 public class InitStockController extends BaseController {
 
-    // TODO 加权限
+    private final InitStockService initStockService;
 
     /**
      * 分页列表
@@ -33,8 +36,8 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<InitStockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InitStockDTO.SearchParamDTO> dto) {
-        return success(null);
+    public ApiResult<PagingVO<InitStockDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<InitStockDTO.SearchParamDTO> dto) {
+        return success(initStockService.paging(dto));
     }
 
     /**
@@ -85,7 +88,7 @@ public class InitStockController extends BaseController {
      */
     @GetMapping("/view")
     public ApiResult<InitStockDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(null);
+        return success(initStockService.view(id));
     }
 
     /**

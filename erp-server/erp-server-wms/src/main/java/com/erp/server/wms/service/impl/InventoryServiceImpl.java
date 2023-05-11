@@ -49,11 +49,20 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(status);
+        String qWarehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
                 .eq(InventoryEntity::getSkuId, skuId)
-                .eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId))
                 .eq(InventoryEntity::getDictInventoryStatus, status);
+        /**
+         * 不控制库位把库位条件置位空字符串（从空库位查询）；
+         * 其他控制库位的如果传了则从指定库位出，没传则从空库位出
+         */
+        if(Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
+            qWarehouseLocationId = "";
+        }
+        queryWrapper.eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId).last("limit 1");
         InventoryEntity inventory = baseMapper.selectOne(queryWrapper);
         return inventory;
     }

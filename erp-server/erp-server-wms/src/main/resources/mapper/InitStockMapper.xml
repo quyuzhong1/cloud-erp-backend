@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.InitStockMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.InitStockEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="code" property="code" />
+        <result column="bill_date" property="billDate" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="dict_trade_type" property="dictTradeType" />
+        <result column="org_id" property="orgId" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="inventory_status" property="inventoryStatus" />
+        <result column="approve_user_name" property="approveUserName" />
+        <result column="approve_user_id" property="approveUserId" />
+        <result column="approve_time" property="approveTime" />
+        <result column="invalid_remark" property="invalidRemark" />
+        <result column="invalid_status" property="invalidStatus" />
+    </resultMap>
+    <select id="page" resultType="com.erp.model.wms.dto.inventory.InitStockDTO$ListDTO">
+            select
+            ism.id,
+            isd.id as 'detail_id',
+            ism.code,
+            isd.sku_id,
+            isd.sku_no,
+            ism.approval_status,
+            ism.invalid_status,
+            ism.org_id,
+            ism.warehouse_id,
+            isd.qty
+            from init_stock_detail isd
+            inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+            where isd.is_deleted = false
+            <if test="params.code != null and params.code != ''">
+                and ism.code = #{params.code}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                and isd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                and ism.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+                and ism.org_id in
+                <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            ism.create_time desc
+    </select>
+
+    <select id="exportList" resultType="com.erp.model.wms.dto.inventory.InitStockDTO$ListDTO">
+        select
+        ism.id,
+        isd.id as 'detail_id',
+        ism.code,
+        isd.sku_no,
+        ism.approval_status,
+        ism.org_id,
+        ism.warehouse_id,
+        isd.qty
+        from init_stock_detail isd
+        inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+        where isd.is_deleted = false
+        <if test="params.ids != null and params.ids.size != ''">
+            and ism.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and isd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            and ism.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+            and ism.org_id in
+            <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        ism.create_time desc
+    </select>
+
+</mapper>

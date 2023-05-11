@@ -125,6 +125,11 @@ public class InitStockDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
          * 期初数量
          */
         private Integer qty;

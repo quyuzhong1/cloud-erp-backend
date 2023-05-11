@@ -57,5 +57,17 @@ public class ServiceException extends RuntimeException {
         this.msg = msg;
     }
 
+    /**
+     * 统一错误码，错误描述外部传入
+     *
+     * @param
+     */
+    public ServiceException(String msg) {
+        // 加上super，否则会显示null
+        super(msg);
+        this.code = ApiError.Default.code;
+        this.msg = msg;
+    }
+
 
 }

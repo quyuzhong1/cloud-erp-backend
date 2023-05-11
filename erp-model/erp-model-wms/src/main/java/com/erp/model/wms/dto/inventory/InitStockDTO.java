@@ -17,6 +17,7 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 @Data
+@NoArgsConstructor
 public class InitStockDTO implements Serializable {
 
     /**
@@ -143,20 +144,31 @@ public class InitStockDTO implements Serializable {
     }
 
     /**
-     * 分页列表
+     * 列表
      */
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO {
+    public static class ListDTO {
         /**
-         * id
+         * 期初库存主单id
          */
         private String id;
+
+        /**
+         * 期初库存明细id
+         */
+        private String detailId;
 
         /**
          * 单据编号
          */
         private String code;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
 
         /**
          * sku编号
@@ -180,6 +192,16 @@ public class InitStockDTO implements Serializable {
         private String approveStatusName;
 
         /**
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态（0未作废，1已作废）
+         */
+        private String invalidStatusName;
+
+        /**
          * spu型号
          */
         private String spuNo;
@@ -190,6 +212,11 @@ public class InitStockDTO implements Serializable {
         private String brandName;
 
         /**
+         * 库存组织id
+         */
+        private String orgId;
+
+        /**
          * 库存组织名称
          */
         private String orgName;
@@ -197,12 +224,17 @@ public class InitStockDTO implements Serializable {
         /**
          * 销售状态编码
          */
-        private String saleStatus;
+        private Integer saleStatus;
 
         /**
          * 销售状态名称
          */
         private String saleStatusName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
         /**
          * 仓库名称
