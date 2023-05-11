@@ -1,12 +1,21 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.sys.vo.SysMenuVO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
@@ -23,6 +32,7 @@ import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -30,6 +40,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.rowset.serial.SerialException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -329,22 +341,84 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @Date 2023/4/12 11:58
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveSearchOptionDTO>
      **/
+    @Override
     public List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOption() {
         List<WorkOptionDTO.ApproveSearchOptionDTO> list = new ArrayList<>();
         String userId = commonService.getUserInfo().getUid();
         List<ApproveSearchOptionEnum> all = ApproveSearchOptionEnum.getAll();
         for (ApproveSearchOptionEnum optionEnum : all) {
-            WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
             if (optionEnum.getCode().equals(ApproveSearchOptionEnum.WAITHANDLE.getCode())) {
+                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+                //获取我的待办数量
+                List<WorkOptionDTO.Module> waitHandleCount = baseMapper.getWaitHandleCount(userId, ApproveStatusEnum.APPROVE_ING.getStatus(), optionEnum.getCode());
+                Integer quantity = waitHandleCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                //获取我的待办信息
-                List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-                List<String> collect = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
-                approveSearchOptionDTO.setQuantity(collect.size());
-
-                approveSearchOptionDTO.setModuleList(null);
+                approveSearchOptionDTO.setQuantity(quantity);
+                approveSearchOptionDTO.setModuleList(waitHandleCount);
+                list.add(approveSearchOptionDTO);
+            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.ALREADYHANDLE.getCode())) {
+                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+                //获取我的已办数量
+                List<WorkOptionDTO.Module> approveCount = baseMapper.getApproveCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
+                Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
+                approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setQuantity(quantity);
+                approveSearchOptionDTO.setModuleList(approveCount);
+                list.add(approveSearchOptionDTO);
+            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.CARBONCOPY.getCode())) {
+                //获取我的抄送我的数量
+                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+                approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setQuantity(0);
+                approveSearchOptionDTO.setModuleList(new ArrayList<>());
+                list.add(approveSearchOptionDTO);
+            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.INITIATE.getCode())) {
+                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+                //获取我的已发起数量
+                List<WorkOptionDTO.Module> createCount = baseMapper.getCreateCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
+                Integer quantity = createCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
+                approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setQuantity(quantity);
+                approveSearchOptionDTO.setModuleList(createCount);
+                list.add(approveSearchOptionDTO);
             }
         }
-        return null;
+        return list;
     }
+
+    /**
+     * 审批中心-列表
+     * @Author Luo_WG
+     * @Date 2023/5/11 15:32
+     * @param dto dto
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveViewDTO>
+     **/
+    @Override
+    public PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
+        dto.getParams().setParam(dto.getParam());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        LoginUser userInfo = commonService.getUserInfo();
+        dto.getParams().setUserId(userInfo.getUid());
+        IPage<WorkOptionDTO.ApproveViewDTO> pageData = this.baseMapper.approveView(query, dto.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
+            return new PagingVO(new Page());
+        }
+
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<WorkOptionDTO.ApproveViewDTO> records = pageData.getRecords();
+        records.forEach(req -> {
+            if (StringUtils.isNotBlank(req.getApproveDuration())) {
+                BigDecimal bigDecimal = BigDecimal.valueOf(Double.valueOf(req.getApproveDuration()));
+                String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(60), 2, BigDecimal.ROUND_DOWN));
+                req.setApproveDuration(value+" H");
+            } else {
+                req.setApproveDuration(0+" H");
+            }
+            req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
+            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserName())).findFirst().orElse(new FindUserDTO());
+            req.setCreateUserName(findUserDTO.getUserName());
+        });
+        return new PagingVO(pageData);
+    }
+
 }

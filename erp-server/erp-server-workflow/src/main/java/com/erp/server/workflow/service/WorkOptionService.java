@@ -1,6 +1,8 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
@@ -80,4 +82,21 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @return java.lang.Boolean
      **/
     Boolean delete(String id);
+
+    /**
+     * 审批中心-下拉搜索选项
+     * @Author Luo_WG
+     * @Date 2023/4/12 11:58
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveSearchOptionDTO>
+     **/
+    List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOption();
+
+    /**
+     * 审批中心-列表
+     * @Author Luo_WG
+     * @Date 2023/5/11 15:32
+     * @param dto dto
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveViewDTO>
+     **/
+    PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto);
 }

@@ -2,6 +2,7 @@ package com.erp.server.workflow.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -107,18 +108,6 @@ public class WorkOptionController extends BaseController {
     }
 
     /**
-     * 审批中心
-     * @Author Luo_WG
-     * @Date 2023/4/12 9:35
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.approveViewDTO>>
-     **/
-    @PostMapping("/approveView")
-    public ApiResult<List<WorkOptionDTO.ApproveViewDTO>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
-        List<WorkOptionDTO.ApproveViewDTO> approveViewDTO = null;
-        return success(approveViewDTO);
-    }
-
-    /**
      * 删除
      * @Author Luo_WG
      * @Date 2023/4/24 13:03
@@ -137,9 +126,21 @@ public class WorkOptionController extends BaseController {
      * @Date 2023/4/12 9:35
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.approveViewDTO>>
      **/
-    @PostMapping("/approveSearchOption")
+    @GetMapping("/approveSearchOption")
     public ApiResult<List<WorkOptionDTO.ApproveSearchOptionDTO>> approveSearchOption() {
-        List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOptionDTO = null;
+        List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOptionDTO = workOptionService.approveSearchOption();
         return success(approveSearchOptionDTO);
+    }
+
+    /**
+     * 审批中心-列表
+     * @Author Luo_WG
+     * @Date 2023/4/12 9:35
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.approveViewDTO>>
+     **/
+    @PostMapping("/approveView")
+    public ApiResult<PagingVO<List<WorkOptionDTO.ApproveViewDTO>>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
+        PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveViewDTO = workOptionService.approveView(dto);
+        return success(approveViewDTO);
     }
 }

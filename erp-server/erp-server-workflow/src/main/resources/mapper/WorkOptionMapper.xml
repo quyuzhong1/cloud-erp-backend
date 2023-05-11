@@ -81,4 +81,78 @@
         ORDER BY wm.sys_classify,wm.id
     </select>
 
+    <select id="getWaitHandleCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
+        SELECT
+        count(*) AS quantity,
+        wm.sys_classify
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        WHERE 1 = 1
+        AND pm.approve_status = #{approveStatus}
+        AND ptm.cur_approve_id = #{userId}
+        GROUP BY wm.sys_classify
+    </select>
+
+    <select id="getApproveCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
+        SELECT
+        count(*) AS quantity,
+        wm.sys_classify
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        WHERE 1 = 1
+        AND (pm.approve_status = #{approveStatus} OR pm.approve_status = 'reject')
+        AND ptm.cur_approve_id = #{userId}
+        AND wm.sys_classify = #{sysClassify}
+        GROUP BY wm.sys_classify
+    </select>
+
+    <select id="getCreateCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
+        SELECT
+        count(*) AS quantity,
+        wm.sys_classify
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        WHERE 1 = 1
+        AND ptm.create_user_id = #{userId}
+        AND wm.sys_classify = #{sysClassify}
+        GROUP BY wm.sys_classify
+    </select>
+
+    <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
+        SELECT
+            wm.module_classify AS source,
+            pm.business_code AS sourceCode,
+            pm.business_key,
+            pm.create_user_id,
+            EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,
+            pm.create_time,
+            pm.approve_status
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        WHERE 1 = 1
+        <if test="params.status == 'waitHandle'">
+            AND pm.approve_status = 'approveIng'
+            AND ptm.cur_approve_id = #{params.userId}
+        </if>
+        <if test="params.status == 'alreadyHandle'">
+            AND pm.approve_status = 'approve'
+            AND ptm.cur_approve_id = #{params.userId}
+        </if>
+        <if test="params.status == 'carbonCopy'">
+            <![CDATA[
+                AND 1 <> 1
+            ]]>
+        </if>
+        <if test="params.status == 'initiate'">
+            AND ptm.cur_approve_id = #{params.userId}
+        </if>
+        <if test="params.sysClassify != '' and  params.sysClassify != null">
+            AND wm.sys_classify = #{params.sysClassify}
+        </if>
+    </select>
+
 </mapper>
