@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -78,29 +78,25 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("delivery_org_name")
     private String deliveryOrgName;
 
-    /**
-     * 要货日期
-     */
-    @TableField("require_date")
-    private Date requireDate;
+
 
     /**
      * 预计发货日期
      */
     @TableField("plan_delivery_date")
-    private Date planDeliveryDate;
+    private LocalDate planDeliveryDate;
 
     /**
      * 打包日期
      */
     @TableField("pack_date")
-    private Date packDate;
+    private LocalDate packDate;
 
     /**
      * 实际发货日期
      */
     @TableField("actual_delivery_date")
-    private Date actualDeliveryDate;
+    private LocalDate actualDeliveryDate;
 
     /**
      * 运输单号
@@ -124,7 +120,7 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      * 客户id
      */
     @TableField("consumer_id ")
-    private String consumerId ;
+    private String consumerId;
 
     /**
      * 客户

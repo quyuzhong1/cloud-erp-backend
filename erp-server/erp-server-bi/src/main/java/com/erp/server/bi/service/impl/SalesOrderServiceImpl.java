@@ -77,7 +77,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //去年
         dto.setStartTime(LocalDateUtil.getLastYearStart(now));
         dto.setEndTime(LocalDateUtil.getLastYearEnd(now));
-        List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate);
+        List<SalesFlagVO> lastYearList = baseMapper.getMonthSales(dto, timeFlag, settleRate);
 
         int initSize = 12;
         List<String> xAxisList = new ArrayList<>(initSize);

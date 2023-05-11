@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -79,7 +78,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDate> createTimeList;
+        private List<LocalDateTime> createTimeList;
 
     }
 
@@ -578,5 +577,12 @@ public class CustomerDTO implements Serializable {
          * 销售员信息
          */
         private List<SellerDTO.ViewDTO> sellerList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO  extends PagingParamDTO{
+
+        private List<String> ids;
     }
 }

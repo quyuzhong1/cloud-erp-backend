@@ -94,8 +94,8 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     /**
      * 银行手续费
      */
-    @TableField(" bank_service_fee")
-    private BigDecimal  bankServiceFee;
+    @TableField("bank_service_fee")
+    private BigDecimal bankServiceFee;
 
     /**
      * 运费
@@ -124,7 +124,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     /**
      * 收货地址
      */
-    @TableField("receive_address")
+    @TableField("receiver_address")
     private String receiveAddress;
 
     /**
