@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +7,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,7 +51,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 首批下单时间
      */
-    private LocalDateTime placeOrderTime;
+    private LocalDate placeOrderTime;
 
     /**
      * 预计首批到货时间
