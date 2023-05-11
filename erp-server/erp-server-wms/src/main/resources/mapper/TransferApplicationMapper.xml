@@ -233,6 +233,7 @@
             ta.code,
             tad.id as sourceDetailId,
             ta.transfer_direction as transferDirection,
+            tad.sku_id as skuId,
             tad.sku_no as skuNo,
             tad.qty as qty,
             ta.bill_date as billDate,

@@ -360,6 +360,11 @@ public class TransferApplicationDTO implements Serializable {
         private String transferDirectionName;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * SKU
          */
         private String skuNo;
