@@ -25,7 +25,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean saveOrUpdateDict(List<DictBasicDTO> dto);
+    Boolean saveOrUpdateDict(List<DictBasicDTO.ListDTO> dto);
 
     /**
      * 根据key 获取字典数据
@@ -34,7 +34,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
      */
-    List<DictBasicDTO> getByKey(String key);
+    List<DictBasicDTO.ListDTO> getByKey(String key);
 
     
     /**
@@ -45,4 +45,13 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return java.util.List<com.erp.model.scm.entity.DictBasicEntity>
      */
     List<DictBasicEntity> getByKeyList(List<String> keyList);
+    /**
+     * @description: 下拉列表
+     * @author Will
+     * @date: 2023/5/11 11:52
+     * @param type
+     * @param remark
+     * @return List<DropDownDTO>
+     */
+    List<DictBasicDTO.DropDownDTO> listByType(String type, String remark);
 }

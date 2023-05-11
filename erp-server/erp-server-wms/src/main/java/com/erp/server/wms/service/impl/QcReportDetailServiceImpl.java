@@ -258,7 +258,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     @Override
     public void exportReportByMainId(String mainId, HttpServletResponse response) {
         List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(mainId);
-        List<DictBasicDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
         List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list, ExportQcReportExcelDTO.class);
         for (ExportQcReportExcelDTO item : resultList) {
             String resultDict = item.getResultDict();

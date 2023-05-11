@@ -29,7 +29,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
 
     private WarehouseService warehouseService;
 
-    private List<DictBasicDTO> dictBasicList;
+    private List<DictBasicDTO.ListDTO> dictBasicList;
 
     private List<FindUserDTO> userList;
 
@@ -46,7 +46,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     private List<WarehouseExcelDTO> errorList = new ArrayList<>();
 
 
-    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO> orgList, List<WarehouseEntity> existList) {
+    public WarehouseExcelListener(WarehouseService warehouseService, List<DictBasicDTO.ListDTO> dictBasicList, List<FindUserDTO> userList, List<BaseIdDTO> orgList, List<WarehouseEntity> existList) {
         this.warehouseService = warehouseService;
         this.dictBasicList = dictBasicList;
         this.userList = userList;

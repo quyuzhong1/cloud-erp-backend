@@ -475,6 +475,16 @@ public enum ApiError implements Serializable {
     ERROR_99040(99040,"库存交易流水不存在或已经反审核，无法反审核"),
     ERROR_99041(99041,"【%s】下推的数量合计不能大于收货数量"),
     ERROR_99042(99042,"已下推质检单，不能反审核"),
+    ERROR_99043(99043,"未找到调拨申请单"),
+
+
+
+
+
+
+
+
+
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

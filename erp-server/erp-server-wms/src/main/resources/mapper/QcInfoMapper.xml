@@ -438,7 +438,10 @@
                qi.warehouse_id
         from qc_info qi
         left join qc_result qr on qi.id = qr.main_id and qr.is_deleted = false
-        where qi.is_deleted and qr.purchase_order_detail_id = #{podIds}
+        where qi.is_deleted and qr.purchase_order_detail_id in
+        <foreach collection="podIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
     </select>
 
 </mapper>

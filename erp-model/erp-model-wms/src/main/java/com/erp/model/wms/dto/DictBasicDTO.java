@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.erp.model.wms.entity.DictBasicEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,38 +17,54 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class DictBasicDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO{
+        /**
+         * 表id
+         */
+        private String id;
+
+        /**
+         * remark
+         */
+        private String remark;
+
+        /**
+         * value 使用值
+         */
+        private String value;
+
+        /**
+         * type 属性
+         * 查询依据
+         */
+        private String type;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 序号
+         */
+        private Integer sort;
+    }
 
     /**
-     * 表id
+     * 下拉列表返回值
      */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO{
+        private String code;
 
+        private String name;
 
-
-
-    /**
-     * remark
-     */
-    private String remark;
-
-    /**
-     * value 使用值
-     */
-    private String value;
-
-    /**
-     * type 属性
-     * 查询依据
-     */
-    private String type;
-
-    /**
-     * 名称
-     */
-    private String name;
-
-    /**
-     * 序号
-     */
-    private Integer sort;
+        public DropDownDTO(DictBasicEntity entity) {
+            this.code = entity.getValue();
+            this.name = entity.getName();
+        }
+    }
 }
