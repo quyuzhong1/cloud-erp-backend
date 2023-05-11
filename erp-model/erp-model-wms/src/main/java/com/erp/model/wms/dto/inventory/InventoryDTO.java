@@ -296,11 +296,6 @@ public class InventoryDTO {
         private String warehouseLocation;
 
         /**
-         * 仓位名称
-         */
-        private String warehouseLocationName;
-
-        /**
          * 仓库id
          */
         private String warehouseId;

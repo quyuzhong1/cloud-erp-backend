@@ -9,14 +9,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.config.InventoryHelper;
-import com.erp.server.wms.service.InventoryDetailService;
-import com.erp.server.wms.service.InventoryHisService;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.TransactionFlowService;
+import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.base.Stopwatch;
 import lombok.SneakyThrows;
@@ -60,6 +58,9 @@ public abstract class AbstractInventoryServiceImpl {
 
     @Autowired
     public InventoryHelper inventoryHelper;
+
+    @Autowired
+    private WarehouseService warehouseService;
 
     /**
      *
@@ -382,9 +383,14 @@ public abstract class AbstractInventoryServiceImpl {
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             InventoryEntity inventory = inventoryService.findInventory(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
             if(Objects.isNull(inventory)) {
                 log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，无法出库", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
-                throw new ServiceException(ApiError.ERROR_99035);
+                if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName()));
+                } else {
+                    throw new ServiceException("仓库库存数量不足");
+                }
             }
             Integer originQty = inventory.getQty();
             log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty);

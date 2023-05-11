@@ -246,6 +246,11 @@ public class InitStockDTO implements Serializable {
          */
         private Integer qty;
 
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
     }
 
     /**

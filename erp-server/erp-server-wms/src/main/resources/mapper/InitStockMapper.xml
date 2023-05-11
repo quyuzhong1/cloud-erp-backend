@@ -83,7 +83,8 @@
         ism.approval_status,
         ism.org_id,
         ism.warehouse_id,
-        isd.qty
+        isd.qty,
+        isd.warehouse_location
         from init_stock_detail isd
         inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
         where isd.is_deleted = false

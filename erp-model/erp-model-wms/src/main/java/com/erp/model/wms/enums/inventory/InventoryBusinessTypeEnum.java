@@ -25,7 +25,7 @@ public enum InventoryBusinessTypeEnum {
     PO_RETURN_REF("po_return_ref", "05","采购退货（退货退款）"),
 
     INVENTOR_ALLOCATE("inventory_allocate", "06","调拨申请单"),
-    DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单"),
+    DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单（新增）"),
 
     STEP_INVENTORY_OUT("step_inventory_out", "08","分步式调拨调出"),
     STEP_INVENTORY_IN("step_inventory_in", "09","分步式调拨调入"),
@@ -54,6 +54,8 @@ public enum InventoryBusinessTypeEnum {
     DISASSEMBLE_IN_CHILD("disassemble_in_child", "24","加工单拆卸（子SKU增加）"),
 
     PURCHASE_ORDER_FINISH("purchase_order_finish", "25","采购订单结束交货"),
+
+    DIRECT_ALLOCATE_APPLY("direct_allocate_apply", "26","直接调拨单（调拨申请单下推）"),
     ;
 
     private String code;

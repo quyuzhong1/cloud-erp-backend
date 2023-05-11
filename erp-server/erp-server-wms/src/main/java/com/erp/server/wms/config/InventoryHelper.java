@@ -154,19 +154,27 @@ public class InventoryHelper {
         // 操作数量
         Integer qty = param.getQty();
         // 来源
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
         InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         InventoryEntity inventory = inventoryService.findInventoryLock(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
-
-        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
-        if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-            ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName())));
-        } else {
-            ValidatorUtil.isTrue(Objects.nonNull(inventory),()->new ServiceException("仓库库存数量不足"));
+        if(Objects.isNull(inventory)) {
+            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 出库时未找到库存数据", warehouseId, orgId, warehouseLocationId,skuId, skuNo);
+            if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName()));
+            } else {
+                throw new ServiceException("仓库库存数量不足");
+            }
         }
         Integer inventoryQty = inventory.getQty();
         log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，操作数量：【{}】，库存状态对应的总数量：【{}】", warehouseId, orgId, warehouseLocationId,skuId, skuNo, sourceTypeEnum.getName(),
                 businessType.getName(), status.getName(), qty, inventoryQty);
-        ValidatorUtil.isTrue(inventoryQty >= qty,()->new ServiceException(ApiError.ERROR_99035));
+        if(inventoryQty < qty) {
+            if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName()));
+            } else {
+                throw new ServiceException("仓库库存数量不足");
+            }
+        }
     }
 
     /**

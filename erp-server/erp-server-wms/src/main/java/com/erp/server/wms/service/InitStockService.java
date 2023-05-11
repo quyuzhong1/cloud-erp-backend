@@ -7,6 +7,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.entity.InitStockEntity;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 期初库存表 服务类
@@ -36,6 +38,6 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      * 导出Excel
      * @param param
      */
-    void exportExcel(InitStockDTO.SearchParamDTO param);
+    void exportExcel(InitStockDTO.ExportSearchParamDTO param, HttpServletResponse response);
 
 }

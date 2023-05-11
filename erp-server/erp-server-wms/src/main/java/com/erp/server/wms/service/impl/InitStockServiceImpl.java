@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -16,11 +18,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.InitStockExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 import com.erp.model.wms.entity.InitStockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InitStockMapper;
@@ -34,6 +36,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -122,12 +125,19 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     }
 
     @Override
-    public void exportExcel(InitStockDTO.SearchParamDTO param) {
+    public void exportExcel(InitStockDTO.ExportSearchParamDTO param, HttpServletResponse response) {
         List<InitStockDTO.ListDTO> list = this.baseMapper.exportList(param);
         if(CollUtil.isEmpty(list)) {
             return;
         }
         filling(list);
+        List<InitStockExportExcelDTO> resultList = BeanMapperUtils.copyList(InitStockExportExcelDTO.class, list);
+        String fileName = "期初库存数据";
+        try {
+            ExcelUtil.export(fileName, "期初库存数据", resultList, InitStockExportExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     public void filling(List<InitStockDTO.ListDTO> list) {

@@ -80,7 +80,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setWarehouseName(warehouse.getName());
         transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
         // TODO 暂时还没有库位表
-        transactionFlowEntity.setWarehouseLocationName("");
         transactionFlowEntity.setDictInventoryStatus(param.getDictInventoryStatus());
         // 批次日期取库存明细表上关联的日期
         transactionFlowEntity.setInstockBatchDate(param.getInstockBatchDate());

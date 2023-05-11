@@ -92,6 +92,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
              * 其他控制库位的如果传了则从指定库位出，没传则从空库位出
              */
             if(Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
+                log.info("库存状态：【{}】不控制库位", inventoryStatus.getName());
                 qWarehouseLocationId = "";
             }
             queryWrapper.eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId).last("limit 1");

@@ -16,20 +16,20 @@ import java.util.Objects;
 @NoArgsConstructor
 public enum InventorySourceTypeEnum {
 
-    INVENTORY_INIT("inventoryInit", "期初库存"),
+    INIT_STOCK("initStock", "期初库存"),
     WAREHOUSE_RECEIVE("warehouseReceive", "采购签收单（收货单）"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
-    TRANSFER_APPLY("transferApply", "调拨申请单"),
-    DIRECT_TRANSFER("directTransfer", "直接调拨单"),
-    STEP_TRANSFER_OUT("stepTransferOut", "分步式调出单"),
-    STEP_TRANSFER_IN("stepTransferIn", "分步式调入单"),
-    SHIP_NOTICE("shipNotice", "发货通知单"),
-    SALES_DELIVERY_ORDER("sales_delivery_order", "销售出库单"),
-    SALES_RETURN_RECEIPT("sales_return_receipt", "销售退货入库单"),
-    MACHINE("machine", "加工单"),
-    OTHER_IN_RECEIPT("other_in_receipt", "其他入库单"),
-    OTHER_OUT_RECEIPT("other_out_receipt", "其他出库单"),
+    TRANSFER_APPLY("transferApplication", "调拨申请单"),
+    TRANSFER_INFO("transferInfo", "直接调拨单"),
+    TRANSFER_OUT("transferOut", "分步式调出单"),
+    TRANSFER_IN("transferIn", "分步式调入单"),
+    SO_DELIVERY_NOTICE("soDeliveryNotice", "发货通知单"),
+    PURCHASE_STOCK_OUT("purchaseStockOut", "销售出库单"),
+    SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单"),
+    MACHINE_INFO("machine_info", "加工单"),
+    OTHER_INSTOCK("other_instock", "其他入库单"),
+    OTHER_OUTSTOCK("other_outstock", "其他出库单"),
     INSTOCK_FORCAST("instock_forcast", "入库预报"),
 
     ;
