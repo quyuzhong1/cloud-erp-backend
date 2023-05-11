@@ -232,9 +232,17 @@
             ta.id as sourceId,
             ta.code,
             tad.id as sourceDetailId,
-            ta.transfer_direction as transferDirection
+            ta.transfer_direction as transferDirection,
+            tad.sku_no as skuNo,
+            tad.qty as qty,
+            ta.bill_date as billDate,
+            ta.out_warehouse_id as outWarehouseId,
+            ta.out_warehouse_name as outWarehouseName,
+            ta.in_warehouse_id as inWarehouseId,
+            ta.in_warehouse_name as inWarehouseName,
+            tad.remark as remark
         from transfer_application ta
-        left join transfer_application_detail tad on ta.id = tad.main_id and ta.is_deleted = false
+        inner join transfer_application_detail tad on ta.id = tad.main_id and ta.is_deleted = false
         <where>
             ta.is_deleted = false and ta.id in
             <foreach collection="ids" item="item" open="(" close=")" separator=",">

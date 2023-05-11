@@ -385,9 +385,19 @@ public class TransferApplicationDTO implements Serializable {
         private String   outWarehouseId;
 
         /**
+         * 调出仓库名称
+         */
+        private String   outWarehouseName;
+
+        /**
          * 调入仓库id
          */
         private String  inWarehouseId;
+
+        /**
+         * 调入仓库名称
+         */
+        private String   inWarehouseName;
 
         /**
          * 备注
