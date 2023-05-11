@@ -174,7 +174,7 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
      * 作废状态
      */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
 
     /**
      * 作废描述

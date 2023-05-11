@@ -46,7 +46,7 @@ public class SoReturnReceiveDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 客户id
          */
@@ -102,7 +102,7 @@ public class SoReturnReceiveDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 作废状态名称
          */
@@ -326,7 +326,7 @@ public class SoReturnReceiveDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 作废描述
          */

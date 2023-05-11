@@ -132,7 +132,7 @@ public class SoReturnReceiveEntity extends BaseEntity<SoReturnReceiveEntity> {
      * 作废状态
      */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
 
     /**
      * 作废描述

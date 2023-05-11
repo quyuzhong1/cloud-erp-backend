@@ -3,6 +3,8 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SoDetailEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 销售订单详情 服务类
@@ -12,5 +14,12 @@ import com.erp.model.oms.entity.SoDetailEntity;
  * @since 2023-05-10
  */
 public interface SoDetailService extends SuperService<SoDetailEntity> {
-
+    /**
+     * 根据退货单详情表id查询退货单
+     * @Author Luo_WG
+     * @Date 2023/5/11 18:16
+     * @param detailIds
+     * @return java.util.List<com.erp.model.oms.entity.SoInfoEntity>
+     **/
+    List<SoDetailEntity> listSoDetailByIds(List<String> detailIds);
 }

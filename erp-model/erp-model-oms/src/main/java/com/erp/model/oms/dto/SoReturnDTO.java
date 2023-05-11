@@ -47,7 +47,7 @@ public class SoReturnDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 客户id
          */
@@ -73,6 +73,10 @@ public class SoReturnDTO {
     @NoArgsConstructor
     public static class PagingView {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -80,6 +84,14 @@ public class SoReturnDTO {
          * 退货订单号
          */
         private String code;
+        /**
+         * 销售单id
+         */
+        private String sourceId;
+        /**
+         * 销售单详情表id
+         */
+        private String sourceDetailId;
         /**
          * 销售单号
          */
@@ -99,7 +111,7 @@ public class SoReturnDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 作废状态名称
          */
@@ -116,6 +128,10 @@ public class SoReturnDTO {
          * 销售员
          */
         private String sellerName;
+        /**
+         * skuId
+         */
+        private String skuId;
         /**
          * SKU
          */
@@ -396,7 +412,7 @@ public class SoReturnDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 作废描述
          */

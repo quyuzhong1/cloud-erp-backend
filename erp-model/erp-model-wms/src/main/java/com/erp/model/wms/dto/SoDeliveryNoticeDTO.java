@@ -56,7 +56,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 销售员id
          */
@@ -108,7 +108,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 作废状态名称
          */
@@ -420,7 +420,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 作废状态
          */
-        private String invalidStatus;
+        private Boolean invalidStatus;
         /**
          * 作废描述
          */
