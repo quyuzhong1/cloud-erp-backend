@@ -100,4 +100,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateStockInView(List<String> ids) {
         return null;
     }
+
+    @Override
+    public Boolean generateSoDeliverySave(List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> list) {
+        return null;
+    }
 }

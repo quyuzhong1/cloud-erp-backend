@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
+import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.SoReturnInstockService;
@@ -90,6 +91,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public Boolean exportExcel(SoReturnInstockDTO.PagingParam dto, HttpServletResponse response) {
+        return null;
+    }
+
+    @Override
+    public Boolean generateSoReturnReceiveSave(List<SoReturnReceiveDTO.GenerateSoReturnInstockView> list) {
         return null;
     }
 }

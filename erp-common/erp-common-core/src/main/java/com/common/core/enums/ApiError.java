@@ -136,6 +136,7 @@ public enum ApiError implements Serializable {
     PROCESS_ACTIVITY_ID_NOT_NULL(94020,"节点id不能为空"),
     // 当前任务无法驳回
     PROCESS_TASK_NOT_REJECT(94021,"当前任务无法驳回"),
+    ERROR_940022(94022,"模块已存在请不要重复操作"),
 
 
 

@@ -3,6 +3,8 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -20,12 +22,14 @@ import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkMenuService;
 import com.erp.server.workflow.service.WorkOptionService;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.sql.rowset.serial.SerialException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -139,6 +143,19 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public Boolean addWaitDo(WorkOptionDTO.AddDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
+        if (dto.getType().equals("1")) {
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
+            List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
+                throw new ServiceException(ApiError.ERROR_940022);
+            }
+        } else {
+            List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+            List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
+                throw new ServiceException(ApiError.ERROR_940022);
+            }
+        }
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
         workOptionEntity.setOptionUserId(userInfo.getUid());
         workOptionEntity.setOptionUserMame(userInfo.getUserName());
@@ -159,6 +176,20 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public Boolean updateWaitDo(WorkOptionDTO.UpdateDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
+        WorkOptionEntity byId = this.getById(dto.getId());
+        if (byId.getType().equals("1")) {
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
+            List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
+                throw new ServiceException(ApiError.ERROR_940022);
+            }
+        } else {
+            List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+            List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)) {
+                throw new ServiceException(ApiError.ERROR_940022);
+            }
+        }
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
         workOptionEntity.setOptionUserId(userInfo.getUid());
         workOptionEntity.setOptionUserMame(userInfo.getUserName());
