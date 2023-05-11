@@ -216,6 +216,21 @@ public enum RocketMqTagEnum {
      */
     PRODUCT_LISTING_UPDATE_TAG(36, RocketMqTagEnum.SKU_INFO,"product_listing_update_tag"),
 
+    /**
+     * 同步产品sku到中台wms仓储系统
+     */
+    SYNC_WMS_PRODUCT_SKU_TAG(37,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_sku_tag"),
+
+    /**
+     * 同步产品sku销售信息到wms仓储系统
+     */
+    SYNC_WMS_PRODUCT_SKU_SALE_TAG(38,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_sku_sale_tag"),
+
+    /**
+     * 同步产品信息到wms仓储系统
+     */
+    SYNC_WMS_PRODUCT_INFO_TAG(39,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_info_tag"),
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -232,6 +247,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_DMP = "sync_dmp";
 
     public static final String MSG_NOTICE = "msg_notice";
+
+    public static final String SYNC_WMS = "sync_wms";
 
     private Integer code;
 

@@ -1,6 +1,7 @@
 package com.erp.server.plm.schedule;
 
 import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
+import com.erp.server.plm.rocketmq.sync.wms.WmsSyncProductService;
 import com.erp.server.plm.service.NoticeMessageService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,9 @@ public class PlmJob {
     @Autowired
     private SyncProductService syncProductService;
 
+    @Autowired
+    private WmsSyncProductService wmsSyncProductService;
+
 
     /**
      * 生成发送任务预警通知 每天17:00
@@ -52,6 +56,10 @@ public class PlmJob {
     @XxlJob("productSkuSyncDmp")
     public void productSkuSyncDmp() {
         syncProductService.syncProductSkuToDmp();
+        wmsSyncProductService.syncProductInfoToDmp();
+        wmsSyncProductService.syncProductSkuToWms();
+        wmsSyncProductService.syncProductSkuSaleToWms();
+
     }
 
     /**

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.pull.mapper.ProductInfoMapper">
+
+    <select id="getProductInfoAll" resultType="com.erp.model.plm.entity.ProductInfoEntity">
+        SELECT
+            id,
+            name,
+            category,
+            property,
+            charge_name,
+            charge_id,
+            grade,
+            brand_name,
+            approval_status,
+            sys_field,
+            property_id,
+            brand_id,
+            category_id,
+            create_time,
+            update_time,
+            type,
+            delete_state,
+            spu_no,
+            sell_spot,
+            function_desc,
+            usage_desc,
+            pirate_risk,
+            materials,
+            spec_type,
+            sale_method,
+            relevance_product_id,
+            grade_id,
+            create_user_id,
+            create_user_name,
+            update_user_id,
+            update_user_name,
+            is_finished_product_dev,
+            approval_time,
+            product_version,
+            entrusted_develop_cost,
+            mold_cost,
+            sample_fee,
+            is_customized,
+            sales_channel,
+            name_en,
+            image_url,
+            progress_status,
+            project_charge_id,
+            template_id,
+            is_deleted,
+            version
+        FROM product_info
+    </select>
+
+</mapper>

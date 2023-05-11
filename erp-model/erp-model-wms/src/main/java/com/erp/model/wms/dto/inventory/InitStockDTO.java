@@ -284,7 +284,7 @@ public class InitStockDTO implements Serializable {
         /**
          * 销售状态集合
          */
-        private List<String> saleStatusList;
+        private List<Integer> saleStatusList;
 
         /**
          * 库存组织集合
@@ -329,7 +329,7 @@ public class InitStockDTO implements Serializable {
         /**
          * 销售状态集合
          */
-        private List<String> saleStatusList;
+        private List<Integer> saleStatusList;
 
         /**
          * 库存组织集合

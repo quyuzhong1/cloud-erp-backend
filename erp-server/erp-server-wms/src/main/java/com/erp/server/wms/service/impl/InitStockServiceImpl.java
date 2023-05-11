@@ -69,7 +69,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         // 分页查询数据
-        // TODO SPU和销售状态表里没有固化，需要通过远程调用获取，性能差
         IPage<InitStockDTO.ListDTO> pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());

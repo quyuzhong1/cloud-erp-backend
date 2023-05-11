@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.pull.mapper.ProductDetailMapper">
+    <select id="getProductDetailById" resultType="com.erp.model.plm.entity.ProductDetailEntity">
+        SELECT
+        id,
+        product_id,
+        sku_no,
+        name,
+        variant_property,
+        plan_listing_time,
+        unit_id,
+        product_state,
+        create_time,
+        create_user_id,
+        update_time,
+        update_user_id,
+        images_url,
+        unit_name,
+        charge_id,
+        charge_name,
+        create_user_name,
+        update_user_name,
+        status,
+        process_id,
+        business_process_id,
+        is_change,
+        first_mass_product_date,
+        sync_kingdee_status,
+        sync_kingdee_time,
+        version,
+        is_deleted,
+        sync_kingdee_id
+        FROM product_detail
+        WHERE id = #{id}
+    </select>
+
+</mapper>

@@ -29,17 +29,22 @@
     <select id="page" resultType="com.erp.model.wms.dto.inventory.InitStockDTO$ListDTO">
             select
             ism.id,
-            isd.id as 'detail_id',
+            isd.id as detailId,
             ism.code,
             isd.sku_id,
             isd.sku_no,
-            ism.approval_status,
+            ism.approve_status,
             ism.invalid_status,
             ism.org_id,
             ism.warehouse_id,
-            isd.qty
+            isd.qty,
+            pi.spu_no,
+            ps.sale_state
             from init_stock_detail isd
             inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+            left join product_detail pd on pd.id = isd.sku_id
+            left join product_info pi on pd.product_id = pi.id
+            left join product_sale ps on ps.sku_id = pd.id
             where isd.is_deleted = false
             <if test="params.code != null and params.code != ''">
                 and ism.code = #{params.code}
@@ -47,6 +52,18 @@
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                 and isd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                and pi.spu_no in
+                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                and ps.sale_state in
+                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -77,16 +94,22 @@
     <select id="exportList" resultType="com.erp.model.wms.dto.inventory.InitStockDTO$ListDTO">
         select
         ism.id,
-        isd.id as 'detail_id',
+        isd.id as detailId,
         ism.code,
+        isd.sku_id,
         isd.sku_no,
-        ism.approval_status,
+        ism.approve_status,
+        ism.invalid_status,
         ism.org_id,
         ism.warehouse_id,
         isd.qty,
-        isd.warehouse_location
+        pi.spu_no,
+        ps.sale_state
         from init_stock_detail isd
         inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+        left join product_detail pd on pd.id = isd.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        left join product_sale ps on ps.sku_id = pd.id
         where isd.is_deleted = false
         <if test="params.ids != null and params.ids.size != ''">
             and ism.id in
@@ -97,6 +120,18 @@
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and isd.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            and pi.spu_no in
+            <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            and ps.sale_state in
+            <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
