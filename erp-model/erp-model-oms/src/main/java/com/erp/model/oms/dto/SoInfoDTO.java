@@ -217,7 +217,7 @@ public class SoInfoDTO implements Serializable {
         private List<String> skuNoList;
 
         /**
-         * code 集合
+         * code
          */
         private String code;
 
@@ -227,7 +227,7 @@ public class SoInfoDTO implements Serializable {
         private String type;
 
         /**
-         * 审核列表集合
+         * 审核状态集合
          */
         private List<String> approveStatusList;
 
@@ -381,6 +381,18 @@ public class SoInfoDTO implements Serializable {
          * id
          */
         private String id;
+
+
+        /**
+         * code
+         */
+        private String code;
+
+
+        /**
+         * 审核状态code
+         */
+        private ApproveStatusEnum approveStatus;
         /**
          * 类型
          */
