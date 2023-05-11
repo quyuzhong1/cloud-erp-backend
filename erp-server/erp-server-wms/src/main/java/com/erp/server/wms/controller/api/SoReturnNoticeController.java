@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 退货通知单
+ * 销售退货通知单
  * @author LUO_WG
  * @since 2023-05-10
  */
