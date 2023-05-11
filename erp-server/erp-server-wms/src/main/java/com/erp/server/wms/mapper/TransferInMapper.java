@@ -1,7 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.DistributionInEntity;
+import com.erp.model.wms.entity.TransferInEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-05-10
  */
 @Mapper
-public interface DistributionInMapper extends BaseMapper<DistributionInEntity> {
+public interface TransferInMapper extends BaseMapper<TransferInEntity> {
 
 }

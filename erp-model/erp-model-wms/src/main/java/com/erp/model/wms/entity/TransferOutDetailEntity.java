@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("distribution_out_detail")
-public class DistributionOutDetailEntity extends BaseEntity<DistributionOutDetailEntity> {
+@TableName("transfer_out_detail")
+public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity> {
 
     /**
      * 主表id

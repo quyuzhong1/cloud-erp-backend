@@ -8,14 +8,14 @@ import com.common.core.controller.BaseController;
 
 /**
  * <p>
- * 分布式调入单 前端控制器
+ * 分布式调出单 前端控制器
  * </p>
  *
  * @author lambda
  * @since 2023-05-10
  */
 @RestController
-@RequestMapping("/distribution-in-detail-entity")
-public class DistributionInDetailController extends BaseController {
+@RequestMapping("/distribution-out-entity")
+public class TransferOutController extends BaseController {
 
 }

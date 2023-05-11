@@ -12,7 +12,7 @@ import java.util.Date;
 
 /**
  * <p>
- * 分布式调入单
+ * 分布式调出单
  * </p>
  *
  * @author lambda
@@ -21,8 +21,8 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("distribution_in")
-public class DistributionInEntity extends BaseEntity<DistributionInEntity> {
+@TableName("transfer_out")
+public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
 
     /**
      * 单号
@@ -43,7 +43,7 @@ public class DistributionInEntity extends BaseEntity<DistributionInEntity> {
     private String type;
 
     /**
-     * 调入日期
+     * 调出日期
      */
     @TableField("bill_date")
     private Date billDate;
@@ -102,18 +102,6 @@ public class DistributionInEntity extends BaseEntity<DistributionInEntity> {
     @TableField("invalid_status")
     private Boolean invalidStatus;
 
-    /**
-     * 来源id
-     */
-    @TableField("source_id")
-    private String sourceId;
-
-    /**
-     * 来源类型
-     */
-    @TableField("source_type")
-    private String sourceType;
-
 
     public static final String CODE = "code";
 
@@ -140,10 +128,6 @@ public class DistributionInEntity extends BaseEntity<DistributionInEntity> {
     public static final String REMARK = "remark";
 
     public static final String INVALID_STATUS = "invalid_status";
-
-    public static final String SOURCE_ID = "source_id";
-
-    public static final String SOURCE_TYPE = "source_type";
 
     @Override
     public Serializable pkVal() {
