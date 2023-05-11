@@ -30,17 +30,17 @@ public class TransferInfoDTO implements Serializable {
          */
         private String  id;
         /**
-         * 入库单号
+         * 调拨单号
          */
         private String  code;
         /**
-         * 库存方向
+         * 调拨方向
          */
-        private String   inventoryDirection;
+        private String   transferDirection;
         /**
-         * 库存方向名称
+         * 调拨方向名称
          */
-        private String   inventoryDirectionName;
+        private String   transferDirectionName;
         /**
          * 状态
          */
@@ -58,6 +58,10 @@ public class TransferInfoDTO implements Serializable {
          */
         private String invalidStatusName;
         /**
+         * skuId
+         */
+        private String  skuId;
+        /**
          * sku编码
          */
         private String  skuNo;
@@ -70,25 +74,29 @@ public class TransferInfoDTO implements Serializable {
          */
         private LocalDate billDate;
         /**
-         * 应收数量
+         * 数量
          */
-        private Integer planQty;
-        /**
-         * 实收数量
-         */
-        private Integer actualQty;
+        private Integer qty;
         /**
          * 单位
          */
         private String  unit;
         /**
-         * 收货仓库名称
+         * 调入仓库名称
          */
-        private String    warehouseName;
+        private String   inWarehouseName;
+        /**
+         * 调出仓库名称
+         */
+        private String   outWarehouseName;
+        /**
+         * 备注
+         */
+        private String  remark;
         /**
          * 审核人名称
          */
-        private String    approveUserName;
+        private String   approveUserName;
         /**
          * 创建人名称
          */
@@ -113,7 +121,7 @@ public class TransferInfoDTO implements Serializable {
          */
         private String  searchType;
         /**
-         * 其他入库编号
+         * 调拨单编号
          */
         private String  code;
         /**
@@ -129,15 +137,15 @@ public class TransferInfoDTO implements Serializable {
          */
         private Boolean  invalidStatus;
         /**
-         * 库存方向
+         * 调拨方向
          */
-        private List<String>   inventoryDirection;
+        private List<String>   transferDirection;
         /**
-         * 入库日期集合
+         * 调拨日期集合
          */
         private List<LocalDate>  billDateList;
         /**
-         * 入库仓库id集合
+         * 调入仓库id集合
          */
         private List<String>  inWarehouseIdList;
         /**

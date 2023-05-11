@@ -33,7 +33,7 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
-    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO> dto) {
+    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.ListDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
         return result == true ? success() : failure();
     }
@@ -49,9 +49,22 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<DictBasicDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO> list = dictBasicService.getByKey(key);
+    public ApiResult<List<DictBasicDTO.ListDTO>> list(@RequestParam("key") String key) {
+        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey(key);
         return success(list);
+    }
+
+
+    /**
+     * 字典通用下拉列表
+     * @param type transferType 调拨类型，transferDirection 调拨方向
+     * @param remark 备注
+     * @return
+     */
+    @GetMapping("/drop/down")
+    public ApiResult<List<DictBasicDTO.DropDownDTO>> dictDropDown(@RequestParam(value = "type")String type, @RequestParam(value = "remark", required = false) String remark) {
+        List<DictBasicDTO.DropDownDTO> result =  dictBasicService.listByType(type, remark);
+        return success(result);
     }
 
 }

@@ -31,17 +31,17 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String  id;
         /**
-         * 入库单号
+         * 调拨单号
          */
         private String  code;
         /**
-         * 事务类型
+         * 调拨方向
          */
-        private String   workType;
+        private String   transferDirection;
         /**
-         * 事务类型名称
+         * 调拨方向名称
          */
-        private String   workTypeName;
+        private String   transferDirectionName;
         /**
          * 状态
          */
@@ -71,7 +71,7 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String  productName;
         /**
-         * 加工日期
+         * 调拨日期
          */
         private LocalDate billDate;
         /**
@@ -83,9 +83,21 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String  unit;
         /**
-         * 仓库名称
+         * 调入仓库名称
          */
-        private String   warehouseName;
+        private String   inWarehouseName;
+        /**
+         * 调出仓库名称
+         */
+        private String   outWarehouseName;
+        /**
+         * 备注
+         */
+        private String  remark;
+        /**
+         * 申请人
+         */
+        private String  applyUserName;
         /**
          * 审核人名称
          */
@@ -226,7 +238,7 @@ public class TransferApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends OtherOutstockDTO.CommonDTO {
+    public static class UpdateDTO extends CommonDTO {
 
         /**
          * 主键id

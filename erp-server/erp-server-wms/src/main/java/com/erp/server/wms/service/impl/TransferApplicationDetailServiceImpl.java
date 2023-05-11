@@ -24,4 +24,14 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
     public void add(List<TransferApplicationDetailDTO.AddDTO> details, String mainId) {
 
     }
+
+    @Override
+    public void update(List<TransferApplicationDetailDTO.UpdateDTO> details, String mainId) {
+
+    }
+
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+
+    }
 }

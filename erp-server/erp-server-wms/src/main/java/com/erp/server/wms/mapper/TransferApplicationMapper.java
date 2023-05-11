@@ -8,6 +8,8 @@ import com.erp.model.wms.entity.TransferApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -35,4 +37,12 @@ public interface TransferApplicationMapper extends BaseMapper<TransferApplicatio
      * @return Integer
      */
     Integer listCount(@Param("params") TransferApplicationDTO.SearchParamDTO params);
+    /**
+     * @description: 导出数据查询
+     * @author Will
+     * @date: 2023/5/11 10:54
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<TransferApplicationDTO.ListDTO> listExportExcel(@Param("params") TransferApplicationDTO.SearchParamDTO params);
 }
