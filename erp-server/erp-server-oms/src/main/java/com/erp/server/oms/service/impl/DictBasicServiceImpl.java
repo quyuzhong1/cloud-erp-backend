@@ -34,12 +34,11 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 12:21
      */
     @Override
-    public Boolean saveOrUpdateDict(List<DictBasicDTO> list) {
+    public Boolean saveOrUpdateDict(List<DictBasicDTO.AddOrUpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        List<DictBasicEntity> addList = new ArrayList<>(list.size());
-        addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        List<DictBasicEntity>  addList = BeanMapper.copyList(list, DictBasicEntity.class);
         return this.saveOrUpdateBatch(addList);
     }
 
@@ -53,9 +52,9 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 14:16
      */
     @Override
-    public List<DictBasicDTO> getByKey(String key) {
+    public List<DictBasicDTO.ViewDTO> getByKey(String key) {
         List<DictBasicEntity> list = listByKey(key);
-        List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
+        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
         return resultList;
     }
 

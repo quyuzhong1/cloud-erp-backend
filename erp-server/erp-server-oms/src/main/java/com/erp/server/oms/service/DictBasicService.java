@@ -21,7 +21,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean saveOrUpdateDict(List<DictBasicDTO> dto);
+    Boolean saveOrUpdateDict(List<DictBasicDTO.AddOrUpdateDTO> dto);
 
     /**
      * 根据key 获取字典数据
@@ -30,7 +30,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
      */
-    List<DictBasicDTO> getByKey(String key);
+    List<DictBasicDTO.ViewDTO> getByKey(String key);
 
 
     /**

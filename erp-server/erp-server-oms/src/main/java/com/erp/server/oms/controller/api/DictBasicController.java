@@ -32,7 +32,7 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
-    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO> dto) {
+    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
         return result == true ? success() : failure();
     }
@@ -40,14 +40,15 @@ public class DictBasicController extends BaseController {
 
     /**
      * 获取对应字典数据
-     *  supplierPayMode  供应商结算方式
-     *  supplierCategory 供应商分类
-     *  supplierAccountPayment  供应商支付方式
+     *  customerCompanyCategory  公司客户类别
+     * settleMode 客户支付方式
+     *
+     * 最后取value值
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<DictBasicDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO> list = dictBasicService.getByKey(key);
+    public ApiResult<List<DictBasicDTO.ViewDTO>> list(@RequestParam("key") String key) {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
         return success(list);
     }
 }
