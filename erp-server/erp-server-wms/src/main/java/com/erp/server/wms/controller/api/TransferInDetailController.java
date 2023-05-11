@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
  * @since 2023-05-10
  */
 @RestController
-@RequestMapping("/distribution-in-entity")
-public class DistributionInController extends BaseController {
+@RequestMapping("/distribution-in-detail-entity")
+public class TransferInDetailController extends BaseController {
 
 }

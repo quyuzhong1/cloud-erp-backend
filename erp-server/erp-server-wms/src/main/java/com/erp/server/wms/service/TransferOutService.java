@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.entity.DistributionOutEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.erp.model.wms.entity.DistributionOutEntity;
  * @author lambda
  * @since 2023-05-10
  */
-public interface DistributionOutService extends SuperService<DistributionOutEntity> {
+public interface TransferOutService extends SuperService<TransferOutEntity> {
 
 }
