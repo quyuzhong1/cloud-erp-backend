@@ -27,10 +27,12 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.dto.TransferApplicationDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -400,7 +402,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
 
-
+        //调拨方向
+        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
         for (TransferApplicationDTO.ListDTO obj : records) {
             //产品名称
@@ -408,6 +411,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
                 obj.setProductName(productName);
             }
+            //调拨方向名称
+            if (CollectionUtils.isNotEmpty(transferDirectionList)) {
+                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+                obj.setTransferDirectionName(transferDirectionName);
+            }
+
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
 

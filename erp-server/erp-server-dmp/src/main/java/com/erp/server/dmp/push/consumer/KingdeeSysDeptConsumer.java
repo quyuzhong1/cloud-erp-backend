@@ -121,7 +121,7 @@ public class KingdeeSysDeptConsumer implements RocketMQListener<Map<String, Obje
                 return;
             }
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FId",".", id);
+            KingdeeUtils.makeFieldJson(json,"FDEPTID",".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

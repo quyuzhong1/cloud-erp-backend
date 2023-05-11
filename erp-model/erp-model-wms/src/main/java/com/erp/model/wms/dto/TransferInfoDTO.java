@@ -189,7 +189,7 @@ public class TransferInfoDTO implements Serializable {
         private String  type;
 
         /**
-         * 入库日期
+         * 调拨日期
          */
         private LocalDate billDate;
 
@@ -266,7 +266,7 @@ public class TransferInfoDTO implements Serializable {
         private String id;
 
         /**
-         * 入库单号
+         * 调拨单号
          */
         private String  code;
 
