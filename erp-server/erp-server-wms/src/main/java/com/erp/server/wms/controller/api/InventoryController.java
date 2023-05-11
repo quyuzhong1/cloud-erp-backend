@@ -5,12 +5,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.server.wms.service.InventoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -23,6 +25,9 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping(value = "/inventory")
 public class InventoryController extends BaseController {
+
+    @Resource
+    private InventoryService inventoryService;
 
     /**
      * 即时库存分页列表
@@ -96,6 +101,19 @@ public class InventoryController extends BaseController {
     @PostMapping(value = "/exportExcelInOutStockSummary")
     public ApiResult<Void> exportExcelInOutStockSummary(@RequestBody InventoryDTO.InOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
         return success();
+    }
+
+    /**
+     * 查询可用库存
+     * @author Will
+     * @date: 2023/5/11 10:10
+     * @param dto
+     * @return ApiResult<Integer>
+     */
+    @PostMapping(value = "/getUsableInventoryTotal")
+    public ApiResult<Integer> getUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getOrgId(), dto.getWarehouseId(), dto.getSkuId(), dto.getWarehouseLocationId());
+        return success(usableInventoryTotal);
     }
 
 }

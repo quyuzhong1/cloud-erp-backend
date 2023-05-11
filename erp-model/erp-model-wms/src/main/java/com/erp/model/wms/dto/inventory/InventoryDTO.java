@@ -4,6 +4,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -588,6 +589,38 @@ public class InventoryDTO {
         private List<String> warehouseIdList;
 
     }
+
+    /**
+     * 可用库存查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UsableInventoryParamDTO {
+        /**
+         * 组织id
+         */
+        @NotBlank(message = "仓库组织不能为空")
+        private String orgId;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+
+        /**
+         * 库位id
+         */
+        private String warehouseLocationId;
+
+    }
+
 
     /**
      * 出入库列表分页列表

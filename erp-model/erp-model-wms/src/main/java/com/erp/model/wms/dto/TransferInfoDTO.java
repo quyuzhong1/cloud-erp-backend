@@ -267,6 +267,7 @@ public class TransferInfoDTO implements Serializable {
          */
         private String  approveStatus;
 
+
         /**
          * 明细
          */
