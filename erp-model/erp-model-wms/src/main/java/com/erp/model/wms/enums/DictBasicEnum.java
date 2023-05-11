@@ -14,7 +14,11 @@ public enum DictBasicEnum {
     HANDLE_MODE_TYPE("handleModeType", "", "质检单处理措施"),
     TRANSFER_TYPE("transferType", "", "调拨类型"),
     TRANSFER_DIRECTION("transferDirection", "", "调拨方向"),
-
+    INVENTORY_DIRECTION("inventoryDirection", "", "库存方向"),
+    INSTOCK_TYPE("instockType", "", "入库类型"),
+    OUTSTOCK_TYPE("outstockType", "", "出库类型"),
+    WORK_TYPE("workType", "", "事务类型"),
+    MACHINE_TYPE("machineType", "", "加工单类型"),
     ;
 
 

@@ -85,6 +85,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -397,6 +400,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
 
+
+
         for (TransferApplicationDTO.ListDTO obj : records) {
             //产品名称
             if (CollectionUtils.isNotEmpty(productDetailList)) {
@@ -405,6 +410,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+
         }
     }
 
