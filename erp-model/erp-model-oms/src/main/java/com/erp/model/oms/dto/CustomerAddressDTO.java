@@ -82,8 +82,8 @@ public class CustomerAddressDTO implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 200, message = "邮箱最大200字符")
-        private Boolean remark;
+        @Size(max = 200, message = "联系地址备注最大200字符")
+        private String remark;
 
 
     }
@@ -143,7 +143,7 @@ public class CustomerAddressDTO implements Serializable {
         /**
          * 备注
          */
-        private Boolean remark;
+        private String remark;
 
     }
 }

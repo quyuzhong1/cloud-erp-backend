@@ -41,6 +41,7 @@ public class SellerDTO  implements Serializable {
         /**
          * 开始日期
          */
+
         private LocalDate startDate;
 
         /**
@@ -53,7 +54,7 @@ public class SellerDTO  implements Serializable {
          *备注
          */
         @NotBlank(message ="销售员备注最大200字符")
-        private Boolean remark;
+        private String remark;
 
 
     }
@@ -107,6 +108,6 @@ public class SellerDTO  implements Serializable {
         /**
          *备注
          */
-        private Boolean remark;
+        private String remark;
     }
 }

@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -36,6 +36,8 @@ public class CustomerSellerEntity extends BaseEntity<CustomerSellerEntity> {
     @TableField("dept_id")
     private String deptId;
 
+
+
     /**
      * 销售员id
      */
@@ -52,13 +54,13 @@ public class CustomerSellerEntity extends BaseEntity<CustomerSellerEntity> {
      * 开始日期
      */
     @TableField("start_date")
-    private Date startDate;
+    private LocalDate startDate;
 
     /**
      * 结束日期
      */
     @TableField("end_date")
-    private Date endDate;
+    private LocalDate endDate;
 
     /**
      * 备注

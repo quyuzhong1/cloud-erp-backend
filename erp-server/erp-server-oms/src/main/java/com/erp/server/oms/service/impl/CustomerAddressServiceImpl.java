@@ -3,11 +3,12 @@ package com.erp.server.oms.service.impl;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.server.oms.mapper.CustomerAddressMapper;
 import com.erp.server.oms.service.CustomerAddressService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,12 +44,17 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
      * 批量保存地址信息
      * @author yl
      * @date 2023-05-12 15:56
-     * @param id
-     * @param contactList
+     * @param mainId
+     * @param addressList
      * @return void
      */
     @Override
-    public void saveBatchAddress(String id, List<CustomerContactDTO.AddDTO> contactList) {
-
+    public void saveBatchAddress(String mainId, List<CustomerAddressDTO.AddDTO> addressList) {
+        if (CollectionUtils.isEmpty(addressList)) {
+            return;
+        }
+        List<CustomerAddressEntity> addList = BeanMapper.copyList(addressList, CustomerAddressEntity.class);
+        addList.forEach(c -> c.setMainId(mainId));
+        this.saveBatch(addList);
     }
 }

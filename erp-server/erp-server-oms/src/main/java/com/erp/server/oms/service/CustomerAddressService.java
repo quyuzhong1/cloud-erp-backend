@@ -2,7 +2,6 @@ package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 
 import java.util.List;
@@ -35,5 +34,5 @@ public interface CustomerAddressService extends SuperService<CustomerAddressEnti
      * @param contactList
      * @return void
      */
-    void saveBatchAddress(String id, List<CustomerContactDTO.AddDTO> contactList);
+    void saveBatchAddress(String id, List<CustomerAddressDTO.AddDTO> contactList);
 }

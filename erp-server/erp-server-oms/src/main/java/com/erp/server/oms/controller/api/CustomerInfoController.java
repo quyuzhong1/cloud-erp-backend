@@ -64,7 +64,19 @@ public class CustomerInfoController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         String id= customerInfoService.add(dto);
-        return StringUtils.isBlank(id)?success():failure();
+        return StringUtils.isNotBlank(id)?success():failure();
+    }
+
+    /**
+     * 提交
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/submit")
+    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result=customerInfoService.submit(dto.getIds());
+        return result?success():failure();
     }
 
     /**

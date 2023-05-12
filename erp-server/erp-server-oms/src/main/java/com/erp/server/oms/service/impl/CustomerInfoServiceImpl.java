@@ -19,11 +19,14 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -154,15 +157,78 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
 
             //批量保存联系人信息
-            customerContactService.saveBatchContact(id,contactList);
+            customerContactService.saveBatchContact(id, contactList);
 
             //批量保存地址信息
-            customerAddressService.saveBatchAddress(id,contactList);
+            customerAddressService.saveBatchAddress(id, addressList);
+
+            //批量保存发票信息
+            customerInvoiceService.saveBatchInvoice(id, invoiceList);
+
+            //批量销售员信息
+            customerSellerService.saveBatchSeller(id, sellerList);
+
+            return id;
 
         }
 
+        return "";
+    }
 
-        return null;
+
+    /**
+     * 提交
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-12 16:47
+     */
+    @Override
+    public Boolean submit(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<CustomerInfoEntity> list = this.list();
+
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        //审核中
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        if (result) {
+            //添加日志
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+            //审核不通过
+            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.CUSTOMER.getCode(), rejectPairList, "状态变更");
+        }
+        return result;
+
+    }
+
+    private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(s -> s.setApproveStatus(statusEnum));
+            return this.updateBatchById(list);
+        }
+        return true;
     }
 
 

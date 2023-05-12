@@ -40,7 +40,8 @@ import java.util.List;
         "com.erp.server.auth.controller.api",
         "com.erp.server.bi.controller.api",
         "com.erp.server.plm.controller.api",
-        "com.erp.server.sys.controller.api"
+        "com.erp.server.sys.controller.api",
+        "com.erp.server.oms.controller.api"
 
 })
 public class GlobalExceptionHandler {

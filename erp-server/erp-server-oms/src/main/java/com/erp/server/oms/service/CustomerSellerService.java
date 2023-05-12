@@ -25,4 +25,14 @@ public interface CustomerSellerService extends SuperService<CustomerSellerEntity
      * @return void
      */
     void checkDate(List<SellerDTO.AddDTO> sellerList);
+
+    /**
+     * 批量保存销售员信息
+     * @author yl
+     * @date 2023-05-12 16:04
+     * @param id
+     * @param sellerList
+     * @return void
+     */
+    void saveBatchSeller(String id, List<SellerDTO.AddDTO> sellerList);
 }

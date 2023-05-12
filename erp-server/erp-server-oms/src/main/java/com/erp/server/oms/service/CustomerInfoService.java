@@ -34,4 +34,14 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.String
      */
     String add(CustomerDTO.AddDTO dto);
+
+    
+    /**
+     * 提交
+     * @author yl
+     * @date 2023-05-12 16:47
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean submit(List<String> ids);
 }
