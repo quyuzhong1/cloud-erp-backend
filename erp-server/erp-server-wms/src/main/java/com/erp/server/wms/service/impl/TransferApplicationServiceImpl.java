@@ -549,10 +549,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     //调拨操作请求实体
                     TransferDTO transferDTO = new TransferDTO();
                     BeanMapperUtils.copy(addDTO,transferDTO);
-                    transferDTO.setCurOrgId(addDTO.getOrgId());
                     transferDTO.setCurWarehouseId(addDTO.getWarehouseId());
                     transferDTO.setCurWarehouseLocation(addDTO.getWarehouseLocation());
-                    transferDTO.setTargetOrgId(entity.getInOrgId());
                     transferDTO.setTargetWarehouseId(entity.getInWarehouseId());
                     transferList.add(transferDTO);
                 }
