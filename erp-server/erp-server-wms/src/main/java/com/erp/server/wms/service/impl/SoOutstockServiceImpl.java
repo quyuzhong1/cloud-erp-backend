@@ -1,10 +1,12 @@
-package com.erp.server.oms.service.impl;
+package com.erp.server.wms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
 import com.erp.model.oms.entity.SoOutstockEntity;
-import com.erp.server.oms.mapper.SoOutstockMapper;
-import com.erp.server.oms.service.SoOutstockService;
+import com.erp.server.wms.mapper.SoOutstockMapper;
+import com.erp.server.wms.service.SoOutstockService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService {
 
+    @Override
+    public List<SoOutstockEntity> getSoOutstockBySourceId(String id) {
+        return lambdaQuery().eq(SoOutstockEntity::getSourceId, id).list();
+    }
 }

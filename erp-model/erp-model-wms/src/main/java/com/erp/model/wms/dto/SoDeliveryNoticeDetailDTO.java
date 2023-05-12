@@ -47,9 +47,15 @@ public class SoDeliveryNoticeDetailDTO {
     @NoArgsConstructor
     public static class Update {
         /**
-         * 主键id
+         * 详情表id
          */
+        @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 通知单主表id
+         */
+        private String mainId;
         /**
          * 发货数量
          */

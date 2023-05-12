@@ -60,7 +60,7 @@ public class SoReturnDTO {
         /**
          * 退货日期
          */
-        private List<String> billDateList;
+        private List<LocalDate> billDateList;
         /**
          * 创建人id
          */
@@ -223,9 +223,13 @@ public class SoReturnDTO {
          */
         private String sourceId;
         /**
+         * 来源类型：界面新增可传空值
+         */
+        private String sourceType;
+        /**
          * 退货日期
          */
-        private String billDate;
+        private LocalDate billDate;
         /**
          * 联系人
          */
@@ -239,7 +243,7 @@ public class SoReturnDTO {
          */
         private String receiveAddress;
         /**
-         * 交货方式 wms/common/enumDropDown?type=deliveryMode
+         * 交货方式 wms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;
@@ -254,12 +258,12 @@ public class SoReturnDTO {
         /**
          * 是否含税
          */
-        private String isTax;
+        private Boolean isTax;
         /**
-         * 地址类型 oms/common/enumDropDown?type=addressType
+         * 地址类型 oms/common/enumDropDown?type=AddressType
          * 描述：forwarder 货代地址  deliver 发货地址 company 公司地址
          */
-        private String addressType;
+        private String addressTypeDict;
         /**
          * 明细信息
          */
@@ -283,7 +287,7 @@ public class SoReturnDTO {
         /**
          * 退货日期
          */
-        private String billDate;
+        private LocalDate billDate;
         /**
          * 联系人
          */
@@ -297,7 +301,7 @@ public class SoReturnDTO {
          */
         private String receiveAddress;
         /**
-         * 交货方式 wms/common/enumDropDown?type=deliveryMode
+         * 交货方式 wms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;
@@ -312,12 +316,12 @@ public class SoReturnDTO {
         /**
          * 是否含税
          */
-        private String isTax;
+        private Boolean isTax;
         /**
-         * 地址类型 oms/common/enumDropDown?type=addressType
+         * 地址类型 oms/common/enumDropDown?type=AddressType
          * 描述：forwarder 货代地址  deliver 发货地址 company 公司地址
          */
-        private String addressType;
+        private String addressTypeDict;
         /**
          * 明细信息
          */
@@ -381,7 +385,7 @@ public class SoReturnDTO {
         /**
          * 退货日期
          */
-        private String returnDate;
+        private LocalDate returnDate;
         /**
          * 客户id
          */
@@ -425,7 +429,7 @@ public class SoReturnDTO {
         /**
          * 地址类型
          */
-        private String addressType;
+        private String addressTypeDict;
         /**
          * 作废状态
          */
@@ -510,6 +514,10 @@ public class SoReturnDTO {
          * 退货类型
          */
         private String returnType;
+        /**
+         * 销售类型名称
+         */
+        private String returnTypeName;
         /**
          * 退货原因 调用字典接口 类型=returnReason
          */

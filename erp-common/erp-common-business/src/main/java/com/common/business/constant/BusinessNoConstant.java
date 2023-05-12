@@ -40,4 +40,6 @@ public interface BusinessNoConstant {
     String RKYB = "RKYB";
 
     String DBSQ = "DBSQ";
+
+    String FHTZ = "FHTZ";
 }

@@ -1,8 +1,13 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -15,4 +20,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntity> {
 
+    IPage<SoDeliveryNoticeDTO.PagingView> paging(Page query, @Param("params") SoDeliveryNoticeDTO.PagingParam params);
+
+    Integer listCount(@Param("params") SoDeliveryNoticeDTO.PagingParam pagingParam);
 }

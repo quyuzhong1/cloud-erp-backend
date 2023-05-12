@@ -1,14 +1,27 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.dto.SoReturnDetailDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
+import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
- * 发货通知单主表明细表 服务实现类
+ * 退货单详情 服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -17,4 +30,45 @@ import org.springframework.stereotype.Service;
 @Service
 public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMapper, SoReturnDetailEntity> implements SoReturnDetailService {
 
+    @Resource
+    private SoDetailService soDetailService;
+
+    @Override
+    public Boolean add(SoReturnDTO.Add dto, String id) {
+        List<String> detailIds = dto.getDetailList().stream().map(SoReturnDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(detailIds);
+        if (CollectionUtils.isEmpty(soDetailEntitieList)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
+        List<SoReturnDetailEntity> list = new ArrayList<>();
+        for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
+            SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            soReturnDetailEntity.setMainId(id);
+            soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
+            soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            soReturnDetailEntity.setSalesQty(soDetailEntity.getQty());
+            soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());
+            soReturnDetailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            soReturnDetailEntity.setRemark(detailDto.getRemark());
+            soReturnDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            list.add(soReturnDetailEntity);
+        }
+        return this.saveBatch(list);
+    }
+
+    @Override
+    public Boolean update(SoReturnDetailDTO.Update dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean delete(List<String> mainIds) {
+        return null;
+    }
+
+    @Override
+    public List<SoReturnDetailEntity> getDetailByMainId(String mainId) {
+        return null;
+    }
 }

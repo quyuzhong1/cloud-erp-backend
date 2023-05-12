@@ -14,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
@@ -26,9 +27,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.service.SoReturnService;
+import com.erp.server.oms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -42,7 +41,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- *  服务实现类
+ *  退货单服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -50,6 +49,10 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoReturnEntity> implements SoReturnService {
+
+    @Resource
+    private SoReturnDetailService soReturnDetailService;
+
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
@@ -61,6 +64,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
@@ -153,11 +159,26 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public String add(SoReturnDTO.Add dto) {
+        //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
         SoReturnEntity soReturnEntity = new SoReturnEntity();
         BeanMapperUtils.copy(soInfoEntity, soReturnEntity);
-        
-        return null;
+        soReturnEntity.setSourceId(dto.getSourceId());
+        soReturnEntity.setSourceCode(soInfoEntity.getCode());
+        soReturnEntity.setSourceType(dto.getSourceType());
+        soReturnEntity.setBillDate(dto.getBillDate());
+        soReturnEntity.setReceiverName(dto.getReceiverName());
+        soReturnEntity.setTelNumber(dto.getTelNumber());
+        soReturnEntity.setAddressTypeDict(dto.getReceiveAddress());
+        soReturnEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
+        soReturnEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
+        soReturnEntity.setCurrency(dto.getCurrency());
+        soReturnEntity.setCurrencySymbol(dto.getCurrencySymbol());
+        soReturnEntity.setIsTax(dto.getIsTax());
+        soReturnEntity.setAddressTypeDict(dto.getAddressTypeDict());
+        this.save(soReturnEntity);
+        soReturnDetailService.add(dto, soReturnEntity.getId());
+        return soReturnEntity.getId();
     }
 
     @Override

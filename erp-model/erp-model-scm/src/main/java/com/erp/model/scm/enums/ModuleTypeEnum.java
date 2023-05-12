@@ -20,6 +20,7 @@ public enum ModuleTypeEnum {
     PURCHASE_RETURN_ORDER("9", "采购退货单"),
     QC_ORDER("10", "质检单"),
     TRANSFER_APPLICATION("11", "调拨申请单"),
+    SO_DELIVERY_NOTICE("12", "发货通知单"),
 
     ;
 

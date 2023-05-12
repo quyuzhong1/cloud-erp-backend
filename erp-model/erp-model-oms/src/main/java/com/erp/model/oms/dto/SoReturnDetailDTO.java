@@ -17,6 +17,10 @@ public class SoReturnDetailDTO {
     @NoArgsConstructor
     public static class Add {
         /**
+         * 采购订单id
+         */
+        private String sourceId;
+        /**
          * 销售数量
          */
         @NotNull(message = "销售数量不能为空")
@@ -33,7 +37,7 @@ public class SoReturnDetailDTO {
         /**
          * 退货类型
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 备注
          */

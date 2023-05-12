@@ -48,18 +48,6 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     private Integer deliveryQty;
 
     /**
-     * 仓库id
-     */
-    @TableField("warehouse_id")
-    private String warehouseId;
-
-    /**
-     * 仓库名称
-     */
-    @TableField("warehouse_name")
-    private String warehouseName;
-
-    /**
      * 是否关闭
      */
     @TableField("is_close")

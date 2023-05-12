@@ -59,14 +59,14 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     /**
      * 销售部门id
      */
-    @TableField("dept_id")
-    private String deptId;
+    @TableField("sales_dept_id")
+    private String salesDeptId;
 
     /**
      * 销售部门名称
      */
-    @TableField("dept_name")
-    private String deptName;
+    @TableField("sales_dept_name")
+    private String salesDeptName;
 
     /**
      * 销售员id
@@ -133,6 +133,18 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
      */
     @TableField("track_no")
     private String trackNo;
+
+    /**
+     * 承运商名称
+     */
+    @TableField("warehouse_id")
+    private String WarehouseId;
+
+    /**
+     * 承运商名称
+     */
+    @TableField("warehouse_id")
+    private String WarehouseName;
 
     /**
      * 客户表id
@@ -217,6 +229,12 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
      */
     @TableField("source_type")
     private String sourceType;
+
+    /**
+     * 发货状态
+     */
+    @TableField("delivery_status_dict")
+    private String deliveryStatusDict;
 
 
     public static final String APPROVE_STATUS = "approve_status";
