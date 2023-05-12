@@ -1,8 +1,12 @@
 package com.erp.model.oms.dto;
 
+import com.common.core.anno.RegularValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -27,21 +31,27 @@ public class CustomerContactDTO implements Serializable {
         /**
          * 联系人
          */
+        @NotBlank(message = "联系人不能为空")
+        @Size(max = 50, message = "联系人最大50字符")
         private String person;
 
         /**
          * 职位
          */
+        @Size(max = 50, message = "职位最大50字符")
         private String position;
 
         /**
          * 联系电话
          */
+        @Size(max = 20, message = "联系电话最大20字符")
         private String telNumber;
 
         /**
          * 邮箱
          */
+        @Size(max = 50, message = "邮箱最大50字符")
+        @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
         private String email;
 
 
@@ -63,6 +73,7 @@ public class CustomerContactDTO implements Serializable {
         /**
          *备注
          */
+        @Size(max = 200, message = "邮箱最大200字符")
         private Boolean remark;
 
 

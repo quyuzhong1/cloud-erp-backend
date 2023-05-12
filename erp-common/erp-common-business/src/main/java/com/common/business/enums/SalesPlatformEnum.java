@@ -1,6 +1,8 @@
 package com.common.business.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * 销售平台枚举类
@@ -29,22 +31,27 @@ public enum SalesPlatformEnum implements EnumMessage {
 
     ;
 
+    @JsonValue
+    @EnumValue
     private String code;
 
     private String name;
 
     private String desc;
 
+
+    public String getDesc() {
+        return desc;
+    }
+
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
-    }
-
-    public String getDesc() {
-        return desc;
     }
 
     SalesPlatformEnum(String code, String name, String desc) {
@@ -82,4 +89,6 @@ public enum SalesPlatformEnum implements EnumMessage {
         }
         return null;
     }
+
+
 }

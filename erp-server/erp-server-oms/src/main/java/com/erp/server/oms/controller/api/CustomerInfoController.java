@@ -10,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.server.oms.service.CustomerInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,7 +63,8 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
-        return success();
+        String id= customerInfoService.add(dto);
+        return StringUtils.isBlank(id)?success():failure();
     }
 
     /**

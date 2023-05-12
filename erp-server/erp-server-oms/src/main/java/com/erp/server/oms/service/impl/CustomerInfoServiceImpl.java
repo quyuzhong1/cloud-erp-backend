@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.CustomerInfoService;
@@ -33,5 +34,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public List<String> listGroup() {
         List<CustomerInfoEntity> list = this.list();
         return list.stream().map(CustomerInfoEntity::getGroupId).distinct().collect(Collectors.toList());
+    }
+
+
+    /**
+     * 添加客户信息
+     * @author yl
+     * @date 2023-05-12 10:30
+     * @param dto
+     * @return java.lang.String
+     */
+    @Override
+    public String add(CustomerDTO.AddDTO dto) {
+
+
+        return null;
     }
 }

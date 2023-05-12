@@ -2,12 +2,16 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -189,11 +193,12 @@ public class CustomerDTO implements Serializable {
         /**
          * 使用组织
          */
+        @NotBlank(message = "使用组织不能为空")
         private String useOrgId;
 
 
         /**
-         * 内部组织id
+         * 对应组织id
          */
         private String innerOrgId;
 
@@ -201,6 +206,15 @@ public class CustomerDTO implements Serializable {
          * 分组id
          */
         private String groupId;
+
+        /**
+         *平台类型
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=SalesPlatform
+         */
+        @NotNull(message = "平台类型不能为空")
+        @StateEnumValue(clazz = SalesPlatformEnum.class,message = "平台类型有误")
+        private SalesPlatformEnum  platformType;
 
         /**
          * 国家id
@@ -224,6 +238,7 @@ public class CustomerDTO implements Serializable {
          * 客户名称
          */
         @NotBlank(message = "客户名称不能为空")
+        @Size(max = 200, message = "客户名称最大200字符")
         private String name;
 
         /**
@@ -234,13 +249,21 @@ public class CustomerDTO implements Serializable {
         /**
          * 付款方
          */
-        private String payId;
+        private List<String> payNameList;
 
 
         /**
          * 结算方
          */
-        private String settleId;
+        private String settleName;
+
+
+        /**
+         * 结算方式
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * key=settleMode
+         */
+        private String settleDict;
 
 
         /**
@@ -251,11 +274,14 @@ public class CustomerDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 200, message = "最大200字符")
         private String remark;
 
 
         /**
-         * 条件
+         * 收款条件
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * key=customerCompanyCategory
          */
         private String conditionDict;
 
@@ -273,11 +299,13 @@ public class CustomerDTO implements Serializable {
         /**
          * 联系人信息
          */
+        @Valid
         private List<CustomerContactDTO.AddDTO> contactList;
 
         /**
          * 地址信息
          */
+        @Valid
         private List<CustomerAddressDTO.AddDTO> addressList;
 
 

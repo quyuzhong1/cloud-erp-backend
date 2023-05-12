@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 
 import java.util.List;
@@ -23,4 +24,14 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> listGroup();
+
+    
+    /**
+     * 添加客户信息
+     * @author yl
+     * @date 2023-05-12 10:30
+     * @param dto
+     * @return java.lang.String
+     */
+    String add(CustomerDTO.AddDTO dto);
 }

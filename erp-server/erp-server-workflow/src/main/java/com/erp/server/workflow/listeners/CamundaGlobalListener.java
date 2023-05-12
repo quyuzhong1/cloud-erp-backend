@@ -33,7 +33,7 @@ public class CamundaGlobalListener {
    * @param taskDelegate
    * eventName = create complete
    */
-  @EventListener
+  //@EventListener
   public void onTaskEvent(DelegateTask taskDelegate) {
     // 任务完成时，会触发该事件 eventName = complete create
     log.info("CamundaGlobalListener taskDelegate onTaskEvent = {}", taskDelegate.toString());
@@ -69,7 +69,7 @@ public class CamundaGlobalListener {
    * @param executionDelegate
    * eventName = start， end complete
    */
-  @EventListener
+  //@EventListener
   public void onExecutionEvent(DelegateExecution executionDelegate) {
     log.info("Handle mutable execution event: {}",  executionDelegate.toString());
     if (executionDelegate.getEventName().equals(ExecutionListener.EVENTNAME_START)) {

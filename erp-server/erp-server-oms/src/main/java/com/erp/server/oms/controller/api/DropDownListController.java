@@ -2,10 +2,8 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,34 +24,6 @@ public class DropDownListController extends BaseController {
 
     @Resource
     private DictBasicService dictBasicService;
-
-
-    /**
-     * 审核状态下拉列表
-     *
-     * @return
-     */
-    @GetMapping("/approveStatus/list")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listApproveStatusDropDown() {
-        List<BaseDropDownDTO.CommonDTO> result = Arrays.stream(ApproveStatusEnum.values())
-                .map(x -> new BaseDropDownDTO.CommonDTO(x.getStatus(), x.getName()))
-                .collect(Collectors.toList());
-        return success(result);
-    }
-
-    /**
-     * 作废状态下拉列表
-     *
-     * @return
-     */
-    @GetMapping("/invalidStatus/list")
-    public ApiResult<List<BaseDropDownDTO.CommonBooleanDTO>> listInvalidStatusDropDown() {
-        List<BaseDropDownDTO.CommonBooleanDTO> result = Arrays.stream(InvalidStatusEnum.values())
-                .map(x -> new BaseDropDownDTO.CommonBooleanDTO(x.getStatus(), x.getName()))
-                .collect(Collectors.toList());
-        return success(result);
-    }
-
 
 
 
@@ -75,6 +44,8 @@ public class DropDownListController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
+
+
 
 
 
