@@ -78,12 +78,6 @@ public class InitStockDTO implements Serializable {
         private String warehouseId;
 
         /**
-         * 库存组织id
-         */
-        @NotEmpty(message = "库存组织不能为空")
-        private String orgId;
-
-        /**
          * 期初库存产品明细
          */
         @Valid
