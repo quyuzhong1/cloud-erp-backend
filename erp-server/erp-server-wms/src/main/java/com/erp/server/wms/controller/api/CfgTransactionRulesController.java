@@ -9,10 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * @Classname: CfgTransactionRulesController
- * @Description: TODO
- * @CreateTime: 2023-05-05  19:29
- * @Author: zhangchunlin
+ * 库存交易规则管理
+ * @author zhangchunlin
+ * @since 2023-05-11
  */
 @AllArgsConstructor
 @RestController

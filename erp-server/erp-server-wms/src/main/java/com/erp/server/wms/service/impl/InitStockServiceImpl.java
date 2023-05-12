@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -178,7 +179,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Override
     public void add(InitStockDTO.AddDTO dto) {
         InitStockEntity initStockEntity = BeanMapperUtils.map(InitStockEntity.class, dto);
-        checkAddReapateSku(dto.getDetails());
+        checkAddRepeateSku(dto.getDetails());
         // 保存期初库存主单
         fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
         //生成单号
@@ -197,19 +198,21 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 判断数据是否存在
         InitStockEntity initStockEntity = super.getById(dto.getId());
         Optional.ofNullable(initStockEntity).orElseThrow(()->new ServiceException("期初库存数据不存在"));
-        checkUpdateReapateSku(dto.getDetails(), dto.getId());
+        checkUpdateRepeateSku(dto.getDetails(), dto.getId());
         // 判断状态是否允许操作（只有待提交的才允许修改）
         ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),
                 ()->new ServiceException("当前单据状态不允许修改"));
-
-
+        fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
+        // 修改采购订单数据
+        initStockEntity.setBillDate(dto.getBillDate());
+        initStockEntity.setWarehouseId(dto.getWarehouseId());
     }
 
     /**
      * 新增检查是否存在重复sku
      * @param details
      */
-    public void checkAddReapateSku(List<InitStockDetailDTO.AddDTO> details) {
+    public void checkAddRepeateSku(List<InitStockDetailDTO.AddDTO> details) {
         // 不允许出现重复的sku
         Map<String,List<InitStockDetailDTO.AddDTO>> skuList = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.AddDTO::getSkuId));
         skuList.forEach((skuId,skuIdList)->{
@@ -223,15 +226,19 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
      * 修改检查是否存在重复sku
      * @param details
      */
-    public void checkUpdateReapateSku(List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
-        Map<String,List<InitStockDetailDTO.UpdateDTO>> skuList = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
-        skuList.forEach((skuId,skuIdList)->{
+    public void checkUpdateRepeateSku(List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
+        Map<String,List<InitStockDetailDTO.UpdateDTO>> skuMembers = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
+        skuMembers.forEach((skuId,members)->{
             // 不允许出现重复的sku
-            if(skuIdList.size() > 1) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", skuIdList.get(0).getSkuNo()));
+            if(members.size() > 1) {
+                throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", members.get(0).getSkuNo()));
             }
             // 判断是否在明细表中已经存在的sku
             InitStockDetailEntity initStockDetailEntity = initStockDetailService.findDetail(mainId, skuId);
+            InitStockDetailDTO.UpdateDTO member = members.get(0);
+            if(Objects.nonNull(initStockDetailEntity) && !Objects.equals(initStockDetailEntity.getId(), member)) {
+                throw new ServiceException(StrUtil.format("sku编码【{}】已存在", member.getSkuNo()));
+            }
         });
     }
 
