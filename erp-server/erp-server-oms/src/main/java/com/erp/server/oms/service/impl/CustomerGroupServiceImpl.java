@@ -95,6 +95,24 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
 
 
     /**
+     * 获取客户分组信息
+     *
+     * @param groupId
+     * @return java.util.List<com.erp.model.oms.entity.CustomerGroupEntity>
+     * @author yl
+     * @date 2023-05-12 15:25
+     */
+    @Override
+    public List<CustomerGroupEntity> listById(String groupId) {
+
+        if (StringUtils.isBlank(groupId)) {
+            return this.list();
+        }
+        return this.lambdaQuery().eq(CustomerGroupEntity::getId,groupId).list();
+    }
+
+
+    /**
      * 获取到要删除的数据
      *
      * @param groupList

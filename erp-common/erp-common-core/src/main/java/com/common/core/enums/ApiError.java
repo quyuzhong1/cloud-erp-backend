@@ -63,6 +63,7 @@ public enum ApiError implements Serializable {
     ERROR_1025(1025, "内容过长，请仔细检查修改后再提交"),
     ERROR_1026(1026, "数据已被他人锁住，为避免数据错误，请稍后再试"),
     ERROR_1027(1027, "数据已被他人修改，为避免数据错误，请稍后再试"),
+    ERROR_1028(1028, "名称不能重复"),
     /**
      * 警告信息 从800 开始
      */
@@ -428,6 +429,7 @@ public enum ApiError implements Serializable {
 
 
 
+
     /**
      * WMS 错误
      * 从99000 开始  以端口号
@@ -486,6 +488,10 @@ public enum ApiError implements Serializable {
     ERROR_92002(92002,"存在已被客户引用的分组"),
     ERROR_92003(92003,"销售单不存在"),
     ERROR_92004(92004,"已下推销售出库单，不能反审核"),
+    ERROR_92005(92005,"默认联系人不能超过一个"),
+    ERROR_92006(92006,"默认地址不能超过一个"),
+    ERROR_92007(92007,"默认开户行不能超过一个"),
+    ERROR_92008(92008,"开始日期不能 大于结束日期"),
 
 
 

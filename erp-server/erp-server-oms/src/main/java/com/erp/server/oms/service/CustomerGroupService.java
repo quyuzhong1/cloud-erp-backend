@@ -35,4 +35,14 @@ public interface CustomerGroupService extends SuperService<CustomerGroupEntity> 
      * @return java.util.List<com.erp.model.oms.dto.CustomerGroupDTO.ListDTO>
      */
     List<CustomerGroupDTO.ListDTO> listCustomer();
+
+    
+    /**
+     * 获取客户分组信息
+     * @author yl
+     * @date 2023-05-12 15:25
+     * @param groupId
+     * @return java.util.List<com.erp.model.oms.entity.CustomerGroupEntity>
+     */
+    List<CustomerGroupEntity> listById(String groupId);
 }

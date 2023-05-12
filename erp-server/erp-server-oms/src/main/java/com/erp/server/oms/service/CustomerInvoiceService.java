@@ -1,7 +1,10 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.entity.CustomerInvoiceEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,12 @@ import com.erp.model.oms.entity.CustomerInvoiceEntity;
  */
 public interface CustomerInvoiceService extends SuperService<CustomerInvoiceEntity> {
 
+    /**
+     * 检查默认银行是否是多个
+     * @author yl
+     * @date 2023-05-12 14:59
+     * @param invoiceList
+     * @return void
+     */
+    void checkIsDefault(List<InvoiceDTO.AddDTO> invoiceList);
 }

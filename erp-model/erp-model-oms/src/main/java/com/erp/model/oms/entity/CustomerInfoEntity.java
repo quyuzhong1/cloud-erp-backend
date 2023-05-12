@@ -42,6 +42,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String groupId;
 
     /**
+     * 分组名
+     */
+    @TableField("group_name")
+    private String groupName;
+
+    /**
      * 国家id
      */
     @TableField("country_id")
@@ -77,11 +83,21 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     @TableField("use_org_id")
     private String useOrgId;
 
+    @TableField("use_org_name")
+    private String useOrgName;
+
+
     /**
      * 内部组织id
      */
     @TableField("inner_org_id")
     private String innerOrgId;
+
+    /**
+     * 内部组织id
+     */
+    @TableField("inner_org_name")
+    private String innerOrgName;
 
     /**
      * 简称
@@ -90,9 +106,9 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String shortName;
 
     /**
-     * 平台类型 从sys_dict 获取
+     * 平台类型
      */
-    @TableField("platform_dict")
+    @TableField("platform_type")
     private String platformDict;
 
     /**
