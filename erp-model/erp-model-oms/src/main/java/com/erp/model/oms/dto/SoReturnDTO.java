@@ -231,7 +231,7 @@ public class SoReturnDTO {
          */
         private LocalDate billDate;
         /**
-         * 联系人
+         * 收货人
          */
         private String receiverName;
         /**
@@ -289,7 +289,7 @@ public class SoReturnDTO {
          */
         private LocalDate billDate;
         /**
-         * 联系人
+         * 收货人
          */
         private String receiverName;
         /**
@@ -395,13 +395,9 @@ public class SoReturnDTO {
          */
         private String customerName;
         /**
-         * 联系人id
+         * 收货人
          */
-        private String contactsUserId;
-        /**
-         * 联系人名称
-         */
-        private String contactsUserName;
+        private String receiverName;
         /**
          * 联系电话
          */

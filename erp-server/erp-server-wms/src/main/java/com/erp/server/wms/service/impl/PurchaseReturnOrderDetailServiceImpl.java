@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
@@ -16,6 +17,7 @@ import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper;
@@ -46,22 +48,10 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
-    private WarehouseService warehouseService;
-
-    @Resource
-    private CommonService commonService;
-
-    @Resource
-    private PoInstockService poInstockService;
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private PoInstockDetailService poInstockDetailService;
-
-    @Resource
-    private WarehouseReceiveService warehouseReceiveService;
 
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
@@ -159,11 +149,18 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
         checkAddDetailsRepeat(detailList);
+
+        List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
             PurchaseReturnOrderDetailEntity purchaseReturnOrderDetailEntity = new PurchaseReturnOrderDetailEntity();
             BeanMapperUtils.copy(addDTO, purchaseReturnOrderDetailEntity);
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(addDTO.getReturnQty());
+            //获取sku信息
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(addDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            purchaseReturnOrderDetailEntity.setSkuNo(productDetailEntity.getSkuNo());
             listDetail.add(purchaseReturnOrderDetailEntity);
         }
         return listDetail;

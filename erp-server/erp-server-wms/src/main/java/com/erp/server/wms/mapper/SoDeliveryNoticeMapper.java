@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 发货通知单主表明细表 Mapper 接口
@@ -23,4 +25,8 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     IPage<SoDeliveryNoticeDTO.PagingView> paging(Page query, @Param("params") SoDeliveryNoticeDTO.PagingParam params);
 
     Integer listCount(@Param("params") SoDeliveryNoticeDTO.PagingParam pagingParam);
+
+    List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateStockInView(@Param("ids") List<String> ids);
+
+    List<SoDeliveryNoticeDTO.PagingView> soDeliveryNoticeExportExcel(@Param("params") SoDeliveryNoticeDTO.PagingParam dto);
 }

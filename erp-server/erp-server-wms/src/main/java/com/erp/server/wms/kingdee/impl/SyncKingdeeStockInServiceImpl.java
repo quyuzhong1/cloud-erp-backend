@@ -156,8 +156,10 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("supplierName", supplierEntity.getName());
             //交货仓库
             jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
-            //交货仓库
-            jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
+            if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+                //交货仓库
+                jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
+            }
             //库位
             jsonObject.set("warehouseLocationName", detail.getWarehouseLocationName());
             //入库备注

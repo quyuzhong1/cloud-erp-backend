@@ -1,12 +1,11 @@
 package com.erp.model.wms.enums;
 
 public enum OsDeliveryChangeListTypeEnum {
-    TO_BE_APPROVE("toBeApprove", "待审批"),
-    APPROVE("approve", "审核通过"),
+    TO_BE_APPROVE("toBeApprove", "待审核"),
+    UN_SHIPPED("unShipped", "待发货"),
     REJECT("reject", "不通过"),
     COMPLETE_SHIPMENT("completeShipment", "已发货"),
     ;
-
 
     private String code;
     private String name;

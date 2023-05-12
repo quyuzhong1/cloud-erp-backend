@@ -46,7 +46,10 @@ public class SoDeliveryNoticeDTO {
          */
         private List<String> approveStatusList;
         /**
-         * 发货状态
+         * 发货状态 wms/common/enumDropDown?type=DeliveryStatus
+         * "unShipped","未发货"
+         * "partialShipment","部分发货"
+         * "completeShipment","已发货"
          */
         private String deliveryStatusDict;
         /**
@@ -56,7 +59,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 要货日期
          */
-        private List<LocalDate> requireDataList;
+        private List<LocalDate> requireDateList;
         /**
          * 出货仓库
          */
@@ -126,7 +129,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidStatusName;
         /**
-         * 发货状态
+         * 发货状态 wms/common/enumDropDown?type=DeliveryStatus
+         * "unShipped","未发货"
+         * "partialShipment","部分发货"
+         * "completeShipment","已发货"
          */
         private String deliveryStatusDict;
         /**
@@ -197,9 +203,8 @@ public class SoDeliveryNoticeDTO {
     @Data
     @NoArgsConstructor
     public static class StatusCountDTO {
-
         /**
-         * 类型(waitSubmit 待提交，approveIng 审核中，reject 审核不通过，approve 已审核)
+         * 类型(toBeApprove 待审核，unShipped 待发货，reject 不通过，completeShipment 已发货)
          */
         private String type;
         /**
@@ -352,6 +357,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String approveStatus;
         /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
          * 单据类型
          */
         private String type;
@@ -387,6 +396,15 @@ public class SoDeliveryNoticeDTO {
          * 发货组织名称
          */
         private String deliveryOrgName;
+        /**
+         * 出货仓库
+         */
+        private String warehouseId;
+        /**
+         * 出货仓库名称
+         */
+        private String warehouseName;
+
         /**
          * 要货日期
          */
@@ -424,13 +442,9 @@ public class SoDeliveryNoticeDTO {
          */
         private String customerName;
         /**
-         * 联系人id
+         * 收货人
          */
-        private String contactsUserId;
-        /**
-         * 联系人名称
-         */
-        private String contactsUserName;
+        private String receiverName;
         /**
          * 联系电话
          */
@@ -449,9 +463,29 @@ public class SoDeliveryNoticeDTO {
          */
         private Boolean invalidStatus;
         /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+        /**
+         * 发货状态
+         */
+        private String deliveryStatusDict;
+        /**
+         * 发货状态名称
+         */
+        private String deliveryStatusDictName;
+        /**
          * 作废描述
          */
         private String invalidRemark;
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
         /**
          * 明细信息
          */
@@ -473,6 +507,18 @@ public class SoDeliveryNoticeDTO {
     @Data
     @NoArgsConstructor
     public static class GenerateSoDeliveryView {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 销售单id
+         */
+        private String sourceId;
+        /**
+         * 销售单详情表id
+         */
+        private String sourceDetailId;
         /**
          * 销售单号
          */
@@ -509,6 +555,14 @@ public class SoDeliveryNoticeDTO {
          * 预计发货日期
          */
         private LocalDate planDeliveryDate;
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
         /**
          * 备注
          */
