@@ -53,9 +53,14 @@ public class TransferApplicationDetailDTO implements Serializable {
     public static class ViewDTO extends UpdateDTO {
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
          * 及时库存
          */
-        private String curInventoryQty;
+        private Integer curInventoryQty;
 
     }
 

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 
 import java.util.List;
@@ -77,5 +78,14 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     int updateQtyById(String id, Integer qty, Integer version);
+
+    /**
+     * @description: 查询拣货数据
+     * @author Will
+     * @date: 2023/5/12 15:48
+     * @param dto
+     * @return List<InventoryEntity>
+     */
+    List<InventoryEntity> listPickingDetailInventory(PickingDetailDTO.InventoryParamDTO dto);
 
 }

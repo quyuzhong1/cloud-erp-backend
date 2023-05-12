@@ -3,17 +3,23 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.inventory.*;
+import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.mapper.InventoryMapper;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.InventoryService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
@@ -22,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -139,6 +147,64 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public int updateQtyById(String id, Integer qty, Integer version) {
         LoginUser loginUser = commonService.getUserInfo();
         return inventoryMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+    }
+
+    @Override
+    public List<InventoryEntity> listPickingDetailInventory(PickingDetailDTO.InventoryParamDTO dto) {
+        //根据组织、仓库、sku查询可用库存
+        List<InventoryEntity> inventoryList = this.findInventoryCheckLocation(dto.getOrgId(), dto.getWarehouseId(), dto.getSkuId(), null, InventoryStatusEnum.USABLE.getCode());
+
+        log.info("组织【{}】、仓库【{}】、SKU【{}】查询可用库存",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo());
+
+        if (CollectionUtils.isEmpty(inventoryList)) {
+            throw new ServiceException(new ApiResult(1,String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo())));
+        }
+        /**
+         * 拣货规则：
+         * 1、如果可用库存存在超过拣货数量则直接顺序取
+         * 2、如果可用库存不存在超过拣货数量则倒序取（如果剩余拣货数量与库存数量匹配则直接取）
+         */
+
+        List<InventoryEntity> resultList  = new ArrayList<>();
+
+        //拣货数量
+        Integer qty = dto.getQty();
+
+        //1、如果可用库存存在超过拣货数量则直接顺序取
+        InventoryEntity inventoryEntity = inventoryList.stream().filter(obj -> obj.getQty().intValue() >= dto.getQty().intValue()).sorted(Comparator.comparing(InventoryEntity::getQty)).findFirst().orElse(null);
+        if (ObjectUtils.isNotEmpty(inventoryEntity)) {
+            inventoryEntity.setQty(qty);
+            resultList.add(inventoryEntity);
+            return resultList;
+        }
+        //2、如果可用库存不存在超过拣货数量则倒序取（如果剩余拣货数量与库存数量匹配则直接取）
+        List<InventoryEntity> sortList = inventoryList.stream().filter(obj -> dto.getQty().intValue() > obj.getQty().intValue()).sorted(Comparator.comparing(InventoryEntity::getQty).reversed()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sortList)) {
+            throw new ServiceException(new ApiResult(1,String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo())));
+        }
+        for (InventoryEntity inventory : sortList) {
+            //如果拣货数量为0则跳出循环
+            if (MathUtil.compareTo(qty,MathUtil.ZERO) == MathUtil.ZERO) {
+                break;
+            }
+            //剩余拣货数量
+            qty = qty - inventory.getQty();
+
+            //添加拣货明细
+            resultList.add(inventory);
+
+            //判断剩余数量是否存在相同库存数量，如果存在则直接匹配
+            Integer finalQty = qty;
+            List<String> inventoryIds = resultList.stream().map(InventoryEntity::getId).collect(Collectors.toList());
+            InventoryEntity matches = inventoryList.stream().filter(obj -> obj.getQty().intValue() == finalQty.intValue() && !inventoryIds.contains(obj.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(matches)) {
+                //添加拣货明细
+                resultList.add(matches);
+                break;
+            }
+
+        }
+        return resultList;
     }
 
 }

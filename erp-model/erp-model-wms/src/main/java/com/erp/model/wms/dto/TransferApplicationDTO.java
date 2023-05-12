@@ -5,8 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -195,7 +194,7 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 调拨日期
          */
-        private String  billDate;
+        private LocalDate  billDate;
         /**
          * 调出仓库id
          */
@@ -211,7 +210,7 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 申请日期
          */
-        private String   applyDate;
+        private LocalDate   applyDate;
         /**
          * 调拨方向
          */
@@ -232,7 +231,7 @@ public class TransferApplicationDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<TransferApplicationDetailDTO.AddDTO> details;
+        private List<TransferApplicationDetailDTO.AddDTO> detailList;
     }
 
 
@@ -251,7 +250,7 @@ public class TransferApplicationDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<TransferApplicationDetailDTO.UpdateDTO> details;
+        private List<TransferApplicationDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -321,7 +320,7 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 明细
          */
-        private List<TransferApplicationDetailDTO.ViewDTO> details;
+        private List<TransferApplicationDetailDTO.ViewDTO> detailList;
     }
 
 
@@ -377,12 +376,12 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 调拨数量
          */
-        private String qty;
+        private Integer qty;
 
         /**
          * 调拨日期
          */
-        private String billDate;
+        private LocalDate billDate;
 
         /**
          * 调出仓库id
@@ -410,4 +409,67 @@ public class TransferApplicationDTO implements Serializable {
         private String remark;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class generateTransferInfoDTO {
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 调拨数量
+         */
+        @NotNull(message = "调拨数量不能为空")
+        @Min(value = 1,message = "调拨数量最小值为1")
+        @Max(value = 99999999,message = "调拨数量最大值为99999999")
+        private Integer qty;
+
+        /**
+         * 调拨日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 调出仓库id
+         */
+        @NotNull(message = "调出仓库不能为空")
+        private String   outWarehouseId;
+
+        /**
+         * 调入仓库id
+         */
+        @NotNull(message = "调入仓库不能为空")
+        private String  inWarehouseId;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

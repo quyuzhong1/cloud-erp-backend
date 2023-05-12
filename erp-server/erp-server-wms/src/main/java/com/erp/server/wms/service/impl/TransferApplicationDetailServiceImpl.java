@@ -42,11 +42,11 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
 
     
     @Override
-    public void add(List<TransferApplicationDetailDTO.AddDTO> details, String mainId) {
-        if (CollectionUtils.isEmpty(details)) {
+    public void add(List<TransferApplicationDetailDTO.AddDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<TransferApplicationDetailEntity> list = BeanMapperUtils.copyList(TransferApplicationDetailEntity.class, details);
+        List<TransferApplicationDetailEntity> list = BeanMapperUtils.copyList(TransferApplicationDetailEntity.class, detailList);
 
         //处理明细数据
         doOpHandleDetails(list,mainId,Boolean.FALSE);

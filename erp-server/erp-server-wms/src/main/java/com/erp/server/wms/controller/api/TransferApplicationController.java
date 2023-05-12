@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -290,7 +291,7 @@ public class TransferApplicationController extends BaseController {
     }
 
     /**
-     * 下推直接调拨单
+     * 下推直接调拨单数据显示
      * @author Will
      * @date: 2023/5/10 18:39
      * @param dto
@@ -308,7 +309,20 @@ public class TransferApplicationController extends BaseController {
     }
 
     /**
-     * 下推分布式调出
+     * 下推直接调拨单保存
+     * @author Will
+     * @date: 2023/5/12 10:52
+     * @param validList
+     * @return ApiResult
+     */
+    @PostMapping("/generateTransferInfo")
+    public ApiResult generateTransferInfo(@RequestBody @Validated ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList) {
+        Boolean flag = transferApplicationService.generateTransferInfo(validList);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推分布式调出数据显示
      * @author Will
      * @date: 2023/5/10 18:39
      * @param dto

@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
@@ -149,4 +150,12 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return List<ViewGenerateTransferInfoDTO>
      */
     List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids);
+    /**
+     * @description: 下推直接调拨单保存
+     * @author Will
+     * @date: 2023/5/12 10:53
+     * @param list
+     * @return Boolean
+     */
+    Boolean generateTransferInfo(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList);
 }
