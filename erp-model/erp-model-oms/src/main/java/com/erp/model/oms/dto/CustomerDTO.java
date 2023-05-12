@@ -312,11 +312,13 @@ public class CustomerDTO implements Serializable {
         /**
          * 发票信息
          */
+        @Valid
         private List<InvoiceDTO.AddDTO> invoiceList;
 
         /**
          * 销售员信息
          */
+        @Valid
         private List<SellerDTO.AddDTO> sellerList;
 
     }

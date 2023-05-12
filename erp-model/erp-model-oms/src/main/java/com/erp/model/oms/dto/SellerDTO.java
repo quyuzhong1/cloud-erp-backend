@@ -3,6 +3,7 @@ package com.erp.model.oms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -28,11 +29,13 @@ public class SellerDTO  implements Serializable {
         /**
          * 销售员id
          */
+        @NotBlank(message ="销售员不能为空" )
         private String sellerId;
 
         /**
          * 部门id
          */
+        @NotBlank(message ="销售部门不能为空")
         private String deptId;
 
         /**
@@ -49,6 +52,7 @@ public class SellerDTO  implements Serializable {
         /**
          *备注
          */
+        @NotBlank(message ="销售员备注最大200字符")
         private Boolean remark;
 
 
