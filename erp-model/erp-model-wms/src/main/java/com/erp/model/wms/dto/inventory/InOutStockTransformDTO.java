@@ -15,7 +15,6 @@ import java.time.LocalDate;
 @Data
 public class InOutStockTransformDTO extends InventoryStockBaseDTO implements Serializable {
 
-
     /**
      * 单据类型
      */
@@ -40,11 +39,6 @@ public class InOutStockTransformDTO extends InventoryStockBaseDTO implements Ser
      * 可能没有单据明细id
      */
     private String sourceDetailId;
-
-    /**
-     * 仓库组织
-     */
-    private String orgId;
 
     /**
      * 仓库

@@ -48,7 +48,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 currInventoryBaseInfoDTO.setSourceId(param.getSourceId());
                 currInventoryBaseInfoDTO.setWarehouseId(param.getCurWarehouseId());
                 currInventoryBaseInfoDTO.setWarehouseLocation(param.getCurWarehouseLocation());
-                currInventoryBaseInfoDTO.setOrgId(param.getCurOrgId());
                 currInventoryBaseInfoDTO.setSkuId(param.getSkuId());
                 currInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
                 currInventoryBaseInfoDTO.setQty(param.getQty());
@@ -62,7 +61,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 targetInventoryBaseInfoDTO.setSourceId(param.getSourceId());
                 targetInventoryBaseInfoDTO.setWarehouseId(param.getTargetWarehouseId());
                 targetInventoryBaseInfoDTO.setWarehouseLocation(param.getTargetWarehouseLocation());
-                targetInventoryBaseInfoDTO.setOrgId(param.getTargetOrgId());
                 targetInventoryBaseInfoDTO.setSkuId(param.getSkuId());
                 targetInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
                 targetInventoryBaseInfoDTO.setQty(param.getQty());
@@ -86,7 +84,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 currInventoryBaseInfoDTO.setSourceId(param.getSourceId());
                 currInventoryBaseInfoDTO.setWarehouseId(param.getCurWarehouseId());
                 currInventoryBaseInfoDTO.setWarehouseLocation(param.getCurWarehouseLocation());
-                currInventoryBaseInfoDTO.setOrgId(param.getCurOrgId());
                 currInventoryBaseInfoDTO.setSkuId(param.getSkuId());
                 currInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
                 currInventoryBaseInfoDTO.setQty(param.getQty());
@@ -102,7 +99,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 targetInventoryBaseInfoDTO.setSourceId(param.getSourceId());
                 targetInventoryBaseInfoDTO.setWarehouseId(param.getTargetWarehouseId());
                 targetInventoryBaseInfoDTO.setWarehouseLocation(param.getTargetWarehouseLocation());
-                targetInventoryBaseInfoDTO.setOrgId(param.getTargetOrgId());
                 targetInventoryBaseInfoDTO.setSkuId(param.getSkuId());
                 targetInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
                 targetInventoryBaseInfoDTO.setQty(param.getQty());

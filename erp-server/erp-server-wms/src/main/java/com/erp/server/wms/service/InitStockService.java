@@ -5,9 +5,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
+import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -39,5 +42,12 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      * @param param
      */
     void exportExcel(InitStockDTO.ExportSearchParamDTO param, HttpServletResponse response);
+
+    /**
+     * @description: 导入
+     * @param response
+     * @return InitStockDetailDTO.ImportDTO
+     */
+    InitStockDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
 }

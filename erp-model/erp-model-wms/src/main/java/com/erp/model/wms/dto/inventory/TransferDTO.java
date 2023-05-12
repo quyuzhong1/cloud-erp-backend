@@ -51,12 +51,6 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     private String sourceDetailId;
 
     /**
-     * 当前仓库组织
-     */
-    @NotEmpty(message = "当前仓库组织不能为空")
-    private String curOrgId;
-
-    /**
      * 当前仓库
      */
     @NotEmpty(message = "当前仓库不能为空")
@@ -68,11 +62,6 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
      */
     private String curWarehouseLocation;
 
-    /**
-     * 目的仓库组织
-     */
-    @NotEmpty(message = "目的仓库组织不能为空")
-    private String targetOrgId;
 
     /**
      * 目的仓库

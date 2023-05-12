@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -142,8 +143,6 @@ public class InventoryHelper {
      * @param status
      */
     public void checkStockQtyByWareLocalSkuStatus(InventoryBusinessTypeEnum businessType, InventoryBaseInfoDTO param, InventoryStatusEnum status) {
-        // 仓库组织
-        String orgId = param.getOrgId();
         // 仓库
         String warehouseId = param.getWarehouseId();
         // SKU
@@ -154,15 +153,25 @@ public class InventoryHelper {
         // 操作数量
         Integer qty = param.getQty();
         // 来源
-        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
         InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        // 仓库组织
+        String orgId = warehouseDetail.getOrgId();
+
         InventoryEntity inventory = inventoryService.findInventoryLock(orgId, warehouseId,skuId,warehouseLocationId,status.getCode());
+
+        String inventoryStatusName = Optional.ofNullable(status).map(InventoryStatusEnum::getName).orElse("");
+
         if(Objects.isNull(inventory)) {
             log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 出库时未找到库存数据", warehouseId, orgId, warehouseLocationId,skuId, skuNo);
             if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName()));
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
             } else {
-                throw new ServiceException("仓库库存数量不足");
+                throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
             }
         }
         Integer inventoryQty = inventory.getQty();
@@ -170,9 +179,9 @@ public class InventoryHelper {
                 businessType.getName(), status.getName(), qty, inventoryQty);
         if(inventoryQty < qty) {
             if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName()));
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
             } else {
-                throw new ServiceException("仓库库存数量不足");
+                throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
             }
         }
     }

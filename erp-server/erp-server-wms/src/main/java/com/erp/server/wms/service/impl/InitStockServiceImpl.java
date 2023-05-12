@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -11,6 +12,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -18,13 +20,15 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.InitStockExportExcelDTO;
+import com.erp.model.wms.dto.excel.ExportInitStockExcelDTO;
+import com.erp.model.wms.dto.excel.ImportInitStockExcelDTO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 import com.erp.model.wms.entity.InitStockEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.listener.InitStockDetailExcelListener;
 import com.erp.server.wms.mapper.InitStockMapper;
 import com.common.business.service.SuperServiceImpl;
 import com.erp.server.wms.service.InitStockDetailService;
@@ -35,8 +39,10 @@ import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -130,13 +136,40 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             return;
         }
         filling(list);
-        List<InitStockExportExcelDTO> resultList = BeanMapperUtils.copyList(InitStockExportExcelDTO.class, list);
+        List<ExportInitStockExcelDTO> resultList = BeanMapperUtils.copyList(ExportInitStockExcelDTO.class, list);
         String fileName = "期初库存数据";
         try {
-            ExcelUtil.export(fileName, "期初库存数据", resultList, InitStockExportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "期初库存数据", resultList, ExportInitStockExcelDTO.class, response);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public InitStockDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        // 查询所有审核通过的产品信息
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        InitStockDetailExcelListener listener = new InitStockDetailExcelListener(skuList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ImportInitStockExcelDTO.class, listener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("excel导入错误", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<InitStockDetailDTO.AddDTO> successList = listener.getSuccessList(); // 导入成功数据
+        List<ImportInitStockExcelDTO> errorList = listener.getErrorList(); // 导入失败数据
+        InitStockDetailDTO.ImportDTO result = new InitStockDetailDTO.ImportDTO();
+        result.setSuccessList(successList);
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "期初库存导入错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, ImportInitStockExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
     public void filling(List<InitStockDTO.ListDTO> list) {

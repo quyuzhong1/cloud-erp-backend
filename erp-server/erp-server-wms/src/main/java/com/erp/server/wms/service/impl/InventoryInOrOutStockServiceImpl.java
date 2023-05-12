@@ -40,7 +40,6 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
             inventoryBaseInfoDTO.setBillDate(param.getBillDate());
             inventoryBaseInfoDTO.setSourceId(param.getSourceId());
             inventoryBaseInfoDTO.setWarehouseId(param.getWarehouseId());
-            inventoryBaseInfoDTO.setOrgId(param.getOrgId());
             inventoryBaseInfoDTO.setSkuId(param.getSkuId());
             inventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
             inventoryBaseInfoDTO.setQty(param.getQty());

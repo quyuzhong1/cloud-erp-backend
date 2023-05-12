@@ -18,8 +18,6 @@ import java.time.LocalDate;
 @Data
 public class InventoryBaseInfoDTO implements Serializable {
 
-    private String orgId;
-
     private String warehouseId;
 
     private String skuId;

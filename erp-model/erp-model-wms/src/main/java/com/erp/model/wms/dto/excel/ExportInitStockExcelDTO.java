@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @Author: zhangchunlin
  */
 @Data
-public class InitStockExportExcelDTO implements Serializable {
+public class ExportInitStockExcelDTO implements Serializable {
 
     /**
      * 单据编号

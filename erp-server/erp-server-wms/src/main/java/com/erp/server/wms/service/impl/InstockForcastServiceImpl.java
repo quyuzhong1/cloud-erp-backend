@@ -1,10 +1,14 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InstockForcastDetailEntity;
 import com.erp.model.wms.entity.InstockForcastEntity;
@@ -12,11 +16,8 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.InstockForcastDetailService;
-import com.erp.server.wms.service.InstockForcastService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.InventoryTransCoreService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,9 +56,19 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     @Autowired
     private InstockForcastMapper instockForcastMapper;
 
+    @Autowired
+    private WarehouseService warehouseService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void generateByPurchaseOrder(InstockForcastDTO.AddDTO dto) {
+        String purchaseOrderId = dto.getPurchaseOrderId();
+        // 此处增加校验，如果下推过，则不允许下推
+        InstockForcastEntity queryInstockForcastEntity = findByPurchaseOrderId(dto.getPurchaseOrderId());
+        if(Objects.nonNull(queryInstockForcastEntity)) {
+            log.warn("采购订单id：【{}】已找到未删除的入库预报", purchaseOrderId);
+            throw new ServiceException("采购订单已下推生成入库预报");
+        }
         InstockForcastEntity instockForcastEntity = new InstockForcastEntity();
         // 生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
@@ -74,9 +85,17 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         instockForcastEntity.setApproveUserId(loginUser.getUid());
         instockForcastEntity.setApproveUserName(loginUser.getUserName());
 
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(dto.getWarehouseId());
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+
+        // 仓库组织
+        String orgId = warehouseDetail.getOrgId();
         instockForcastEntity.setCode(code);
-        instockForcastEntity.setPurchaseOrderId(dto.getPurchaseOrderId());
-        instockForcastEntity.setOrgId(dto.getOrgId());
+        instockForcastEntity.setPurchaseOrderId(purchaseOrderId);
+        instockForcastEntity.setOrgId(orgId);
         instockForcastEntity.setWarehouseId(dto.getWarehouseId());
         instockForcastEntity.setBillDate(LocalDate.now());// 单据日期取当前时间
 
@@ -90,7 +109,6 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(instockForcastDetails.size());
         instockForcastDetails.stream().forEach(instockForcastDetailEntity -> {
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setOrgId(instockForcastEntity.getOrgId());
             inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
             inOutStockDTO.setSourceId(instockForcastEntity.getId());
@@ -146,7 +164,6 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         List<InOutStockDTO> inventorySkus = Lists.newArrayListWithExpectedSize(members.size());
         members.stream().forEach(member -> {
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setOrgId(instockForcastEntity.getOrgId());
             inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
             inOutStockDTO.setSourceId(instockForcastEntity.getId());

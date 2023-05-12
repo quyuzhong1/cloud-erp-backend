@@ -54,8 +54,10 @@ public class TransferCustomDTO extends InventoryStockBaseDTO implements Serializ
     /**
      * 当前仓库组织
      */
+    /*
     @NotEmpty(message = "当前仓库组织不能为空")
     private String curOrgId;
+     */
 
     /**
      * 当前仓库
@@ -77,8 +79,10 @@ public class TransferCustomDTO extends InventoryStockBaseDTO implements Serializ
     /**
      * 目的仓库组织
      */
+    /*
     @NotEmpty(message = "目的仓库组织不能为空")
     private String targetOrgId;
+     */
 
     /**
      * 目的仓库

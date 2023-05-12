@@ -17,6 +17,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -177,7 +178,7 @@ public class InitStockController extends BaseController {
     @GetMapping("/exportExcelTemplate")
     public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/initStock.xlsx";
-        String excelName = "template.xlsx";
+        String excelName = "期初库存导入模板.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
             InputStream inputStream = resourceLoader.getResource(path).getInputStream();
@@ -199,13 +200,13 @@ public class InitStockController extends BaseController {
 
     /**
      * 导入
-     * @param excelImportDTO
+     * @param file
      * @param response
      * @return
      */
     @PostMapping("/importFile")
-    public ApiResult<InitStockDetailDTO.ImportDTO> importFile(@ModelAttribute @Validated InitStockDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        return success();
+    public ApiResult<InitStockDetailDTO.ImportDTO> importFile(@RequestParam("multipartFile") MultipartFile file, HttpServletResponse response) {
+        return success(initStockService.importFile(file, response));
     }
 
 }

@@ -52,11 +52,9 @@ public class InventoryUtils {
         InOutStockTransformDTO inOutStockParam = new InOutStockTransformDTO();
 
         if(Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT)) {
-            inOutStockParam.setOrgId(param.getCurOrgId());
             inOutStockParam.setWarehouseId(param.getCurWarehouseId());
             inOutStockParam.setWarehouseLocation(param.getCurWarehouseLocation());
         } else if (Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET)) {
-            inOutStockParam.setOrgId(param.getTargetOrgId());
             inOutStockParam.setWarehouseId(param.getTargetWarehouseId());
             inOutStockParam.setWarehouseLocation(param.getTargetWarehouseLocation());
         }
@@ -83,11 +81,9 @@ public class InventoryUtils {
         InOutStockTransformDTO inOutStockParam = new InOutStockTransformDTO();
 
         if(Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT)) {
-            inOutStockParam.setOrgId(param.getCurOrgId());
             inOutStockParam.setWarehouseId(param.getCurWarehouseId());
             inOutStockParam.setWarehouseLocation(param.getCurWarehouseLocation());
         } else if (Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET)) {
-            inOutStockParam.setOrgId(param.getTargetOrgId());
             inOutStockParam.setWarehouseId(param.getTargetWarehouseId());
             inOutStockParam.setWarehouseLocation(param.getTargetWarehouseLocation());
         }
@@ -128,10 +124,10 @@ public class InventoryUtils {
      */
     public static TransactionFlowDTO wrapTransactionFlowInOutStock(InOutStockCoreDTO param, String inventoryId, InventoryBusinessTypeEnum businessType,
                                                             String inventoryDetailId, InventoryStatusEnum inventoryStatusEnum, LocalDate instockBatchDate,
-                                                            Integer qty) {
+                                                            Integer qty, String orgId) {
         TransactionFlowDTO transactionFlowDTO = new TransactionFlowDTO();
         // 复制对象性能慢，改为手工赋值
-        transactionFlowDTO.setOrgId(param.getOrgId());
+        transactionFlowDTO.setOrgId(orgId);
         transactionFlowDTO.setWarehouseId(param.getWarehouseId());
         transactionFlowDTO.setWarehouseLocation(param.getWarehouseLocation());
         transactionFlowDTO.setSkuId(param.getSkuId());

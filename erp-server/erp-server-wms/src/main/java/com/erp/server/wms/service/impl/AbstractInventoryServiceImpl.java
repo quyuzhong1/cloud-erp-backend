@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -134,7 +135,6 @@ public abstract class AbstractInventoryServiceImpl {
             // 此处需注意：1.已经反审核过的单据不允许再次反审核，以免库存数据错乱（前面查询条件已过滤）；2.可能会出现负数，如入库后被出库了反审核后仓库数量不够反审核，增加验证不允许反审核
             // 登记反审核的交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
             InOutStockCoreDTO param = new InOutStockCoreDTO();
-            param.setOrgId(txnFlow.getOrgId());
             param.setWarehouseId(txnFlow.getWarehouseId());
             param.setWarehouseLocation(txnFlow.getWarehouseLocation());
             param.setSkuId(txnFlow.getSkuId());
@@ -148,7 +148,7 @@ public abstract class AbstractInventoryServiceImpl {
 
             InventoryBusinessTypeEnum inventoryBusinessType = InventoryBusinessTypeEnum.of(txnFlow.getDictBizType());// 取原交易流水的业务类型
             Integer operationQty = Math.abs(txnFlow.getQty());
-            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, txnFlow.getInventoryId(),inventoryBusinessType, txnFlow.getInventoryDetailId(), InventoryStatusEnum.of(txnFlow.getDictInventoryStatus()), txnFlow.getInstockBatchDate(), Math.abs(txnFlow.getQty()));
+            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, txnFlow.getInventoryId(),inventoryBusinessType, txnFlow.getInventoryDetailId(), InventoryStatusEnum.of(txnFlow.getDictInventoryStatus()), txnFlow.getInstockBatchDate(), Math.abs(txnFlow.getQty()), txnFlow.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
 
             // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
@@ -167,10 +167,17 @@ public abstract class AbstractInventoryServiceImpl {
                 InventoryModeEnum inventoryModeCur = originQty < 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
                 // 判断原库存明细id是否足以扣除库存（反审核入库的时候），反审核库存明细可能需要从别的库存明细出
                 InventoryDetailEntity inventoryDetail = inventoryDetailService.getById(txnFlow.getInventoryDetailId());
+                WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(txnFlow.getWarehouseId());
+                InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.of(txnFlow.getDictInventoryStatus());
+                String inventoryStatusName = Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
                 if(Objects.equals(inventoryModeCur, InventoryModeEnum.OUT_STOCK)) {
                     if(inventoryDetail.getQty() < txnFlow.getQty()) {
                         log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存明细数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventoryDetail.getQty(), txnFlow.getQty());
-                        throw new ServiceException(ApiError.ERROR_99035);
+                        if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                        } else {
+                            throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                        }
                     }
                 }
                 // 计算当前反审核后库存数量
@@ -182,7 +189,11 @@ public abstract class AbstractInventoryServiceImpl {
                     // 检查库存数量是否足够反审核，否则会出现负库存数
                     if(inventory.getQty() < txnFlow.getQty()) {
                         log.info("反审核》》》，仓库：{}，组织：{}，SKU ID：{}，SKU编号：{}, 交易业务：{}，来源单据类型：{}, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventory.getQty(), txnFlow.getQty());
-                        throw new ServiceException(ApiError.ERROR_99035);
+                        if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                        } else {
+                            throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                        }
                     }
                     transactionInventoryQty = transactionInventoryQty - operationQty;
                 }
@@ -232,8 +243,6 @@ public abstract class AbstractInventoryServiceImpl {
      */
     @SneakyThrows
     public void inStockCore(InOutStockCoreDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId, String transactionNo) {
-        // 仓库组织
-        String orgId = param.getOrgId();
         // 仓库
         String warehouseId = param.getWarehouseId();
         // SKU
@@ -247,6 +256,13 @@ public abstract class AbstractInventoryServiceImpl {
         InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         // 单据信息
         String sourceId = param.getSourceId();
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        // 仓库组织
+        String orgId = warehouseDetail.getOrgId();
         // 单据日期
         LocalDate billDate = param.getBillDate();
         log.info("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
@@ -310,7 +326,7 @@ public abstract class AbstractInventoryServiceImpl {
             }
             String inventoryDetailId = inventoryDetail.getId();
             // 登记交易流水
-            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, inventoryDetail.getInstockBatchDate(), qty);
+            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, inventoryDetail.getInstockBatchDate(), qty, orgId);
             transactionFlowDTO.setTransactionNo(transactionNo);
             transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQty, InventoryModeEnum.IN_STOCK);
 
@@ -352,8 +368,6 @@ public abstract class AbstractInventoryServiceImpl {
     @SneakyThrows
     public void outStockCore (InOutStockCoreDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId,
                               String transactionNo) {
-        // 仓库组织
-        String orgId = param.getOrgId();
         // 仓库
         String warehouseId = param.getWarehouseId();
         // SKU
@@ -367,6 +381,13 @@ public abstract class AbstractInventoryServiceImpl {
         InventorySourceTypeEnum sourceTypeEnum = param.getSourceType();
         // 单据信息
         String sourceId = param.getSourceId();
+        // 仓库信息
+        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        // 仓库组织
+        String orgId = warehouseDetail.getOrgId();
         // 单据日期
         LocalDate billDate = param.getBillDate();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
@@ -383,20 +404,24 @@ public abstract class AbstractInventoryServiceImpl {
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             InventoryEntity inventory = inventoryService.findInventory(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
-            WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+            String inventoryStatusName = Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
             if(Objects.isNull(inventory)) {
                 log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，无法出库", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
                 if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName()));
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
                 } else {
-                    throw new ServiceException("仓库库存数量不足");
+                    throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
                 }
             }
             Integer originQty = inventory.getQty();
             log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty);
             // 判断库存数量是否足够出库
             if(originQty < qty) {
-                throw new ServiceException(ApiError.ERROR_99035);
+                if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                } else {
+                    throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                }
             }
             // 查询库存明细，排序，雪花算法id在单机上是严格递增的，但是在分布式环境下不是严格递增的（因为不同的机器的MAC地址/机器ID/数据中心不一样等等），此处改为按创建时间递增排序
             List<InventoryDetailEntity> inventoryDetails = inventoryDetailService.findListQtyGreatZero(inventory.getId());
@@ -425,12 +450,16 @@ public abstract class AbstractInventoryServiceImpl {
                 // 本次更新后库存剩余数量
                 transactionInventoryQty = transactionInventoryQty - detailDeductQty;
                 // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
-                TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventory.getId(), businessType, inventoryDetailEntity.getId(), inventoryStatusEnum, inventoryDetailEntity.getInstockBatchDate(), detailDeductQty);
+                TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventory.getId(), businessType, inventoryDetailEntity.getId(), inventoryStatusEnum, inventoryDetailEntity.getInstockBatchDate(), detailDeductQty, orgId);
                 transactionFlowDTO.setTransactionNo(transactionNo);
                 transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, transactionInventoryQty, InventoryModeEnum.OUT_STOCK);
             }
             if(waitOutQty > 0) {
-                throw new ServiceException(ApiError.ERROR_99035);
+                if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                } else {
+                    throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                }
             }
             // 更新库存表
             Integer afterInventoryQty = originQty - qty;

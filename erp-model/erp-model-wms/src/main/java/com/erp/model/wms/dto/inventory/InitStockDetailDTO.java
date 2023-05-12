@@ -37,6 +37,11 @@ public class InitStockDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
          * 期初数量
          */
         @NotNull(message = "期初数量不能为空")
@@ -45,7 +50,7 @@ public class InitStockDetailDTO implements Serializable {
         private Integer qty;
 
 
-        @Size(max = 19, message = "仓位id长度不能超过19位")
+        @Size(max = 32, message = "仓位id长度不能超过19位")
         private String warehouseLocation;
 
 
