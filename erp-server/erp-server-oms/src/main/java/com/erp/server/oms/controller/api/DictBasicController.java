@@ -38,17 +38,5 @@ public class DictBasicController extends BaseController {
     }
 
 
-    /**
-     * 获取对应字典数据
-     *  customerCompanyCategory  公司客户类别
-     * settleMode 客户支付方式
-     *
-     * 最后取value值
-     * @return
-     */
-    @GetMapping("/list")
-    public ApiResult<List<DictBasicDTO.ViewDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
-        return success(list);
-    }
+
 }

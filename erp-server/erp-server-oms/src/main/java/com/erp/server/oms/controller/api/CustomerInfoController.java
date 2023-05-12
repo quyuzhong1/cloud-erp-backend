@@ -9,9 +9,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.server.oms.service.CustomerInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
@@ -25,6 +27,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/customer")
 public class CustomerInfoController extends BaseController {
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
 
     /**
@@ -118,12 +123,12 @@ public class CustomerInfoController extends BaseController {
 
     /**
      * 反审核
-     *
      */
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return  success();
+        return success();
     }
+
     /**
      * 删除仓库
      *
@@ -143,8 +148,6 @@ public class CustomerInfoController extends BaseController {
 
         return success();
     }
-
-
 
 
 }
