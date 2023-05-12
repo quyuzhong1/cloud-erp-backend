@@ -1,11 +1,15 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.common.business.service.SuperService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
+
+import java.util.List;
 
 /**
  * <p>
@@ -84,4 +88,37 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return
      */
     Boolean backUpdateApprove(String taskId, String managementId, ApproveTypeEnum approveType, String activityId, String comment);
+
+    /**
+     * 转办
+     * @param dto
+     */
+    void transfer(List<ProcessManagementDTO.TransferDTO> dto);
+
+    /**
+     * 流程撤销
+     * @param dto
+     */
+    void revoke(ProcessManagementDTO.RevokeDTO dto);
+
+    /**
+     * 根据流程实例id删除任务
+     * @param processInstanceId
+     * @return
+     */
+    Boolean removeByProcessInstanceId(String processInstanceId);
+
+    /**
+     * 根据业务查询历史任务
+     * @param dto
+     * @return
+     */
+    List<ProcessManagementDTO.HistoryActivityResultDTO> historyActivity(ProcessManagementDTO.HistoryActivityDTO dto);
+
+    /**
+     * 分页查询
+     * @param pageDTO
+     * @return PagingVO<ProcessManagementDTO.PagingResultDTO>
+     */
+    PagingVO<ProcessManagementDTO.PagingResultDTO> paging(PagingDTO<ProcessManagementDTO.SearchDTO> pageDTO);
 }

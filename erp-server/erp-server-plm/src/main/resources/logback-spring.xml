@@ -31,7 +31,7 @@
 			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%X{traceid},%X{X-B3-TraceId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 
 	<!-- 超过最大天数会清理日志 -->
-	<property name="maxHistory" value="15"/>
+	<property name="maxHistory" value="10"/>
 	<!-- 文件达到 最大xxMB时会被切割 -->
 	<property name="maxFileSize" value="500MB"/>
 	<!-- 超过总容量 会自动清理日志 -->

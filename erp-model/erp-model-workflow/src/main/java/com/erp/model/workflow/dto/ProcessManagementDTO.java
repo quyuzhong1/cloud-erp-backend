@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
 import com.erp.model.workflow.enums.RejectTypeEnum;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -147,6 +149,7 @@ public class ProcessManagementDTO {
         /**
          * 驳回的目标节点 ID
          */
+        @NotBlank(message = "驳回的目标节点不能为空")
         private String activityId;
     }
 
@@ -182,7 +185,7 @@ public class ProcessManagementDTO {
         /**
          * 当前节点ID
          */
-        private String currentNodeId;
+        private String curActivityId;
 
         /**
          * 流程状态
@@ -224,14 +227,9 @@ public class ProcessManagementDTO {
         private String taskManagementId;
 
         /**
-         * 当前节点ID
-         */
-        private String currentActivityId;
-
-        /**
          * 当前节点名称
          */
-        private String currentActivityName;
+        private String curActivityName;
 
         /**
          * 任务ID
@@ -241,7 +239,7 @@ public class ProcessManagementDTO {
         /**
          * 当前审批人ID
          */
-        private String currentApproveId;
+        private String curApproveId;
 
         /**
          * 任务状态
@@ -291,5 +289,217 @@ public class ProcessManagementDTO {
          * 申请人id
          */
         private String approveId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TransferDTO {
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 业务表id
+         */
+        @NotBlank(message = "业务表id不能为空")
+        private String businessId;
+
+        /**
+         * 审批人
+         */
+        @NotBlank(message = "转办申请人")
+        private String sourceUserId;
+        /**
+         * 转办目标人
+         */
+        @NotBlank(message = "转办目标人")
+        private String targetUserId;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class HistoryActivityDTO {
+        /**
+         * 业务类型key
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 业务表id
+         */
+        @NotBlank(message = "业务表id不能为空")
+        private String businessId;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class HistoryActivityResultDTO {
+        /**
+         * 流程定义id
+         */
+        private String processDefinitionId;
+        /**
+         * 流程实例id
+         */
+        private String processInstanceId;
+        /**
+         * 流程名称
+         */
+        private String processName;
+        /**
+         * 业务id
+         */
+        private String businessId;
+        /**
+         * 业务编码
+         */
+        private String businessCode;
+        /**
+         * 业务名称
+         */
+        private String businessName;
+        /**
+         * 节点id
+         */
+        private String activityId;
+        /**
+         * 节点名称
+         */
+        private String activityName;
+
+        /**
+         * 节点状态
+         */
+        private String activityStatus;
+
+        /**
+         *  orSignature 或签  jointSignature 会签
+         * 节点类型
+         */
+        private DictBasicEnum activityType;
+
+        public HistoryActivityResultDTO(ManagementTaskDTO task) {
+            this.processDefinitionId = task.getProcessDefinitionId();
+            this.processInstanceId = task.getProcessInstanceId();
+            this.processName = task.getBusinessName();
+            this.businessId = task.getBusinessId();
+            this.businessCode = task.getBusinessCode();
+            this.businessName = task.getBusinessName();
+            this.activityId = task.getCurActivityId();
+            this.activityName = task.getCurActivityName();
+            this.activityStatus = task.getApproveStatus().getName();
+
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class RevokeDTO {
+
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 业务表id
+         */
+        @NotBlank(message = "业务表id不能为空")
+        private String businessId;
+
+        /**
+         * 审批人
+         */
+        @NotBlank(message = "撤回人不能为空")
+        private String userId;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO{
+
+        private List<String> businessNames;
+
+        private List<ProcessStatusEnum> processStatus;
+
+        private Integer processVersion;
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class PagingResultDTO {
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程定义ID
+         */
+        private String processDefinitionId;
+        /**
+         * 流程定义版本
+         */
+        private Integer processVersion;
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 业务ID
+         */
+        private String businessId;
+
+        /**
+         * 业务编码
+         */
+        private String businessCode;
+
+        /**
+         * 业务名称
+         */
+        private String businessName;
+
+        /**
+         * 审批人名称
+         */
+        private String curApproveName;
+
+        /**
+         * 流程状态
+         */
+        private ProcessStatusEnum processStatus;
+
+        /**
+         * 开始时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 结束时间
+         */
+        private LocalDateTime endTime;
+
+        /**
+         * 流程引擎流程实例ID
+         */
+        private String actProcessDefinitionId;
+
+        /**
+         * 详情地址
+         */
+        private String detailUrl;
+
     }
 }

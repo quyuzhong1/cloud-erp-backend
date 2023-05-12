@@ -1,10 +1,14 @@
 package com.erp.server.workflow.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -25,4 +29,20 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return
      */
     ProcessManagementDTO.ManagementTaskDTO getTaskByBusiness(@Param("businessId") String businessId, @Param("businessKey") String businessKey,@Param("userId")  String userId);
+
+    /**
+     * 根据业务id和业务类型获取流程管理信息
+     * @param businessId
+     * @param businessKey
+     * @return
+     */
+    List<ProcessManagementDTO.ManagementTaskDTO> listTaskByBusiness(@Param("businessId")String businessId, @Param("businessKey") String businessKey);
+
+    /**
+     * 分页查询
+     * @param page
+     * @param params
+     * @return IPage<ProcessManagementDTO.PagingResultDTO>
+     */
+    IPage<ProcessManagementDTO.PagingResultDTO> paging(Page page,@Param("param") ProcessManagementDTO.SearchDTO params);
 }

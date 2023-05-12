@@ -17,47 +17,76 @@
         <result column="process_definition_id" property="processDefinitionId" />
         <result column="business_id" property="businessId" />
         <result column="business_code" property="businessCode" />
-        <result column="current_node_id" property="currentNodeId" />
         <result column="process_status" property="processStatus" />
         <result column="start_time" property="startTime" />
         <result column="end_time" property="endTime" />
     </resultMap>
+    <sql id="Get_Task_Management">
+        SELECT
+        pm.id as managementId,
+        pm.process_instance_id,
+        pm.process_definition_id,
+        pm.business_id,
+        pm.business_code,
+        pm.business_key,
+        pm.process_status,
+        pm.start_time,
+        pm.end_time,
+        pm.business_name,
+        pm.approve_status,
+        pm.act_process_definition_id,
+        ptm.id AS taskManagementId,
+        ptm.cur_activity_id,
+        ptm.task_id,
+        ptm.cur_approve_id,
+        ptm.task_status,
+        ptm.timeout_warn_status,
+        ptm.timeout_warn_interval,
+        ptm.timeout_handle_type,
+        ptm.approve_time,
+        ptm.remark,
+        ptm.pre_activity_id,
+        ptm.execution_id,
+        ptm.cur_activity_name
+        FROM process_management pm , process_task_management ptm
+        where pm.process_instance_id = ptm.process_instance_id AND approve_status = 'approveIng'
+        AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
+        <if test="null != userId and userId != ''">
+            AND ptm.cur_approve_id = #{userId}
+        </if>
+        ORDER BY ptm.create_time ASC
+        LIMIT 1
+    </sql>
+
     <select id="getTaskByBusiness"
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+    </select>
+    <select id="listTaskByBusiness"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+    </select>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
         SELECT
-            pm.id as managementId,
             pm.process_instance_id,
-            pm.process_definition_id,
-            pm.business_id,
-            pm.business_code,
-            pm.business_key,
-            pm.current_node_id,
-            pm.process_status,
-            pm.start_time,
-            pm.end_time,
-            pm.business_name,
-            pm.approve_status,
-            pm.act_process_definition_id,
-            ptm.id AS taskManagementId,
-            ptm.current_activity_id,
-            ptm.task_id,
-            ptm.current_approve_id,
-            ptm.task_status,
-            ptm.timeout_warn_status,
-            ptm.timeout_warn_interval,
-            ptm.timeout_handle_type,
-            ptm.approve_time,
-            ptm.remark,
-            ptm.pre_activity_id,
-            ptm.execution_id,
-            ptm.current_activity_name
-        from process_management pm , process_task_management ptm
-        where pm.process_instance_id = ptm.process_instance_id AND approve_status = 'approveIng'
-          AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey}
-          AND ptm.task_status = 'approveIng' AND user_id = #{userId}
-        ORDER BY ptm.create_time ASC
-            LIMIT 1
-
+            max(pm.process_definition_id) as process_definition_id,
+            max(pm.process_version) as process_version,
+            max(pm.process_status) as process_status,
+            max(pm.process_name) as process_name,
+            max(pm.business_id) as business_id,
+            max(pm.business_code) as business_code,
+            max(pm.business_name) as business_name,
+            max(pm.start_time) as  start_time,
+            max(pm.end_time) as end_time,
+            max(pm.act_process_definition_id) as act_process_definition_id,
+            string_agg(ptm.cur_approve_name, ', ') AS cur_approve_name,
+            max(wm.detail_url) as detail_url
+        FROM process_management AS pm
+                 LEFT JOIN process_task_management AS ptm  on pm.process_instance_id = ptm.process_instance_id
+                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code
+        where ptm.task_status = 'approveIng'
+        GROUP BY pm.process_instance_id
+        order by pm.create_time desc
     </select>
 
 </mapper>

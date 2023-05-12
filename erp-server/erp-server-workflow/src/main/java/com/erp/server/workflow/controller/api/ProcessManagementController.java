@@ -1,6 +1,8 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
@@ -13,6 +15,8 @@ import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * <p>
@@ -60,4 +64,44 @@ public class ProcessManagementController extends BaseController {
         processManagementService.back(dto);
         return success();
     }
+
+    /**
+     * 撤回流程
+     *
+     */
+    @PostMapping("/revoke")
+    public ApiResult revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
+        processManagementService.revoke(dto);
+        return success();
+    }
+
+
+    /**
+     * 转发任务
+     */
+    @PostMapping("/transfer")
+    public ApiResult transferProcess(@RequestBody @Valid @NotNull List<ProcessManagementDTO.TransferDTO> dto) {
+        processManagementService.transfer(dto);
+        return success();
+    }
+
+    /**
+     * 历史流程节点 - 用于指定人驳回
+     */
+    @PostMapping("/history/activity")
+    public ApiResult<List<ProcessManagementDTO.HistoryActivityResultDTO>> historyActivity(@RequestBody @Valid ProcessManagementDTO.HistoryActivityDTO dto) {
+        List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
+        return success(resultList);
+    }
+    /**
+     * 流程管理分页列表
+     */
+    @PostMapping("paging")
+    public ApiResult<PagingVO<ProcessManagementDTO.PagingResultDTO>> paging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
+        PagingVO<ProcessManagementDTO.PagingResultDTO> resultList = processManagementService.paging(dto);
+        return success(resultList);
+    }
+
+
+
 }

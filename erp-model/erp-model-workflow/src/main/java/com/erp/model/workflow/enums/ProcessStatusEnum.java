@@ -20,13 +20,11 @@ public enum ProcessStatusEnum {
     FINISH("finish", "已完成"),
     // 运行中
     RUNNING("running", "运行中"),
-    // 挂起
-    HANGUP("hangup", "挂起"),
     ;
     @EnumValue
     @JsonValue
-    private String code;
-    private String name;
+    private final String code;
+    private final String name;
 
     ProcessStatusEnum(String code, String name) {
         this.code = code;

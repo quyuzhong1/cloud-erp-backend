@@ -42,4 +42,20 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param insertTask
      */
     void saveProcessTask(ProcessTaskManagementEntity insertTask);
+
+    /**
+     * 更新流程任务
+     *
+     * @param taskId
+     * @param targetUserId
+     * @param sourceUserId
+     * @param remark
+     */
+    void updateTransfer(String taskId, String targetUserId, String sourceUserId, String remark);
+
+    /**
+     * 根据流程实例id删除流程任务
+     * @param processInstanceId
+     */
+    void removeByProcessInstanceId(String processInstanceId);
 }

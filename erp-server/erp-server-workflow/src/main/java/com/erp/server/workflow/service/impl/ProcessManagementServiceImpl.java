@@ -1,15 +1,23 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -18,6 +26,7 @@ import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
@@ -29,18 +38,19 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
+import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessInstanceWithVariablesImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
+import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
-import org.camunda.bpm.model.bpmn.instance.FlowElement;
-import org.camunda.bpm.model.bpmn.instance.UserTask;
+import org.camunda.bpm.model.bpmn.instance.*;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
@@ -81,6 +91,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private AssigneeStrategyService assigneeStrategyService;
     @Resource
     private HistoryService historyService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     @Override
@@ -125,7 +137,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<TaskEntity> tasks = executionEntity.getTasks();
         String processInstanceId = processInstance.getProcessInstanceId();
         // 保存审批节点数据
-        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activity.getActivityId(), processStartTime, processDefinition.getId(),processInstance.getProcessDefinitionId());
+        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activity.getActivityId(), processStartTime, processDefinition,processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
@@ -196,10 +208,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(ApproveTypeEnum.PASS.equals(dto.getApproveType())) {
             // 审核通过
             taskService.createComment(managementTask.getTaskId(), processInstanceId, dto.getComment());
+            updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
             Map<String, Object> variablesMap = dto.getVariablesMap();
             variablesMap.put("ApproveStatus", "approved");
             taskService.complete(managementTask.getTaskId(), variablesMap);
-            updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         }
 
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
@@ -274,7 +286,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 填充用户变量
         executionDelegate.setVariableLocal("userList", candidateUsers);
-        executionDelegate.setVariable("userList", candidateUsers);
+//        executionDelegate.setVariable("userList", candidateUsers);
     }
 
     @Override
@@ -322,7 +334,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public ProcessManagementDTO.ManagementTaskDTO getTaskByBusiness(String businessId, String businessKey, String userId) {
-        return baseMapper.getTaskByBusiness(businessId, businessKey, userId);
+        return baseMapper.getTaskByBusiness(businessId, businessKey, null);
+    }
+
+    private List<ProcessManagementDTO.ManagementTaskDTO> listTaskByBusiness(String businessId, String businessKey) {
+        return baseMapper.listTaskByBusiness(businessId, businessKey);
     }
 
     @Override
@@ -340,6 +356,100 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void transfer(List<ProcessManagementDTO.TransferDTO> dtoList) {
+        // 查询当前执行任务
+        for (ProcessManagementDTO.TransferDTO dto : dtoList) {
+            ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
+            if (null == managementTask) {
+                throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
+            }
+            String taskId = managementTask.getTaskId();
+            // 查询当前任务
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if(null == task){
+                throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+            }
+            // 转发任务给目标人员
+            identityService.setAuthenticatedUserId(dto.getSourceUserId());
+            taskService.delegateTask(task.getId(), dto.getTargetUserId());
+            Task task2 = taskService.createTaskQuery().taskId(taskId).singleResult();
+            // 更新流程任务数据
+            processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(), dto.getSourceUserId(), dto.getRemark());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void revoke(ProcessManagementDTO.RevokeDTO dto) {
+        // 查询流程实例
+        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
+        if (null == managementTask) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
+        }
+        // 查询当前实例
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(managementTask.getProcessInstanceId()).singleResult();
+        if(null == processInstance || processInstance.isEnded()){
+            throw new ServiceException(ApiError.ERROR_94000);
+        }
+        BpmnModelInstance modelInstance = repositoryService.getBpmnModelInstance(processInstance.getProcessDefinitionId());
+        if (null == modelInstance) {
+            throw new ServiceException(ApiError.ERROR_94001);
+        }
+        String initialActivityId = null;
+        Collection<FlowElement> flowElements = modelInstance.getModelElementsByType(FlowElement.class);
+        for (FlowElement flowElement : flowElements) {
+            if (flowElement instanceof StartEvent) {
+                initialActivityId = flowElement.getId();
+                break;
+            }
+        }
+        // 查询所有执行中的节点
+        List<Execution> executions = runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).list();
+        for (Execution execution : executions) {
+            if (execution instanceof ExecutionEntity) {
+                ExecutionEntity executionEntity = (ExecutionEntity) execution;
+                // 根据节点状态进行撤回操作
+                if (executionEntity.isActive() && !executionEntity.isEnded() && !executionEntity.getActivityId().equals(initialActivityId)) {
+                    runtimeService.deleteProcessInstance(execution.getProcessInstanceId(), "process revoke", true);
+                    historyService.deleteHistoricProcessInstance(execution.getProcessInstanceId());
+                    // 在这里可以记录流程撤回日志
+                    break;
+                }
+            }
+        }
+        // 更新流程任务数据
+        removeByProcessInstanceId(processInstance.getProcessInstanceId());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeByProcessInstanceId(String processInstanceId) {
+        remove(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId));
+        processTaskManagementService.removeByProcessInstanceId(processInstanceId);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<ProcessManagementDTO.HistoryActivityResultDTO> historyActivity(ProcessManagementDTO.HistoryActivityDTO dto) {
+        List<ProcessManagementDTO.ManagementTaskDTO> taskList  = listTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey());
+        if(CollectionUtil.isEmpty(taskList)){
+            return Collections.emptyList();
+        }
+        return taskList.stream()
+                .map(ProcessManagementDTO.HistoryActivityResultDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PagingVO<ProcessManagementDTO.PagingResultDTO> paging(PagingDTO<ProcessManagementDTO.SearchDTO> pageDTO) {
+        // 查询流程实例
+        Page<ProcessManagementDTO.PagingResultDTO> query = new Page<>(pageDTO.getCurrPage(), pageDTO.getPageSize());
+        IPage<ProcessManagementDTO.PagingResultDTO> pageData = baseMapper.paging(query, pageDTO.getParams());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void createTaskHandle(DelegateTask task) {
         // 保存流程任务数据 execution 中包含实例信息,
         // 审批任务填充审批信息
@@ -350,8 +460,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 保存流程任务数据
         DelegateExecution processInstance = task.getExecution().getProcessInstance();
         String processInstanceId = processInstance.getId();
-        String activityName = processInstance.getCurrentActivityName();
-        String activityId = processInstance.getCurrentActivityId();
+        String activityName = StrUtil.isNotBlank(processInstance.getCurrentActivityName()) ? processInstance.getCurrentActivityName():task.getName();
+        String activityId = StrUtil.isNotBlank(processInstance.getCurrentActivityId()) ? processInstance.getCurrentActivityId():task.getTaskDefinitionKey();
         LocalDateTime processStartTime = LocalDateUtil.date2LocalDateTime(task.getCreateTime());
         String executionId = task.getExecutionId();
         // 查询流程设计审核人处理方式
@@ -360,18 +470,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
+        if(CollectionUtil.isEmpty(userList)){
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e ));
         candidateUsers.forEach(userId -> {
             // 对去重类型做处理，自动审核通过
+            FindUserDTO findUserDTO = userMap.get(userId);
+            if(null == findUserDTO){
+                return;
+            }
             DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
-            Optional<ProcessTaskManagementEntity> approveUserId = Optional.empty();
-            ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, userId, executionId, activityName);
+            Optional<ProcessTaskManagementEntity> processTaskManagement = Optional.empty();
+            ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName);
             processTaskManagementService.saveProcessTask(insertTask);
             // 审核人配置
             if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
                 // 相邻节点去重
                 // 查询当前节点的上一个节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, MathUtil.ONE);
-                approveUserId = processTaskManagementList.entrySet().stream()
+                processTaskManagement = processTaskManagementList.entrySet().stream()
                         .findFirst()
                         .get()
                         .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
@@ -380,15 +499,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 // 全局去重
                 // 查询已完成审核节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
-                approveUserId = processTaskManagementList.values().stream().flatMap(List::stream)
+                processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
                         .filter(item -> item.getCurApproveId().equals(userId))
                         .findFirst();
             }
-            if (approveUserId.isPresent()) {
+            if (processTaskManagement.isPresent()) {
                 // 审核人已存在，自动审核通过
                 taskService.createComment(task.getId(), processInstanceId, "审核人重复,审核自动通过");
                 taskService.complete(task.getId());
-                updateApprove(approveUserId.get().getId(), ApproveTypeEnum.PASS, insertTask.getId(), processInstanceId, "审核人重复,审核自动通过");
+                updateApprove(processTaskManagement.get().getId(), ApproveTypeEnum.PASS, insertTask.getId(), processInstanceId, "审核人重复,审核自动通过");
             }
         });
     }

@@ -1,8 +1,10 @@
 package com.erp.model.workflow.entity;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 
@@ -116,6 +118,12 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("cur_activity_name")
     private String curActivityName;
 
+    @TableField("cur_approve_name")
+    private String curApproveName;
+
+    @TableField("approve_name")
+    private String approveName;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
@@ -142,7 +150,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId, String executionId, String activityName) {
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, FindUserDTO findUserDTO, String executionId, String activityName) {
         this.processInstanceId = processInstanceId;
         this.curActivityId = activityId;
         this.taskId = taskId;
@@ -151,9 +159,18 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.timeoutInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutInterval()) : 0;
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
         this.timeoutWarnInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutWarnInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutWarnInterval()) : 0;
-        this.curApproveId = userId;
+        this.curApproveId = findUserDTO.getUserId();
+        this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;
         this.curActivityName = activityName;
+    }
+
+    public static ProcessTaskManagementEntity getByEntity(ProcessTaskManagementEntity entity, String targetUserId) {
+        ProcessTaskManagementEntity insertEntity = new ProcessTaskManagementEntity();
+        BeanUtil.copyProperties(entity, insertEntity, "id","createTime","updateTime","version");
+        insertEntity.setStartTime(LocalDateTime.now());
+        insertEntity.setCurApproveId(targetUserId);
+        return insertEntity;
     }
 
     @Override

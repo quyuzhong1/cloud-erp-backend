@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
@@ -38,6 +40,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
                     .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
                     .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
+                    .set(ProcessTaskManagementEntity::getApproveName, entity.getCurApproveName())
                     .eq(ProcessTaskManagementEntity::getProcessInstanceId, entity.getProcessInstanceId())
                     .ne(ProcessTaskManagementEntity::getCurActivityId, activityId)
                     .update();
@@ -48,6 +51,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
                     .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
                     .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
+                    .set(ProcessTaskManagementEntity::getApproveName, entity.getCurApproveName())
                     .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
                     .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
                     .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
@@ -93,6 +97,42 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         boolean save = save(insertTask);
         if (!save) {
             throw new RuntimeException("保存流程任务失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateTransfer(String taskId, String targetUserId, String sourceUserId, String remark) {
+        ProcessTaskManagementEntity entity = lambdaQuery().eq(ProcessTaskManagementEntity::getTaskId, taskId)
+                .eq(ProcessTaskManagementEntity::getCurApproveId, sourceUserId)
+                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
+                .one();
+        if(null == entity){
+            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+        }
+        // 关闭原有记录
+        boolean update = lambdaUpdate()
+                    .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
+                    .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
+                    .set(ProcessTaskManagementEntity::getApproveId, sourceUserId)
+                    .set(ProcessTaskManagementEntity::getRemark, StrUtil.format("{}已将任务转移给{}办理，备注：{}", sourceUserId, targetUserId, remark))
+                    .eq(ProcessTaskManagementEntity::getId, entity.getId())
+                    .update();
+        // 新增审批记录
+        boolean save = save(ProcessTaskManagementEntity.getByEntity(entity,targetUserId));
+        if (!save) {
+            throw new RuntimeException(" updateTransfer 任务转办 保存流程任务失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByProcessInstanceId(String processInstanceId) {
+        boolean remove = lambdaUpdate()
+                .eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId)
+                .remove();
+        if (!remove) {
+            throw new RuntimeException("删除流程任务失败");
         }
     }
 }
