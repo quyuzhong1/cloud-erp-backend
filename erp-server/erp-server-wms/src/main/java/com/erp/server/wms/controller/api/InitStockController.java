@@ -53,6 +53,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult<Void> add(@RequestBody @Validated InitStockDTO.AddDTO dto) {
+        initStockService.add(dto);
         return  success();
     }
 
@@ -63,6 +64,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult<Void> update(@RequestBody @Validated InitStockDTO.UpdateDTO dto) {
+        initStockService.update(dto);
         return  success();
     }
 

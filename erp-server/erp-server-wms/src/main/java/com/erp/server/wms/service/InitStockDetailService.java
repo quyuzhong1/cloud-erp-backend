@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 
 import java.util.List;
@@ -19,5 +20,20 @@ public interface InitStockDetailService  extends SuperService<InitStockDetailEnt
      * @return
      */
     List<InitStockDetailEntity> findList(String mainId);
+
+    /**
+     * 新增明细
+     * @param details
+     * @param mainId
+     */
+    void add(List<InitStockDetailDTO.AddDTO> details, String mainId);
+
+    /**
+     * 根据主单id和sku id查询明细
+     * @param mainId
+     * @param skuId
+     * @return
+     */
+    InitStockDetailEntity findDetail(String mainId, String skuId);
 
 }

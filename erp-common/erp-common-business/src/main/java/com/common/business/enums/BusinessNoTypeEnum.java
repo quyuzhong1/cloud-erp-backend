@@ -29,7 +29,7 @@ public enum BusinessNoTypeEnum {
     CODE_DBSQ(19, "dbsq","调拨申请"),
     CODE_FHTZ(19, "fhtz","发货通知单"),
     CODE_CUST(20, "cust","客户"),
-
+    CODE_INIT_STOCK(21, "init_stock","期初库存"),
     ;
 
 

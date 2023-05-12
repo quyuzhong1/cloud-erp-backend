@@ -50,4 +50,17 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      */
     InitStockDetailDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
 
+    /**
+     * 新增
+     * @param dto
+     * @return
+     */
+    void add(InitStockDTO.AddDTO dto);
+
+    /**
+     * 修改
+     * @param dto
+     */
+    void update(InitStockDTO.UpdateDTO dto);
+
 }

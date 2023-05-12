@@ -44,4 +44,7 @@ public interface BusinessNoConstant {
     String FHTZ = "FHTZ";
     //客户
     String CUST = "CUST";
+
+    // 期初库存
+    String QCKC = "QCKC";
 }

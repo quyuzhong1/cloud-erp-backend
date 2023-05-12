@@ -5,19 +5,19 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportInitStockExcelDTO;
@@ -26,6 +26,7 @@ import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 import com.erp.model.wms.entity.InitStockEntity;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.InitStockDetailExcelListener;
@@ -39,6 +40,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -172,6 +174,85 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         return result;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void add(InitStockDTO.AddDTO dto) {
+        InitStockEntity initStockEntity = BeanMapperUtils.map(InitStockEntity.class, dto);
+        checkAddReapateSku(dto.getDetails());
+        // 保存期初库存主单
+        fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
+        //生成单号
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCKC, BusinessNoTypeEnum.CODE_INIT_STOCK.getCode()));
+        initStockEntity.setCode(code);
+        initStockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        boolean save = super.save(initStockEntity);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("期初库存保存失败"));
+        // 保存期初库存明细
+        initStockDetailService.add(dto.getDetails(), initStockEntity.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void update(InitStockDTO.UpdateDTO dto) {
+        // 判断数据是否存在
+        InitStockEntity initStockEntity = super.getById(dto.getId());
+        Optional.ofNullable(initStockEntity).orElseThrow(()->new ServiceException("期初库存数据不存在"));
+        checkUpdateReapateSku(dto.getDetails(), dto.getId());
+        // 判断状态是否允许操作（只有待提交的才允许修改）
+        ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),
+                ()->new ServiceException("当前单据状态不允许修改"));
+
+
+    }
+
+    /**
+     * 新增检查是否存在重复sku
+     * @param details
+     */
+    public void checkAddReapateSku(List<InitStockDetailDTO.AddDTO> details) {
+        // 不允许出现重复的sku
+        Map<String,List<InitStockDetailDTO.AddDTO>> skuList = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.AddDTO::getSkuId));
+        skuList.forEach((skuId,skuIdList)->{
+            if(skuIdList.size() > 1) {
+                throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", skuIdList.get(0).getSkuNo()));
+            }
+        });
+    }
+
+    /**
+     * 修改检查是否存在重复sku
+     * @param details
+     */
+    public void checkUpdateReapateSku(List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
+        Map<String,List<InitStockDetailDTO.UpdateDTO>> skuList = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
+        skuList.forEach((skuId,skuIdList)->{
+            // 不允许出现重复的sku
+            if(skuIdList.size() > 1) {
+                throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", skuIdList.get(0).getSkuNo()));
+            }
+            // 判断是否在明细表中已经存在的sku
+            InitStockDetailEntity initStockDetailEntity = initStockDetailService.findDetail(mainId, skuId);
+        });
+    }
+
+    /**
+     * 新增和修改填充值
+     * @param initStockEntity
+     */
+    public void fillingAddOrUpdate(InitStockEntity initStockEntity, String warehouseId) {
+        initStockEntity.setDictTradeType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());
+        if(StrUtils.isNotEmpty(warehouseId)) {
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
+            ValidatorUtil.isTrue(Objects.nonNull(warehouseDetail) && StrUtils.isNotEmpty(warehouseDetail.getId()),
+                    ()->new ServiceException(ApiError.ERROR_99002));
+            initStockEntity.setOrgId(warehouseDetail.getOrgId());
+        }
+    }
+
+    /**
+     * 分页列表和导出excel填充
+     * @param list
+     */
     public void filling(List<InitStockDTO.ListDTO> list) {
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();

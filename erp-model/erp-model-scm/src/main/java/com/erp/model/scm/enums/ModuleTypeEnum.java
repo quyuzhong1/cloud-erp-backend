@@ -21,6 +21,7 @@ public enum ModuleTypeEnum {
     QC_ORDER("10", "质检单"),
     TRANSFER_APPLICATION("11", "调拨申请单"),
     SO_DELIVERY_NOTICE("12", "发货通知单"),
+    INIT_STOCK("13", "期初库存"),
 
     ;
 
