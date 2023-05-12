@@ -229,21 +229,21 @@
     <select id="viewGenerateTransferInfo"
             resultType="com.erp.model.wms.dto.TransferApplicationDTO$ViewGenerateTransferInfoDTO">
         select
-            ta.id as sourceId,
             ta.code,
-            tad.id as sourceDetailId,
+            pd.id as sourceId,
+            pd.id as sourceDetailId,
             ta.transfer_direction as transferDirection,
-            tad.sku_id as skuId,
-            tad.sku_no as skuNo,
-            tad.qty as qty,
+            pd.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.qty as qty,
             ta.bill_date as billDate,
             ta.out_warehouse_id as outWarehouseId,
             ta.out_warehouse_name as outWarehouseName,
             ta.in_warehouse_id as inWarehouseId,
             ta.in_warehouse_name as inWarehouseName,
-            tad.remark as remark
+            pd.out_warehouse_location as outWarehouseLocation
         from transfer_application ta
-        inner join transfer_application_detail tad on ta.id = tad.main_id and ta.is_deleted = false
+        inner join picking_detail pd on ta.id = pd.source_id and pd.is_deleted = false
         <where>
             ta.is_deleted = false and ta.id in
             <foreach collection="ids" item="item" open="(" close=")" separator=",">

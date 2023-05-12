@@ -404,6 +404,11 @@ public class TransferApplicationDTO implements Serializable {
         private String   inWarehouseName;
 
         /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
          * 备注
          */
         private String remark;
@@ -466,6 +471,12 @@ public class TransferApplicationDTO implements Serializable {
          */
         @NotNull(message = "调入仓库不能为空")
         private String  inWarehouseId;
+
+        /**
+         * 调出仓位
+         */
+        @NotNull(message = "调出仓位不能为空")
+        private String outWarehouseLocation;
 
         /**
          * 备注

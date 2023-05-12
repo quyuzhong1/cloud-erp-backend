@@ -102,6 +102,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Resource
     private PickingDetailService pickingDetailService;
 
+    @Resource
+    private TransferInfoService transferInfoService;
 
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -452,21 +454,29 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.generateTransferInfoDTO> list = validList.getList();
         //根据来源id分组生成下推直接调拨单
         Map<String, List<TransferApplicationDTO.generateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.generateTransferInfoDTO::getSourceId));
 
         for (Map.Entry<String, List<TransferApplicationDTO.generateTransferInfoDTO>> entry : map.entrySet()) {
-            String sourceId = entry.getKey();
             List<TransferApplicationDTO.generateTransferInfoDTO> value = entry.getValue();
-
+            TransferApplicationDTO.generateTransferInfoDTO transferInfoDTO = value.get(0);
             //直接调拨单
             TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-            addDTO.setSourceType(value.get(0).getSourceType());
-            //TODO
-        }
+            BeanMapperUtils.copy(addDTO,transferInfoDTO);
 
+            List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (TransferApplicationDTO.generateTransferInfoDTO dto : value) {
+                TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
+                BeanMapperUtils.copy(dto,addDetailDTO);
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setDetailList(addDetailList);
+            //新增直接调拨单
+            transferInfoService.add(addDTO);
+        }
         return Boolean.TRUE;
     }
 
