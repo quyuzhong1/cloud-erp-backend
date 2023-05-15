@@ -21,6 +21,7 @@
         <module>erp-rpc-dmp</module>
         <module>erp-rpc-wms</module>
         <module>erp-rpc-scm</module>
+        <module>ero-rpc-oms</module>
     </modules>
 
    <dependencies>
