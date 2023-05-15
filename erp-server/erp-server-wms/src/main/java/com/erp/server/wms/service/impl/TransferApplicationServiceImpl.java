@@ -32,9 +32,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.entity.TransferApplicationDetailEntity;
-import com.erp.model.wms.entity.TransferApplicationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -104,6 +102,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Resource
     private TransferInfoService transferInfoService;
+
+    @Resource
+    private TransferOutService transferOutService;
+
 
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -385,12 +387,25 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             throw new ServiceException(ApiError.ERROR_98014);
         }
 
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            throw  new ServiceException(ApiError.ERROR_99045);
+        }
+        List<TransferOutEntity> transferOutList = transferOutService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(transferOutList)) {
+            throw  new ServiceException(ApiError.ERROR_99046);
+        }
+
         log.info("调拨申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //取回流程 TODO
 
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //回扣库存 TODO
+
+        //inventoryTransCoreService.unApprove();
+
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "反审核操作");
@@ -476,6 +491,32 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             addDTO.setDetailList(addDetailList);
             //新增直接调拨单
             transferInfoService.add(addDTO);
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean generateTransferOut(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList) {
+        List<TransferApplicationDTO.generateTransferInfoDTO> list = validList.getList();
+        //根据来源id分组生成下推直接调拨单
+        Map<String, List<TransferApplicationDTO.generateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.generateTransferInfoDTO::getSourceId));
+
+        for (Map.Entry<String, List<TransferApplicationDTO.generateTransferInfoDTO>> entry : map.entrySet()) {
+            List<TransferApplicationDTO.generateTransferInfoDTO> value = entry.getValue();
+            TransferApplicationDTO.generateTransferInfoDTO transferInfoDTO = value.get(0);
+            //直接调拨单
+            TransferOutDTO.AddDTO addDTO = new TransferOutDTO.AddDTO();
+            BeanMapperUtils.copy(addDTO,transferInfoDTO);
+
+            List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (TransferApplicationDTO.generateTransferInfoDTO dto : value) {
+                TransferOutDetailDTO.AddDTO addDetailDTO = new TransferOutDetailDTO.AddDTO();
+                BeanMapperUtils.copy(dto,addDetailDTO);
+                addDetailList.add(addDetailDTO);
+            }
+            addDTO.setDetailList(addDetailList);
+            //新增直接调拨单
+            //transferOutService.add(addDTO);
         }
         return Boolean.TRUE;
     }

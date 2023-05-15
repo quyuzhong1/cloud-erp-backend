@@ -1,4 +1,4 @@
-package com.ero.rpc.oms.feign;
+package com.erp.rpc.oms.feign;
 
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -6,7 +6,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "soInfo")

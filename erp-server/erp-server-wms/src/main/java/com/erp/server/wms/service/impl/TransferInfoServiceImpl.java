@@ -94,4 +94,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
         return null;
     }
+
+    @Override
+    public List<TransferInfoEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(TransferInfoEntity::getSourceId,sourceIds).list();
+    }
 }

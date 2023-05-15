@@ -154,8 +154,16 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 下推直接调拨单保存
      * @author Will
      * @date: 2023/5/12 10:53
-     * @param list
+     * @param validList
      * @return Boolean
      */
     Boolean generateTransferInfo(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList);
+    /**
+     * @description: 下推分布式调出单保存
+     * @author Will
+     * @date: 2023/5/15 9:38
+     * @param validList
+     * @return Boolean
+     */
+    Boolean generateTransferOut(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList);
 }

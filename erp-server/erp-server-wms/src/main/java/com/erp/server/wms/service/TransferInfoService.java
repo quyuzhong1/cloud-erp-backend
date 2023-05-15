@@ -48,4 +48,6 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
     Boolean cancelProcess(List<String> ids);
 
     Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response);
+
+    List<TransferInfoEntity> listBySourceIds(List<String> sourceIds);
 }

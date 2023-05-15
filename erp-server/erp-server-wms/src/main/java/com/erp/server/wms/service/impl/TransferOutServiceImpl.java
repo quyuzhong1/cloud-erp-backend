@@ -6,6 +6,8 @@ import com.erp.server.wms.mapper.TransferOutMapper;
 import com.erp.server.wms.service.TransferOutService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * <p>
  * 分布式调出单 服务实现类
@@ -17,4 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, TransferOutEntity> implements TransferOutService {
 
+    @Override
+    public List<TransferOutEntity> listBySourceIds(List<String> ids) {
+        return lambdaQuery().in(TransferOutEntity::getSourceId,ids).list();
+    }
 }

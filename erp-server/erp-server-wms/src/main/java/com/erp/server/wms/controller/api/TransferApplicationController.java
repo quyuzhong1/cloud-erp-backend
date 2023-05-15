@@ -339,4 +339,17 @@ public class TransferApplicationController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 下推分布式调出保存
+     * @author Will
+     * @date: 2023/5/12 10:52
+     * @param validList
+     * @return ApiResult
+     */
+    @PostMapping("/generateTransferOut")
+    public ApiResult generateTransferOut(@RequestBody @Validated ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList) {
+        Boolean flag = transferApplicationService.generateTransferOut(validList);
+        return flag == true ? success() : failure();
+    }
+
 }
