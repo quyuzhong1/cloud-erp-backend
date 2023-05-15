@@ -498,6 +498,7 @@ public enum ApiError implements Serializable {
     ERROR_92009(92009,"退货数量不能大于销售数量"),
     ERROR_92010(92010,"发货数量不能大于销售数量"),
     ERROR_92011(92011,"客户不存在"),
+    EXPORT_DATA_EMPTY(92009,"导出数据不能为空"),
 
 
 

@@ -9,6 +9,8 @@ import com.common.business.service.SuperService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -121,4 +123,16 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return PagingVO<ProcessManagementDTO.PagingResultDTO>
      */
     PagingVO<ProcessManagementDTO.PagingResultDTO> paging(PagingDTO<ProcessManagementDTO.SearchDTO> pageDTO);
+
+    /**
+     *  导出
+     * @param dto
+     */
+    void export(ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) throws Exception ;
+
+    /**
+     * 流程进度
+     * @param dto
+     */
+    void progress(ProcessManagementDTO.ProgressDTO dto);
 }

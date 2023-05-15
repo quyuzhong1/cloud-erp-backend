@@ -1,6 +1,7 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -501,5 +502,13 @@ public class ProcessManagementDTO {
          */
         private String detailUrl;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProgressDTO {
+
+        @NotBlank(message = "流程实例id不能为空")
+        private String processInstanceId;
     }
 }

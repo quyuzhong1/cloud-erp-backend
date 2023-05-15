@@ -66,7 +66,7 @@
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
         <include refid="Get_Task_Management"/>
     </select>
-    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
+    <sql id="List_Process_Management">
         SELECT
             pm.process_instance_id,
             max(pm.process_definition_id) as process_definition_id,
@@ -87,6 +87,12 @@
         where ptm.task_status = 'approveIng'
         GROUP BY pm.process_instance_id
         order by pm.create_time desc
+    </sql>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
+       <include refid="List_Process_Management"/>
+    </select>
+    <select id="export" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
+        <include refid="List_Process_Management"/>
     </select>
 
 </mapper>
