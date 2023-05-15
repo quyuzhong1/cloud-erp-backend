@@ -1,10 +1,12 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -40,7 +42,8 @@ public class CustomerInfoController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<CustomerDTO.TabListDTO>> tabList() {
-        return success(null);
+        List<CustomerDTO.TabListDTO> list = customerInfoService.tabList();
+        return success(list);
     }
 
     /**
@@ -51,7 +54,8 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<CustomerDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerDTO.PagingParamDTO> dto) {
-        return success(null);
+        PagingVO<CustomerDTO.PagingViewDTO> pagingVO = customerInfoService.paging(dto);
+        return success(pagingVO);
     }
 
 
@@ -63,8 +67,8 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
-        String id= customerInfoService.add(dto);
-        return StringUtils.isNotBlank(id)?success():failure();
+        String id = customerInfoService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -75,8 +79,8 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result=customerInfoService.submit(dto.getIds());
-        return result?success():failure();
+        Boolean result = customerInfoService.submit(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**
@@ -87,7 +91,8 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
-        return success();
+        Boolean result = customerInfoService.addAndSubmit(dto);
+        return result ? success() : failure();
     }
 
 
@@ -98,8 +103,15 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:supplier:view",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult<CustomerDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(null);
+        CustomerDTO.ViewDTO view = customerInfoService.view(dto.getId());
+        return success(view);
     }
 
     /**

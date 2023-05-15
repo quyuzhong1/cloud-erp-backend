@@ -215,7 +215,7 @@
             AND qb.qc_status=#{params.searchType}
         </if>
         <if test="params.purchaseOrderCode !=null and params.purchaseOrderCode!=''">
-            AND qb.purchase_order_code LIKE concat('%', #{params.purchaseOrderCode} ,'%')
+            AND qb.purchase_order_code ILIKE concat('%', #{params.purchaseOrderCode} ,'%')
         </if>
         <if test="params.code !=null and params.code!=''">
             AND qb.code ilike concat('%', #{params.code} ,'%')

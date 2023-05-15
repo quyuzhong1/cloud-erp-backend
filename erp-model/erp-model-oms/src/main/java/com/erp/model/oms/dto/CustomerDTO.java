@@ -36,12 +36,13 @@ public class CustomerDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
+         * all 全部
          * waitSubmit 待提交
          * approveIng 审核中
          * approve 已审核
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"waitSubmit", "approveIng", "approve", "reject"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all","waitSubmit", "approveIng", "approve", "reject"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
@@ -71,7 +72,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 使用组织集合
          */
-        private List<String> useOrgidList;
+        private List<String> useOrgIdList;
 
 
         /**
@@ -218,18 +219,21 @@ public class CustomerDTO implements Serializable {
 
         /**
          * 国家id
+         * 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @NotBlank(message = "国家不能为空")
         private String countryId;
 
         /**
          * 省id
+         * http://172.16.100.11:3002/project/36/interface/api/13408
          */
         private String provinceId;
 
 
         /**
          * 城市id
+         * http://172.16.100.11:3002/project/36/interface/api/13408
          */
         private String cityId;
 
