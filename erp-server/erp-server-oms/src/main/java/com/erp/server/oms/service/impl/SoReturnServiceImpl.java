@@ -19,10 +19,10 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -131,22 +131,22 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
      **/
     @Override
     public List<SoReturnDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
-        PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
+        SOReturnChangeListTypeEnum[] values = SOReturnChangeListTypeEnum.values();
         List<SoReturnDTO.StatusCountDTO> list = new ArrayList<>();
-        for (PurchaseChangeListTypeEnum item : values) {
+        for (SOReturnChangeListTypeEnum item : values) {
             SoReturnDTO.PagingParam pagingParam = new SoReturnDTO.PagingParam();
             pagingParam.setParam(dto.getParam());
             SoReturnDTO.StatusCountDTO resultDTO = new SoReturnDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
-            if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
-            if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+            if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
-            if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
@@ -169,8 +169,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setBillDate(dto.getBillDate());
         soReturnEntity.setReceiverName(dto.getReceiverName());
         soReturnEntity.setTelNumber(dto.getTelNumber());
-        soReturnEntity.setAddressTypeDict(dto.getReceiveAddress());
-        soReturnEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
+        soReturnEntity.setAddressTypeDict(dto.getReceiveAddressDict());
         soReturnEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
         soReturnEntity.setCurrency(dto.getCurrency());
         soReturnEntity.setCurrencySymbol(dto.getCurrencySymbol());

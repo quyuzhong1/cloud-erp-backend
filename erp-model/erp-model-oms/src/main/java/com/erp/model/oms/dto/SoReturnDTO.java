@@ -240,8 +240,12 @@ public class SoReturnDTO {
         private String telNumber;
         /**
          * 收货地址
+         *
+         * AddressTypeEnum
+         *
          */
-        private String receiveAddress;
+
+        private String receiveAddressDict;
         /**
          * 交货方式 wms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
