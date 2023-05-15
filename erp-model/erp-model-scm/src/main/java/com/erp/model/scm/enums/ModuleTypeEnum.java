@@ -24,6 +24,7 @@ public enum ModuleTypeEnum {
     CUSTOMER("14", "客户"),
     INIT_STOCK("13", "期初库存"),
     SO_RETURN("15", "销售退货订单"),
+    TRANSFER_INFO("16", "直接调拨单"),
 
     ;
 

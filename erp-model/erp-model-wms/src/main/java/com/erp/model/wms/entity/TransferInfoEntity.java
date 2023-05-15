@@ -8,7 +8,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -40,7 +41,7 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
      * 单据日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 调拨类型
@@ -130,7 +131,7 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
      * 审核时间
      */
     @TableField("approve_time")
-    private Date approveTime;
+    private LocalDateTime approveTime;
 
     /**
      * 审核人名称

@@ -55,13 +55,13 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
     }
 
     @Override
-    public void update(List<TransferApplicationDetailDTO.UpdateDTO> details, String mainId) {
-        if (details == null) {
-            details = new ArrayList<>();
+    public void update(List<TransferApplicationDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (detailList == null) {
+            detailList = new ArrayList<>();
         }
         //原明细数据
         List<TransferApplicationDetailEntity> oldList = this.listByMainId(mainId);
-        List<String> deleteIds = getDeleteIds(details, oldList);
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<TransferApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
@@ -69,7 +69,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        List<TransferApplicationDetailEntity> newList = BeanMapperUtils.copyList(TransferApplicationDetailEntity.class, details);
+        List<TransferApplicationDetailEntity> newList = BeanMapperUtils.copyList(TransferApplicationDetailEntity.class, detailList);
 
         //处理明细id及操作日志
         doOpHandleDetails(newList,mainId,Boolean.TRUE);
@@ -140,7 +140,6 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), addPairList, "编辑操作");
         }
-
-
     }
+
 }

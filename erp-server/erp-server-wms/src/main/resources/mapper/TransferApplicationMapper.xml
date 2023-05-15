@@ -57,7 +57,7 @@
             ta.create_user_name as createUserName,
             ta.create_time as createTime
         from transfer_application ta
-        left join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
+        inner join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
         <where>
             ta.is_deleted = false
             <if test="params.code != null and params.code != ''">

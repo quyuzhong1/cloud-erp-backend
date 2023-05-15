@@ -120,7 +120,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             return new PagingVO(pageData);
         }
         //数据处理
-        doOpHandlePurchaseStockIn(records);
+        doOpHandleData(records);
         List<String> list = new ArrayList<>();
         //清空明细数据
         records.forEach(obj -> {
@@ -210,7 +210,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     public Boolean update(TransferApplicationDTO.UpdateDTO dto) {
         TransferApplicationEntity entity = new TransferApplicationEntity();
         BeanMapperUtils.copy(dto, entity);
-        List<TransferApplicationDetailDTO.UpdateDTO> details = dto.getDetailList();
+        List<TransferApplicationDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //处理数据id
         doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getApplyUserId(), entity);
 
@@ -222,7 +222,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //更新主表数据
         this.updateById(entity);
         //更新明细数据
-        transferApplicationDetailService.update(details, entity.getId());
+        transferApplicationDetailService.update(detailList, entity.getId());
         return Boolean.TRUE;
     }
 
@@ -330,7 +330,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
-        log.info("采购入库单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("调拨申请单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //更新
         lambdaUpdate().in(TransferApplicationEntity::getId, ids)
@@ -377,7 +377,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "审核操作");
     }
 
 
@@ -411,7 +411,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_APPLY,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-
+        //删除拣货明细
+        pickingDetailService.deleteBySourceId(ids);
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "反审核操作");
@@ -447,7 +448,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
-        doOpHandlePurchaseStockIn(list);
+        doOpHandleData(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/transferApplication.xlsx";
         String name = "调拨申请单导出";
@@ -631,7 +632,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @author Will
      * @date: 2023/4/19 18:58
      */
-    private void doOpHandlePurchaseStockIn(List<TransferApplicationDTO.ListDTO> records) {
+    private void doOpHandleData(List<TransferApplicationDTO.ListDTO> records) {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }

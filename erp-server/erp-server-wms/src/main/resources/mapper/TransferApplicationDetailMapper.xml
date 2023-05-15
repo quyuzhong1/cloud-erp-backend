@@ -18,7 +18,6 @@
         <result column="sku_no" property="skuNo" />
         <result column="qty" property="qty" />
         <result column="unit" property="unit" />
-        <result column="cur_inventory_qty" property="curInventoryQty" />
         <result column="remark" property="remark" />
     </resultMap>
 

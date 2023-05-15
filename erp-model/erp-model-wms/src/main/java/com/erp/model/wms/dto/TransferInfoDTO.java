@@ -275,10 +275,54 @@ public class TransferInfoDTO implements Serializable {
          */
         private String  approveStatus;
 
+        /**
+         * 审核状态名称
+         */
+        private String  approveStatusName;
+
+        /**
+         * 调拨方向名称
+         */
+        private String  transferDirectionName;
+
+        /**
+         * 仓管员名称
+         */
+        private String   warehouseKeeperName;
+
+        /**
+         * 调出仓库名称
+         */
+        private String  outWarehouseName;
+
+        /**
+         * 调入仓库名称
+         */
+        private String  inWarehouseName;
+
+        /**
+         * 调出组织id
+         */
+        private String  outOrgId;
+
+        /**
+         * 调出组织名称
+         */
+        private String  outOrgName;
+
+        /**
+         * 调入组织id
+         */
+        private String  inOrgId;
+
+        /**
+         * 调入组织名称
+         */
+        private String  inOrgName;
 
         /**
          * 明细
          */
-        private List<TransferInfoDetailDTO.ViewDTO> details;
+        private List<TransferInfoDetailDTO.ViewDTO> detailList;
     }
 }

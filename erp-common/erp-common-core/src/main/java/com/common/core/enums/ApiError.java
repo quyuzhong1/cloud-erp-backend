@@ -429,7 +429,8 @@ public enum ApiError implements Serializable {
 
 
 
-
+    ERROR_99047(99047,"未找到直接调拨单"),
+    ERROR_99048(99048,"未找到直接调拨明细"),
     /**
      * WMS 错误
      * 从99000 开始  以端口号

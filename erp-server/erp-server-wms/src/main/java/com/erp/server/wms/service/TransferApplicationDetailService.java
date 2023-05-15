@@ -19,18 +19,18 @@ public interface TransferApplicationDetailService extends SuperService<TransferA
      * @description: 新增
      * @author Will
      * @date: 2023/5/10 19:49
-     * @param details
+     * @param detailList
      * @param mainId
      */
-    void add(List<TransferApplicationDetailDTO.AddDTO> details, String mainId);
+    void add(List<TransferApplicationDetailDTO.AddDTO> detailList, String mainId);
     /**
      * @description: 修改
      * @author Will
      * @date: 2023/5/11 10:35
-     * @param details
+     * @param detailList
      * @param mainId
      */
-    void update(List<TransferApplicationDetailDTO.UpdateDTO> details, String mainId);
+    void update(List<TransferApplicationDetailDTO.UpdateDTO> detailList, String mainId);
     /**
      * @description: 根据主表ids删除
      * @author Will
