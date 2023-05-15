@@ -1,4 +1,4 @@
-package com.ero.rpc.oms.feign;
+package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.entity.SoDetailEntity;
