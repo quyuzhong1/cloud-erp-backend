@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
 
-import com.erp.model.wms.entity.MachineInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.MachineInfoDTO;
+import com.erp.model.wms.entity.MachineInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -14,5 +18,21 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface MachineInfoMapper extends BaseMapper<MachineInfoEntity> {
-
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/5/15 18:09
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<MachineInfoDTO.ListDTO> paging(Page query,@Param("params") MachineInfoDTO.SearchParamDTO params);
+    /**
+     * @description: 查询数量
+     * @author Will
+     * @date: 2023/5/15 18:18
+     * @param params
+     * @return Integer
+     */
+    Integer listCount(@Param("params") MachineInfoDTO.SearchParamDTO params);
 }

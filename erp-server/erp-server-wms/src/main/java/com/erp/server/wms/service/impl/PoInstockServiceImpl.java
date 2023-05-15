@@ -291,14 +291,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (CollectionUtils.isEmpty(poInstockDetailList)) {
             throw new ServiceException(ApiError.ERROR_98051);
         }
-        List<String> podIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+        List<String> poIds = list.stream().map(PoInstockEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
 
         //质检单未质检完成则不允许提交
-        List<QcInfoEntity> qcInfoList = qcInfoService.listByPodIds(podIds);
-        if (CollectionUtils.isNotEmpty(qcInfoList)) {
-            List<QcInfoEntity> qcList = qcInfoList.stream().filter(obj -> obj.getQcStatus().equals(QcBillStatusEnum.DRAFT) || obj.getQcStatus().equals(QcBillStatusEnum.WAIT_QC)).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(qcList)) {
-                String qcCodes = qcList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
+        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(poIds);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            List<QcInfoEntity> resultList = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(resultList)) {
+                String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
                 throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持提交",qcCodes)));
             }
         }

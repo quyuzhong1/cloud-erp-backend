@@ -213,11 +213,12 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         }
 
         //判断是否存在质检单、存在且未质检完成则不支持入库
-        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(Arrays.asList(entity.getId()));
+        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(Arrays.asList(entity.getPurchaseOrderId()));
         if (CollectionUtils.isNotEmpty(qcList)) {
-           Long count = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.getCode().equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.getCode().equals(obj.getQcStatus())).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99010);
+            List<QcInfoEntity> resultList = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(resultList)) {
+                String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
+                throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持下推入库单",qcCodes)));
             }
         }
 

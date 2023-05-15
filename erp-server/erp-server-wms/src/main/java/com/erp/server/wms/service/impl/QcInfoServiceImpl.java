@@ -1347,11 +1347,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         return batchQc;
     }
 
-    @Override
-    public List<QcInfoEntity> listByPodIds(List<String> podIds) {
-        return baseMapper.listByPodIds(podIds);
-    }
-
     /**
      * 根据来源id查询质检单
      * @Author Luo_WG

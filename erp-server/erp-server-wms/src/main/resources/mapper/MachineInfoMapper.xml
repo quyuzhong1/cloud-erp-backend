@@ -33,4 +33,12 @@
         <result column="approve_user_id" property="approveUserId" />
     </resultMap>
 
+    <select id="paging" resultType="com.erp.model.wms.dto.MachineInfoDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+
+    </select>
+
 </mapper>

@@ -62,6 +62,10 @@ public class MachineInfoDTO implements Serializable {
         /**
          * sku编码
          */
+        private String  skuId;
+        /**
+         * sku编码
+         */
         private String  skuNo;
         /**
          * 产品名称
@@ -210,7 +214,7 @@ public class MachineInfoDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<MachineInfoDetailDTO.AddDTO> details;
+        private List<MachineInfoDetailDTO.AddDTO> detailList;
     }
 
 

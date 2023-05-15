@@ -101,12 +101,4 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("ids")List<String> ids);
-    /**
-     * @description: 根据采购订单明细ids
-     * @author Will
-     * @date: 2023/5/10 17:57
-     * @param podIds
-     * @return List<QcInfoEntity>
-     */
-    List<QcInfoEntity> listByPodIds(@Param("podIds") List<String> podIds);
 }
