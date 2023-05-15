@@ -127,10 +127,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             boolean contains = list.contains(obj.getId());
             if (contains) {
                 obj.setCode(null);
+                obj.setTransferDirection(null);
                 obj.setApproveStatus(null);
                 obj.setApproveStatusName(null);
                 obj.setInvalidStatus(null);
                 obj.setInvalidStatusName(null);
+                obj.setApplyUserName(null);
+                obj.setApproveUserName(null);
                 obj.setCreateUserName(null);
                 return;
             }
