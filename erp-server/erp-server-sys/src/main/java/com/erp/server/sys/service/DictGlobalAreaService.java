@@ -25,4 +25,14 @@ public interface DictGlobalAreaService extends SuperService<DictGlobalAreaEntity
      * @return java.lang.Boolean
      */
     Boolean addOrUpdate(List<DictGlobalAreaDTO.AddOrUpdateDTO> list);
+
+    
+    /**
+     * 根据国家id获取地区信息
+     * @author yl
+     * @date 2023-05-15 11:39
+     * @param countryIds
+     * @return java.util.List<com.erp.model.sys.dto.DictGlobalAreaDTO.InfoDTO>
+     */
+    List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(List<String> countryIds);
 }

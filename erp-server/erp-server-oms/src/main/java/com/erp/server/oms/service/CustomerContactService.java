@@ -35,4 +35,27 @@ public interface CustomerContactService extends SuperService<CustomerContactEnti
      * @return void
      */
     void saveBatchContact(String id, List<CustomerContactDTO.AddDTO> contactList);
+
+    
+    
+    /**
+     *
+     * 获取联系人信息
+     * @author yl
+     * @date 2023-05-15 9:53
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.CustomerContactDTO.ViewDTO>
+     */
+    List<CustomerContactDTO.ViewDTO> listByMainId(String mainId);
+
+    
+    /**
+     * 修改联系人信息
+     * @author yl
+     * @date 2023-05-15 10:57
+     * @param mainId
+     * @param contactList
+     * @return void
+     */
+    void updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
 }

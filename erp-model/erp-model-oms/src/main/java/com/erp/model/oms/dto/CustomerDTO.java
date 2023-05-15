@@ -392,6 +392,16 @@ public class CustomerDTO implements Serializable {
         private String countryId;
 
         /**
+         * 地区
+         */
+        private String areaId;
+
+        /**
+         * 地区名
+         */
+        private String areaName;
+
+        /**
          * 省id
          */
         private String provinceId;
@@ -417,13 +427,13 @@ public class CustomerDTO implements Serializable {
         /**
          * 付款方
          */
-        private String payId;
+        private String payName;
 
 
         /**
          * 结算方
          */
-        private String settleId;
+        private String settleName;
 
 
         /**
@@ -477,7 +487,7 @@ public class CustomerDTO implements Serializable {
 
 
     /**
-     * 详情
+     * 修改
      */
     @Data
     @NoArgsConstructor
@@ -486,35 +496,11 @@ public class CustomerDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "客户信息不能为空")
         private String id;
 
-
         /**
-         * code
-         */
-        private String code;
-
-        /**
-         * 审核状态code
-         */
-        private ApproveStatusEnum approveStatus;
-
-
-        /**
-         * 审核状态名
-         */
-        private String approveStatusName;
-
-
-
-        /**
-         * 使用组织
-         */
-        private String useOrgId;
-
-
-        /**
-         * 内部组织id
+         * 对应组织id
          */
         private String innerOrgId;
 
@@ -524,19 +510,31 @@ public class CustomerDTO implements Serializable {
         private String groupId;
 
         /**
+         *平台类型
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=SalesPlatform
+         */
+        @NotNull(message = "平台类型不能为空")
+        @StateEnumValue(clazz = SalesPlatformEnum.class,message = "平台类型有误")
+        private SalesPlatformEnum  platformType;
+
+        /**
          * 国家id
+         * 来源 http://172.16.100.11:3002/project/36/interface/api/13390
          */
         @NotBlank(message = "国家不能为空")
         private String countryId;
 
         /**
          * 省id
+         * http://172.16.100.11:3002/project/36/interface/api/13408
          */
         private String provinceId;
 
 
         /**
          * 城市id
+         * http://172.16.100.11:3002/project/36/interface/api/13408
          */
         private String cityId;
 
@@ -545,6 +543,7 @@ public class CustomerDTO implements Serializable {
          * 客户名称
          */
         @NotBlank(message = "客户名称不能为空")
+        @Size(max = 200, message = "客户名称最大200字符")
         private String name;
 
         /**
@@ -555,13 +554,21 @@ public class CustomerDTO implements Serializable {
         /**
          * 付款方
          */
-        private String payId;
+        private List<String> payNameList;
 
 
         /**
          * 结算方
          */
-        private String settleId;
+        private String settleName;
+
+
+        /**
+         * 结算方式
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * key=settleMode
+         */
+        private String settleDict;
 
 
         /**
@@ -572,11 +579,14 @@ public class CustomerDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 200, message = "最大200字符")
         private String remark;
 
 
         /**
-         * 条件
+         * 收款条件
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * key=customerCompanyCategory
          */
         private String conditionDict;
 
@@ -589,6 +599,13 @@ public class CustomerDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+
+        /**
+         * 使用组织
+         */
+        @NotBlank(message = "使用组织不能为空")
+        private String useOrgId;
 
 
         /**

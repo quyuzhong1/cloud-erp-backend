@@ -35,4 +35,25 @@ public interface CustomerSellerService extends SuperService<CustomerSellerEntity
      * @return void
      */
     void saveBatchSeller(String id, List<SellerDTO.AddDTO> sellerList);
+
+    
+    /**
+     * 售货员信息
+     * @author yl
+     * @date 2023-05-15 10:10
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SellerDTO.ViewDTO>
+     */
+    List<SellerDTO.ViewDTO> listByMainId(String mainId);
+
+    
+    /**
+     * 批量修改发票信息
+     * @author yl
+     * @date 2023-05-15 11:21
+     * @param mainId
+     * @param sellerList
+     * @return void
+     */
+    void updateBatchSeller(String mainId, List<SellerDTO.ViewDTO> sellerList);
 }

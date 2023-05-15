@@ -5,14 +5,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataPermission;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -21,7 +19,9 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -122,8 +122,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String id = IdWorker.getIdStr();
         CustomerInfoEntity addEntity = new CustomerInfoEntity();
         BeanMapper.copy(dto, addEntity);
+        addEntity.setId(id);
+        //国家id
+        String countryId = dto.getCountryId();
+
+        addEntity.setAreaId(countryId);
         //分组id
         String groupId = dto.getGroupId();
+        //付款方
+        List<String> payNameList = dto.getPayNameList();
+        String payName = CollectionUtils.isNotEmpty(payNameList) ? payNameList.stream().collect(Collectors.joining(",")) : "";
+        addEntity.setPayName(payName);
         //获取客户分组信息
         List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
         String gradeName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
@@ -289,16 +298,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
-        List<CustomerGroupEntity> groupList = customerGroupService.listByIds(groupIdList);
-        for (CustomerDTO.PagingViewDTO item : list) {
-            String groupId = item.getGroupId();
-            String groupName = groupList.stream().filter(g -> groupId.equals(g.getId())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setGroupName(groupName);
-            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
-            item.setApproveStatusName(approveStatusEnum.getName());
-        }
 
         return new PagingVO<>(pageData);
     }
@@ -336,11 +335,151 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public CustomerDTO.ViewDTO view(String id) {
         CustomerDTO.ViewDTO view = new CustomerDTO.ViewDTO();
         CustomerInfoEntity customer = this.getById(id);
-        if(Objects.isNull(customer)){
+        if (Objects.isNull(customer)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        BeanMapper.copy(customer, view);
+        String  areaId= customer.getAreaId();
+        List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(areaId));
+        String regionName = globalAreaList.stream().filter(d -> d.getId().equals(areaId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getRegionName())).orElse("");
+        view.setAreaName(regionName);
+        view.setApproveStatusName(customer.getApproveStatus().getName());
+        List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
+        List<String> attachmentUrlList = attachmentList.stream().
+                map(OmsAttachmentDTO.UpdateDTO::getAttachUrl).
+                collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().
+                map(OmsAttachmentDTO.UpdateDTO::getAttachName).
+                collect(Collectors.toList());
+        view.setAttachUrlList(attachmentUrlList);
+        view.setAttachNameList(attachmentNameList);
+        //联系人信息
+        List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(id);
+        view.setContactList(contactList);
 
+        //地址信息
+        List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(id);
+        view.setAddressList(addressList);
+
+        //发票信息
+        List<InvoiceDTO.ViewDTO> invoiceList = customerInvoiceService.listByMainId(id);
+        view.setInvoiceList(invoiceList);
+
+        //销售员信息
+        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(id);
+        view.setSellerList(sellerList);
+
+        return view;
+    }
+
+
+    /**
+     * 修改客户信息
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-05-15 10:39
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String updateCustomer(CustomerDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        CustomerInfoEntity customer = this.getById(id);
+        if (Objects.isNull(customer)) {
+            throw new ServiceException(ApiError.ERROR_92011);
         }
 
-        return null;
+        //检查名称
+        checkName(id, dto.getName());
+        //客户联系人
+        List<CustomerContactDTO.ViewDTO> contactList = dto.getContactList();
+        List<CustomerContactDTO.AddDTO> contactAddList = BeanMapper.copyList(contactList, CustomerContactDTO.AddDTO.class);
+        //检查联系人默认是否多个
+        customerContactService.checkIsDefault(contactAddList);
+
+        //检查默认地址是否多个
+        List<CustomerAddressDTO.ViewDTO> addressList = dto.getAddressList();
+        List<CustomerAddressDTO.AddDTO> addressAddList = BeanMapper.copyList(addressList, CustomerAddressDTO.AddDTO.class);
+        customerAddressService.checkIsDefault(addressAddList);
+
+        //检查默认发票 银行账号
+        List<InvoiceDTO.ViewDTO> invoiceList = dto.getInvoiceList();
+        List<InvoiceDTO.AddDTO> invoiceAddList = BeanMapper.copyList(invoiceList, InvoiceDTO.AddDTO.class);
+        customerInvoiceService.checkIsDefault(invoiceAddList);
+
+        //销售员信息
+        List<SellerDTO.ViewDTO> sellerList = dto.getSellerList();
+        List<SellerDTO.AddDTO> sellerAddList = BeanMapper.copyList(sellerList, SellerDTO.AddDTO.class);
+        customerSellerService.checkDate(sellerAddList);
+
+
+        //旧的
+        SupplierEntity old = new SupplierEntity();
+        BeanMapper.copy(customer, old);
+
+        BeanMapper.copy(dto, customer);
+
+        //分组id
+        String groupId = dto.getGroupId();
+        //付款方
+        List<String> payNameList = dto.getPayNameList();
+        String payName = CollectionUtils.isNotEmpty(payNameList) ? payNameList.stream().collect(Collectors.joining(",")) : "";
+        customer.setPayName(payName);
+        //获取客户分组信息
+        List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
+        String gradeName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        customer.setGroupName(gradeName);
+
+        //对应组织
+        String innerOrgId = dto.getInnerOrgId();
+
+        //使用组织
+        String useOrgId = dto.getUseOrgId();
+        //组织列表
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
+
+        String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        customer.setInnerOrgName(innerOrgName);
+
+        String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        customer.setUseOrgName(useOrgName);
+        Boolean updateResult = this.updateById(customer);
+        if (updateResult) {
+
+            /**
+             * 添加修改日志
+             */
+            operateLogService.addModuleOperateLogByObj(old, customer, ModuleTypeEnum.CUSTOMER.getCode(), id, "", "");
+
+            Class<CustomerInfoEntity> customerClass = CustomerInfoEntity.class;
+            TableName tableName = customerClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            //修改附件
+            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, id);
+
+            //批量修改联系人信息
+            customerContactService.updateBatchContact(id, dto.getContactList());
+
+            //批量修改地址信息
+            customerAddressService.updateBatchAddress(id, dto.getAddressList());
+
+            //批量修改发票信息
+            customerInvoiceService.updateBatchInvoice(id, dto.getInvoiceList());
+
+            //批量修改销售员信息
+            customerSellerService.updateBatchSeller(id, dto.getSellerList());
+
+            return id;
+        }
+
+
+        return "";
     }
 
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {

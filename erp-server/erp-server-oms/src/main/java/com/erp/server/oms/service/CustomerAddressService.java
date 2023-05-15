@@ -35,4 +35,23 @@ public interface CustomerAddressService extends SuperService<CustomerAddressEnti
      * @return void
      */
     void saveBatchAddress(String id, List<CustomerAddressDTO.AddDTO> contactList);
+
+    
+    /**
+     * 根据主表id 获取地址信息
+     * @author yl
+     * @date 2023-05-15 10:01
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.CustomerAddressDTO.ViewDTO>
+     */
+    List<CustomerAddressDTO.ViewDTO> listByMainId(String mainId);
+    /**
+     * 修改地址信息
+     * @author yl
+     * @date 2023-05-15 11:08
+     * @param mainId
+     * @param addressList
+     * @return void
+     */
+    void updateBatchAddress(String mainId, List<CustomerAddressDTO.ViewDTO> addressList);
 }

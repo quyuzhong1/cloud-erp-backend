@@ -107,12 +107,12 @@ public class CustomerAddressDTO implements Serializable {
         /**
          * 联系人
          */
-        private String contactPerson;
+        private String person;
 
         /**
          * 地址类型
          */
-        private String addressType;
+        private String type;
 
         /**
          * 电话

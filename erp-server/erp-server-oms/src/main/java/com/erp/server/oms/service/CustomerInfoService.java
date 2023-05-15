@@ -83,4 +83,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return com.erp.model.oms.dto.CustomerDTO.ViewDTO
      */
     CustomerDTO.ViewDTO view(String id);
+
+    /**
+     * 修改客户信息
+     * @author yl
+     * @date 2023-05-15 10:39
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateCustomer(CustomerDTO.UpdateDTO dto);
 }

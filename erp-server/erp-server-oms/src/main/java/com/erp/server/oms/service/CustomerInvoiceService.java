@@ -35,4 +35,23 @@ public interface CustomerInvoiceService extends SuperService<CustomerInvoiceEnti
      * @return void
      */
     void saveBatchInvoice(String id, List<InvoiceDTO.AddDTO> invoiceList);
+
+    /**
+     * 根据主表信息 获取发票信息
+     * @author yl
+     * @date 2023-05-15 10:06
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.InvoiceDTO.ViewDTO>
+     */
+    List<InvoiceDTO.ViewDTO> listByMainId(String mainId);
+
+    /**
+     * 批量修改发票信息
+     * @author yl
+     * @date 2023-05-15 11:16
+     * @param mainId
+     * @param invoiceList
+     * @return void
+     */
+    void updateBatchInvoice(String mainId, List<InvoiceDTO.ViewDTO> invoiceList);
 }

@@ -53,6 +53,11 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:paging",
+            tableAlias = "ci"
+    )
     public ApiResult<PagingVO<CustomerDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerDTO.PagingParamDTO> dto) {
         PagingVO<CustomerDTO.PagingViewDTO> pagingVO = customerInfoService.paging(dto);
         return success(pagingVO);
@@ -66,6 +71,12 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:add",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         String id = customerInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -78,6 +89,12 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:submit",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.submit(dto.getIds());
         return result ? success() : failure();
@@ -90,6 +107,12 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:addAndSubmit",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         Boolean result = customerInfoService.addAndSubmit(dto);
         return result ? success() : failure();
@@ -105,7 +128,7 @@ public class CustomerInfoController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:supplier:view",
+            menuCode = "oms:customer:view",
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
     )
@@ -121,8 +144,15 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated CustomerDTO.ViewDTO dto) {
-        return success();
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:update",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "id"
+    )
+    public ApiResult update(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+        String id = customerInfoService.updateCustomer(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**

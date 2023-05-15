@@ -50,4 +50,7 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @return void
      */
     void removeAttachment(AttachmentDTO.DeleteDTO dto);
+
+    
+
 }

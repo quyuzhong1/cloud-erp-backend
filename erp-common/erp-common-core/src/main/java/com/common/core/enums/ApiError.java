@@ -497,6 +497,7 @@ public enum ApiError implements Serializable {
     ERROR_92008(92008,"开始日期不能 大于结束日期"),
     ERROR_92009(92009,"退货数量不能大于销售数量"),
     ERROR_92010(92010,"发货数量不能大于销售数量"),
+    ERROR_92011(92011,"客户不存在"),
 
 
 

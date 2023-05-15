@@ -296,4 +296,15 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/notice/listNoticeReceiver")
     List<NoticeReceiverDTO.InfoDTO> listNoticeReceiverByNodeKey(@RequestBody String nodeKey);
+
+
+    /**
+     * 根据国家id获取到地区信息
+     * @author yl
+     * @date 2023-05-15 11:44
+     * @param countryIds
+     * @return java.util.List<com.erp.model.sys.dto.DictGlobalAreaDTO.InfoDTO>
+     */
+    @PostMapping("feign/dict/listGlobalAreaByCountryIds")
+    List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(@RequestBody List<String> countryIds);
 }
