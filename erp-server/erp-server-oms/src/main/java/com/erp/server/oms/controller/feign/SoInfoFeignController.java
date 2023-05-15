@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.feign;
 
+import com.common.core.controller.BaseController;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
@@ -19,7 +20,7 @@ import java.util.List;
  **/
 @RestController
 @RequestMapping("feign/soInfo")
-public class SoInfoFeignController {
+public class SoInfoFeignController extends BaseController {
     @Resource
     private SoDetailService soDetailService;
 
