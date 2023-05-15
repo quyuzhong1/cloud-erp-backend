@@ -17,7 +17,7 @@ import com.erp.model.wms.dto.excel.ExportQcDocumentExcelDTO;
 import com.erp.model.wms.dto.excel.ExportQcPersonnelExcelDTO;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcReportExportExcelType;
+import com.erp.model.wms.enums.QcReportExportExcelTypeEnum;
 import com.erp.model.wms.enums.ViewQcTrendEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcInfoMapper;
@@ -203,13 +203,13 @@ public class QcEffectivenessServiceImpl implements QcEffectivenessService {
         String fileName = "";
         Class<?> clazz = null;
         List<?> list = null;
-        if (QcReportExportExcelType.PERSONNEL.getCode().equals(type)) {
+        if (QcReportExportExcelTypeEnum.PERSONNEL.getCode().equals(type)) {
              list =  this.qcInfoMapper.viewExportQcForPersonnel(dto);
              fileName = "按人员导出";
              clazz = ExportQcPersonnelExcelDTO.class;
              list =  BeanMapperUtils.copyList(ExportQcPersonnelExcelDTO.class,list);
         }
-        if (QcReportExportExcelType.DOCUMENT.getCode().equals(type)) {
+        if (QcReportExportExcelTypeEnum.DOCUMENT.getCode().equals(type)) {
              list =  this.qcInfoMapper.viewExportQcForDocument(dto);
              fileName = "按单据导出";
              clazz = ExportQcDocumentExcelDTO.class;

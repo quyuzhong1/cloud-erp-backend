@@ -10,11 +10,9 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 
 /**
- * <p>
  * 调拨申请单明细表
- * </p>
  *
- * @author lambda
+ * @author will
  * @since 2023-05-10
  */
 @Getter
