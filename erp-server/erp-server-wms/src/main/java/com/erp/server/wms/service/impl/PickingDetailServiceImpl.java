@@ -33,4 +33,9 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
 
         this.saveBatch(list);
     }
+
+    @Override
+    public Boolean deleteBySourceId(List<String> ids) {
+        return this.lambdaUpdate().set(PickingDetailEntity::getIsDeleted, Boolean.TRUE).in(PickingDetailEntity::getSourceId, ids).update();
+    }
 }

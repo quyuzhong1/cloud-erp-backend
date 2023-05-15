@@ -20,6 +20,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
+import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -32,9 +41,6 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -98,6 +104,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private InventoryService inventoryService;
+
+    @Resource
+    private PickingDetailService pickingDetailService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -257,7 +271,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         BeanMapperUtils.copy(soDeliveryNoticeEntity, viewDTO);
         //创库保存详情表的集合
         List<SoDeliveryNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
-        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.getDetailByMainId(id);
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(id);
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soDeliveryNoticeEntity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
         //获取sku的id集合
@@ -361,6 +375,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .set(SoDeliveryNoticeEntity::getApproveTime, LocalDateTime.now())
                     .in(SoDeliveryNoticeEntity::getId, ids)
                     .update();
+
+            generatePickingDetail(deliveryNoticeEntityList);
         } else {
             //审核不通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -399,6 +415,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoDeliveryNoticeEntity::getId, ids)
                 .update();
+
+        //回扣库存
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE,ids);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //删除拣货详情
+        pickingDetailService.deleteBySourceId(ids);
+
         //操作日志
         List<Pair<String, String>> pairList = deliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个发货通知单【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "反审核操作");
@@ -558,5 +582,70 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public Boolean generateSoDeliverySave(List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> list) {
         return null;
+    }
+
+    private void generatePickingDetail(List<SoDeliveryNoticeEntity> list) {
+        //生成拣货明细
+        List<String> ids = list.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99044);
+        }
+        //拣货明细集合
+        List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
+        for (SoDeliveryNoticeEntity entity :list) {
+            List<SoDeliveryNoticeDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailEntities)) {
+                throw new ServiceException(ApiError.ERROR_99044);
+            }
+            //获取仓库信息
+            WarehouseEntity warehouseEntity = warehouseService.getById(entity.getWarehouseId());
+
+            //获取sku的id集合
+            List<String> skuIdList = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
+            //根据ids查询sku信息
+            List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+
+            for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
+
+                //查询可用库存生成拣货明细
+                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(),warehouseEntity.getName(),entity.getWarehouseId(),
+                        entity.getWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty());
+                List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
+
+                List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
+
+                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+
+                List<TransferDTO>  transferList = new ArrayList<>();
+                for (PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
+                    addDTO.setSourceId(entity.getId());
+                    addDTO.setSourceCode(entity.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+                    addDTO.setSourceDetailId(detailEntity.getId());
+                    addDTO.setUnit(productDetailEntity.getUnitName());
+                    addDTO.setWarehouseName(entity.getWarehouseName());
+                    addDTO.setOrgName(warehouseEntity.getName());
+
+                    //调拨操作请求实体
+                    TransferDTO transferDTO = new TransferDTO();
+                    BeanMapperUtils.copy(addDTO,transferDTO);
+                    transferDTO.setCurWarehouseId(addDTO.getWarehouseId());
+                    transferDTO.setCurWarehouseLocation(addDTO.getWarehouseLocation());
+                    transferDTO.setTargetWarehouseId(entity.getWarehouseId());
+                    transferList.add(transferDTO);
+                }
+                addList.addAll(pickingDetailList);
+
+                //减少可用库存，添加冻结库存
+                InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+                inventoryTransferDTO.setMembers(transferList);
+                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.SHIP_NOTICE.getCode());
+                //更新库存
+                inventoryTransCoreService.approveByType(inventoryTransferDTO);
+            }
+        }
+        //添加拣货明细数据
+        pickingDetailService.add(addList);
     }
 }

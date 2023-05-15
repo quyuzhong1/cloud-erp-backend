@@ -22,4 +22,13 @@ public interface PickingDetailService extends SuperService<PickingDetailEntity> 
       * @param detailList
       */
      void add(List<PickingDetailDTO.CommonDTO> detailList);
+
+     /**
+      * 根据来源Id删除拣货详情
+      * @Author Luo_WG
+      * @Date 2023/5/15 11:11
+      * @param ids ids
+      * @return void
+      **/
+     Boolean deleteBySourceId(List<String> ids);
 }

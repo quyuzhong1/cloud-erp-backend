@@ -89,7 +89,12 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     @Override
-    public List<SoDeliveryNoticeDetailEntity> getDetailByMainId(String mainId) {
+    public List<SoDeliveryNoticeDetailEntity> listDetailByMainId(String mainId) {
         return lambdaQuery().eq(SoDeliveryNoticeDetailEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(List<String> mainIdList) {
+        return lambdaQuery().in(SoDeliveryNoticeDetailEntity::getMainId, mainIdList).list();
     }
 }

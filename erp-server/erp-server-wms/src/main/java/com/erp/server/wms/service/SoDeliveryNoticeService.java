@@ -22,6 +22,7 @@ import java.util.List;
  * @since 2023-05-10
  */
 public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEntity> {
+
     /**
      * 分页查询
      * @Author Luo_WG

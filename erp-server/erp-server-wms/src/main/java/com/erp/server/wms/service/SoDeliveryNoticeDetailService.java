@@ -54,5 +54,15 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @param mainId mainId
      * @return java.lang.Boolean
      **/
-    List<SoDeliveryNoticeDetailEntity> getDetailByMainId(String mainId);
+    List<SoDeliveryNoticeDetailEntity> listDetailByMainId(String mainId);
+
+
+    /**
+     * 根据主表id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
+     * @param mainIds mainIds
+     * @return java.lang.Boolean
+     **/
+    List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(List<String> mainIds);
 }
