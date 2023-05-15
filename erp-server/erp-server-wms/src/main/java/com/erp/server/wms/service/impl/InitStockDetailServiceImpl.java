@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
@@ -23,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +56,10 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
     @Override
     public void add(List<InitStockDetailDTO.AddDTO> details, String mainId) {
         List<InitStockDetailEntity> list = BeanMapperUtils.copyList(InitStockDetailEntity.class, details);
-        handleDetails(list, mainId);
+        handleDetails(list, mainId, Boolean.FALSE);
         // 批量保存
-        this.saveBatch(list);
+        boolean save = this.saveBatch(list);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("期初库存明细保存失败"));
     }
 
     @Override
@@ -93,19 +92,35 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
         // 新增或修改的明细数据
         List<InitStockDetailEntity> newList = BeanMapperUtils.copyList(InitStockDetailEntity.class, details);
         // 记录新增或修改日志
-        handleDetails(newList, mainId);
+        handleDetails(newList, mainId, Boolean.TRUE);
         //新增或修改期初库存明细
-        this.saveOrUpdateBatch(newList);
+        boolean save = this.saveOrUpdateBatch(newList);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("期初库存明细保存失败"));
+    }
+
+    @Override
+    public Integer countCondition(String warehouseId, String skuId, String mainId) {
+        return this.baseMapper.countCondition(warehouseId, skuId, mainId);
+    }
+
+    @Override
+    public Map<String, List<InitStockDetailEntity>> findListByIds(List<String> mainIds) {
+        List<InitStockDetailEntity> details =  lambdaQuery().in(InitStockDetailEntity::getMainId, mainIds).list();
+        // 按主单id分组
+        Map<String, List<InitStockDetailEntity>> initStockDetailEntityMap = details.stream().collect(Collectors.groupingBy(InitStockDetailEntity::getMainId));
+        return initStockDetailEntityMap;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+        lambdaUpdate().in(InitStockDetailEntity::getMainId, mainIds).remove();
     }
 
 
-    public void handleDetails(List<InitStockDetailEntity> list, String mainId) {
+    public void handleDetails(List<InitStockDetailEntity> list, String mainId, Boolean isUpdate) {
         //添加操作日志
         List<InitStockDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), addPairList, "编辑操作");
-        }
         List<String> skuIds = list.stream().map(InitStockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfos = plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String,SkuVO> skuMap =  skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
@@ -116,6 +131,8 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
             }
             data.setMainId(mainId);
             data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充真实的sku no
+            // TODO 待验证库位
+            data.setWarehouseLocation(StrUtils.null2EmptyWithTrim(data.getWarehouseLocation()));
             // 修改时添加日志
             if(StrUtils.isNotEmpty(data.getId())) {
                 InitStockDetailEntity initStockDetailOld = super.getById(data.getId());
@@ -124,6 +141,10 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
                 }
                 operateLogService.addModuleOperateLogByObj(initStockDetailOld,data, ModuleTypeEnum.INIT_STOCK.getCode(),mainId,"",String.format("【%s】",initStockDetailOld.getSkuNo()));
             }
+        }
+        if (CollUtil.isNotEmpty(addList) && isUpdate) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), addPairList, "编辑操作");
         }
     }
 

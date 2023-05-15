@@ -27,10 +27,10 @@ public enum InventorySourceTypeEnum {
     SO_DELIVERY_NOTICE("soDeliveryNotice", "发货通知单"),
     PURCHASE_STOCK_OUT("purchaseStockOut", "销售出库单"),
     SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单"),
-    MACHINE_INFO("machine_info", "加工单"),
-    OTHER_INSTOCK("other_instock", "其他入库单"),
-    OTHER_OUTSTOCK("other_outstock", "其他出库单"),
-    INSTOCK_FORCAST("instock_forcast", "入库预报"),
+    MACHINE_INFO("machineInfo", "加工单"),
+    OTHER_INSTOCK("otherInstock", "其他入库单"),
+    OTHER_OUTSTOCK("otherOutstock", "其他出库单"),
+    INSTOCK_FORCAST("instockForcast", "入库预报"),
 
     ;
 

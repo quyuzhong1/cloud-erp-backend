@@ -3,6 +3,9 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @Classname: InitStockDetailMapper
@@ -12,5 +15,13 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface InitStockDetailMapper extends BaseMapper<InitStockDetailEntity> {
+
+    /**
+     * 根据仓库和状态集合判断是否存在sku（不能为作废状态）
+     * @param warehouseId
+     * @param skuId
+     * @return
+     */
+    Integer countCondition(@Param(value = "warehouseId") String warehouseId,@Param(value = "skuId")  String skuId, @Param(value = "id")  String id);
 
 }

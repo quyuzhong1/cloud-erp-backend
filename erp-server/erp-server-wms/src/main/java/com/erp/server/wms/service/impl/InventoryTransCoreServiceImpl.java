@@ -79,11 +79,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     @Override
     public void batchUnApprove(InventoryBatchUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
+        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
         dto.getBillIds().stream().forEach(billId->{
             InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
             inventoryUnApproveDTO.setSourceType(dto.getSourceType());
             inventoryUnApproveDTO.setBillId(billId);
-            inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).unApprove(inventoryUnApproveDTO);
+            abstractInventoryService.unApprove(inventoryUnApproveDTO);
         });
     }
 

@@ -30,7 +30,7 @@ public enum InventoryBusinessTypeEnum {
     STEP_INVENTORY_OUT("step_inventory_out", "08","分步式调拨调出"),
     STEP_INVENTORY_IN("step_inventory_in", "09","分步式调拨调入"),
 
-    SHIP_NOTICE("ship_notice", "10","销售发货通知单"),
+    SHIP_NOTICE("so_delivery_notice", "10","销售发货通知单"),
     SALES_DELIVERY_ORDER("sales_delivery_order", "11","销售出库"),
     SALES_RETURN_RECEIPT("sales_return_receipt", "12","销售退货"),
 

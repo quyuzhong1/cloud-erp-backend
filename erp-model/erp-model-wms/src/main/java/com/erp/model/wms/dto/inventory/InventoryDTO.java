@@ -339,6 +339,10 @@ public class InventoryDTO {
     @NoArgsConstructor
     public static class InOutStockTransFlowSearchParamDTO extends SortDTO {
 
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
 
         /**
          * sku编码
@@ -351,28 +355,28 @@ public class InventoryDTO {
         private List<String> dateList;
 
         /**
-         * 单据类型集合
+         * 单据名称集合
          */
         private List<String> sourceTypeList;
 
 
         /**
-         * spu编码
+         * spu
          */
         private List<String> spuNoList;
 
         /**
-         * 仓库id集合
+         * 仓库
          */
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态集合
+         * 销售状态
          */
         private List<Integer> saleStatusList;
 
         /**
-         * 库存组织集合
+         * 库存组织
          */
         private List<String> orgIdLList;
 
@@ -402,28 +406,28 @@ public class InventoryDTO {
         private List<String> dateList;
 
         /**
-         * 单据类型集合
+         * 单据名称
          */
         private List<String> sourceTypeList;
 
 
         /**
-         * spu编码
+         * spu
          */
         private List<String> spuNoList;
 
         /**
-         * 仓库id集合
+         * 仓库
          */
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态集合
+         * 销售状态
          */
         private List<Integer> saleStatusList;
 
         /**
-         * 库存组织集合
+         * 库存组织
          */
         private List<String> orgIdLList;
 
@@ -459,7 +463,7 @@ public class InventoryDTO {
         private String sourceType;
 
         /**
-         * 单据类型名称
+         * 单据名称
          */
         private String sourceTypeName;
 

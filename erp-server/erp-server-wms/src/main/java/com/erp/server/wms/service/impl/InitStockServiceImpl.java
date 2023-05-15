@@ -3,14 +3,17 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -18,27 +21,32 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportInitStockExcelDTO;
 import com.erp.model.wms.dto.excel.ImportInitStockExcelDTO;
-import com.erp.model.wms.dto.inventory.InitStockDTO;
-import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InitStockDetailEntity;
 import com.erp.model.wms.entity.InitStockEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.InitStockDetailExcelListener;
 import com.erp.server.wms.mapper.InitStockMapper;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.InitStockDetailService;
-import com.erp.server.wms.service.InitStockService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,9 +54,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * <p>
@@ -58,6 +68,7 @@ import java.util.stream.Collectors;
  * @author ZHANGCHUNLIN
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, InitStockEntity> implements InitStockService {
 
@@ -72,6 +83,18 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private OperateLogService operateLogService;
+
+    @Autowired
+    private CommonService commonService;
+
+    @Autowired
+    private InventoryTransCoreService inventoryTransCoreService;
+
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     @Override
     public PagingVO<InitStockDTO.ListDTO> paging(PagingDTO<InitStockDTO.SearchParamDTO> pagingParamDTO) {
@@ -175,62 +198,329 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         return result;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(InitStockDTO.AddDTO dto) {
+    public String add(InitStockDTO.AddDTO dto) {
         InitStockEntity initStockEntity = BeanMapperUtils.map(InitStockEntity.class, dto);
-        checkAddRepeateSku(dto.getDetails());
+        checkAddRepeateSku(dto, dto.getDetails());
         // 保存期初库存主单
         fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QCKC, BusinessNoTypeEnum.CODE_INIT_STOCK.getCode()));
         initStockEntity.setCode(code);
         initStockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        initStockEntity.setDictTradeType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());
+        initStockEntity.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+
+        log.info("创建 开始新增期初库存数据，单号：【{}】", code);
         boolean save = super.save(initStockEntity);
         ValidatorUtil.isTrue(save, ()->new ServiceException("期初库存保存失败"));
+
         // 保存期初库存明细
+        log.info("创建 开始新增期初库存明细数据，单号：【{}】", code);
         initStockDetailService.add(dto.getDetails(), initStockEntity.getId());
+
+        // 记录主单操作日志
+        log.info("创建 开始新增期初库存日志数据，单号：【{}】", code);
+        operateLogService.addModuleOperateLog(String.format("新增了一个期初库存【%s】", code), ModuleTypeEnum.INIT_STOCK.getCode(), initStockEntity.getId(), "新增操作");
+        return initStockEntity.getId();
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(InitStockDTO.UpdateDTO dto) {
         // 判断数据是否存在
-        InitStockEntity initStockEntity = super.getById(dto.getId());
-        Optional.ofNullable(initStockEntity).orElseThrow(()->new ServiceException("期初库存数据不存在"));
-        checkUpdateRepeateSku(dto.getDetails(), dto.getId());
-        // 判断状态是否允许操作（只有待提交的才允许修改）
-        ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),
+        InitStockEntity originInitStock = super.getById(dto.getId());
+        Optional.ofNullable(originInitStock).orElseThrow(()->new ServiceException("期初库存数据不存在"));
+        checkUpdateRepeateSku(dto, dto.getDetails(), dto.getId());
+        // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
+        ValidatorUtil.isTrue(Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
                 ()->new ServiceException("当前单据状态不允许修改"));
-        fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
+
+        InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, originInitStock);
+        fillingAddOrUpdate(nowInitStock, dto.getWarehouseId());
         // 修改期初库存主单数据
-        initStockEntity.setBillDate(dto.getBillDate());
-        super.updateById(initStockEntity);
+        nowInitStock.setBillDate(dto.getBillDate());
+        log.info("编辑 开始修改期初库存数据，单号：【{}】", originInitStock.getCode());
+        boolean save = super.updateById(nowInitStock);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("期初库存保存失败"));
+
         // 修改期初库存明细数据（包含增删改）
-        initStockDetailService.update(dto.getDetails(), initStockEntity.getId());
+        log.info("编辑 开始修改期初库存明细数据，单号：【{}】", originInitStock.getCode());
+        initStockDetailService.update(dto.getDetails(), nowInitStock.getId());
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录期初库存日志数据，单号：【{}】", originInitStock.getCode());
+        operateLogService.addModuleOperateLogByObj(originInitStock, nowInitStock, ModuleTypeEnum.INIT_STOCK.getCode(), nowInitStock.getId(), "", "");
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void submit(List<String> ids) {
+        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        // 判断id是否正确
+        List<InitStockEntity> list = super.listByIds(ids);
+        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+        // 能查询到的数据id集合
+        List<String> findIds = list.stream().map(InitStockEntity::getId).distinct().collect(Collectors.toList());
+        IntStream.range(0,ids.size()).forEach(idx->{
+            String id = ids.get(idx);
+            ValidatorUtil.isTrue(findIds.contains(id),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据不存在", idx + 1)));
+            InitStockEntity initStockEntity = initStockEntityMap.get(id);
+            //待提交或审核不通过并且未作废允许提交
+            if((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(initStockEntity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(initStockEntity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(initStockEntity.getInvalidStatus())) {
+                throw new ServiceException(StrUtil.format("只有待提交或审核不通过并且未作废数据支持提交，第{}行期初库存数据状态不允许操作", idx + 1));
+            }
+        });
+        // 更新单据审核状态
+        log.info("提交 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        lambdaUpdate().in(InitStockEntity::getId, ids).set(InitStockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus()).update();
+
+        // TODO 启动流程
+
+        // 记录操作日志
+        log.info("提交 开始记录期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个期初库存【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "提交操作");
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void addAndSubmit(InitStockDTO.AddDTO dto) {
+        String id = this.add(dto); // 新增
+        this.submit(Lists.newArrayList(id));// 提交
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateAndSubmit(InitStockDTO.UpdateDTO dto) {
+        this.update(dto);// 修改
+        this.submit(Lists.newArrayList(dto.getId()));// 提交
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
+        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        List<InitStockEntity> list = super.listByIds(ids);
+        ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到期初库存数据"));
+        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+        //只有审核中的数据允许审核
+        IntStream.range(0,ids.size()).forEach(idx->{
+            String id = ids.get(idx);
+            ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据不存在",idx + 1)));
+            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据状态不为审核中，不允许操作",idx + 1)));
+        });
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
+        ApproveStatusEnum approveStatus = null;
+        if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
+            approveStatus = ApproveStatusEnum.APPROVE;
+           this.send2Inventory(initStockEntityMap);
+            // TODO 审核通过流程
+        } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
+            approveStatus = ApproveStatusEnum.REJECT;
+           // TODO 中止当前审批流程
+        }
+
+        log.info("审核 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        updateForApprove(ids, approveStatus.getStatus()); // 修改单据状态
+        //操作日志
+        log.info("审核 开始修改期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(data -> new Pair<>(data.getId(), data.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个期初库存", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "审核操作");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void delete(List<String> ids) {
+        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        List<InitStockEntity> list = super.listByIds(ids);
+        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+        IntStream.range(0,ids.size()).forEach(idx->{
+            String id = ids.get(idx);
+            ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据不存在",idx + 1)));
+            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据状态不为待提交，不允许操作",idx + 1)));
+        });
+        // 删除期初库存日志数据
+        log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        operateLogService.removeByBusinessIds(ids);
+
+        // 删除期初库存明细数据
+        log.info("删除 开始删除期初库存明细数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        initStockDetailService.removeByMainIds(ids);
+
+        // 删除期初库存主单数据
+        log.info("删除 开始删除期初库存主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        super.removeByIds(ids);
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void disApprove(List<String> ids) {
+        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        List<InitStockEntity> list = super.listByIds(ids);
+        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+        IntStream.range(0,ids.size()).forEach(idx->{
+            String id = ids.get(idx);
+            ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据不存在",idx + 1)));
+            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据状态不为已审核，不允许操作",idx + 1)));
+        });
+        log.info("反审核 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
+        updateForDisApprove(ids, approveStatus.getStatus()); // 修改单据状态为待提交
+
+        log.info("反审核 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        // 操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个期初库存【%s】", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "反审核操作");
+        // 库存交易反审核
+        inventoryTransCoreService.batchUnApprove(new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.INIT_STOCK, ids));
+        // TODO 流程
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void invalid(List<String> ids, String remark) {
+        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        List<InitStockEntity> list = super.listByIds(ids);
+        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+        IntStream.range(0,ids.size()).forEach(idx->{
+            String id = ids.get(idx);
+            ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据不存在",idx + 1)));
+            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据状态不为待提交或审核不通过，不允许操作",idx + 1)));
+        });
+        log.info("作废 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        lambdaUpdate().in(InitStockEntity::getId, ids)
+                .set(InitStockEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(InitStockEntity::getInvalidRemark, remark)
+                .update();
+
+        log.info("作废 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个期初库存【%s】，作废原因：".concat(remark), ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "作废操作");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void cancel(List<String> ids) {
+        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        List<InitStockEntity> list = super.listByIds(ids);
+        Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+        IntStream.range(0,ids.size()).forEach(idx->{
+            String id = ids.get(idx);
+            ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据不存在",idx + 1)));
+            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException(StrUtil.format("您选择的第{}行期初库存数据状态不为审核中，不允许操作",idx + 1)));
+        });
+        log.info("撤销  开始撤销流程，id集合：【{}】",JSONObject.toJSONString(ids));
+        workflowFeign.cancelProcess(ids);
+
+        log.info("撤销 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //操作日志
+        log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("期初库存【%s】取消流程", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "取消流程操作");
+    }
+
+    public void send2Inventory(Map<String, InitStockEntity> initStockEntityMap) {
+        Map<String, List<InitStockDetailEntity>> initStockDetailMap = initStockDetailService.findListByIds(new ArrayList<>(initStockEntityMap.keySet()));
+        // 调用库存组件
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());
+        List<InOutStockDTO> stockMembers = Lists.newArrayList();
+        initStockEntityMap.forEach((id, initStock)->{
+            // 获取期初库存明细（此处优化，防止循环遍历慢）
+            List<InitStockDetailEntity> members = initStockDetailMap.get(id);
+            members.stream().forEach(member->{
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setWarehouseId(initStock.getWarehouseId());
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.INIT_STOCK);
+                inOutStockDTO.setSourceId(initStock.getId());
+                inOutStockDTO.setSourceCode(initStock.getCode());
+                inOutStockDTO.setBillDate(initStock.getBillDate());
+                inOutStockDTO.setSourceDetailId(member.getId());
+                inOutStockDTO.setSkuId(member.getSkuId());
+                inOutStockDTO.setSkuNo(member.getSkuNo());
+                inOutStockDTO.setQty(member.getQty());
+                stockMembers.add(inOutStockDTO);
+            });
+        });
+        inventoryInOutStockDTO.setMembers(stockMembers);
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
     /**
-     * 新增检查是否存在重复sku
+     * 审核更新审核状态、审核人、审核时间
+     * @param ids
+     * @param approveStatus
+     */
+    public void updateForApprove(List<String> ids, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        this.lambdaUpdate().in(InitStockEntity::getId, ids)
+                .set(InitStockEntity::getApproveUserId, userInfo.getUid())
+                .set(InitStockEntity::getApproveUserName, userInfo.getUserName())
+                .set(InitStockEntity::getApproveStatus, approveStatus)
+                .set(InitStockEntity::getApproveTime, LocalDateTime.now())
+                .update();
+    }
+
+    /**
+     * 反审核更新审核状态、审核人、审核时间
+     * @param ids
+     * @param approveStatus
+     */
+    public void updateForDisApprove(List<String> ids, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        this.lambdaUpdate().in(InitStockEntity::getId, ids)
+                .set(InitStockEntity::getApproveUserId, "")
+                .set(InitStockEntity::getApproveUserName, "")
+                .set(InitStockEntity::getApproveStatus, approveStatus)
+                .set(InitStockEntity::getApproveTime, null)
+                .update();
+    }
+
+
+
+    /**
+     * 新增检查
+     * @param
      * @param details
      */
-    public void checkAddRepeateSku(List<InitStockDetailDTO.AddDTO> details) {
+    public void checkAddRepeateSku(InitStockDTO.AddDTO mainDTO, List<InitStockDetailDTO.AddDTO> details) {
         // 不允许出现重复的sku
-        Map<String,List<InitStockDetailDTO.AddDTO>> skuList = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.AddDTO::getSkuId));
-        skuList.forEach((skuId,skuIdList)->{
+        Map<String,List<InitStockDetailDTO.AddDTO>> skuMap = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.AddDTO::getSkuId));
+        skuMap.forEach((skuId,skuIdList)->{
             if(skuIdList.size() > 1) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", skuIdList.get(0).getSkuNo()));
             }
+            // 同一个仓库相同SKU仅可添加一次（不包括已作废单据）
+            Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), skuId, null);
+            ValidatorUtil.isTrue(checkCnt <= 0,()->new ServiceException(StrUtil.format("sku编码【{}】在仓库已经存在", skuIdList.get(0).getSkuNo())));
         });
+
     }
 
     /**
-     * 修改检查是否存在重复sku
+     * 修改检查
      * @param details
      */
-    public void checkUpdateRepeateSku(List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
-        Map<String,List<InitStockDetailDTO.UpdateDTO>> skuMembers = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
-        skuMembers.forEach((skuId,members)->{
+    public void checkUpdateRepeateSku(InitStockDTO.UpdateDTO mainDTO, List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
+        Map<String,List<InitStockDetailDTO.UpdateDTO>> skuMap = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
+        skuMap.forEach((skuId,members)->{
             // 不允许出现重复的sku
             if(members.size() > 1) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", members.get(0).getSkuNo()));
@@ -238,9 +528,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             // 判断是否在明细表中已经存在的sku
             InitStockDetailEntity initStockDetailEntity = initStockDetailService.findDetail(mainId, skuId);
             InitStockDetailDTO.UpdateDTO member = members.get(0);
-            if(Objects.nonNull(initStockDetailEntity) && !Objects.equals(initStockDetailEntity.getId(), member)) {
+            if(Objects.nonNull(initStockDetailEntity) && !Objects.equals(initStockDetailEntity.getId(), member.getId())) {
                 throw new ServiceException(StrUtil.format("sku编码【{}】已存在", member.getSkuNo()));
             }
+            // 同一个仓库相同SKU仅可添加一次（不包括已作废单据）,修改需排除本身
+            Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), skuId, mainId);
+            ValidatorUtil.isTrue(checkCnt <= 0,()->new ServiceException(StrUtil.format("sku编码【{}】在仓库已经存在", member.getSkuNo())));
         });
     }
 

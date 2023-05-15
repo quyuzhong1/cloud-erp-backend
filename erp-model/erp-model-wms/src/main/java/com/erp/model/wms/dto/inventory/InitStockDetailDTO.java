@@ -45,7 +45,7 @@ public class InitStockDetailDTO implements Serializable {
          * 期初数量
          */
         @NotNull(message = "期初数量不能为空")
-        @Min(value = 0, message = "期初数量最小值为0")
+        @Min(value = 1, message = "期初数量最小值为1")
         @Max(value = 999999999, message = "期初数量最大值为999999999")
         private Integer qty;
 
@@ -69,7 +69,6 @@ public class InitStockDetailDTO implements Serializable {
         /**
          * 明细id
          */
-        @NotEmpty(message = "id不能为空")
         private String id;
 
         /**
@@ -88,7 +87,7 @@ public class InitStockDetailDTO implements Serializable {
          * 期初数量
          */
         @NotNull(message = "期初数量不能为空")
-        @Min(value = 0, message = "期初数量最小值为0")
+        @Min(value = 1, message = "期初数量最小值为1")
         @Max(value = 999999999, message = "期初数量最大值为999999999")
         private Integer qty;
 

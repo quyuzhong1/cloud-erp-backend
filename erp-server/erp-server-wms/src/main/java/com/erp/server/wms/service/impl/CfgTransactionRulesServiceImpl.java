@@ -418,6 +418,18 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(),  InventoryWarehouseOptionEnum.WAREHOUSE_TARGET.getName(), inventoryStatus.getName(), inventoryMode.getName()));
         rules.add(cfgTransactionRulesEntity);
 
+        // 00-期初库存
+        // 可用增加
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.INVENTORY_INIT;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
+        inventoryStatus = InventoryStatusEnum.USABLE;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.IN_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(),  InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
         super.saveBatch(rules);
     }
 

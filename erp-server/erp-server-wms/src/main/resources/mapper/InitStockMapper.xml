@@ -41,13 +41,13 @@
             pi.spu_no,
             ps.sale_state
             from init_stock_detail isd
-            inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+            inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false and ism.dict_trade_type = '00'
             left join product_detail pd on pd.id = isd.sku_id
             left join product_info pi on pd.product_id = pi.id
             left join product_sale ps on ps.sku_id = pd.id
             where isd.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and ism.code = #{params.code}
+                and ism.code like concat('%',#{params.code},'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                 and isd.sku_no in
@@ -106,7 +106,7 @@
         pi.spu_no,
         ps.sale_state
         from init_stock_detail isd
-        inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+        inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false and ism.dict_trade_type = '00'
         left join product_detail pd on pd.id = isd.sku_id
         left join product_info pi on pd.product_id = pi.id
         left join product_sale ps on ps.sku_id = pd.id

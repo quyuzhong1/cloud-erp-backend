@@ -45,8 +45,8 @@ public class InitStockDTO implements Serializable {
          * 期初库存产品明细
          */
         @Valid
-        @NotNull(message = "产品明细不能为空")
-        @Size(min = 1, message = "请至少录入一条产品明细")
+        @NotNull(message = "期初库存明细不能为空")
+        @Size(min = 1, message = "请至少录入一条期初库存明细")
         private List<InitStockDetailDTO.AddDTO> details;
 
     }
@@ -81,8 +81,8 @@ public class InitStockDTO implements Serializable {
          * 期初库存产品明细
          */
         @Valid
-        @NotNull(message = "产品明细不能为空")
-        @Size(min = 1, message = "请至少录入一条产品明细")
+        @NotNull(message = "期初库存明细不能为空")
+        @Size(min = 1, message = "请至少录入一条期初库存明细")
         private List<InitStockDetailDTO.UpdateDTO> details;
 
     }

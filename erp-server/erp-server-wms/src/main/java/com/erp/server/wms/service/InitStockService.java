@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -55,12 +56,64 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      * @param dto
      * @return
      */
-    void add(InitStockDTO.AddDTO dto);
+    String add(InitStockDTO.AddDTO dto);
 
     /**
      * 修改
      * @param dto
      */
     void update(InitStockDTO.UpdateDTO dto);
+
+    /**
+     * 批量提交
+     * @param ids
+     * @return
+     */
+    void submit(List<String> ids);
+
+    /**
+     * 新增并提交
+     * @param dto
+     */
+    void addAndSubmit(InitStockDTO.AddDTO dto);
+
+    /**
+     * 修改并提交
+     * @param dto
+     */
+    void updateAndSubmit(InitStockDTO.UpdateDTO dto);
+
+    /**
+     * 批量审核
+     * @param baseApproveParamDTO
+     */
+    void approve(BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 删除
+     * @param ids
+     */
+    void delete(List<String> ids);
+
+    /**
+     * 反审核
+     * @param ids
+     */
+    void disApprove(List<String> ids);
+
+    /**
+     * 作废
+     * @param ids
+     * @param remark
+     */
+    void invalid(List<String> ids, String remark);
+
+    /**
+     * 删除
+     * @param ids
+     */
+    void cancel(List<String> ids);
+
+
 
 }

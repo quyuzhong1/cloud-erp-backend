@@ -5,6 +5,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.*;
 
 import java.time.LocalDate;
@@ -146,6 +147,27 @@ public class InventoryUtils {
         transactionFlowDTO.setQty(qty);
         transactionFlowDTO.setOperationMode(Objects.nonNull(param.getOperationMode()) ? param.getOperationMode().getCode() : "");
         return transactionFlowDTO;
+    }
+
+    /**
+     * 从交易流水取值赋值给出入库参数实体
+     * @param txnFlow
+     * @param inventoryOperationModeEnum
+     * @return
+     */
+    public static InOutStockCoreDTO convertInoutStockForTxn(TransactionFlowEntity txnFlow, InventoryOperationModeEnum inventoryOperationModeEnum) {
+        InOutStockCoreDTO param = new InOutStockCoreDTO();
+        param.setWarehouseId(txnFlow.getWarehouseId());
+        param.setWarehouseLocation(txnFlow.getWarehouseLocation());
+        param.setSkuId(txnFlow.getSkuId());
+        param.setSkuNo(txnFlow.getSkuNo());
+        param.setSourceId(txnFlow.getSourceId());
+        param.setSourceCode(txnFlow.getSourceCode());
+        param.setSourceDetailId(txnFlow.getSourceDetailId());
+        param.setBillDate(txnFlow.getBillDate());
+        param.setSourceType(InventorySourceTypeEnum.of(txnFlow.getSourceType()));
+        param.setOperationMode(inventoryOperationModeEnum);
+        return param;
     }
 
 }

@@ -103,7 +103,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setOperationMode(StrUtils.null2EmptyWithTrim(param.getOperationMode()));
         transactionFlowEntity.setVersion(1);
         transactionFlowEntity.setTransactionNo(param.getTransactionNo());
-        super.save(transactionFlowEntity);
+        // 如果是反审核操作，字段是否反审核设置为true，否则后面对同一单据查询会把这条记录查询出来
+        if(Objects.equals(transactionFlowEntity.getOperationMode(),InventoryOperationModeEnum.UN_APPROVE.getCode())) {
+            transactionFlowEntity.setIsUnapproved(Boolean.TRUE);
+        }
+        boolean save = super.save(transactionFlowEntity);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
     }
 
 }

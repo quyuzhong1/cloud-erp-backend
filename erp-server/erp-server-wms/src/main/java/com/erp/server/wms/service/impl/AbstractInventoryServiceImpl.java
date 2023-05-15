@@ -134,17 +134,7 @@ public abstract class AbstractInventoryServiceImpl {
         txnFlows.stream().forEach(txnFlow->{
             // 此处需注意：1.已经反审核过的单据不允许再次反审核，以免库存数据错乱（前面查询条件已过滤）；2.可能会出现负数，如入库后被出库了反审核后仓库数量不够反审核，增加验证不允许反审核
             // 登记反审核的交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
-            InOutStockCoreDTO param = new InOutStockCoreDTO();
-            param.setWarehouseId(txnFlow.getWarehouseId());
-            param.setWarehouseLocation(txnFlow.getWarehouseLocation());
-            param.setSkuId(txnFlow.getSkuId());
-            param.setSkuNo(txnFlow.getSkuNo());
-            param.setSourceId(txnFlow.getSourceId());
-            param.setSourceCode(txnFlow.getSourceCode());
-            param.setSourceDetailId(txnFlow.getSourceDetailId());
-            param.setBillDate(txnFlow.getBillDate());
-            param.setSourceType(InventorySourceTypeEnum.of(txnFlow.getSourceType()));
-            param.setOperationMode(InventoryOperationModeEnum.UN_APPROVE);//反审核
+            InOutStockCoreDTO param = InventoryUtils.convertInoutStockForTxn(txnFlow, InventoryOperationModeEnum.UN_APPROVE);
 
             InventoryBusinessTypeEnum inventoryBusinessType = InventoryBusinessTypeEnum.of(txnFlow.getDictBizType());// 取原交易流水的业务类型
             Integer operationQty = Math.abs(txnFlow.getQty());
@@ -203,7 +193,7 @@ public abstract class AbstractInventoryServiceImpl {
                 if(updateCnt != 1) {
                     throw new ServiceException(ApiError.ERROR_1027);
                 }
-                // 记录交易流水
+                // 记录交易流水（反审核的）
                 transactionFlowService.add(transactionFlowDTO, inventoryBusinessType, txnFlow.getTransactionRuleId(), transactionInventoryQty, inventoryModeCur);
                 // 更新原交易流水为已反审核
                 transactionFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
@@ -292,7 +282,8 @@ public abstract class AbstractInventoryServiceImpl {
                 inventory.setDictInventoryStatus(inventoryStatusEnum.getCode());
                 inventory.setQty(qty);
                 inventory.setVersion(1);
-                inventoryService.save(inventory);
+                boolean save = inventoryService.save(inventory);
+                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
             } else {
                 originInventoryQty = inventory.getQty();
                 // 更新实时库存表数量
@@ -313,7 +304,8 @@ public abstract class AbstractInventoryServiceImpl {
                 inventoryDetail.setInstockBatchDate(billDate);
                 inventoryDetail.setQty(qty);
                 inventoryDetail.setVersion(1);
-                inventoryDetailService.save(inventoryDetail);
+                boolean save = inventoryDetailService.save(inventoryDetail);
+                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
             } else {
                 Integer originInventoryDetailQty = inventoryDetail.getQty(); // 库存明细原数量
                 Integer afterInventoryDetailQty = originInventoryDetailQty + qty;
@@ -339,7 +331,8 @@ public abstract class AbstractInventoryServiceImpl {
                 inventoryHis.setBillDate(billDate);
                 inventoryHis.setQty(afterInventoryQty);
                 inventoryHis.setVersion(1);
-                inventoryHisService.save(inventoryHis);
+                boolean save = inventoryHisService.save(inventoryHis);
+                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
             } else {
                 int updateCnt = inventoryHisService.updateQtyById(inventoryHis.getId(), afterInventoryQty, inventoryHis.getVersion());
                 if(updateCnt != 1) {
@@ -477,7 +470,8 @@ public abstract class AbstractInventoryServiceImpl {
                 inventoryHis.setBillDate(billDate);
                 inventoryHis.setQty(afterInventoryQty);
                 inventoryHis.setVersion(1);
-                inventoryHisService.save(inventoryHis);
+                boolean save = inventoryHisService.save(inventoryHis);
+                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
             } else {
                 updateCnt = inventoryHisService.updateQtyById(inventoryHis.getId(), afterInventoryQty, inventoryHis.getVersion());
                 if(updateCnt != 1) {

@@ -2,4 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.InitStockDetailMapper">
 
+    <select id="countCondition" resultType="java.lang.Integer">
+        select count(isd.sku_id) from init_stock_detail isd
+        inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false
+        where isd.sku_id = #{skuId} and ism.warehouse_id = #{warehouseId}
+        and ism.invalid_status = false
+        <if test="id != null and id !=''">
+            and isd.main_id != #{id}
+        </if>
+    </select>
 </mapper>

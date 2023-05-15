@@ -75,6 +75,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated InitStockDTO.AddDTO dto) {
+        initStockService.addAndSubmit(dto);
         return  success();
     }
 
@@ -85,6 +86,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated InitStockDTO.UpdateDTO dto) {
+        initStockService.updateAndSubmit(dto);
         return  success();
     }
 
@@ -106,6 +108,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/submit")
     public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        initStockService.submit(dto.getIds());
         return  success();
     }
 
@@ -116,6 +119,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
+        initStockService.approve(baseApproveParamDTO);
         return  success();
     }
 
@@ -126,6 +130,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/disApprove")
     public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        initStockService.disApprove(dto.getIds());
         return  success();
     }
 
@@ -136,6 +141,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/cancel")
     public ApiResult cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        initStockService.cancel(dto.getIds());
         return  success();
     }
 
@@ -146,6 +152,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/invalid")
     public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        initStockService.invalid(dto.getIds(), dto.getRemark());
         return success();
     }
 
@@ -156,6 +163,7 @@ public class InitStockController extends BaseController {
      */
     @PostMapping("/delete")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        initStockService.delete(dto.getIds());
         return success();
     }
 
