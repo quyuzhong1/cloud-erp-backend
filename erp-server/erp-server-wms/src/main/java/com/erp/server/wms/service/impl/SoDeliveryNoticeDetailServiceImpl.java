@@ -3,6 +3,9 @@ package com.erp.server.wms.service.impl;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
@@ -44,8 +47,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         for (SoDeliveryNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            SoDeliveryNoticeDetailEntity soDeliveryNotice = detailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
-            if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + soDeliveryNotice.getDeliveryQty()) {
+            Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
 
@@ -76,8 +79,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             if (StringUtils.isNotBlank(detailDto.getId())) {
                 soDeliveryNoticeDetailEntity.setId(detailDto.getId());
             }
-            SoDeliveryNoticeDetailEntity soDeliveryNotice = detailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
-            if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + soDeliveryNotice.getDeliveryQty()) {
+            Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
             soDeliveryNoticeDetailEntity.setMainId(detailDto.getMainId());

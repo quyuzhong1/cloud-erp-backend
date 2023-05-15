@@ -2,11 +2,13 @@ package com.erp.server.oms.service.impl;
 
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoReturnDetailService;
@@ -41,11 +43,13 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(detailIds);
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            if (soDetailEntity.getQty() < detailDto.getReturnQty()) {
+            Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (soDetailEntity.getQty() < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
             soReturnDetailEntity.setMainId(id);
@@ -69,11 +73,13 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(detailIds);
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            if (soDetailEntity.getQty() < detailDto.getReturnQty()) {
+            Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (soDetailEntity.getQty() < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
@@ -98,5 +104,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     public List<SoReturnDetailEntity> listDetailByMainId(String mainId) {
         return lambdaQuery().eq(SoReturnDetailEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public List<SoReturnDetailEntity> listDetailBySourceId(List<String> sourceIds) {
+        return baseMapper.listDetailBySourceId(sourceIds);
     }
 }

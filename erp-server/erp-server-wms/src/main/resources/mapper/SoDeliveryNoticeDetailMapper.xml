@@ -14,5 +14,11 @@
             sdn.approve_status
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and sdn.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>
