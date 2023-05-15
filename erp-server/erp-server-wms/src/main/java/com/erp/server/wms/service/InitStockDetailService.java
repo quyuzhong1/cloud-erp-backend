@@ -36,4 +36,12 @@ public interface InitStockDetailService  extends SuperService<InitStockDetailEnt
      */
     InitStockDetailEntity findDetail(String mainId, String skuId);
 
+
+    /**
+     * 更新明细
+     * @param details
+     * @param mainId
+     */
+    void update(List<InitStockDetailDTO.UpdateDTO> details, String mainId);
+
 }

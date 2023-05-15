@@ -1,10 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.enums.inventory.InventoryBizTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.server.wms.config.InventoryHelper;
@@ -72,6 +69,22 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     public void unApprove(InventoryUnApproveDTO dto) {
         ValidatorUtil.validateEntity(dto);
         inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).unApprove(dto);
+    }
+
+    /**
+     * 批量反审核
+     * @param dto
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchUnApprove(InventoryBatchUnApproveDTO dto) {
+        ValidatorUtil.validateEntity(dto);
+        dto.getBillIds().stream().forEach(billId->{
+            InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO();
+            inventoryUnApproveDTO.setSourceType(dto.getSourceType());
+            inventoryUnApproveDTO.setBillId(billId);
+            inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK).unApprove(inventoryUnApproveDTO);
+        });
     }
 
 }

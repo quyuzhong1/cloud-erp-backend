@@ -206,7 +206,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 修改期初库存主单数据
         initStockEntity.setBillDate(dto.getBillDate());
         super.updateById(initStockEntity);
-        // 修改期初库存明细数据
+        // 修改期初库存明细数据（包含增删改）
+        initStockDetailService.update(dto.getDetails(), initStockEntity.getId());
     }
 
     /**

@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.dto.inventory.*;
 
 /**
  * @Classname: InventoryCoreService
@@ -36,6 +33,12 @@ public interface InventoryTransCoreService {
      * @param dto
      */
     void unApprove(InventoryUnApproveDTO dto);
+
+    /**
+     * 批量反审核
+     * @param dto
+     */
+    void batchUnApprove(InventoryBatchUnApproveDTO dto);
 
 
 }

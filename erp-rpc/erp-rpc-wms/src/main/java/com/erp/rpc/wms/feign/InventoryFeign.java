@@ -1,7 +1,8 @@
 package com.erp.rpc.wms.feign;
 
-import com.erp.model.wms.dto.inventory.InstockForcastDTO;
+import com.erp.model.wms.dto.inventory.*;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +22,38 @@ public interface InventoryFeign {
      * 调用说明：
      * 1.调用方如果不是wms，需使用feign远程调用，同时使用seata分布式事务
      */
+
+
+
+    /**
+     * 出入库业务，按业务类型
+     * @param dto
+     */
+    @PostMapping("/feign/inventory/approveInOutStockByType")
+    void approveInOutStockByType(@RequestBody @Validated InventoryInOutStockDTO dto);
+
+    /**
+     * 调拨业务，按业务类型
+     * @param dto
+     */
+    @PostMapping("/feign/inventory/approveTransferByType")
+    void approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto);
+
+    /**
+     * 调拨业务，自定义规则
+     * @param dto
+     */
+    @PostMapping("/feign/inventory/approveByRule")
+    void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto);
+
+
+    /**
+     * 反审核
+     * @param dto
+     */
+    @PostMapping("/feign/inventory/unApprove")
+    void unApprove(@RequestBody @Validated InventoryUnApproveDTO dto);
+
 
     /**
      * 根据采购订单生成入库预报单
@@ -42,5 +75,12 @@ public interface InventoryFeign {
      */
     @PostMapping(value = "/feign/instockForcast/finishDelivery")
     void finishDelivery(@RequestBody @Valid InstockForcastDTO.FinishDeliveryDTO dto);
+
+    /**
+     * 批量反审核
+     * @param dto
+     */
+    @PostMapping("/feign/inventory/batchUnApprove")
+    void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto);
 
 }

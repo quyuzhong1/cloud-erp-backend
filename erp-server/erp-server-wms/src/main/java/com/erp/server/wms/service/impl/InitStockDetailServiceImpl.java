@@ -71,6 +71,33 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
                 .one();
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void update(List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
+        // 查询原明细数据
+        List<InitStockDetailEntity> originMembers = this.findList(mainId);
+        // 查询被删除的明细id（即新上传的id集合没有包含原始id的）
+        List<String> originIds = originMembers.stream().map(InitStockDetailEntity::getId).collect(Collectors.toList());
+        // 新上送的明细id集合（不包括空的）
+        List<String> nowIds = details.stream().filter(r->StrUtils.isNotEmpty(r.getId())).map(InitStockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        // 需要删除的id集合
+        List<String> deleteIds = originIds.stream().filter(id->!nowIds.contains(id)).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(deleteIds)) {
+            // 记录删除日志
+            List<InitStockDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.INIT_STOCK.getCode(),pairList,"编辑操作");
+            // 删除明细数据
+            super.removeByIds(deleteIds);
+        }
+        // 新增或修改的明细数据
+        List<InitStockDetailEntity> newList = BeanMapperUtils.copyList(InitStockDetailEntity.class, details);
+        // 记录新增或修改日志
+        handleDetails(newList, mainId);
+        //新增或修改期初库存明细
+        this.saveOrUpdateBatch(newList);
+    }
+
 
     public void handleDetails(List<InitStockDetailEntity> list, String mainId) {
         //添加操作日志
