@@ -8,6 +8,8 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -29,4 +31,14 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage
      */
     IPage<CustomerDTO.PagingViewDTO> paging(Page query, @Param("params")CustomerDTO.PagingParamDTO params);
+
+    
+    /**
+     * 获取到导出的数据
+     * @author yl
+     * @date 2023-05-15 14:56
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.PagingViewDTO>
+     */
+    List<CustomerDTO.PagingViewDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto);
 }

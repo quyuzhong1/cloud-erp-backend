@@ -148,6 +148,12 @@ public class CustomerDTO implements Serializable {
          */
         private Boolean disabled;
 
+        /**
+         * 禁用状态 true 禁用
+         * false 启用
+         */
+        private String disabledName;
+
 
         /**
          * 使用组织名
@@ -216,6 +222,15 @@ public class CustomerDTO implements Serializable {
         @NotNull(message = "平台类型不能为空")
         @StateEnumValue(clazz = SalesPlatformEnum.class,message = "平台类型有误")
         private SalesPlatformEnum  platformType;
+
+
+        /**
+         *  公司类别
+         *  http://172.16.100.11:3002/project/110/interface/api/13435
+         *   type=customerCompanyCategory
+         */
+        private String companyCategoryDict;
+
 
         /**
          * 国家id
@@ -442,6 +457,29 @@ public class CustomerDTO implements Serializable {
         private String currency;
 
         /**
+         *平台类型
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=SalesPlatform
+         */
+        private SalesPlatformEnum  platformType;
+
+
+        /**
+         * 结算方式
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * key=settleMode
+         */
+        private String settleDict;
+
+
+        /**
+         *  公司类别
+         *  http://172.16.100.11:3002/project/110/interface/api/13435
+         *   type=customerCompanyCategory
+         */
+        private String companyCategoryDict;
+
+        /**
          * 备注
          */
         private String remark;
@@ -517,6 +555,14 @@ public class CustomerDTO implements Serializable {
         @NotNull(message = "平台类型不能为空")
         @StateEnumValue(clazz = SalesPlatformEnum.class,message = "平台类型有误")
         private SalesPlatformEnum  platformType;
+
+
+        /**
+         *  公司类别
+         *  http://172.16.100.11:3002/project/110/interface/api/13435
+         *   type=customerCompanyCategory
+         */
+        private String companyCategoryDict;
 
         /**
          * 国家id

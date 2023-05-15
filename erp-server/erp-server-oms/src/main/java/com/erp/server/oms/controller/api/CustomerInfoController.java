@@ -162,8 +162,15 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerDTO.ViewDTO dto) {
-        return success();
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:update",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "id"
+    )
+    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+        Boolean result = customerInfoService.updateAndSubmit(dto);
+        return result ? success() : failure();
     }
 
     /**
@@ -173,36 +180,57 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:approve",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = customerInfoService.approve(dto);
+        return result ? success() : failure();
     }
 
     /**
      * 反审核
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:disApprove",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = customerInfoService.disApprove(dto.getIds());
+        return result?success():failure();
     }
 
     /**
-     * 删除仓库
+     * 删除客户
      *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "oms:customer:delete",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = customerInfoService.deleteByIds(dto.getIds());
+        return result?success():failure();
     }
 
     /**
      * 导出数据
      */
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
-
-        return success();
+    public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = customerInfoService.exportExcel(dto, response);
+        return result?success():failure();
     }
 
 

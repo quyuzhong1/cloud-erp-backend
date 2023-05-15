@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -14,18 +16,20 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -33,6 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +51,7 @@ import java.util.stream.Collectors;
  * @since 2023-05-10
  */
 @Service
+@Slf4j
 public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper, CustomerInfoEntity> implements CustomerInfoService {
 
 
@@ -135,9 +142,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         addEntity.setPayName(payName);
         //获取客户分组信息
         List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
-        String gradeName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
+        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        addEntity.setGroupName(gradeName);
+        addEntity.setGroupName(groupName);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
         addEntity.setCode(code);
@@ -339,7 +346,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.ERROR_92011);
         }
         BeanMapper.copy(customer, view);
-        String  areaId= customer.getAreaId();
+        String areaId = customer.getAreaId();
         List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(areaId));
         String regionName = globalAreaList.stream().filter(d -> d.getId().equals(areaId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getRegionName())).orElse("");
@@ -414,9 +421,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<SellerDTO.AddDTO> sellerAddList = BeanMapper.copyList(sellerList, SellerDTO.AddDTO.class);
         customerSellerService.checkDate(sellerAddList);
 
+        String code = customer.getCode();
 
         //旧的
-        SupplierEntity old = new SupplierEntity();
+        CustomerInfoEntity old = new CustomerInfoEntity();
         BeanMapper.copy(customer, old);
 
         BeanMapper.copy(dto, customer);
@@ -427,11 +435,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<String> payNameList = dto.getPayNameList();
         String payName = CollectionUtils.isNotEmpty(payNameList) ? payNameList.stream().collect(Collectors.joining(",")) : "";
         customer.setPayName(payName);
+        customer.setAreaId(dto.getCountryId());
+        customer.setCode(code);
         //获取客户分组信息
         List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
-        String gradeName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
+        String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        customer.setGroupName(gradeName);
+        customer.setGroupName(groupName);
 
         //对应组织
         String innerOrgId = dto.getInnerOrgId();
@@ -480,6 +490,183 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
 
         return "";
+    }
+
+    /**
+     * 修改并提交
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 14:12
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAndSubmit(CustomerDTO.UpdateDTO dto) {
+        String id = this.updateCustomer(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
+
+    /**
+     * 审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 14:17
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<CustomerInfoEntity> list = this.listByIds(ids);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
+        //意见
+        String comment = dto.getComment();
+        Boolean result = true;
+        String content = "";
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+        } else {
+            //审核不通过
+            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
+        }
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 反审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 14:25
+     */
+    @Override
+    public Boolean disApprove(List<String> ids) {
+        List<CustomerInfoEntity> list = this.listByIds(ids);
+        //审核中
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(approveIngStatus);
+        statusList.add(approveStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        //反审核
+        if (result) {
+            //添加日志
+            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+            //审核通过
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), rejectPairList, "状态变更");
+
+        }
+        return result;
+    }
+
+    /**
+     * 删除客户
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 14:30
+     */
+    @Override
+    public Boolean deleteByIds(List<String> ids) {
+        List<CustomerInfoEntity> list = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //TODO 检查能否删除
+
+        //删除客户
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除供应商[%s]";
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "删除");
+        }
+        return result;
+    }
+
+
+    /**
+     * 导出 客户列表
+     *
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 14:53
+     */
+    @Override
+    public Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response) {
+        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        for (CustomerDTO.PagingViewDTO item : list) {
+            Boolean disabled = item.getDisabled();
+            String disabledName = disabled ? "停用" : "启用";
+            item.setDisabledName(disabledName);
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+
+        }
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/CustomerExport.xlsx";
+        String name = "客户列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("客户列表导出出错 {}",e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+
+
     }
 
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {

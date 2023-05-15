@@ -65,7 +65,7 @@ public class DictGlobalAreaServiceImpl extends SuperServiceImpl<DictGlobalAreaMa
         if (CollectionUtils.isEmpty(countryIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(DictGlobalAreaEntity::getRegionCode, countryIds).list();
+        return this.lambdaQuery().in(DictGlobalAreaEntity::getId, countryIds).list();
 
     }
 

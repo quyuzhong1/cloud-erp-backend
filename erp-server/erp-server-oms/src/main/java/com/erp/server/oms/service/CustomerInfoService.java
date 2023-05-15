@@ -1,11 +1,13 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -92,4 +94,53 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.String
      */
     String updateCustomer(CustomerDTO.UpdateDTO dto);
+
+    
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-15 14:12
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(CustomerDTO.UpdateDTO dto);
+
+    /**
+     * 审核
+     * @author yl
+     * @date 2023-05-15 14:17
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
+
+    
+    /**
+     * 反审核
+     * @author yl
+     * @date 2023-05-15 14:25
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean disApprove(List<String> ids);
+
+    /**
+     * 删除客户
+     * @author yl
+     * @date 2023-05-15 14:30
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean deleteByIds(List<String> ids);
+
+    
+    /**
+     * 导出 客户列表
+     * @author yl
+     * @date 2023-05-15 14:53
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response);
 }

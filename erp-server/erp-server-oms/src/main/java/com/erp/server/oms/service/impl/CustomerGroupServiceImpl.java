@@ -104,7 +104,6 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
      */
     @Override
     public List<CustomerGroupEntity> listById(String groupId) {
-
         if (StringUtils.isBlank(groupId)) {
             return this.list();
         }
