@@ -30,6 +30,7 @@ public enum BusinessNoTypeEnum {
     CODE_FHTZ(19, "fhtz","发货通知单"),
     CODE_CUST(20, "cust","客户"),
     CODE_INIT_STOCK(21, "init_stock","期初库存"),
+    CODE_THDD(22, "thdd","销售退货订单"),
     ;
 
 

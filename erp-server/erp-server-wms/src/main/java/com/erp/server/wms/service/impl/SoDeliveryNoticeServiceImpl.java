@@ -256,7 +256,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
         soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
         soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
-        boolean flag = this.saveOrUpdate(soDeliveryNoticeEntity);
+        boolean flag = this.updateById(soDeliveryNoticeEntity);
         soDeliveryNoticeDetailService.update(dto);
         //操作日志
         SoDeliveryNoticeEntity byId = this.getById(dto.getId());
@@ -406,7 +406,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         //下推入库单不能反审核
         deliveryNoticeEntityList.forEach(req -> {
-            List<SoOutstockEntity> soOutstockEntityList = soOutstockService.getSoOutstockBySourceId(req.getId());
+            List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listSoOutstockBySourceId(req.getId());
             if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
                 throw new ServiceException(ApiError.ERROR_92004);
             }

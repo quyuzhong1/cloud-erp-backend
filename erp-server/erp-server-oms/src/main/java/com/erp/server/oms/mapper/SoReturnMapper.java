@@ -5,8 +5,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -30,6 +33,14 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
     IPage<SoReturnDTO.PagingView> paging(Page query, @Param("params") SoReturnDTO.PagingParam params);
 
     /**
+     * 导出excel
+     * @Author Luo_WG
+     * @Date 2023/5/15 14:00
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>
+     **/
+    List<SoReturnDTO.PagingView> soDeliveryNoticeExportExcel(@Param("params") SoReturnDTO.PagingParam dto);
+    /**
      * 列表状态数量统计
      * @Author Luo_WG
      * @Date 2023/5/11 18:32
@@ -37,4 +48,5 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      * @return java.lang.Integer
      **/
     Integer listCount(@Param("params") SoReturnDTO.PagingParam pagingParam);
+
 }

@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,14 +23,6 @@ public class SoReturnDTO {
          */
         private List<String> ids;
         /**
-         * 创建时间
-         */
-        private List<LocalDateTime> createTimeList;
-        /**
-         * 单据编号
-         */
-        private String code;
-        /**
          * sku编号
          */
         private List<String> skuNoList;
@@ -37,6 +30,10 @@ public class SoReturnDTO {
          * 销售单号
          */
         private String sourceCode;
+        /**
+         * 单据编号
+         */
+        private String code;
         /**
          * 单据类型
          */
@@ -65,6 +62,10 @@ public class SoReturnDTO {
          * 创建人id
          */
         private List<String> createUserIdList;
+        /**
+         * 创建时间
+         */
+        private List<LocalDateTime> createTimeList;
     }
 
     /**
@@ -78,14 +79,6 @@ public class SoReturnDTO {
          */
         private String id;
         /**
-         * 创建时间
-         */
-        private LocalDateTime createTime;
-        /**
-         * 退货订单号
-         */
-        private String code;
-        /**
          * 销售单id
          */
         private String sourceId;
@@ -93,6 +86,10 @@ public class SoReturnDTO {
          * 销售单详情表id
          */
         private String sourceDetailId;
+        /**
+         * 退货订单号
+         */
+        private String code;
         /**
          * 销售单号
          */
@@ -108,7 +105,7 @@ public class SoReturnDTO {
         /**
          * 单据状态编号
          */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
         /**
          * 单据状态名称
          */
@@ -193,6 +190,10 @@ public class SoReturnDTO {
          * 创建人
          */
         private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -301,9 +302,10 @@ public class SoReturnDTO {
          */
         private String telNumber;
         /**
-         * 收货地址
+         * 交货方式 wms/common/enumDropDown?type=DeliveryMode
+         * 描述：deliverGoods（发货）selfExtraction（自提）
          */
-        private String receiveAddress;
+        private String receiveAddressDict;
         /**
          * 交货方式 wms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
@@ -350,6 +352,10 @@ public class SoReturnDTO {
          * 审核状态
          */
         private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
         /**
          * 单据类型
          */
@@ -434,6 +440,10 @@ public class SoReturnDTO {
          * 作废状态
          */
         private Boolean invalidStatus;
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
         /**
          * 作废描述
          */

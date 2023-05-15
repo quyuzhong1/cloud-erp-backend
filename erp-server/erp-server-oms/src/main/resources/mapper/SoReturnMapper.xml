@@ -25,16 +25,80 @@
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE sr.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size != ''">
+            and sr.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and srd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and sr.source_code = #{params.sourceCode}
+        </if>
+        <if test="params.code != null and params.code != ''">
+            and sr.code = #{params.code}
+        </if>
+        <if test="params.type != null and params.type != ''">
+            and sr.type = #{params.type}
+        </if>
+        <if test="params.approveStatusList != null and params.approveStatusList.size != ''">
+            and sr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus != null">
+            and sr.invalid_status = #{params.invalidStatus}
+        </if>
+        <if test="params.customerIdList != null and params.customerIdList.size != ''">
+            and sr.customer_id in
+            <foreach collection="params.customerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList != null and params.sellerIdList.size != ''">
+            and sr.seller_id in
+            <foreach collection="params.sellerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and sr.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+        </if>
+        <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+            and sr.create_user_d in
+            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            and sr.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sr.create_time desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
-        SELECT
-        count(distinct sr.id)
-        FROM so_return_detail srd
-        INNER JOIN so_return sr ON sr.main_id = srd.id AND srd.is_deleted = FALSE
-        WHERE sr.is_deleted = FALSE
+        select
+        count(distinct sdn.id)
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and sr.approve_status in
+            and sdn.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -43,4 +107,95 @@
             ${params.param}
         </if>
     </select>
+
+    <select id="soDeliveryNoticeExportExcel" resultType="com.erp.model.oms.dto.SoReturnDTO$PagingView">
+        SELECT
+        sr.id,
+        sr.create_time,
+        sr.code,
+        sr.source_id,
+        srd.source_detail_id,
+        sr.source_code,
+        sr.type,
+        sr.approve_status,
+        sr.invalid_status,
+        sr.customer_id,
+        sr.sales_org_id,
+        sr.seller_id,
+        srd.sku_id,
+        srd.sku_no,
+        srd.sales_qty,
+        srd.return_qty,
+        sr.bill_date,
+        sr.approve_user_name,
+        sr.create_user_name
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size != ''">
+            and sr.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and srd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and sr.source_code = #{params.sourceCode}
+        </if>
+        <if test="params.code != null and params.code != ''">
+            and sr.code = #{params.code}
+        </if>
+        <if test="params.type != null and params.type != ''">
+            and sr.type = #{params.type}
+        </if>
+        <if test="params.approveStatusList != null and params.approveStatusList.size != ''">
+            and sr.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus != null">
+            and sr.invalid_status = #{params.invalidStatus}
+        </if>
+        <if test="params.customerIdList != null and params.customerIdList.size != ''">
+            and sr.customer_id in
+            <foreach collection="params.customerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList != null and params.sellerIdList.size != ''">
+            and sr.seller_id in
+            <foreach collection="params.sellerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and sr.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+        </if>
+        <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+            and sr.create_user_d in
+            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            and sr.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sr.create_time desc
+    </select>
+
 </mapper>

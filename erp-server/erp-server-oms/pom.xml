@@ -59,6 +59,18 @@
             <artifactId>druid-spring-boot-starter</artifactId>
             <version>${alibaba.druid.verison}</version>
         </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-wms</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-workflow</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <profiles>

@@ -33,7 +33,7 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean update(SoReturnDetailDTO.Update dto);
+    Boolean update(SoReturnDTO.Update dto);
 
     /**
      * 根据主表id删除
@@ -51,5 +51,5 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @param mainId mainId
      * @return java.lang.Boolean
      **/
-    List<SoReturnDetailEntity> getDetailByMainId(String mainId);
+    List<SoReturnDetailEntity> listDetailByMainId(String mainId);
 }

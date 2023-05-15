@@ -481,7 +481,6 @@ public enum ApiError implements Serializable {
     ERROR_99044(99044,"未找到调拨申请明细"),
     ERROR_99045(99045,"调拨申请单已下推直接调拨单，不支持反审核"),
     ERROR_99046(99046,"调拨申请单已下推分布式调出单，不支持反审核"),
-
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -499,6 +498,8 @@ public enum ApiError implements Serializable {
     ERROR_92010(92010,"发货数量不能大于销售数量"),
     ERROR_92011(92011,"客户不存在"),
     EXPORT_DATA_EMPTY(92009,"导出数据不能为空"),
+    ERROR_92012(92012,"已下推退货通知单，不能反审核"),
+
 
 
 

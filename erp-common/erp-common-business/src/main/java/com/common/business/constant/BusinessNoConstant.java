@@ -47,4 +47,6 @@ public interface BusinessNoConstant {
 
     // 期初库存
     String QCKC = "QCKC";
+
+    String THDD = "THDD";
 }

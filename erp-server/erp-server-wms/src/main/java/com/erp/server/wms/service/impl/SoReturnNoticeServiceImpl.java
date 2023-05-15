@@ -102,4 +102,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     public List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> generateSoDeliveryView(List<String> ids) {
         return null;
     }
+
+    @Override
+    public List<SoReturnNoticeEntity> listSoReturnNoticeBySourceId(String sourceId) {
+        return lambdaQuery().eq(SoReturnNoticeEntity::getSourceId, sourceId).list();
+    }
 }

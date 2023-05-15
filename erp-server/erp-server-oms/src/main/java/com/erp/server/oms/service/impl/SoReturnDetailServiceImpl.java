@@ -62,17 +62,41 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
-    public Boolean update(SoReturnDetailDTO.Update dto) {
-        return null;
+    public Boolean update(SoReturnDTO.Update dto) {
+        List<String> detailIds = dto.getDetailList().stream().map(SoReturnDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(detailIds);
+
+        if (CollectionUtils.isEmpty(soDetailEntitieList)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
+        List<SoReturnDetailEntity> list = new ArrayList<>();
+        for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
+            SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            if (soDetailEntity.getQty() < detailDto.getReturnQty()) {
+                throw new ServiceException(ApiError.ERROR_92009);
+            }
+            soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
+            soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            soReturnDetailEntity.setSalesQty(soDetailEntity.getQty());
+            soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());
+            soReturnDetailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            soReturnDetailEntity.setRemark(detailDto.getRemark());
+            soReturnDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            list.add(soReturnDetailEntity);
+        }
+        return this.saveOrUpdateBatch(list);
     }
 
     @Override
     public Boolean delete(List<String> mainIds) {
-        return null;
+        return lambdaUpdate().set(SoReturnDetailEntity::getIsDeleted, Boolean.TRUE)
+                .in(SoReturnDetailEntity::getMainId, mainIds)
+                .remove();
     }
 
     @Override
-    public List<SoReturnDetailEntity> getDetailByMainId(String mainId) {
-        return null;
+    public List<SoReturnDetailEntity> listDetailByMainId(String mainId) {
+        return lambdaQuery().eq(SoReturnDetailEntity::getMainId, mainId).list();
     }
 }

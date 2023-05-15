@@ -22,5 +22,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param id
      * @return java.util.List<com.erp.model.oms.entity.SoOutstockEntity>
      **/
-    List<SoOutstockEntity> getSoOutstockBySourceId(String id);
+    List<SoOutstockEntity> listSoOutstockBySourceId(String id);
 }

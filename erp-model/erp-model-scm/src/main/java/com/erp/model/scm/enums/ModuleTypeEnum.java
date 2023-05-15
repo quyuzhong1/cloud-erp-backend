@@ -23,6 +23,7 @@ public enum ModuleTypeEnum {
     SO_DELIVERY_NOTICE("12", "发货通知单"),
     CUSTOMER("14", "客户"),
     INIT_STOCK("13", "期初库存"),
+    SO_RETURN("15", "销售退货订单"),
 
     ;
 
