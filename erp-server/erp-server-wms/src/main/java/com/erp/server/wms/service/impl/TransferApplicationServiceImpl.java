@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -30,12 +31,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -338,7 +341,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -402,9 +405,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        //回扣库存 TODO
-
-        //inventoryTransCoreService.unApprove();
+        //回扣库存
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_APPLY,ids);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -669,17 +672,36 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             entity.setApplyUserName(userDTO.getUserName());
         }
         //仓库信息
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(inWarehouseId,outWarehouseId));
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(inWarehouseId,outWarehouseId));
 
         if (CollectionUtils.isEmpty(warehouseList)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
         //调入仓库
-        String inWarehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-        entity.setInWarehouseName(inWarehouseName);
+        WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(inWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
         //调出仓库
-        String outWarehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseName())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
-        entity.setOutWarehouseName(outWarehouseName);
+        WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(outWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        //组织信息
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inWarehouse.getOrgId(), outWarehouse.getOrgId()));
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+        entity.setInWarehouseName(inWarehouse.getName());
+        entity.setInOrgId(inWarehouse.getOrgId());
+        //调入组织名称
+        String inOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inWarehouse.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse("");
+        entity.setInOrgName(inOrgName);
+        entity.setOutOrgId(outWarehouse.getOrgId());
+        entity.setOutWarehouseName(outWarehouse.getName());
+        //调出组织名称
+        String outOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(outWarehouse.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse("");
+        entity.setOutOrgName(outOrgName);
     }
 
     /**

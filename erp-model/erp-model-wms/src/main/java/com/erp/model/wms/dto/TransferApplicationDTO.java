@@ -283,9 +283,9 @@ public class TransferApplicationDTO implements Serializable {
         private String  transferDirectionName;
 
         /**
-         * 仓管员名称
+         * 申请人名称
          */
-        private String   warehouseKeeperName;
+        private String   applyUserName;
 
         /**
          * 调出仓库名称

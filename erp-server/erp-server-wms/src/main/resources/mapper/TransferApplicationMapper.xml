@@ -241,7 +241,7 @@
             ta.out_warehouse_name as outWarehouseName,
             ta.in_warehouse_id as inWarehouseId,
             ta.in_warehouse_name as inWarehouseName,
-            pd.out_warehouse_location as outWarehouseLocation
+            pd.warehouse_location as outWarehouseLocation
         from transfer_application ta
         inner join picking_detail pd on ta.id = pd.source_id and pd.is_deleted = false
         <where>

@@ -124,7 +124,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
-
+            detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
                 TransferApplicationDetailEntity old = this.getById(detail.getId());
