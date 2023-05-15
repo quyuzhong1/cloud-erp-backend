@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.validation.Valid;
 import java.util.List;
 
-@FeignClient(name = "erp-wms", contextId = "soInfo")
+@FeignClient(name = "erp-oms", contextId = "soInfo")
 public interface SoInfoFeign {
 
     @PostMapping("feign/soInfo/getSoInfoById")
