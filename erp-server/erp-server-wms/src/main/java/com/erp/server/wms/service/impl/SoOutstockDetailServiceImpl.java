@@ -20,7 +20,7 @@ import java.util.List;
 @Service
 public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDetailMapper, SoOutstockDetailEntity> implements SoOutstockDetailService {
     @Override
-    public List<SoOutstockDetailEntity> listSoOutstockBySourceDetailId(String sourceDetailId) {
-        return lambdaQuery().eq(SoOutstockDetailEntity::getSourceDetailId, sourceDetailId).list();
+    public List<SoOutstockDetailEntity> listSoOutstockBySourceDetailId(List<String> sourceDetailIds) {
+        return lambdaQuery().in(SoOutstockDetailEntity::getSourceDetailId, sourceDetailIds).list();
     }
 }

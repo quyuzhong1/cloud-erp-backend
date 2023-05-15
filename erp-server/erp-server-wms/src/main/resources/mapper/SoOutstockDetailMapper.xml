@@ -2,6 +2,28 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoOutstockDetailMapper">
 
-
+    <select id="listSoOutstockBySourceDetailId" resultType="com.erp.model.oms.entity.SoOutstockDetailEntity">
+        SELECT
+            sod.id,
+            sod.main_id,
+            sod.sku_id,
+            sod.sku_no,
+            sod.plan_qty,
+            sod.actual_qty,
+            sod.warehouse_location,
+            sod.is_close,
+            sod.remark,
+            sod.source_detail_id,
+            so.approve_status
+        FROM so_outstock_detail sod
+        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+            AND sod.source_detail_id in
+            <foreach collection="sourceDetailIds" separator="," item="id" open="(" close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

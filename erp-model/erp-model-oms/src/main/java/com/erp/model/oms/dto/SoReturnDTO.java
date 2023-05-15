@@ -485,9 +485,13 @@ public class SoReturnDTO {
     @NoArgsConstructor
     public static class GenerateSoReturnNoticeView {
         /**
-         * 销售单号
+         * 销售单id
          */
         private String sourceId;
+        /**
+         * 销售单详情表id
+         */
+        private String sourceDetailId;
         /**
          * 销售单号
          */

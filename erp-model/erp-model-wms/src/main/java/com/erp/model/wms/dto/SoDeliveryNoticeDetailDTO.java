@@ -7,6 +7,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 public class SoDeliveryNoticeDetailDTO {
     /**
@@ -38,6 +39,15 @@ public class SoDeliveryNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
     }
 
     /**
@@ -79,6 +89,14 @@ public class SoDeliveryNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
     }
 
     /**
@@ -131,5 +149,13 @@ public class SoDeliveryNoticeDetailDTO {
          * 备注
          */
         private String remark;
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
     }
 }

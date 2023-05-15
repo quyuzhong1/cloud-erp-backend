@@ -77,6 +77,8 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    @TableField("approve_status")
+    private String approveStatus;
 
     public static final String MAIN_ID = "main_id";
 

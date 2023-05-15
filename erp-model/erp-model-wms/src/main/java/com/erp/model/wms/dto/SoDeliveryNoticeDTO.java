@@ -234,14 +234,6 @@ public class SoDeliveryNoticeDTO {
         @NotBlank(message = "发货组织不能为空")
         private String deliveryOrgId;
         /**
-         * 要货日期
-         */
-        private LocalDate requireDate;
-        /**
-         * 预计发货日期
-         */
-        private LocalDate planDeliveryDate;
-        /**
          * 承运商id
          */
         @NotBlank(message = "承运商不能为空")
@@ -299,14 +291,6 @@ public class SoDeliveryNoticeDTO {
         @NotBlank(message = "发货组织不能为空")
         private String deliveryOrgId;
         /**
-         * 要货日期
-         */
-        private LocalDate requireDate;
-        /**
-         * 预计发货日期
-         */
-        private LocalDate planDeliveryDate;
-        /**
          * 承运商id
          */
         @NotBlank(message = "承运商不能为空")
@@ -318,7 +302,7 @@ public class SoDeliveryNoticeDTO {
         /**
          * 出货仓库
          */
-        private String WarehouseId;
+        private String warehouseId;
         /**
          * 收货人
          */
@@ -478,14 +462,6 @@ public class SoDeliveryNoticeDTO {
          * 作废描述
          */
         private String invalidRemark;
-        /**
-         * 附件名集合
-         */
-        private List<String> attachNameList;
-        /**
-         * 附件url集合
-         */
-        private List<String> attachUrlList;
         /**
          * 明细信息
          */

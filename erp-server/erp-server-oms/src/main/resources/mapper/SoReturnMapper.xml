@@ -198,4 +198,21 @@
         sr.create_time desc
     </select>
 
+    <select id="generateSoReturnNoticeView" resultType="com.erp.model.oms.dto.SoReturnDTO$GenerateSoReturnNoticeView">
+        SELECT
+            sr.source_id,
+            sr.source_code,
+            sr.customer_id,
+            sr.customer_name,
+            srd.sku_id,
+            srd.sku_no,
+            srd.return_qty,
+            srd.return_type_dict,
+            srd.remark,
+            srd.source_detail_id
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+    </select>
+
 </mapper>
