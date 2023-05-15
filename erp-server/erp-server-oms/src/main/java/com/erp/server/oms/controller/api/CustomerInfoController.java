@@ -2,10 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -203,8 +200,27 @@ public class CustomerInfoController extends BaseController {
     )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.disApprove(dto.getIds());
-        return result?success():failure();
+        return result ? success() : failure();
     }
+
+
+    /**
+     * 撤销流程
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:cancelProcess",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "ids")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = customerInfoService.cancelProcess(dto.getIds());
+        return result  ? success() : failure();
+    }
+
 
     /**
      * 删除客户
@@ -221,7 +237,7 @@ public class CustomerInfoController extends BaseController {
     )
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.deleteByIds(dto.getIds());
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -230,7 +246,28 @@ public class CustomerInfoController extends BaseController {
     @PostMapping("/export")
     public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerInfoService.exportExcel(dto, response);
-        return result?success():failure();
+        return result ? success() : failure();
+    }
+
+    /**
+     * 客户列表
+     */
+    @GetMapping("/list")
+    public ApiResult<List<CustomerDTO.InfoDTO>> list() {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listCustomer();
+        return success(list);
+    }
+
+    /**
+     * 启用或者停用 客户
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = customerInfoService.updateStatus(dto);
+        return result ? success() : failure();
     }
 
 

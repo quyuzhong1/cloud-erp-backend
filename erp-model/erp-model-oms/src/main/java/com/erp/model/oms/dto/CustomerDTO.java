@@ -42,7 +42,7 @@ public class CustomerDTO implements Serializable {
          * approve 已审核
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all","waitSubmit", "approveIng", "approve", "reject"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitSubmit", "approveIng", "approve", "reject"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
@@ -215,19 +215,19 @@ public class CustomerDTO implements Serializable {
         private String groupId;
 
         /**
-         *平台类型
+         * 平台类型
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
         @NotNull(message = "平台类型不能为空")
-        @StateEnumValue(clazz = SalesPlatformEnum.class,message = "平台类型有误")
-        private SalesPlatformEnum  platformType;
+        @StateEnumValue(clazz = SalesPlatformEnum.class, message = "平台类型有误")
+        private SalesPlatformEnum platformType;
 
 
         /**
-         *  公司类别
-         *  http://172.16.100.11:3002/project/110/interface/api/13435
-         *   type=customerCompanyCategory
+         * 公司类别
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * type=customerCompanyCategory
          */
         private String companyCategoryDict;
 
@@ -372,7 +372,6 @@ public class CustomerDTO implements Serializable {
         private String approveStatusName;
 
 
-
         /**
          * 使用组织
          */
@@ -457,11 +456,11 @@ public class CustomerDTO implements Serializable {
         private String currency;
 
         /**
-         *平台类型
+         * 平台类型
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        private SalesPlatformEnum  platformType;
+        private SalesPlatformEnum platformType;
 
 
         /**
@@ -473,9 +472,9 @@ public class CustomerDTO implements Serializable {
 
 
         /**
-         *  公司类别
-         *  http://172.16.100.11:3002/project/110/interface/api/13435
-         *   type=customerCompanyCategory
+         * 公司类别
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * type=customerCompanyCategory
          */
         private String companyCategoryDict;
 
@@ -548,19 +547,19 @@ public class CustomerDTO implements Serializable {
         private String groupId;
 
         /**
-         *平台类型
+         * 平台类型
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
         @NotNull(message = "平台类型不能为空")
-        @StateEnumValue(clazz = SalesPlatformEnum.class,message = "平台类型有误")
-        private SalesPlatformEnum  platformType;
+        @StateEnumValue(clazz = SalesPlatformEnum.class, message = "平台类型有误")
+        private SalesPlatformEnum platformType;
 
 
         /**
-         *  公司类别
-         *  http://172.16.100.11:3002/project/110/interface/api/13435
-         *   type=customerCompanyCategory
+         * 公司类别
+         * http://172.16.100.11:3002/project/110/interface/api/13435
+         * type=customerCompanyCategory
          */
         private String companyCategoryDict;
 
@@ -678,8 +677,19 @@ public class CustomerDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ExportDTO  extends PagingParamDTO{
+    public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InfoDTO {
+
+        private String id;
+
+        private String code;
+
+        private Boolean disabled;
     }
 }

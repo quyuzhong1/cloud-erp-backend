@@ -11,6 +11,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -660,13 +661,73 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            log.error("客户列表导出出错 {}",e);
+            log.error("客户列表导出出错 {}", e);
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
 
 
+    }
 
+    @Override
+    public List<CustomerDTO.InfoDTO> listCustomer() {
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(CustomerInfoEntity::getId,
+                CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getDisabled);
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
+        queryWrapper.eq(CustomerInfoEntity::getApproveStatus, approveStatusEnum);
+        List<CustomerInfoEntity> list = this.list(queryWrapper);
+        return BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+    }
+
+
+    /**
+     * 启用或者停用客户
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 15:30
+     */
+    @Override
+    public Boolean updateStatus(UpdateStateDTO dto) {
+        String id = dto.getId();
+        CustomerInfoEntity customer = this.getById(id);
+        if (Objects.isNull(customer)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        Boolean oldDisabled = customer.getDisabled();
+        customer.setDisabled(dto.getState());
+        //添加日志
+        String content = String.format("编辑了客户[%s] 启用状态 有[%s] 变更为[%s]", customer.getName(), oldDisabled != true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
+        addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), id, "修改操作");
+        return this.updateById(customer);
+    }
+
+
+    /**
+     * 撤销流程
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 15:39
+     */
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        List<CustomerInfoEntity> list = this.listByIds(ids);
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 撤销流程
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("客户【%s】取消流程", ModuleTypeEnum.CUSTOMER.getCode(), pairList, "取消流程操作");
+        return result;
     }
 
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {

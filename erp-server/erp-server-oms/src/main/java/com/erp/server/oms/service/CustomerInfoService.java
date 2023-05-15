@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
@@ -143,4 +144,33 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response);
+
+    
+    /**
+     * 客户列表
+     * @author yl
+     * @date 2023-05-15 15:24
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     */
+    List<CustomerDTO.InfoDTO> listCustomer();
+
+    /**
+     * 启用或者停用客户
+     * @author yl
+     * @date 2023-05-15 15:30
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateStatus(UpdateStateDTO dto);
+
+    
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-05-15 15:39
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
 }
