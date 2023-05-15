@@ -3,4 +3,47 @@
 <mapper namespace="com.erp.server.oms.mapper.CustomerInfoMapper">
 
 
+    <select id="paging" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
+        SELECT
+           id,code,approve_status,
+           name,short_name,disabled,
+           use_org_name,group_id,group_name,
+           create_user_name,create_time
+        FROM customer_info ci
+        WHERE ci.is_deleted=FALSE
+        <if test="params.code !=null and params.code!=''">
+         AND ci.code ILIKE  concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.name !=null and params.name!=''">
+            AND ci.name ILIKE  concat('%', #{params.name} ,'%')
+        </if>
+        <if test="params.shortName !=null and params.shortName!=''">
+            AND ci.short_name ILIKE  concat('%', #{params.name} ,'%')
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND ci.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+               #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.useOrgIdList !=null and params.useOrgIdList.size>0">
+            AND ci.inner_org_id IN
+            <foreach collection="params.useOrgIdList" item="useOrgId" open="(" separator="," close=")">
+                #{useOrgId}
+            </foreach>
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND ci.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND ci.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > ci.create_time
+        </if>
+
+
+
+    </select>
 </mapper>

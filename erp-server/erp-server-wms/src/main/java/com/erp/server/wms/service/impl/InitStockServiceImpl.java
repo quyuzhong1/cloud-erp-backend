@@ -203,9 +203,10 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),
                 ()->new ServiceException("当前单据状态不允许修改"));
         fillingAddOrUpdate(initStockEntity, dto.getWarehouseId());
-        // 修改采购订单数据
+        // 修改期初库存主单数据
         initStockEntity.setBillDate(dto.getBillDate());
-        initStockEntity.setWarehouseId(dto.getWarehouseId());
+        super.updateById(initStockEntity);
+        // 修改期初库存明细数据
     }
 
     /**
@@ -252,6 +253,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
             ValidatorUtil.isTrue(Objects.nonNull(warehouseDetail) && StrUtils.isNotEmpty(warehouseDetail.getId()),
                     ()->new ServiceException(ApiError.ERROR_99002));
+            initStockEntity.setWarehouseId(warehouseId);
             initStockEntity.setOrgId(warehouseDetail.getOrgId());
         }
     }

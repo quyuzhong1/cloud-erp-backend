@@ -54,6 +54,12 @@ public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity>
     private String warehouseLocation;
 
     /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
      * 备注
      */
     @TableField("remark")

@@ -2,12 +2,19 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataPermission;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -26,10 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -221,6 +225,122 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         return result;
 
+    }
+
+
+    /**
+     * 获取tab list
+     *
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.TabListDTO>
+     * @author yl
+     * @date 2023-05-12 17:01
+     */
+    @Override
+    public List<CustomerDTO.TabListDTO> tabList() {
+        List<CustomerDTO.TabListDTO> resultList = new ArrayList<>(4);
+        //全部
+        List<CustomerInfoEntity> list = this.list();
+        CustomerDTO.TabListDTO all = new CustomerDTO.TabListDTO();
+        all.setCount(list.size());
+        all.setSearchType(SearchType.ALL);
+        resultList.add(all);
+
+        //待审核
+        ApproveStatusEnum ing = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        CustomerDTO.TabListDTO waitApprove = new CustomerDTO.TabListDTO();
+        waitApprove.setCount((int) list.stream().filter(l -> ing.equals(l.getApproveStatus())).count());
+        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        resultList.add(waitApprove);
+
+        //已审核
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE.getStatus());
+        CustomerDTO.TabListDTO approve = new CustomerDTO.TabListDTO();
+        approve.setCount((int) list.stream().filter(l -> approveStatus.equals(l.getApproveStatus())).count());
+        approve.setSearchType(ApproveStatusEnum.APPROVE.getStatus());
+        resultList.add(approve);
+
+        //审核不通过
+        ApproveStatusEnum rejectStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.REJECT.getStatus());
+        CustomerDTO.TabListDTO reject = new CustomerDTO.TabListDTO();
+        reject.setCount((int) list.stream().filter(l -> rejectStatus.equals(l.getApproveStatus())).count());
+        reject.setSearchType(ApproveStatusEnum.REJECT.getStatus());
+        resultList.add(reject);
+        return resultList;
+    }
+
+    /**
+     * 分页信息
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.CustomerDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-05-12 17:21
+     */
+    @Override
+    public PagingVO<CustomerDTO.PagingViewDTO> paging(PagingDTO<CustomerDTO.PagingParamDTO> dto) {
+        CustomerDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        String searchType = params.getSearchType();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+
+        List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
+        List<CustomerGroupEntity> groupList = customerGroupService.listByIds(groupIdList);
+        for (CustomerDTO.PagingViewDTO item : list) {
+            String groupId = item.getGroupId();
+            String groupName = groupList.stream().filter(g -> groupId.equals(g.getId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setGroupName(groupName);
+            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+            item.setApproveStatusName(approveStatusEnum.getName());
+        }
+
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 新增并提交
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 9:21
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addAndSubmit(CustomerDTO.AddDTO dto) {
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        Boolean result = this.submit(Arrays.asList(id));
+        return result;
+
+    }
+
+
+    /**
+     * 客户详情
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.CustomerDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-15 9:24
+     */
+    @Override
+    public CustomerDTO.ViewDTO view(String id) {
+        CustomerDTO.ViewDTO view = new CustomerDTO.ViewDTO();
+        CustomerInfoEntity customer = this.getById(id);
+        if(Objects.isNull(customer)){
+
+        }
+
+        return null;
     }
 
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {
