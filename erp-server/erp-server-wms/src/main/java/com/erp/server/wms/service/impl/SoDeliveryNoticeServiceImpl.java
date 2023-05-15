@@ -19,6 +19,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.ero.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoOutstockEntity;
@@ -37,8 +38,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.wms.mapper.SoDeliveryNoticeMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -71,10 +70,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
 
     @Resource
-    private SoDetailService soDetailService;
-
-    @Resource
-    private SoInfoService soInfoService;
+    private SoInfoFeign soInfoFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -118,7 +114,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = records.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -193,7 +189,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FHTZ, BusinessNoTypeEnum.CODE_FHTZ.getCode()));
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
@@ -228,7 +224,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
         BeanMapperUtils.copy(soInfoEntity, soDeliveryNoticeEntity);
         soDeliveryNoticeEntity.setId(dto.getId());
@@ -260,7 +256,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //创库保存详情表的集合
         List<SoDeliveryNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.getDetailByMainId(id);
-        SoInfoEntity soInfoEntity = soInfoService.getById(soDeliveryNoticeEntity.getSourceId());
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soDeliveryNoticeEntity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
@@ -269,7 +265,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         viewDTO.setDeliveryStatusDictName(DeliveryStatusEnum.getName(viewDTO.getDeliveryStatusDict()));
@@ -504,7 +500,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = pagingViews.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -535,7 +531,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = generateSoDeliveryViews.stream().map(SoDeliveryNoticeDTO.GenerateSoDeliveryView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         //获取sku的id集合
         List<String> skuIdList = generateSoDeliveryViews.stream().map(SoDeliveryNoticeDTO.GenerateSoDeliveryView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
