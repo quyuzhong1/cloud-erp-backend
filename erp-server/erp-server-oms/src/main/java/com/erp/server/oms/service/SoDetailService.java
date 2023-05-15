@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 
 import java.util.List;
@@ -22,4 +24,13 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.entity.SoInfoEntity>
      **/
     List<SoDetailEntity> listSoDetailByIds(List<String> detailIds);
+
+    /**
+     * 添加详情按钮-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:04
+     * @param id id
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>
+     **/
+    List<SoDetailDTO.AddDetailView> listAddDetailView(String id);
 }

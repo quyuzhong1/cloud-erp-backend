@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.mapper.SoDetailMapper;
@@ -32,4 +33,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public List<SoDetailEntity> listSoDetailByIds(List<String> detailIds) {
         return lambdaQuery().in(SoDetailEntity::getId, detailIds).list();
     }
+
+    @Override
+    public List<SoDetailDTO.AddDetailView> listAddDetailView(String id) {
+        List<SoDetailDTO.AddDetailView> list = baseMapper.listAddDetailView(id);
+        return null;
+    }
+
 }

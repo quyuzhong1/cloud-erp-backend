@@ -394,4 +394,68 @@ public class SoDetailDTO implements Serializable {
          */
         private String errorUrl;
     }
+
+    /**
+     * 添加详情按钮-列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDetailView {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 库存组织id
+         */
+        private String  inventoryOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String  inventoryOrgName;
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 可出数量
+         */
+        private Integer availableQty;
+        /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 剩余未出数量
+         */
+        private Integer unDeliveryQty;
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+        /**
+         * 是否关闭 true 是
+         */
+        private Boolean isClose;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

@@ -2,5 +2,26 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SoDetailMapper">
 
-
+    <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
+        SELECT
+        sd.id
+        sd.mainId
+        sd.skuId
+        sd.skuNo
+        inventoryOrgId
+        inventoryOrgName
+        salesQty
+        availableQty
+        deliveryQty
+        unDeliveryQty
+        isGift
+        isClose
+        remark
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted = FALSE
+        <if test="id != null and id != ''">
+            AND si.id = #{id}
+        </if>
+    </select>
 </mapper>
