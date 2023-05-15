@@ -108,4 +108,9 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     public List<SoReturnNoticeDetailEntity> listDetailBySourceIds(List<String> sourceIds) {
         return baseMapper.listDetailBySourceIds(sourceIds);
     }
+
+    @Override
+    public List<SoReturnNoticeDetailEntity> listDetailByMainId(String id) {
+        return lambdaQuery().eq(SoReturnNoticeDetailEntity::getMainId, id).list();
+    }
 }

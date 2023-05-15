@@ -17,10 +17,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.oms.entity.SoOutstockDetailEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.dto.SoReturnDetailDTO;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -29,6 +27,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
@@ -208,7 +207,40 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public SoReturnNoticeDTO.View view(String id) {
-        return null;
+        SoReturnNoticeDTO.View viewDTO = new SoReturnNoticeDTO.View();
+        SoReturnNoticeEntity entity = this.getById(id);
+        BeanMapperUtils.copy(entity, viewDTO);
+       /* //创库保存详情表的集合
+        List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
+        List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listDetailByMainId(id);
+        SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
+        BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        //获取sku的id集合
+        List<String> skuIdList = detailEntityList.stream().map(SoReturnDetailEntity::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
+        //获取界面传过来的销售单详情表id集合
+        List<String> orderDetailIds = detailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        for (SoReturnDetailEntity detailEntity : detailEntityList) {
+            SoReturnDetailDTO.View detailView = new SoReturnDetailDTO.View();
+            BeanMapperUtils.copy(detailEntity, detailView);
+            //产品sku信息
+            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            detailView.setProductName(productDetailEntity.getName());
+            //销售单信息
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            detailView.setSalesQty(soDetailEntity.getQty());
+            detailViewDTOS.add(detailView);
+        }
+        viewDTO.setDetailList(detailViewDTOS);*/
+        return viewDTO;
     }
 
     @Override

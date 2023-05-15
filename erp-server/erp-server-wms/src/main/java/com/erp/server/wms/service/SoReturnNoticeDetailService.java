@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.common.business.service.SuperService;
@@ -51,4 +52,13 @@ public interface SoReturnNoticeDetailService extends SuperService<SoReturnNotice
      * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
      **/
     List<SoReturnNoticeDetailEntity> listDetailBySourceIds(List<String> sourceIds);
+
+    /**
+     * 根据主键id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:56
+     * @param id id
+     * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
+     **/
+    List<SoReturnNoticeDetailEntity> listDetailByMainId(String id);
 }
