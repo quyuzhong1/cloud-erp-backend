@@ -2,6 +2,9 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SoOutstockDetailEntity;
+import com.erp.model.oms.entity.SoOutstockEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,12 @@ import com.erp.model.oms.entity.SoOutstockDetailEntity;
  * @since 2023-05-10
  */
 public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEntity> {
-
+    /**
+     * 根据来源明细id查询出库表
+     * @Author Luo_WG
+     * @Date 2023/5/15 14:56
+     * @param sourceDetailId sourceDetailId
+     * @return java.util.List<com.erp.model.oms.entity.SoOutstockDetailEntity>
+     **/
+    List<SoOutstockDetailEntity> listSoOutstockBySourceDetailId(String sourceDetailId);
 }

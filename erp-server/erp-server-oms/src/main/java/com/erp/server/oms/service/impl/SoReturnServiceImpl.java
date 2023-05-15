@@ -141,8 +141,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 if (ObjectUtil.isEmpty(soDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_99006);
                 }
-                obj.setSalesQty(soDetailEntity.getQty());
                 obj.setProductName(productDetailEntity.getName());
+                obj.setSalesQty(soDetailEntity.getQty());
+
+
                 obj.setUnit(productDetailEntity.getUnitName());
                 obj.setSalesAmount(soDetailEntity.getAmount());
                 list.add(obj.getId());

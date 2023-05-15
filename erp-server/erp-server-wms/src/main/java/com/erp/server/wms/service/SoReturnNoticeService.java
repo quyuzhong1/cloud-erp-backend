@@ -173,4 +173,6 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * @return
      **/
     List<SoReturnNoticeEntity> listSoReturnNoticeBySourceId(String sourceId);
+
+
 }
