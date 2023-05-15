@@ -229,7 +229,7 @@
     <select id="viewGenerateTransferInfo"
             resultType="com.erp.model.wms.dto.TransferApplicationDTO$ViewGenerateTransferInfoDTO">
         select
-            ta.code,
+            ta.code as sourceCode,
             pd.id as sourceId,
             pd.id as sourceDetailId,
             ta.transfer_direction as transferDirection,

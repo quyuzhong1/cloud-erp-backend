@@ -109,6 +109,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Resource
     private TransferOutService transferOutService;
 
+    @Resource
+    private TransferInfoDetailService transferInfoDetailService;
 
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -477,20 +479,45 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList) {
-        List<TransferApplicationDTO.generateTransferInfoDTO> list = validList.getList();
-        //根据来源id分组生成下推直接调拨单
-        Map<String, List<TransferApplicationDTO.generateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.generateTransferInfoDTO::getSourceId));
+    public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
+        List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
 
-        for (Map.Entry<String, List<TransferApplicationDTO.generateTransferInfoDTO>> entry : map.entrySet()) {
-            List<TransferApplicationDTO.generateTransferInfoDTO> value = entry.getValue();
-            TransferApplicationDTO.generateTransferInfoDTO transferInfoDTO = value.get(0);
+        List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+
+        //调拨申请单明细信息
+        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99044);
+        }
+
+        //直接调拨信息
+        List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
+
+        //根据来源id分组生成下推直接调拨单
+        Map<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId));
+
+        for (Map.Entry<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> entry : map.entrySet()) {
+            List<TransferApplicationDTO.GenerateTransferInfoDTO> value = entry.getValue();
+            TransferApplicationDTO.GenerateTransferInfoDTO transferInfoDTO = value.get(0);
             //直接调拨单
             TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
             BeanMapperUtils.copy(addDTO,transferInfoDTO);
 
             List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
-            for (TransferApplicationDTO.generateTransferInfoDTO dto : value) {
+            for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
+                if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
+                    //申请数量
+                    Integer applyQty = detailList.stream().filter(obj -> obj.getId().equals(dto.getSourceDetailId())).map(TransferApplicationDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+
+                    //已调拨数量
+                    Integer totalQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (applyQty.intValue() == totalQty.intValue()) {
+                        throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, dto.getSkuNo()));
+                    }
+                    if (dto.getQty().intValue() > applyQty.intValue() - totalQty.intValue()) {
+                        throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg, applyQty - totalQty));
+                    }
+                }
                 TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
                 BeanMapperUtils.copy(dto,addDetailDTO);
                 addDetailList.add(addDetailDTO);
@@ -503,20 +530,20 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    public Boolean generateTransferOut(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList) {
-        List<TransferApplicationDTO.generateTransferInfoDTO> list = validList.getList();
+    public Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
+        List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
         //根据来源id分组生成下推直接调拨单
-        Map<String, List<TransferApplicationDTO.generateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.generateTransferInfoDTO::getSourceId));
+        Map<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId));
 
-        for (Map.Entry<String, List<TransferApplicationDTO.generateTransferInfoDTO>> entry : map.entrySet()) {
-            List<TransferApplicationDTO.generateTransferInfoDTO> value = entry.getValue();
-            TransferApplicationDTO.generateTransferInfoDTO transferInfoDTO = value.get(0);
+        for (Map.Entry<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> entry : map.entrySet()) {
+            List<TransferApplicationDTO.GenerateTransferInfoDTO> value = entry.getValue();
+            TransferApplicationDTO.GenerateTransferInfoDTO transferInfoDTO = value.get(0);
             //直接调拨单
             TransferOutDTO.AddDTO addDTO = new TransferOutDTO.AddDTO();
             BeanMapperUtils.copy(addDTO,transferInfoDTO);
 
             List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
-            for (TransferApplicationDTO.generateTransferInfoDTO dto : value) {
+            for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                 TransferOutDetailDTO.AddDTO addDetailDTO = new TransferOutDetailDTO.AddDTO();
                 BeanMapperUtils.copy(dto,addDetailDTO);
                 addDetailList.add(addDetailDTO);
@@ -640,21 +667,30 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<String> ids = records.stream().map(TransferApplicationDTO.ListDTO::getSkuId).collect(Collectors.toList());
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
 
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        if (CollectionUtils.isEmpty(transferDirectionList)) {
+            throw new ServiceException(ApiError.ERROR_99049);
+        }
 
         for (TransferApplicationDTO.ListDTO obj : records) {
             //产品名称
-            if (CollectionUtils.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-                obj.setProductName(productName);
+            String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+            if (StringUtils.isBlank(productName)) {
+                throw new ServiceException(ApiError.ERROR_95084);
             }
+            obj.setProductName(productName);
+
             //调拨方向名称
-            if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-                obj.setTransferDirectionName(transferDirectionName);
+            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            if (StringUtils.isBlank(transferDirectionName)) {
+                throw new ServiceException(ApiError.ERROR_99049);
             }
+            obj.setTransferDirectionName(transferDirectionName);
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));

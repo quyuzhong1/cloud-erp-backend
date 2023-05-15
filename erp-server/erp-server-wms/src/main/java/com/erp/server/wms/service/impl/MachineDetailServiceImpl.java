@@ -1,17 +1,15 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.server.wms.mapper.MachineDetailMapper;
 import com.erp.server.wms.service.MachineDetailService;
-import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**
- * <p>
- * 加工单明细 服务实现类
- * </p>
+ * 加工单明细
  *
- * @author lambda
+ * @author will
  * @since 2023-05-10
  */
 @Service

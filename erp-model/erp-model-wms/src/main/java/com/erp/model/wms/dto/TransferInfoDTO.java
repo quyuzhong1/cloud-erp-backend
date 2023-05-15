@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -186,37 +187,49 @@ public class TransferInfoDTO implements Serializable {
         /**
          * 调拨类型
          */
-        private String  type;
+        @NotBlank(message = "调拨类型不能为空")
+        private String type;
 
         /**
          * 调拨日期
          */
+        @NotNull(message = "调拨日期不能未空")
         private LocalDate billDate;
 
         /**
          * 调拨方向
          */
-        private String   transferDirection;
+        @NotBlank(message = "调拨方向不能为空")
+        private String transferDirection;
 
         /**
          * 仓管员id
          */
-        private String   warehouseKeeperId;
+        private String warehouseKeeperId;
 
         /**
          * 调出仓库id
          */
-        private String  outWarehouseId;
+        @NotBlank(message = "调出仓库不能为空")
+        private String outWarehouseId;
 
         /**
          * 调入仓库id
          */
-        private String  inWarehouseId;
+        @NotBlank(message = "调入仓库不能为空")
+        private String inWarehouseId;
 
         /**
          * 来源id
          */
+        @NotBlank(message = "来源id不能为空")
         private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        @NotBlank(message = "来源编码不能为空")
+        private String sourceCode;
 
         /**
          * 来源类型

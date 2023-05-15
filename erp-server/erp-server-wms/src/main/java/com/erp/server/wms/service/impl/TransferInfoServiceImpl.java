@@ -500,24 +500,34 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> ids = records.stream().map(TransferInfoDTO.ListDTO::getSkuId).collect(Collectors.toList());
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
 
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        if (CollectionUtils.isEmpty(transferDirectionList)) {
+            throw new ServiceException(ApiError.ERROR_99049);
+        }
 
         for (TransferInfoDTO.ListDTO obj : records) {
             //产品名称
-            if (CollectionUtils.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-                obj.setProductName(productName);
+            String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+            if (StringUtils.isBlank(productName)) {
+                throw new ServiceException(ApiError.ERROR_95084);
             }
+            obj.setProductName(productName);
+
             //调拨方向名称
-            if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-                obj.setTransferDirectionName(transferDirectionName);
+            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            if (StringUtils.isBlank(transferDirectionName)) {
+                throw new ServiceException(ApiError.ERROR_99049);
             }
+            obj.setTransferDirectionName(transferDirectionName);
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+
         }
     }
     /**

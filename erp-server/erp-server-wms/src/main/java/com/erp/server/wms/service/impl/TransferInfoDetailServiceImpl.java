@@ -92,6 +92,11 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         return lambdaQuery().in(TransferInfoDetailEntity::getMainId,mainIds).list();
     }
 
+    @Override
+    public List<TransferInfoDetailEntity> listSourceDetailIds(List<String> sourceDetailIds) {
+        return lambdaQuery().in(TransferInfoDetailEntity::getSourceDetailId,sourceDetailIds).list();
+    }
+
     /**
      * 查询需要删除的数据
      */

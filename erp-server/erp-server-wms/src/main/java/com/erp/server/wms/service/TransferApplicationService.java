@@ -157,7 +157,7 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @param validList
      * @return Boolean
      */
-    Boolean generateTransferInfo(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList);
+    Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
     /**
      * @description: 下推分布式调出单保存
      * @author Will
@@ -165,5 +165,5 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @param validList
      * @return Boolean
      */
-    Boolean generateTransferOut(ValidList<TransferApplicationDTO.generateTransferInfoDTO> validList);
+    Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
 }

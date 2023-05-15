@@ -190,35 +190,41 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 调拨类型
          */
-        private String  type;
+        @NotBlank(message = "调拨类型不能为空")
+        private String type;
         /**
          * 调拨日期
          */
-        private LocalDate  billDate;
+        @NotNull(message = "调拨日期不能未空")
+        private LocalDate billDate;
         /**
          * 调出仓库id
          */
-        private String   outWarehouseId;
+        @NotBlank(message = "调出仓库不能为空")
+        private String outWarehouseId;
         /**
          * 调入仓库id
          */
-        private String  inWarehouseId;
+        @NotBlank(message = "调入仓库不能为空")
+        private String inWarehouseId;
         /**
          * 申请人id
          */
-        private String  applyUserId;
+        private String applyUserId;
         /**
          * 申请日期
          */
-        private LocalDate   applyDate;
+        private LocalDate applyDate;
         /**
          * 调拨方向
          */
-        private String  transferDirection;
+        @NotBlank(message = "调拨方向不能为空")
+        private String transferDirection;
         /**
          * 备注
          */
-        private String   remark;
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
 
     }
 
@@ -344,9 +350,9 @@ public class TransferApplicationDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 调拨申请单号
+         * 调拨申请单号(来源编号)
          */
-        private String code;
+        private String sourceCode;
 
         /**
          * 调拨方向
@@ -416,7 +422,7 @@ public class TransferApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class generateTransferInfoDTO {
+    public static class GenerateTransferInfoDTO {
 
         /**
          * 来源明细id
